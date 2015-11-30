@@ -55,7 +55,12 @@ namespace session {
 namespace {
 Mutex g_stats_cache_mutex;  // NOLINT
 const char kStatsJobName[] = "SaveCachedStats";
+#ifndef OS_ANDROID
 const uint32 kSaveCacheStatsInterval = 10 * 60 * 1000;  // 10 min
+#else  // !OS_ANDROID
+// Reduce the frequency to save battery.
+const uint32 kSaveCacheStatsInterval = 2 * 60 * 60 * 1000;  // 2 hours
+#endif  // !OS_ANDROID
 
 const size_t kMaxSession = 64;
 

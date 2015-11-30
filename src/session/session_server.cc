@@ -74,8 +74,7 @@ SessionServer::SessionServer()
   session_handler_->AddObserver(usage_observer_.get());
 
   // start usage stats timer
-  // send usage stats within 5 min later
-  // attempt to send every 5 min -- 2 hours.
+  // send usage stats within 6 min later
   Scheduler::AddJob(Scheduler::JobSetting(
       "UsageStatsTimer",
       UsageStatsUploader::kDefaultScheduleInterval,
