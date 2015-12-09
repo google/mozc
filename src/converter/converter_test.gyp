@@ -54,6 +54,7 @@
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary_mock',
         '../dictionary/dictionary.gyp:suffix_dictionary',
+        '../dictionary/dictionary_base.gyp:user_dictionary',
         '../dictionary/system/system_dictionary.gyp:system_dictionary',
         '../dictionary/system/system_dictionary.gyp:value_dictionary',
         '../engine/engine.gyp:engine_factory',

@@ -233,23 +233,6 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   CHECK(top_candidate_);
 
-  // Don't remove duplications if USER_DICTIONARY.
-  if (candidate->attributes & Segment::Candidate::USER_DICTIONARY) {
-    return CandidateFilter::GOOD_CANDIDATE;
-  }
-
-  // too many candidates size
-  if (candidate_size + 1 >= kMaxCandidatesSize) {
-    return CandidateFilter::STOP_ENUMERATION;
-  }
-
-  // The candidate is already seen.
-  if (seen_.find(candidate->value) != seen_.end()) {
-    return CandidateFilter::BAD_CANDIDATE;
-  }
-
-  CHECK(!nodes.empty());
-
   // "短縮よみ" must only have 1 node.
   if (pos_matcher_->IsIsolatedWord(nodes[0]->lid) &&
       (nodes.size() > 1 ||
@@ -271,6 +254,23 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
                                               candidate->content_value))) {
     return CandidateFilter::BAD_CANDIDATE;
   }
+
+  // Don't remove duplications if USER_DICTIONARY.
+  if (candidate->attributes & Segment::Candidate::USER_DICTIONARY) {
+    return CandidateFilter::GOOD_CANDIDATE;
+  }
+
+  // too many candidates size
+  if (candidate_size + 1 >= kMaxCandidatesSize) {
+    return CandidateFilter::STOP_ENUMERATION;
+  }
+
+  // The candidate is already seen.
+  if (seen_.find(candidate->value) != seen_.end()) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+
+  CHECK(!nodes.empty());
 
   // Suppress "書います", "書いすぎ", "買いて"
   // Basic idea:

@@ -59,6 +59,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
+#include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
@@ -151,6 +152,15 @@ class InsertDummyWordsRewriter : public RewriterInterface {
 
 class ConverterTest : public ::testing::Test {
  protected:
+  struct UserDefinedEntry {
+    const string key;
+    const string value;
+    const user_dictionary::UserDictionary::PosType pos;
+    UserDefinedEntry(const string &k, const string &v,
+                     user_dictionary::UserDictionary::PosType p)
+        : key(k), value(v), pos(p) {}
+  };
+
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   ConverterTest() {}
   virtual ~ConverterTest() {}
@@ -180,9 +190,14 @@ class ConverterTest : public ::testing::Test {
     std::unique_ptr<ConverterImpl> converter;
   };
 
-  ConverterAndData *CreateConverterAndData(RewriterInterface *rewriter) {
-    ConverterAndData *ret = new ConverterAndData;
-
+  // Initializes ConverterAndData with mock data set using given
+  // |user_dictionary| and |suppression_dictionary|.
+  // ConverterAndData takes ownership of |user_dicationary| and
+  // |suppression_dictionary|
+  void InitConverterAndData(DictionaryInterface *user_dictionary,
+                            SuppressionDictionary *suppression_dictionary,
+                            RewriterInterface *rewriter,
+                            ConverterAndData *converter_and_data) {
     testing::MockDataManager data_manager;
 
     const char *dictionary_data = NULL;
@@ -191,36 +206,48 @@ class ConverterTest : public ::testing::Test {
 
     SystemDictionary *sysdic =
         SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-    ret->user_dictionary.reset(new UserDictionaryStub);
-    ret->suppression_dictionary.reset(new SuppressionDictionary);
-    ret->dictionary.reset(new DictionaryImpl(
+    converter_and_data->user_dictionary.reset(user_dictionary);
+    converter_and_data->suppression_dictionary.reset(suppression_dictionary);
+    converter_and_data->dictionary.reset(new DictionaryImpl(
         sysdic,  // DictionaryImpl takes the ownership
         new ValueDictionary(*data_manager.GetPOSMatcher(),
                             &sysdic->value_trie()),
-        ret->user_dictionary.get(),
-        ret->suppression_dictionary.get(),
+        converter_and_data->user_dictionary.get(),
+        converter_and_data->suppression_dictionary.get(),
         data_manager.GetPOSMatcher()));
-    ret->pos_group.reset(new PosGroup(data_manager.GetPosGroupData()));
-    ret->suggestion_filter.reset(CreateSuggestionFilter(data_manager));
-    ret->suffix_dictionary.reset(
+    converter_and_data->pos_group.reset(
+        new PosGroup(data_manager.GetPosGroupData()));
+    converter_and_data->suggestion_filter.reset(
+        CreateSuggestionFilter(data_manager));
+    converter_and_data->suffix_dictionary.reset(
         CreateSuffixDictionaryFromDataManager(data_manager));
-    ret->connector.reset(Connector::CreateFromDataManager(data_manager));
-    ret->segmenter.reset(Segmenter::CreateFromDataManager(data_manager));
-    ret->immutable_converter.reset(
-        new ImmutableConverterImpl(ret->dictionary.get(),
-                                   ret->suffix_dictionary.get(),
-                                   ret->suppression_dictionary.get(),
-                                   ret->connector.get(),
-                                   ret->segmenter.get(),
-                                   data_manager.GetPOSMatcher(),
-                                   ret->pos_group.get(),
-                                   ret->suggestion_filter.get()));
-    ret->converter.reset(new ConverterImpl);
-    ret->converter->Init(data_manager.GetPOSMatcher(),
-                         ret->suppression_dictionary.get(),
-                         new StubPredictor,
-                         rewriter,
-                         ret->immutable_converter.get());
+    converter_and_data->connector.reset(
+        Connector::CreateFromDataManager(data_manager));
+    converter_and_data->segmenter.reset(
+        Segmenter::CreateFromDataManager(data_manager));
+    converter_and_data->immutable_converter.reset(
+        new ImmutableConverterImpl(
+            converter_and_data->dictionary.get(),
+            converter_and_data->suffix_dictionary.get(),
+            converter_and_data->suppression_dictionary.get(),
+            converter_and_data->connector.get(),
+            converter_and_data->segmenter.get(),
+            data_manager.GetPOSMatcher(),
+            converter_and_data->pos_group.get(),
+            converter_and_data->suggestion_filter.get()));
+    converter_and_data->converter.reset(new ConverterImpl);
+    converter_and_data->converter->Init(
+        data_manager.GetPOSMatcher(),
+        converter_and_data->suppression_dictionary.get(),
+        new StubPredictor,
+        rewriter,
+        converter_and_data->immutable_converter.get());
+  }
+
+  ConverterAndData *CreateConverterAndData(RewriterInterface *rewriter) {
+    ConverterAndData *ret = new ConverterAndData;
+    InitConverterAndData(new UserDictionaryStub, new SuppressionDictionary,
+                         rewriter, ret);
     return ret;
   }
 
@@ -230,6 +257,37 @@ class ConverterTest : public ::testing::Test {
 
   ConverterAndData *CreateConverterAndDataWithInsertDummyWordsRewriter() {
     return CreateConverterAndData(new InsertDummyWordsRewriter);
+  }
+
+  ConverterAndData *CreateConverterAndDataWithUserDefinedEntries(
+      const vector<UserDefinedEntry> &user_defined_entries,
+      RewriterInterface *rewriter) {
+    ConverterAndData *ret = new ConverterAndData;
+
+    testing::MockUserPosManager user_pos_manager;
+    SuppressionDictionary *suppression_dictionary = new SuppressionDictionary;
+    dictionary::UserDictionary *user_dictionary =
+        new dictionary::UserDictionary(
+            new dictionary::UserPOS(user_pos_manager.GetUserPOSData()),
+            user_pos_manager.GetPOSMatcher(),
+            suppression_dictionary);
+    InitConverterAndData(
+        user_dictionary, suppression_dictionary, rewriter, ret);
+
+    {
+      user_dictionary::UserDictionaryStorage storage;
+      typedef user_dictionary::UserDictionary::Entry UserEntry;
+      user_dictionary::UserDictionary *dictionary = storage.add_dictionaries();
+      for (const auto &user_entry : user_defined_entries) {
+        UserEntry *entry = dictionary->add_entries();
+        entry->set_key(user_entry.key);
+        entry->set_value(user_entry.value);
+        entry->set_pos(user_entry.pos);
+      }
+
+      user_dictionary->Load(storage);
+    }
+    return ret;
   }
 
   EngineInterface *CreateEngineWithMobilePredictor() {
@@ -1689,6 +1747,126 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   EXPECT_EQ(1, segments.segment(0).candidates_size());
   EXPECT_EQ(original_meta_candidates_size,
             segments.segment(0).meta_candidates_size());
+}
+
+TEST_F(ConverterTest, UserEntryShouldBePromoted) {
+  using user_dictionary::UserDictionary;
+  vector<UserDefinedEntry> user_defined_entries;
+  // "哀" is not in the test dictionary
+  user_defined_entries.push_back(
+      // "あい", "哀"
+      UserDefinedEntry("\xe3\x81\x82\xe3\x81\x84",
+                       "\xe5\x93\x80", UserDictionary::NOUN));
+
+  std::unique_ptr<ConverterAndData> ret(
+      CreateConverterAndDataWithUserDefinedEntries(
+          user_defined_entries, new StubRewriter));
+
+  ConverterInterface *converter = ret->converter.get();
+  CHECK(converter);
+  {
+    Segments segments;
+    // "あい"
+    EXPECT_TRUE(converter->StartConversion(
+        &segments, string("\xe3\x81\x82\xe3\x81\x84")));
+    ASSERT_EQ(1, segments.conversion_segments_size());
+    ASSERT_LT(1, segments.conversion_segment(0).candidates_size());
+    // "哀"
+    EXPECT_EQ(
+        "\xe5\x93\x80", segments.conversion_segment(0).candidate(0).value);
+  }
+}
+
+TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
+  using user_dictionary::UserDictionary;
+  vector<UserDefinedEntry> user_defined_entries;
+  // "哀" is not in the test dictionary
+  user_defined_entries.push_back(
+      // "あい", "哀"
+      UserDefinedEntry("\xe3\x81\x82\xe3\x81\x84",
+                       "\xe5\x93\x80", UserDictionary::NOUN));
+  user_defined_entries.push_back(
+      // "あい", "哀"
+      UserDefinedEntry("\xe3\x81\x82\xe3\x81\x84",
+                       "\xe5\x93\x80", UserDictionary::SUPPRESSION_WORD));
+
+  std::unique_ptr<ConverterAndData> ret(
+      CreateConverterAndDataWithUserDefinedEntries(
+          user_defined_entries, new StubRewriter));
+
+  ConverterInterface *converter = ret->converter.get();
+  CHECK(converter);
+  {
+    Segments segments;
+    // "あい"
+    EXPECT_TRUE(converter->StartConversion(
+        &segments, string("\xe3\x81\x82\xe3\x81\x84")));
+    ASSERT_EQ(1, segments.conversion_segments_size());
+    ASSERT_LT(1, segments.conversion_segment(0).candidates_size());
+    // "哀"
+    EXPECT_FALSE(
+        FindCandidateByValue("\xe5\x93\x80", segments.conversion_segment(0)));
+  }
+}
+
+TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
+  using user_dictionary::UserDictionary;
+  vector<UserDefinedEntry> user_defined_entries;
+  user_defined_entries.push_back(
+      // "じゅ"
+      UserDefinedEntry("\xe3\x81\x98\xe3\x82\x85",
+                       "Google+", UserDictionary::ABBREVIATION));
+
+  std::unique_ptr<ConverterAndData> ret(
+      CreateConverterAndDataWithUserDefinedEntries(
+          user_defined_entries, new StubRewriter));
+
+  ConverterInterface *converter = ret->converter.get();
+  CHECK(converter);
+  {
+    Segments segments;
+    // "じゅうじか"
+    EXPECT_TRUE(converter->StartConversion(
+        &segments,
+        string(
+            "\xe3\x81\x98\xe3\x82\x85\xe3\x81\x86\xe3\x81\x98\xe3\x81\x8b")));
+    ASSERT_EQ(1, segments.conversion_segments_size());
+    // "Google+うじか"
+    EXPECT_FALSE(
+        FindCandidateByValue(
+            "\x47\x6f\x6f\x67\x6c\x65\x2b\xe3\x81\x86\xe3\x81\x98\xe3\x81\x8b",
+            segments.conversion_segment(0)));
+  }
+}
+
+TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
+  using user_dictionary::UserDictionary;
+  vector<UserDefinedEntry> user_defined_entries;
+  user_defined_entries.push_back(
+      // "じゅ"
+      UserDefinedEntry("\xe3\x81\x98\xe3\x82\x85",
+                       "Google+", UserDictionary::SUGGESTION_ONLY));
+
+  std::unique_ptr<ConverterAndData> ret(
+      CreateConverterAndDataWithUserDefinedEntries(
+          user_defined_entries, new StubRewriter));
+
+  ConverterInterface *converter = ret->converter.get();
+  CHECK(converter);
+  {
+    Segments segments;
+    // "じゅうじか"
+    EXPECT_TRUE(converter->StartConversion(
+        &segments,
+        string(
+            "\xe3\x81\x98\xe3\x82\x85\xe3\x81\x86\xe3\x81\x98\xe3\x81\x8b")));
+    ASSERT_EQ(1, segments.conversion_segments_size());
+    // "Google+うじか"
+    EXPECT_FALSE(
+        FindCandidateByValue(
+            "\x47\x6f\x6f\x67\x6c\x65\x2b\xe3\x81\x86\xe3\x81\x98\xe3\x81\x8b",
+            segments.conversion_segment(0)));
+  }
 }
 
 }  // namespace mozc
