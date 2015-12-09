@@ -142,8 +142,10 @@ message KeyEvent {
     VIRTUAL_LEFT = 72;  // Left key on virtual (software) keyboard
     VIRTUAL_RIGHT = 73;  // Right key on virtual (software) keyboard
     VIRTUAL_ENTER = 74;  // Enter key on virtual (software) keyboard
+    VIRTUAL_UP = 75;  // Up key on virtual (software) keyboard
+    VIRTUAL_DOWN = 76;  // Down key on virtual (software) keyboard
 
-    NUM_SPECIALKEYS = 75;
+    NUM_SPECIALKEYS = 77;
   };
 
   // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the

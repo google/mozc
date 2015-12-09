@@ -176,6 +176,8 @@ class KeyParserData {
     keycode_map_["virtualleft"] = KeyEvent::VIRTUAL_LEFT;
     keycode_map_["virtualright"] = KeyEvent::VIRTUAL_RIGHT;
     keycode_map_["virtualenter"] = KeyEvent::VIRTUAL_ENTER;
+    keycode_map_["virtualup"] = KeyEvent::VIRTUAL_UP;
+    keycode_map_["virtualdown"] = KeyEvent::VIRTUAL_DOWN;
 
     // Meant to be used for any other special keys.
     keycode_map_["undefinedkey"] = KeyEvent::UNDEFINED_KEY;
