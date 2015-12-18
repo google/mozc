@@ -363,6 +363,25 @@
           ],
         },
         {
+          'target_name': 'gen_pbgra32_bitmap',
+          'type': 'executable',
+          'sources': [
+            'win32/gen_pbgra32_bitmap.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base_core',
+            '../base/base.gyp:scoped_handle',
+          ],
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalDependencies': [
+                'gdiplus.lib',  # used in 'gen_pbgra32_bitmap.cc'
+              ],
+              'SubSystem': '1',  # 1 == subSystemConsole
+            },
+          },
+        },
+        {
           'target_name': 'mozc_renderer',
           'product_name': '<(renderer_product_name_win)',
           'type': 'executable',
