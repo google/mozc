@@ -124,20 +124,6 @@ class ImeContext {
     return &client_context_;
   }
 
-  const commands::Rectangle &composition_rectangle() const {
-    return composition_rectangle_;
-  }
-  commands::Rectangle *mutable_composition_rectangle() {
-    return &composition_rectangle_;
-  }
-
-  const commands::Rectangle &caret_rectangle() const {
-    return caret_rectangle_;
-  }
-  commands::Rectangle *mutable_caret_rectangle() {
-    return &caret_rectangle_;
-  }
-
   const commands::Output &output() const {
     return output_;
   }
@@ -173,11 +159,6 @@ class ImeContext {
   commands::ApplicationInfo application_info_;
 
   commands::Context client_context_;
-
-  // TODO(nona): remove these fields by moving the rectangle calculation logic
-  //   to the Linux client.
-  commands::Rectangle composition_rectangle_;
-  commands::Rectangle caret_rectangle_;
 
   // Storing the last output consisting of the last result and the
   // last performed command.

@@ -100,8 +100,6 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
 
   dest->mutable_client_capability()->CopyFrom(src.client_capability());
   dest->mutable_application_info()->CopyFrom(src.application_info());
-  dest->mutable_composition_rectangle()->CopyFrom(src.composition_rectangle());
-  dest->mutable_caret_rectangle()->CopyFrom(src.caret_rectangle());
   dest->mutable_output()->CopyFrom(src.output());
 }
 

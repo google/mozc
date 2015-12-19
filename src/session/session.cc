@@ -145,14 +145,6 @@ void SetSessionState(const ImeContext::State state, ImeContext *context) {
       break;
     case ImeContext::COMPOSITION:
       if (prev_state == ImeContext::PRECOMPOSITION) {
-        // NOTE: In case of state change including commitment, state change
-        // doesn't happen directly at once from CONVERSION to COMPOSITION.
-        // Actual state change is CONVERSION to PRECOMPOSITION at first,
-        // followed by PRECOMPOSITION to COMPOSITION.
-        // However in this case we can only get one SendCaretRectangle
-        // because the state change is executed atomically.
-        context->mutable_composition_rectangle()->CopyFrom(
-            context->caret_rectangle());
         // Notify the start of composition to the converter so that internal
         // state can be refreshed by the client context (especially by
         // preceding text).
@@ -352,9 +344,6 @@ bool Session::SendCommand(commands::Command *command) {
       break;
     case commands::SessionCommand::UNDO_OR_REWIND:
       result = UndoOrRewind(command);
-      break;
-    case commands::SessionCommand::SEND_CARET_LOCATION:
-      result = SetCaretLocation(command);
       break;
     case commands::SessionCommand::COMMIT_RAW_TEXT:
       result = CommitRawText(command);
@@ -2675,33 +2664,6 @@ void Session::Output(commands::Command *command) {
   OutputMode(command);
   context_->mutable_converter()->PopOutput(
       context_->composer(), command->mutable_output());
-  OutputWindowLocation(command);
-}
-
-void Session::OutputWindowLocation(commands::Command *command) const {
-  if (!(command->output().has_candidates() &&
-        context_->caret_rectangle().IsInitialized() &&
-        context_->composition_rectangle().IsInitialized())) {
-    return;
-  }
-
-  DCHECK(command->output().candidates().has_category());
-
-  commands::Candidates *candidates =
-      command->mutable_output()->mutable_candidates();
-
-  candidates->mutable_caret_rectangle()->CopyFrom(
-      context_->caret_rectangle());
-
-  candidates->mutable_composition_rectangle()->CopyFrom(
-      context_->composition_rectangle());
-
-  if (command->output().candidates().category() == commands::SUGGESTION ||
-      command->output().candidates().category() == commands::PREDICTION) {
-    candidates->set_window_location(commands::Candidates::COMPOSITION);
-  } else {
-    candidates->set_window_location(commands::Candidates::CARET);
-  }
 }
 
 void Session::OutputMode(commands::Command *command) const {
@@ -2861,41 +2823,6 @@ bool Session::SwitchInputFieldType(commands::Command *command) {
   context_->mutable_composer()->SetInputFieldType(
       command->input().context().input_field_type());
   Output(command);
-  return true;
-}
-
-bool Session::SetCaretLocation(commands::Command *command) {
-  if (!command->input().has_command()) {
-    return false;
-  }
-
-  const commands::SessionCommand &session_command = command->input().command();
-  if (!session_command.has_caret_rectangle()) {
-    context_->mutable_caret_rectangle()->Clear();
-    return false;
-  }
-
-  if (!context_->caret_rectangle().IsInitialized()) {
-    context_->mutable_caret_rectangle()->CopyFrom(
-        session_command.caret_rectangle());
-    return true;
-  }
-
-  const int caret_delta_y = abs(
-      context_->caret_rectangle().y() - session_command.caret_rectangle().y());
-
-  context_->mutable_caret_rectangle()->CopyFrom(
-      session_command.caret_rectangle());
-
-  const int kJumpThreshold = 30;
-
-  // If caret is jumped, assume the text field is also jumped and reset the
-  // rectangle of composition text.
-  if (caret_delta_y > kJumpThreshold) {
-    context_->mutable_composition_rectangle()->CopyFrom(
-        context_->caret_rectangle());
-  }
-
   return true;
 }
 

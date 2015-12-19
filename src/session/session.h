@@ -35,7 +35,6 @@
 #include <memory>
 #include <string>
 
-#include "base/coordinates.h"
 #include "base/port.h"
 #include "composer/composer.h"
 #include "session/session_interface.h"
@@ -60,7 +59,6 @@ class EngineInterface;
 
 namespace session {
 class ImeContext;
-class SessionCursorManageTest;
 
 class Session : public SessionInterface {
  public:
@@ -362,7 +360,6 @@ class Session : public SessionInterface {
   void OutputMode(mozc::commands::Command *command) const;
   void OutputComposition(mozc::commands::Command *command) const;
   void OutputKey(mozc::commands::Command *command) const;
-  void OutputWindowLocation(mozc::commands::Command *command) const;
 
   bool SendKeyDirectInputState(mozc::commands::Command *command);
   bool SendKeyPrecompositionState(mozc::commands::Command *command);
@@ -385,9 +382,6 @@ class Session : public SessionInterface {
   // return true if |key_event| is a triggering key_event of
   // AutoIMEConversion.
   bool CanStartAutoConversion(const mozc::commands::KeyEvent &key_event) const;
-
-  // Stores received caret location into caret_rectangle_.
-  bool SetCaretLocation(mozc::commands::Command *command);
 
   // Handles KeyEvent::activated to support indirect IME on/off.
   bool HandleIndirectImeOnOff(mozc::commands::Command *command);

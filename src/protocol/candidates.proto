@@ -86,8 +86,8 @@ enum DisplayType {
   CASCADE = 1;
 };
 
-// TODO(nona): merge to RendererCommand::Rectangle
-message Rectangle {
+// Obsolete. Used only in old IBus client.
+message DeprecatedRectangle {
   required int32 x = 1;
   required int32 y = 2;
   required int32 width = 3;
@@ -206,19 +206,20 @@ message Candidates {
   };
   optional Direction direction = 14 [ default = VERTICAL ];
 
-  // This position is used for suggest window position.
-  optional Rectangle composition_rectangle = 15;
-  optional Rectangle caret_rectangle = 16;
+  // Obsolete. Used only in old IBus client.
+  optional DeprecatedRectangle deprecated_composition_rectangle = 15;
+  optional DeprecatedRectangle deprecated_caret_rectangle = 16;
 
-  enum CandidateWindowLocation{
+  // Obsolete. Used only in old IBus client.
+  enum DeprecatedCandidateWindowLocation {
     // Shows candidate window under the caret. This is used for prediction and
     // conversion
-    CARET = 0;
+    DEPRECATED_CARET = 0;
     // Shows candidate window aligned with composition area. This is used for
     // suggestion.
-    COMPOSITION = 1;
+    DEPRECATED_COMPOSITION = 1;
   }
-  optional CandidateWindowLocation window_location = 17;
+  optional DeprecatedCandidateWindowLocation deprecated_window_location = 17;
 
   // The number of candidates per page.
   optional uint32 page_size = 18 [ default = 9 ];
