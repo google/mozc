@@ -27,46 +27,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Defines codec for dictionary file
+#include "dictionary/file/codec_util.h"
 
-#ifndef MOZC_DICTIONARY_FILE_CODEC_H_
-#define MOZC_DICTIONARY_FILE_CODEC_H_
+#include <iostream>
 
-#include <ostream>
-#include <string>
-#include <vector>
-
-#include "base/port.h"
-#include "dictionary/file/codec_interface.h"
-#include "dictionary/file/section.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace dictionary {
+namespace filecodec_util {
 
-class DictionaryFileCodec : public DictionaryFileCodecInterface {
- public:
-  DictionaryFileCodec();
-  virtual ~DictionaryFileCodec();
+void WriteInt(int value, ostream *ofs) {
+  DCHECK(ofs);
+  ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
+}
 
-  virtual void WriteSections(const vector<DictionaryFileSection> &sections,
-                             ostream *ofs) const;
-  virtual bool ReadSections(const char *image, int length,
-                            vector<DictionaryFileSection> *sections) const;
-  virtual string GetSectionName(const string &name) const;
+int ReadInt(const char *ptr) {
+  DCHECK(ptr);
+  return *reinterpret_cast<const int *>(ptr);
+}
 
- private:
-  void WriteHeader(ostream *ofs) const;
-  void WriteSection(const DictionaryFileSection &section, ostream *ofs) const;
+// Round up
+int Rup4(int length) {
+  const int rem = (length % 4);
+  return ((4 - rem) % 4);
+}
 
-  static void Pad4(int length, ostream *ofs);
-
-  // Magic value for simple file validation
-  const int filemagic_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryFileCodec);
-};
-
+}  // namespace filecodec_util
 }  // namespace dictionary
 }  // namespace mozc
-
-#endif  // MOZC_DICTIONARY_FILE_CODEC_H_

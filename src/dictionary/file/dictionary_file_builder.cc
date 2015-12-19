@@ -40,7 +40,10 @@
 namespace mozc {
 namespace dictionary {
 
-DictionaryFileBuilder::DictionaryFileBuilder() {}
+DictionaryFileBuilder::DictionaryFileBuilder(
+    DictionaryFileCodecInterface *file_codec) : file_codec_(file_codec) {
+  DCHECK(file_codec_);
+}
 
 DictionaryFileBuilder::~DictionaryFileBuilder() {
   for (vector<DictionaryFileSection>::iterator itr = sections_.begin();
@@ -69,15 +72,14 @@ bool DictionaryFileBuilder::AddSectionFromFile(
   ifs.read(ptr, len);
 
   sections_.push_back(DictionaryFileSection(ptr, len, ""));
-  sections_.back().name =
-      DictionaryFileCodecFactory::GetCodec()->GetSectionName(section_name);
+  sections_.back().name = file_codec_->GetSectionName(section_name);
   return true;
 }
 
 void DictionaryFileBuilder::WriteImageToFile(const string &file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
   OutputFileStream ofs(file_name.c_str(), ios::binary);
-  DictionaryFileCodecFactory::GetCodec()->WriteSections(sections_, &ofs);
+  file_codec_->WriteSections(sections_, &ofs);
   LOG(INFO) << "Generated";
 }
 

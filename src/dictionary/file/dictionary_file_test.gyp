@@ -39,6 +39,7 @@
         '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
         'dictionary_file.gyp:codec',
+        'dictionary_file.gyp:codec_factory',
       ],
       'variables': {
         'test_size': 'small',
@@ -53,6 +54,7 @@
       'dependencies': [
         '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
+        'dictionary_file.gyp:codec_factory',
         'dictionary_file.gyp:dictionary_file',
         'dictionary_file.gyp:dictionary_file_builder',
       ],

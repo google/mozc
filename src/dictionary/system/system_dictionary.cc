@@ -62,6 +62,7 @@
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/token_decode_iterator.h"
@@ -399,8 +400,10 @@ struct SystemDictionary::Builder::Specification {
   };
 
   Specification(InputType t, const string &fn, const char *p, int l, Options o,
-                const SystemDictionaryCodecInterface *codec)
-      : type(t), filename(fn), ptr(p), len(l), options(o), codec(codec) {}
+                const SystemDictionaryCodecInterface *codec,
+                const DictionaryFileCodecInterface *file_codec)
+      : type(t), filename(fn), ptr(p), len(l), options(o), codec(codec),
+        file_codec(file_codec) {}
 
   InputType type;
 
@@ -413,15 +416,16 @@ struct SystemDictionary::Builder::Specification {
 
   Options options;
   const SystemDictionaryCodecInterface *codec;
+  const DictionaryFileCodecInterface *file_codec;
 };
 
 SystemDictionary::Builder::Builder(const string &filename)
     : spec_(new Specification(Specification::FILENAME,
-                              filename, nullptr, -1, NONE, nullptr)) {}
+                              filename, nullptr, -1, NONE, nullptr, nullptr)) {}
 
 SystemDictionary::Builder::Builder(const char *ptr, int len)
     : spec_(new Specification(Specification::IMAGE,
-                              "", ptr, len, NONE, nullptr)) {}
+                              "", ptr, len, NONE, nullptr, nullptr)) {}
 
 SystemDictionary::Builder::~Builder() {}
 
@@ -442,8 +446,12 @@ SystemDictionary *SystemDictionary::Builder::Build() {
     spec_->codec = SystemDictionaryCodecFactory::GetCodec();
   }
 
+  if (spec_->file_codec == nullptr) {
+    spec_->file_codec = DictionaryFileCodecFactory::GetCodec();
+  }
+
   std::unique_ptr<SystemDictionary> instance(
-      new SystemDictionary(spec_->codec));
+      new SystemDictionary(spec_->codec, spec_->file_codec));
 
   switch (spec_->type) {
     case Specification::FILENAME:
@@ -478,10 +486,12 @@ SystemDictionary *SystemDictionary::Builder::Build() {
   return instance.release();
 }
 
-SystemDictionary::SystemDictionary(const SystemDictionaryCodecInterface *codec)
+SystemDictionary::SystemDictionary(
+    const SystemDictionaryCodecInterface *codec,
+    const DictionaryFileCodecInterface *file_codec)
     : frequent_pos_(nullptr),
       codec_(codec),
-      dictionary_file_(new DictionaryFile) {}
+      dictionary_file_(new DictionaryFile(file_codec)) {}
 
 SystemDictionary::~SystemDictionary() {}
 

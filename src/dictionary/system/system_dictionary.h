@@ -38,6 +38,7 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/file/codec_interface.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/words_info.h"
@@ -48,6 +49,7 @@ namespace mozc {
 namespace dictionary {
 
 class DictionaryFile;
+class DictionaryFileCodecInterface;
 class SystemDictionaryCodecInterface;
 
 class SystemDictionary : public DictionaryInterface {
@@ -124,7 +126,8 @@ class SystemDictionary : public DictionaryInterface {
   class ReverseLookupIndex;
   struct PredictiveLookupSearchState;
 
-  explicit SystemDictionary(const SystemDictionaryCodecInterface *codec);
+  explicit SystemDictionary(const SystemDictionaryCodecInterface *codec,
+                            const DictionaryFileCodecInterface *file_codec);
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
   void RegisterReverseLookupTokensForT13N(StringPiece value,

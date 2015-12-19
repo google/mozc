@@ -39,6 +39,7 @@
 
 #include "base/mmap.h"
 #include "base/port.h"
+#include "dictionary/file/codec_interface.h"
 
 namespace mozc {
 namespace dictionary {
@@ -47,7 +48,7 @@ struct DictionaryFileSection;
 
 class DictionaryFile {
  public:
-  DictionaryFile();
+  explicit DictionaryFile(const DictionaryFileCodecInterface *file_codec);
   ~DictionaryFile();
 
   // Open from file
@@ -62,6 +63,8 @@ class DictionaryFile {
   const char *GetSection(const string &section_name, int *len) const;
 
  private:
+  // DictionaryFile does not take the ownership of |file_codec_|.
+  const DictionaryFileCodecInterface *file_codec_;
   // This will be nullptr if the mapping source is given as a pointer.
   std::unique_ptr<Mmap> mapping_;
   vector<DictionaryFileSection> sections_;

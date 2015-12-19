@@ -37,6 +37,31 @@
         'codec.cc',
       ],
       'dependencies': [
+        'codec_util',
+        '../../base/base.gyp:base_core',
+      ],
+    },
+    {
+      'target_name': 'codec_factory',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'codec_factory.cc',
+      ],
+      'dependencies': [
+        'codec',
+        'codec_util',
+        '../../base/base.gyp:base_core',
+      ],
+    },
+    {
+      'target_name': 'codec_util',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'codec_util.cc',
+      ],
+      'dependencies': [
         '../../base/base.gyp:base_core',
       ],
     },

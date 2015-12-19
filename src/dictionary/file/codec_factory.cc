@@ -27,46 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Defines codec for dictionary file
+#include "dictionary/file/codec_factory.h"
 
-#ifndef MOZC_DICTIONARY_FILE_CODEC_H_
-#define MOZC_DICTIONARY_FILE_CODEC_H_
 
-#include <ostream>
-#include <string>
-#include <vector>
-
-#include "base/port.h"
+#include "base/singleton.h"
+#include "dictionary/file/codec.h"
 #include "dictionary/file/codec_interface.h"
-#include "dictionary/file/section.h"
+
 
 namespace mozc {
 namespace dictionary {
 
-class DictionaryFileCodec : public DictionaryFileCodecInterface {
- public:
-  DictionaryFileCodec();
-  virtual ~DictionaryFileCodec();
 
-  virtual void WriteSections(const vector<DictionaryFileSection> &sections,
-                             ostream *ofs) const;
-  virtual bool ReadSections(const char *image, int length,
-                            vector<DictionaryFileSection> *sections) const;
-  virtual string GetSectionName(const string &name) const;
+namespace {
+DictionaryFileCodecInterface *g_dictionary_file_codec = nullptr;
+}  // namespace
 
- private:
-  void WriteHeader(ostream *ofs) const;
-  void WriteSection(const DictionaryFileSection &section, ostream *ofs) const;
+typedef DictionaryFileCodec DefaultCodec;
 
-  static void Pad4(int length, ostream *ofs);
+DictionaryFileCodecInterface *DictionaryFileCodecFactory::GetCodec() {
+  if (g_dictionary_file_codec == nullptr) {
+    return Singleton<DefaultCodec>::get();
+  } else {
+    return g_dictionary_file_codec;
+  }
+}
 
-  // Magic value for simple file validation
-  const int filemagic_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryFileCodec);
-};
+void DictionaryFileCodecFactory::SetCodec(DictionaryFileCodecInterface *codec) {
+  g_dictionary_file_codec = codec;
+}
 
 }  // namespace dictionary
 }  // namespace mozc
-
-#endif  // MOZC_DICTIONARY_FILE_CODEC_H_

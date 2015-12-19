@@ -60,18 +60,6 @@ class DictionaryFileCodecInterface {
   DISALLOW_COPY_AND_ASSIGN(DictionaryFileCodecInterface);
 };
 
-class DictionaryFileCodecFactory {
- public:
-  // Returns the singleton instance.
-  static DictionaryFileCodecInterface *GetCodec();
-
-  // For dependency injectin in unit tests.
-  static void SetCodec(DictionaryFileCodecInterface *codec);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(DictionaryFileCodecFactory);
-};
-
 }  // namespace dictionary
 }  // namespace mozc
 

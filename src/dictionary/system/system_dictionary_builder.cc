@@ -40,6 +40,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec.h"

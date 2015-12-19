@@ -27,46 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Defines codec for dictionary file
+#ifndef MOZC_DICTIONARY_FILE_CODEC_UTIL_H_
+#define MOZC_DICTIONARY_FILE_CODEC_UTIL_H_
 
-#ifndef MOZC_DICTIONARY_FILE_CODEC_H_
-#define MOZC_DICTIONARY_FILE_CODEC_H_
-
-#include <ostream>
-#include <string>
-#include <vector>
-
-#include "base/port.h"
-#include "dictionary/file/codec_interface.h"
-#include "dictionary/file/section.h"
+#include <iostream>
 
 namespace mozc {
 namespace dictionary {
+namespace filecodec_util {
 
-class DictionaryFileCodec : public DictionaryFileCodecInterface {
- public:
-  DictionaryFileCodec();
-  virtual ~DictionaryFileCodec();
+void WriteInt(int value, ostream *ofs);
 
-  virtual void WriteSections(const vector<DictionaryFileSection> &sections,
-                             ostream *ofs) const;
-  virtual bool ReadSections(const char *image, int length,
-                            vector<DictionaryFileSection> *sections) const;
-  virtual string GetSectionName(const string &name) const;
+int ReadInt(const char *ptr);
 
- private:
-  void WriteHeader(ostream *ofs) const;
-  void WriteSection(const DictionaryFileSection &section, ostream *ofs) const;
+int Rup4(int length);
 
-  static void Pad4(int length, ostream *ofs);
-
-  // Magic value for simple file validation
-  const int filemagic_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryFileCodec);
-};
-
+}  // namespace filecodec_util
 }  // namespace dictionary
 }  // namespace mozc
 
-#endif  // MOZC_DICTIONARY_FILE_CODEC_H_
+#endif  // MOZC_DICTIONARY_FILE_CODEC_UTIL_H_

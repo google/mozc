@@ -39,6 +39,7 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
@@ -50,7 +51,8 @@ namespace mozc {
 namespace dictionary {
 
 ValueDictionary::ValueDictionary(const POSMatcher& pos_matcher)
-    : dictionary_file_(new DictionaryFile),
+    : dictionary_file_(
+          new DictionaryFile(DictionaryFileCodecFactory::GetCodec())),
       codec_(SystemDictionaryCodecFactory::GetCodec()),
       suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {
 }
