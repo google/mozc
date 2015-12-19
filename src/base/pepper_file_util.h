@@ -30,17 +30,16 @@
 #ifndef MOZC_BASE_PEPPER_FILE_UTIL_H_
 #define MOZC_BASE_PEPPER_FILE_UTIL_H_
 
+#ifdef __native_client__
+
+#include <ppapi/cpp/instance.h>
+
 #include <string>
 
+#include "base/mmap_sync_interface.h"
 #include "base/port.h"
 
-namespace pp {
-class Instance;
-}  // namespace pp
-
 namespace mozc {
-
-class Mmap;
 
 // Interface for Papper File system.
 class PepperFileSystemInterface {
@@ -54,8 +53,8 @@ class PepperFileSystemInterface {
                                const string &buffer) = 0;
   virtual bool DeleteFile(const string &filename) = 0;
   virtual bool RenameFile(const string &from, const string &to) = 0;
-  virtual bool RegisterMmap(Mmap *mmap) = 0;
-  virtual bool UnRegisterMmap(Mmap *mmap) = 0;
+  virtual bool RegisterMmap(MmapSyncInterface *mmap) = 0;
+  virtual bool UnRegisterMmap(MmapSyncInterface *mmap) = 0;
   virtual bool SyncMmapToFile() = 0;
 };
 
@@ -97,15 +96,17 @@ class PepperFileUtil {
   static bool RenameFile(const string &from, const string &to);
 
   // Registers Mmap object.
-  static bool RegisterMmap(Mmap *mmap);
+  static bool RegisterMmap(MmapSyncInterface *mmap);
 
   // Unegisters Mmap object.
-  static bool UnRegisterMmap(Mmap *mmap);
+  static bool UnRegisterMmap(MmapSyncInterface *mmap);
 
   // Call SyncToFile() method of the all registered Mmap objects.
   static bool SyncMmapToFile();
 };
 
 }  // namespace mozc
+
+#endif  // __native_client__
 
 #endif  // MOZC_BASE_PEPPER_FILE_UTIL_H_

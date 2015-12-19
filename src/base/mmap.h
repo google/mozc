@@ -35,14 +35,15 @@
 #endif  // MOZC_USE_PEPPER_FILE_IO
 #include <string>
 
+#include "base/mmap_sync_interface.h"
 #include "base/port.h"
 
 namespace mozc {
 
-class Mmap {
+class Mmap : public MmapSyncInterface {
  public:
   Mmap();
-  ~Mmap() { Close(); }
+  virtual ~Mmap() { Close(); }
 
   bool Open(const char *filename, const char *mode = "r");
   void Close();
@@ -82,7 +83,7 @@ class Mmap {
 
 #ifdef MOZC_USE_PEPPER_FILE_IO
   // Save the data in memory to the file.
-  bool SyncToFile();
+  virtual bool SyncToFile();
 #endif  // MOZC_USE_PEPPER_FILE_IO
 
  private:

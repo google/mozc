@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <climits>  // for CHAR_BIT
+#include <type_traits>
 
 #include "base/logging.h"
 
@@ -217,6 +218,8 @@ string MakeDigestImpl(StringPiece source) {
     uint32 W[80];  // Message schedule.
     for (size_t i = 0; i < 16; ++i) {
       const size_t base_index = i * 4;
+      static_assert(std::is_unsigned<StringPiece::value_type>::value,
+                    "Assuming unsigned value type.");
       W[i] = (static_cast<uint32>(message[base_index + 0]) << 24) |
              (static_cast<uint32>(message[base_index + 1]) << 16) |
              (static_cast<uint32>(message[base_index + 2]) << 8) |

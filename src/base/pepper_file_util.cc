@@ -29,6 +29,8 @@
 
 // TODO(horo): Write tests.
 
+#ifdef __native_client__
+
 #include "base/pepper_file_util.h"
 
 #include <ppapi/c/pp_file_info.h>
@@ -563,8 +565,8 @@ class PepperFileSystem : public PepperFileSystemInterface {
   virtual bool WriteBinaryFile(const string &filename, const string &buffer);
   virtual bool DeleteFile(const string &filename);
   virtual bool RenameFile(const string &from, const string &to);
-  virtual bool RegisterMmap(Mmap *mmap);
-  virtual bool UnRegisterMmap(Mmap *mmap);
+  virtual bool RegisterMmap(MmapSyncInterface *mmap);
+  virtual bool UnRegisterMmap(MmapSyncInterface *mmap);
   virtual bool SyncMmapToFile();
 
  private:
@@ -576,7 +578,7 @@ class PepperFileSystem : public PepperFileSystemInterface {
   pp::CompletionCallbackFactory<PepperFileSystem> cc_factory_;
   UnnamedEvent event_;
   pp::Instance *instance_;
-  set<Mmap*> mmap_set_;
+  set<MmapSyncInterface*> mmap_set_;
   Mutex mutex_;
   DISALLOW_COPY_AND_ASSIGN(PepperFileSystem);
 };
@@ -686,19 +688,19 @@ bool PepperFileSystem::RenameFile(const string &from, const string &to) {
   return renamer.Rename(from, to) == PP_OK;
 }
 
-bool PepperFileSystem::RegisterMmap(Mmap *mmap) {
+bool PepperFileSystem::RegisterMmap(MmapSyncInterface *mmap) {
   scoped_lock lock(&mutex_);
   return mmap_set_.insert(mmap).second;
 }
 
-bool PepperFileSystem::UnRegisterMmap(Mmap *mmap) {
+bool PepperFileSystem::UnRegisterMmap(MmapSyncInterface *mmap) {
   scoped_lock lock(&mutex_);
   return mmap_set_.erase(mmap);
 }
 
 bool PepperFileSystem::SyncMmapToFile() {
   scoped_lock lock(&mutex_);
-  for (set<Mmap*>::iterator it = mmap_set_.begin();
+  for (set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
        it != mmap_set_.end(); ++it) {
     (*it)->SyncToFile();
   }
@@ -755,11 +757,11 @@ bool PepperFileUtil::RenameFile(const string &from, const string &to) {
   return GetPepperFileSystem()->RenameFile(from, to);
 }
 
-bool PepperFileUtil::RegisterMmap(Mmap *mmap) {
+bool PepperFileUtil::RegisterMmap(MmapSyncInterface *mmap) {
   return GetPepperFileSystem()->RegisterMmap(mmap);
 }
 
-bool PepperFileUtil::UnRegisterMmap(Mmap *mmap) {
+bool PepperFileUtil::UnRegisterMmap(MmapSyncInterface *mmap) {
   return GetPepperFileSystem()->UnRegisterMmap(mmap);
 }
 
@@ -768,3 +770,5 @@ bool PepperFileUtil::SyncMmapToFile() {
 }
 
 }  // namespace mozc
+
+#endif  // __native_client__

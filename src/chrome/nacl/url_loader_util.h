@@ -30,6 +30,8 @@
 #ifndef MOZC_CHROME_NACL_URL_LOADER_UTIL_H_
 #define MOZC_CHROME_NACL_URL_LOADER_UTIL_H_
 
+#ifdef __native_client__
+
 #include <ppapi/cpp/completion_callback.h>
 
 #include <string>
@@ -59,5 +61,7 @@ class URLLoaderUtil {
 }  // namespace nacl
 }  // namespace chrome
 }  // namespace mozc
+
+#endif  // __native_client__
 
 #endif  // MOZC_CHROME_NACL_URL_LOADER_UTIL_H_

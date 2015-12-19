@@ -27,56 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_
-#define MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_
-
-#ifdef __native_client__
-
-#include <memory>
-#include <string>
-
-#include "base/port.h"
+#ifndef MOZC_BASE_MMAP_SYNC_INTERFACE_H_
+#define MOZC_BASE_MMAP_SYNC_INTERFACE_H_
 
 namespace mozc {
-namespace chrome {
-namespace nacl {
 
-class DictionaryDownloader {
+// This interface is used to resolve a cyclic dependency between PepperFileUtil
+// and Mmap.
+class MmapSyncInterface {
  public:
-  enum DownloadStatus {
-    DOWNLOAD_INITIALIZED,
-    DOWNLOAD_PENDING,
-    DOWNLOAD_STARTED,
-    DOWNLOAD_FINISHED,
-    DOWNLOAD_WAITING_FOR_RETRY,
-    DOWNLOAD_ERROR
-  };
-  DictionaryDownloader(const string &url,
-                       const string &file_name);
-  ~DictionaryDownloader();
-  // Sets the options.
-  void SetOption(uint32 start_delay,
-                 uint32 random_delay,
-                 uint32 retry_interval,
-                 uint32 retry_backoff_count,
-                 uint32 max_retry);
-  // Downloading will be started after start_delay + [0 - random_delay] msec.
-  // If failed, 1st retry is started after retry_interval + [0 - random_delay].
-  // While the retry count is less than retry_backoff_count, retry_interval will
-  // be doubled.
-  void StartDownload();
-  DownloadStatus GetStatus();
+  virtual ~MmapSyncInterface() {}
 
- private:
-  class Impl;
-  std::unique_ptr<Impl> impl_;
-  DISALLOW_COPY_AND_ASSIGN(DictionaryDownloader);
+#ifdef MOZC_USE_PEPPER_FILE_IO
+  // Save the data in memory to the file.
+  virtual bool SyncToFile() = 0;
+#endif  // MOZC_USE_PEPPER_FILE_IO
 };
 
-}  // namespace nacl
-}  // namespace chrome
 }  // namespace mozc
 
-#endif  // __native_client__
-
-#endif  // MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_
+#endif  // MOZC_BASE_MMAP_SYNC_INTERFACE_H_
