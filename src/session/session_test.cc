@@ -8875,7 +8875,6 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   commands::Request request;
 
   request.set_zero_query_suggestion(false);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
   session->SetRequest(&request);
 

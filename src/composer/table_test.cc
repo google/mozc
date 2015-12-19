@@ -756,7 +756,6 @@ TEST_F(TableTest, MobileMode) {
   mozc::commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
 
   {
     // To 12keys -> Hiragana mode

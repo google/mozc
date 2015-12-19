@@ -569,7 +569,7 @@ message Request {
       [default = false] ;  // true for android
 
   // Combine all segments like mobile IME.
-  optional bool combine_all_segments = 3
+  optional bool OBSOLETE_combine_all_segments = 3
       [default = false] ;  // true for android
 
   enum SpecialRomanjiTable {

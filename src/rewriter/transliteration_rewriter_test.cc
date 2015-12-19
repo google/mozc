@@ -654,7 +654,6 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HIRAGANA);
 
@@ -725,7 +724,6 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HIRAGANA);
 
@@ -797,7 +795,6 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(
       commands::Request::TOGGLE_FLICK_TO_HIRAGANA);
 
@@ -868,7 +865,6 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
   commands::Request client_request;
   client_request.set_zero_query_suggestion(true);
   client_request.set_mixed_conversion(true);
-  client_request.set_combine_all_segments(true);
   client_request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
 
@@ -921,7 +917,6 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(commands::Request::GODAN_TO_HIRAGANA);
 
   composer::Table table;
@@ -990,7 +985,6 @@ TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(commands::Request::GODAN_TO_HIRAGANA);
 
   composer::Table table;

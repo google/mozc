@@ -3184,7 +3184,6 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   composer_->SetRequest(&request);
