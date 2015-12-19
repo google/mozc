@@ -30,10 +30,14 @@
 #ifndef MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_
 #define MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_
 
+#ifdef __native_client__
+
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
+#include "base/mmap_sync_interface.h"
 #include "base/mutex.h"
 #include "base/pepper_file_util.h"
 #include "base/port.h"
@@ -43,6 +47,34 @@ class Instance;
 }  // namespace pp
 
 namespace mozc {
+namespace internal {
+class MockFileNode {
+ public:
+  MockFileNode();
+  MockFileNode(MockFileNode *parent_node, const string &name,
+               bool is_directory);
+  ~MockFileNode();
+  bool FileExists(const string &filename) const;
+  bool DirectoryExists(const string &dirname) const;
+  bool IsDirectory() const;
+  bool GetFileContent(string *buffer) const;
+  bool SetFile(const string &filename, const string &content);
+  bool AddDirectory(const string &dirname);
+  bool Rename(const string &fiename, MockFileNode *parent_node);
+  bool Delete();
+  MockFileNode *GetNode(const string &path);
+  string DebugMessage() const;
+
+ private:
+  MockFileNode *parent_node_;  // nullptr if this is a root node.
+  string name_;
+  map<string, std::unique_ptr<MockFileNode> > child_nodes_;
+  bool is_directory_;
+  string content_;
+
+  DISALLOW_COPY_AND_ASSIGN(MockFileNode);
+};
+}  // namespace internal
 
 // Mock implementation of Papper file system.
 // Currently all method just return false.
@@ -54,22 +86,24 @@ class PepperFileSystemMock : public PepperFileSystemInterface {
   virtual bool FileExists(const string &filename);
   virtual bool DirectoryExists(const string &dirname);
   virtual bool ReadBinaryFile(const string &filename, string *buffer);
-  virtual bool WriteBinaryFile(const string &filename,
-                               const string &buffer);
-  virtual bool DeleteFile(const string &filename);
-  virtual bool RenameFile(const string &from, const string &to);
-  virtual bool RegisterMmap(Mmap *mmap);
-  virtual bool UnRegisterMmap(Mmap *mmap);
+  virtual bool WriteBinaryFile(const string &filename, const string &buffer);
+  virtual bool CreateDirectory(const string &dirname);
+  virtual bool Delete(const string &path);
+  virtual bool Rename(const string &from, const string &to);
+  virtual bool RegisterMmap(MmapSyncInterface *mmap);
+  virtual bool UnRegisterMmap(MmapSyncInterface *mmap);
   virtual bool SyncMmapToFile();
 
  private:
-  map<string, string> file_storage_;
-  set<Mmap*> mmap_set_;
+  set<MmapSyncInterface*> mmap_set_;
+  internal::MockFileNode root_directory_;
   Mutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(PepperFileSystemMock);
 };
 
 }  // namespace mozc
+
+#endif  // __native_client__
 
 #endif  // MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_

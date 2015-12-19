@@ -51,8 +51,9 @@ class PepperFileSystemInterface {
   virtual bool ReadBinaryFile(const string &filename, string *buffer) = 0;
   virtual bool WriteBinaryFile(const string &filename,
                                const string &buffer) = 0;
-  virtual bool DeleteFile(const string &filename) = 0;
-  virtual bool RenameFile(const string &from, const string &to) = 0;
+  virtual bool CreateDirectory(const string &dirname) = 0;
+  virtual bool Delete(const string &path) = 0;
+  virtual bool Rename(const string &from, const string &to) = 0;
   virtual bool RegisterMmap(MmapSyncInterface *mmap) = 0;
   virtual bool UnRegisterMmap(MmapSyncInterface *mmap) = 0;
   virtual bool SyncMmapToFile() = 0;
@@ -83,17 +84,17 @@ class PepperFileUtil {
   // If the file does not exist or an error occurs returns false.
   static bool ReadBinaryFile(const string &filename, string *buffer);
 
-  // Writes a file and returns ture.
-  // If an error occurs returns false.
+  // Writes a file.
   static bool WriteBinaryFile(const string &filename, const string &buffer);
 
-  // Deletes a file and returns ture.
-  // If an error occurs returns false.
-  static bool DeleteFile(const string &filename);
+  // Creates an empty directory.
+  static bool CreateDirectory(const string &dirname);
 
-  // Renames a file.
-  // This method first deletes the "to" file if it exists, and tries to rename.
-  static bool RenameFile(const string &from, const string &to);
+  // Deletes a file or an empty directory.
+  static bool Delete(const string &path);
+
+  // Renames a file or an directory.
+  static bool Rename(const string &from, const string &to);
 
   // Registers Mmap object.
   static bool RegisterMmap(MmapSyncInterface *mmap);

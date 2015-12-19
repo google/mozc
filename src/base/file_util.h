@@ -57,14 +57,11 @@ namespace mozc {
 
 class FileUtil {
  public:
-  // Some filesystem related methods are disabled on Native Client environment.
-#ifndef MOZC_USE_PEPPER_FILE_IO
   // Creates a directory. Does not create directories in the way to the path.
   static bool CreateDirectory(const string &path);
 
   // Removes an empty directory.
   static bool RemoveDirectory(const string &dirname);
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
   // Removes a file.
   static bool Unlink(const string &filename);
