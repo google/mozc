@@ -220,6 +220,27 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   EXPECT_EQ("1+1=2", segments.segment(0).candidate(index + 1).value);
 }
 
+// CalculatorRewriter should convert an expression starting with '='.
+TEST_F(CalculatorRewriterTest, ExpressionStartingWithEqualTest) {
+  // Pretend "=1+1" is calculated to "2".
+  calculator_mock().SetCalculatePair("=1+1", "2", true);
+
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
+      BuildCalculatorRewriterWithConverterMock());
+  const ConversionRequest request;
+
+  Segments segments;
+  SetSegment("=1+1", "=1+1", &segments);
+  calculator_rewriter->Rewrite(request, &segments);
+  int index = GetIndexOfCalculatedCandidate(segments);
+  EXPECT_NE(-1, index);
+  EXPECT_EQ("2", segments.segment(0).candidate(index).value);
+  EXPECT_TRUE(ContainsCalculatedResult(
+      segments.segment(0).candidate(index + 1)));
+  // CalculatorRewriter should append the result to the side '=' exists.
+  EXPECT_EQ("2=1+1", segments.segment(0).candidate(index + 1).value);
+}
+
 // Verify the description of calculator candidate.
 TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
   // "５・（８／４）ー７％３＋６＾−１＊９＝"
