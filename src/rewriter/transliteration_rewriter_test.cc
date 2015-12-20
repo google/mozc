@@ -94,12 +94,9 @@ class TransliterationRewriterTest : public testing::Test {
 #endif  // MOZC_USE_PACKED_DICTIONARY
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
   }
 
   virtual void TearDown() {
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
@@ -184,14 +181,14 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request());
+  composer::Composer composer(&table, &default_request(), &default_config());
   SetAkann(&composer);
 
   Segments segments;
   Segment *segment = segments.add_segment();
   CHECK(segment);
 
-  ConversionRequest request(&composer, &default_request());
+  ConversionRequest request(&composer, &default_request(), &default_config());
   // "あかん"
   segment->set_key("\xe3\x81\x82\xe3\x81\x8b\xe3\x82\x93");
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
@@ -245,7 +242,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request());
+  composer::Composer composer(&table, &default_request(), &default_config());
   InsertASCIISequence("ssh", &composer);
 
   Segments segments;
@@ -255,7 +252,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
 
   commands::Request input;
   input.set_mixed_conversion(true);
-  ConversionRequest request(&composer, &input);
+  ConversionRequest request(&composer, &input, &default_config());
   {
     // Although the segment key is "っ" as a partical string of the full
     // composition, the transliteration key should be "っsh" as the
@@ -288,7 +285,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request());
+  composer::Composer composer(&table, &default_request(), &default_config());
 
   // Set kamabokoinbou to composer.
   {
@@ -302,7 +299,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
   }
 
   Segments segments;
-  ConversionRequest request(&composer, &default_request());
+  ConversionRequest request(&composer, &default_request(), &default_config());
   {
     Segment *segment = segments.add_segment();
     CHECK(segment);
@@ -341,7 +338,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request());
+  composer::Composer composer(&table, &default_request(), &default_config());
 
   // Set kan to composer.
   {
@@ -356,7 +353,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   Segment *segment = segments.add_segment();
   CHECK(segment);
 
-  ConversionRequest request(&composer, &default_request());
+  ConversionRequest request(&composer, &default_request(), &default_config());
   // "かん"
   segment->set_key("\xe3\x81\x8b\xe3\x82\x93");
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
@@ -404,13 +401,13 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request());
+  composer::Composer composer(&table, &default_request(), &default_config());
   SetAkann(&composer);
 
   Segments segments;
   Segment *segment = segments.add_segment();
   CHECK(segment);
-  ConversionRequest request(&composer, &default_request());
+  ConversionRequest request(&composer, &default_request(), &default_config());
   // "あかん"
   segment->set_key("\xe3\x81\x82\xe3\x81\x8b\xe3\x82\x93");
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
@@ -563,14 +560,14 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request());
+  composer::Composer composer(&table, &default_request(), &default_config());
   InsertASCIISequence("a", &composer);
 
   Segments segments;
   Segment *segment = segments.add_segment();
   CHECK(segment);
 
-  ConversionRequest request(&composer, &default_request());
+  ConversionRequest request(&composer, &default_request(), &default_config());
 
   // "あ"
   segment->set_key("\xe3\x81\x82");
@@ -607,7 +604,7 @@ TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request());
+  composer::Composer composer(&table, &default_request(), &default_config());
 
   // "らゔ"
   composer.InsertCharacterPreedit("\xE3\x82\x89\xE3\x82\x94");
@@ -621,7 +618,7 @@ TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
     segment->add_candidate()->value = "LOVE";
   }
 
-  ConversionRequest request(&composer, &default_request());
+  ConversionRequest request(&composer, &default_request(), &default_config());
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
   EXPECT_EQ(1, segments.segments_size());
   const Segment &seg = segments.segment(0);
@@ -631,19 +628,19 @@ TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
 }
 
 TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   std::unique_ptr<TransliterationRewriter> rewriter(
       CreateTransliterationRewriter());
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
   }
 }
 
@@ -659,7 +656,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request);
+  composer::Composer composer(&table, &request, &default_config());
 
   {
     InsertASCIISequence("11#", &composer);
@@ -672,7 +669,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   Segment *segment = segments.add_segment();
   // "い、"
   segment->set_key("\xe3\x81\x84\xe3\x80\x81");
-  ConversionRequest rewrite_request(&composer, &request);
+  ConversionRequest rewrite_request(&composer, &request, &default_config());
   EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments));
 
   // Do not want to show raw keys for implementation
@@ -729,7 +726,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request);
+  composer::Composer composer(&table, &request, &default_config());
 
   {
     InsertASCIISequence("1212", &composer);
@@ -742,7 +739,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
   Segment *segment = segments.add_segment();
   // "あかあか"
   segment->set_key("\xe3\x81\x82\xe3\x81\x8b\xe3\x81\x82\xe3\x81\x8b");
-  ConversionRequest rewrite_request(&composer, &request);
+  ConversionRequest rewrite_request(&composer, &request, &default_config());
   EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments));
 
   // Because NoTransliteration attribute is specified in the mobile romaji
@@ -800,7 +797,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request);
+  composer::Composer composer(&table, &request, &default_config());
 
   {
     InsertASCIISequence("1a", &composer);
@@ -813,7 +810,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
   Segment *segment = segments.add_segment();
   // "あき"
   segment->set_key("\xe3\x81\x82\xe3\x81\x8d");
-  ConversionRequest rewrite_request(&composer, &request);
+  ConversionRequest rewrite_request(&composer, &request, &default_config());
   EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments));
 
   // Do not want to show raw keys for implementation
@@ -874,7 +871,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
   table.InitializeWithRequestAndConfig(client_request, default_config());
 
   {
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("shi", &composer);
     string query;
@@ -884,7 +881,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key(kShi);
-    ConversionRequest request(&composer, &client_request);
+    ConversionRequest request(&composer, &client_request, &default_config());
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
@@ -892,7 +889,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
   }
 
   {
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("si", &composer);
     string query;
@@ -902,7 +899,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key(kShi);
-    ConversionRequest request(&composer, &client_request);
+    ConversionRequest request(&composer, &client_request, &default_config());
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
@@ -921,7 +918,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request);
+  composer::Composer composer(&table, &request, &default_config());
   {
     InsertASCIISequence("<'de", &composer);
     string query;
@@ -933,7 +930,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   Segment *segment = segments.add_segment();
   // "あん゜で"
   segment->set_key("\xe3\x81\x82\xe3\x82\x93\xe3\x82\x9c\xe3\x81\xa7");
-  ConversionRequest rewrite_request(&composer, &request);
+  ConversionRequest rewrite_request(&composer, &request, &default_config());
   EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments));
 
   // Do not show raw keys.
@@ -1019,7 +1016,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
       continue;
     }
 
-    composer::Composer composer(&table, &request);
+    composer::Composer composer(&table, &request, &default_config());
 
     string ascii_input(1, static_cast<char>(i));
     InsertASCIISequence(ascii_input, &composer);
@@ -1032,7 +1029,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key(query);
-    ConversionRequest rewrite_request(&composer, &request);
+    ConversionRequest rewrite_request(&composer, &request, &default_config());
     EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments) ||
                 query.empty());
 
@@ -1067,7 +1064,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
   composer::Table table;
   table.InitializeWithRequestAndConfig(client_request, default_config());
   {
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("ssh", &composer);
     string query;
@@ -1078,7 +1075,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
     segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     segment->set_key(kXtsu);
-    ConversionRequest request(&composer, &client_request);
+    ConversionRequest request(&composer, &client_request, &default_config());
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
@@ -1099,7 +1096,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
   composer::Table table;
   table.InitializeWithRequestAndConfig(client_request, default_config());
   {
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("ssh", &composer);  // "っsh|"
     string query;
@@ -1112,7 +1109,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
     segments.set_request_type(Segments::PARTIAL_SUGGESTION);
     Segment *segment = segments.add_segment();
     segment->set_key(kXtsu);
-    ConversionRequest request(&composer, &client_request);
+    ConversionRequest request(&composer, &client_request, &default_config());
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);

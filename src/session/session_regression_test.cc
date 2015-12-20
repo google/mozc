@@ -456,10 +456,9 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
 
     InitSessionToPrecomposition(session_.get());
     config::Config config;
-    config::ConfigHandler::GetConfig(&config);
+    config::ConfigHandler::GetDefaultConfig(&config);
     config.set_use_auto_conversion(true);
-    config::ConfigHandler::SetConfig(config);
-    session_->ReloadConfig();
+    session_->SetConfig(&config);
 
     const char kInputKeys[] = "aiueo.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {
@@ -482,8 +481,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
     config::Config config;
     config::ConfigHandler::GetConfig(&config);
     config.set_use_auto_conversion(true);
-    config::ConfigHandler::SetConfig(config);
-    session_->ReloadConfig();
+    session_->SetConfig(&config);
 
     const char kInputKeys[] = "1234.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {

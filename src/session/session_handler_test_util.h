@@ -132,6 +132,7 @@ class TestSessionClient {
   bool UndoOrRewind(commands::Output *output);
   bool SwitchInputMode(commands::CompositionMode composition_mode);
   bool SetRequest(const commands::Request &request, commands::Output *output);
+  bool SetConfig(const config::Config &config, commands::Output *output);
   void SetCallbackText(const string &text);
 
  private:

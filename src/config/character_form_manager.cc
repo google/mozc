@@ -113,7 +113,7 @@ class CharacterFormManagerImpl {
   // store the setting of a character
   map<uint16, Config::CharacterForm> conversion_table_;
 
-  map<uint16, vector<uint16> > group_table_;
+  map<uint16, vector<uint16>> group_table_;
 
   // When this flag is true,
   // character form conversion requires that output has consistent forms.
@@ -341,7 +341,7 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
   // Do cast since CharacterForm may not be 32 bit
   const uint32 iform = static_cast<uint32>(form);
 
-  map<uint16, vector<uint16> >::iterator iter = group_table_.find(ucs2);
+  map<uint16, vector<uint16>>::iterator iter = group_table_.find(ucs2);
   if (iter == group_table_.end()) {
     storage_->Insert(key, reinterpret_cast<const char *>(&iform));
   } else {

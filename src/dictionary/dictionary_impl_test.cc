@@ -37,7 +37,6 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "request/conversion_request.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -48,6 +47,7 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -89,18 +89,12 @@ DictionaryData *CreateDictionaryData() {
 
 class DictionaryImplTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+  DictionaryImplTest() {
+    convreq_.set_config(&config_);
   }
 
-  virtual void TearDown() {
-    // just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+  virtual void SetUp() {
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   class CheckKeyValueExistenceCallback : public DictionaryInterface::Callback {
@@ -202,6 +196,7 @@ class DictionaryImplTest : public ::testing::Test {
   };
 
   ConversionRequest convreq_;
+  config::Config config_;
 };
 
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
@@ -263,9 +258,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
 
   // The spelling correction entry (kKey, kValue) should be found if spelling
   // correction flag is set in the config.
-  config::Config config;
-  config.set_use_spelling_correction(true);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_use_spelling_correction(true);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
@@ -273,8 +266,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   }
 
   // Without the flag, it should be suppressed.
-  config.set_use_spelling_correction(false);
-  config::ConfigHandler::SetConfig(config);;
+  config_.set_use_spelling_correction(false);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
@@ -298,9 +290,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
 
   // The zip code entry (kKey, kValue) should be found if the flag is set in the
   // config.
-  config::Config config;
-  config.set_use_zip_code_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_use_zip_code_conversion(true);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
@@ -308,8 +298,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   }
 
   // Without the flag, it should be suppressed.
-  config.set_use_zip_code_conversion(false);
-  config::ConfigHandler::SetConfig(config);;
+  config_.set_use_zip_code_conversion(false);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
@@ -335,9 +324,7 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
 
   // The T13N entry (kKey, kValue) should be found if the flag is set in the
   // config.
-  config::Config config;
-  config.set_use_t13n_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_use_t13n_conversion(true);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
@@ -345,8 +332,7 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   }
 
   // Without the flag, it should be suppressed.
-  config.set_use_t13n_conversion(false);
-  config::ConfigHandler::SetConfig(config);;
+  config_.set_use_t13n_conversion(false);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);

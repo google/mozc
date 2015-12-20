@@ -111,23 +111,17 @@ class ConverterRegressionTest : public ::testing::Test {
 #endif
 
     user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
-    config_backup_.CopyFrom(ConfigHandler::GetConfig());
 
     // set default user profile directory
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
   }
 
   virtual void TearDown() {
-    ConfigHandler::SetConfig(config_backup_);
     SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
   }
 
  private:
   string user_profile_directory_backup_;
-  Config config_backup_;
 };
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
@@ -161,7 +155,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
     // Create an empty composer.
     const Table table;
     const commands::Request request;
-    composer::Composer composer(&table, &request);
+    composer::Composer composer(&table, &request, nullptr);
     conv_request.set_composer(&composer);
     // Converter returns false, but not crash.
     EXPECT_FALSE(converter->StartConversionForRequest(conv_request,

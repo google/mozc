@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "session/session_converter.h"
-
 #include <memory>
 #include <string>
 
@@ -43,6 +41,7 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "session/session_converter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -106,14 +105,15 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   };
 
   const string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
-  const commands::Request default_request;
+  const commands::Request request;
+  config::Config config;
 
   std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface* converter = engine->GetConverter();
-  SessionConverter sconverter(converter, &default_request);
+  SessionConverter sconverter(converter, &request, &config);
   composer::Table table;
   table.LoadFromFile(kRomajiHiraganaTable.c_str());
-  composer::Composer composer(&table, &default_request);
+  composer::Composer composer(&table, &request, &config);
   commands::Output output;
   string input;
 

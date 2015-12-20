@@ -264,9 +264,9 @@ bool ExecCommand(const ConverterInterface &converter,
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
     Table table;
-    Composer composer(&table, &request);
+    Composer composer(&table, &request, &config);
     composer.InsertCharacterPreedit(fields[1]);
-    ConversionRequest conversion_request(&composer, &request);
+    ConversionRequest conversion_request(&composer, &request, &config);
     return converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
@@ -282,30 +282,30 @@ bool ExecCommand(const ConverterInterface &converter,
     return converter.StartReverseConversion(segments, fields[1]);
   } else if (func == "startprediction" || func == "predict" || func == "p") {
     Table table;
-    Composer composer(&table, &request);
+    Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
       composer.InsertCharacterPreedit(fields[1]);
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartPredictionForRequest(conversion_request, segments);
     } else {
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartPredictionForRequest(conversion_request, segments);
     }
   } else if (func == "startsuggestion" || func == "suggest") {
     Table table;
-    Composer composer(&table, &request);
+    Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
       composer.InsertCharacterPreedit(fields[1]);
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartSuggestionForRequest(conversion_request, segments);
     } else {
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartSuggestionForRequest(conversion_request, segments);
     }
   } else if (func == "finishconversion" || func == "finish") {
     Table table;
-    Composer composer(&table, &request);
-    ConversionRequest conversion_request(&composer, &request);
+    Composer composer(&table, &request, &config);
+    ConversionRequest conversion_request(&composer, &request, &config);
     return converter.FinishConversion(conversion_request, segments);
   } else if (func == "resetconversion" || func == "reset") {
     return converter.ResetConversion(segments);
@@ -324,8 +324,8 @@ bool ExecCommand(const ConverterInterface &converter,
       }
     }
     Table table;
-    Composer composer(&table, &request);
-    ConversionRequest conversion_request(&composer, &request);
+    Composer composer(&table, &request, &config);
+    ConversionRequest conversion_request(&composer, &request, &config);
     return converter.FinishConversion(conversion_request, segments);
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);

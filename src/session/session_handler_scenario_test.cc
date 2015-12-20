@@ -475,8 +475,7 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
       ASSERT_EQ(3, columns.size());
       ASSERT_TRUE(SetOrAddFieldValueFromString(columns[1], columns[2],
                                                config_.get()));
-      ASSERT_TRUE(ConfigHandler::SetConfig(*config_));
-      ASSERT_TRUE(client_->Reload());
+      ASSERT_TRUE(client_->SetConfig(*config_, last_output_.get()));
     } else if (command == "SET_SELECTION_TEXT") {
       ASSERT_EQ(2, columns.size());
       client_->SetCallbackText(columns[1]);

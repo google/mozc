@@ -91,15 +91,6 @@ namespace mozc {
 namespace dictionary {
 
 namespace {
-
-// This function will be removed soon in the following change, which
-// enables to inject config to ConversionRequest.
-void config_set_use_kana_modifier_insensitive_conversion(bool is_enable) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config.set_use_kana_modifier_insensitive_conversion(is_enable);
-  config::ConfigHandler::SetConfig(config);
-}
 }  // namespace
 
 class SystemDictionaryTest : public testing::Test {
@@ -113,6 +104,7 @@ class SystemDictionaryTest : public testing::Test {
     text_dict_->LoadWithLineLimit(dic_path, "", FLAGS_dictionary_test_size);
 
     convreq_.set_request(&request_);
+    convreq_.set_config(&config_);
   }
 
   virtual void SetUp() {
@@ -124,12 +116,7 @@ class SystemDictionaryTest : public testing::Test {
     FLAGS_min_key_length_to_use_small_cost_encoding = kint32max;
 
     request_.Clear();
-
-    // This config initialization will be removed once ConversionRequest can
-    // take config as an injected argument.
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   virtual void TearDown() {
@@ -152,6 +139,7 @@ class SystemDictionaryTest : public testing::Test {
   unique_ptr<TextDictionaryLoader> text_dict_;
 
   ConversionRequest convreq_;
+  config::Config config_;
   commands::Request request_;
   const string dic_fn_;
   int original_flags_min_key_length_to_use_small_cost_encoding_;
@@ -620,7 +608,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     LookupPrefixTestCallback callback;
     // Use kana modifier insensitive lookup
     request_.set_kana_modifier_insensitive_conversion(true);
-    config_set_use_kana_modifier_insensitive_conversion(true);
+    config_.set_use_kana_modifier_insensitive_conversion(true);
     system_dic->LookupPrefix(
         "\xE3\x81\xAF\xE3\x81\xB2",  // "はひ"
         convreq_,
@@ -703,14 +691,14 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
   // Without Kana modifier insensitive lookup flag, nothing is looked up.
   CollectTokenCallback callback;
   request_.set_kana_modifier_insensitive_conversion(false);
-  config_set_use_kana_modifier_insensitive_conversion(false);
+  config_.set_use_kana_modifier_insensitive_conversion(false);
   system_dic->LookupPredictive(kKey, convreq_, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 
   // With Kana modifier insensitive lookup flag, every token is looked up.
   callback.Clear();
   request_.set_kana_modifier_insensitive_conversion(true);
-  config_set_use_kana_modifier_insensitive_conversion(true);
+  config_.set_use_kana_modifier_insensitive_conversion(true);
   system_dic->LookupPredictive(kKey, convreq_, &callback);
   EXPECT_TOKENS_EQ_UNORDERED(tokens, callback.tokens());
 }
@@ -1088,7 +1076,7 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
       << "Failed to open dictionary source:" << dic_fn_;
 
   request_.set_kana_modifier_insensitive_conversion(true);
-  config_set_use_kana_modifier_insensitive_conversion(true);
+  config_.set_use_kana_modifier_insensitive_conversion(true);
 
   // Prefix search
   for (size_t i = 0; i < arraysize(tokens); ++i) {
@@ -1150,7 +1138,7 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   const string k = "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
       "\xe3\x81\x84\xe3\x82\x93\xe3\x81\x90";
   request_.set_kana_modifier_insensitive_conversion(true);
-  config_set_use_kana_modifier_insensitive_conversion(true);
+  config_.set_use_kana_modifier_insensitive_conversion(true);
   CheckTokenExistenceCallback callback(t0.get());
   system_dic->LookupPrefix(k, convreq_, &callback);
   EXPECT_TRUE(callback.found()) << "Not found: " << PrintToken(*t0);
@@ -1190,7 +1178,7 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
       << "Failed to open dictionary source:" << dic_fn_;
 
   request_.set_kana_modifier_insensitive_conversion(false);
-  config_set_use_kana_modifier_insensitive_conversion(true);
+  config_.set_use_kana_modifier_insensitive_conversion(false);
 
   // Prefix search
   {

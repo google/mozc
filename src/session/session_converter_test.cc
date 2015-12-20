@@ -68,6 +68,7 @@ namespace session {
 using mozc::commands::Context;
 using mozc::commands::Request;
 using mozc::commands::RequestForUnitTest;
+using mozc::config::Config;
 
 // "あいうえお"
 static const char kChars_Aiueo[] =
@@ -92,17 +93,16 @@ class SessionConverterTest : public ::testing::Test {
   virtual void SetUp() {
     convertermock_.reset(new ConverterMock());
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
+    config_.reset(new Config);
+    config_->set_use_cascading_window(true);
+    request_.reset(new Request);
+
     table_.reset(new composer::Table);
-    table_->InitializeWithRequestAndConfig(default_request_, config);
-    composer_.reset(new composer::Composer(table_.get(), &default_request_));
-    mobile_request_.reset(new Request);
-    RequestForUnitTest::FillMobileRequest(mobile_request_.get());
+    table_->InitializeWithRequestAndConfig(*request_, *config_);
+    composer_.reset(
+        new composer::Composer(table_.get(), request_.get(), config_.get()));
   }
 
   virtual void TearDown() {
@@ -110,11 +110,6 @@ class SessionConverterTest : public ::testing::Test {
     composer_.reset();
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-
-    // just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
   }
 
   static void GetSegments(const SessionConverter &converter, Segments *dest) {
@@ -134,11 +129,6 @@ class SessionConverterTest : public ::testing::Test {
   static const CandidateList &GetCandidateList(
       const SessionConverter &converter) {
     return *converter.candidate_list_;
-  }
-
-  static const OperationPreferences &GetOperationPreferences(
-      const SessionConverter &converter) {
-    return converter.operation_preferences_;
   }
 
   static SessionConverterInterface::State GetState(
@@ -314,15 +304,11 @@ class SessionConverterTest : public ::testing::Test {
   }
 
   static void ExpectSameSessionConverter(const SessionConverter &lhs,
-                                  const SessionConverter &rhs) {
+                                         const SessionConverter &rhs) {
     EXPECT_EQ(lhs.IsActive(), rhs.IsActive());
     EXPECT_EQ(IsCandidateListVisible(lhs), IsCandidateListVisible(rhs));
     EXPECT_EQ(GetSegmentIndex(lhs), GetSegmentIndex(rhs));
 
-    EXPECT_EQ(GetOperationPreferences(lhs).use_cascading_window,
-              GetOperationPreferences(rhs).use_cascading_window);
-    EXPECT_EQ(GetOperationPreferences(lhs).candidate_shortcuts,
-              GetOperationPreferences(rhs).candidate_shortcuts);
     EXPECT_EQ(lhs.conversion_preferences().use_history,
               rhs.conversion_preferences().use_history);
     EXPECT_EQ(lhs.conversion_preferences().max_history_size,
@@ -411,8 +397,8 @@ class SessionConverterTest : public ::testing::Test {
 
   std::unique_ptr<composer::Composer> composer_;
   std::unique_ptr<composer::Table> table_;
-  std::unique_ptr<Request> mobile_request_;
-  const Request default_request_;
+  std::unique_ptr<Request> request_;
+  std::unique_ptr<Config> config_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
@@ -420,7 +406,8 @@ class SessionConverterTest : public ::testing::Test {
   EXPECT_PRED_FORMAT2(ExpectSelectedCandidateIndices, converter, indices);
 
 TEST_F(SessionConverterTest, Convert) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
@@ -475,7 +462,8 @@ TEST_F(SessionConverterTest, Convert) {
 }
 
 TEST_F(SessionConverterTest, ConvertWithSpellingCorrection) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
@@ -490,7 +478,8 @@ TEST_F(SessionConverterTest, ConvertWithSpellingCorrection) {
 }
 
 TEST_F(SessionConverterTest, ConvertToTransliteration) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
 
@@ -559,7 +548,8 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
 TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
   Segments segments;
   InitConverterWithLike(&segments);
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   // Convert
   EXPECT_TRUE(converter.Convert(*composer_));
@@ -602,7 +592,8 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   {
     Segment *segment;
@@ -615,10 +606,8 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     candidate->value = "DVD";
   }
   {  // Set OperationPreferences
-    OperationPreferences preferences;
-    preferences.use_cascading_window = false;
-    preferences.candidate_shortcuts = "";
-    converter.SetOperationPreferences(preferences);
+    converter.set_use_cascading_window(false);
+    converter.set_selection_shortcut(config::Config::NO_SHORTCUT);
   }
 
   // "ｄｖｄ"
@@ -684,7 +673,8 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
 }
 
 TEST_F(SessionConverterTest, MultiSegmentsConversion) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetKamaboko(&segments);
   const string kKamabokono =
@@ -750,7 +740,6 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(0, candidates.focused_index());
     EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(0, candidates.position());
     EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
@@ -1011,7 +1000,8 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
 }
 
 TEST_F(SessionConverterTest, Transliterations) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   // "く"
   composer_->InsertCharacterKeyAndPreedit("h", "\xE3\x81\x8F");
   // "ま"
@@ -1066,7 +1056,8 @@ TEST_F(SessionConverterTest, Transliterations) {
 }
 
 TEST_F(SessionConverterTest, T13NWithResegmentation) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   {
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -1165,7 +1156,8 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
 }
 
 TEST_F(SessionConverterTest, ConvertToHalfWidth) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   vector<int> expected_indices;
   // "あ"
   composer_->InsertCharacterKeyAndPreedit("a", "\xE3\x81\x82");
@@ -1256,7 +1248,8 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
 TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
   // http://b/2517514
   // ConvertToHalfWidth converts punctuations differently w/ or w/o kana.
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   // "ｑ"
   composer_->InsertCharacterKeyAndPreedit("q", "\xef\xbd\x91");
   // "、"
@@ -1297,7 +1290,8 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
 
 TEST_F(SessionConverterTest, SwitchKanaType) {
   {  // From composition mode.
-    SessionConverter converter(convertermock_.get(), &default_request_);
+    SessionConverter converter(
+        convertermock_.get(), request_.get(), config_.get());
     // "あ"
     composer_->InsertCharacterKeyAndPreedit("a", "\xE3\x81\x82");
     // "ｂ"
@@ -1370,7 +1364,8 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
   }
 
   {  // From conversion mode
-    SessionConverter converter(convertermock_.get(), &default_request_);
+    SessionConverter converter(
+        convertermock_.get(), request_.get(), config_.get());
     composer_->EditErase();
     // "か"
     composer_->InsertCharacterKeyAndPreedit("ka", "\xE3\x81\x8B");
@@ -1480,7 +1475,8 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
 }
 
 TEST_F(SessionConverterTest, CommitFirstSegment) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetKamaboko(&segments);
   FillT13Ns(&segments, composer_.get());
@@ -1563,7 +1559,8 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
 }
 
 TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   // "いべりこ"
   const string kIberiko = "\xE3\x81\x84\xE3\x81\xB9\xE3\x82\x8A\xE3\x81\x93";
   // "ねこを"
@@ -1627,7 +1624,8 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
 }
 
 TEST_F(SessionConverterTest, CommitHeadToFocusedSegments_atLastSegment) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetKamaboko(&segments);
   convertermock_->SetStartConversionForRequest(&segments, true);
@@ -1661,7 +1659,8 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegments_atLastSegment) {
 }
 
 TEST_F(SessionConverterTest, CommitPreedit) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   vector<int> expected_indices;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   composer_->InsertCharacterPreedit(kChars_Aiueo);
@@ -1689,7 +1688,8 @@ TEST_F(SessionConverterTest, CommitPreedit) {
 }
 
 TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     segments.set_request_type(Segments::SUGGESTION);
@@ -1771,7 +1771,8 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
 }
 
 TEST_F(SessionConverterTest, CommitSuggestionById) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     segments.set_request_type(Segments::SUGGESTION);
@@ -1848,7 +1849,9 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
 }
 
 TEST_F(SessionConverterTest, PartialSuggestion) {
-  SessionConverter converter(convertermock_.get(), mobile_request_.get());
+  RequestForUnitTest::FillMobileRequest(request_.get());
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments1, segments2;
   Segments suggestion_segments;
   // "ここで"
@@ -1982,7 +1985,8 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
 }
 
 TEST_F(SessionConverterTest, SuggestAndPredict) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     segments.set_request_type(Segments::SUGGESTION);
@@ -2208,7 +2212,8 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
 }
 
 TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     segments.set_request_type(Segments::SUGGESTION);
@@ -2241,7 +2246,8 @@ TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
 }
 
 TEST_F(SessionConverterTest, SuppressSuggestion) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     segments.set_request_type(Segments::SUGGESTION);
@@ -2270,7 +2276,9 @@ TEST_F(SessionConverterTest, SuppressSuggestion) {
 }
 
 TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
-  SessionConverter converter(convertermock_.get(), mobile_request_.get());
+  RequestForUnitTest::FillMobileRequest(request_.get());
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   const char *kSuggestionValues[] = {
       "S0",
@@ -2368,7 +2376,9 @@ TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
 }
 
 TEST_F(SessionConverterTest, ExpandSuggestion) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  RequestForUnitTest::FillMobileRequest(request_.get());
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   const char *kSuggestionValues[] = {
       "S0",
@@ -2462,12 +2472,10 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
 }
 
 TEST_F(SessionConverterTest, AppendCandidateList) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   SetState(SessionConverterInterface::CONVERSION, &converter);
-  OperationPreferences operation_preferences =
-      GetOperationPreferences(converter);
-  operation_preferences.use_cascading_window = true;
-  converter.SetOperationPreferences(operation_preferences);
+  converter.set_use_cascading_window(true);
   Segments segments;
 
   {
@@ -2533,7 +2541,8 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
 }
 
 TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   SetState(SessionConverterInterface::SUGGESTION, &converter);
   Segments segments;
 
@@ -2571,7 +2580,8 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
 }
 
 TEST_F(SessionConverterTest, ReloadConfig) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
@@ -2582,11 +2592,8 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   converter.SetCandidateListVisible(true);
 
   {  // Set OperationPreferences
-    const char kShortcut123456789[] = "123456789";
-    OperationPreferences preferences;
-    preferences.use_cascading_window = false;
-    preferences.candidate_shortcuts = kShortcut123456789;
-    converter.SetOperationPreferences(preferences);
+    converter.set_use_cascading_window(false);
+    converter.set_selection_shortcut(config::Config::SHORTCUT_123456789);
     EXPECT_TRUE(IsCandidateListVisible(converter));
   }
   {  // Check the config update
@@ -2602,10 +2609,8 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   }
 
   {  // Set OperationPreferences #2
-    OperationPreferences preferences;
-    preferences.use_cascading_window = false;
-    preferences.candidate_shortcuts = "";
-    converter.SetOperationPreferences(preferences);
+    converter.set_use_cascading_window(false);
+    converter.set_selection_shortcut(config::Config::NO_SHORTCUT);
   }
   {  // Check the config update
     commands::Output output;
@@ -2621,7 +2626,8 @@ TEST_F(SessionConverterTest, ReloadConfig) {
 }
 
 TEST_F(SessionConverterTest, OutputAllCandidateWords) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetKamaboko(&segments);
   // "かまぼこの"
@@ -2722,7 +2728,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // PREDICTION
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     convertermock_->SetStartPredictionForRequest(&segments, true);
     converter.Predict(*composer_);
     converter.CandidateNext(*composer_);
@@ -2736,7 +2742,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // SUGGESTION
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     convertermock_->SetStartSuggestionForRequest(&segments, true);
     converter.Suggest(*composer_);
     string preedit;
@@ -2760,7 +2766,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // CONVERSION
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     convertermock_->SetStartConversionForRequest(&segments, true);
     converter.Convert(*composer_);
     converter.CandidateNext(*composer_);
@@ -2774,7 +2780,8 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
 }
 
 TEST_F(SessionConverterTest, GetAndSetSegments) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
 
   // Set history segments.
@@ -2829,7 +2836,8 @@ TEST_F(SessionConverterTest, GetAndSetSegments) {
 }
 
 TEST_F(SessionConverterTest, Clone) {
-  SessionConverter src(convertermock_.get(), &default_request_);
+  SessionConverter src(
+      convertermock_.get(), request_.get(), config_.get());
 
   // "かまぼこの"
   const string kKamabokono =
@@ -2839,7 +2847,6 @@ TEST_F(SessionConverterTest, Clone) {
       "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86";
   // "陰謀"
   const string kInbouKanji = "\xE9\x99\xB0\xE8\xAC\x80";
-  const char *kShortcut = "987654321";
 
   {  // create source converter
     Segments segments;
@@ -2847,10 +2854,8 @@ TEST_F(SessionConverterTest, Clone) {
 
     convertermock_->SetStartConversionForRequest(&segments, true);
 
-    OperationPreferences operation_preferences;
-    operation_preferences.use_cascading_window = false;
-    operation_preferences.candidate_shortcuts = kShortcut;
-    src.SetOperationPreferences(operation_preferences);
+    src.set_use_cascading_window(false);
+    src.set_selection_shortcut(config::Config::SHORTCUT_123456789);
   }
 
   {  // validation
@@ -2876,7 +2881,8 @@ TEST_F(SessionConverterTest, Clone) {
 
 // Suggest() in the suggestion state was not accepted.  (http://b/1948334)
 TEST_F(SessionConverterTest, Issue1948334) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for the first suggestion
     segments.set_request_type(Segments::SUGGESTION);
@@ -2949,7 +2955,8 @@ TEST_F(SessionConverterTest, Issue1960362) {
   composer_->InsertCharacter("u");
   composer_->InsertCharacter("t");
 
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   Segments segments;
   {
@@ -3001,7 +3008,8 @@ TEST_F(SessionConverterTest, Issue1960362) {
 
 TEST_F(SessionConverterTest, Issue1978201) {
   // This is a unittest against http://b/1978201
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   composer_->InsertCharacterPreedit(kChars_Mo);
 
@@ -3057,7 +3065,8 @@ TEST_F(SessionConverterTest, Issue1978201) {
 }
 
 TEST_F(SessionConverterTest, Issue1981020) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   // hiragana "ヴヴヴヴ"
   composer_->InsertCharacterPreedit(
       "\xE3\x82\x94\xE3\x82\x94\xE3\x82\x94\xE3\x82\x94");
@@ -3075,7 +3084,8 @@ TEST_F(SessionConverterTest, Issue1981020) {
 TEST_F(SessionConverterTest, Issue2029557) {
   // Unittest against http://b/2029557
   // a<tab><F6> raised a DCHECK error.
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   // Composition (as "a")
   composer_->InsertCharacterPreedit("a");
 
@@ -3103,7 +3113,8 @@ TEST_F(SessionConverterTest, Issue2029557) {
 TEST_F(SessionConverterTest, Issue2031986) {
   // Unittest against http://b/2031986
   // aaaaa<Shift+Enter> raised a CRT error.
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   {  // Initialize a suggest result triggered by "aaaa".
     Segments segments;
@@ -3139,7 +3150,8 @@ TEST_F(SessionConverterTest, Issue2040116) {
   // It happens when the first Predict returns results but the next
   // MaybeExpandPrediction does not return any results.  That's a
   // trick by GoogleSuggest.
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   composer_->InsertCharacterPreedit("G");
 
   {
@@ -3211,7 +3223,8 @@ TEST_F(SessionConverterTest, Issue2040116) {
 }
 
 TEST_F(SessionConverterTest, GetReadingText) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   // "阿伊宇江於"
   const char *kKanjiAiueo =
@@ -3242,7 +3255,8 @@ TEST_F(SessionConverterTest, GetReadingText) {
 }
 
 TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   // Set up a mock suggestion result.
   Segments segments;
@@ -3353,7 +3367,8 @@ class ConverterMockForReconstructHistory : public ConverterMock {
 TEST(SessionConverterResetTest, Reset) {
   ConverterMockForReset convertermock;
   Request request;
-  SessionConverter converter(&convertermock, &request);
+  Config config;
+  SessionConverter converter(&convertermock, &request, &config);
   EXPECT_FALSE(convertermock.reset_conversion_called());
   converter.Reset();
   EXPECT_TRUE(convertermock.reset_conversion_called());
@@ -3362,14 +3377,16 @@ TEST(SessionConverterResetTest, Reset) {
 TEST(SessionConverterRevertTest, Revert) {
   ConverterMockForRevert convertermock;
   Request request;
-  SessionConverter converter(&convertermock, &request);
+  Config config;
+  SessionConverter converter(&convertermock, &request, &config);
   EXPECT_FALSE(convertermock.revert_conversion_called());
   converter.Revert();
   EXPECT_TRUE(convertermock.revert_conversion_called());
 }
 
 TEST_F(SessionConverterTest, CommitHead) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   // "あいうえお"
   composer_->InsertCharacterPreedit(kChars_Aiueo);
 
@@ -3413,7 +3430,8 @@ TEST_F(SessionConverterTest, CommitHead) {
 }
 
 TEST_F(SessionConverterTest, CommandCandidate) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
@@ -3441,7 +3459,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     // The first candidate is a command candidate, so
     // CommitFirstSegment resets all conversion.
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     Segments segments;
     SetKamaboko(&segments);
     SetCommandCandidate(&segments, 0, 0,
@@ -3465,7 +3483,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     // The second candidate is a command candidate, so
     // CommitFirstSegment commits all conversion.
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     Segments segments;
     SetKamaboko(&segments);
     SetCommandCandidate(&segments, 1, 0,
@@ -3488,7 +3506,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
   {
     // The selected suggestion with Id is a command candidate.
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
@@ -3505,7 +3523,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
   {
     // The selected suggestion with Index is a command candidate.
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 1,
@@ -3523,13 +3541,9 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
 TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
   // Enable Incognito mode
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_incognito_mode(false);
-    config::ConfigHandler::SetConfig(config);
-
+    config_->set_incognito_mode(false);
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
@@ -3544,20 +3558,18 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
 
-    config::ConfigHandler::GetConfig(&config);
-    EXPECT_TRUE(config.incognito_mode())
-        << "Incognito mode should be enabled.";
+    // The config in the |output| has the updated value, but |config_| keeps
+    // the previous value.
+    EXPECT_TRUE(output.has_config());
+    EXPECT_TRUE(output.config().incognito_mode());
+    EXPECT_FALSE(config_->incognito_mode());
   }
 
   // Disable Incognito mode
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_incognito_mode(true);
-    config::ConfigHandler::SetConfig(config);
-
+    config_->set_incognito_mode(false);
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
@@ -3572,20 +3584,19 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
 
-    config::ConfigHandler::GetConfig(&config);
-    EXPECT_FALSE(config.incognito_mode())
-        << "Incognito mode should be disabled.";
+    // The config in the |output| has the updated value, but |config_| keeps
+    // the previous value.
+    EXPECT_TRUE(output.has_config());
+    EXPECT_FALSE(output.config().incognito_mode());
+    EXPECT_FALSE(config_->incognito_mode());
   }
 
   // Enable Presentation mode
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_presentation_mode(false);
-    config::ConfigHandler::SetConfig(config);
-
+    config_->set_presentation_mode(false);
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
+
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
@@ -3600,20 +3611,19 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
 
-    config::ConfigHandler::GetConfig(&config);
-    EXPECT_TRUE(config.presentation_mode())
-        << "Presentation mode should be enabled.";
+    // The config in the |output| has the updated value, but |config_| keeps
+    // the previous value.
+    EXPECT_TRUE(output.has_config());
+    EXPECT_TRUE(output.config().presentation_mode());
+    EXPECT_FALSE(config_->presentation_mode());
   }
 
   // Disable Presentation mode
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_incognito_mode(true);
-    config::ConfigHandler::SetConfig(config);
-
+    config_->set_incognito_mode(true);
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
+
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
@@ -3628,20 +3638,19 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
 
-    config::ConfigHandler::GetConfig(&config);
-    EXPECT_FALSE(config.presentation_mode())
-        << "Presentation mode should be disabled.";
+    // The config in the |output| has the updated value, but |config_| keeps
+    // the previous value.
+    EXPECT_TRUE(output.has_config());
+    EXPECT_FALSE(output.config().presentation_mode());
+    EXPECT_FALSE(config_->presentation_mode());
   }
 }
 
 TEST_F(SessionConverterTest, PropageteConfigToRenderer) {
   // Disable information_list_config()
   {
-    config::Config config;
-    config::ConfigHandler::SetConfig(config);
-
     SessionConverter converter(
-        convertermock_.get(), &default_request_);
+        convertermock_.get(), request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     FillT13Ns(&segments, composer_.get());
@@ -3665,7 +3674,8 @@ TEST_F(SessionConverterTest, PropageteConfigToRenderer) {
 }
 
 TEST_F(SessionConverterTest, ConversionFail) {
-  SessionConverter converter(convertermock_.get(), &default_request_);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
 
   // Conversion fails.
   {
@@ -3730,7 +3740,7 @@ TEST_F(SessionConverterTest, ResetByClientRevision) {
   const int32 kRevision = 0x1234;
 
   ConverterMockForReset convertermock;
-  SessionConverter converter(&convertermock, &default_request_);
+  SessionConverter converter(&convertermock, request_.get(), config_.get());
   Context context;
 
   // Initialize the session converter with given context age.
@@ -3749,7 +3759,7 @@ TEST_F(SessionConverterTest, ResetByClientRevision) {
 
 TEST_F(SessionConverterTest, ResetByPrecedingText) {
   ConverterMockForReset convertermock;
-  SessionConverter converter(&convertermock, &default_request_);
+  SessionConverter converter(&convertermock, request_.get(), config_.get());
 
   // no preceding_text -> Reset should not be called.
   {
@@ -3868,7 +3878,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
 
   // With revision
   {
-    SessionConverter converter(&convertermock, &default_request_);
+    SessionConverter converter(&convertermock, request_.get(), config_.get());
 
     Context context;
     context.set_revision(0);
@@ -3914,7 +3924,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
 
   // Without revision
   {
-    SessionConverter converter(&convertermock, &default_request_);
+    SessionConverter converter(&convertermock, request_.get(), config_.get());
 
     Context context;
     context.set_preceding_text(kKey);
@@ -3958,9 +3968,9 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
 // of CandidateList.page_size is in session/internal/candidate_list_test.cc
 TEST_F(SessionConverterTest, CandidatePageSize) {
   const size_t kPageSize = 3;
-  Request request;
-  request.set_candidate_page_size(kPageSize);
-  SessionConverter converter(convertermock_.get(), &request);
+  request_->set_candidate_page_size(kPageSize);
+  SessionConverter converter(
+      convertermock_.get(), request_.get(), config_.get());
   EXPECT_EQ(kPageSize, GetCandidateList(converter).page_size());
 }
 

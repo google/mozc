@@ -31,11 +31,12 @@
 
 #include <string>
 #include <vector>
+
 #include "base/singleton.h"
-#include "config/config_handler.h"
+#include "composer/internal/typing_model.h"
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
-#include "composer/internal/typing_model.h"
+#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -297,20 +298,13 @@ class TypingCorrectorTest : public ::testing::Test {
   }
 
   virtual void SetUp() {
-    ConfigHandler::GetConfig(&config_backup_);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    config.set_use_typing_correction(true);
-    ConfigHandler::SetConfig(config);
+    ConfigHandler::GetDefaultConfig(&config_);
+    config_.set_use_typing_correction(true);
     commands::Request request;
     request.set_special_romanji_table(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
-    qwerty_table_.InitializeWithRequestAndConfig(request, config);
+    qwerty_table_.InitializeWithRequestAndConfig(request, config_);
     qwerty_table_.typing_model_ = &qwerty_typing_model_;
-  }
-
-  virtual void TearDown() {
-    ConfigHandler::SetConfig(config_backup_);
   }
 
   void InsertOneByOne(const char *keys, TypingCorrector *corrector) {
@@ -341,6 +335,7 @@ class TypingCorrectorTest : public ::testing::Test {
                                   const TypingCorrector &r) {
     EXPECT_EQ(l.available_, r.available_);
     EXPECT_EQ(l.table_, r.table_);
+    EXPECT_EQ(l.config_, r.config_);
     EXPECT_EQ(l.max_correction_query_candidates_,
               r.max_correction_query_candidates_);
     EXPECT_EQ(l.max_correction_query_results_,
@@ -351,7 +346,7 @@ class TypingCorrectorTest : public ::testing::Test {
     }
   }
 
-  Config config_backup_;
+  Config config_;
   Table qwerty_table_;
   TypingModel qwerty_typing_model_;
 };
@@ -362,6 +357,7 @@ TEST_F(TypingCorrectorTest, TypingCorrection) {
   TypingCorrector corrector(&qwerty_table_,
                             kCorrectedQueryCandidates,
                             kCorrectedQueryResults);
+  corrector.SetConfig(&config_);
   ASSERT_TRUE(corrector.IsAvailable());
 
   struct {
@@ -455,6 +451,7 @@ TEST_F(TypingCorrectorTest, Invalidate) {
   const CostTableForTest *table = Singleton<CostTableForTest>::get();
 
   TypingCorrector corrector(&qwerty_table_, 30, 30);
+  corrector.SetConfig(&config_);
 
   EXPECT_TRUE(corrector.IsAvailable());
   table->InsertCharacter(&corrector, "p");
@@ -475,6 +472,7 @@ TEST_F(TypingCorrectorTest, Invalidate) {
 
 TEST_F(TypingCorrectorTest, CopyFrom) {
   TypingCorrector corrector(&qwerty_table_, 30, 30);
+  corrector.SetConfig(&config_);
   InsertOneByOne("phayou", &corrector);
 
   TypingCorrector corrector2(NULL, 1000, 1000);

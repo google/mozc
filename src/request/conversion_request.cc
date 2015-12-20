@@ -38,15 +38,18 @@ namespace mozc {
 ConversionRequest::ConversionRequest()
     : composer_(NULL),
       request_(&commands::Request::default_instance()),
+      config_(&config::ConfigHandler::DefaultConfig()),
       use_actual_converter_for_realtime_conversion_(false),
       composer_key_selection_(CONVERSION_KEY),
       skip_slow_rewriters_(false),
       create_partial_candidates_(false) {}
 
 ConversionRequest::ConversionRequest(const composer::Composer *c,
-                                     const commands::Request *request)
+                                     const commands::Request *request,
+                                     const config::Config *config)
     : composer_(c),
       request_(request),
+      config_(config),
       use_actual_converter_for_realtime_conversion_(false),
       composer_key_selection_(CONVERSION_KEY),
       skip_slow_rewriters_(false),
@@ -77,7 +80,12 @@ void ConversionRequest::set_request(const commands::Request *request) {
 }
 
 const config::Config &ConversionRequest::config() const {
-  return config::ConfigHandler::GetConfig();
+  DCHECK(config_);
+  return *config_;
+}
+
+void ConversionRequest::set_config(const config::Config *config) {
+  config_ = config;
 }
 
 bool ConversionRequest::use_actual_converter_for_realtime_conversion() const {
@@ -117,12 +125,13 @@ void ConversionRequest::set_create_partial_candidates(bool value) {
 
 bool ConversionRequest::IsKanaModifierInsensitiveConversion() const {
   return request_->kana_modifier_insensitive_conversion() &&
-         config().use_kana_modifier_insensitive_conversion();
+         config_->use_kana_modifier_insensitive_conversion();
 }
 
 void ConversionRequest::CopyFrom(const ConversionRequest &request) {
   composer_ = request.composer_;
   request_ = request.request_;
+  config_ = request.config_;
   use_actual_converter_for_realtime_conversion_ =
       request.use_actual_converter_for_realtime_conversion_;
   composer_key_selection_ = request.composer_key_selection_;

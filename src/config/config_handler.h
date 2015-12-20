@@ -108,11 +108,6 @@ class ConfigHandler {
   DISALLOW_IMPLICIT_CONSTRUCTORS(ConfigHandler);
 };
 
-// macro for config field
-// if (GET_CONFIG(incognite_mode) == false) {
-//  }
-#define GET_CONFIG(field) \
-  config::ConfigHandler::GetConfig().field()
 }  // namespace config
 }  // namespace mozc
 

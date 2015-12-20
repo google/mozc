@@ -38,9 +38,9 @@
 #include "base/port.h"
 #include "composer/composer.h"
 #include "session/session_interface.h"
-#include "transliteration/transliteration.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace commands {
@@ -237,7 +237,7 @@ class Session : public SessionInterface {
 
   bool ReportBug(mozc::commands::Command *command);
 
-  virtual void ReloadConfig();
+  virtual void SetConfig(mozc::config::Config *config);
 
   virtual void SetRequest(const mozc::commands::Request *request);
 
@@ -265,14 +265,6 @@ class Session : public SessionInterface {
   mozc::composer::Composer *get_internal_composer_only_for_unittest();
 
   const ImeContext &context() const;
-
-  // Update config of |context| referring |config|.
-  static void UpdateConfig(const mozc::config::Config &config,
-                           ImeContext *context);
-
-  // Set OperationPreferences on |context| by using (tentative) |config|.
-  static void UpdateOperationPreferences(const mozc::config::Config &config,
-                                         ImeContext *context);
 
  private:
   FRIEND_TEST(SessionTest, OutputInitialComposition);

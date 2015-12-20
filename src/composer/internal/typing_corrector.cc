@@ -48,7 +48,7 @@
 
 DEFINE_bool(enable_typing_correction, false,
             "Force enabling typing correction feature "
-            "regardless of GET_CONFIG(use_typing_correction).");
+            "regardless of the specified config.");
 
 namespace mozc {
 namespace composer {
@@ -91,7 +91,8 @@ TypingCorrector::TypingCorrector(const Table *table,
                                  size_t max_correction_query_results)
     : table_(table),
       max_correction_query_candidates_(max_correction_query_candidates),
-      max_correction_query_results_(max_correction_query_results) {
+      max_correction_query_results_(max_correction_query_results),
+      config_(&config::ConfigHandler::DefaultConfig()) {
   Reset();
 }
 
@@ -147,7 +148,7 @@ void TypingCorrector::Invalidate() {
 }
 
 bool TypingCorrector::IsAvailable() const {
-  return (GET_CONFIG(use_typing_correction) ||
+  return (config_->use_typing_correction() ||
           FLAGS_enable_typing_correction) &&
          available_ && table_ && table_->typing_model();
 }
@@ -155,6 +156,7 @@ bool TypingCorrector::IsAvailable() const {
 void TypingCorrector::CopyFrom(const TypingCorrector &src) {
   available_ = src.available_;
   table_ = src.table_;
+  config_ = src.config_;
   max_correction_query_candidates_ = src.max_correction_query_candidates_;
   max_correction_query_results_ = src.max_correction_query_results_;
   top_n_ = src.top_n_;
@@ -170,6 +172,9 @@ void TypingCorrector::SetTable(const Table *table) {
   }
 }
 
+void TypingCorrector::SetConfig(const config::Config *config) {
+  config_ = config;
+}
 
 void TypingCorrector::GetQueriesForPrediction(
     vector<TypeCorrectedQuery> *queries) const {

@@ -79,18 +79,10 @@ class CollocationRewriterTest : public ::testing::Test {
 
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetConfig(&config_backup_);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
 
     const mozc::testing::MockDataManager data_manager;
     pos_matcher_ = data_manager.GetPOSMatcher();
     collocation_rewriter_.reset(new CollocationRewriter(&data_manager));
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(config_backup_);
   }
 
   // Makes a segment from SegmentData.
@@ -136,9 +128,7 @@ class CollocationRewriterTest : public ::testing::Test {
   const POSMatcher *pos_matcher_;
 
  private:
-  config::Config config_backup_;
   std::unique_ptr<const CollocationRewriter> collocation_rewriter_;
-
   DISALLOW_COPY_AND_ASSIGN(CollocationRewriterTest);
 };
 

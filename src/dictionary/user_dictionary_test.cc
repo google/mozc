@@ -190,28 +190,18 @@ string GenRandomAlphabet(int size) {
   return result;
 }
 
-// This function will be removed soon in the following change, which
-// enables to inject config to ConversionRequest.
-void config_set_incognito_mode(bool is_enabled) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config.set_incognito_mode(is_enabled);
-  config::ConfigHandler::SetConfig(config);
-}
-
 class UserDictionaryTest : public ::testing::Test {
  protected:
+  UserDictionaryTest() {
+    convreq_.set_config(&config_);
+  }
+
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     suppression_dictionary_.reset(new SuppressionDictionary);
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-
-    // This config initialization will be removed once ConversionRequest can
-    // take config as an injected argument.
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   virtual void TearDown() {
@@ -387,6 +377,7 @@ class UserDictionaryTest : public ::testing::Test {
 
   unique_ptr<SuppressionDictionary> suppression_dictionary_;
   ConversionRequest convreq_;
+  config::Config config_;
 
  private:
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
@@ -583,7 +574,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
 }
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
-  config_set_incognito_mode(true);
+  config_.set_incognito_mode(true);
   unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
@@ -597,7 +588,7 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
   TestLookupPrefixHelper(NULL, 0, "start", 4, *dic);
   TestLookupPredictiveHelper(NULL, 0, "s", *dic);
 
-  config_set_incognito_mode(false);
+  config_.set_incognito_mode(false);
   {
     EntryCollector collector;
     dic->LookupPrefix("start", convreq_, &collector);

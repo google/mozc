@@ -67,16 +67,16 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
 
 TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
   RemoveRedundantCandidateRewriter rewriter;
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   {
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(request));
+    EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
 }
 }  // namespace mozc

@@ -36,6 +36,7 @@
 #include <map>
 #include <set>
 #include <string>
+
 #include "composer/key_event_util.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap_interface.h"
@@ -68,8 +69,10 @@ class KeyMapManager {
   KeyMapManager();
   ~KeyMapManager();
 
+  bool Initialize(config::Config::SessionKeymap keymap);
+
   // Reloads the key map by using given configuration.
-  bool ReloadWithKeymap(const config::Config::SessionKeymap new_keymap);
+  bool ReloadConfig(const config::Config &config);
 
   bool LoadFile(const char *filename);
   bool LoadStream(istream *is);
@@ -127,6 +130,7 @@ class KeyMapManager {
  private:
   friend class KeyMapTest;
 
+  void Reset();
   void InitCommandData();
 
   bool ParseCommandDirect(const string &command_string,

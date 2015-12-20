@@ -242,7 +242,8 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   ScopedSetConfigFileName scoped_config_file_name(
       "memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
-  EXPECT_EQ(default_incognito_mode, GET_CONFIG(incognito_mode));
+  EXPECT_EQ(default_incognito_mode,
+            config::ConfigHandler::GetConfig().incognito_mode());
 }
 
 #if !defined(OS_ANDROID) && !defined(__native_client__)

@@ -35,7 +35,6 @@
 
 #include "base/flags.h"
 #include "base/logging.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -153,13 +152,14 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
          segments->request_type() == Segments::PARTIAL_PREDICTION ||
          segments->request_type() == Segments::PARTIAL_SUGGESTION);
 
-  if (GET_CONFIG(presentation_mode)) {
+  if (request.config().presentation_mode()) {
     return false;
   }
 
   int size = kPredictionSize;
   if (segments->request_type() == Segments::SUGGESTION) {
-    size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
+    size = min(9,
+               max(1, static_cast<int>(request.config().suggestions_size())));
   }
 
   bool result = false;
@@ -209,7 +209,7 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
          segments->request_type() == Segments::PARTIAL_PREDICTION ||
          segments->request_type() == Segments::PARTIAL_SUGGESTION);
 
-  if (GET_CONFIG(presentation_mode)) {
+  if (request.config().presentation_mode()) {
     return false;
   }
 

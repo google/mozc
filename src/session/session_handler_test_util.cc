@@ -253,6 +253,14 @@ bool TestSessionClient::SetRequest(const commands::Request &request,
   return EvalCommand(&input, output);
 }
 
+bool TestSessionClient::SetConfig(const config::Config &config,
+                                  commands::Output *output) {
+  commands::Input input;
+  input.set_type(commands::Input::SET_CONFIG);
+  *input.mutable_config() = config;
+  return EvalCommand(&input, output);
+}
+
 void TestSessionClient::SetCallbackText(const string &text) {
   callback_text_ = text;
 }

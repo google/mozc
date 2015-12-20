@@ -37,7 +37,6 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -48,7 +47,6 @@
 
 using mozc::config::CharacterFormManager;
 using mozc::config::Config;
-using mozc::config::ConfigHandler;
 using mozc::dictionary::POSMatcher;
 
 namespace mozc {
@@ -80,9 +78,6 @@ class VariantsRewriterTest : public testing::Test {
 
   void Reset() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     CharacterFormManager::GetCharacterFormManager()->ClearHistory();
   }
@@ -253,10 +248,6 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
-
-  Config config;
-  ConfigHandler::GetDefaultConfig(&config);
-  ConfigHandler::SetConfig(config);
 
   {
     for (int i = 0; i < 10; ++i) {

@@ -49,8 +49,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-using std::unique_ptr;
-
 using mozc::quality_regression::QualityRegressionUtil;
 
 namespace mozc {
@@ -68,15 +66,6 @@ class QualityRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-  }
-
-  virtual void TearDown() {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
   }
 
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
@@ -171,16 +160,17 @@ class QualityRegressionTest : public testing::Test {
 
 
 TEST_F(QualityRegressionTest, ChromeOSTest) {
-  unique_ptr<EngineInterface> chromeos_engine(ChromeOsEngineFactory::Create());
-  QualityRegressionUtil util(chromeos_engine->GetConverter());
+  std::unique_ptr<EngineInterface> engine(ChromeOsEngineFactory::Create());
+  QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::CHROMEOS, &util);
 }
 
 // Test for desktop
 TEST_F(QualityRegressionTest, BasicTest) {
-  unique_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
 }
+
 }  // namespace
 }  // namespace mozc

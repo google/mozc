@@ -161,16 +161,6 @@ class MockDataAndImmutableConverter {
 
 class NBestGeneratorTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
   void GatherCandidates(
       size_t size, Segments::RequestType request_type,
       NBestGenerator *nbest, Segment *segment) const {
@@ -198,9 +188,6 @@ class NBestGeneratorTest : public ::testing::Test {
     }
     return end_node;
   }
-
- private:
-  config::Config default_config_;
 };
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {

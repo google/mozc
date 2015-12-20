@@ -70,9 +70,6 @@ class FocusCandidateRewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-
     rewriter_.reset(new FocusCandidateRewriter(&mock_data_manager_));
   }
 
@@ -82,7 +79,6 @@ class FocusCandidateRewriterTest : public ::testing::Test {
 
  private:
   std::unique_ptr<FocusCandidateRewriter> rewriter_;
-  config::Config default_config_;
   testing::MockDataManager mock_data_manager_;
 };
 
