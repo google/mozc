@@ -66,6 +66,7 @@
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
         '../protocol/protocol.gyp:config_proto',
+        '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         'dictionary_base.gyp:pos_matcher',
         'dictionary_base.gyp:suppression_dictionary',

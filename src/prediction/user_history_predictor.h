@@ -455,7 +455,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // composer() if composer is available. If not, use the key
   // directory. It also use MaybeRomanMisspelledKey() defined
   // below to check the preedit looks missspelled or not.
-  static string GetRomanMisspelledKey(const Segments &segments);
+  static string GetRomanMisspelledKey(const ConversionRequest &request,
+                                      const Segments &segments);
 
   // return true if |key| may contain miss spelling.
   // Currently, this function returns true if

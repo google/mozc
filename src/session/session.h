@@ -35,13 +35,12 @@
 #include <memory>
 #include <string>
 
-#include "base/coordinates.h"
 #include "base/port.h"
 #include "composer/composer.h"
 #include "session/session_interface.h"
-#include "transliteration/transliteration.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace commands {
@@ -60,7 +59,6 @@ class EngineInterface;
 
 namespace session {
 class ImeContext;
-class SessionCursorManageTest;
 
 class Session : public SessionInterface {
  public:
@@ -239,7 +237,7 @@ class Session : public SessionInterface {
 
   bool ReportBug(mozc::commands::Command *command);
 
-  virtual void ReloadConfig();
+  virtual void SetConfig(mozc::config::Config *config);
 
   virtual void SetRequest(const mozc::commands::Request *request);
 
@@ -267,14 +265,6 @@ class Session : public SessionInterface {
   mozc::composer::Composer *get_internal_composer_only_for_unittest();
 
   const ImeContext &context() const;
-
-  // Update config of |context| referring |config|.
-  static void UpdateConfig(const mozc::config::Config &config,
-                           ImeContext *context);
-
-  // Set OperationPreferences on |context| by using (tentative) |config|.
-  static void UpdateOperationPreferences(const mozc::config::Config &config,
-                                         ImeContext *context);
 
  private:
   FRIEND_TEST(SessionTest, OutputInitialComposition);
@@ -362,7 +352,6 @@ class Session : public SessionInterface {
   void OutputMode(mozc::commands::Command *command) const;
   void OutputComposition(mozc::commands::Command *command) const;
   void OutputKey(mozc::commands::Command *command) const;
-  void OutputWindowLocation(mozc::commands::Command *command) const;
 
   bool SendKeyDirectInputState(mozc::commands::Command *command);
   bool SendKeyPrecompositionState(mozc::commands::Command *command);
@@ -385,9 +374,6 @@ class Session : public SessionInterface {
   // return true if |key_event| is a triggering key_event of
   // AutoIMEConversion.
   bool CanStartAutoConversion(const mozc::commands::KeyEvent &key_event) const;
-
-  // Stores received caret location into caret_rectangle_.
-  bool SetCaretLocation(mozc::commands::Command *command);
 
   // Handles KeyEvent::activated to support indirect IME on/off.
   bool HandleIndirectImeOnOff(mozc::commands::Command *command);

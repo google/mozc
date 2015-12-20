@@ -32,10 +32,14 @@
     # Implementation of a Trie data structure based on LOUDS and its builder.
     {
       'target_name': 'louds',
-      'type': 'none',
+      'type': 'static_library',
       'toolsets': ['target', 'host'],
       'sources': [
-        'louds.h',
+        'louds.cc',
+      ],
+      'dependencies': [
+        '../../base/base.gyp:base',
+        'simple_succinct_bit_vector_index',
       ],
     },
     {

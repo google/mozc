@@ -37,9 +37,12 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_manager.h"
+#include "data_manager/packed/packed_data_mock.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -48,7 +51,6 @@
 
 using mozc::config::CharacterFormManager;
 using mozc::config::Config;
-using mozc::config::ConfigHandler;
 using mozc::dictionary::POSMatcher;
 
 namespace mozc {
@@ -71,6 +73,14 @@ class VariantsRewriterTest : public testing::Test {
 
   virtual void SetUp() {
     Reset();
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers mocked PackedDataManager.
+    std::unique_ptr<packed::PackedDataManager>
+        data_manager(new packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
     pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
@@ -80,11 +90,11 @@ class VariantsRewriterTest : public testing::Test {
 
   void Reset() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     CharacterFormManager::GetCharacterFormManager()->ClearHistory();
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    packed::RegisterPackedDataManager(nullptr);
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   void InitSegmentsForAlphabetRewrite(const string &value,
@@ -253,10 +263,6 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
-
-  Config config;
-  ConfigHandler::GetDefaultConfig(&config);
-  ConfigHandler::SetConfig(config);
 
   {
     for (int i = 0; i < 10; ++i) {

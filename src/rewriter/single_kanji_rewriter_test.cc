@@ -60,9 +60,6 @@ class SingleKanjiRewriterTest : public ::testing::Test {
 
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
   }
 
   SingleKanjiRewriter *CreateSingleKanjiRewriter() const {
@@ -83,10 +80,12 @@ class SingleKanjiRewriterTest : public ::testing::Test {
 TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
   std::unique_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
 
-  commands::Request client_request;
-  client_request.set_mixed_conversion(false);
-  const ConversionRequest request(NULL, &client_request);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
+
+  request.set_mixed_conversion(false);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
 }
 
 TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
@@ -114,19 +113,19 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, MobileEnvironmentTest) {
-  commands::Request client_request;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   std::unique_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
 
   {
-    client_request.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &client_request);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
   }
 
   {
-    client_request.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &client_request);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
   }
 }
 

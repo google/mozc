@@ -35,9 +35,9 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "request/conversion_request.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 using std::unique_ptr;

@@ -89,9 +89,9 @@
         '../../base/base.gyp:base_core',
         '../../data_manager/data_manager.gyp:user_pos_manager',
         '../../request/request.gyp:conversion_request',
+        '../../storage/louds/louds.gyp:louds_trie_builder',
         '../../testing/testing.gyp:gtest_main',
         '../dictionary.gyp:dictionary_test_util',
-        'system_dictionary.gyp:system_dictionary_builder',
         'system_dictionary.gyp:value_dictionary',
       ],
       'variables': {

@@ -62,6 +62,7 @@
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/token_decode_iterator.h"
@@ -78,6 +79,21 @@ using mozc::storage::louds::LoudsTrie;
 namespace {
 
 const int kMinTokenArrayBlobSize = 4;
+
+// TODO(noriyukit): The following paramters may not be well optimized.  In our
+// experiments, Select1 is computational burden, so increasing cache size for
+// lb1/select1 may improve performance.
+const size_t kKeyTrieLb0CacheSize = 1 * 1024;
+const size_t kKeyTrieLb1CacheSize = 1 * 1024;
+const size_t kKeyTrieSelect0CacheSize = 4 * 1024;
+const size_t kKeyTrieSelect1CacheSize = 4 * 1024;
+const size_t kKeyTrieTermvecCacheSize = 1 * 1024;
+
+const size_t kValueTrieLb0CacheSize = 1 * 1024;
+const size_t kValueTrieLb1CacheSize = 1 * 1024;
+const size_t kValueTrieSelect0CacheSize = 1 * 1024;
+const size_t kValueTrieSelect1CacheSize = 16 * 1024;
+const size_t kValueTrieTermvecCacheSize = 4 * 1024;
 
 // Expansion table format:
 // "<Character to expand>[<Expanded character 1><Expanded character 2>...]"
@@ -399,8 +415,10 @@ struct SystemDictionary::Builder::Specification {
   };
 
   Specification(InputType t, const string &fn, const char *p, int l, Options o,
-                const SystemDictionaryCodecInterface *codec)
-      : type(t), filename(fn), ptr(p), len(l), options(o), codec(codec) {}
+                const SystemDictionaryCodecInterface *codec,
+                const DictionaryFileCodecInterface *file_codec)
+      : type(t), filename(fn), ptr(p), len(l), options(o), codec(codec),
+        file_codec(file_codec) {}
 
   InputType type;
 
@@ -413,15 +431,16 @@ struct SystemDictionary::Builder::Specification {
 
   Options options;
   const SystemDictionaryCodecInterface *codec;
+  const DictionaryFileCodecInterface *file_codec;
 };
 
 SystemDictionary::Builder::Builder(const string &filename)
     : spec_(new Specification(Specification::FILENAME,
-                              filename, nullptr, -1, NONE, nullptr)) {}
+                              filename, nullptr, -1, NONE, nullptr, nullptr)) {}
 
 SystemDictionary::Builder::Builder(const char *ptr, int len)
     : spec_(new Specification(Specification::IMAGE,
-                              "", ptr, len, NONE, nullptr)) {}
+                              "", ptr, len, NONE, nullptr, nullptr)) {}
 
 SystemDictionary::Builder::~Builder() {}
 
@@ -442,8 +461,12 @@ SystemDictionary *SystemDictionary::Builder::Build() {
     spec_->codec = SystemDictionaryCodecFactory::GetCodec();
   }
 
+  if (spec_->file_codec == nullptr) {
+    spec_->file_codec = DictionaryFileCodecFactory::GetCodec();
+  }
+
   std::unique_ptr<SystemDictionary> instance(
-      new SystemDictionary(spec_->codec));
+      new SystemDictionary(spec_->codec, spec_->file_codec));
 
   switch (spec_->type) {
     case Specification::FILENAME:
@@ -478,10 +501,12 @@ SystemDictionary *SystemDictionary::Builder::Build() {
   return instance.release();
 }
 
-SystemDictionary::SystemDictionary(const SystemDictionaryCodecInterface *codec)
+SystemDictionary::SystemDictionary(
+    const SystemDictionaryCodecInterface *codec,
+    const DictionaryFileCodecInterface *file_codec)
     : frequent_pos_(nullptr),
       codec_(codec),
-      dictionary_file_(new DictionaryFile) {}
+      dictionary_file_(new DictionaryFile(file_codec)) {}
 
 SystemDictionary::~SystemDictionary() {}
 
@@ -490,7 +515,12 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *key_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForKey(), &len));
-  if (!key_trie_.Open(key_image)) {
+  if (!key_trie_.Open(key_image,
+                      kKeyTrieLb0CacheSize,
+                      kKeyTrieLb1CacheSize,
+                      kKeyTrieSelect0CacheSize,
+                      kKeyTrieSelect1CacheSize,
+                      kKeyTrieTermvecCacheSize)) {
     LOG(ERROR) << "cannot open key trie";
     return false;
   }
@@ -499,7 +529,12 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *value_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForValue(), &len));
-  if (!value_trie_.Open(value_image)) {
+  if (!value_trie_.Open(value_image,
+                        kValueTrieLb0CacheSize,
+                        kValueTrieLb1CacheSize,
+                        kValueTrieSelect0CacheSize,
+                        kValueTrieSelect1CacheSize,
+                        kValueTrieTermvecCacheSize)) {
     LOG(ERROR) << "can not open value trie";
     return false;
   }

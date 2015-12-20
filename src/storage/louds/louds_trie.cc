@@ -45,7 +45,12 @@ inline int32 ReadInt32(const uint8 *data) {
 }
 }  // namespace
 
-bool LoudsTrie::Open(const uint8 *image) {
+bool LoudsTrie::Open(const uint8 *image,
+                     size_t louds_lb0_cache_size,
+                     size_t louds_lb1_cache_size,
+                     size_t louds_select0_cache_size,
+                     size_t louds_select1_cache_size,
+                     size_t termvec_lb1_cache_size) {
   // Reads a binary image data, which is compatible with rx.
   // The format is as follows:
   // [trie size: little endian 4byte int]
@@ -79,8 +84,12 @@ bool LoudsTrie::Open(const uint8 *image) {
   const uint8 *terminal_image = louds_image + louds_size;
   const uint8 *edge_character = terminal_image + terminal_size;
 
-  louds_.Init(louds_image, louds_size);
-  terminal_bit_vector_.Init(terminal_image, terminal_size);
+  louds_.Init(louds_image, louds_size,
+              louds_lb0_cache_size, louds_lb1_cache_size,
+              louds_select0_cache_size, louds_select1_cache_size);
+  terminal_bit_vector_.Init(terminal_image, terminal_size,
+                            0,  // Select0 is not carried out.
+                            termvec_lb1_cache_size);
   edge_character_ = reinterpret_cast<const char*>(edge_character);
 
   return true;

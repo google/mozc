@@ -36,6 +36,7 @@
 
 #include "base/port.h"
 #include "converter/segments.h"
+#include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -71,31 +72,12 @@ struct ConversionPreferences {
   bool request_suggestion;
 };
 
-// Do not forget to update SessionConverter::SetOperationPreferences()
-// when update this struct.
-struct OperationPreferences {
-  bool use_cascading_window;
-  string candidate_shortcuts;
-  OperationPreferences() {
-#ifdef OS_LINUX
-    // TODO(komatsu): Move this logic to the client code.
-    use_cascading_window = false;
-#else
-    use_cascading_window = true;
-#endif
-  }
-};
-
 // Class handling ConverterInterface with a session state.  This class
 // support stateful operations related with the converter.
 class SessionConverterInterface {
  public:
   SessionConverterInterface() {}
   virtual ~SessionConverterInterface() {}
-
-  // Update OperationPreferences.
-  virtual void SetOperationPreferences(const OperationPreferences &preferences)
-      = 0;
 
   typedef int States;
   enum State {
@@ -259,12 +241,21 @@ class SessionConverterInterface {
   // Currently this is especially for SessionConverter.
   virtual void SetRequest(const commands::Request *request) = 0;
 
+  // Set setting by the config.
+  // Currently this is especially for SessionConverter.
+  virtual void SetConfig(const config::Config *config) = 0;
+
   // Update the internal state by the context.
   virtual void OnStartComposition(const commands::Context &context) = 0;
 
   // Clone instance.
   // Callee object doesn't have the ownership of the cloned instance.
   virtual SessionConverterInterface *Clone() const = 0;
+
+  virtual void set_selection_shortcut(
+      config::Config::SelectionShortcut selection_shortcut) = 0;
+
+  virtual void set_use_cascading_window(bool use_cascading_window) = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionConverterInterface);

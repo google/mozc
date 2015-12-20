@@ -37,6 +37,8 @@
 
 #include "base/port.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "session/internal/key_event_transformer.h"
 
 namespace mozc {
 
@@ -76,6 +78,10 @@ class ImeContext {
   SessionConverterInterface *mutable_converter();
   void set_converter(SessionConverterInterface *converter);
 
+  const KeyEventTransformer &key_event_transformer() const {
+    return *key_event_transformer_;
+  }
+
   enum State {
     NONE = 0,
     DIRECT = 1,
@@ -90,6 +96,8 @@ class ImeContext {
     state_ = state;
   }
 
+  // Returns the current keymap.  This might be temporary and different from
+  // the keymap in the config.
   config::Config::SessionKeymap keymap() const {
     return keymap_;
   }
@@ -99,6 +107,9 @@ class ImeContext {
 
   void SetRequest(const commands::Request *request);
   const commands::Request &GetRequest() const;
+
+  void SetConfig(const config::Config *config);
+  const config::Config &GetConfig() const;
 
   const commands::Capability &client_capability() const {
     return client_capability_;
@@ -122,20 +133,6 @@ class ImeContext {
   }
   commands::Context *mutable_client_context() {
     return &client_context_;
-  }
-
-  const commands::Rectangle &composition_rectangle() const {
-    return composition_rectangle_;
-  }
-  commands::Rectangle *mutable_composition_rectangle() {
-    return &composition_rectangle_;
-  }
-
-  const commands::Rectangle &caret_rectangle() const {
-    return caret_rectangle_;
-  }
-  commands::Rectangle *mutable_caret_rectangle() {
-    return &caret_rectangle_;
   }
 
   const commands::Output &output() const {
@@ -162,9 +159,12 @@ class ImeContext {
 
   std::unique_ptr<SessionConverterInterface> converter_;
 
+  std::unique_ptr<KeyEventTransformer> key_event_transformer_;
+
   State state_;
 
   const commands::Request *request_;
+  const config::Config *config_;
 
   config::Config::SessionKeymap keymap_;
 
@@ -173,11 +173,6 @@ class ImeContext {
   commands::ApplicationInfo application_info_;
 
   commands::Context client_context_;
-
-  // TODO(nona): remove these fields by moving the rectangle calculation logic
-  //   to the Linux client.
-  commands::Rectangle composition_rectangle_;
-  commands::Rectangle caret_rectangle_;
 
   // Storing the last output consisting of the last result and the
   // last performed command.

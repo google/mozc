@@ -37,12 +37,14 @@
 #include "composer/composition_interface.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
 DEFINE_string(table, "system://romanji-hiragana.tsv",
               "preedit conversion table file.");
 
 using ::mozc::commands::Request;
+using ::mozc::config::Config;
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
@@ -50,7 +52,9 @@ int main(int argc, char **argv) {
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
   std::unique_ptr<mozc::composer::Composer> composer(
-      new mozc::composer::Composer(&table, &Request::default_instance()));
+      new mozc::composer::Composer(&table,
+                                   &Request::default_instance(),
+                                   &Config::default_instance()));
 
   string command;
   string left, focused, right;

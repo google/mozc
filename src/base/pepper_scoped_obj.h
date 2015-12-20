@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_PEPPER_SCOPED_OBJ_H_
 #define MOZC_BASE_PEPPER_SCOPED_OBJ_H_
 
+#ifdef __native_client__
+
 #include <ppapi/utility/completion_callback_factory.h>
 
 #include "base/port.h"
@@ -104,5 +106,7 @@ class scoped_main_thread_destructed_object {
 };
 
 }  // namespace mozc
+
+#endif  // __native_client__
 
 #endif  // MOZC_BASE_PEPPER_SCOPED_OBJ_H_

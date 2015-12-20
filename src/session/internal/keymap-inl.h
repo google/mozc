@@ -33,14 +33,10 @@
 #define MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
 
 #include "composer/key_event_util.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
 
 namespace mozc {
-
-namespace commands {
-class KeyEvent;
-}  // namespace commands
-
 namespace keymap {
 
 template<typename T>

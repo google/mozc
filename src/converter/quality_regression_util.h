@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "base/port.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 class Segments;
@@ -81,11 +82,13 @@ class QualityRegressionUtil {
                       string *actual_value);
 
   void SetRequest(const commands::Request &request);
+  void SetConfig(const config::Config &config);
   static string GetPlatformString(uint32 platform_bitfiled);
 
  private:
   ConverterInterface *converter_;
   std::unique_ptr<commands::Request> request_;
+  std::unique_ptr<config::Config> config_;
   std::unique_ptr<Segments> segments_;
 
   DISALLOW_COPY_AND_ASSIGN(QualityRegressionUtil);

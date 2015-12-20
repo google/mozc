@@ -89,9 +89,5 @@ bool Version::CompareVersion(const string &lhs, const string &rhs) {
                                       vrhs.end(), StringAsIntegerComparator);
 }
 
-Version::BuildType Version::GetMozcBuildType() {
-  return version::kMozcBuildType;
-}
-
 
 }  // namespace mozc

@@ -897,8 +897,10 @@
           'mac_bundle': 1,
           'xcode_settings': {
             'INSTALL_PATH': '@executable_path/../Frameworks',
+            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_lib_info',
           },
           'dependencies+': [
+            'gen_mozc_tool_lib_info_plist',
             'prelauncher_lib',
           ],
           'conditions': [
@@ -1142,6 +1144,28 @@
                 '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
                 '--input',
                 '../data/mac/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+                '--branding', '<(branding)',
+              ],
+            },
+          ],
+        },
+        {
+          'target_name': 'gen_mozc_tool_lib_info_plist',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'mozc_tool_lib info.plist',
+              'inputs': [
+                '../data/mac/mozc_tool_lib_info',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/mozc_tool_lib_info',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist.py',
+                '--output', '<(gen_out_dir)/mozc_tool_lib_info',
+                '--input', '../data/mac/mozc_tool_lib_info',
+                '--version_file', '../mozc_version.txt',
                 '--branding', '<(branding)',
               ],
             },

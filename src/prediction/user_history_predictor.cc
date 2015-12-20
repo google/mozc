@@ -45,7 +45,6 @@
 #include "base/trie.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -517,15 +516,8 @@ bool UserHistoryPredictor::Save() {
     return true;
   }
 
-  if (GET_CONFIG(incognito_mode)) {
-    VLOG(2) << "incognito mode";
-    return true;
-  }
-
-  if (!GET_CONFIG(use_history_suggest)) {
-    VLOG(2) << "no history suggest";
-    return true;
-  }
+  // Do not check incognito_mode or use_history_suggest in Config here.
+  // The input data should not have been inserted when those flags are on.
 
   const DicElement *tail = dic_->Tail();
   if (tail == nullptr) {
@@ -768,8 +760,9 @@ bool UserHistoryPredictor::HasBigramEntry(
 
 // static
 string UserHistoryPredictor::GetRomanMisspelledKey(
+    const ConversionRequest &request,
     const Segments &segments) {
-  if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
+  if (request.config().preedit_method() != config::Config::ROMAN) {
     return "";
   }
 
@@ -1199,7 +1192,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  if (GET_CONFIG(incognito_mode)) {
+  if (request.config().incognito_mode()) {
     VLOG(2) << "incognito mode";
     return false;
   }
@@ -1209,7 +1202,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  if (!GET_CONFIG(use_history_suggest) &&
+  if (!request.config().use_history_suggest() &&
       segments->request_type() == Segments::SUGGESTION) {
     VLOG(2) << "no history suggest";
     return false;
@@ -1311,7 +1304,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   const size_t max_results_size = 5 * segments.max_prediction_candidates_size();
 
   // Gets romanized input key if the given preedit looks misspelled.
-  const string roman_input_key = GetRomanMisspelledKey(segments);
+  const string roman_input_key = GetRomanMisspelledKey(request, segments);
 
   // TODO(team): make GetKanaMisspelledKey(segments);
   // const string kana_input_key = GetKanaMisspelledKey(segments);
@@ -1688,12 +1681,12 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (GET_CONFIG(incognito_mode)) {
+  if (request.config().incognito_mode()) {
     VLOG(2) << "incognito mode";
     return;
   }
 
-  if (!GET_CONFIG(use_history_suggest)) {
+  if (!request.config().use_history_suggest()) {
     VLOG(2) << "no history suggest";
     return;
   }

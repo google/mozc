@@ -100,15 +100,16 @@ void StripWritePreventingAttributesIfExists(const string &filename) {
 }  // namespace
 #endif  // OS_WIN
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
 bool FileUtil::CreateDirectory(const string &path) {
-#ifdef OS_WIN
+#if defined(OS_WIN)
   wstring wide;
   return (Util::UTF8ToWide(path, &wide) > 0 &&
           ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
-#else  // OS_WIN
+#elif defined(__native_client__)  // OS_WIN
+  return PepperFileUtil::CreateDirectory(path);
+#else  // OS_WIN or __native_client__
   return ::mkdir(path.c_str(), 0700) == 0;
-#endif  // OS_WIN
+#endif  // OS_WIN or __native_client__
 }
 
 bool FileUtil::RemoveDirectory(const string &dirname) {
@@ -116,11 +117,12 @@ bool FileUtil::RemoveDirectory(const string &dirname) {
   wstring wide;
   return (Util::UTF8ToWide(dirname, &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
-#else  // OS_WIN
+#elif defined(__native_client__)  // OS_WIN
+  return PepperFileUtil::Delete(dirname);
+#else  // OS_WIN or __native_client
   return ::rmdir(dirname.c_str()) == 0;
-#endif  // OS_WIN
+#endif  // OS_WIN or __native_client
 }
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 bool FileUtil::Unlink(const string &filename) {
 #ifdef OS_WIN
@@ -129,7 +131,7 @@ bool FileUtil::Unlink(const string &filename) {
   return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::DeleteFileW(wide.c_str()) != 0);
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
-  return PepperFileUtil::DeleteFile(filename);;
+  return PepperFileUtil::Delete(filename);
 #else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
   return ::unlink(filename.c_str()) == 0;
 #endif  // OS_WIN
@@ -320,8 +322,8 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
 
   return true;
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
-  // TODO(horo): PepperFileUtil::RenameFile() is not atomic operation.
-  return PepperFileUtil::RenameFile(from, to);
+  // TODO(horo): PepperFileUtil::Rename() is not atomic operation.
+  return PepperFileUtil::Rename(from, to);
 #else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
   // Mac OSX: use rename(2), but rename(2) on Mac OSX
   // is not properly implemented, atomic rename is POSIX spec though.

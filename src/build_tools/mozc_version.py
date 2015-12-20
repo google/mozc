@@ -72,7 +72,6 @@ VERSION_PROPERTIES = [
     'BUILD',
     'REVISION',
     'ANDROID_VERSION_CODE',
-    'FLAG',
     'TARGET_PLATFORM',
     'ANDROID_APPLICATION_ID',
     'ANDROID_SERVICE_NAME',
@@ -132,12 +131,6 @@ def _ParseVersionTemplateFile(template_path, target_platform,
   # Some properties need to be tweaked.
   template_dict['REVISION'] = _GetRevisionForPlatform(
       template_dict.get('REVISION', None), target_platform)
-  num_of_days = datetime.date.today().toordinal() - MOZC_EPOCH.toordinal()
-  if template_dict['BUILD'] == 'daily':
-    template_dict['BUILD'] = str(num_of_days)
-    template_dict.setdefault('FLAG', 'CONTINUOUS')
-  else:
-    template_dict.setdefault('FLAG', 'RELEASE')
 
   template_dict['ANDROID_VERSION_CODE'] = (
       str(_GetAndroidVersionCode(int(template_dict['BUILD']), android_arch)))
@@ -273,7 +266,6 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       'BUILD=@BUILD@',
       'REVISION=@REVISION@',
       'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@',
-      'FLAG=@FLAG@',
       'TARGET_PLATFORM=@TARGET_PLATFORM@',
       'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@',
       'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@',

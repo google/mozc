@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 #include "testing/base/public/googletest.h"
 
 #ifdef OS_WIN
@@ -39,6 +40,7 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
 
@@ -149,3 +151,4 @@ void InitTestFlags() {
 }
 
 }  // namespace mozc
+

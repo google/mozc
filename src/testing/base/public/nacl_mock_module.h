@@ -30,6 +30,8 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 #define MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 
+#ifdef __native_client__
+
 namespace mozc {
 namespace testing {
 
@@ -45,5 +47,7 @@ void WorkAroundEmptyFunctionToAvoidLinkError();
 
 }  // namespace testing
 }  // namespace mozc
+
+#endif  // __native_client__
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_

@@ -96,6 +96,8 @@ TEST(CalculatorTest, BasicTest) {
   VerifyRejection(calculator, "(5)=");
   // Expression must include at least one number.
   VerifyRejection(calculator, "()=");
+  // Expression with both heading and tailing '='s should be rejected.
+  VerifyRejection(calculator, "=(0-0)=");
 
   // Test for each operators
   VerifyCalculation(calculator, "38+2.5=", "40.5");
@@ -108,6 +110,8 @@ TEST(CalculatorTest, BasicTest) {
   VerifyCalculation(calculator, "2^10=", "1024");
   VerifyCalculation(calculator, "4*-2=", "-8");
   VerifyCalculation(calculator, "-10.3+3.5=", "-6.8");
+  // Expression can starts with '=' instead of ending with '='.
+  VerifyCalculation(calculator, "=-10.3+3.5", "-6.8");
 
   // Full width cases (some operators may appear as full width character).
   // "１２３４５＋６７８９０＝"

@@ -158,19 +158,11 @@ class ConverterTest : public ::testing::Test {
   virtual void SetUp() {
     // set default user profile directory
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
 
     UsageStats::ClearAllStatsForTest();
   }
 
   virtual void TearDown() {
-    // just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-
     UsageStats::ClearAllStatsForTest();
   }
 
@@ -197,12 +189,14 @@ class ConverterTest : public ::testing::Test {
     int dictionary_size = 0;
     data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
+    SystemDictionary *sysdic =
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
     ret->user_dictionary.reset(new UserDictionaryStub);
     ret->suppression_dictionary.reset(new SuppressionDictionary);
     ret->dictionary.reset(new DictionaryImpl(
-        SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
-        ValueDictionary::CreateValueDictionaryFromImage(
-            *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
+        sysdic,  // DictionaryImpl takes the ownership
+        new ValueDictionary(*data_manager.GetPOSMatcher(),
+                            &sysdic->value_trie()),
         ret->user_dictionary.get(),
         ret->suppression_dictionary.get(),
         data_manager.GetPOSMatcher()));
@@ -1005,14 +999,15 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
   composer::Table table;
   table.AddRule("si", kShi, "");
   table.AddRule("shi", kShi, "");
+  config::Config config;
 
   {
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &config);
 
     composer.InsertCharacter("shi");
 
     Segments segments;
-    const ConversionRequest request(&composer, &client_request);
+    const ConversionRequest request(&composer, &client_request, &config);
     EXPECT_TRUE(converter->StartSuggestionForRequest(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -1023,12 +1018,12 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
   }
 
   {
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &config);
 
     composer.InsertCharacter("si");
 
     Segments segments;
-    const ConversionRequest request(&composer, &client_request);
+    const ConversionRequest request(&composer, &client_request, &config);
     EXPECT_TRUE(converter->StartSuggestionForRequest(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -1234,10 +1229,12 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
+  SystemDictionary *sysdic =
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   std::unique_ptr<DictionaryInterface> dictionary(new DictionaryImpl(
-      SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
-      ValueDictionary::CreateValueDictionaryFromImage(
-          *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
+      sysdic,  // DictionaryImpl takes the ownership
+      new ValueDictionary(*data_manager.GetPOSMatcher(),
+                          &sysdic->value_trie()),
       mock_user_dictionary.get(),
       suppression_dictionary.get(),
       data_manager.GetPOSMatcher()));
@@ -1325,12 +1322,13 @@ TEST_F(ConverterTest, ComposerKeySelection) {
   std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
   composer::Table table;
+  config::Config config;
   {
     Segments segments;
-    composer::Composer composer(&table, &default_request());
+    composer::Composer composer(&table, &default_request(), &config);
     composer.InsertCharacterPreedit(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\x68");  // "わたしh"
-    ConversionRequest request(&composer, &default_request());
+    ConversionRequest request(&composer, &default_request(), &config);
     request.set_composer_key_selection(ConversionRequest::CONVERSION_KEY);
     converter->StartConversionForRequest(request, &segments);
     EXPECT_EQ(2, segments.conversion_segments_size());
@@ -1340,10 +1338,10 @@ TEST_F(ConverterTest, ComposerKeySelection) {
   }
   {
     Segments segments;
-    composer::Composer composer(&table, &default_request());
+    composer::Composer composer(&table, &default_request(), &config);
     composer.InsertCharacterPreedit(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\x68");  // "わたしh"
-    ConversionRequest request(&composer, &default_request());
+    ConversionRequest request(&composer, &default_request(), &config);
     request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
     converter->StartConversionForRequest(request, &segments);
     EXPECT_EQ(1, segments.conversion_segments_size());
@@ -1364,9 +1362,10 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
 
   // Convert
   composer::Table table;
-  composer::Composer composer(&table, &default_request());
+  config::Config config;
+  composer::Composer composer(&table, &default_request(), &config);
   composer.InsertCharacter("dummy");
-  const ConversionRequest request(&composer, &default_request());
+  const ConversionRequest request(&composer, &default_request(), &config);
   Segments segments;
   EXPECT_TRUE(ret->converter->StartConversionForRequest(request, &segments));
 
@@ -1655,10 +1654,11 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   ConverterInterface *converter = engine->GetConverter();
 
   composer::Table table;
+  const config::Config &config = config::ConfigHandler::DefaultConfig();
   mozc::commands::Request request_proto;
-  mozc::composer::Composer composer(&table, &request_proto);
+  mozc::composer::Composer composer(&table, &request_proto, &config);
   composer.InsertCharacterPreedit("\xE3\x81\x82");  // "あ"
-  ConversionRequest request(&composer, &request_proto);
+  ConversionRequest request(&composer, &request_proto, &config);
 
   Segments segments;
   ASSERT_TRUE(converter->StartConversionForRequest(request, &segments));

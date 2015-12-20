@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_USAGE_REWRITER_DATA_STRUCTS_H_
 #define MOZC_REWRITER_USAGE_REWRITER_DATA_STRUCTS_H_
 
+#ifndef NO_USAGE_REWRITER
+
 #include "base/port.h"
 
 namespace mozc {
@@ -48,5 +50,7 @@ struct UsageDictItem {
 };
 
 }  // namespace mozc
+
+#endif  // NO_USAGE_REWRITER
 
 #endif  // MOZC_REWRITER_USAGE_REWRITER_DATA_STRUCTS_H_

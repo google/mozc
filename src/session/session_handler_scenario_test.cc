@@ -27,6 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef __native_client__
+// Disabled on NaCl since it uses a mock file system.
+
 #include <memory>
 
 #include "base/file_stream.h"
@@ -475,8 +478,7 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
       ASSERT_EQ(3, columns.size());
       ASSERT_TRUE(SetOrAddFieldValueFromString(columns[1], columns[2],
                                                config_.get()));
-      ASSERT_TRUE(ConfigHandler::SetConfig(*config_));
-      ASSERT_TRUE(client_->Reload());
+      ASSERT_TRUE(client_->SetConfig(*config_, last_output_.get()));
     } else if (command == "SET_SELECTION_TEXT") {
       ASSERT_EQ(2, columns.size());
       client_->SetCallbackText(columns[1]);
@@ -618,3 +620,5 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
 #undef EXPECT_NOT_IN_ALL_CANDIDATE_WORDS
 
 }  // namespace
+
+#endif  // !__native_client__

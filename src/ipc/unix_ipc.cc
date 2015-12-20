@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// skip all if non-Linux or Android.
-#if defined(OS_LINUX) && !defined(OS_ANDROID)
+// skip all if non-Linux or Android or NaCl.
+#if defined(OS_LINUX) && !defined(OS_ANDROID) && !defined(__native_client__)
 
 #include "ipc/ipc.h"
 
@@ -492,4 +492,4 @@ void IPCServer::Terminate() {
 
 }  // namespace mozc
 
-#endif  // OS_LINUX && !OS_ANDROID
+#endif  // OS_LINUX && !OS_ANDROID && !__native_client__

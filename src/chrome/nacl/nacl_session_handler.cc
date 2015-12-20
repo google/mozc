@@ -29,6 +29,8 @@
 
 // TODO(horo): write tests.
 
+#ifdef __native_client__
+
 #include <ppapi/cpp/instance.h>
 #include <ppapi/cpp/module.h>
 #include <ppapi/cpp/var.h>
@@ -482,3 +484,5 @@ Module *CreateModule() {
 }
 
 }  // namespace pp
+
+#endif  // __native_client__

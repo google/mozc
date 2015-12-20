@@ -87,13 +87,12 @@ class EmoticonRewriterTest : public testing::Test {
 
 TEST_F(EmoticonRewriterTest, BasicTest) {
   EmoticonRewriter emoticon_rewriter;
-  const ConversionRequest request;
-
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  ConversionRequest request;
+  request.set_config(&config);
   {
-    config::Config input;
-    config::ConfigHandler::GetConfig(&input);
-    input.set_use_emoticon_conversion(true);
-    config::ConfigHandler::SetConfig(input);
+    config.set_use_emoticon_conversion(true);
 
     Segments segments;
     AddSegment("test", "test", &segments);
@@ -125,10 +124,7 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
   }
 
   {
-    config::Config input;
-    config::ConfigHandler::GetConfig(&input);
-    input.set_use_emoticon_conversion(false);
-    config::ConfigHandler::SetConfig(input);
+    config.set_use_emoticon_conversion(false);
 
     Segments segments;
     AddSegment("test", "test", &segments);
@@ -161,19 +157,19 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
 }
 
 TEST_F(EmoticonRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
   EmoticonRewriter rewriter;
+  commands::Request request;
+  ConversionRequest convreq;
+  convreq.set_request(&request);
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
   }
 }
 

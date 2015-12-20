@@ -41,6 +41,7 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_factory.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -54,12 +55,6 @@
 #include "session/session_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-#ifdef OS_ANDROID
-#include "base/mmap.h"
-#include "base/singleton.h"
-#include "data_manager/android/android_data_manager.h"
-#endif
 
 DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
@@ -89,41 +84,6 @@ void InitSessionToPrecomposition(session::Session* session) {
 #endif  // OS_WIN
 }
 
-#ifdef OS_ANDROID
-// In actual libmozc.so usage, the dictionary data will be given via JNI call
-// because only Java side code knows where the data is.
-// On native code unittest, we cannot do it, so instead we mmap the files
-// and use it.
-// Note that this technique works here because the no other test code doesn't
-// link to this binary.
-// TODO(hidehiko): Get rid of this hack by refactoring Engine/DataManager
-// related code.
-class AndroidInitializer {
- private:
-  AndroidInitializer() {
-    string dictionary_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/dictionary_data");
-    CHECK(dictionary_mmap_.Open(dictionary_data_path.c_str(), "r"));
-    mozc::android::AndroidDataManager::SetDictionaryData(
-        dictionary_mmap_.begin(), dictionary_mmap_.size());
-
-    string connection_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/connection_data");
-    CHECK(connection_mmap_.Open(connection_data_path.c_str(), "r"));
-    mozc::android::AndroidDataManager::SetConnectionData(
-        connection_mmap_.begin(), connection_mmap_.size());
-    LOG(ERROR) << "mmap data initialized.";
-  }
-
-  friend class Singleton<AndroidInitializer>;
-
-  Mmap dictionary_mmap_;
-  Mmap connection_mmap_;
-
-  DISALLOW_COPY_AND_ASSIGN(AndroidInitializer);
-};
-#endif  // OS_ANDROID
-
 }  // namespace
 
 class SessionRegressionTest : public testing::Test {
@@ -133,10 +93,6 @@ class SessionRegressionTest : public testing::Test {
 
     orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
     FLAGS_use_history_rewriter = true;
-
-#ifdef OS_ANDROID
-    Singleton<AndroidInitializer>::get();
-#endif
 
     // Note: engine must be created after setting all the flags, as it
     // internally depends on global flags, e.g., for creation of rewriters.
@@ -204,6 +160,8 @@ class SessionRegressionTest : public testing::Test {
   std::unique_ptr<session::Session> session_;
   std::unique_ptr<composer::Table> table_;
   config::Config config_;
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
 };
 
 
@@ -456,10 +414,9 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
 
     InitSessionToPrecomposition(session_.get());
     config::Config config;
-    config::ConfigHandler::GetConfig(&config);
+    config::ConfigHandler::GetDefaultConfig(&config);
     config.set_use_auto_conversion(true);
-    config::ConfigHandler::SetConfig(config);
-    session_->ReloadConfig();
+    session_->SetConfig(&config);
 
     const char kInputKeys[] = "aiueo.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {
@@ -482,8 +439,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
     config::Config config;
     config::ConfigHandler::GetConfig(&config);
     config.set_use_auto_conversion(true);
-    config::ConfigHandler::SetConfig(config);
-    session_->ReloadConfig();
+    session_->SetConfig(&config);
 
     const char kInputKeys[] = "1234.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {

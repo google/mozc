@@ -40,6 +40,7 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -138,6 +139,8 @@ class CandidateFilterTest : public ::testing::Test {
   const POSMatcher *pos_matcher_;
   SuppressionDictionary suppression_dictionary_;
   std::unique_ptr<SuggestionFilter> suggestion_filter_;
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
 };
 
 TEST_F(CandidateFilterTest, FilterTest) {

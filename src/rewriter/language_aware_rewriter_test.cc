@@ -89,14 +89,10 @@ class LanguageAwareRewriterTest : public testing::Test {
     packed::RegisterPackedDataManager(data_manager.release());
 #endif  // MOZC_USE_PACKED_DICTIONARY
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
     dictionary_mock_.reset(new DictionaryMock);
   }
 
   virtual void TearDown() {
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
@@ -113,9 +109,6 @@ class LanguageAwareRewriterTest : public testing::Test {
 
   unique_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
-
- private:
-  config::Config default_config_;
 };
 
 namespace {
@@ -131,7 +124,7 @@ bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
   config::Config default_config;
   table.InitializeWithRequestAndConfig(client_request, default_config);
 
-  composer::Composer composer(&table, &client_request);
+  composer::Composer composer(&table, &client_request, &default_config);
   InsertASCIISequence(key, &composer);
   composer.GetStringForPreedit(composition);
 
@@ -142,7 +135,7 @@ bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
   }
   Segment *segment = segments->mutable_conversion_segment(0);
   segment->set_key(*composition);
-  ConversionRequest request(&composer, &client_request);
+  ConversionRequest request(&composer, &client_request, &default_config);
 
   return rewriter->Rewrite(request, segments);
 }
@@ -328,7 +321,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     config::Config default_config;
     table.InitializeWithRequestAndConfig(client_request, default_config);
 
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence("python", &composer);
     composer.GetStringForPreedit(&composition);
     EXPECT_EQ(kPyTeyoN, composition);
@@ -337,7 +330,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     segment->set_key(composition);
-    ConversionRequest request(&composer, &client_request);
+    ConversionRequest request(&composer, &client_request, &default_config);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
 

@@ -46,28 +46,35 @@ namespace session {
 
 class KeyEventTransformer {
  public:
-  // Update transform table accoding to config.
-  void ReloadConfig(const config::Config &config);
-
-  // Transform key event accoding to transform table.
-  // We should update table using ReloadConfig() before calling a this function.
-  bool TransformKeyEvent(commands::KeyEvent *key_event);
-
- private:
-  friend class Singleton<KeyEventTransformer>;
+  typedef map<string, commands::KeyEvent> Table;
 
   KeyEventTransformer();
   virtual ~KeyEventTransformer();
 
+  // Updates the transform table accoding to config.
+  void ReloadConfig(const config::Config &config);
+
+  // Transforms key event accoding to transform table.
+  // We should update table using ReloadConfig() before calling a this function.
+  bool TransformKeyEvent(commands::KeyEvent *key_event) const;
+
+  // Resets this instance to the copy of |src|.
+  void CopyFrom(const KeyEventTransformer &src);
+
+  const Table &table() const { return table_; }
+  config::Config::NumpadCharacterForm numpad_character_form() const {
+    return numpad_character_form_;
+  }
+
+ private:
   // Transform the key event base on the rule.  This function is used
   // for special treatment with numpad keys.
-  bool TransformKeyEventForNumpad(commands::KeyEvent *key_event);
+  bool TransformKeyEventForNumpad(commands::KeyEvent *key_event) const;
 
   // Transform symbols for Kana input.  Character transformation for
   // Romanji input is performed in preedit/table.cc
-  bool TransformKeyEventForKana(commands::KeyEvent *key_event);
+  bool TransformKeyEventForKana(commands::KeyEvent *key_event) const;
 
-  typedef map<string, commands::KeyEvent> Table;
   Table table_;
   config::Config::NumpadCharacterForm numpad_character_form_;
 

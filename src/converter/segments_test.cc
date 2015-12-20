@@ -39,53 +39,9 @@
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
 
-class SegmentsTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
- private:
-  config::Config default_config_;
-};
-
-class CandidateTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
- private:
-  config::Config default_config_;
-};
-
-class SegmentTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
- private:
-  config::Config default_config_;
-};
-
-TEST_F(SegmentsTest, BasicTest) {
+TEST(SegmentsTest, BasicTest) {
   Segments segments;
 
   // flags
@@ -195,7 +151,7 @@ TEST_F(SegmentsTest, BasicTest) {
   EXPECT_EQ(0, segments.segments_size());
 }
 
-TEST_F(CandidateTest, BasicTest) {
+TEST(CandidateTest, BasicTest) {
   Segment segment;
 
   const char str[] = "this is a test";
@@ -269,7 +225,7 @@ TEST_F(CandidateTest, BasicTest) {
   EXPECT_EQ(cand[1], segment.mutable_candidate(2));
 }
 
-TEST_F(CandidateTest, CopyFrom) {
+TEST(CandidateTest, CopyFrom) {
   Segment::Candidate src, dest;
   src.Init();
 
@@ -314,7 +270,7 @@ TEST_F(CandidateTest, CopyFrom) {
   EXPECT_EQ(src.inner_segment_boundary, dest.inner_segment_boundary);
 }
 
-TEST_F(CandidateTest, IsValid) {
+TEST(CandidateTest, IsValid) {
   Segment::Candidate c;
   c.Init();
   EXPECT_TRUE(c.IsValid());
@@ -356,7 +312,7 @@ TEST_F(CandidateTest, IsValid) {
   EXPECT_FALSE(c.IsValid());
 }
 
-TEST_F(SegmentsTest, RevertEntryTest) {
+TEST(SegmentsTest, RevertEntryTest) {
   Segments segments;
   EXPECT_EQ(0, segments.revert_entries_size());
 
@@ -408,7 +364,7 @@ TEST_F(SegmentsTest, RevertEntryTest) {
   EXPECT_EQ(0, segments.revert_entries_size());
 }
 
-TEST_F(SegmentsTest, CopyFromTest) {
+TEST(SegmentsTest, CopyFromTest) {
   Segments src;
 
   src.set_max_history_segments_size(1);
@@ -455,7 +411,7 @@ TEST_F(SegmentsTest, CopyFromTest) {
   }
 }
 
-TEST_F(CandidateTest, functional_key) {
+TEST(CandidateTest, functional_key) {
   Segment::Candidate candidate;
   candidate.Init();
 
@@ -486,7 +442,7 @@ TEST_F(CandidateTest, functional_key) {
   EXPECT_EQ("", candidate.functional_key());
 }
 
-TEST_F(CandidateTest, functional_value) {
+TEST(CandidateTest, functional_value) {
   Segment::Candidate candidate;
   candidate.Init();
 
@@ -517,7 +473,7 @@ TEST_F(CandidateTest, functional_value) {
   EXPECT_EQ("", candidate.functional_value());
 }
 
-TEST_F(CandidateTest, InnerSegmentIterator) {
+TEST(CandidateTest, InnerSegmentIterator) {
   {
     // For empty inner_segment_boundary, the initial state is done.
     Segment::Candidate candidate;
@@ -565,7 +521,7 @@ TEST_F(CandidateTest, InnerSegmentIterator) {
   }
 }
 
-TEST_F(SegmentTest, CopyFrom) {
+TEST(SegmentTest, CopyFrom) {
   Segment src, dest;
 
   src.set_key("key");
@@ -586,7 +542,7 @@ TEST_F(SegmentTest, CopyFrom) {
   EXPECT_EQ(src.meta_candidate(0).key, dest.meta_candidate(0).key);
 }
 
-TEST_F(SegmentTest, MetaCandidateTest) {
+TEST(SegmentTest, MetaCandidateTest) {
   Segment segment;
 
   EXPECT_EQ(0, segment.meta_candidates_size());

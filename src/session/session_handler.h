@@ -41,7 +41,6 @@
 #include "session/common.h"
 #include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
-
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
@@ -103,8 +102,11 @@ class SessionHandler : public SessionHandlerInterface {
       SessionMap;
   typedef SessionMap::Element SessionElement;
 
-  // Reload the configurations on the current sessions.
-  void ReloadConfig();
+  // Sets config to all the modules managed by this handler.  This does not
+  // affect the stored config in the local storage.
+  void SetConfig(const config::Config &config);
+  // Updates the stored config, if the |command| contains the config.
+  void MaybeUpdateStoredConfig(commands::Command *command);
 
   bool CreateSession(commands::Command *command);
   bool DeleteSession(commands::Command *command);
@@ -153,6 +155,7 @@ class SessionHandler : public SessionHandlerInterface {
       user_dictionary_session_handler_;
   std::unique_ptr<composer::TableManager> table_manager_;
   std::unique_ptr<commands::Request> request_;
+  std::unique_ptr<config::Config> config_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandler);
 };

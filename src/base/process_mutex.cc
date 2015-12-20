@@ -176,11 +176,17 @@ ProcessMutex::~ProcessMutex() {
 }
 
 bool ProcessMutex::LockAndWrite(const string &message) {
-  return Singleton<NamedLockManager>::get()->Lock(filename_, message);
+  if (!Singleton<NamedLockManager>::get()->Lock(filename_, message)) {
+    VLOG(1) << filename_ << " is already locked";
+    return false;
+  }
+  locked_ = true;
+  return true;
 }
 
 bool ProcessMutex::UnLock() {
   Singleton<NamedLockManager>::get()->UnLock(filename_);
+  locked_ = false;
   return true;
 }
 

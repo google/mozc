@@ -52,9 +52,9 @@
 #include "protocol/config.pb.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/key_event_transformer.h"
-#include "session/internal/keymap-inl.h"
 #include "session/internal/keymap.h"
 #include "session/internal/keymap_factory.h"
+#include "session/internal/keymap-inl.h"
 #include "session/internal/session_output.h"
 #include "session/session_converter.h"
 #include "session/session_usage_stats_util.h"
@@ -145,14 +145,6 @@ void SetSessionState(const ImeContext::State state, ImeContext *context) {
       break;
     case ImeContext::COMPOSITION:
       if (prev_state == ImeContext::PRECOMPOSITION) {
-        // NOTE: In case of state change including commitment, state change
-        // doesn't happen directly at once from CONVERSION to COMPOSITION.
-        // Actual state change is CONVERSION to PRECOMPOSITION at first,
-        // followed by PRECOMPOSITION to COMPOSITION.
-        // However in this case we can only get one SendCaretRectangle
-        // because the state change is executed atomically.
-        context->mutable_composition_rectangle()->CopyFrom(
-            context->caret_rectangle());
         // Notify the start of composition to the converter so that internal
         // state can be refreshed by the client context (especially by
         // preceding text).
@@ -222,9 +214,13 @@ Session::~Session() {}
 void Session::InitContext(ImeContext *context) const {
   context->set_create_time(Clock::GetTime());
   context->set_last_command_time(0);
-  context->set_composer(new composer::Composer(NULL, &context->GetRequest()));
+  context->set_composer(new composer::Composer(NULL,
+                                               &context->GetRequest(),
+                                               &context->GetConfig()));
   context->set_converter(
-      new SessionConverter(engine_->GetConverter(), &context->GetRequest()));
+      new SessionConverter(engine_->GetConverter(),
+                           &context->GetRequest(),
+                           &context->GetConfig()));
 #ifdef OS_WIN
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
@@ -234,7 +230,11 @@ void Session::InitContext(ImeContext *context) const {
 #endif
   context->mutable_client_context()->Clear();
 
-  UpdateConfig(config::ConfigHandler::GetConfig(), context);
+  context->SetConfig(&context->GetConfig());
+
+#ifdef OS_LINUX
+  context->mutable_converter()->set_use_cascading_window(false);
+#endif
 }
 
 
@@ -352,9 +352,6 @@ bool Session::SendCommand(commands::Command *command) {
       break;
     case commands::SessionCommand::UNDO_OR_REWIND:
       result = UndoOrRewind(command);
-      break;
-    case commands::SessionCommand::SEND_CARET_LOCATION:
-      result = SetCaretLocation(command);
       break;
     case commands::SessionCommand::COMMIT_RAW_TEXT:
       result = CommitRawText(command);
@@ -943,12 +940,13 @@ bool Session::SendKeyConversionState(commands::Command *command) {
 
 void Session::UpdatePreferences(commands::Command *command) {
   DCHECK(command);
-
   const config::Config &config = command->input().config();
   if (config.has_session_keymap()) {
+    // Set temporary keymap.
     context_->set_keymap(config.session_keymap());
   } else {
-    context_->set_keymap(GET_CONFIG(session_keymap));
+    // Reset keymap.
+    context_->set_keymap(context_->GetConfig().session_keymap());
   }
 
   if (command->input().has_capability()) {
@@ -956,7 +954,21 @@ void Session::UpdatePreferences(commands::Command *command) {
         command->input().capability());
   }
 
-  UpdateOperationPreferences(config, context_.get());
+  // Update config values modified temporarily.
+  // TODO(team): Stop using config for temporary modification.
+  if (config.has_selection_shortcut()) {
+    context_->mutable_converter()->set_selection_shortcut(
+        config.selection_shortcut());
+  }
+
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+  context_->mutable_converter()->set_use_cascading_window(false);
+#else  // OS_LINUX || OS_ANDROID || OS_NACL
+  if (config.has_use_cascading_window()) {
+    context_->mutable_converter()->set_use_cascading_window(
+        config.use_cascading_window());
+  }
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 }
 
 bool Session::IMEOn(commands::Command *command) {
@@ -1114,63 +1126,16 @@ bool Session::ResetContext(commands::Command *command) {
 
 void Session::SetTable(const composer::Table *table) {
   ClearUndoContext();
-  context_.get()->mutable_composer()->SetTable(table);
+  context_->mutable_composer()->SetTable(table);
 }
 
-void Session::ReloadConfig() {
-  UpdateConfig(config::ConfigHandler::GetConfig(), context_.get());
+void Session::SetConfig(config::Config *config) {
+  context_->SetConfig(config);
 }
 
 void Session::SetRequest(const commands::Request *request) {
   ClearUndoContext();
   context_->SetRequest(request);
-}
-
-// static
-void Session::UpdateConfig(const config::Config &config, ImeContext *context) {
-  context->set_keymap(config.session_keymap());
-
-  Singleton<KeyEventTransformer>::get()->ReloadConfig(config);
-  context->mutable_composer()->ReloadConfig();
-  UpdateOperationPreferences(config, context);
-}
-
-// static
-void Session::UpdateOperationPreferences(const config::Config &config,
-                                         ImeContext *context) {
-  OperationPreferences operation_preferences;
-  // Keyboard shortcut for candidates.
-  const char kShortcut123456789[] = "123456789";
-  const char kShortcutASDFGHJKL[] = "asdfghjkl";
-  config::Config::SelectionShortcut shortcut;
-  if (config.has_selection_shortcut()) {
-    shortcut = config.selection_shortcut();
-  } else {
-    shortcut = GET_CONFIG(selection_shortcut);
-  }
-  switch (shortcut) {
-    case config::Config::SHORTCUT_123456789:
-      operation_preferences.candidate_shortcuts = kShortcut123456789;
-      break;
-    case config::Config::SHORTCUT_ASDFGHJKL:
-      operation_preferences.candidate_shortcuts = kShortcutASDFGHJKL;
-      break;
-    case config::Config::NO_SHORTCUT:
-      operation_preferences.candidate_shortcuts.clear();
-      break;
-    default:
-      LOG(WARNING) << "Unkown shortcuts type: "
-                   << GET_CONFIG(selection_shortcut);
-      break;
-  }
-
-  // Cascading Window.
-#ifndef OS_LINUX
-  if (config.has_use_cascading_window()) {
-    operation_preferences.use_cascading_window = config.use_cascading_window();
-  }
-#endif
-  context->mutable_converter()->SetOperationPreferences(operation_preferences);
 }
 
 bool Session::GetStatus(commands::Command *command) {
@@ -1441,6 +1406,7 @@ bool Session::InsertCharacter(commands::Command *command) {
   }
 
   const commands::KeyEvent &key = command->input().key();
+
   if (key.input_style() == commands::KeyEvent::DIRECT_INPUT &&
       context_->state() == ImeContext::PRECOMPOSITION) {
     // If the key event represents a half width ascii character (ie.
@@ -1549,7 +1515,7 @@ bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
   std::unique_ptr<composer::Composer> temporary_composer;
   if (input.has_key() && input.key().has_mode()) {
     // Allocate an object only when it is necessary.
-    temporary_composer.reset(new composer::Composer(NULL, NULL));
+    temporary_composer.reset(new composer::Composer(NULL, NULL, NULL));
     // Copy the current composer state just in case.
     temporary_composer->CopyFrom(context_->composer());
     ApplyInputMode(input.key().mode(), temporary_composer.get());
@@ -1559,7 +1525,7 @@ bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
 
   // Check the current config and the current input status.
   bool is_full_width = false;
-  switch (GET_CONFIG(space_character_form)) {
+  switch (context_->GetConfig().space_character_form()) {
     case config::Config::FUNDAMENTAL_INPUT_MODE: {
       const transliteration::TransliterationType input_mode =
           target_composer->GetInputMode();
@@ -2675,33 +2641,6 @@ void Session::Output(commands::Command *command) {
   OutputMode(command);
   context_->mutable_converter()->PopOutput(
       context_->composer(), command->mutable_output());
-  OutputWindowLocation(command);
-}
-
-void Session::OutputWindowLocation(commands::Command *command) const {
-  if (!(command->output().has_candidates() &&
-        context_->caret_rectangle().IsInitialized() &&
-        context_->composition_rectangle().IsInitialized())) {
-    return;
-  }
-
-  DCHECK(command->output().candidates().has_category());
-
-  commands::Candidates *candidates =
-      command->mutable_output()->mutable_candidates();
-
-  candidates->mutable_caret_rectangle()->CopyFrom(
-      context_->caret_rectangle());
-
-  candidates->mutable_composition_rectangle()->CopyFrom(
-      context_->composition_rectangle());
-
-  if (command->output().candidates().category() == commands::SUGGESTION ||
-      command->output().candidates().category() == commands::PREDICTION) {
-    candidates->set_window_location(commands::Candidates::COMPOSITION);
-  } else {
-    candidates->set_window_location(commands::Candidates::CARET);
-  }
 }
 
 void Session::OutputMode(commands::Command *command) const {
@@ -2781,7 +2720,7 @@ bool IsValidKey(const config::Config &config,
 
 bool Session::CanStartAutoConversion(
     const commands::KeyEvent &key_event) const {
-  if (!GET_CONFIG(use_auto_conversion)) {
+  if (!context_->GetConfig().use_auto_conversion()) {
     return false;
   }
 
@@ -2815,7 +2754,6 @@ bool Session::CanStartAutoConversion(
     return false;
   }
 
-  const config::Config &config = config::ConfigHandler::GetConfig();
   const uint32 key_code = key_event.key_code();
 
   string preedit;
@@ -2828,7 +2766,7 @@ bool Session::CanStartAutoConversion(
   // Check last character as user may change romaji table,
   // For instance, if user assigns "." as "foo", we don't
   // want to invoke auto_conversion.
-  if (!IsValidKey(config, key_code, last_char)) {
+  if (!IsValidKey(context_->GetConfig(), key_code, last_char)) {
     return false;
   }
 
@@ -2851,8 +2789,7 @@ void Session::UpdateTime() {
 
 void Session::TransformInput(commands::Input *input) {
   if (input->has_key()) {
-    Singleton<KeyEventTransformer>::get()->TransformKeyEvent(
-        input->mutable_key());
+    context_->key_event_transformer().TransformKeyEvent(input->mutable_key());
   }
 }
 
@@ -2861,41 +2798,6 @@ bool Session::SwitchInputFieldType(commands::Command *command) {
   context_->mutable_composer()->SetInputFieldType(
       command->input().context().input_field_type());
   Output(command);
-  return true;
-}
-
-bool Session::SetCaretLocation(commands::Command *command) {
-  if (!command->input().has_command()) {
-    return false;
-  }
-
-  const commands::SessionCommand &session_command = command->input().command();
-  if (!session_command.has_caret_rectangle()) {
-    context_->mutable_caret_rectangle()->Clear();
-    return false;
-  }
-
-  if (!context_->caret_rectangle().IsInitialized()) {
-    context_->mutable_caret_rectangle()->CopyFrom(
-        session_command.caret_rectangle());
-    return true;
-  }
-
-  const int caret_delta_y = abs(
-      context_->caret_rectangle().y() - session_command.caret_rectangle().y());
-
-  context_->mutable_caret_rectangle()->CopyFrom(
-      session_command.caret_rectangle());
-
-  const int kJumpThreshold = 30;
-
-  // If caret is jumped, assume the text field is also jumped and reset the
-  // rectangle of composition text.
-  if (caret_delta_y > kJumpThreshold) {
-    context_->mutable_composition_rectangle()->CopyFrom(
-        context_->caret_rectangle());
-  }
-
   return true;
 }
 

@@ -94,7 +94,8 @@ def MakeSubsetFont(fonttools_path, unicodes, input_font, output_font):
     python_cmd = 'python'
     commands = [python_cmd, os.path.join(fonttools_path, 'subset.py'),
                 temp_input_font]
-    commands.extend(['U+%08x' % ord(char) for char in unicodes])
+    commands.extend(['--unicodes=%s' %
+                     ','.join(['U+%08x' % ord(char) for char in unicodes])])
     env = os.environ.copy()
     # In fontTools toolchain, "from fontTools import XXXX" is executed.
     # In order for successfull import, add parent directory of the toolchain

@@ -208,15 +208,6 @@ class DateRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
-  }
-
-  virtual void TearDown() {
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
   }
 };
 
@@ -1075,9 +1066,10 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
 TEST_F(DateRewriterTest, NumberRewriterTest) {
   Segments segments;
   DateRewriter rewriter;
-  const commands::Request &request = commands::Request::default_instance();
-  const composer::Composer composer(NULL, &request);
-  const ConversionRequest conversion_request(&composer, &request);
+  const commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
 
   // 0101 is expected 3 time candidate and 2 date candidates
   InitSegment("0101", "0101", &segments);
@@ -1217,9 +1209,11 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
   composer::Table table;
   table.AddRule("222", "c", "");
   table.AddRule("3", "d", "");
-
-  composer::Composer composer(&table, NULL);
-  const ConversionRequest conversion_request(&composer, NULL);
+  const commands::Request request;
+  const config::Config config;
+  composer::Composer composer(&table, &request, &config);
+  ConversionRequest conversion_request;
+  conversion_request.set_composer(&composer);
 
   // Key sequence : 2223
   // Preedit : cd
@@ -1263,19 +1257,19 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
 }
 
 TEST_F(DateRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   DateRewriter rewriter;
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
   }
 }
 

@@ -35,6 +35,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "testing/base/public/googletest.h"

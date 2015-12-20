@@ -48,9 +48,13 @@
 #include "base/stopwatch.h"
 #include "base/util.h"
 #include "net/http_client_common.h"
+
 #ifdef MOZC_ENABLE_HTTP_CLIENT
+#if defined(OS_MACOSX)
 #include "net/http_client_mac.h"
+#elif defined(__native_client__)  // OS_MACOSX
 #include "net/http_client_pepper.h"
+#endif  // OS_MACOSX or __native_client__
 #include "net/proxy_manager.h"
 #endif  // MOZC_ENABLE_HTTP_CLIENT
 

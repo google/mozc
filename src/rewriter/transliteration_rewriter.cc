@@ -30,6 +30,7 @@
 #include "rewriter/transliteration_rewriter.h"
 
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "base/logging.h"
@@ -108,9 +109,7 @@ void ModifyT13nsForGodan(const string &key, vector<string> *t13ns) {
   for (string::const_iterator c = src.begin(); c != src.end(); ++c) {
     // Won't check "0 <= *c" here as string::value_type must be configured
     // to be unsigned in Mozc.
-    // TODO(yukawa): use std::is_unsigned in <type_traits> instead
-    //     when C++11 becomes available.
-    static_assert(string::value_type(-1) > 0,
+    static_assert(std::is_unsigned<string::value_type>::value,
                   "string::value must be unsigned.");
     if (*c < arraysize(kKeycodeToT13nMap) && kKeycodeToT13nMap[*c] != NULL) {
       dst.append(kKeycodeToT13nMap[*c]);

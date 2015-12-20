@@ -109,17 +109,9 @@ class ZipcodeRewriterTest : public ::testing::Test {
 #endif  // MOZC_USE_PACKED_DICTIONARY
 
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
   }
 
   virtual void TearDown() {
-    // restore config to default.
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
-
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
@@ -140,38 +132,31 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
      // "東京都港区赤坂"
      "\xE6\x9D\xB1\xE4\xBA\xAC\xE9\x83\xBD\xE6"
      "\xB8\xAF\xE5\x8C\xBA\xE8\xB5\xA4\xE5\x9D\x82";
-  const ConversionRequest default_request;
+  ConversionRequest request;
+  config::Config config;
+  request.set_config(&config);
 
   {
     Segments segments;
     AddSegment("test", "test", NON_ZIPCODE, &segments);
-    EXPECT_FALSE(zipcode_rewriter->Rewrite(default_request, &segments));
+    EXPECT_FALSE(zipcode_rewriter->Rewrite(request, &segments));
   }
 
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_space_character_form(
-        config::Config::FUNDAMENTAL_HALF_WIDTH);
-    config::ConfigHandler::SetConfig(config);
+    config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter->Rewrite(default_request, &segments);
-    EXPECT_TRUE(HasZipcodeAndAddress(segments,
-                                     kZipcode + " " + kAddress));
+    zipcode_rewriter->Rewrite(request, &segments);
+    EXPECT_TRUE(HasZipcodeAndAddress(segments, kZipcode + " " + kAddress));
   }
 
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_space_character_form(
-        config::Config::FUNDAMENTAL_FULL_WIDTH);
-    config::ConfigHandler::SetConfig(config);
+    config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter->Rewrite(default_request, &segments);
+    zipcode_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      // "　" (full-width space)
                                      kZipcode + "\xE3\x80\x80" + kAddress));

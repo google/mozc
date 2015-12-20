@@ -66,6 +66,7 @@
       'dependencies': [
         '<(dataset_tag)_data_manager_base.gyp:<(dataset_tag)_user_pos_manager',
         '<(mozc_dir)/base/base.gyp:base',
+        '<(mozc_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_dir)/rewriter/rewriter.gyp:embedded_dictionary',
         'gen_<(dataset_tag)_embedded_data#host',

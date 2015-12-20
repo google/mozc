@@ -87,10 +87,11 @@ class MockDataAndImmutableConverter {
     int dictionary_size = 0;
     data_manager_->GetSystemDictionaryData(&dictionary_data,
                                            &dictionary_size);
+    SystemDictionary *sysdic =
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
     dictionary_.reset(new DictionaryImpl(
-        SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
-        ValueDictionary::CreateValueDictionaryFromImage(
-            *pos_matcher, dictionary_data, dictionary_size),
+        sysdic,  // DictionaryImpl takes the ownership
+        new ValueDictionary(*pos_matcher, &sysdic->value_trie()),
         &user_dictionary_stub_,
         suppression_dictionary_.get(),
         pos_matcher));
@@ -161,16 +162,6 @@ class MockDataAndImmutableConverter {
 
 class NBestGeneratorTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
   void GatherCandidates(
       size_t size, Segments::RequestType request_type,
       NBestGenerator *nbest, Segment *segment) const {
@@ -198,9 +189,6 @@ class NBestGeneratorTest : public ::testing::Test {
     }
     return end_node;
   }
-
- private:
-  config::Config default_config_;
 };
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {

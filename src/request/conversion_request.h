@@ -75,7 +75,8 @@ class ConversionRequest {
 
   ConversionRequest();
   ConversionRequest(const composer::Composer *c,
-                    const commands::Request *request);
+                    const commands::Request *request,
+                    const config::Config *config);
   ~ConversionRequest();
 
   bool has_composer() const;
@@ -95,6 +96,7 @@ class ConversionRequest {
   void set_request(const commands::Request *request);
 
   const config::Config &config() const;
+  void set_config(const config::Config *config);
 
   void CopyFrom(const ConversionRequest &request);
 
@@ -112,6 +114,9 @@ class ConversionRequest {
 
   // Input request.
   const commands::Request *request_;
+
+  // Input config.
+  const config::Config *config_;
 
   // If true, insert a top candidate from the actual (non-immutable) converter
   // to realtime conversion results. Note that setting this true causes a big

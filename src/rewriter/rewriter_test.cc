@@ -68,9 +68,6 @@ class RewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
     converter_mock_.reset(new ConverterMock);
     const testing::MockDataManager data_manager;
     pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
@@ -79,12 +76,6 @@ class RewriterTest : public ::testing::Test {
                                      &data_manager,
                                      pos_group_.get(),
                                      kNullDictionary));
-  }
-
-  virtual void TearDown() {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
   }
 
   const RewriterInterface *GetRewriter() const {

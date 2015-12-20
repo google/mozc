@@ -174,8 +174,18 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
       candidate->value = value;
       candidate->content_value = value;
     } else {       // with expression
-      candidate->value = expression + value;
-      candidate->content_value = expression + value;
+      DCHECK(!expression.empty());
+      if (expression.front() == '=') {
+        // Expression starts with '='.
+        // Appends value to the left of expression.
+        candidate->value = value + expression;
+        candidate->content_value = value + expression;
+      } else {
+        // Expression ends with '='.
+        // Appends value to the right of expression.
+        candidate->value = expression + value;
+        candidate->content_value = expression + value;
+      }
     }
   }
 

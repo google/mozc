@@ -118,7 +118,6 @@ TEST(ImeSwitchUtilTest, DefaultTest) {
   ConfigHandler::GetDefaultConfig(&config);
   config.set_session_keymap(Config::NONE);
   ImeSwitchUtil::ReloadConfig(config);
-  // MSIME for windows, KOTOERI for others
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -142,7 +141,11 @@ TEST(ImeSwitchUtilTest, DefaultTest) {
     commands::KeyEvent key;
     KeyParser::ParseKey("ON", &key);
     key.set_special_key(commands::KeyEvent::ON);
-    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
+    if (ConfigHandler::GetDefaultKeyMap() == config::Config::CHROMEOS) {
+      EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
+    } else {
+      EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
+    }
   }
 }
 

@@ -36,17 +36,12 @@
 
 #include "base/file_util.h"
 #include "base/port.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/gunit.h"
-
-#ifdef OS_ANDROID
-#include "base/mmap.h"
-#include "base/singleton.h"
-#include "data_manager/android/android_data_manager.h"
-#endif  // OS_ANDROID
 
 namespace {
 uint32 GenerateRandomSeed() {
@@ -69,51 +64,15 @@ namespace mozc {
 using session::testing::SessionHandlerTestBase;
 using session::testing::TestSessionClient;
 
-namespace {
-#ifdef OS_ANDROID
-// In actual libmozc.so usage, the dictionary data will be given via JNI call
-// because only Java side code knows where the data is.
-// On native code unittest, we cannot do it, so instead we mmap the files
-// and use it.
-// Note that this technique works here because the no other test code doesn't
-// link to this binary.
-// TODO(hidehiko): Get rid of this hack by refactoring Engine/DataManager
-// related code.
-class AndroidInitializer {
- private:
-  AndroidInitializer() {
-    string dictionary_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/dictionary_data");
-    CHECK(dictionary_mmap_.Open(dictionary_data_path.c_str(), "r"));
-    android::AndroidDataManager::SetDictionaryData(
-        dictionary_mmap_.begin(), dictionary_mmap_.size());
-
-    string connection_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/connection_data");
-    CHECK(connection_mmap_.Open(connection_data_path.c_str(), "r"));
-    android::AndroidDataManager::SetConnectionData(
-        connection_mmap_.begin(), connection_mmap_.size());
-    LOG(ERROR) << "mmap data initialized.";
-  }
-
-  friend class Singleton<AndroidInitializer>;
-
-  Mmap dictionary_mmap_;
-  Mmap connection_mmap_;
-
-  DISALLOW_COPY_AND_ASSIGN(AndroidInitializer);
-};
-#endif  // OS_ANDROID
-}  // namespace
-
 class SessionHandlerStressTest : public SessionHandlerTestBase {
  protected:
   virtual EngineInterface *CreateEngine() {
-#ifdef OS_ANDROID
-    Singleton<AndroidInitializer>::get();
-#endif  // OS_ANDROID
     return EngineFactory::Create();
   }
+
+ private:
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
 };
 
 TEST_F(SessionHandlerStressTest, BasicStressTest) {

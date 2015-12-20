@@ -43,7 +43,6 @@
 namespace mozc {
 namespace dictionary {
 
-
 class DictionaryFileCodec : public DictionaryFileCodecInterface {
  public:
   DictionaryFileCodec();

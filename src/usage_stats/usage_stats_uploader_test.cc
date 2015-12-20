@@ -57,9 +57,9 @@
 #include "usage_stats/usage_stats_testing_util.h"
 
 #ifdef OS_ANDROID
-#include "base/android_util.h"
 #include "base/android_jni_mock.h"
 #include "base/android_jni_proxy.h"
+#include "base/android_util.h"
 #endif  // OS_ANDROID
 
 DECLARE_string(test_tmpdir);
@@ -169,10 +169,6 @@ class UsageStatsUploaderTest : public ::testing::Test {
     HTTPClient::SetHTTPClientHandler(&client_);
     EXPECT_TRUE(storage::Registry::Clear());
 
-    mozc::config::Config config;
-    mozc::config::ConfigHandler::GetDefaultConfig(&config);
-    mozc::config::ConfigHandler::SetConfig(config);
-
     // save test stats
     UsageStats::IncrementCountBy(kCountStatsKey, kCountStatsDefaultValue);
     EXPECT_COUNT_STATS(kCountStatsKey, kCountStatsDefaultValue);
@@ -181,10 +177,6 @@ class UsageStatsUploaderTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    mozc::config::Config config;
-    mozc::config::ConfigHandler::GetDefaultConfig(&config);
-    mozc::config::ConfigHandler::SetConfig(config);
-
     TestableUsageStatsUploader::SetClientIdHandler(NULL);
     HTTPClient::SetHTTPClientHandler(NULL);
     EXPECT_TRUE(storage::Registry::Clear());

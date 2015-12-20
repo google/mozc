@@ -72,8 +72,6 @@ void CreateTestFile(const string &filename, const string &data) {
 }
 }  // namespace
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
-
 TEST_F(FileUtilTest, CreateDirectory) {
   EXPECT_TRUE(FileUtil::DirectoryExists(FLAGS_test_tmpdir));
   // dirpath = FLAGS_test_tmpdir/testdir
@@ -113,8 +111,6 @@ TEST_F(FileUtilTest, DirectoryExists) {
   FileUtil::Unlink(filepath);
   ASSERT_FALSE(FileUtil::FileExists(filepath));
 }
-
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 TEST_F(FileUtilTest, Unlink) {
   const string filepath = FileUtil::JoinPath(FLAGS_test_tmpdir, "testfile");

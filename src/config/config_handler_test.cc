@@ -242,13 +242,15 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   ScopedSetConfigFileName scoped_config_file_name(
       "memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
-  EXPECT_EQ(default_incognito_mode, GET_CONFIG(incognito_mode));
+  EXPECT_EQ(default_incognito_mode,
+            config::ConfigHandler::GetConfig().incognito_mode());
 }
 
-#ifndef OS_ANDROID
+#if !defined(OS_ANDROID) && !defined(__native_client__)
 // Temporarily disable this test because FileUtil::CopyFile fails on
-// Android for some reason.
-// TODO(yukawa): Enable this test on Android.
+// Android for some reason, and on NaCl since it uses mock file system and the
+// mock file system doesn't have a source file.
+// TODO(hsumita): Enable this test on Android and NaCl.
 TEST_F(ConfigHandlerTest, LoadTestConfig) {
   const char kPathPrefix[] = "";
   const char KDataDir[] = "data/test/config";
@@ -292,7 +294,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     EXPECT_FALSE(FileUtil::FileExists(dest_path));
   }
 }
-#endif  // !OS_ANDROID
+#endif  // !OS_ANDROID && !__native_client__
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   config::Config output;
@@ -301,9 +303,11 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   config::ConfigHandler::GetDefaultConfig(&output);
 #ifdef OS_MACOSX
   EXPECT_EQ(output.session_keymap(), config::Config::KOTOERI);
-#else  // OS_MACOSX
+#elif defined(__native_client__)  // OS_MACOSX
+  EXPECT_EQ(output.session_keymap(), config::Config::CHROMEOS);
+#else  // OS_MACOSX || __native_client
   EXPECT_EQ(output.session_keymap(), config::Config::MSIME);
-#endif
+#endif  // OS_MACOSX || __native_client
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {

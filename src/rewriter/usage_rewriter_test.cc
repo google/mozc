@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef NO_USAGE_REWRITER
+
 #include "rewriter/usage_rewriter.h"
 
 #include <memory>
@@ -41,6 +43,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
@@ -69,11 +72,14 @@ void AddCandidate(const string &key, const string &value,
 
 class UsageRewriterTest : public ::testing::Test {
  protected:
+  UsageRewriterTest() {
+    convreq_.set_request(&request_);
+    convreq_.set_config(&config_);
+  }
+
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+    config::ConfigHandler::GetDefaultConfig(&config_);
 
     data_manager_.reset(new testing::MockDataManager);
 
@@ -85,10 +91,8 @@ class UsageRewriterTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    // just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+    // just in case, reset the config
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   UsageRewriter *CreateUsageRewriter() const {
@@ -97,6 +101,10 @@ class UsageRewriterTest : public ::testing::Test {
         user_dictionary_.get());
   }
 
+  ConversionRequest convreq_;
+  commands::Request request_;
+  config::Config config_;
+
   std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDictionary> user_dictionary_;
   std::unique_ptr<testing::MockDataManager> data_manager_;
@@ -104,10 +112,9 @@ class UsageRewriterTest : public ::testing::Test {
 
 TEST_F(UsageRewriterTest, CapabilityTest) {
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  const ConversionRequest request;
   EXPECT_EQ(RewriterInterface::CONVERSION |
             RewriterInterface::PREDICTION,
-            rewriter->capability(request));
+            rewriter->capability(convreq_));
 }
 
 TEST_F(UsageRewriterTest, ConjugationTest) {
@@ -129,8 +136,7 @@ TEST_F(UsageRewriterTest, ConjugationTest) {
                "\xE5\x94\xB1\xE3\x81\x88\xE3\x81\xB0",
                "\xE3\x81\x86\xE3\x81\x9F\xE3\x81\x88",
                "\xE5\x94\x84\xE3\x81\x88", seg);
-  const ConversionRequest default_request;
-  EXPECT_TRUE(rewriter->Rewrite(default_request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   // "歌う"
   EXPECT_EQ("\xE6\xAD\x8C\xE3\x81\x86",
             segments.conversion_segment(0).candidate(0).usage_title);
@@ -145,7 +151,6 @@ TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
-  const ConversionRequest request;
 
   segments.Clear();
   seg = segments.push_back_segment();
@@ -156,7 +161,7 @@ TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
                "\xE9\x9D\x92\xE3\x81\x84",
                "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                "\xE9\x9D\x92\xE3\x81\x84", seg);
-  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   // "青い"
   EXPECT_EQ("\xE9\x9D\x92\xE3\x81\x84",
             segments.conversion_segment(0).candidate(0).usage_title);
@@ -171,7 +176,7 @@ TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
                "\xE3\x81\x82\xE3\x81\x82\xE3\x81\x82",
                "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                "\xE3\x81\x82\xE3\x81\x82\xE3\x81\x82", seg);
-  EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter->Rewrite(convreq_, &segments));
   EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_title);
   EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_description);
 }
@@ -180,7 +185,6 @@ TEST_F(UsageRewriterTest, ConfigTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
-  const ConversionRequest request;
 
   // Default setting
   {
@@ -193,15 +197,12 @@ TEST_F(UsageRewriterTest, ConfigTest) {
                  "\xE9\x9D\x92\xE3\x81\x84",
                  "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                  "\xE9\x9D\x92\xE3\x81\x84", seg);
-    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   }
 
   {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config.mutable_information_list_config()->
+    config_.mutable_information_list_config()->
         set_use_local_usage_dictionary(false);
-    config::ConfigHandler::SetConfig(config);
 
     segments.Clear();
     seg = segments.push_back_segment();
@@ -212,15 +213,12 @@ TEST_F(UsageRewriterTest, ConfigTest) {
                  "\xE9\x9D\x92\xE3\x81\x84",
                  "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                  "\xE9\x9D\x92\xE3\x81\x84", seg);
-    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+    EXPECT_FALSE(rewriter->Rewrite(convreq_, &segments));
   }
 
   {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config.mutable_information_list_config()->
+    config_.mutable_information_list_config()->
         set_use_local_usage_dictionary(true);
-    config::ConfigHandler::SetConfig(config);
 
     segments.Clear();
     seg = segments.push_back_segment();
@@ -231,7 +229,7 @@ TEST_F(UsageRewriterTest, ConfigTest) {
                  "\xE9\x9D\x92\xE3\x81\x84",
                  "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                  "\xE9\x9D\x92\xE3\x81\x84", seg);
-    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   }
 }
 
@@ -239,7 +237,6 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
-  const ConversionRequest request;
 
   segments.Clear();
   seg = segments.push_back_segment();
@@ -255,7 +252,7 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
                "\xE8\x92\xBC\xE3\x81\x84",
                "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                "\xE8\x92\xBC\xE3\x81\x84", seg);
-  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   // "青い"
   EXPECT_EQ("\xE9\x9D\x92\xE3\x81\x84",
             segments.conversion_segment(0).candidate(0).usage_title);
@@ -279,7 +276,7 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
                "\xE3\x81\x82\xE3\x81\x82\xE3\x81\x82",
                "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                "\xE3\x81\x82\xE3\x81\x82\xE3\x81\x82", seg);
-  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   // "青い"
   EXPECT_EQ("\xE9\x9D\x92\xE3\x81\x84",
             segments.conversion_segment(0).candidate(0).usage_title);
@@ -301,7 +298,7 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
                "\xE9\x9D\x92\xE3\x81\x84",
                "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                "\xE9\x9D\x92\xE3\x81\x84", seg);
-  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_title);
   EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_description);
   // "青い"
@@ -323,7 +320,7 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
                "\xE3\x81\x84\xE3\x81\x84\xE3\x81\x84",
                "\xE3\x81\x82\xE3\x81\x8A\xE3\x81\x84",
                "\xE3\x81\x84\xE3\x81\x84\xE3\x81\x84", seg);
-  EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter->Rewrite(convreq_, &segments));
   EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_title);
   EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_description);
   EXPECT_EQ("", segments.conversion_segment(0).candidate(1).usage_title);
@@ -334,7 +331,6 @@ TEST_F(UsageRewriterTest, MultiSegmentsTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
-  const ConversionRequest request;
 
   segments.Clear();
   seg = segments.push_back_segment();
@@ -368,7 +364,7 @@ TEST_F(UsageRewriterTest, MultiSegmentsTest) {
                "\xE5\x94\xB1\xE3\x81\x88\xE3\x81\xB0",
                "\xE3\x81\x86\xE3\x81\x9F\xE3\x81\x88",
                "\xE5\x94\x84\xE3\x81\x88", seg);
-  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   // "青い"
   EXPECT_EQ("\xE9\x9D\x92\xE3\x81\x84",
             segments.conversion_segment(0).candidate(0).usage_title);
@@ -393,7 +389,6 @@ TEST_F(UsageRewriterTest, SameUsageTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
   Segment *seg;
-  const ConversionRequest request;
 
   seg = segments.push_back_segment();
   // "うたえば"
@@ -413,7 +408,7 @@ TEST_F(UsageRewriterTest, SameUsageTest) {
                "\xE5\x94\xB1\xE3\x82\xA8\xE3\x83\x90",
                "\xE3\x81\x86\xE3\x81\x9F\xE3\x81\x88",
                "\xE5\x94\x84\xE3\x81\x88", seg);
-  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
   // "歌う"
   EXPECT_EQ("\xE6\xAD\x8C\xE3\x81\x86",
             segments.conversion_segment(0).candidate(0).usage_title);
@@ -513,9 +508,8 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
       "\xE3\x81\x86\xE3\x81\xBE",
       "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x91\xE3\x82\xAB", seg);
 
-  const ConversionRequest request;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
 
   // Result of ("うま", "Horse"). No comment is expected.
   const Segment::Candidate &cand0 = segments.conversion_segment(0).candidate(0);
@@ -534,3 +528,5 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
 }
 
 }  // namespace mozc
+
+#endif  // NO_USAGE_REWRITER

@@ -49,7 +49,10 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-using std::unique_ptr;
+#ifdef __native_client__
+#include "data_manager/packed/packed_data_oss.h"
+#include "data_manager/packed/packed_data_manager.h"
+#endif  // __native_client__
 
 using mozc::quality_regression::QualityRegressionUtil;
 
@@ -68,15 +71,22 @@ class QualityRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+
+#ifdef __native_client__
+    // Registers full-size PackedDataManager.
+    std::unique_ptr<mozc::packed::PackedDataManager> data_manager(
+        new mozc::packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    mozc::packed::RegisterPackedDataManager(data_manager.release());
+#endif  // __native_client__
   }
 
   virtual void TearDown() {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+#ifdef __native_client__
+    // Unregisters mocked PackedDataManager.
+    mozc::packed::RegisterPackedDataManager(nullptr);
+#endif  // __native_client__
   }
 
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
@@ -171,16 +181,17 @@ class QualityRegressionTest : public testing::Test {
 
 
 TEST_F(QualityRegressionTest, ChromeOSTest) {
-  unique_ptr<EngineInterface> chromeos_engine(ChromeOsEngineFactory::Create());
-  QualityRegressionUtil util(chromeos_engine->GetConverter());
+  std::unique_ptr<EngineInterface> engine(ChromeOsEngineFactory::Create());
+  QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::CHROMEOS, &util);
 }
 
 // Test for desktop
 TEST_F(QualityRegressionTest, BasicTest) {
-  unique_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
 }
+
 }  // namespace
 }  // namespace mozc

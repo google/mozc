@@ -144,9 +144,6 @@ class NumberRewriterTest : public ::testing::Test {
 #endif  // MOZC_USE_PACKED_DICTIONARY
 
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
     pos_matcher_ = mock_data_manager_.GetPOSMatcher();
   }
 
@@ -1111,56 +1108,19 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
 TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
   // To reproduce issue b/6714268.
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
-
-  Segments segments;
-  Segment *segment = segments.push_back_segment();
-  for (int i = 0; i < 20; ++i) {
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetUnknownId();  // Not number POS
-    candidate->rid = pos_matcher_->GetUnknownId();
-    // "いち"
-    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "いち"
-    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "壱"
-    candidate->value = "\xe5\xa3\xb1";
-    // "壱"
-    candidate->content_value = "\xe5\xa3\xb1";
-  }
-  for (int i = 0; i < 20; ++i) {
-    Segment::Candidate *candidate = segment->add_candidate();
-
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();  // Number POS
-    candidate->rid = pos_matcher_->GetNumberId();
-    // "いち"
-    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "いち"
-    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "一"
-    candidate->value = "\xe4\xb8\x80";
-    // "一"
-    candidate->content_value = "\xe4\xb8\x80";
-  }
-
-  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
-}
-
-TEST_F(NumberRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
   }
 }
 

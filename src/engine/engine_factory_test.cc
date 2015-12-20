@@ -30,14 +30,41 @@
 #include "engine/engine_factory.h"
 
 #include <memory>
+#include <string>
 
+#include "base/logging.h"
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_manager.h"
+#include "data_manager/packed/packed_data_mock.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 
-TEST(EngineFactoryTest, MobilePredictorOnAndroid) {
+class EngineFactoryTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers mocked PackedDataManager.
+    std::unique_ptr<packed::PackedDataManager>
+        data_manager(new packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
+  }
+
+  virtual void TearDown() {
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Unregisters mocked PackedDataManager.
+    packed::RegisterPackedDataManager(nullptr);
+#endif  // MOZC_USE_PACKED_DICTIONARY
+  }
+};
+
+TEST_F(EngineFactoryTest, MobilePredictorOnAndroid) {
   std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   PredictorInterface *predictor = engine->GetPredictor();
 #ifdef OS_ANDROID

@@ -39,6 +39,7 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
@@ -49,64 +50,14 @@ using mozc::storage::louds::LoudsTrie;
 namespace mozc {
 namespace dictionary {
 
-ValueDictionary::ValueDictionary(const POSMatcher& pos_matcher)
-    : dictionary_file_(new DictionaryFile),
+ValueDictionary::ValueDictionary(const POSMatcher &pos_matcher,
+                                 const LoudsTrie *value_trie)
+    : value_trie_(value_trie),
       codec_(SystemDictionaryCodecFactory::GetCodec()),
       suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {
 }
 
 ValueDictionary::~ValueDictionary() {}
-
-// static
-ValueDictionary *ValueDictionary::CreateValueDictionaryFromFile(
-    const POSMatcher& pos_matcher, const string &filename) {
-  std::unique_ptr<ValueDictionary> instance(new ValueDictionary(pos_matcher));
-  DCHECK(instance.get());
-  if (!instance->dictionary_file_->OpenFromFile(filename)) {
-    LOG(ERROR) << "Failed to open system dictionary file";
-    return nullptr;
-  }
-  if (!instance->OpenDictionaryFile()) {
-    LOG(ERROR) << "Failed to create value dictionary";
-    return nullptr;
-  }
-  return instance.release();
-}
-
-// static
-ValueDictionary *ValueDictionary::CreateValueDictionaryFromImage(
-    const POSMatcher& pos_matcher, const char *ptr, int len) {
-  // Make the dictionary not to be paged out.
-  // We don't check the return value because the process doesn't necessarily
-  // has the priviledge to mlock.
-  // Note that we don't munlock the space because it's always better to keep
-  // the singleton system dictionary paged in as long as the process runs.
-  Mmap::MaybeMLock(ptr, len);
-  std::unique_ptr<ValueDictionary> instance(new ValueDictionary(pos_matcher));
-  DCHECK(instance.get());
-  if (!instance->dictionary_file_->OpenFromImage(ptr, len)) {
-    LOG(ERROR) << "Failed to open system dictionary file";
-    return nullptr;
-  }
-  if (!instance->OpenDictionaryFile()) {
-    LOG(ERROR) << "Failed to create value dictionary";
-    return nullptr;
-  }
-  return instance.release();
-}
-
-bool ValueDictionary::OpenDictionaryFile() {
-  int image_len = 0;
-  const unsigned char *value_image =
-      reinterpret_cast<const uint8 *>(dictionary_file_->GetSection(
-          codec_->GetSectionNameForValue(), &image_len));
-  CHECK(value_image) << "can not find value section";
-  if (!(value_trie_.Open(value_image))) {
-    DLOG(ERROR) << "Cannot open value trie";
-    return false;
-  }
-  return true;
-}
 
 // ValueDictionary is supposed to use the same data with SystemDictionary
 // and SystemDictionary::HasKey should return the same result with
@@ -175,7 +126,7 @@ void ValueDictionary::LookupPredictive(
   codec_->EncodeValue(key, &encoded_key);
 
   LoudsTrie::Node node;
-  if (!value_trie_.Traverse(encoded_key, &node)) {
+  if (!value_trie_->Traverse(encoded_key, &node)) {
     return;
   }
 
@@ -191,8 +142,8 @@ void ValueDictionary::LookupPredictive(
     node = queue.front();
     queue.pop();
 
-    if (value_trie_.IsTerminalNode(node)) {
-      switch (HandleTerminalNode(value_trie_, *codec_,
+    if (value_trie_->IsTerminalNode(node)) {
+      switch (HandleTerminalNode(*value_trie_, *codec_,
                                  suggestion_only_word_id_,
                                  node, callback, encoded_value_buffer,
                                  &value, &token)) {
@@ -205,9 +156,9 @@ void ValueDictionary::LookupPredictive(
       }
     }
 
-    for (value_trie_.MoveToFirstChild(&node);
-         value_trie_.IsValidNode(node);
-         value_trie_.MoveToNextSibling(&node)) {
+    for (value_trie_->MoveToFirstChild(&node);
+         value_trie_->IsValidNode(node);
+         value_trie_->MoveToNextSibling(&node)) {
       queue.push(node);
     }
   } while (!queue.empty());
@@ -230,7 +181,7 @@ void ValueDictionary::LookupExact(
 
   string lookup_key_str;
   codec_->EncodeValue(key, &lookup_key_str);
-  if (value_trie_.ExactSearch(lookup_key_str) == -1) {
+  if (value_trie_->ExactSearch(lookup_key_str) == -1) {
     return;
   }
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {

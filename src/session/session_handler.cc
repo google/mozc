@@ -152,7 +152,8 @@ SessionHandler::SessionHandler(EngineInterface *engine)
       user_dictionary_session_handler_(
           new user_dictionary::UserDictionarySessionHandler),
       table_manager_(new composer::TableManager),
-      request_(new commands::Request) {
+      request_(new commands::Request),
+      config_(new config::Config) {
   if (FLAGS_restricted) {
     VLOG(1) << "Server starts with restricted mode";
     // --restricted is almost always specified when mozc_client is inside Job.
@@ -174,6 +175,8 @@ SessionHandler::SessionHandler(EngineInterface *engine)
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
+
+  config::ConfigHandler::GetConfig(config_.get());
 
   // allow [2..128] sessions
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
@@ -224,18 +227,19 @@ bool SessionHandler::StartWatchDog() {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
-void SessionHandler::ReloadConfig() {
-  const composer::Table *table = table_manager_->GetTable(
-      *request_, config::ConfigHandler::GetConfig());
+void SessionHandler::SetConfig(const config::Config &config) {
+  *config_ = config;
+  const composer::Table *table = table_manager_->GetTable(*request_, *config_);
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
     if (element->value != NULL) {
-      element->value->ReloadConfig();
+      element->value->SetConfig(config_.get());
       element->value->SetRequest(request_.get());
       element->value->SetTable(table);
     }
   }
+  config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config);
 }
 
 bool SessionHandler::SyncData(commands::Command *command) {
@@ -247,7 +251,6 @@ bool SessionHandler::SyncData(commands::Command *command) {
 bool SessionHandler::Shutdown(commands::Command *command) {
   VLOG(1) << "Shutdown server";
   SyncData(command);
-  ReloadConfig();   // for saving log_commands
   is_available_ = false;
   UsageStats::IncrementCount("ShutDown");
   return true;
@@ -255,10 +258,8 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 
 bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
-  ReloadConfig();
+  SetConfig(config::ConfigHandler::GetConfig());
   engine_->Reload();
-  config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
-      config::ConfigHandler::GetConfig());
   return true;
 }
 
@@ -285,10 +286,6 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
 
 bool SessionHandler::GetStoredConfig(commands::Command *command) {
   VLOG(1) << "Getting stored config";
-  // Ensure the onmemory config is same as the locally stored one
-  // because the local data could be changed by sync.
-  ReloadConfig();
-
   // Use GetStoredConfig instead of GetConfig because GET_CONFIG
   // command should return raw stored config, which is not
   // affected by imposed config.
@@ -297,6 +294,11 @@ bool SessionHandler::GetStoredConfig(commands::Command *command) {
     LOG(WARNING) << "cannot get config";
     return false;
   }
+
+  // Ensure the onmemory config is same as the locally stored one
+  // because the local data could be changed by sync.
+  SetConfig(command->output().config());
+
   return true;
 }
 
@@ -307,15 +309,10 @@ bool SessionHandler::SetStoredConfig(commands::Command *command) {
     return false;
   }
 
-  const mozc::config::Config &config = command->input().config();
-  if (!config::ConfigHandler::SetConfig(config)) {
-    return false;
-  }
+  *command->mutable_output()->mutable_config() = command->input().config();
+  MaybeUpdateStoredConfig(command);
 
-  command->mutable_output()->mutable_config()->CopyFrom(config);
-  Reload(command);
   UsageStats::IncrementCount("SetConfig");
-
   return true;
 }
 
@@ -553,6 +550,16 @@ void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
   observer_handler_->AddObserver(observer);
 }
 
+void SessionHandler::MaybeUpdateStoredConfig(commands::Command *command) {
+  if (!command->output().has_config()) {
+    return;
+  }
+
+  *config_ = command->output().config();
+  config::ConfigHandler::SetConfig(*config_);
+  Reload(command);
+}
+
 bool SessionHandler::SendKey(commands::Command *command) {
   const SessionID id = command->input().id();
   session::SessionInterface **session = session_map_->MutableLookup(id);
@@ -561,6 +568,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
     return false;
   }
   (*session)->SendKey(command);
+  MaybeUpdateStoredConfig(command);
   return true;
 }
 
@@ -584,6 +592,7 @@ bool SessionHandler::SendCommand(commands::Command *command) {
     return false;
   }
   (*session)->SendCommand(command);
+  MaybeUpdateStoredConfig(command);
   return true;
 }
 
@@ -647,7 +656,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
-  ReloadConfig();
+  SetConfig(config::ConfigHandler::GetConfig());
 
   // session is not empty.
   last_session_empty_time_ = 0;

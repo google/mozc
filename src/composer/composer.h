@@ -39,13 +39,13 @@
 
 #include "base/port.h"
 #include "base/protobuf/repeated_field.h"
-#include "composer/internal/typing_corrector.h"
 #include "composer/internal/transliterators.h"
+#include "composer/internal/typing_corrector.h"
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
-#include "transliteration/transliteration.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
+#include "transliteration/transliteration.h"
 
 
 namespace mozc {
@@ -64,7 +64,9 @@ class Composer {
     REWIND,
   };
 
-  Composer(const Table *table, const commands::Request *request);
+  Composer(const Table *table,
+           const commands::Request *request,
+           const config::Config *config);
   virtual ~Composer();
 
   // Reset all composing data except table.
@@ -85,6 +87,7 @@ class Composer {
   void SetTable(const Table *table);
 
   void SetRequest(const commands::Request *request);
+  void SetConfig(const config::Config *config);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -271,6 +274,7 @@ class Composer {
   size_t max_length_;
 
   const commands::Request *request_;
+  const config::Config *config_;
 
   DISALLOW_COPY_AND_ASSIGN(Composer);
 };
