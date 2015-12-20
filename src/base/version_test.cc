@@ -50,10 +50,6 @@ TEST(VersionTest, VersionNumberTest) {
       "%d.%d.%d.%d", major, minor, build_number, revision));
 }
 
-TEST(VersionTest, BuildTypeTest) {
-  EXPECT_EQ(version::kMozcBuildType, Version::GetMozcBuildType());
-}
-
 TEST(VersionTest, CompareVersion) {
   EXPECT_FALSE(Version::CompareVersion("0.0.0.0", "0.0.0.0"));
   EXPECT_FALSE(Version::CompareVersion("1.2.3.4", "1.2.3.4"));

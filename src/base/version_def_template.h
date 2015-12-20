@@ -30,8 +30,6 @@
 #ifndef MOZC_BASE_VERSION_DEF_H_
 #define MOZC_BASE_VERSION_DEF_H_
 
-#include "base/version.h"  // for BuildType
-
 namespace mozc {
 namespace version {
 
@@ -42,7 +40,6 @@ const int kMozcVersionMajor = @MAJOR@;
 const int kMozcVersionMinor = @MINOR@;
 const int kMozcVersionBuildNumber = @BUILD@;
 const int kMozcVersionRevision = @REVISION@;
-const Version::BuildType kMozcBuildType = Version::@FLAG@;
 
 
 }  // namespace version

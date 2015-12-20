@@ -37,11 +37,6 @@ namespace mozc {
 
 class Version {
  public:
-  enum BuildType {
-    CONTINUOUS = 1,
-    RELEASE = 2,
-  };
-
   // Get current mozc version (former called MOZC_VERSION)
   static string GetMozcVersion();
 
@@ -60,9 +55,6 @@ class Version {
   // CompareVersion("1.2.3.4", "5.2.3.4") => true
   // CompareVersion("1.25.3.4", "1.2.3.4") => false
   static bool CompareVersion(const string &lhs, const string &rhs);
-
-  // Get the current build type.
-  static BuildType GetMozcBuildType();
 
 
  private:
