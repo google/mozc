@@ -34,6 +34,7 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/string_piece.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
@@ -95,13 +96,13 @@ const char *VariantsRewriter::kYenKigou =
 #endif  // OS_ANDROID
 
 // Append |src| to |dst| with a separator ' '.
-void AppendString(const string &src, string *dst) {
-  CHECK(dst);
+void AppendString(StringPiece src, string *dst) {
+  DCHECK(dst);
   if (!src.empty()) {
     if (!dst->empty()) {
-      dst->append(" ");
+      dst->append(1, ' ');
     }
-    dst->append(src);
+    src.AppendToString(dst);
   }
 }
 
@@ -178,8 +179,7 @@ void VariantsRewriter::SetDescriptionForPrediction(
 void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
                                       int description_type,
                                       Segment::Candidate *candidate) {
-  string description;
-  string character_form_message;
+  StringPiece character_form_message;
 
   // Add Character form.
   if (description_type & CHARACTER_FORM) {
@@ -187,22 +187,22 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
         Util::GetScriptTypeWithoutSymbols(candidate->value);
     switch (type) {
       case Util::HIRAGANA:
-        character_form_message = kHiragana;
+        character_form_message.set(kHiragana);
         // don't need to set full/half, because hiragana only has
         // full form
         description_type &= ~FULL_HALF_WIDTH;
         break;
       case Util::KATAKANA:
         // character_form_message = "カタカナ";
-        character_form_message = kKatakana;
+        character_form_message.set(kKatakana);
         break;
       case Util::NUMBER:
         // character_form_message = "数字";
-        character_form_message = kNumber;
+        character_form_message.set(kNumber);
         break;
       case Util::ALPHABET:
         // character_form_message = "アルファベット";
-        character_form_message = kAlphabet;
+        character_form_message.set(kAlphabet);
         break;
       case Util::KANJI:
       case Util::EMOJI:
@@ -231,6 +231,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     character_form_message.clear();
   }
 
+  string description;
   // full/half char description
   if (description_type & FULL_HALF_WIDTH) {
     const Util::FormType form = Util::GetFormType(candidate->value);
@@ -259,13 +260,13 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
 
   // add main message
   if (candidate->value == "\x5C" || candidate->value == "\xEF\xBC\xBC") {
-    // if "\" (harlf-width backslash) or "＼" (full-width backslash)
+    // if "\" (half-width backslash) or "＼" (full-width backslash)
     // AppendString("バックスラッシュ", &description);
     AppendString("\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF\xE3\x82\xB9"
                  "\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5",
                  &description);
   } else if (candidate->value == "\xC2\xA5") {
-    // if "¥" (harlf-width Yen sign), append kYenKigou and kPlatformDependent.
+    // if "¥" (half-width Yen sign), append kYenKigou and kPlatformDependent.
     AppendString(kYenKigou, &description);
     AppendString(kPlatformDependent, &description);
   } else if (candidate->value == "\xEF\xBF\xA5") {
@@ -305,7 +306,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   }
 
   // set new description
-  candidate->description = description;
+  candidate->description.swap(description);
   candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
 }
 
