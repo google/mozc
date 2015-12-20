@@ -240,15 +240,7 @@ void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
 }
 
 string ConfigHandlerImpl::GetConfigFileName() {
-#ifdef __native_client__
-  // Copies filename_ string here to prevent Copy-On-Write issues in
-  // multi-thread environment.
-  // See: http://stackoverflow.com/questions/1661154/c-stdstring-in-a-multi-threaded-program/
-  // TODO(hsumita): Remove this hack if not necessary.
-  return string(filename_.data(), filename_.size());
-#else
   return filename_;
-#endif  // __native_client__
 }
 }  // namespace
 
