@@ -27,6 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef __native_client__
+// Disabled on NaCl since it uses a mock file system.
+
 #include <memory>
 
 #include "base/file_stream.h"
@@ -617,3 +620,5 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
 #undef EXPECT_NOT_IN_ALL_CANDIDATE_WORDS
 
 }  // namespace
+
+#endif  // !__native_client__

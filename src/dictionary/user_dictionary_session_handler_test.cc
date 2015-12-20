@@ -233,7 +233,11 @@ TEST_F(UserDictionarySessionHandlerTest, NoOperation) {
 
 TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
 #ifdef __native_client__
-  EXPECT_PROTO_EQ("status: UNKNOWN_ERROR", *status_);
+  Clear();
+  command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
+  EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_ERROR,
+            status_->status());
 #else
   // Set up a user dictionary.
   {

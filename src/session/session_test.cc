@@ -43,6 +43,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -834,6 +835,8 @@ class SessionTest : public testing::Test {
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> mobile_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
 };
 
 // This test is intentionally defined at this location so that this
@@ -4124,6 +4127,9 @@ TEST_F(SessionTest, StatusOutput) {
     // Global mode should be kept as HIRAGANA
     EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
 
+#ifndef __native_client__
+    // NaCl doesn't support OFF key.
+
     // When the IME is deactivated, the temporary composition mode is reset.
     EXPECT_TRUE(SendKey("OFF", session.get(), &command));  // "あAaあA"
     ASSERT_TRUE(command.output().has_status());
@@ -4134,6 +4140,7 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::DIRECT, command.output().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+#endif  // !__native_client__
   }
 
   {  // Katakana mode + Shift key
@@ -4163,6 +4170,9 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::FULL_KATAKANA,
               command.output().status().comeback_mode());
 
+#ifndef __native_client__
+    // NaCl doesn't support OFF key.
+
     // When the IME is deactivated, the temporary composition mode is reset.
     EXPECT_TRUE(SendKey("OFF", session.get(), &command));  // "アA"
     ASSERT_TRUE(command.output().has_status());
@@ -4174,6 +4184,7 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
     EXPECT_EQ(commands::FULL_KATAKANA,
               command.output().status().comeback_mode());
+#endif  // !__native_client__
   }
 }
 
@@ -6001,6 +6012,8 @@ TEST_F(SessionTest, Issue2223762) {
   EXPECT_FALSE(command.output().has_result());
 }
 
+#ifndef __native_client__
+// NaCl doesn't support Eisu key
 TEST_F(SessionTest, Issue2223755) {
   // This is a unittest against http://b/2223755.
   // - F6 and F7 convert space to half-width.
@@ -6064,6 +6077,7 @@ TEST_F(SessionTest, Issue2223755) {
     EXPECT_EQ("\xE3\x82\xA2\xE3\x80\x80\xE3\x82\xA4", GetComposition(command));
   }
 }
+#endif  // !__native_client__
 
 TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
@@ -6294,6 +6308,8 @@ TEST_F(SessionTest, Issue2555503) {
   EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
 }
 
+#ifndef __native_client__
+// NaCl doesn't support hankaku/zenkaku key.
 TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
   // Existing preedit should be committed when IME is turned off.
@@ -6314,7 +6330,10 @@ TEST_F(SessionTest, Issue2791640) {
 
   ASSERT_FALSE(command.output().has_preedit());
 }
+#endif  // !__native_client__
 
+#ifndef __native_client__
+// NaCl doesn't support hankaku/zenkaku key.
 TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
   // Existing preedit should be committed when IME is turned off.
 
@@ -6356,7 +6375,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
     ASSERT_FALSE(command.output().has_preedit());
   }
 }
-
+#endif  // !__native_client__
 
 TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
@@ -6640,6 +6659,8 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   EXPECT_TRUE(command.output().has_preedit());
 }
 
+#ifndef __native_client__
+// NaCl doesn't support KeyEvent::ON|OFF.
 TEST_F(SessionTest, PerformedCommand) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
@@ -6687,6 +6708,7 @@ TEST_F(SessionTest, PerformedCommand) {
     EXPECT_COUNT_STATS("Performed_Conversion_Commit", 1);
   }
 }
+#endif  // !__native_client__
 
 TEST_F(SessionTest, ResetContext) {
   std::unique_ptr<MockConverterEngineForReset> engine(

@@ -27,51 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/engine_factory.h"
+#ifndef MOZC_DATA_MANAGER_PACKED_SCOPED_PACKED_DATA_MANAGER_INITIALIZER_FOR_TESTING_H_
+#define MOZC_DATA_MANAGER_PACKED_SCOPED_PACKED_DATA_MANAGER_INITIALIZER_FOR_TESTING_H_
 
-#include <memory>
-#include <string>
-
-#include "base/logging.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-#include "engine/engine_interface.h"
-#include "prediction/predictor_interface.h"
-#include "testing/base/public/gunit.h"
+#include "base/port.h"
 
 namespace mozc {
+namespace packed {
 
-class EngineFactoryTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers mocked PackedDataManager.
-    std::unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-  }
+class scoped_packed_data_manager_initializer_for_testing {
+ public:
+  scoped_packed_data_manager_initializer_for_testing();
+  ~scoped_packed_data_manager_initializer_for_testing();
 
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    packed::RegisterPackedDataManager(nullptr);
-#endif  // MOZC_USE_PACKED_DICTIONARY
-  }
+ private:
+  DISALLOW_COPY_AND_ASSIGN(scoped_packed_data_manager_initializer_for_testing);
 };
 
-TEST_F(EngineFactoryTest, MobilePredictorOnAndroid) {
-  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
-  PredictorInterface *predictor = engine->GetPredictor();
-#ifdef OS_ANDROID
-  EXPECT_EQ("MobilePredictor", predictor->GetPredictorName());
-#else
-  EXPECT_EQ("DefaultPredictor", predictor->GetPredictorName());
-#endif  // OS_ANDROID
-}
-
+}  // namespace packed
 }  // namespace mozc
+
+#endif  // MOZC_DATA_MANAGER_PACKED_SCOPED_PACKED_DATA_MANAGER_INITIALIZER_FOR_TESTING_H_

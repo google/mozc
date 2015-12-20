@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef NO_USAGE_REWRITER
+
 #include "rewriter/usage_rewriter.h"
 
 #include <memory>
@@ -526,3 +528,5 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
 }
 
 }  // namespace mozc
+
+#endif  // NO_USAGE_REWRITER

@@ -49,6 +49,11 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+#ifdef __native_client__
+#include "data_manager/packed/packed_data_oss.h"
+#include "data_manager/packed/packed_data_manager.h"
+#endif  // __native_client__
+
 using mozc::quality_regression::QualityRegressionUtil;
 
 namespace mozc {
@@ -66,6 +71,22 @@ class QualityRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+#ifdef __native_client__
+    // Registers full-size PackedDataManager.
+    std::unique_ptr<mozc::packed::PackedDataManager> data_manager(
+        new mozc::packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    mozc::packed::RegisterPackedDataManager(data_manager.release());
+#endif  // __native_client__
+  }
+
+  virtual void TearDown() {
+#ifdef __native_client__
+    // Unregisters mocked PackedDataManager.
+    mozc::packed::RegisterPackedDataManager(nullptr);
+#endif  // __native_client__
   }
 
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {

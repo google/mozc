@@ -31,6 +31,7 @@
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
+#include "base/logging.h"
 #include "base/system_util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
@@ -67,7 +68,7 @@ bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
   command.mutable_input()->mutable_capability()->set_text_deletion(
       commands::Capability::DELETE_PRECEDING_TEXT);
   handler->EvalCommand(&command);
-  if (id != NULL) {
+  if (id != nullptr) {
     *id = command.has_output() ? command.output().id() : 0;
   }
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
@@ -218,14 +219,14 @@ bool TestSessionClient::SubmitCandidate(uint32 id, commands::Output *output) {
 bool TestSessionClient::Reload() {
   commands::Input input;
   input.set_type(commands::Input::RELOAD);
-  return EvalCommand(&input, NULL);
+  return EvalCommand(&input, nullptr);
 }
 
 bool TestSessionClient::ResetContext() {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
   input.mutable_command()->set_type(commands::SessionCommand::RESET_CONTEXT);
-  return EvalCommand(&input, NULL);
+  return EvalCommand(&input, nullptr);
 }
 
 bool TestSessionClient::UndoOrRewind(commands::Output *output) {
@@ -242,7 +243,7 @@ bool TestSessionClient::SwitchInputMode(
   input.mutable_command()->set_type(
       commands::SessionCommand::SWITCH_INPUT_MODE);
   input.mutable_command()->set_composition_mode(composition_mode);
-  return EvalCommand(&input, NULL);
+  return EvalCommand(&input, nullptr);
 }
 
 bool TestSessionClient::SetRequest(const commands::Request &request,
@@ -272,7 +273,7 @@ bool TestSessionClient::EvalCommandInternal(commands::Input *input,
   commands::Command command;
   command.mutable_input()->CopyFrom(*input);
   bool result = handler_->EvalCommand(&command);
-  if (result && output != NULL) {
+  if (result && output != nullptr) {
     output->CopyFrom(command.output());
   }
 

@@ -39,6 +39,10 @@
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_manager.h"
+#include "data_manager/packed/packed_data_mock.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -69,6 +73,14 @@ class VariantsRewriterTest : public testing::Test {
 
   virtual void SetUp() {
     Reset();
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers mocked PackedDataManager.
+    std::unique_ptr<packed::PackedDataManager>
+        data_manager(new packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
     pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
@@ -80,6 +92,9 @@ class VariantsRewriterTest : public testing::Test {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     CharacterFormManager::GetCharacterFormManager()->ClearHistory();
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    packed::RegisterPackedDataManager(nullptr);
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   void InitSegmentsForAlphabetRewrite(const string &value,

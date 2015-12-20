@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_USAGE_REWRITER_H_
 #define MOZC_REWRITER_USAGE_REWRITER_H_
 
+#ifndef NO_USAGE_REWRITER
+
 #include <map>
 #include <string>
 #include <utility>
@@ -76,5 +78,7 @@ class UsageRewriter : public RewriterInterface  {
 };
 
 }  // namespace mozc
+
+#endif  // NO_USAGE_REWRITER
 
 #endif  // MOZC_REWRITER_USAGE_REWRITER_H_

@@ -39,6 +39,10 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_manager.h"
+#include "data_manager/packed/packed_data_mock.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -183,6 +187,15 @@ class EmojiRewriterTest : public ::testing::Test {
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers mocked PackedDataManager.
+    unique_ptr<packed::PackedDataManager>
+        data_manager(new packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
+
     rewriter_.reset(new EmojiRewriter(
         kTestEmojiData, arraysize(kTestEmojiData),
         kTestToken, arraysize(kTestToken),
@@ -190,8 +203,11 @@ class EmojiRewriterTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Unregisters mocked PackedDataManager.
+    packed::RegisterPackedDataManager(NULL);
+#endif  // MOZC_USE_PACKED_DICTIONARY
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-
     SystemUtil::SetUserProfileDirectory(original_profile_directory_);
   }
 

@@ -42,6 +42,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
+        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
@@ -77,8 +78,9 @@
       'dependencies': [
         '../converter/converter_base.gyp:converter_mock',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:mock_converter_engine',
-        "../engine/engine.gyp:mock_data_engine_factory",
+        '../engine/engine.gyp:mock_data_engine_factory',
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
@@ -95,6 +97,7 @@
         'session_regression_test.cc',
       ],
       'dependencies': [
+        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
@@ -115,7 +118,7 @@
         '../converter/converter_base.gyp:converter_mock',
         '../engine/engine.gyp:mock_converter_engine',
         '../testing/testing.gyp:gtest_main',
-        "../usage_stats/usage_stats_test.gyp:usage_stats_testing_util",
+        '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session',
         'session.gyp:session_server',
         'session_handler_test_util',
@@ -235,6 +238,7 @@
         'session_handler_stress_test.cc'
       ],
       'dependencies': [
+        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:random_keyevents_generator',

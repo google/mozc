@@ -44,11 +44,13 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
-#ifdef OS_ANDROID
-#include "base/mmap.h"
-#include "base/singleton.h"
-#include "data_manager/android/android_data_manager.h"
-#endif
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#ifdef MOZC_BUILD
+#include "data_manager/packed/packed_data_oss.h"
+#endif  // MOZC_BUILD
+
+#include "data_manager/packed/packed_data_manager.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 
 DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
@@ -61,43 +63,6 @@ using mozc::composer::Table;
 using mozc::config::Config;
 using mozc::config::ConfigHandler;
 
-namespace {
-#ifdef OS_ANDROID
-// In actual libmozc.so usage, the dictionary data will be given via JNI call
-// because only Java side code knows where the data is.
-// On native code unittest, we cannot do it, so instead we mmap the files
-// and use it.
-// Note that this technique works here because the no other test code doesn't
-// link to this binary.
-// TODO(hidehiko): Get rid of this hack by refactoring Engine/DataManager
-// related code.
-class AndroidInitializer {
- private:
-  AndroidInitializer() {
-    string dictionary_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/dictionary_data");
-    CHECK(dictionary_mmap_.Open(dictionary_data_path.c_str(), "r"));
-    mozc::android::AndroidDataManager::SetDictionaryData(
-        dictionary_mmap_.begin(), dictionary_mmap_.size());
-
-    string connection_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/connection_data");
-    CHECK(connection_mmap_.Open(connection_data_path.c_str(), "r"));
-    mozc::android::AndroidDataManager::SetConnectionData(
-        connection_mmap_.begin(), connection_mmap_.size());
-    LOG(ERROR) << "mmap data initialized.";
-  }
-
-  friend class Singleton<AndroidInitializer>;
-
-  Mmap dictionary_mmap_;
-  Mmap connection_mmap_;
-
-  DISALLOW_COPY_AND_ASSIGN(AndroidInitializer);
-};
-#endif  // OS_ANDROID
-}  // namespace
-
 class ConverterRegressionTest : public ::testing::Test {
  protected:
   ConverterRegressionTest() {
@@ -106,17 +71,22 @@ class ConverterRegressionTest : public ::testing::Test {
   }
 
   virtual void SetUp() {
-#ifdef OS_ANDROID
-    Singleton<AndroidInitializer>::get();
-#endif
-
     user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
-
-    // set default user profile directory
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Use a full-size dictionary for regression tests.
+    std::unique_ptr<mozc::packed::PackedDataManager>
+        data_manager(new mozc::packed::PackedDataManager);
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    mozc::packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   virtual void TearDown() {
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    mozc::packed::RegisterPackedDataManager(nullptr);
+#endif  // MOZC_USE_PACKED_DICTIONARY
     SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
   }
 

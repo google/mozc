@@ -55,6 +55,8 @@ struct ConnectionDataEntry {
   int cost;
 };
 
+#ifndef __native_client__
+// Disabled on NaCl since it uses a mock file system.
 TEST(ConnectorTest, CompareWithRawData) {
   const string path = FileUtil::JoinPath(
       FLAGS_test_srcdir, kTestConnectionDataImagePath);
@@ -89,6 +91,7 @@ TEST(ConnectorTest, CompareWithRawData) {
     }
   }
 }
+#endif  // !__native_client
 
 }  // namespace
 }  // namespace mozc

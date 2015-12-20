@@ -39,6 +39,7 @@
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/suppression_dictionary.h"
@@ -77,9 +78,12 @@ class CheckCandSizePredictor : public PredictorInterface {
   virtual const string &GetPredictorName() const {
     return predictor_name_;
   }
+
  private:
   int expected_cand_size_;
   const string predictor_name_;
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
 };
 
 class NullPredictor : public PredictorInterface {
