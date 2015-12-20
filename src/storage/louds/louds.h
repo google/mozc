@@ -93,16 +93,17 @@ class Louds {
   ~Louds();
 
   // Initializes this LOUDS from bit array.  To improve the performance of
-  // downward traversal (i.e., from root to leaves), set |select0_cache_size| to
-  // a larger value.  On the other hand, to improve the performance of upward
-  // traversal (i.e., from leaves to the root), set |select1_cache_size| to a
-  // larger value.
+  // downward traversal (i.e., from root to leaves), set |bitvec_lb0_cache_size|
+  // and |select0_cache_size| to larger values.  On the other hand, to improve
+  // the performance of upward traversal (i.e., from leaves to the root), set
+  // |bitvec_lb1_cache_size| and |select1_cache_size| to larger values.
   void Init(const uint8 *image, int length,
+            size_t bitvec_lb0_cache_size, size_t bitvec_lb1_cache_size,
             size_t select0_cache_size, size_t select1_cache_size);
 
   // Initializes this LOUDS from bit array without cache.
   void Init(const uint8 *image, int length) {
-    Init(image, length, 0, 0);
+    Init(image, length, 0, 0, 0, 0);
   }
 
   // Explicitly clears the internal bit array.

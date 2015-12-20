@@ -86,7 +86,19 @@ vector<uint8> MakeSequence(StringPiece s) {
     EXPECT_FALSE(louds.IsValidNode(tmp)); \
   } while (false)
 
-using CacheSizeParam = std::pair<size_t, size_t>;
+struct CacheSizeParam {
+  CacheSizeParam(size_t lb0, size_t lb1, size_t s0, size_t s1)
+      : bitvec_lb0_cache_size(lb0),
+        bitvec_lb1_cache_size(lb1),
+        select0_cache_size(s0),
+        select1_cache_size(s1) {}
+
+  size_t bitvec_lb0_cache_size;
+  size_t bitvec_lb1_cache_size;
+  size_t select0_cache_size;
+  size_t select1_cache_size;
+};
+
 class LoudsTest : public ::testing::TestWithParam<CacheSizeParam> {};
 
 TEST_P(LoudsTest, Basic) {
@@ -95,7 +107,11 @@ TEST_P(LoudsTest, Basic) {
   // Test with the trie illustrated in louds.h.
   const vector<uint8> kSeq = MakeSequence("10 110 0 110 0 0");
   Louds louds;
-  louds.Init(kSeq.data(), kSeq.size(), param.first, param.second);
+  louds.Init(kSeq.data(), kSeq.size(),
+             param.bitvec_lb0_cache_size,
+             param.bitvec_lb1_cache_size,
+             param.select0_cache_size,
+             param.select1_cache_size);
 
   // root -> 2 -> 3 -> 4 -> 5
   {
@@ -138,14 +154,27 @@ TEST_P(LoudsTest, Basic) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(GenLoudsTest, LoudsTest,
-                        ::testing::Values(CacheSizeParam(0, 0),
-                                          CacheSizeParam(0, 1),
-                                          CacheSizeParam(1, 0),
-                                          CacheSizeParam(1, 1),
-                                          CacheSizeParam(2, 2),
-                                          CacheSizeParam(8, 8),
-                                          CacheSizeParam(1024, 1024)));
+INSTANTIATE_TEST_CASE_P(
+    GenLoudsTest, LoudsTest,
+    ::testing::Values(CacheSizeParam(0, 0, 0, 0),
+                      CacheSizeParam(0, 0, 0, 1),
+                      CacheSizeParam(0, 0, 1, 0),
+                      CacheSizeParam(0, 0, 1, 1),
+                      CacheSizeParam(0, 1, 0, 0),
+                      CacheSizeParam(0, 1, 0, 1),
+                      CacheSizeParam(0, 1, 1, 0),
+                      CacheSizeParam(0, 1, 1, 1),
+                      CacheSizeParam(1, 0, 0, 0),
+                      CacheSizeParam(1, 0, 0, 1),
+                      CacheSizeParam(1, 0, 1, 0),
+                      CacheSizeParam(1, 0, 1, 1),
+                      CacheSizeParam(1, 1, 0, 0),
+                      CacheSizeParam(1, 1, 0, 1),
+                      CacheSizeParam(1, 1, 1, 0),
+                      CacheSizeParam(1, 1, 1, 1),
+                      CacheSizeParam(2, 2, 2, 2),
+                      CacheSizeParam(8, 8, 8, 8),
+                      CacheSizeParam(1024, 1024, 1024, 1024)));
 
 }  // namespace
 }  // namespace louds

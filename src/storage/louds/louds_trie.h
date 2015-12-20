@@ -52,17 +52,21 @@ class LoudsTrie {
   LoudsTrie() : edge_character_(nullptr) {}
   ~LoudsTrie() {}
 
-  // Opens the binary image and constructs the data structure.  The two cache
-  // sizes are passed to the underlying LOUDS.  See louds.h for more information
-  // of cache size.  This class doesn't own the "data", so it is caller's
+  // Opens the binary image and constructs the data structure.  The first four
+  // cache sizes are passed to the underlying LOUDS.  See louds.h for more
+  // information of cache size.  The last one is passed to the underlying
+  // terminal bit vector.  This class doesn't own the "data", so it is caller's
   // reponsibility to keep the data alive until Close is invoked.  See .cc file
   // for the detailed format of the binary image.
   bool Open(const uint8 *data,
+            size_t louds_lb0_cache_size,
+            size_t louds_lb1_cache_size,
             size_t louds_select0_cache_size,
-            size_t louds_select1_cache_size);
+            size_t louds_select1_cache_size,
+            size_t termvec_lb1_cache_size);
 
   bool Open(const uint8 *data) {
-    return Open(data, 0, 0);
+    return Open(data, 0, 0, 0, 0, 0);
   }
 
   // Destructs the internal data structure explicitly (the destructor will do

@@ -38,8 +38,9 @@ Louds::Louds() : select0_cache_size_(0), select1_cache_size_(0) {}
 Louds::~Louds() {}
 
 void Louds::Init(const uint8 *image, int length,
+                 size_t bitvec_lb0_cache_size, size_t bitvec_lb1_cache_size,
                  size_t select0_cache_size, size_t select1_cache_size) {
-  index_.Init(image, length);
+  index_.Init(image, length, bitvec_lb0_cache_size, bitvec_lb1_cache_size);
 
   // Cap the cache sizes.
   if (select0_cache_size > index_.GetNum0Bits()) {
