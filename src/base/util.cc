@@ -1577,7 +1577,7 @@ Util::ScriptType Util::GetScriptType(const char *begin,
 
 namespace {
 
-Util::ScriptType GetScriptTypeInternal(const string &str, bool ignore_symbols) {
+Util::ScriptType GetScriptTypeInternal(StringPiece str, bool ignore_symbols) {
   Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
@@ -1623,7 +1623,7 @@ Util::ScriptType GetScriptTypeInternal(const string &str, bool ignore_symbols) {
 
 }  // namespace
 
-Util::ScriptType Util::GetScriptType(const string &str) {
+Util::ScriptType Util::GetScriptType(StringPiece str) {
   return GetScriptTypeInternal(str, false);
 }
 

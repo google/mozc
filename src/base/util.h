@@ -386,7 +386,7 @@ class Util {
   // return script type of string. all chars in str must be
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.
   // If str has mixed scripts, this function returns UNKNOWN_SCRIPT
-  static ScriptType GetScriptType(const string &str);
+  static ScriptType GetScriptType(StringPiece str);
 
   // The same as GetScryptType(), but it ignores symbols
   // in the |str|.
