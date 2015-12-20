@@ -80,6 +80,11 @@ namespace {
 
 const int kMinTokenArrayBlobSize = 4;
 
+const size_t kKeyTrieSelect0CacheSize = 4 * 1024;
+const size_t kKeyTrieSelect1CacheSize = 4 * 1024;
+const size_t kValueTrieSelect0CacheSize = 1 * 1024;
+const size_t kValueTrieSelect1CacheSize = 16 * 1024;
+
 // Expansion table format:
 // "<Character to expand>[<Expanded character 1><Expanded character 2>...]"
 //
@@ -500,7 +505,9 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *key_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForKey(), &len));
-  if (!key_trie_.Open(key_image)) {
+  if (!key_trie_.Open(key_image,
+                      kKeyTrieSelect0CacheSize,
+                      kKeyTrieSelect1CacheSize)) {
     LOG(ERROR) << "cannot open key trie";
     return false;
   }
@@ -509,7 +516,9 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *value_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForValue(), &len));
-  if (!value_trie_.Open(value_image)) {
+  if (!value_trie_.Open(value_image,
+                        kValueTrieSelect0CacheSize,
+                        kValueTrieSelect1CacheSize)) {
     LOG(ERROR) << "can not open value trie";
     return false;
   }

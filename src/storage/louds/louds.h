@@ -30,6 +30,8 @@
 #ifndef MOZC_STORAGE_LOUDS_LOUDS_H_
 #define MOZC_STORAGE_LOUDS_LOUDS_H_
 
+#include <memory>
+
 #include "base/port.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
@@ -57,7 +59,8 @@ namespace louds {
 //  Node:  0   1    2  3    4  5
 // LOUDS:  10  110  0  110  0  0
 //
-// This class provides basic APIs to traverse a tree structure.
+// This class provides basic APIs to traverse a tree structure.  Performance
+// critical methods are inlined.
 class Louds {
  public:
   // Represents and stores location (tree node) for tree traversal.  By storing
@@ -86,18 +89,24 @@ class Louds {
     friend class Louds;
   };
 
-  Louds() {}
-  ~Louds() {}
+  Louds();
+  ~Louds();
 
-  // Initializes this LOUDS from bit array.
+  // Initializes this LOUDS from bit array.  To improve the performance of
+  // downward traversal (i.e., from root to leaves), set |select0_cache_size| to
+  // a larger value.  On the other hand, to improve the performance of upward
+  // traversal (i.e., from leaves to the root), set |select1_cache_size| to a
+  // larger value.
+  void Init(const uint8 *image, int length,
+            size_t select0_cache_size, size_t select1_cache_size);
+
+  // Initializes this LOUDS from bit array without cache.
   void Init(const uint8 *image, int length) {
-    index_.Init(image, length);
+    Init(image, length, 0, 0);
   }
 
   // Explicitly clears the internal bit array.
-  void Reset() {
-    index_.Reset();
-  }
+  void Reset();
 
   // APIs for traversal (all the methods are inline for performance).
 
@@ -105,7 +114,9 @@ class Louds {
   // Note: to get the root node, just allocate a default Node instance.
   void InitNodeFromNodeId(int node_id, Node *node) const {
     node->node_id_ = node_id;
-    node->edge_index_ = index_.Select1(node->node_id_);
+    node->edge_index_ = node_id < select1_cache_size_
+                            ? select1_cache_ptr_[node_id]
+                            : index_.Select1(node_id);
   }
 
   // Returns true if the given node is the root.
@@ -121,7 +132,9 @@ class Louds {
   //   * node 4 -> invalid node
   // REQUIRES: |node| is valid.
   void MoveToFirstChild(Node *node) const {
-    node->edge_index_ = index_.Select0(node->node_id_) + 1;
+    node->edge_index_ = node->node_id_ < select0_cache_size_
+                            ? select_cache_[node->node_id_]
+                            : index_.Select0(node->node_id_) + 1;
     node->node_id_ = node->edge_index_ - node->node_id_ + 1;
   }
 
@@ -145,7 +158,9 @@ class Louds {
   // REQUIRES: |node| is valid and not root.
   void MoveToParent(Node *node) const {
     node->node_id_ = node->edge_index_ - node->node_id_ + 1;
-    node->edge_index_ = index_.Select1(node->node_id_);
+    node->edge_index_ = node->node_id_ < select1_cache_size_
+                            ? select1_cache_ptr_[node->node_id_]
+                            : index_.Select1(node->node_id_);
   }
 
   // Returns true if |node| is in a valid state.
@@ -155,6 +170,10 @@ class Louds {
 
  private:
   SimpleSuccinctBitVectorIndex index_;
+  size_t select0_cache_size_;
+  size_t select1_cache_size_;
+  std::unique_ptr<int[]> select_cache_;
+  int* select1_cache_ptr_;  // = select_cache_.get() + select0_cache_size_
 
   DISALLOW_COPY_AND_ASSIGN(Louds);
 };

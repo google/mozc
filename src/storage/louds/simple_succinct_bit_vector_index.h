@@ -84,6 +84,9 @@ class SimpleSuccinctBitVectorIndex {
   // Returned index is 0-origin.
   int Select1(int n) const;
 
+  int GetNum1Bits() const { return index_.back(); }
+  int GetNum0Bits() const { return 8 * length_ - index_.back(); }
+
  private:
   const uint8 *data_;
   int length_;

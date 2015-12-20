@@ -43,6 +43,8 @@ TEST_F(SimpleSuccinctBitVectorIndexTest, Rank) {
   SimpleSuccinctBitVectorIndex bit_vector;
 
   bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8);
+  EXPECT_EQ(32, bit_vector.GetNum0Bits());
+  EXPECT_EQ(32, bit_vector.GetNum1Bits());
   EXPECT_EQ(0, bit_vector.Rank0(0));
   EXPECT_EQ(0, bit_vector.Rank1(0));
 
@@ -72,6 +74,9 @@ TEST_F(SimpleSuccinctBitVectorIndexTest, Select) {
   SimpleSuccinctBitVectorIndex bit_vector;
 
   bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8);
+  EXPECT_EQ(32, bit_vector.GetNum0Bits());
+  EXPECT_EQ(32, bit_vector.GetNum1Bits());
+
   for (int i = 1; i <= 16; ++i) {
     EXPECT_EQ(i - 1, bit_vector.Select0(i)) << i;
   }
@@ -92,6 +97,9 @@ TEST_F(SimpleSuccinctBitVectorIndexTest, Pattern1) {
 
   SimpleSuccinctBitVectorIndex bit_vector;
   bit_vector.Init(reinterpret_cast<const uint8 *>(data.data()), data.length());
+  EXPECT_EQ(4 * 1024, bit_vector.GetNum0Bits());
+  EXPECT_EQ(4 * 1024, bit_vector.GetNum1Bits());
+
   for (int i = 0; i < 1024; ++i) {
     EXPECT_EQ(i * 4, bit_vector.Rank0(i * 8)) << i;
     EXPECT_EQ(i * 4 + 1, bit_vector.Rank0(i * 8 + 1)) << i;
@@ -124,6 +132,9 @@ TEST_F(SimpleSuccinctBitVectorIndexTest, Pattern2) {
 
   SimpleSuccinctBitVectorIndex bit_vector;
   bit_vector.Init(reinterpret_cast<const uint8 *>(data.data()), data.length());
+  EXPECT_EQ(4 * 1024, bit_vector.GetNum0Bits());
+  EXPECT_EQ(4 * 1024, bit_vector.GetNum1Bits());
+
   for (int i = 0; i < 1024; ++i) {
     EXPECT_EQ(i * 4, bit_vector.Rank0(i * 8)) << i;
     EXPECT_EQ(i * 4 + 1, bit_vector.Rank0(i * 8 + 1)) << i;
