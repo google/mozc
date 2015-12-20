@@ -77,7 +77,6 @@
         '../../storage/louds/louds.gyp:louds_trie',
         '../dictionary_base.gyp:pos_matcher',
         '../file/dictionary_file.gyp:codec_factory',
-        '../file/dictionary_file.gyp:dictionary_file',
         'system_dictionary_codec',
       ],
     },

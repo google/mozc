@@ -30,55 +30,46 @@
 #include "dictionary/system/value_dictionary.h"
 
 #include <memory>
-#include <vector>
 
-#include "base/file_util.h"
-#include "base/stl_util.h"
-#include "base/system_util.h"
 #include "data_manager/user_pos_manager.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/system/system_dictionary_builder.h"
+#include "dictionary/system/codec_interface.h"
 #include "request/conversion_request.h"
-#include "testing/base/public/googletest.h"
+#include "storage/louds/louds_trie_builder.h"
 #include "testing/base/public/gunit.h"
+
+using mozc::storage::louds::LoudsTrie;
+using mozc::storage::louds::LoudsTrieBuilder;
 
 namespace mozc {
 namespace dictionary {
 
-class ValueDictionaryTest : public testing::Test {
+class ValueDictionaryTest : public ::testing::Test {
  protected:
-  ValueDictionaryTest() :
-      dict_name_(FLAGS_test_tmpdir + "/value_dict_test.dic") {}
-
   virtual void SetUp() {
-    STLDeleteElements(&tokens_);
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    FileUtil::Unlink(dict_name_);
     pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+    louds_trie_builder_.reset(new LoudsTrieBuilder);
+    louds_trie_.reset(new LoudsTrie);
   }
 
   virtual void TearDown() {
-    STLDeleteElements(&tokens_);
-    FileUtil::Unlink(dict_name_);
+    louds_trie_.reset(nullptr);
+    louds_trie_builder_.reset(nullptr);
   }
 
-  void AddToken(const string &key, const string &value) {
-    Token *token = new Token;
-    token->key = key;
-    token->value = value;
-    token->cost = 0;
-    token->lid = 0;
-    token->rid = 0;
-    tokens_.push_back(token);
+  void AddValue(const string &value) {
+    string encoded;
+    SystemDictionaryCodecFactory::GetCodec()->EncodeValue(value, &encoded);
+    louds_trie_builder_->Add(encoded);
   }
 
-  void BuildDictionary() {
-    dictionary::SystemDictionaryBuilder builder;
-    builder.BuildFromTokens(tokens_);
-    builder.WriteToFile(dict_name_);
+  ValueDictionary *BuildValueDictionary() {
+    louds_trie_builder_->Build();
+    louds_trie_->Open(
+        reinterpret_cast<const uint8 *>(louds_trie_builder_->image().data()));
+    return new ValueDictionary(*pos_matcher_, louds_trie_.get());
   }
 
   void InitToken(const string &value, Token *token) const {
@@ -88,27 +79,18 @@ class ValueDictionaryTest : public testing::Test {
     token->attributes = Token::NONE;
   }
 
-  const string dict_name_;
   const POSMatcher *pos_matcher_;
   ConversionRequest convreq_;
-
- private:
-  vector<Token *> tokens_;
+  std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
+  std::unique_ptr<LoudsTrie> louds_trie_;
 };
 
 TEST_F(ValueDictionaryTest, HasValue) {
-  // "うぃー"
-  AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
-  // "うぉー"
-  AddToken("\xE3\x81\x86\xE3\x81\x89\xE3\x83\xBC", "war");
-  // "わーど"
-  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
-  // "わーるど"
-  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x82\x8B\xE3\x81\xA9", "world");
-  BuildDictionary();
-  std::unique_ptr<ValueDictionary> dictionary(
-      ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
-                                                     dict_name_));
+  AddValue("we");
+  AddValue("war");
+  AddValue("word");
+  AddValue("world");
+  std::unique_ptr<ValueDictionary> dictionary(BuildValueDictionary());
 
   // ValueDictionary is supposed to use the same data with SystemDictionary
   // and SystemDictionary::HasValue should return the same result with
@@ -124,20 +106,12 @@ TEST_F(ValueDictionaryTest, HasValue) {
 }
 
 TEST_F(ValueDictionaryTest, LookupPredictive) {
-  // "ぐーぐる"
-  AddToken("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B", "google");
-  // "うぃー"
-  AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
-  // "うぉー"
-  AddToken("\xE3\x81\x86\xE3\x81\x89\xE3\x83\xBC", "war");
-  // "わーど"
-  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
-  // "わーるど"
-  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x82\x8B\xE3\x81\xA9", "world");
-  BuildDictionary();
-  std::unique_ptr<ValueDictionary> dictionary(
-      ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
-                                                     dict_name_));
+  AddValue("google");
+  AddValue("we");
+  AddValue("war");
+  AddValue("word");
+  AddValue("world");
+  std::unique_ptr<ValueDictionary> dictionary(BuildValueDictionary());
 
   // Reading fields are irrelevant to value dictionary.  Prepare actual tokens
   // that are to be looked up.
@@ -178,17 +152,11 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
 }
 
 TEST_F(ValueDictionaryTest, LookupExact) {
-  // "うぃー"
-  AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
-  // "うぉー"
-  AddToken("\xE3\x81\x86\xE3\x81\x89\xE3\x83\xBC", "war");
-  // "わーど"
-  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
-  BuildDictionary();
+  AddValue("we");
+  AddValue("war");
+  AddValue("word");
+  std::unique_ptr<ValueDictionary> dictionary(BuildValueDictionary());
 
-  std::unique_ptr<ValueDictionary> dictionary(
-      ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
-                                                     dict_name_));
   CollectTokenCallback callback;
   dictionary->LookupExact("war", convreq_, &callback);
   ASSERT_EQ(1, callback.tokens().size());

@@ -189,12 +189,14 @@ class ConverterTest : public ::testing::Test {
     int dictionary_size = 0;
     data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
+    SystemDictionary *sysdic =
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
     ret->user_dictionary.reset(new UserDictionaryStub);
     ret->suppression_dictionary.reset(new SuppressionDictionary);
     ret->dictionary.reset(new DictionaryImpl(
-        SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
-        ValueDictionary::CreateValueDictionaryFromImage(
-            *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
+        sysdic,  // DictionaryImpl takes the ownership
+        new ValueDictionary(*data_manager.GetPOSMatcher(),
+                            &sysdic->value_trie()),
         ret->user_dictionary.get(),
         ret->suppression_dictionary.get(),
         data_manager.GetPOSMatcher()));
@@ -1227,10 +1229,12 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
+  SystemDictionary *sysdic =
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   std::unique_ptr<DictionaryInterface> dictionary(new DictionaryImpl(
-      SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
-      ValueDictionary::CreateValueDictionaryFromImage(
-          *data_manager.GetPOSMatcher(), dictionary_data, dictionary_size),
+      sysdic,  // DictionaryImpl takes the ownership
+      new ValueDictionary(*data_manager.GetPOSMatcher(),
+                          &sysdic->value_trie()),
       mock_user_dictionary.get(),
       suppression_dictionary.get(),
       data_manager.GetPOSMatcher()));

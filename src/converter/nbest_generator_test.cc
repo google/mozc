@@ -87,10 +87,11 @@ class MockDataAndImmutableConverter {
     int dictionary_size = 0;
     data_manager_->GetSystemDictionaryData(&dictionary_data,
                                            &dictionary_size);
+    SystemDictionary *sysdic =
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
     dictionary_.reset(new DictionaryImpl(
-        SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
-        ValueDictionary::CreateValueDictionaryFromImage(
-            *pos_matcher, dictionary_data, dictionary_size),
+        sysdic,  // DictionaryImpl takes the ownership
+        new ValueDictionary(*pos_matcher, &sysdic->value_trie()),
         &user_dictionary_stub_,
         suppression_dictionary_.get(),
         pos_matcher));

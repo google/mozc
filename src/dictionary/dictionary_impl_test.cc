@@ -69,12 +69,10 @@ DictionaryData *CreateDictionaryData() {
   const char *dictionary_data = NULL;
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
-  DictionaryInterface *sys_dict =
+  SystemDictionary *sys_dict =
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-  DictionaryInterface *val_dict =
-      ValueDictionary::CreateValueDictionaryFromImage(*ret->pos_matcher,
-                                                      dictionary_data,
-                                                      dictionary_size);
+  ValueDictionary *val_dict =
+      new ValueDictionary(*ret->pos_matcher, &sys_dict->value_trie());
   ret->user_dictionary.reset(new UserDictionaryStub);
   ret->suppression_dictionary.reset(new SuppressionDictionary);
   ret->dictionary.reset(new DictionaryImpl(sys_dict,

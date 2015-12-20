@@ -98,6 +98,8 @@ class SystemDictionary : public DictionaryInterface {
 
   virtual ~SystemDictionary();
 
+  const storage::louds::LoudsTrie &value_trie() const { return value_trie_; }
+
   // Implementation of DictionaryInterface.
   virtual bool HasKey(StringPiece key) const;
   virtual bool HasValue(StringPiece value) const;

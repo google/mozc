@@ -34,9 +34,6 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_
 #define MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_
 
-#include <memory>
-#include <string>
-
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
@@ -45,19 +42,15 @@
 namespace mozc {
 namespace dictionary {
 
-class DictionaryFile;
 class POSMatcher;
 class SystemDictionaryCodecInterface;
 
 class ValueDictionary : public DictionaryInterface {
  public:
+  // This class doesn't take the ownership of |value_trie|.
+  ValueDictionary(const POSMatcher &pos_matcher,
+                  const storage::louds::LoudsTrie *value_trie);
   virtual ~ValueDictionary();
-
-  static ValueDictionary *CreateValueDictionaryFromFile(
-      const POSMatcher& pos_matcher, const string &filename);
-
-  static ValueDictionary *CreateValueDictionaryFromImage(
-      const POSMatcher& pos_matcher, const char *ptr, int len);
 
   // Implementation of DictionaryInterface
   virtual bool HasKey(StringPiece key) const;
@@ -76,12 +69,7 @@ class ValueDictionary : public DictionaryInterface {
                              Callback *callback) const;
 
  private:
-  explicit ValueDictionary(const POSMatcher& pos_matcher);
-
-  bool OpenDictionaryFile();
-
-  storage::louds::LoudsTrie value_trie_;
-  std::unique_ptr<DictionaryFile> dictionary_file_;
+  const storage::louds::LoudsTrie *value_trie_;
   const SystemDictionaryCodecInterface *codec_;
   const uint16 suggestion_only_word_id_;
 
