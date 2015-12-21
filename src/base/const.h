@@ -148,12 +148,6 @@ const char kMozcServerName[] = "mozc_server";
 const char kMozcRenderer[] = "mozc_renderer";
 const char kEventPathPrefix[] = "mozc.event.";
 const char kMozcTool[] = "mozc_tool";
-#ifdef OS_ANDROID
-#ifndef MOZC_ANDROID_APPLICATION_ID
-#error "MOZC_ANDROID_APPLICATION_ID must be set (e.g. \"org.mozc.android\""
-#endif  // !MOZC_ANDROID_APPLICATION_ID
-const char kMozcAndroidPackage[] = MOZC_ANDROID_APPLICATION_ID;
-#endif  // OS_ANDROID
 #endif
 
 const char kWordRegisterEnvironmentName[] = "default_entry_of_word_register";

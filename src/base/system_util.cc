@@ -233,10 +233,9 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 #endif  //  GOOGLE_JAPANESE_INPUT_BUILD
 
 #elif defined(OS_ANDROID)
-  // For android, we just use pre-defined directory, which is under the package
-  // directory, asssuming each device has single user.
-  dir = FileUtil::JoinPath("/data/data", kMozcAndroidPackage);
-  dir = FileUtil::JoinPath(dir, ".mozc");
+  // For android, we do nothing here because user profile directory,
+  // of which the path depends on active user,
+  // is injected from Java layer.
 
 #else  // !OS_WIN && !OS_MACOSX && !OS_ANDROID
   char buf[1024];

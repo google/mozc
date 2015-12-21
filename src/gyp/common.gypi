@@ -339,7 +339,6 @@
                   'OS_ANDROID',
                   # For the ambiguity of wcsstr.
                   '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-                  'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
                 ],
                 'cflags': [
                   # For unittest:
