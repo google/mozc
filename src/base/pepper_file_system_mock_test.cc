@@ -34,9 +34,6 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-namespace {
-const char *kFileDelimiter = "/";
-}  // namespace
 
 TEST(PepperFileSystemMockTest, ReadWriteDeleteBinaryFile) {
   PepperFileSystemMock file_system;
