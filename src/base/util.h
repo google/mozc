@@ -182,9 +182,23 @@ class Util {
     return CharsLen(str.data(), str.size());
   }
 
+  // Converts the first character of UTF8 string starting at |begin| to UCS4.
+  // The read byte length is stored to |mblen|.
   static char32 UTF8ToUCS4(const char *begin,
                            const char *end,
                            size_t *mblen);
+
+  // Converts a UCS4 code point to UTF8 string.
+  static void UCS4ToUTF8(char32 c, string *output);
+
+  // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
+  // |output| is not cleared.
+  static void UCS4ToUTF8Append(char32 c, string *output);
+
+  // Converts a UCS4 code point to UTF8 and stores it to char array.  The result
+  // is terminated by '\0'.  Returns the byte length of converted UTF8 string.
+  // REQUIRES: The output buffer must be longer than 7 bytes.
+  static size_t UCS4ToUTF8(char32 c, char *output);
 
   // Returns true if |s| is split into |first_char32| + |rest|.
   // You can pass NULL to |first_char32| and/or |rest| to ignore the matched
@@ -203,9 +217,6 @@ class Util {
   static bool SplitLastChar32(StringPiece s,
                               StringPiece *rest,
                               char32 *last_char32);
-
-  static void UCS4ToUTF8(char32 c, string *output);
-  static void UCS4ToUTF8Append(char32 c, string *output);
 
 #ifdef OS_WIN
   // Returns how many wide characters are necessary in UTF-16 to represent

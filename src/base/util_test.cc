@@ -814,6 +814,33 @@ TEST(UtilTest, UCS4ToUTF8) {
   EXPECT_EQ("\xF0\x90\x80\x80", output);
   Util::UCS4ToUTF8(0x1FFFFF, &output);
   EXPECT_EQ("\xF7\xBF\xBF\xBF", output);
+
+  // Buffer version.
+  char buf[7];
+
+  EXPECT_EQ(0, Util::UCS4ToUTF8(0, buf));
+  EXPECT_EQ(0, strcmp(buf, ""));
+
+  EXPECT_EQ(1, Util::UCS4ToUTF8(0x7F, buf));
+  EXPECT_EQ(0, strcmp("\x7F", buf));
+
+  EXPECT_EQ(2, Util::UCS4ToUTF8(0x80, buf));
+  EXPECT_EQ(0, strcmp("\xC2\x80", buf));
+
+  EXPECT_EQ(2, Util::UCS4ToUTF8(0x7FF, buf));
+  EXPECT_EQ(0, strcmp("\xDF\xBF", buf));
+
+  EXPECT_EQ(3, Util::UCS4ToUTF8(0x800, buf));
+  EXPECT_EQ(0, strcmp("\xE0\xA0\x80", buf));
+
+  EXPECT_EQ(3, Util::UCS4ToUTF8(0xFFFF, buf));
+  EXPECT_EQ(0, strcmp("\xEF\xBF\xBF", buf));
+
+  EXPECT_EQ(4, Util::UCS4ToUTF8(0x10000, buf));
+  EXPECT_EQ(0, strcmp("\xF0\x90\x80\x80", buf));
+
+  EXPECT_EQ(4, Util::UCS4ToUTF8(0x1FFFFF, buf));
+  EXPECT_EQ(0, strcmp("\xF7\xBF\xBF\xBF", buf));
 }
 
 TEST(UtilTest, CharsLen) {
