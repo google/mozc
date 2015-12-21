@@ -383,9 +383,6 @@
               }],
             ],
           }],
-          ['enable_mode_indicator==1', {
-            'defines': ['MOZC_ENABLE_MODE_INDICATOR'],
-          }],
         ],
       },
       'x86_Base': {

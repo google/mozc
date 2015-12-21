@@ -42,8 +42,6 @@ namespace {
 
 using std::unique_ptr;
 
-#ifdef MOZC_ENABLE_MODE_INDICATOR
-
 const uint64 kWaitDuration = 500;  // msec
 const VirtualKey AKey = VirtualKey::FromVirtualKey('A');
 
@@ -125,21 +123,6 @@ TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
             tracker.OnKey(AKey, false, false));
   EXPECT_TRUE(tracker.IsVisible());    // KeyUp -> Visible
 }
-
-#else
-
-// Mode Indicator is not supported yet.
-TEST(IndicatorVisibilityTrackerTest, BasicTest) {
-  IndicatorVisibilityTracker tracker;
-
-  EXPECT_FALSE(tracker.IsVisible()) << "Should be hidden by default.";
-
-  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
-            tracker.OnChangeInputMode());
-  EXPECT_FALSE(tracker.IsVisible());    // ChangeInputMode -> Invisible
-}
-
-#endif  // MOZC_ENABLE_MODE_INDICATOR or not
 
 }  // namespace
 

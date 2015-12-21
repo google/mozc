@@ -462,9 +462,6 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='cloud handwriting',
                    macro_name='ENABLE_CLOUD_HANDWRITING',
                    option_name='cloud_handwriting')
-  AddFeatureOption(parser, feature_name='mode_indicator',
-                   macro_name='MOZC_ENABLE_MODE_INDICATOR',
-                   option_name='mode_indicator')
 
   if IsWindows():
     parser.add_option('--wix_dir', dest='wix_dir',
@@ -822,8 +819,6 @@ def GypMain(options, unused_args, _):
                            linux=is_official_dev,
                            windows=is_official_dev,
                            mac=is_official_dev)
-  SetCommandLineForFeature(option_name='mode_indicator',
-                           windows=True)
 
   gyp_options.extend(['-D', 'target_platform=%s' % options.target_platform])
 
