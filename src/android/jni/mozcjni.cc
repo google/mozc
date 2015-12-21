@@ -88,10 +88,8 @@ void Initialize(
   // First of all, set the user profile directory.
   SystemUtil::SetUserProfileDirectory(user_profile_directory);
 
-#ifdef MOZC_ENABLE_HTTP_CLIENT
   // Initialize Java native callback proxy.
   JavaHttpClientProxy::SetJavaVM(vm);
-#endif  // MOZC_ENABLE_HTTP_CLIENT
 
   // Initialize dictionary data.
   DataManagerType::SetDictionaryData(dictionary_address, dictionary_size);
@@ -207,9 +205,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
-#ifdef MOZC_ENABLE_HTTP_CLIENT
   mozc::jni::JavaHttpClientProxy::SetJavaVM(NULL);
-#endif  // MOZC_ENABLE_HTTP_CLIENT
 
   // Delete global references.
   JNIEnv *env = mozc::AndroidUtil::GetEnv(vm);

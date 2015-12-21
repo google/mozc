@@ -43,7 +43,7 @@
         '../base/base.gyp:base',
       ],
       'conditions': [
-        ['enable_http_client==1', {
+        ['branding=="GoogleJapaneseInput"', {
           'conditions': [
             ['OS=="mac"', {
               'sources': [
@@ -88,6 +88,10 @@
                 '../base/base.gyp:jni_proxy'
               ],
             }],
+          ],
+        }, {  # blanding!=GoogleJapaneseInput
+          'sources': [
+            'http_client_null.cc',
           ],
         }],
       ],

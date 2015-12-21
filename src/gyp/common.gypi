@@ -244,9 +244,6 @@
     # enabled or not.
     'enable_cloud_handwriting%': 0,
 
-    # enable_http_client represents if http client feature is enabled or not.
-    'enable_http_client%': 0,
-
     # enable ambiguous search (a.k.a. KATSUKOU-conversion).
     'enable_ambiguous_search%': 0,
     # enable typing correction.
@@ -319,11 +316,6 @@
           }],
           ['enable_cloud_handwriting==1', {
             'defines': ['ENABLE_CLOUD_HANDWRITING'],
-          }],
-          ['enable_http_client==1', {
-            # TODO(peria): Considers of moving the definition and control of
-            # enable_http_client and MOZC_ENABLE_HTTP_CLIENT to net/net.gyp.
-            'defines': ['MOZC_ENABLE_HTTP_CLIENT'],
           }],
           ['enable_gtk_renderer==1', {
             'defines': ['ENABLE_GTK_RENDERER'],

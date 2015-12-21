@@ -462,9 +462,6 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='cloud handwriting',
                    macro_name='ENABLE_CLOUD_HANDWRITING',
                    option_name='cloud_handwriting')
-  AddFeatureOption(parser, feature_name='http client',
-                   macro_name='MOZC_ENABLE_HTTP_CLIENT',
-                   option_name='http_client')
   AddFeatureOption(parser, feature_name='mode_indicator',
                    macro_name='MOZC_ENABLE_MODE_INDICATOR',
                    option_name='mode_indicator')
@@ -825,13 +822,6 @@ def GypMain(options, unused_args, _):
                            linux=is_official_dev,
                            windows=is_official_dev,
                            mac=is_official_dev)
-  SetCommandLineForFeature(option_name='http_client',
-                           linux=is_official,
-                           windows=is_official,
-                           mac=is_official,
-                           android=is_official,
-                           # System dictionary is read with HttpClient in NaCl.
-                           nacl=True)
   SetCommandLineForFeature(option_name='mode_indicator',
                            windows=True)
 
