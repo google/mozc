@@ -284,106 +284,8 @@
     },
     'configurations': {
       'Common_Base': {
+        # gui/qt_target_defaults.gypi overrides Common_Base.
         'abstract': 1,
-        'msvs_configuration_attributes': {
-          'CharacterSet': '<(win_char_set_unicode)',
-        },
-        'conditions': [
-          ['branding=="GoogleJapaneseInput"', {
-            'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
-          }, {
-            'defines': ['MOZC_BUILD'],
-          }],
-          ['channel_dev==1', {
-            'defines': ['CHANNEL_DEV'],
-          }],
-          ['OS=="linux"', {
-            'ldflags': [
-              '<@(linux_ldflags)',
-            ],
-          }],
-          ['use_separate_collocation_data==1', {
-            'defines': ['MOZC_USE_SEPARATE_COLLOCATION_DATA'],
-          }],
-          ['use_separate_connection_data==1', {
-            'defines': ['MOZC_USE_SEPARATE_CONNECTION_DATA'],
-          }],
-          ['use_separate_dictionary==1', {
-            'defines': ['MOZC_USE_SEPARATE_DICTIONARY'],
-          }],
-          ['use_packed_dictionary==1', {
-            'defines': ['MOZC_USE_PACKED_DICTIONARY'],
-          }],
-          ['enable_cloud_handwriting==1', {
-            'defines': ['ENABLE_CLOUD_HANDWRITING'],
-          }],
-          ['enable_gtk_renderer==1', {
-            'defines': ['ENABLE_GTK_RENDERER'],
-          }],
-          ['enable_unittest==1', {
-            'defines': ['MOZC_ENABLE_UNITTEST'],
-          }],
-          ['target_platform=="Android"', {
-            'defines': ['NO_USAGE_REWRITER'],
-            'target_conditions' : [
-              ['_toolset=="target" and _type=="executable"', {
-                # For unittest:
-                # Android 5.0+ requires standalone native executables to be PIE.
-                # See crbug.com/373219.
-                'ldflags': [
-                  '-pie',
-                ],
-              }],
-              ['_toolset=="target"', {
-                'defines': [
-                  'OS_ANDROID',
-                  # For the ambiguity of wcsstr.
-                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-                ],
-                'cflags': [
-                  # For unittest:
-                  # Android 5.0+ requires standalone native executables to be
-                  # PIE. Note that we can specify this option even for ICS
-                  # unless we ship a standalone native executable.
-                  # See crbug.com/373219.
-                  '-fPIE',
-                ],
-                'ldflags!': [  # Remove all libraries for GNU/Linux.
-                  '<@(linux_ldflags)',
-                ],
-                'ldflags': [
-                  '-llog',
-                ],
-                'conditions': [
-                  ['android_arch=="arm"', {
-                    'ldflags+': [
-                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
-                      '-march=armv7-a',
-                    ],
-                    'cflags': [
-                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
-                      '-march=armv7-a',
-                      '-mfloat-abi=softfp',
-                      '-mfpu=vfpv3-d16',
-                      '-mthumb',  # Force thumb interaction set for smaller file size.
-                    ],
-                  }],
-                ],
-              }],
-            ],
-          }],
-          ['target_platform=="NaCl"', {
-            'target_conditions' : [
-              ['_toolset=="target"', {
-                'defines': [
-                  'OS_NACL',
-                  # For the ambiguity of wcsstr.
-                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-                ],
-              }],
-            ],
-          }],
-        ],
       },
       'x86_Base': {
         'abstract': 1,
@@ -667,6 +569,100 @@
       }],
     ],
     'conditions': [
+      ['branding=="GoogleJapaneseInput"', {
+        'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
+      }, {
+        'defines': ['MOZC_BUILD'],
+      }],
+      ['channel_dev==1', {
+        'defines': ['CHANNEL_DEV'],
+      }],
+      ['OS=="linux"', {
+        'ldflags': [
+          '<@(linux_ldflags)',
+        ],
+      }],
+      ['use_separate_collocation_data==1', {
+        'defines': ['MOZC_USE_SEPARATE_COLLOCATION_DATA'],
+      }],
+      ['use_separate_connection_data==1', {
+        'defines': ['MOZC_USE_SEPARATE_CONNECTION_DATA'],
+      }],
+      ['use_separate_dictionary==1', {
+        'defines': ['MOZC_USE_SEPARATE_DICTIONARY'],
+      }],
+      ['use_packed_dictionary==1', {
+        'defines': ['MOZC_USE_PACKED_DICTIONARY'],
+      }],
+      ['enable_cloud_handwriting==1', {
+        'defines': ['ENABLE_CLOUD_HANDWRITING'],
+      }],
+      ['enable_gtk_renderer==1', {
+        'defines': ['ENABLE_GTK_RENDERER'],
+      }],
+      ['enable_unittest==1', {
+        'defines': ['MOZC_ENABLE_UNITTEST'],
+      }],
+      ['target_platform=="Android"', {
+        'defines': ['NO_USAGE_REWRITER'],
+        'target_conditions' : [
+          ['_toolset=="target" and _type=="executable"', {
+            # For unittest:
+            # Android 5.0+ requires standalone native executables to be PIE.
+            # See crbug.com/373219.
+            'ldflags': [
+              '-pie',
+            ],
+          }],
+          ['_toolset=="target"', {
+            'defines': [
+              'OS_ANDROID',
+              # For the ambiguity of wcsstr.
+              '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
+            ],
+            'cflags': [
+              # For unittest:
+              # Android 5.0+ requires standalone native executables to be
+              # PIE. Note that we can specify this option even for ICS
+              # unless we ship a standalone native executable.
+              # See crbug.com/373219.
+              '-fPIE',
+            ],
+            'ldflags!': [  # Remove all libraries for GNU/Linux.
+              '<@(linux_ldflags)',
+            ],
+            'ldflags': [
+              '-llog',
+            ],
+            'conditions': [
+              ['android_arch=="arm"', {
+                'ldflags+': [
+                  # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
+                  '-march=armv7-a',
+                ],
+                'cflags': [
+                  # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
+                  '-march=armv7-a',
+                  '-mfloat-abi=softfp',
+                  '-mfpu=vfpv3-d16',
+                  '-mthumb',  # Force thumb interaction set for smaller file size.
+                ],
+              }],
+            ],
+          }],
+        ],
+      }],
+      ['target_platform=="NaCl"', {
+        'target_conditions' : [
+          ['_toolset=="target"', {
+            'defines': [
+              'OS_NACL',
+              # For the ambiguity of wcsstr.
+              '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
+            ],
+          }],
+        ],
+      }],
       ['OS=="win"', {
         'variables': {
           'wtl_dir': '<(additional_third_party_dir)/wtl',
@@ -698,6 +694,9 @@
           '<@(msvs_includes)',
           '<(wtl_dir)/include',
         ],
+        'msvs_configuration_attributes': {
+          'CharacterSet': '<(win_char_set_unicode)',
+        },
         'msvs_cygwin_shell': 0,
         'msvs_disabled_warnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
         'msvs_settings': {
