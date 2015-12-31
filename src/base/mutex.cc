@@ -53,7 +53,7 @@ namespace mozc {
 
 // Wrapper for Windows InterlockedCompareExchange
 namespace {
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 // Linux doesn't provide InterlockedCompareExchange-like function.
 inline int InterlockedCompareExchange(volatile int *target,
                                       int new_value,
@@ -72,7 +72,7 @@ inline int InterlockedCompareExchange(volatile int *target,
   pthread_mutex_unlock(&lock);
   return result;
 }
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 // Use OSAtomicCompareAndSwapInt on Mac OSX
 // http://developer.apple.com/iphone/library/documentation/
@@ -185,7 +185,7 @@ Mutex::Mutex() {
   pthread_mutexattr_init(&attr);
 #if defined(OS_MACOSX)
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
 #else
 #error "This platform is not supported."

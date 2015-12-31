@@ -238,7 +238,7 @@ void LogStreamImpl::Init(const string &log_file_path) {
 #ifdef OS_NACL
     // In NaCl, we only use stderr to output logs.
     stream_ = &cerr;
-#else
+#else  // OS_NACL
   if (FLAGS_logtostderr) {
     stream_ = &cerr;
 #ifndef OS_WIN

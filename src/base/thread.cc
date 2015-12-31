@@ -235,7 +235,7 @@ void *Thread::WrapperForPOSIX(void *ptr) {
     // This hack makes the meaning of IsRunning() different in NaCl.
     p->state_->is_running_ = false;
   }
-#else
+#else  // OS_NACL
   {
     // Caveat: the pthread_cleanup_push/pthread_cleanup_pop pair should be put
     //     in the same function. Never move them into any other function.

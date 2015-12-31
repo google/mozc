@@ -264,9 +264,9 @@ bool WinMacPasswordManager::RemovePassword() const {
 // We use plain text file for password storage on Linux. If you port this module
 // to other Linux distro, you might want to implement a new password manager
 // which adopts some secure mechanism such like gnome-keyring.
-#if defined OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 typedef PlainPasswordManager DefaultPasswordManager;
-#endif
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 // Windows or Mac
 #if (defined(OS_WIN) || defined(OS_MACOSX))

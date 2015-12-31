@@ -372,14 +372,14 @@ string SystemUtil::GetServerDirectory() {
 #elif defined(OS_MACOSX)
   return MacUtil::GetServerDirectory();
 
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #if defined(MOZC_SERVER_DIRECTORY)
   return MOZC_SERVER_DIRECTORY;
 #else
   return "/usr/lib/mozc";
 #endif  // MOZC_SERVER_DIRECTORY
 
-#endif  // OS_WIN, OS_MACOSX, OS_LINUX
+#endif  // OS_WIN, OS_MACOSX, OS_LINUX, ...
 }
 
 string SystemUtil::GetServerPath() {
@@ -450,7 +450,7 @@ string SystemUtil::GetUserNameAsString() {
   return ppw->pw_name;
 
 #else  // OS_ANDROID
-  // OS_MACOSX or OS_LINUX
+  // OS_MACOSX, OS_LINUX or OS_NACL
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
@@ -610,7 +610,7 @@ string GetSessionIdString() {
 #endif  // OS_WIN
 
 string SystemUtil::GetDesktopNameAsString() {
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   const char *display = getenv("DISPLAY");
   if (display == NULL) {
     return "";
@@ -640,7 +640,7 @@ string SystemUtil::GetDesktopNameAsString() {
   }
 
   return (session_id + "." + window_station_name + "." + desktop_name);
-#endif  // OS_LINUX, OS_MACOSX, OS_WIN
+#endif  // OS_LINUX, OS_MACOSX, OS_WIN, ...
 }
 
 #ifdef OS_WIN
@@ -691,7 +691,7 @@ bool SystemUtil::IsPlatformSupported() {
 #if defined(OS_MACOSX)
   // TODO(yukawa): support Mac.
   return true;
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   // TODO(yukawa): support Linux.
   return true;
 #elif defined(OS_WIN)
@@ -927,7 +927,7 @@ string SystemUtil::GetOSVersionString() {
   const string ret = "MacOSX " + MacUtil::GetOSVersionString();
   // TODO(toshiyuki): get more specific info
   return ret;
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_NACL)
   const string ret = "Linux";
   return ret;
 #else  // !OS_WIN && !OS_MACOSX && !OS_LINUX
@@ -977,7 +977,7 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
     return 0;
   }
   return total_memory;
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const long page_size = sysconf(_SC_PAGESIZE);
   const long number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);

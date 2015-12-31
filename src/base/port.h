@@ -30,6 +30,39 @@
 #ifndef MOZC_BASE_PORT_H_
 #define MOZC_BASE_PORT_H_
 
+// Check duplicate OS_XXX definition.
+
+#ifdef OS_WIN
+#define MOZC_OS_DEFINED
+#endif  // OS_WIN
+
+#ifdef OS_MACOSX
+#define MOZC_OS_DEFINED
+#endif  // OS_MACOSX
+
+#ifdef OS_ANDROID
+#define MOZC_OS_DEFINED
+#endif  // OS_ANDROID
+
+#ifdef OS_NACL
+#define MOZC_OS_DEFINED
+#endif  // OS_NACL
+
+#ifdef OS_LINUX
+// TODO(matsuzakit): Remove following guard.
+// Currently OS_LINUX and (OS_ANDROID or OS_NACL) are defined at the same time.
+#if !defined(OS_ANDROID) && !defined(OS_NACL)
+#define MOZC_OS_DEFINED
+#endif  // !OS_ANDROID && !OS_NACL
+#endif  // OS_LINUX
+
+#ifndef MOZC_OS_DEFINED
+#error "OS_XXX (e.g., OS_WIN) must be defined."
+#endif  // !MOZC_OS_DEFINED
+
+#undef MOZC_OS_DEFINED
+
+
 
 #include <sys/types.h>
 #include <cstddef>

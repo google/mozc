@@ -121,7 +121,7 @@ TEST(MmapTest, LinuxMaybeMLockTest) {
 #if defined(OS_ANDROID) || defined(OS_NACL)
   EXPECT_EQ(-1, Mmap::MaybeMLock(addr, data_len));
   EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr, data_len));
-#else
+#else  // defined(OS_ANDROID) || defined(OS_NACL)
   EXPECT_EQ(0, Mmap::MaybeMLock(addr, data_len));
   EXPECT_EQ(0, Mmap::MaybeMUnlock(addr, data_len));
 #endif  // defined(OS_ANDROID) || defined(OS_NACL)

@@ -123,7 +123,7 @@ class SystemUtil {
 
   // Return true if the OS is supported.
   // [OS_MACOSX] This function never returns false.
-  // [OS_LINUX] This function never returns false.
+  // [OS_LINUX, OS_ANDROID, OS_NACL] This function never returns false.
   // TODO(yukawa): support Mac and Linux.
   static bool IsPlatformSupported();
 

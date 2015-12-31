@@ -38,10 +38,10 @@
 #include <unistd.h>
 #endif  // OS_MACOSX
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #include <unistd.h>
 #include <sys/types.h>
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -267,9 +267,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 
   return RunLevel::NORMAL;
 
-#else
-
-  // Linux or Mac
+#else  // OS_WIN
   if (type == SERVER || type == RENDERER) {
     if (::geteuid() == 0) {
       // This process is started by root, or the executable is setuid to root.
@@ -299,7 +297,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 
   return RunLevel::NORMAL;
 
-#endif
+#endif  // OS_WIN
 }
 
 bool RunLevel::IsProcessInJob() {
@@ -324,9 +322,9 @@ bool RunLevel::IsProcessInJob() {
   }
 
   return true;
-#else
+#else  // OS_WIN
   return false;
-#endif
+#endif  // OS_WIN
 }
 
 bool RunLevel::IsElevatedByUAC() {
@@ -341,9 +339,9 @@ bool RunLevel::IsElevatedByUAC() {
 
   ScopedHandle process_token(hProcessToken);
   return mozc::IsElevatedByUAC(process_token.get());
-#else
+#else  // OS_WIN
   return false;
-#endif
+#endif  // OS_WIN
 }
 
 bool RunLevel::SetElevatedProcessDisabled(bool disable) {
@@ -373,9 +371,9 @@ bool RunLevel::SetElevatedProcessDisabled(bool disable) {
   ::RegCloseKey(key);
 
   return ERROR_SUCCESS == result;
-#else
+#else  // OS_WIN
   return false;
-#endif
+#endif  // OS_WIN
 }
 
 bool RunLevel::GetElevatedProcessDisabled() {
@@ -408,8 +406,8 @@ bool RunLevel::GetElevatedProcessDisabled() {
   }
 
   return value > 0;
-#else
+#else  // OS_WIN
   return false;
-#endif
+#endif  // OS_WIN
 }
 }  // namespace mozc

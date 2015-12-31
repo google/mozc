@@ -238,7 +238,7 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
   EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_ERROR,
             status_->status());
-#else
+#else  // OS_NACL
   // Set up a user dictionary.
   {
     Clear();

@@ -124,7 +124,7 @@ class ClockImpl : public ClockInterface {
     mach_timebase_info(&timebase_info);
     return static_cast<uint64>(
         1.0e9 * timebase_info.denom / timebase_info.numer);
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
     return 1000000uLL;
 #else  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
 #error "Not supported platform"
@@ -141,7 +141,7 @@ class ClockImpl : public ClockInterface {
     return static_cast<uint64>(timestamp.QuadPart);
 #elif defined(OS_MACOSX)
     return static_cast<uint64>(mach_absolute_time());
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
     uint64 sec;
     uint32 usec;
     GetTimeOfDay(&sec, &usec);

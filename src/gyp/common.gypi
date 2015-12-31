@@ -603,66 +603,6 @@
       ['enable_unittest==1', {
         'defines': ['MOZC_ENABLE_UNITTEST'],
       }],
-      ['target_platform=="Android"', {
-        'defines': ['NO_USAGE_REWRITER'],
-        'target_conditions' : [
-          ['_toolset=="target" and _type=="executable"', {
-            # For unittest:
-            # Android 5.0+ requires standalone native executables to be PIE.
-            # See crbug.com/373219.
-            'ldflags': [
-              '-pie',
-            ],
-          }],
-          ['_toolset=="target"', {
-            'defines': [
-              'OS_ANDROID',
-              # For the ambiguity of wcsstr.
-              '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-            ],
-            'cflags': [
-              # For unittest:
-              # Android 5.0+ requires standalone native executables to be
-              # PIE. Note that we can specify this option even for ICS
-              # unless we ship a standalone native executable.
-              # See crbug.com/373219.
-              '-fPIE',
-            ],
-            'ldflags!': [  # Remove all libraries for GNU/Linux.
-              '<@(linux_ldflags)',
-            ],
-            'ldflags': [
-              '-llog',
-            ],
-            'conditions': [
-              ['android_arch=="arm"', {
-                'ldflags+': [
-                  # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
-                  '-march=armv7-a',
-                ],
-                'cflags': [
-                  # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
-                  '-march=armv7-a',
-                  '-mfloat-abi=softfp',
-                  '-mfpu=vfpv3-d16',
-                  '-mthumb',  # Force thumb interaction set for smaller file size.
-                ],
-              }],
-            ],
-          }],
-        ],
-      }],
-      ['target_platform=="NaCl"', {
-        'target_conditions' : [
-          ['_toolset=="target"', {
-            'defines': [
-              'OS_NACL',
-              # For the ambiguity of wcsstr.
-              '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-            ],
-          }],
-        ],
-      }],
       ['OS=="win"', {
         'variables': {
           'wtl_dir': '<(additional_third_party_dir)/wtl',
@@ -754,9 +694,6 @@
         },
       }],
       ['OS=="linux"', {
-        'defines': [
-          'OS_LINUX',
-        ],
         'cflags': [
           '<@(warning_cflags)',
           '-fPIC',
@@ -768,6 +705,65 @@
           '-Wno-deprecated',
         ],
         'conditions': [
+          ['target_platform=="Linux"', {
+            # OS_LINUX is defined always (target and host).
+            'defines': ['OS_LINUX',],
+          }],
+          ['target_platform=="Android"', {
+            'defines': ['NO_USAGE_REWRITER'],
+            'target_conditions' : [
+              ['_toolset=="host"', {
+                'defines': ['OS_LINUX',],
+              }],
+              ['_toolset=="target" and _type=="executable"', {
+                # For unittest:
+                # Android 5.0+ requires standalone native executables to be PIE.
+                # See crbug.com/373219.
+                'ldflags': [
+                  '-pie',
+                ],
+              }],
+              ['_toolset=="target"', {
+                'defines': [
+                  'OS_ANDROID',
+                  # For the ambiguity of wcsstr.
+                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
+                ],
+                'cflags': [
+                  # For unittest:
+                  # Android 5.0+ requires standalone native executables to be
+                  # PIE. Note that we can specify this option even for ICS
+                  # unless we ship a standalone native executable.
+                  # See crbug.com/373219.
+                  '-fPIE',
+                ],
+                'ldflags!': [  # Remove all libraries for GNU/Linux.
+                  '<@(linux_ldflags)',
+                ],
+                'ldflags': [
+                  '-llog',
+                ],
+                'conditions': [
+                  ['android_arch=="arm"', {
+                    'ldflags': [
+                      # Support only armv7-a.
+                      # Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
+                    ],
+                    'cflags': [
+                      # Support only armv7-a.
+                      # Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
+                      '-mfloat-abi=softfp',
+                      '-mfpu=vfpv3-d16',
+                      # Force thumb interaction set for smaller file size.
+                      '-mthumb',
+                    ],
+                  }],
+                ],
+              }],
+            ],
+          }],
           ['target_platform!="NaCl"', {
             'cflags': [
               '<@(linux_cflags)',
@@ -776,6 +772,7 @@
           ['target_platform=="NaCl"', {
             'target_conditions' : [
               ['_toolset=="host"', {
+                'defines': ['OS_LINUX',],
                 'cflags': [
                   '<@(linux_cflags)',
                 ],
@@ -789,6 +786,9 @@
                 ],
                 'defines': [
                   'MOZC_USE_PEPPER_FILE_IO',
+                  'OS_NACL',
+                  # For the ambiguity of wcsstr.
+                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
                 ],
                 'include_dirs': [
                   '<(nacl_sdk_root)/include',

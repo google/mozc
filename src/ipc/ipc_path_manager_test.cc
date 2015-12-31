@@ -29,6 +29,10 @@
 
 #include "ipc/ipc_path_manager.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #include <string>
 #include <vector>
 

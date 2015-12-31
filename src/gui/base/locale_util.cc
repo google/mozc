@@ -29,6 +29,10 @@
 
 #include "gui/base/locale_util.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #ifdef OS_WIN
 #include <windows.h>
 #include <CommCtrl.h>  // for CCSIZEOF_STRUCT

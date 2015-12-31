@@ -29,6 +29,10 @@
 
 #include "gui/word_register_dialog/word_register_dialog.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #ifdef OS_WIN
 # include <windows.h>
 # include <imm.h>
