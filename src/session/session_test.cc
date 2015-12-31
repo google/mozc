@@ -4127,7 +4127,7 @@ TEST_F(SessionTest, StatusOutput) {
     // Global mode should be kept as HIRAGANA
     EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
 
-#ifndef __native_client__
+#ifndef OS_NACL
     // NaCl doesn't support OFF key.
 
     // When the IME is deactivated, the temporary composition mode is reset.
@@ -4140,7 +4140,7 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::DIRECT, command.output().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
-#endif  // !__native_client__
+#endif  // !OS_NACL
   }
 
   {  // Katakana mode + Shift key
@@ -4170,7 +4170,7 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::FULL_KATAKANA,
               command.output().status().comeback_mode());
 
-#ifndef __native_client__
+#ifndef OS_NACL
     // NaCl doesn't support OFF key.
 
     // When the IME is deactivated, the temporary composition mode is reset.
@@ -4184,7 +4184,7 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
     EXPECT_EQ(commands::FULL_KATAKANA,
               command.output().status().comeback_mode());
-#endif  // !__native_client__
+#endif  // !OS_NACL
   }
 }
 
@@ -6012,7 +6012,7 @@ TEST_F(SessionTest, Issue2223762) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // NaCl doesn't support Eisu key
 TEST_F(SessionTest, Issue2223755) {
   // This is a unittest against http://b/2223755.
@@ -6077,7 +6077,7 @@ TEST_F(SessionTest, Issue2223755) {
     EXPECT_EQ("\xE3\x82\xA2\xE3\x80\x80\xE3\x82\xA4", GetComposition(command));
   }
 }
-#endif  // !__native_client__
+#endif  // !OS_NACL
 
 TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
@@ -6308,7 +6308,7 @@ TEST_F(SessionTest, Issue2555503) {
   EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
 }
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // NaCl doesn't support hankaku/zenkaku key.
 TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
@@ -6330,9 +6330,9 @@ TEST_F(SessionTest, Issue2791640) {
 
   ASSERT_FALSE(command.output().has_preedit());
 }
-#endif  // !__native_client__
+#endif  // !OS_NACL
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // NaCl doesn't support hankaku/zenkaku key.
 TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
   // Existing preedit should be committed when IME is turned off.
@@ -6375,7 +6375,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
     ASSERT_FALSE(command.output().has_preedit());
   }
 }
-#endif  // !__native_client__
+#endif  // !OS_NACL
 
 TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
@@ -6659,7 +6659,7 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   EXPECT_TRUE(command.output().has_preedit());
 }
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // NaCl doesn't support KeyEvent::ON|OFF.
 TEST_F(SessionTest, PerformedCommand) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
@@ -6708,7 +6708,7 @@ TEST_F(SessionTest, PerformedCommand) {
     EXPECT_COUNT_STATS("Performed_Conversion_Commit", 1);
   }
 }
-#endif  // !__native_client__
+#endif  // !OS_NACL
 
 TEST_F(SessionTest, ResetContext) {
   std::unique_ptr<MockConverterEngineForReset> engine(

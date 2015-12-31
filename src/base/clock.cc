@@ -35,9 +35,9 @@
 #else  // OS_WIN
 #ifdef OS_MACOSX
 #include <mach/mach_time.h>
-#elif defined(__native_client__)  // OS_MACOSX
+#elif defined(OS_NACL)  // OS_MACOSX
 #include <irt.h>
-#endif  // OS_MACOSX or __native_client__
+#endif  // OS_MACOSX or OS_NACL
 #include <sys/time.h>
 #endif  // OS_WIN
 
@@ -48,11 +48,11 @@ namespace {
 
 class ClockImpl : public ClockInterface {
  public:
-#ifndef __native_client__
+#ifndef OS_NACL
   ClockImpl() {}
-#else  // __native_client__
+#else  // OS_NACL
   ClockImpl() : timezone_offset_sec_(0) {}
-#endif  // __native_client__
+#endif  // OS_NACL
 
   virtual ~ClockImpl() {}
 
@@ -99,12 +99,12 @@ class ClockImpl : public ClockInterface {
     if (_localtime64_s(output, &modified_sec) != 0) {
       return false;
     }
-#elif defined(__native_client__)
+#elif defined(OS_NACL)
     const time_t localtime_sec = modified_sec + timezone_offset_sec_;
     if (gmtime_r(&localtime_sec, output) == nullptr) {
       return false;
     }
-#else  // !OS_WIN && !__native_client__
+#else  // !OS_WIN && !OS_NACL
     if (localtime_r(&modified_sec, output) == nullptr) {
       return false;
     }
@@ -151,14 +151,14 @@ class ClockImpl : public ClockInterface {
 #endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
   }
 
-#ifdef __native_client__
+#ifdef OS_NACL
   virtual void SetTimezoneOffset(int32 timezone_offset_sec) {
     timezone_offset_sec_ = timezone_offset_sec;
   }
 
  private:
   int32 timezone_offset_sec_;
-#endif  // __native_client__
+#endif  // OS_NACL
 };
 
 ClockInterface *g_clock = nullptr;
@@ -189,11 +189,11 @@ uint64 Clock::GetTicks() {
   return GetClock()->GetTicks();
 }
 
-#ifdef __native_client__
+#ifdef OS_NACL
 void Clock::SetTimezoneOffset(int32 timezone_offset_sec) {
   return GetClock()->SetTimezoneOffset(timezone_offset_sec);
 }
-#endif  // __native_client__
+#endif  // OS_NACL
 
 void Clock::SetClockForUnitTest(ClockInterface *clock) {
   g_clock = clock;

@@ -53,9 +53,9 @@
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #if defined(OS_MACOSX)
 #include "net/http_client_mac.h"
-#elif defined(__native_client__)  // OS_MACOSX
+#elif defined(OS_NACL)  // OS_MACOSX
 #include "net/http_client_pepper.h"
-#endif  // OS_MACOSX or __native_client__
+#endif  // OS_MACOSX or OS_NACL
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 #include "net/http_client_null.h"
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
@@ -422,7 +422,7 @@ bool RequestInternal(HTTPMethodType type,
                                         output_string);
 }
 
-#elif defined(__native_client__)  // OS_WIN, OS_MACOSX
+#elif defined(OS_NACL)  // OS_WIN, OS_MACOSX
 
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
@@ -435,7 +435,7 @@ bool RequestInternal(HTTPMethodType type,
                                            output_string);
 }
 
-#elif defined(OS_ANDROID)  // OS_WIN, OS_MACOSX, __native_client__
+#elif defined(OS_ANDROID)  // OS_WIN, OS_MACOSX, OS_NACL
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
                      const char *post_data,
@@ -587,9 +587,9 @@ bool RequestInternal(HTTPMethodType type,
 
   return result;
 }
-#else  // OS_WIN, OS_MACOSX, __native_client__, OS_ANDROID, HAVE_CURL
+#else  // OS_WIN, OS_MACOSX, OS_NACL, OS_ANDROID, HAVE_CURL
 #error "HttpClient does not support your platform."
-#endif  // OS_WIN, OS_MACOSX, __native_client__, OS_ANDROID, HAVE_CURL
+#endif  // OS_WIN, OS_MACOSX, OS_NACL, OS_ANDROID, HAVE_CURL
 
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 

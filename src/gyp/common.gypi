@@ -376,6 +376,7 @@
             'target_conditions' : [
               ['_toolset=="target"', {
                 'defines': [
+                  'OS_NACL',
                   # For the ambiguity of wcsstr.
                   '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
                 ],

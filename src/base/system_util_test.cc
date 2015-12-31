@@ -98,11 +98,11 @@ TEST_F(SystemUtilTest, GetFileVersionStringTest) {
 }
 #endif  // OS_WIN
 
-#ifndef __native_client__
+#ifndef OS_NACL
 TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
   EXPECT_GT(SystemUtil::GetTotalPhysicalMemory(), 0);
 }
-#endif  // __native_client__
+#endif  // OS_NACL
 
 #ifdef OS_ANDROID
 TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {

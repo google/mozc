@@ -146,7 +146,7 @@ void UserDictionarySessionHandler::NoOperation(
 void UserDictionarySessionHandler::ClearStorage(
     const UserDictionaryCommand &command,
     UserDictionaryCommandStatus *status) {
-#ifdef __native_client__
+#ifdef OS_NACL
   // File operation is not supported on NaCl.
   status->set_status(UserDictionaryCommandStatus::UNKNOWN_ERROR);
 #else

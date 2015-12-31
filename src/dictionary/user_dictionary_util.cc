@@ -582,11 +582,11 @@ uint64 UserDictionaryUtil::CreateNewDictionaryId(
   while (id == kInvalidDictionaryId) {
     Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
 
-#ifdef  __native_client__
+#ifdef  OS_NACL
     // Because JavaScript does not support uint64, we downsize the dictionary id
     // range from uint64 to uint32 in NaCl.
     id = static_cast<uint32>(id);
-#endif  // __native_client__
+#endif  // OS_NACL
 
     // Duplication check.
     for (int i = 0; i < storage.dictionaries_size(); ++i) {

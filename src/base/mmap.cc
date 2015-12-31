@@ -257,23 +257,23 @@ bool Mmap::SyncToFile() {
 
 int Mmap::MaybeMLock(const void *addr, size_t len) {
   // TODO(yukawa): Integrate mozc_cache service.
-#if defined(OS_WIN) || defined(OS_ANDROID) || defined(__native_client__)
+#if defined(OS_WIN) || defined(OS_ANDROID) || defined(OS_NACL)
   return -1;
 #else  // defined(OS_WIN) || defined(OS_ANDROID) ||
-       // defined(__native_client__)
+       // defined(OS_NACL)
   return mlock(addr, len);
 #endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
-        // defined(__native_client__)
+        // defined(OS_NACL)
 }
 
 int Mmap::MaybeMUnlock(const void *addr, size_t len) {
-#if defined(OS_WIN) || defined(OS_ANDROID) || defined(__native_client__)
+#if defined(OS_WIN) || defined(OS_ANDROID) || defined(OS_NACL)
   return -1;
 #else  // defined(OS_WIN) || defined(OS_ANDROID) ||
-       // defined(__native_client__)
+       // defined(OS_NACL)
   return munlock(addr, len);
 #endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
-        // defined(__native_client__)
+        // defined(OS_NACL)
 }
 
 }  // namespace mozc

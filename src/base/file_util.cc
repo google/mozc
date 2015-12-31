@@ -105,11 +105,11 @@ bool FileUtil::CreateDirectory(const string &path) {
   wstring wide;
   return (Util::UTF8ToWide(path, &wide) > 0 &&
           ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
-#elif defined(__native_client__)  // OS_WIN
+#elif defined(OS_NACL)  // OS_WIN
   return PepperFileUtil::CreateDirectory(path);
-#else  // OS_WIN or __native_client__
+#else  // OS_WIN or OS_NACL
   return ::mkdir(path.c_str(), 0700) == 0;
-#endif  // OS_WIN or __native_client__
+#endif  // OS_WIN or OS_NACL
 }
 
 bool FileUtil::RemoveDirectory(const string &dirname) {
@@ -117,11 +117,11 @@ bool FileUtil::RemoveDirectory(const string &dirname) {
   wstring wide;
   return (Util::UTF8ToWide(dirname, &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
-#elif defined(__native_client__)  // OS_WIN
+#elif defined(OS_NACL)  // OS_WIN
   return PepperFileUtil::Delete(dirname);
-#else  // OS_WIN or __native_client
+#else  // OS_WIN or OS_NACL
   return ::rmdir(dirname.c_str()) == 0;
-#endif  // OS_WIN or __native_client
+#endif  // OS_WIN or OS_NACL
 }
 
 bool FileUtil::Unlink(const string &filename) {

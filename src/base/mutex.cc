@@ -43,7 +43,7 @@
 
 #if defined(OS_WIN)
 // We do not use pthread on Windows
-#elif defined(__native_client__)
+#elif defined(OS_NACL)
 // TODO(team): Consider to use glibc rwlock.
 #else
 #define MOZC_PTHREAD_HAS_READER_WRITER_LOCK

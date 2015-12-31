@@ -47,9 +47,9 @@ class ClockMock : public ClockInterface {
   virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output);
   virtual uint64 GetFrequency();
   virtual uint64 GetTicks();
-#ifdef __native_client__
+#ifdef OS_NACL
   virtual void SetTimezoneOffset(int32 timezone_offset_sec);
-#endif  // __native_client__
+#endif  // OS_NACL
 
   // Puts this clock forward.
   // It has no impact on ticks.
@@ -72,9 +72,9 @@ class ClockMock : public ClockInterface {
   uint32 micro_seconds_;
   uint64 frequency_;
   uint64 ticks_;
-#ifdef __native_client__
+#ifdef OS_NACL
   int32 timezone_offset_sec_;
-#endif  // __native_client__
+#endif  // OS_NACL
   // Everytime user requests time clock, following time is added to the
   // internal clock.
   uint64 delta_seconds_;

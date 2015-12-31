@@ -48,9 +48,9 @@ class ClockInterface {
   virtual uint64 GetFrequency() = 0;
   virtual uint64 GetTicks() = 0;
 
-#ifdef __native_client__
+#ifdef OS_NACL
   virtual void SetTimezoneOffset(int32 timezone_offset_sec) = 0;
-#endif  // __native_client__
+#endif  // OS_NACL
 
  protected:
   ClockInterface() {}
@@ -85,12 +85,12 @@ class Clock {
   // GetFrequency().
   static uint64 GetTicks();
 
-#ifdef __native_client__
+#ifdef OS_NACL
   // Sets the time difference between local time and UTC time in seconds.
   // We use this function in NaCl Mozc because we can't know the local timezone
   // in NaCl environment.
   static void SetTimezoneOffset(int32 timezone_offset_sec);
-#endif  // __native_client__
+#endif  // OS_NACL
 
   // TESTONLY: The behavior of global system clock can be overridden by using
   // this method.  Set to nullptr to restore the default clock.  This method

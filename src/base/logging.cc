@@ -100,7 +100,7 @@ string Logging::GetLogMessageHeader() {
   char buf[512];
   snprintf(buf, sizeof(buf),
            "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d %u "
-#if defined(__native_client__)
+#if defined(OS_NACL)
            "%p",
 #elif defined(OS_LINUX)
            "%lu",
@@ -125,7 +125,7 @@ string Logging::GetLogMessageHeader() {
 #else  // __LP64__
            reinterpret_cast<uint32>(pthread_self())
 #endif  // __LP64__
-#elif defined(__native_client__)
+#elif defined(OS_NACL)
            ::getpid(),
            // pthread_self() returns __nc_basic_thread_data*.
            static_cast<void*>(pthread_self())
@@ -235,7 +235,7 @@ void LogStreamImpl::Init(const string &log_file_path) {
   if (stream_ != NULL) {
     return;
   }
-#ifdef __native_client__
+#ifdef OS_NACL
     // In NaCl, we only use stderr to output logs.
     stream_ = &cerr;
 #else
@@ -259,7 +259,7 @@ void LogStreamImpl::Init(const string &log_file_path) {
 #endif
 #endif  // OS_ANDROID
   }
-#endif  // __native_client__
+#endif  // OS_NACL
 
   *stream_ << "Log file created at: "
            << Logging::GetLogMessageHeader() << endl;

@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // skip all if non-Linux or Android or NaCl.
-#if defined(OS_LINUX) && !defined(OS_ANDROID) && !defined(__native_client__)
+#if defined(OS_LINUX) && !defined(OS_ANDROID) && !defined(OS_NACL)
 
 #include "ipc/ipc.h"
 
@@ -492,4 +492,4 @@ void IPCServer::Terminate() {
 
 }  // namespace mozc
 
-#endif  // OS_LINUX && !OS_ANDROID && !__native_client__
+#endif  // OS_LINUX && !OS_ANDROID && !OS_NACL

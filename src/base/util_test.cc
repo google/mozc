@@ -47,7 +47,7 @@
 namespace mozc {
 namespace {
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // Disabled on NaCl since it uses a mock file system.
 void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
   CHECK(test_map);
@@ -90,7 +90,7 @@ void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
     test_map->insert(std::make_pair(ucs4, itr->second));
   }
 }
-#endif  // !__native_client__
+#endif  // !OS_NACL
 
 Util::CharacterSet GetExpectedCharacterSet(
     const map<char32, Util::CharacterSet> &test_map,
@@ -2016,7 +2016,7 @@ TEST(UtilTest, FormType) {
 }
 
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // We have a snapshot of the result of |Util::GetCharacterSet(ucs4)| in
 // data/test/character_set/character_set.tsv.
 // Compare the result for each character just in case.
@@ -2034,7 +2034,7 @@ TEST(UtilTest, CharacterSetFullTest) {
         << "Character set changed at " << ucs4;
   }
 }
-#endif  // __native_client__
+#endif  // OS_NACL
 
 TEST(UtilTest, CharacterSet_gen_character_set) {
   // [0x00, 0x7f] are ASCII

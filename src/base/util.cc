@@ -40,9 +40,9 @@
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 
-#elif defined(__native_client__)  // OS_MACOSX
+#elif defined(OS_NACL)  // OS_MACOSX
 #include <irt.h>
-#endif  // OS_MACOSX or __native_client__
+#endif  // OS_MACOSX or OS_NACL
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -941,7 +941,7 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   }
   ::CryptReleaseContext(hprov, 0);
   return true;
-#elif defined(__native_client__)
+#elif defined(OS_NACL)
   struct nacl_irt_random interface;
 
   if (nacl_interface_query(NACL_IRT_RANDOM_v0_1, &interface,
@@ -961,7 +961,7 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
     return false;
   }
   return true;
-#else  // !OS_WIN && !__native_client__
+#else  // !OS_WIN && !OS_NACL
   // Use non blocking interface on Linux.
   // Mac also have /dev/urandom (although it's identical with /dev/random)
   ifstream ifs("/dev/urandom", ios::binary);
@@ -970,7 +970,7 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   }
   ifs.read(buf, buf_size);
   return true;
-#endif  // OS_WIN or __native_client__
+#endif  // OS_WIN or OS_NACL
 }
 }  // namespace
 

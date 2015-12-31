@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_PEPPER_FILE_UTIL_H_
 #define MOZC_BASE_PEPPER_FILE_UTIL_H_
 
-#ifdef __native_client__
+#ifdef OS_NACL
 
 #include <ppapi/cpp/instance.h>
 
@@ -108,6 +108,6 @@ class PepperFileUtil {
 
 }  // namespace mozc
 
-#endif  // __native_client__
+#endif  // OS_NACL
 
 #endif  // MOZC_BASE_PEPPER_FILE_UTIL_H_

@@ -31,9 +31,9 @@
 
 #include "net/http_client_null.h"
 
-#ifdef __native_client__
+#ifdef OS_NACL
 #include <ppapi/cpp/instance.h>
-#endif  // __native_client__
+#endif  // OS_NACL
 
 #include "base/logging.h"
 
@@ -58,7 +58,7 @@ bool NullHTTPRequestHandler::Request(HTTPMethodType type,
   return false;
 }
 
-#ifdef __native_client__
+#ifdef OS_NACL
 void RegisterPepperInstanceForHTTPClient(pp::Instance *instance) {
   Error();
 }
@@ -67,7 +67,7 @@ pp::Instance *GetPepperInstanceForHTTPClient() {
   Error();
   return nullptr;
 }
-#endif  // __native_client__
+#endif  // OS_NACL
 
 }  // namespace mozc
 

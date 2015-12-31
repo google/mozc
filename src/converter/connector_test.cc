@@ -55,7 +55,7 @@ struct ConnectionDataEntry {
   int cost;
 };
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // Disabled on NaCl since it uses a mock file system.
 TEST(ConnectorTest, CompareWithRawData) {
   const string path = FileUtil::JoinPath(
@@ -91,7 +91,7 @@ TEST(ConnectorTest, CompareWithRawData) {
     }
   }
 }
-#endif  // !__native_client
+#endif  // !OS_NACL
 
 }  // namespace
 }  // namespace mozc

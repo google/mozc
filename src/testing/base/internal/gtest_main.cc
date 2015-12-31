@@ -33,11 +33,11 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-#ifdef __native_client__
+#ifdef OS_NACL
 #include "base/pepper_file_system_mock.h"
 #include "base/pepper_file_util.h"
 #include "base/public/nacl_mock_module.h"
-#endif  // __native_client__
+#endif  // OS_NACL
 
 int main(int argc, char **argv) {
   // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
@@ -55,14 +55,14 @@ int main(int argc, char **argv) {
   // See b/2805521 for details.
   testing::GTEST_FLAG(catch_exceptions) = true;
 
-#ifdef __native_client__
+#ifdef OS_NACL
   mozc::testing::WorkAroundEmptyFunctionToAvoidLinkError();
 
   // Sets Pepper file system mock.
   mozc::PepperFileSystemMock pepper_file_system_mock;
   mozc::PepperFileUtil::SetPepperFileSystemInterfaceForTest(
       &pepper_file_system_mock);
-#endif  // __native_client__
+#endif  // OS_NACL
 
   return RUN_ALL_TESTS();
 }
