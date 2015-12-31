@@ -816,8 +816,12 @@
           ['LINK', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
           ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
         ],
-        'mac_framework_dirs': [
-          '<(mac_dir)/Releases/GoogleBreakpad',
+        'conditions': [
+          ['branding=="GoogleJapaneseInput"', {
+            'mac_framework_dirs': [
+              '<(mac_dir)/Releases/GoogleBreakpad',
+            ],
+          }],
         ],
         'xcode_settings': {
           'ARCHS': ['i386'],
