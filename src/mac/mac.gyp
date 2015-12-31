@@ -529,7 +529,6 @@
                 '--version_file', '../mozc_version.txt',
                 '--gen_out_dir', '<(gen_out_dir)',
                 '--build_dir', '$(BUILT_PRODUCTS_DIR)',
-                '--keystone_dir', '<(mac_dir)/Releases/Keystone',
                 '--build_type', '<(build_type)',
               ],
             },

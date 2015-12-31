@@ -905,9 +905,11 @@
           ],
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {
-              'includes': [
-                '../gyp/breakpad_mac.gypi',
-              ],
+              'link_settings': {
+                'libraries': [
+                  '<(mac_breakpad_framework)',
+                ],
+              },
             }],
             ['use_qt=="YES"', {
               'postbuilds': [

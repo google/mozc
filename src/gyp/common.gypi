@@ -212,6 +212,13 @@
     # extracted. This value is ignored when 'use_libprotobuf' is 1.
     'protobuf_root': '<(third_party_dir)/protobuf',
 
+    # For OS X
+    # Assign dummy value to avoid errors of GYP.
+    # TODO: Update this.
+    'mac_breakpad_dir': 'dummy_mac_breakpad_dir',
+    'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
+
+
     # For Android
     'protobuf_java_root': '<(additional_third_party_dir)/protobuf/java/src/main',
 
@@ -819,7 +826,7 @@
         'conditions': [
           ['branding=="GoogleJapaneseInput"', {
             'mac_framework_dirs': [
-              '<(mac_dir)/Releases/GoogleBreakpad',
+              '<(mac_breakpad_dir)',
             ],
           }],
         ],

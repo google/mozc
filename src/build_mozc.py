@@ -366,12 +366,6 @@ def ParseGypOptions(args=None, values=None):
                     help='Treat compiler warning as error. This option is used '
                     'on Mac and Linux.')
 
-  # Mac
-  parser.add_option('--mac_dir', dest='mac_dir',
-                    help='A path to the root directory of third party '
-                    'libraries for Mac build which will be passed to gyp '
-                    'files.')
-
   # Linux
   parser.add_option('--server_dir', dest='server_dir',
                     default='',
@@ -757,16 +751,6 @@ def GypMain(options, unused_args, _):
     gyp_options.extend(['-D', 'warn_as_error=1'])
   else:
     gyp_options.extend(['-D', 'warn_as_error=0'])
-
-  # mac_dir should be started with '<(DEPTH)', otherwise some
-  # operations in XCode fails.  So if the mac_dir option is an
-  # absolute path, it will be changed to a relative path.
-  mac_dir = options.mac_dir or '../mac'
-  if os.path.isabs(mac_dir):
-    mac_dir = GetRelPath(mac_dir, GetTopLevelSourceDirectoryName())
-  mac_dir = os.path.join('<(DEPTH)', mac_dir)
-
-  gyp_options.extend(['-D', 'mac_dir=%s' % mac_dir])
 
   if version.IsDevChannel():
     gyp_options.extend(['-D', 'channel_dev=1'])
