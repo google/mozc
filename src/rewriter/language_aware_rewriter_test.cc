@@ -343,4 +343,30 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
   }
 }
 
+TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
+  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+
+  {
+    // "1d*=" is composed to "１ｄ＊＝", which are the full width ascii
+    // characters of "1d*=". We do not want to rewrite full width ascii to
+    // half width ascii by LanguageAwareRewriter.
+    string composition;
+    Segments segments;
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "1d*=",
+                                               &composition, &segments));
+    // "１ｄ＊＝"
+    EXPECT_EQ("\xef\xbc\x91\xef\xbd\x84\xef\xbc\x8a\xef\xbc\x9d", composition);
+  }
+
+  {
+    // "xyzw" is composed to "ｘｙｚｗ". Do not rewrite.
+    string composition;
+    Segments segments;
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "xyzw",
+                                               &composition, &segments));
+    // "ｘｙｚｗ"
+    EXPECT_EQ("\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x97", composition);
+  }
+}
+
 }  // namespace mozc
