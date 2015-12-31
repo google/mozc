@@ -528,7 +528,7 @@
                 '--input', 'installer/<(branding)_template.pkgproj',
                 '--version_file', '../mozc_version.txt',
                 '--gen_out_dir', '<(gen_out_dir)',
-                '--build_dir', '$(BUILT_PRODUCTS_DIR)',
+                '--build_dir', '<(PRODUCT_DIR)',
                 '--build_type', '<(build_type)',
               ],
             },
@@ -542,13 +542,13 @@
             {
               'action_name': 'generate',
               'inputs': [
-                '$(BUILT_PRODUCTS_DIR)/ActivatePane.bundle',
-                '$(BUILT_PRODUCTS_DIR)/<(branding).app',
-                '$(BUILT_PRODUCTS_DIR)/Uninstall<(branding).app',
+                '<(PRODUCT_DIR)/ActivatePane.bundle',
+                '<(PRODUCT_DIR)/<(branding).app',
+                '<(PRODUCT_DIR)/Uninstall<(branding).app',
                 '<(gen_out_dir)/<(branding).pkgproj',
               ],
               'outputs': [
-                '$(BUILT_PRODUCTS_DIR)/<(branding).pkg',
+                '<(PRODUCT_DIR)/<(branding).pkg',
               ],
               'action': [
                 'python', '../build_tools/build_and_sign_pkg_mac.py',
@@ -557,10 +557,10 @@
               'conditions': [
                 ['branding=="GoogleJapaneseInput"', {
                   'inputs': [
-                    '$(BUILT_PRODUCTS_DIR)/DevConfirmPane.bundle',
+                    '<(PRODUCT_DIR)/DevConfirmPane.bundle',
                   ],
                   'action': [
-                    '--signpkg', '$(BUILT_PRODUCTS_DIR)/<(branding).pkg',
+                    '--signpkg', '<(PRODUCT_DIR)/<(branding).pkg',
                   ],
                 }],
               ],
