@@ -150,14 +150,14 @@
        <item row="5" column="0">
         <widget class="QLabel" name="selectionShortcutModeLabel">
          <property name="text">
-          <string>Selection shortcut</string>
+          <string>Candidate selection shortcut</string>
          </property>
         </widget>
        </item>
        <item row="6" column="0">
         <widget class="QLabel" name="numpadCharacterFormLabel">
          <property name="text">
-          <string>Numpad style</string>
+          <string>Input from numpad keys</string>
          </property>
         </widget>
        </item>
@@ -174,7 +174,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="yenSignLabel">
          <property name="text">
-          <string>character entered by ¥ key</string>
+          <string>Input from ¥ or backslash key</string>
          </property>
         </widget>
        </item>
@@ -438,7 +438,7 @@
        <item row="4" column="0">
         <widget class="QCheckBox" name="zipcodeConversionCheckBox">
          <property name="text">
-          <string>Zip code conversion</string>
+          <string>Postal code conversion</string>
          </property>
         </widget>
        </item>
@@ -817,7 +817,7 @@
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>Always use Ja keyboard layout for Japanese input</string>
+          <string>Always use Japanese keyboard layout for Japanese input</string>
          </property>
         </widget>
        </item>
