@@ -48,7 +48,6 @@
 #include "base/win_util.h"
 #include "config/config_handler.h"
 #include "net/http_client.h"
-#include "protocol/config.pb.h"
 #include "storage/registry.h"
 #include "storage/storage_interface.h"
 #include "testing/base/public/gunit.h"

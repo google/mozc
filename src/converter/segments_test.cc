@@ -36,7 +36,6 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
