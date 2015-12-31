@@ -65,7 +65,7 @@ class RendererInterface;
   NSMutableString *originalString_;
 
   // |cursorPosition_| is the position of cursor in the preedit.  If
-  // no cursor is found, its value should be NSNotFound.
+  // no cursor is found, its value should be -1.
   int cursorPosition_;
 
   // |mode_| stores the current input mode (Direct or conversion).
