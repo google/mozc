@@ -1,6 +1,34 @@
 Release History
 ===============
 
+2.17.2241.102 - 2.17.2284.102 / *2015-11-15* - *2015-12-31*
+--------------------------------------------------
+You can check out Mozc [2.17.2284.102](https://github.com/google/mozc/commit/be24638ab360c39995ab2c10e34ab9b269e39dac) as follows.
+
+```
+git clone https://github.com/google/mozc.git
+cd mozc
+git checkout be24638ab360c39995ab2c10e34ab9b269e39dac
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2241.102](https://github.com/google/mozc/commit/a54fee0095ccc618e6aeb07822fa744f9fcb4fc1) and [2.17.2284.102](https://github.com/google/mozc/commit/be24638ab360c39995ab2c10e34ab9b269e39dac) as follows.
+
+  * Third party libraries:
+    * fontTools: [5ba7d98 -> 8724513](https://github.com/googlei18n/fonttools/compare/5ba7d98a4153fad57258fca23b0bcb238717aec3...8724513a67f954eac56eeb77ced12e27d7c02b6b)
+  * Build related changes:
+    * Reference Dockerfile for Fedora now uses Fedora 23 base image.
+    * the default SDKROOT for OS X build is switched from ```macosx10.8``` to ```macosx10.9```.
+  * Major changes:
+    * ```CalculatorRewriter``` is now triggered not only by inputs end with ```=``` but also by inputs start with ```=```.  For instance, now ```=1+1``` triggers ```CalculatorRewriter```.  See the commit message of [5d423b0b](https://github.com/google/mozc/commit/5d423b0ba6989481ad2474c0eaf8c387a2bdfcc9) and its unittests as for how it works.
+    * Performance improvements in LOUDS.  See commits [3591f5e7](https://github.com/google/mozc/commit/3591f5e77d8bfb0ba6f1ac839b69eb9e7aa265c9) and [cac14650](https://github.com/google/mozc/commit/cac146508d32fcce1ecfec8d038f63f588ed13c4) for details.
+  * Fixed issues:
+    * [#317](https://github.com/google/mozc/issues/317): session_handler_scenario_test is flaky in Linux build on Travis-CI
+    * [#341](https://github.com/google/mozc/issues/341): ```1d*=``` should not trigger language-aware rewriter
+  * Total commits:
+    * [48 commits](https://github.com/google/mozc/compare/a54fee0095ccc618e6aeb07822fa744f9fcb4fc1%5E...be24638ab360c39995ab2c10e34ab9b269e39dac).
+
+
 2.17.2124.102 - 2.17.2240.102 / *2015-09-20* - *2015-11-15*
 --------------------------------------------------
 You can check out Mozc [2.17.2240.102](https://github.com/google/mozc/commit/95de40fa884d693172605e7283ec82233a908b29) as follows.
@@ -19,15 +47,15 @@ Summary of changes between [2.17.2124.102](https://github.com/google/mozc/commit
     * zinnia: [44dddcf9 -> 814a49b0](https://github.com/taku910/zinnia/compare/44dddcf96c0970a806d666030295706f45cbd045...814a49b031709b34d23898bce47f08dc1b554ec8)
     * zlib: [50893291](https://github.com/madler/zlib/commit/50893291621658f355bc5b4d450a8d06a563053d) was added to submodules for NaCl build.
   * Build related changes:
-    * Linux-only build option ```-j```/```--jobs``` was deprecated by b393fbdc346a5243ad35eb559d4468a274f2d2d2.  See its commit log on how to work around it.
+    * Linux-only build option ```-j```/```--jobs``` was deprecated by [b393fbdc](https://github.com/google/mozc/commit/b393fbdc346a5243ad35eb559d4468a274f2d2d2).  See its commit log on how to work around it.
     * Pepper 45 SDK is required to build Mozc for NaCl.
-    * Docker directory id moved from ```mozc/src/docker/``` to ```mozc/docker/``` by cfe9a2a5c7576a01fdbbadca43760496a9405ece.
+    * Docker directory id moved from ```mozc/src/docker/``` to ```mozc/docker/``` by [cfe9a2a5](https://github.com/google/mozc/commit/cfe9a2a5c7576a01fdbbadca43760496a9405ece).
     * Enabled continuous build for Android, NaCl, and Linux-desktop on [Travis CI](https://travis-ci.org).
     * Enabled continuous test for OS X and Linux-desktop on [Travis CI](https://travis-ci.org).
     * ```REGISTER_MODULE_INITIALIZER```, ```REGISTER_MODULE_RELOADER```, ```REGISTER_MODULE_SHUTDOWN_HANDLER```, and ```REGISTER_MODULE_FINALIZER``` were deprecated since they are known as bug-prone.  Deprecating them allows us to reduce the number of use of ```Singleton<T>```, which is also known as bug-prone.
     * [#320](https://github.com/google/mozc/pull/320): ```InitGoogle``` was renamed to ```mozc::InitMozc``` and now declared in ```base/init_mozc.h```.  If you have relied on ```InitGoogle```, then you need to 1) include ```base/init_mozc.h``` and 2) replace ```InitGoogle``` with ```mozc::InitMozc```.
   * Major changes:
-    * DateRewriter is now able to handle 3-digit.  For instance, when converting ```123``` you will see additional candidates such as ```1:23``` and ```01/23```.  See the commit message of f2cc056fd289bb498703a451b163eb73de217c91 and its unittests for details.
+    * ```DateRewriter``` is now able to handle 3-digit.  For instance, when converting ```123``` you will see additional candidates such as ```1:23``` and ```01/23```.  See the commit message of [f2cc056f](https://github.com/google/mozc/commit/f2cc056fd289bb498703a451b163eb73de217c91) and its unittests for details.
   * Known issues:
     * [#263](https://github.com/google/mozc/issues/263): Voiced sound marks on the key pad is not placed at correct position in Android
     * [#273](https://github.com/google/mozc/issues/273): Compilation errors in Android arm64 and mips64 build
