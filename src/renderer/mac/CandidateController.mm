@@ -254,7 +254,7 @@ void CandidateController::AlignWindows() {
   // If there is no need to show cascading window, we just finish the
   // function here.
   if (!command_.output().has_candidates() ||
-      !command_.output().candidates().candidate_size() > 0 ||
+      !(command_.output().candidates().candidate_size() > 0) ||
       !command_.output().candidates().has_subcandidates()) {
     return;
   }

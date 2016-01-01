@@ -71,7 +71,7 @@
     </message>
     <message>
         <location filename="config_dialog.ui" line="411"/>
-        <source>Zip code conversion</source>
+        <source>Postal code conversion</source>
         <translation></translation>
     </message>
     <message>
@@ -227,17 +227,17 @@
     </message>
     <message>
         <location filename="config_dialog.ui" line="123"/>
-        <source>Selection shortcut</source>
+        <source>Candidate selection shortcut</source>
         <translation></translation>
     </message>
     <message>
         <location filename="config_dialog.ui" line="130"/>
-        <source>Numpad style</source>
+        <source>Input from numpad keys</source>
         <translation></translation>
     </message>
     <message utf8="true">
         <location filename="config_dialog.ui" line="147"/>
-        <source>character entered by ¥ key</source>
+        <source>Input from ¥ or backslash key</source>
         <translation></translation>
     </message>
     <message>
@@ -317,7 +317,7 @@
     </message>
     <message>
         <location filename="config_dialog.ui" line="790"/>
-        <source>Always use Ja keyboard layout for Japanese input</source>
+        <source>Always use Japanese keyboard layout for Japanese input</source>
         <translation></translation>
     </message>
     <message>
@@ -415,44 +415,44 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="character_form_editor.cc" line="15"/>
-        <location filename="character_form_editor.cc" line="30"/>
+        <location filename="character_form_editor.cc" line="20"/>
+        <location filename="character_form_editor.cc" line="35"/>
         <source>Fullwidth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="18"/>
-        <location filename="character_form_editor.cc" line="32"/>
+        <location filename="character_form_editor.cc" line="23"/>
+        <location filename="character_form_editor.cc" line="37"/>
         <source>Halfwidth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="21"/>
-        <location filename="character_form_editor.cc" line="34"/>
+        <location filename="character_form_editor.cc" line="26"/>
+        <location filename="character_form_editor.cc" line="39"/>
         <source>Remember</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="24"/>
+        <location filename="character_form_editor.cc" line="29"/>
         <source>Unknown</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="43"/>
-        <location filename="character_form_editor.cc" line="53"/>
-        <location filename="character_form_editor.cc" line="123"/>
+        <location filename="character_form_editor.cc" line="48"/>
+        <location filename="character_form_editor.cc" line="58"/>
+        <location filename="character_form_editor.cc" line="128"/>
         <source>Katakana</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="45"/>
-        <location filename="character_form_editor.cc" line="56"/>
+        <location filename="character_form_editor.cc" line="50"/>
+        <location filename="character_form_editor.cc" line="61"/>
         <source>Numbers</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="47"/>
-        <location filename="character_form_editor.cc" line="58"/>
+        <location filename="character_form_editor.cc" line="52"/>
+        <location filename="character_form_editor.cc" line="63"/>
         <source>Alphabets</source>
         <translation></translation>
     </message>
@@ -460,37 +460,37 @@
 <context>
     <name>mozc::gui::CharacterFormEditor</name>
     <message>
-        <location filename="character_form_editor.cc" line="68"/>
+        <location filename="character_form_editor.cc" line="73"/>
         <source>Fullwidth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="68"/>
+        <location filename="character_form_editor.cc" line="73"/>
         <source>Halfwidth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="68"/>
+        <location filename="character_form_editor.cc" line="73"/>
         <source>Remember</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="72"/>
+        <location filename="character_form_editor.cc" line="77"/>
         <source>Character form editor</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="90"/>
+        <location filename="character_form_editor.cc" line="95"/>
         <source>Group</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="90"/>
+        <location filename="character_form_editor.cc" line="95"/>
         <source>Composition</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="character_form_editor.cc" line="90"/>
+        <location filename="character_form_editor.cc" line="95"/>
         <source>Conversion</source>
         <translation></translation>
     </message>
@@ -498,201 +498,196 @@
 <context>
     <name>mozc::gui::ConfigDialog</name>
     <message>
-        <location filename="config_dialog.cc" line="124"/>
+        <location filename="config_dialog.cc" line="130"/>
         <source>Custom keymap</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="125"/>
+        <location filename="config_dialog.cc" line="131"/>
         <source>ATOK</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="126"/>
+        <location filename="config_dialog.cc" line="132"/>
         <source>MS-IME</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="127"/>
+        <location filename="config_dialog.cc" line="133"/>
         <source>Kotoeri</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="133"/>
+        <location filename="config_dialog.cc" line="139"/>
         <source>Romaji</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="134"/>
+        <location filename="config_dialog.cc" line="140"/>
         <source>Kana</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="138"/>
+        <location filename="config_dialog.cc" line="144"/>
         <source>Romaji (switchable)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="139"/>
+        <location filename="config_dialog.cc" line="145"/>
         <source>Kana (switchable)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="142"/>
-        <location filename="config_dialog.cc" line="158"/>
+        <location filename="config_dialog.cc" line="148"/>
+        <location filename="config_dialog.cc" line="164"/>
         <source>Follow input mode</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="143"/>
-        <location filename="config_dialog.cc" line="159"/>
+        <location filename="config_dialog.cc" line="149"/>
+        <location filename="config_dialog.cc" line="165"/>
         <source>Fullwidth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="144"/>
-        <location filename="config_dialog.cc" line="160"/>
+        <location filename="config_dialog.cc" line="150"/>
+        <location filename="config_dialog.cc" line="166"/>
         <source>Halfwidth</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="146"/>
+        <location filename="config_dialog.cc" line="152"/>
         <source>No shortcut</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="147"/>
+        <location filename="config_dialog.cc" line="153"/>
         <source>1 -- 9</source>
-        <translation></translation>
+        <translation>1–9</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="148"/>
+        <location filename="config_dialog.cc" line="154"/>
         <source>A -- L</source>
-        <translation></translation>
+        <translation>A–L</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="150"/>
+        <location filename="config_dialog.cc" line="156"/>
         <source>Yes</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="151"/>
+        <location filename="config_dialog.cc" line="157"/>
         <source>Yes (don&apos;t record new data)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="152"/>
+        <location filename="config_dialog.cc" line="158"/>
         <source>No</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="154"/>
+        <location filename="config_dialog.cc" line="160"/>
         <source>Off</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="155"/>
+        <location filename="config_dialog.cc" line="161"/>
         <source>Alphanumeric</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="156"/>
+        <location filename="config_dialog.cc" line="162"/>
         <source>Katakana</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="161"/>
+        <location filename="config_dialog.cc" line="167"/>
         <source>Direct input</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="163"/>
+        <location filename="config_dialog.cc" line="169"/>
         <source>0</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="164"/>
+        <location filename="config_dialog.cc" line="170"/>
         <source>1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="165"/>
+        <location filename="config_dialog.cc" line="171"/>
         <source>2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="167"/>
+        <location filename="config_dialog.cc" line="173"/>
         <source>Yen Sign Â¥</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="168"/>
+        <location filename="config_dialog.cc" line="174"/>
         <source>Backslash \</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="283"/>
-        <source>Dictionary preloading</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="config_dialog.cc" line="68"/>
+        <location filename="config_dialog.cc" line="74"/>
         <source>Mozc Preferences</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="360"/>
+        <location filename="config_dialog.cc" line="356"/>
         <source>Failed to get current config values.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="379"/>
+        <location filename="config_dialog.cc" line="375"/>
         <source>The current custom keymap table is empty. When custom keymap is selected, you must customize it.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="392"/>
+        <location filename="config_dialog.cc" line="388"/>
         <source>Romaji/Kana setting is enabled from new applications.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="403"/>
+        <location filename="config_dialog.cc" line="399"/>
         <source>Input mode indicator setting is enabled from new applications.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="411"/>
+        <location filename="config_dialog.cc" line="407"/>
         <source>Failed to update config</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="722"/>
+        <location filename="config_dialog.cc" line="718"/>
         <source>Do you want to clear personalization data? Input history is not reset with this operation. Please open &quot;suggestion&quot; tab to remove input history data.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="736"/>
-        <location filename="config_dialog.cc" line="758"/>
+        <location filename="config_dialog.cc" line="732"/>
+        <location filename="config_dialog.cc" line="754"/>
         <source>Mozc Converter is not running. Settings were not saved.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="746"/>
+        <location filename="config_dialog.cc" line="742"/>
         <source>Do you want to clear all history data?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="768"/>
+        <location filename="config_dialog.cc" line="764"/>
         <source>Do you want to clear unused history data?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="780"/>
+        <location filename="config_dialog.cc" line="776"/>
         <source>Mozc Converter is not running. Operation was not executed.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="853"/>
+        <location filename="config_dialog.cc" line="849"/>
         <source>When you reset Mozc settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
@@ -704,63 +699,63 @@
 <context>
     <name>mozc::gui::GenericTableEditorDialog</name>
     <message>
-        <location filename="generic_table_editor.cc" line="59"/>
+        <location filename="generic_table_editor.cc" line="61"/>
         <source>Edit</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="136"/>
-        <location filename="generic_table_editor.cc" line="202"/>
+        <location filename="generic_table_editor.cc" line="138"/>
+        <location filename="generic_table_editor.cc" line="204"/>
         <source>No entry is selected</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="213"/>
+        <location filename="generic_table_editor.cc" line="215"/>
         <source>You can&apos;t have more than %1 entries</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="222"/>
+        <location filename="generic_table_editor.cc" line="224"/>
         <source>import from file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="232"/>
+        <location filename="generic_table_editor.cc" line="234"/>
         <source>File not found</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="240"/>
+        <location filename="generic_table_editor.cc" line="242"/>
         <source>The specified file is too large (&gt;=100K byte)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="248"/>
+        <location filename="generic_table_editor.cc" line="250"/>
         <source>Import failed</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="259"/>
+        <location filename="generic_table_editor.cc" line="261"/>
         <source>export to file</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="270"/>
+        <location filename="generic_table_editor.cc" line="272"/>
         <source>Export failed</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="307"/>
+        <location filename="generic_table_editor.cc" line="309"/>
         <source>Edit entry</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="309"/>
+        <location filename="generic_table_editor.cc" line="311"/>
         <source>New entry</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="310"/>
+        <location filename="generic_table_editor.cc" line="312"/>
         <source>Remove entry</source>
         <translation></translation>
     </message>
@@ -768,83 +763,83 @@
 <context>
     <name>mozc::gui::KeyMapEditorDialog</name>
     <message>
-        <location filename="keymap_editor.cc" line="218"/>
+        <location filename="keymap_editor.cc" line="225"/>
         <source>New entry</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="220"/>
+        <location filename="keymap_editor.cc" line="227"/>
         <source>Remove selected entries</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="224"/>
+        <location filename="keymap_editor.cc" line="231"/>
         <source>Import predefined mapping</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="228"/>
+        <location filename="keymap_editor.cc" line="235"/>
         <source>ATOK</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="229"/>
+        <location filename="keymap_editor.cc" line="236"/>
         <source>MS-IME</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="230"/>
+        <location filename="keymap_editor.cc" line="237"/>
         <source>Kotoeri</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="234"/>
+        <location filename="keymap_editor.cc" line="241"/>
         <source>Import from file...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="236"/>
+        <location filename="keymap_editor.cc" line="243"/>
         <source>Export to file...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="277"/>
+        <location filename="keymap_editor.cc" line="284"/>
         <source>Mozc keymap editor</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="281"/>
+        <location filename="keymap_editor.cc" line="288"/>
         <source>Mode</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="281"/>
+        <location filename="keymap_editor.cc" line="288"/>
         <source>Key</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="281"/>
+        <location filename="keymap_editor.cc" line="288"/>
         <source>Command</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="370"/>
+        <location filename="keymap_editor.cc" line="377"/>
         <source>Current keymap table is empty. You might want to import a pre-defined keymap table first.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="410"/>
+        <location filename="keymap_editor.cc" line="417"/>
         <source>Invalid key:
 %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="429"/>
+        <location filename="keymap_editor.cc" line="436"/>
         <source>Changes of keymaps for direct input mode will apply only to applications that are launched after making your modifications.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="466"/>
+        <location filename="keymap_editor.cc" line="473"/>
         <source>Do you want to overwrite the current keymaps?</source>
         <translation></translation>
     </message>
@@ -852,75 +847,75 @@
 <context>
     <name>mozc::gui::RomanTableEditorDialog</name>
     <message>
-        <location filename="roman_table_editor.cc" line="33"/>
+        <location filename="roman_table_editor.cc" line="36"/>
         <source>New entry</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="35"/>
+        <location filename="roman_table_editor.cc" line="38"/>
         <source>Remove selected entries</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="38"/>
+        <location filename="roman_table_editor.cc" line="41"/>
         <source>Import from file...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="40"/>
+        <location filename="roman_table_editor.cc" line="43"/>
         <source>Export to file...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="43"/>
+        <location filename="roman_table_editor.cc" line="46"/>
         <source>Reset to defaults</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="45"/>
+        <location filename="roman_table_editor.cc" line="48"/>
         <source>Mozc Romaji table editor</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="49"/>
+        <location filename="roman_table_editor.cc" line="52"/>
         <source>Input</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="49"/>
+        <location filename="roman_table_editor.cc" line="52"/>
         <source>Output</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="49"/>
+        <location filename="roman_table_editor.cc" line="52"/>
         <source>Next input</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="128"/>
-        <location filename="roman_table_editor.cc" line="149"/>
-        <location filename="roman_table_editor.cc" line="189"/>
-        <location filename="roman_table_editor.cc" line="216"/>
+        <location filename="roman_table_editor.cc" line="131"/>
+        <location filename="roman_table_editor.cc" line="152"/>
+        <location filename="roman_table_editor.cc" line="192"/>
+        <location filename="roman_table_editor.cc" line="219"/>
         <source>Mozc settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="129"/>
+        <location filename="roman_table_editor.cc" line="132"/>
         <source>You can&apos;t have more than %1 entries</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="150"/>
+        <location filename="roman_table_editor.cc" line="153"/>
         <source>Romaji to Kana table is empty.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="190"/>
+        <location filename="roman_table_editor.cc" line="193"/>
         <source>Input fields contain capital characters. &quot;Shift-mode-switch&quot; function is disabled with this new mapping.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="roman_table_editor.cc" line="217"/>
+        <location filename="roman_table_editor.cc" line="220"/>
         <source>Do you want to overwrite the current roman table?</source>
         <translation></translation>
     </message>

@@ -646,12 +646,12 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   if (command->input().has_application_info()) {
     session->set_application_info(command->input().application_info());
-#ifdef __native_client__
+#ifdef OS_NACL
     if (command->input().application_info().has_timezone_offset()) {
       Clock::SetTimezoneOffset(
           command->input().application_info().timezone_offset());
     }
-#endif  // __native_client__
+#endif  // OS_NACL
   }
 
   // Ensure the onmemory config is same as the locally stored one

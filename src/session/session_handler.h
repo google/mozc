@@ -44,10 +44,10 @@
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
-#if defined(OS_ANDROID) || defined(__native_client__)
+#if defined(OS_ANDROID) || defined(OS_NACL)
 // Session watch dog is not aviable from android mozc for now.
 #define MOZC_DISABLE_SESSION_WATCHDOG
-#endif  // OS_ANDROID || __native_client__
+#endif  // OS_ANDROID || OS_NACL
 
 namespace mozc {
 class EngineInterface;

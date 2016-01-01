@@ -29,6 +29,10 @@
 
 #include "gui/dictionary_tool/dictionary_tool.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
 #include <QtGui/QProgressDialog>

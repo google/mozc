@@ -27,16 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef __native_client__
+#ifdef OS_NACL
 
 #include "base/pepper_file_system_mock.h"
 
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-namespace {
-const char *kFileDelimiter = "/";
-}  // namespace
 
 TEST(PepperFileSystemMockTest, ReadWriteDeleteBinaryFile) {
   PepperFileSystemMock file_system;
@@ -123,4 +120,4 @@ TEST(PepperFileSystemMockTest, RenameTest) {
 
 }  // namespace mozc
 
-#endif  // __native_client__
+#endif  // OS_NACL

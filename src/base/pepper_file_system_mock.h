@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_
 #define MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_
 
-#ifdef __native_client__
+#ifdef OS_NACL
 
 #include <map>
 #include <memory>
@@ -104,6 +104,6 @@ class PepperFileSystemMock : public PepperFileSystemInterface {
 
 }  // namespace mozc
 
-#endif  // __native_client__
+#endif  // OS_NACL
 
 #endif  // MOZC_BASE_PEPPER_FILE_SYSTEM_MOCK_H_

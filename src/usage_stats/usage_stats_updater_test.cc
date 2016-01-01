@@ -35,7 +35,6 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"

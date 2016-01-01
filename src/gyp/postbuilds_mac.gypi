@@ -36,9 +36,11 @@
   },
   'conditions': [
     ['branding=="GoogleJapaneseInput"', {
-      'includes': [
-        'breakpad_mac.gypi',
-      ],
+      'link_settings': {
+        'libraries': [
+          '<(mac_breakpad_framework)',
+        ],
+      },
       'copies': [
         {
           'files': [

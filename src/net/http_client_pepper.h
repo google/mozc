@@ -30,7 +30,7 @@
 #ifndef MOZC_NET_HTTP_CLIENT_PEPPER_H_
 #define MOZC_NET_HTTP_CLIENT_PEPPER_H_
 
-#ifdef __native_client__
+#ifdef OS_NACL
 
 #include <string>
 
@@ -62,5 +62,5 @@ pp::Instance *GetPepperInstanceForHTTPClient();
 
 }  // namespace mozc
 
-#endif  // __native_client__
+#endif  // OS_NACL
 #endif  // MOZC_NET_HTTP_CLIENT_PEPPER_H_

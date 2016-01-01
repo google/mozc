@@ -300,29 +300,22 @@
             '<(gen_out_dir)/English.lproj/InfoPlist.strings',
             'Japanese.lproj/Config.xib',
             '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
+            '<(PRODUCT_DIR)/<(branding)Converter.app',
+            '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
+            '<(PRODUCT_DIR)/<(branding)Renderer.app',
+            '<(PRODUCT_DIR)/<(branding)Tool.app',
+            '<(PRODUCT_DIR)/AboutDialog.app',
+            '<(PRODUCT_DIR)/CharacterPalette.app',
+            '<(PRODUCT_DIR)/ConfigDialog.app',
+            '<(PRODUCT_DIR)/DictionaryTool.app',
+            '<(PRODUCT_DIR)/ErrorMessageDialog.app',
+            '<(PRODUCT_DIR)/HandWriting.app',
+            '<(PRODUCT_DIR)/WordRegisterDialog.app',
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
             'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
           },
-          'copies': [
-            {
-              'files': [
-                '<(PRODUCT_DIR)/<(branding)Converter.app',
-                '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
-                '<(PRODUCT_DIR)/<(branding)Renderer.app',
-                '<(PRODUCT_DIR)/<(branding)Tool.app',
-                '<(PRODUCT_DIR)/AboutDialog.app',
-                '<(PRODUCT_DIR)/CharacterPalette.app',
-                '<(PRODUCT_DIR)/ConfigDialog.app',
-                '<(PRODUCT_DIR)/DictionaryTool.app',
-                '<(PRODUCT_DIR)/ErrorMessageDialog.app',
-                '<(PRODUCT_DIR)/HandWriting.app',
-                '<(PRODUCT_DIR)/WordRegisterDialog.app',
-              ],
-              'destination': '<(PRODUCT_DIR)/<(branding).app/Contents/Resources',
-            },
-          ],
           'link_settings': {
             'libraries': [
               '$(SDKROOT)/System/Library/Frameworks/Carbon.framework',
@@ -535,8 +528,7 @@
                 '--input', 'installer/<(branding)_template.pkgproj',
                 '--version_file', '../mozc_version.txt',
                 '--gen_out_dir', '<(gen_out_dir)',
-                '--build_dir', '$(BUILT_PRODUCTS_DIR)',
-                '--keystone_dir', '<(mac_dir)/Releases/Keystone',
+                '--build_dir', '<(PRODUCT_DIR)',
                 '--build_type', '<(build_type)',
               ],
             },
@@ -550,13 +542,13 @@
             {
               'action_name': 'generate',
               'inputs': [
-                '$(BUILT_PRODUCTS_DIR)/ActivatePane.bundle',
-                '$(BUILT_PRODUCTS_DIR)/<(branding).app',
-                '$(BUILT_PRODUCTS_DIR)/Uninstall<(branding).app',
+                '<(PRODUCT_DIR)/ActivatePane.bundle',
+                '<(PRODUCT_DIR)/<(branding).app',
+                '<(PRODUCT_DIR)/Uninstall<(branding).app',
                 '<(gen_out_dir)/<(branding).pkgproj',
               ],
               'outputs': [
-                '$(BUILT_PRODUCTS_DIR)/<(branding).pkg',
+                '<(PRODUCT_DIR)/<(branding).pkg',
               ],
               'action': [
                 'python', '../build_tools/build_and_sign_pkg_mac.py',
@@ -565,10 +557,10 @@
               'conditions': [
                 ['branding=="GoogleJapaneseInput"', {
                   'inputs': [
-                    '$(BUILT_PRODUCTS_DIR)/DevConfirmPane.bundle',
+                    '<(PRODUCT_DIR)/DevConfirmPane.bundle',
                   ],
                   'action': [
-                    '--signpkg', '$(BUILT_PRODUCTS_DIR)/<(branding).pkg',
+                    '--signpkg', '<(PRODUCT_DIR)/<(branding).pkg',
                   ],
                 }],
               ],

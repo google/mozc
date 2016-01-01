@@ -118,6 +118,15 @@ bool IsRawQuery(const composer::Composer &composer,
     return false;
   }
 
+  // If the composition string is the full width form of the raw_text,
+  // there is no need to add the candidate to suggestions.
+  string composition_in_half_width_ascii;
+  Util::FullWidthAsciiToHalfWidthAscii(composition,
+                                       &composition_in_half_width_ascii);
+  if (composition_in_half_width_ascii == raw_text) {
+    return false;
+  }
+
   // If alphabet characters are in the middle of the composition, it is
   // probably a raw query.  For example, "えぁｍｐぇ" (example) contains
   // "m" and "p" in the middle.  So it is treated as a raw query.  On the

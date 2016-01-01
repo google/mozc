@@ -30,6 +30,10 @@
 // Qt component of configure dialog for Mozc
 #include "gui/config_dialog/config_dialog.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #ifdef OS_WIN
 #include <QtGui/QWindowsStyle>
 #include <windows.h>
@@ -203,10 +207,10 @@ ConfigDialog::ConfigDialog()
   useJapaneseLayout->hide();
 #endif  // !OS_MACOSX
 
-#ifndef MOZC_ENABLE_MODE_INDICATOR
-  // If not enabled, useModeIndicator checkbox should be invisible.
+#ifndef OS_WIN
+  // Mode indicator is available only on Windows.
   useModeIndicator->hide();
-#endif  // !MOZC_ENABLE_MODE_INDICATOR
+#endif  // !OS_WIN
 
   // signal/slot
   QObject::connect(configDialogButtonBox,

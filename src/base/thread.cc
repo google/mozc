@@ -191,7 +191,7 @@ void PThreadCancel(pthread_t thread_id) {
   }
 }
 
-#elif defined(__native_client__)
+#elif defined(OS_NACL)
 
 void InitPThreadCancel() {
   // Nothing is required.
@@ -211,23 +211,23 @@ void PThreadCancel(pthread_t thread_id) {
   pthread_cancel(thread_id);
 }
 
-#endif  // OS_ANDROID or __native_client__ or others
+#endif  // OS_ANDROID or OS_NACL or others
 
-#ifndef __native_client__
+#ifndef OS_NACL
 
 void PThreadCleanupRoutine(void *ptr) {
   bool *is_running = static_cast<bool *>(ptr);
   *is_running = false;
 }
 
-#endif  // !__native_client__
+#endif  // !OS_NACL
 
 }  // namespace
 
 void *Thread::WrapperForPOSIX(void *ptr) {
   Thread *p = static_cast<Thread *>(ptr);
   InitPThreadCancel();
-#ifdef __native_client__
+#ifdef OS_NACL
   {
     p->Run();
     // TODO(horo): In NaCl we can't use pthread_cleanup_push() and
@@ -235,7 +235,7 @@ void *Thread::WrapperForPOSIX(void *ptr) {
     // This hack makes the meaning of IsRunning() different in NaCl.
     p->state_->is_running_ = false;
   }
-#else
+#else  // OS_NACL
   {
     // Caveat: the pthread_cleanup_push/pthread_cleanup_pop pair should be put
     //     in the same function. Never move them into any other function.
@@ -244,7 +244,7 @@ void *Thread::WrapperForPOSIX(void *ptr) {
     p->Run();
     pthread_cleanup_pop(1);
   }
-#endif  // __native_client__
+#endif  // OS_NACL
   return nullptr;
 }
 

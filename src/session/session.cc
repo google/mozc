@@ -232,9 +232,9 @@ void Session::InitContext(ImeContext *context) const {
 
   context->SetConfig(&context->GetConfig());
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   context->mutable_converter()->set_use_cascading_window(false);
-#endif
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 }
 
 

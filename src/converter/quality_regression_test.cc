@@ -49,10 +49,10 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-#ifdef __native_client__
+#ifdef MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/packed/packed_data_oss.h"
 #include "data_manager/packed/packed_data_manager.h"
-#endif  // __native_client__
+#endif  // MOZC_USE_PACKED_DICTIONARY
 
 using mozc::quality_regression::QualityRegressionUtil;
 
@@ -72,21 +72,21 @@ class QualityRegressionTest : public testing::Test {
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
-#ifdef __native_client__
+#ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers full-size PackedDataManager.
     std::unique_ptr<mozc::packed::PackedDataManager> data_manager(
         new mozc::packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
     mozc::packed::RegisterPackedDataManager(data_manager.release());
-#endif  // __native_client__
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   virtual void TearDown() {
-#ifdef __native_client__
+#ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     mozc::packed::RegisterPackedDataManager(nullptr);
-#endif  // __native_client__
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {

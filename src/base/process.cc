@@ -46,12 +46,12 @@
 #include "base/mac_process.h"
 #endif  // OS_MACOSX
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
 #include <sys/types.h>
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 #include <cstdlib>
 #include <memory>
@@ -125,12 +125,12 @@ bool Process::OpenBrowser(const string &url) {
   return ShellExecuteInSystemDir(L"open", wurl.c_str(), NULL, SW_SHOW);
 #endif
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   static const char kBrowserCommand[] = "/usr/bin/xdg-open";
   // xdg-open which uses kfmclient or gnome-open internally works both on KDE
   // and GNOME environments.
   return SpawnProcess(kBrowserCommand, url);
-#endif  // LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 #ifdef OS_MACOSX
   return MacProcess::OpenBrowserForMac(url);
@@ -209,7 +209,7 @@ bool Process::SpawnProcess(const string &path,
   }
 #endif
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   // Do not call posix_spawn() for obviously bad path.
   if (!S_ISREG(statbuf.st_mode)) {
     LOG(ERROR) << "Not a regular file: " << path;
@@ -232,7 +232,7 @@ bool Process::SpawnProcess(const string &path,
   // (www.gnu.org/software/libc/manual/html_node/Heap-Consistency-Checking.html)
   const int kOverwrite = 0;  // Do not overwrite.
   ::setenv("MALLOC_CHECK_", "2", kOverwrite);
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
   pid_t tmp_pid = 0;
 
   // Spawn new process.
@@ -403,7 +403,7 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
   }
 #endif  // OS_WIN
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   const char kMozcTool[] = "mozc_tool";
   const string arg = "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
@@ -411,7 +411,7 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
   return true;
 }

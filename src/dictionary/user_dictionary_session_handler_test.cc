@@ -232,13 +232,13 @@ TEST_F(UserDictionarySessionHandlerTest, NoOperation) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
-#ifdef __native_client__
+#ifdef OS_NACL
   Clear();
   command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
   EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_ERROR,
             status_->status());
-#else
+#else  // OS_NACL
   // Set up a user dictionary.
   {
     Clear();
@@ -271,7 +271,7 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
                      ">\n",
                      *status_);
   }
-#endif  // __native_client__
+#endif  // OS_NACL
 }
 
 TEST_F(UserDictionarySessionHandlerTest, CreateDeleteSession) {

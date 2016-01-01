@@ -30,7 +30,7 @@
 #ifndef MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_
 #define MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_
 
-#ifdef __native_client__
+#ifdef OS_NACL
 
 #include <memory>
 #include <string>
@@ -77,6 +77,6 @@ class DictionaryDownloader {
 }  // namespace chrome
 }  // namespace mozc
 
-#endif  // __native_client__
+#endif  // OS_NACL
 
 #endif  // MOZC_CHROME_NACL_DICTIONARY_DOWNLOADER_H_

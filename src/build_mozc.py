@@ -366,12 +366,6 @@ def ParseGypOptions(args=None, values=None):
                     help='Treat compiler warning as error. This option is used '
                     'on Mac and Linux.')
 
-  # Mac
-  parser.add_option('--mac_dir', dest='mac_dir',
-                    help='A path to the root directory of third party '
-                    'libraries for Mac build which will be passed to gyp '
-                    'files.')
-
   # Linux
   parser.add_option('--server_dir', dest='server_dir',
                     default='',
@@ -462,12 +456,6 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='cloud handwriting',
                    macro_name='ENABLE_CLOUD_HANDWRITING',
                    option_name='cloud_handwriting')
-  AddFeatureOption(parser, feature_name='http client',
-                   macro_name='MOZC_ENABLE_HTTP_CLIENT',
-                   option_name='http_client')
-  AddFeatureOption(parser, feature_name='mode_indicator',
-                   macro_name='MOZC_ENABLE_MODE_INDICATOR',
-                   option_name='mode_indicator')
 
   if IsWindows():
     parser.add_option('--wix_dir', dest='wix_dir',
@@ -764,16 +752,6 @@ def GypMain(options, unused_args, _):
   else:
     gyp_options.extend(['-D', 'warn_as_error=0'])
 
-  # mac_dir should be started with '<(DEPTH)', otherwise some
-  # operations in XCode fails.  So if the mac_dir option is an
-  # absolute path, it will be changed to a relative path.
-  mac_dir = options.mac_dir or '../mac'
-  if os.path.isabs(mac_dir):
-    mac_dir = GetRelPath(mac_dir, GetTopLevelSourceDirectoryName())
-  mac_dir = os.path.join('<(DEPTH)', mac_dir)
-
-  gyp_options.extend(['-D', 'mac_dir=%s' % mac_dir])
-
   if version.IsDevChannel():
     gyp_options.extend(['-D', 'channel_dev=1'])
 
@@ -825,15 +803,6 @@ def GypMain(options, unused_args, _):
                            linux=is_official_dev,
                            windows=is_official_dev,
                            mac=is_official_dev)
-  SetCommandLineForFeature(option_name='http_client',
-                           linux=is_official,
-                           windows=is_official,
-                           mac=is_official,
-                           android=is_official,
-                           # System dictionary is read with HttpClient in NaCl.
-                           nacl=True)
-  SetCommandLineForFeature(option_name='mode_indicator',
-                           windows=True)
 
   gyp_options.extend(['-D', 'target_platform=%s' % options.target_platform])
 

@@ -46,15 +46,15 @@ EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	0
 EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionCommitted	0
 
 SEND_KEYS	h
-EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	1
+EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	0
 EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionCommitted	0
 
 SEND_KEYS	o
-EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	2
+EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	1
 EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionCommitted	0
 
 SEND_KEYS	n
-EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	3
+EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	2
 EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionCommitted	0
 
 EXPECT_PREEDIT	ｐｙてょｎ
@@ -62,5 +62,5 @@ EXPECT_IN_ALL_CANDIDATE_WORDS	python
 
 SUBMIT_CANDIDATE_BY_VALUE	python
 
-EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	3
+EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionTriggered	2
 EXPECT_USAGE_STATS_COUNT	LanguageAwareSuggestionCommitted	1

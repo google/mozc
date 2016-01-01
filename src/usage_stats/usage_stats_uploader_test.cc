@@ -48,7 +48,6 @@
 #include "base/win_util.h"
 #include "config/config_handler.h"
 #include "net/http_client.h"
-#include "protocol/config.pb.h"
 #include "storage/registry.h"
 #include "storage/storage_interface.h"
 #include "testing/base/public/gunit.h"
@@ -128,11 +127,11 @@ class TestHTTPClient : public HTTPClientInterface {
 const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
 const uint32 kHalfDaySec = 12 * 60 * 60;  // 12 hours
 const char kBaseUrl[] =
-#ifdef __native_client__
+#ifdef OS_NACL
     "https://clients4.google.com/tbproxy/usagestats";
-#else  // __native_client__
+#else  // OS_NACL
     "http://clients4.google.com/tbproxy/usagestats";
-#endif  // __native_client__
+#endif  // OS_NACL
 const char kTestClientId[] = "TestClientId";
 const char kCountStatsKey[] = "Commit";
 const uint32 kCountStatsDefaultValue = 100;

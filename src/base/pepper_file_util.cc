@@ -29,7 +29,7 @@
 
 // TODO(horo): Write tests.
 
-#ifdef __native_client__
+#ifdef OS_NACL
 
 #include "base/pepper_file_util.h"
 
@@ -839,4 +839,4 @@ bool PepperFileUtil::SyncMmapToFile() {
 
 }  // namespace mozc
 
-#endif  // __native_client__
+#endif  // OS_NACL

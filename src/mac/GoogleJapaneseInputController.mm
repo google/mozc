@@ -192,7 +192,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   replacementRange_ = NSMakeRange(NSNotFound, 0);
   originalString_ = [[NSMutableString alloc] init];
   composedString_ = [[NSMutableAttributedString alloc] init];
-  cursorPosition_ = NSNotFound;
+  cursorPosition_ = -1;
   mode_ = mozc::commands::DIRECT;
   checkInputMode_ = YES;
   suppressSuggestion_ = NO;
@@ -704,7 +704,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 
   [composedString_
     deleteCharactersInRange:NSMakeRange(0, [composedString_ length])];
-  cursorPosition_ = NSNotFound;
+  cursorPosition_ = -1;
   if (preedit != nullptr) {
     cursorPosition_ = preedit->cursor();
     for (size_t i = 0; i < preedit->segment_size(); ++i) {
@@ -766,7 +766,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 // |selecrionRange| method is defined at IMKInputController class and
 // means the position of cursor actually.
 - (NSRange)selectionRange {
-  return (cursorPosition_ == NSNotFound) ?
+  return (cursorPosition_ == -1) ?
       [super selectionRange] : // default behavior defined at super class
       NSMakeRange(cursorPosition_, 0);
 }

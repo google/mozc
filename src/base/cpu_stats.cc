@@ -123,13 +123,13 @@ float CPUStats::GetSystemCPULoad() {
 
 #endif  // OS_MACOSX
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   // NOT IMPLEMENTED
   // TODO(taku): implement Linux version
   // can take the info from /proc/stats
   const uint64 total_times = 0;
   const uint64 cpu_times = 0;
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
   return UpdateCPULoad(total_times,
                        cpu_times,
@@ -178,11 +178,11 @@ float CPUStats::GetCurrentProcessCPULoad() {
       TimeValueTToInt64(task_times_info.system_time);
 #endif  // OS_MACOSX
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   // not implemented
   const uint64 total_times = 0;
   const uint64 cpu_times = 0;
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
   return UpdateCPULoad(total_times,
                        cpu_times,
@@ -210,7 +210,7 @@ size_t CPUStats::GetNumberOfProcessors() const {
   return static_cast<size_t>(basic_info.avail_cpus);
 #endif  // OS_MACOSX
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   // Not implemented
   return 1;
 #endif  // OS_LINUX

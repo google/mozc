@@ -32,12 +32,18 @@
     # We accept following warnings come from protobuf.
     # This list should be revised when protobuf is updated.
     'msvc_disabled_warnings_for_protoc': [
+      # switch statement contains 'default' but no 'case' labels.
+      # https://msdn.microsoft.com/en-us/library/aa748818.aspx
+      '4065',
       # unary minus operator applied to unsigned type, result still unsigned.
       # http://msdn.microsoft.com/en-us/library/4kh09110.aspx
       '4146',
       # 'this' : used in base member initializer list
       # http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
       '4355',
+      # no definition for inline function.
+      # https://msdn.microsoft.com/en-us/library/aa733865.aspx
+      '4506',
       # 'type' : forcing value to bool 'true' or 'false'
       # (performance warning)
       # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx

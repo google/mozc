@@ -246,7 +246,7 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
             config::ConfigHandler::GetConfig().incognito_mode());
 }
 
-#if !defined(OS_ANDROID) && !defined(__native_client__)
+#if !defined(OS_ANDROID) && !defined(OS_NACL)
 // Temporarily disable this test because FileUtil::CopyFile fails on
 // Android for some reason, and on NaCl since it uses mock file system and the
 // mock file system doesn't have a source file.
@@ -294,7 +294,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     EXPECT_FALSE(FileUtil::FileExists(dest_path));
   }
 }
-#endif  // !OS_ANDROID && !__native_client__
+#endif  // !OS_ANDROID && !OS_NACL
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   config::Config output;
@@ -303,11 +303,11 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   config::ConfigHandler::GetDefaultConfig(&output);
 #ifdef OS_MACOSX
   EXPECT_EQ(output.session_keymap(), config::Config::KOTOERI);
-#elif defined(__native_client__)  // OS_MACOSX
+#elif defined(OS_NACL)  // OS_MACOSX
   EXPECT_EQ(output.session_keymap(), config::Config::CHROMEOS);
-#else  // OS_MACOSX || __native_client
+#else  // OS_MACOSX || OS_NACL
   EXPECT_EQ(output.session_keymap(), config::Config::MSIME);
-#endif  // OS_MACOSX || __native_client
+#endif  // OS_MACOSX || OS_NACL
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {

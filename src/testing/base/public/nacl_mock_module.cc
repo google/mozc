@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef __native_client__
+#ifdef OS_NACL
 
 #include <errno.h>
 #include <pthread.h>
@@ -147,4 +147,4 @@ Module* CreateModule() {
 
 }  // namespace pp
 
-#endif  // __native_client__
+#endif  // OS_NACL

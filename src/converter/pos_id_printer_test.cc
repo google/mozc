@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef __native_client__
+#ifndef OS_NACL
 // Disabled on NaCl since it uses a mock file system.
 
 #include "converter/pos_id_printer.h"
@@ -83,4 +83,4 @@ TEST_F(PosIdPrinterTest, NullInput) {
 }  // namespace internal
 }  // namespace mozc
 
-#endif  // !__native_client__
+#endif  // !OS_NACL

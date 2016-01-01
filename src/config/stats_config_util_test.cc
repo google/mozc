@@ -696,13 +696,11 @@ TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
 }
 #endif  // OS_ANDROID
 
-#ifdef OS_LINUX
-#ifndef OS_ANDROID
+#if defined(OS_LINUX) || defined(OS_NACL)
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
-#endif  // OS_ANDROID
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_NACL
 
 #else  // !GOOGLE_JAPANESE_INPUT_BUILD
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {

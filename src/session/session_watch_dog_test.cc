@@ -38,7 +38,6 @@
 #include "base/mutex.h"
 #include "base/util.h"
 #include "client/client_mock.h"
-#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 

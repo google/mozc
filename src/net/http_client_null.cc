@@ -27,62 +27,48 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_CLOCK_MOCK_H_
-#define MOZC_BASE_CLOCK_MOCK_H_
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
 
-#include "base/clock.h"
-#include "base/port.h"
+#include "net/http_client_null.h"
+
+#ifdef OS_NACL
+#include <ppapi/cpp/instance.h>
+#endif  // OS_NACL
+
+#include "base/logging.h"
 
 namespace mozc {
 
-// Standard mock clock implementation.
-// This mock behaves in UTC
-class ClockMock : public ClockInterface {
- public:
-  ClockMock(uint64 sec, uint32 usec);
-  virtual ~ClockMock();
+namespace {
 
-  virtual void GetTimeOfDay(uint64 *sec, uint32 *usec);
-  virtual uint64 GetTime();
-  virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output);
-  virtual uint64 GetFrequency();
-  virtual uint64 GetTicks();
+void Error() {
+  LOG(ERROR) << "HttpClient is not enabled.";
+}
+
+}  // namespace
+
+// static
+bool NullHTTPRequestHandler::Request(HTTPMethodType type,
+                                     const string &url,
+                                     const char *post_data,
+                                     size_t post_size,
+                                     const HTTPClient::Option &option,
+                                     string *output_string) {
+  Error();
+  return false;
+}
+
 #ifdef OS_NACL
-  virtual void SetTimezoneOffset(int32 timezone_offset_sec);
+void RegisterPepperInstanceForHTTPClient(pp::Instance *instance) {
+  Error();
+}
+
+pp::Instance *GetPepperInstanceForHTTPClient() {
+  Error();
+  return nullptr;
+}
 #endif  // OS_NACL
-
-  // Puts this clock forward.
-  // It has no impact on ticks.
-  void PutClockForward(uint64 delta_sec, uint32 delta_usec);
-
-  // Puts this clock forward by ticks
-  // It has no impact on seconds and micro seconds.
-  void PutClockForwardByTicks(uint64 ticks);
-
-  // Automatically puts this clock forward on every time after it returns time.
-  // It has no impact on ticks.
-  void SetAutoPutClockForward(uint64 delta_sec, uint32 delta_usec);
-
-  void SetTime(uint64 sec, uint32 usec);
-  void SetFrequency(uint64 frequency);
-  void SetTicks(uint64 ticks);
-
- private:
-  uint64 seconds_;
-  uint32 micro_seconds_;
-  uint64 frequency_;
-  uint64 ticks_;
-#ifdef OS_NACL
-  int32 timezone_offset_sec_;
-#endif  // OS_NACL
-  // Everytime user requests time clock, following time is added to the
-  // internal clock.
-  uint64 delta_seconds_;
-  uint32 delta_micro_seconds_;
-
-  DISALLOW_COPY_AND_ASSIGN(ClockMock);
-};
 
 }  // namespace mozc
 
-#endif  // MOZC_BASE_CLOCK_MOCK_H_
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
