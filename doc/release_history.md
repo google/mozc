@@ -1,6 +1,31 @@
 Release History
 ===============
 
+2.17.2285.102 - 2.17.2287.102 / *2016-01-01* - *2016-01-02*
+--------------------------------------------------
+You can check out Mozc [2.17.2287.102](https://github.com/google/mozc/commit/ab4569e73bca8d2375262d243f362c7b848646da) as follows.
+
+```
+git clone https://github.com/google/mozc.git
+cd mozc
+git checkout ab4569e73bca8d2375262d243f362c7b848646da
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2285.102](https://github.com/google/mozc/commit/4a370c6ea6f003be99e7837713a939a68b75aeae) and [2.17.2287.102](https://github.com/google/mozc/commit/ab4569e73bca8d2375262d243f362c7b848646da) as follows.
+
+  * Third party libraries:
+    * None.
+  * Build related changes:
+    * None.
+  * Major changes:
+    * None.
+  * Fixed issues:
+    * None.
+  * Total commits:
+    * [4 commits](https://github.com/google/mozc/compare/4a370c6ea6f003be99e7837713a939a68b75aeae%5E...ab4569e73bca8d2375262d243f362c7b848646da).
+
+
 2.17.2241.102 - 2.17.2284.102 / *2015-11-15* - *2015-12-31*
 --------------------------------------------------
 You can check out Mozc [2.17.2284.102](https://github.com/google/mozc/commit/be24638ab360c39995ab2c10e34ab9b269e39dac) as follows.
@@ -18,7 +43,7 @@ Summary of changes between [2.17.2241.102](https://github.com/google/mozc/commit
     * fontTools: [5ba7d98 -> 8724513](https://github.com/googlei18n/fonttools/compare/5ba7d98a4153fad57258fca23b0bcb238717aec3...8724513a67f954eac56eeb77ced12e27d7c02b6b)
   * Build related changes:
     * Reference Dockerfile for Fedora now uses Fedora 23 base image.
-    * the default SDKROOT for OS X build is switched from ```macosx10.8``` to ```macosx10.9```.
+    * Default ```SDKROOT``` for OS X build is switched from ```macosx10.8``` to ```macosx10.9```.
   * Major changes:
     * ```CalculatorRewriter``` is now triggered not only by inputs end with ```=``` but also by inputs start with ```=```.  For instance, now ```=1+1``` triggers ```CalculatorRewriter```.  See the commit message of [5d423b0b](https://github.com/google/mozc/commit/5d423b0ba6989481ad2474c0eaf8c387a2bdfcc9) and its unittests as for how it works.
     * Performance improvements in LOUDS.  See commits [3591f5e7](https://github.com/google/mozc/commit/3591f5e77d8bfb0ba6f1ac839b69eb9e7aa265c9) and [cac14650](https://github.com/google/mozc/commit/cac146508d32fcce1ecfec8d038f63f588ed13c4) for details.
