@@ -1,6 +1,6 @@
 ;;; mozc.el --- minor mode to input Japanese with Mozc
 
-;; Copyright 2010-2016 Google Inc. All Rights Reserved.
+;; Copyright 2010-2016, Google Inc. All rights reserved.
 
 ;; Keywords: mule, multilingual, input method
 
