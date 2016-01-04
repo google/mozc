@@ -83,11 +83,6 @@
                 'http_client_pepper.cc',
               ],
             }],
-            ['target_platform=="Android"', {
-              'dependencies': [
-                '../base/base.gyp:jni_proxy'
-              ],
-            }],
           ],
         }, {  # blanding!=GoogleJapaneseInput
           'sources': [

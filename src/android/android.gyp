@@ -576,6 +576,7 @@
       'product_dir': '<(abs_android_dir)/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:jni_proxy',
         '../dictionary/dictionary.gyp:dictionary',
         '../engine/engine.gyp:engine_factory',
         '../session/session.gyp:session',
