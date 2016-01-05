@@ -46,11 +46,6 @@
 #include "win32/base/imm_util.h"
 #include "win32/base/migration_util.h"
 
-DEFINE_int32(ime_switcher_target_process_id, 0,
-             "The broker send messages to the process specified with this ID");
-DEFINE_uint64(ime_switcher_target_process_creation_time, 0,
-              "The process creation time to specify the actual process with"
-              " process ID.");
 DEFINE_bool(set_default_do_not_ask_again, false,
               "Set true if SetDefaultDialog should not be displayed again.");
 
