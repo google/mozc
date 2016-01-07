@@ -66,10 +66,10 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
   explicit UserHistoryStorage(const string &filename);
   ~UserHistoryStorage();
 
-  // Load from encrypted file.
+  // Loads from encrypted file.
   bool Load();
 
-  // Save history into encrypted file.
+  // Saves history into encrypted file.
   bool Save() const;
 
  private:
@@ -134,17 +134,17 @@ class UserHistoryPredictor : public PredictorInterface {
   typedef user_history_predictor::UserHistory::NextEntry NextEntry;
   typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
 
-  // return fingerprints from various object.
+  // Returns fingerprints from various object.
   static uint32 Fingerprint(const string &key, const string &value);
   static uint32 Fingerprint(const string &key, const string &value,
                             EntryType type);
   static uint32 EntryFingerprint(const Entry &entry);
   static uint32 SegmentFingerprint(const Segment &segment);
 
-  // return the size of cache.
+  // Returns the size of cache.
   static uint32 cache_size();
 
-  // return the size of next entries.
+  // Returns the size of next entries.
   static uint32 max_next_entries_size();
 
  private:
@@ -216,6 +216,7 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorClearTest);
   FRIEND_TEST(UserHistoryPredictorTest,
               UserHistoryPredictorTrailingPunctuation);
+  FRIEND_TEST(UserHistoryPredictorTest, TrailingPunctuation_Mobile);
   FRIEND_TEST(UserHistoryPredictorTest, HistoryToPunctuation);
   FRIEND_TEST(UserHistoryPredictorTest,
               UserHistoryPredictorPreceedingPunctuation);
@@ -276,6 +277,8 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile);
   FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop);
   FRIEND_TEST(UserHistoryPredictorTest, UsageStats);
+  FRIEND_TEST(UserHistoryPredictorTest, PunctuationLink_Mobile);
+  FRIEND_TEST(UserHistoryPredictorTest, PunctuationLink_Desktop);
 
   enum MatchType {
     NO_MATCH,            // no match
@@ -290,7 +293,7 @@ class UserHistoryPredictor : public PredictorInterface {
     ZERO_QUERY_SUGGESTION,
   };
 
-  // Return value of RemoveNgramChain() method. See the comments in
+  // Returns value of RemoveNgramChain() method. See the comments in
   // implementation.
   enum RemoveNgramChainResult {
     DONE,
@@ -298,10 +301,10 @@ class UserHistoryPredictor : public PredictorInterface {
     NOT_FOUND,
   };
 
-  // Load user history data to LRU from local file
+  // Loads user history data to LRU from local file
   bool Load();
 
-  // Save user history data in LRU to local file
+  // Saves user history data in LRU to local file
   bool Save();
 
   // non-blocking version of Load
@@ -315,13 +318,13 @@ class UserHistoryPredictor : public PredictorInterface {
   // Waits until syncer finishes.
   void WaitForSyncer();
 
-  // return id for RevertEntry
+  // Returns id for RevertEntry
   static uint16 revert_id();
 
-  // Get match type from two strings
+  // Gets match type from two strings
   static MatchType GetMatchType(const string &lstr, const string &rstr);
 
-  // Get match type with ambiguity expansion
+  // Gets match type with ambiguity expansion
   static MatchType GetMatchTypeFromInput(const string &input_key,
                                          const string &key_base,
                                          const Trie<string> *key_expanded,
@@ -331,11 +334,11 @@ class UserHistoryPredictor : public PredictorInterface {
   static string Uint32ToString(uint32 fp);
   static uint32 StringToUint32(const string &input);
 
-  // return true if prev_entry has a next_fp link to entry
+  // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry &entry,
                              const Entry &prev_entry);
 
-  // return true |result_entry| can be handled as
+  // Returns true |result_entry| can be handled as
   // a valid result if the length of user input is |prefix_len|.
   static bool IsValidSuggestion(RequestType request_type,
                                 uint32 prefix_len,
@@ -348,7 +351,7 @@ class UserHistoryPredictor : public PredictorInterface {
   bool IsValidEntryIgnoringRemovedField(const Entry &entry,
                                         uint32 available_emoji_carrier) const;
 
-  // return "tweaked" score of result_entry.
+  // Returns "tweaked" score of result_entry.
   // the score is basically determined by "last_access_time", (a.k.a,
   // LRU policy), but we want to slightly change the score
   // with different signals, including the length of value and/or
@@ -429,7 +432,7 @@ class UserHistoryPredictor : public PredictorInterface {
       const Entry *prev_entry,
       EntryPriorityQueue *results) const;
 
-  // Get input data from segments.
+  // Gets input data from segments.
   // These input data include ambiguities.
   static void GetInputKeyFromSegments(
       const ConversionRequest &request, const Segments &segments,
@@ -443,14 +446,14 @@ class UserHistoryPredictor : public PredictorInterface {
   void MakeLearningSegments(const Segments &segments,
                             SegmentsForLearning *learning_segments) const;
 
-  // return true if |prefix| is a fuzzy-prefix of |str|.
+  // Returns true if |prefix| is a fuzzy-prefix of |str|.
   // 'Fuzzy' means that
   // 1) Allows one character deletation in the |prefix|.
   // 2) Allows one character swap in the |prefix|.
   static bool RomanFuzzyPrefixMatch(const string &str,
                                     const string &prefix);
 
-  // return romanized preedit string if the preedit looks
+  // Returns romanized preedit string if the preedit looks
   // misspelled. It first tries to get the preedit string with
   // composer() if composer is available. If not, use the key
   // directory. It also use MaybeRomanMisspelledKey() defined
@@ -458,7 +461,7 @@ class UserHistoryPredictor : public PredictorInterface {
   static string GetRomanMisspelledKey(const ConversionRequest &request,
                                       const Segments &segments);
 
-  // return true if |key| may contain miss spelling.
+  // Returns true if |key| may contain miss spelling.
   // Currently, this function returns true if
   // 1) key contains only one alphabet.
   // 2) other characters of key are all hiragana.
@@ -478,7 +481,7 @@ class UserHistoryPredictor : public PredictorInterface {
                      uint64 last_access_time,
                      Segments *segments);
 
-  // insert |key,value,description| to the internal dictionary database.
+  // Inserts |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprint of the next segment.
   // |last_access_time|: the time when this entrty was created
@@ -490,10 +493,21 @@ class UserHistoryPredictor : public PredictorInterface {
               uint64 last_access_time,
               Segments *segments);
 
-  // Insert event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
+  // Tries to insert entry.
+  // Entry's contents and request_type will be checked before insersion.
+  void TryInsert(RequestType request_type,
+                 const string &key,
+                 const string &value,
+                 const string &description,
+                 bool is_suggestion_selected,
+                 uint32 next_fp,
+                 uint64 last_access_time,
+                 Segments *segments);
+
+  // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
   void InsertEvent(EntryType type);
 
-  // Insert a new |next_entry| into |entry|.
+  // Inserts a new |next_entry| into |entry|.
   // it makes a bigram connection from entry to next_entry.
   void InsertNextEntry(const NextEntry &next_entry, Entry *entry) const;
 

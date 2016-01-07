@@ -1578,13 +1578,14 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
   entry->set_last_access_time(last_access_time);
 }
 
-void UserHistoryPredictor::Insert(const string &key,
-                                  const string &value,
-                                  const string &description,
-                                  bool is_suggestion_selected,
-                                  uint32 next_fp,
-                                  uint64 last_access_time,
-                                  Segments *segments) {
+void UserHistoryPredictor::TryInsert(RequestType request_type,
+                                     const string &key,
+                                     const string &value,
+                                     const string &description,
+                                     bool is_suggestion_selected,
+                                     uint32 next_fp,
+                                     uint64 last_access_time,
+                                     Segments *segments) {
   if (key.empty() || value.empty() ||
       key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
@@ -1592,6 +1593,24 @@ void UserHistoryPredictor::Insert(const string &key,
     return;
   }
 
+  // For mobile, we do not learn candidates that ends with puctuation.
+  if (request_type == ZERO_QUERY_SUGGESTION &&
+      Util::CharsLen(value) > 1 &&
+      IsPunctuation(Util::SubString(value, Util::CharsLen(value) - 1, 1))) {
+    return;
+  }
+
+  Insert(key, value, description, is_suggestion_selected, next_fp,
+         last_access_time, segments);
+}
+
+void UserHistoryPredictor::Insert(const string &key,
+                                  const string &value,
+                                  const string &description,
+                                  bool is_suggestion_selected,
+                                  uint32 next_fp,
+                                  uint64 last_access_time,
+                                  Segments *segments) {
   const uint32 dic_key = Fingerprint(key, value);
 
   if (!dic_->HasKey(dic_key)) {
@@ -1737,8 +1756,9 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
       const string value = entry->value() + candidate.value;
       // Uses the same last_access_time stored in the top element
       // so that this item can be grouped together.
-      Insert(key, value, entry->description(), is_suggestion, 0,
-             entry->last_access_time(), segments);
+      TryInsert(request_type,
+                key, value, entry->description(), is_suggestion, 0,
+                entry->last_access_time(), segments);
     }
   }
 
@@ -1851,19 +1871,21 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
     } else {
       this_was_seen = false;
     }
-    Insert(segment.key,
-           segment.value,
-           segment.description,
-           is_suggestion_selected, next_fp_to_set,
-           last_access_time, segments);
+    TryInsert(request_type,
+              segment.key,
+              segment.value,
+              segment.description,
+              is_suggestion_selected, next_fp_to_set,
+              last_access_time, segments);
     if (content_word_learning_enabled_ &&
         segment.content_key != segment.key &&
         segment.content_value != segment.value) {
-      Insert(segment.content_key,
-             segment.content_value,
-             segment.description,
-             is_suggestion_selected, 0,
-             last_access_time, segments);
+      TryInsert(request_type,
+                segment.content_key,
+                segment.content_value,
+                segment.description,
+                is_suggestion_selected, 0,
+                last_access_time, segments);
     }
   }
 
@@ -1872,9 +1894,10 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
   if (request_type != ZERO_QUERY_SUGGESTION &&
       learning_segments.conversion_segments_size() > 1 &&
       !all_key.empty() && !all_value.empty()) {
-    Insert(all_key, all_value, "",
-           is_suggestion_selected,
-           0, last_access_time, segments);
+    TryInsert(request_type,
+              all_key, all_value, "",
+              is_suggestion_selected,
+              0, last_access_time, segments);
   }
 
   // Makes a link from the last history_segment to the first conversion segment
@@ -1886,10 +1909,27 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
             segments->history_segments_size() - 1);
     const SegmentForLearning &conversion_segment =
         learning_segments.conversion_segment(0);
-    // Don't learn a link from/to a punctuation.  Note that another piece of
-    // code handles learning for (sentence + punctuation) form; see Finish().
-    if (IsPunctuation(history_segment.value) ||
-        IsPunctuation(conversion_segment.value)) {
+    const string &history_value = history_segment.value;
+    if (history_value.empty() || conversion_segment.value.empty()) {
+      return;
+    }
+    // 1) Don't learn a link from a history which ends with punctuation.
+    if (IsPunctuation(Util::SubString(history_value,
+                                      Util::CharsLen(history_value) - 1,
+                                      1))) {
+      return;
+    }
+    // 2) Don't learn a link to a punctuation.
+    // Exception: For zero query suggestion, we learn a link to a single
+    //            punctuation segment.
+    // Example: "よろしく|。" -> OK
+    //          "よろしく|。でも" -> NG
+    //          "よろしく|。。" -> NG
+    // Note that another piece of code handles learning for
+    // (sentence + punctuation) form; see Finish().
+    if (IsPunctuation(Util::SubString(conversion_segment.value, 0, 1)) &&
+        (request_type != ZERO_QUERY_SUGGESTION ||
+         Util::CharsLen(conversion_segment.value) > 1)) {
       return;
     }
     Entry *history_entry = dic_->MutableLookupWithoutInsert(
