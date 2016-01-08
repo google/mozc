@@ -61,6 +61,9 @@ using mozc::commands::Request;
 
 namespace {
 
+// Load kEmojiDataList, kEmojiTokenList and kEmojiValueList
+#include "rewriter/emoji_rewriter_data.h"
+
 // "えもじ"
 const char kEmoji[] = "\xE3\x81\x88\xE3\x82\x82\xE3\x81\x98";
 
@@ -97,7 +100,6 @@ bool HasExpectedCandidate(const Segments &segments,
   const Segment &segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     const Segment::Candidate &candidate = segment.candidate(i);
-    LOG(ERROR) << "[i]" << candidate.value;
     if (candidate.value == expect_value) {
       return true;
     }
@@ -200,6 +202,10 @@ class EmojiRewriterTest : public ::testing::Test {
         kTestEmojiData, arraysize(kTestEmojiData),
         kTestToken, arraysize(kTestToken),
         kValueList));
+    full_data_rewriter_.reset(new EmojiRewriter(
+        kEmojiDataList, arraysize(kEmojiDataList),
+        kEmojiTokenList, arraysize(kEmojiTokenList),
+        kEmojiValueList));
   }
 
   virtual void TearDown() {
@@ -215,6 +221,7 @@ class EmojiRewriterTest : public ::testing::Test {
   commands::Request request_;
   config::Config config_;
   std::unique_ptr<EmojiRewriter> rewriter_;
+  std::unique_ptr<EmojiRewriter> full_data_rewriter_;
 
  private:
   string original_profile_directory_;
@@ -506,6 +513,87 @@ TEST_F(EmojiRewriterTest, CheckUsageStats) {
   EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
   rewriter_->Finish(convreq_, &segments);
   EXPECT_COUNT_STATS(kStatsKey, 2);
+}
+
+TEST_F(EmojiRewriterTest, QueryNormalization) {
+  {
+    Segments segments;
+    // "Ｎｅｋｏ"
+    SetSegment("\xEF\xBC\xAE\xEF\xBD\x85\xEF\xBD\x8B\xEF\xBD\x8F", "Neko",
+               &segments);
+    EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("Neko", "Neko", &segments);
+    EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  }
+}
+
+TEST_F(EmojiRewriterTest, FullDataTest) {
+  // U+1F646 (FACE WITH OK GESTURE)
+  {
+    Segments segments;
+    // "ＯＫ"
+    SetSegment("\xEF\xBC\xAF\xEF\xBC\xAB", "OK", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("OK", "OK", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+2795 (HEAVY PLUS SIGN)
+  {
+    Segments segments;
+    // "＋"
+    SetSegment("\xEF\xBC\x8B", "+", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("+", "+", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+1F522 (INPUT SYMBOL FOR NUMBERS)
+  {
+    Segments segments;
+    // "１２３４"
+    SetSegment("\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94", "1234",
+               &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("1234", "1234", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+1F552 (CLOCK FACE THREE OCLOCK)
+  {
+    Segments segments;
+    // "３じ"
+    SetSegment("\xEF\xBC\x93\xE3\x81\x98", "3ji", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("\x33\xE3\x81\x98", "3ji", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+31 U+20E3 (KEYCAP 1)
+  // Since emoji_rewriter does not support multi-codepoint characters,
+  // Rewrite function returns false though ideally it should be supported.
+  {
+    Segments segments;
+    // "１"
+    SetSegment("\xEF\xBC\x91", "1", &segments);
+    EXPECT_FALSE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("1", "1", &segments);
+    EXPECT_FALSE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
 }
 
 }  // namespace mozc

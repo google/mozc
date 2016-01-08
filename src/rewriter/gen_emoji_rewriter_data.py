@@ -76,6 +76,16 @@ def ParseCodePoint(s):
   return int(s, 16)
 
 
+_FULLWIDTH_RE = re.compile(ur'[！-～]')   # U+FF01 - U+FF5E
+
+
+def NormalizeString(string):
+  """Normalize full width ascii characters to half width characters."""
+  offset = ord(u'Ａ') - ord(u'A')
+  return _FULLWIDTH_RE.sub(lambda x: unichr(ord(x.group(0)) - offset),
+                           unicode(string, 'utf-8')).encode('utf-8')
+
+
 def ReadEmojiTsv(stream):
   """Parses emoji_data.tsv file and builds the emoji_data_list and reading map.
   """
@@ -137,7 +147,8 @@ def ReadEmojiTsv(stream):
 
     # \xe3\x80\x80 is a full-width space
     for reading in re.split(r'(?: |\xe3\x80\x80)+', readings.strip()):
-      token_dict[reading].append(index)
+      if reading:
+        token_dict[NormalizeString(reading)].append(index)
 
   return (emoji_data_list, token_dict)
 

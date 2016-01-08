@@ -286,9 +286,10 @@ const EmojiRewriter::Token *EmojiRewriter::LookUpToken(const string &key)
 bool EmojiRewriter::RewriteCandidates(
     int32 available_emoji_carrier, Segments *segments) const {
   bool modified = false;
+  string reading;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
-    const string &reading = segment->key();
+    Util::FullWidthAsciiToHalfWidthAscii(segment->key(), &reading);
     if (reading.empty()) {
       continue;
     }
@@ -300,7 +301,6 @@ bool EmojiRewriter::RewriteCandidates(
           available_emoji_carrier, segment);
       continue;
     }
-
     const Token *token = LookUpToken(reading);
     if (token == NULL) {
       VLOG(2) << "Token not found: " << reading;
