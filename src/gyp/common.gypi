@@ -236,10 +236,6 @@
     # zinnia will be built from source as needed.
     'use_libzinnia%': 0,
 
-    # use_libxml represents if libxml library is used or not.
-    # This option is only for Linux.
-    'use_libxml%': 1,
-
     # use_libibus represents if ibus library is used or not.
     # This option is only for Linux.
     'use_libibus%': 0,
