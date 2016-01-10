@@ -20,7 +20,7 @@ You can download Mozc source code as follows:
 ```
 mkdir -p ~/work
 cd ~/work
-git clone https://github.com/google/mozc.git --recursive
+git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 ```
 
 # Compilation

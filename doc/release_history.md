@@ -6,7 +6,7 @@ Release History
 You can check out Mozc [2.17.2287.102](https://github.com/google/mozc/commit/ab4569e73bca8d2375262d243f362c7b848646da) as follows.
 
 ```
-git clone https://github.com/google/mozc.git
+git clone https://github.com/google/mozc.git -b master --single-branch
 cd mozc
 git checkout ab4569e73bca8d2375262d243f362c7b848646da
 git submodule update --init --recursive
@@ -31,7 +31,7 @@ Summary of changes between [2.17.2285.102](https://github.com/google/mozc/commit
 You can check out Mozc [2.17.2284.102](https://github.com/google/mozc/commit/be24638ab360c39995ab2c10e34ab9b269e39dac) as follows.
 
 ```
-git clone https://github.com/google/mozc.git
+git clone https://github.com/google/mozc.git -b master --single-branch
 cd mozc
 git checkout be24638ab360c39995ab2c10e34ab9b269e39dac
 git submodule update --init --recursive
@@ -59,7 +59,7 @@ Summary of changes between [2.17.2241.102](https://github.com/google/mozc/commit
 You can check out Mozc [2.17.2240.102](https://github.com/google/mozc/commit/95de40fa884d693172605e7283ec82233a908b29) as follows.
 
 ```
-git clone https://github.com/google/mozc.git
+git clone https://github.com/google/mozc.git -b master --single-branch
 cd mozc
 git checkout 95de40fa884d693172605e7283ec82233a908b29
 git submodule update --init --recursive
@@ -101,7 +101,7 @@ Summary of changes between [2.17.2124.102](https://github.com/google/mozc/commit
 You can check out Mozc [2.17.2123.102](https://github.com/google/mozc/commit/e398317a086a78c0cf0004505eb8f56586e925b2) as follows.
 
 ```
-git clone https://github.com/google/mozc.git
+git clone https://github.com/google/mozc.git -b master --single-branch
 cd mozc
 git checkout e398317a086a78c0cf0004505eb8f56586e925b2
 git submodule update --init --recursive
