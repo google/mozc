@@ -377,39 +377,52 @@ TEST_F(FileUtilTest, AtomicRename) {
   FileUtil::Unlink(to);
 }
 
-TEST_F(FileUtilTest, Dirname) {
 #ifdef OS_WIN
-  EXPECT_EQ("\\foo", FileUtil::Dirname("\\foo\\bar"));
-  EXPECT_EQ("\\foo\\bar", FileUtil::Dirname("\\foo\\bar\\foo.txt"));
-  EXPECT_EQ("", FileUtil::Dirname("foo.txt"));
-  EXPECT_EQ("", FileUtil::Dirname("\\"));
+#define SP "\\"
 #else
-  EXPECT_EQ("/foo", FileUtil::Dirname("/foo/bar"));
-  EXPECT_EQ("/foo/bar", FileUtil::Dirname("/foo/bar/foo.txt"));
-  EXPECT_EQ("", FileUtil::Dirname("foo.txt"));
-  EXPECT_EQ("", FileUtil::Dirname("/"));
+#define SP "/"
 #endif  // OS_WIN
+
+TEST_F(FileUtilTest, JoinPath) {
+  EXPECT_TRUE(FileUtil::JoinPath({}).empty());
+  EXPECT_EQ("foo", FileUtil::JoinPath({"foo"}));
+  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "bar"}));
+  EXPECT_EQ("foo" SP "bar" SP "baz", FileUtil::JoinPath({"foo", "bar", "baz"}));
+
+  // Some path components end with delimiter.
+  EXPECT_EQ("foo" SP "bar" SP "baz",
+            FileUtil::JoinPath({"foo" SP, "bar", "baz"}));
+  EXPECT_EQ("foo" SP "bar" SP "baz",
+            FileUtil::JoinPath({"foo", "bar" SP, "baz"}));
+  EXPECT_EQ("foo" SP "bar" SP "baz" SP,
+            FileUtil::JoinPath({"foo", "bar", "baz" SP}));
+
+  // Containing empty strings.
+  EXPECT_TRUE(FileUtil::JoinPath({"", "", ""}).empty());
+  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"", "foo", "bar"}));
+  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "", "bar"}));
+  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "bar", ""}));
+}
+
+TEST_F(FileUtilTest, Dirname) {
+  EXPECT_EQ(SP "foo", FileUtil::Dirname(SP "foo" SP "bar"));
+  EXPECT_EQ(SP "foo" SP "bar",
+            FileUtil::Dirname(SP "foo" SP "bar" SP "foo.txt"));
+  EXPECT_EQ("", FileUtil::Dirname("foo.txt"));
+  EXPECT_EQ("", FileUtil::Dirname(SP));
 }
 
 TEST_F(FileUtilTest, Basename) {
-#ifdef OS_WIN
-  EXPECT_EQ("bar", FileUtil::Basename("\\foo\\bar"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename("\\foo\\bar\\foo.txt"));
+  EXPECT_EQ("bar", FileUtil::Basename(SP "foo" SP "bar"));
+  EXPECT_EQ("foo.txt", FileUtil::Basename(SP "foo" SP "bar" SP "foo.txt"));
   EXPECT_EQ("foo.txt", FileUtil::Basename("foo.txt"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename(".\\foo.txt"));
-  EXPECT_EQ(".foo.txt", FileUtil::Basename(".\\.foo.txt"));
-  EXPECT_EQ("", FileUtil::Basename("\\"));
-  EXPECT_EQ("", FileUtil::Basename("foo\\bar\\buz\\"));
-#else
-  EXPECT_EQ("bar", FileUtil::Basename("/foo/bar"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename("/foo/bar/foo.txt"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename("foo.txt"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename("./foo.txt"));
-  EXPECT_EQ(".foo.txt", FileUtil::Basename("./.foo.txt"));
-  EXPECT_EQ("", FileUtil::Basename("/"));
-  EXPECT_EQ("", FileUtil::Basename("foo/bar/buz/"));
-#endif  // OS_WIN
+  EXPECT_EQ("foo.txt", FileUtil::Basename("." SP "foo.txt"));
+  EXPECT_EQ(".foo.txt", FileUtil::Basename("." SP ".foo.txt"));
+  EXPECT_EQ("", FileUtil::Basename(SP));
+  EXPECT_EQ("", FileUtil::Basename("foo" SP "bar" SP "buz" SP));
 }
+
+#undef SP
 
 TEST_F(FileUtilTest, NormalizeDirectorySeparator) {
 #ifdef OS_WIN

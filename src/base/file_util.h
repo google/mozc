@@ -35,8 +35,10 @@
 #endif  // OS_WIN
 
 #include <string>
+#include <vector>
 
 #include "base/port.h"
+#include "base/string_piece.h"
 
 // Ad-hoc workaround against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
@@ -94,10 +96,18 @@ class FileUtil {
   // Returns true if the file is renamed successfully.
   static bool AtomicRename(const string &from, const string &to);
 
+  // Joins the give path components using the OS-specific path delimiter.
+  static string JoinPath(const vector<StringPiece> &components);
+  static void JoinPath(const vector<StringPiece> &components, string *output);
+
   // Joins the given two path components using the OS-specific path delimiter.
-  static string JoinPath(const string &path1, const string &path2);
+  static string JoinPath(const string &path1, const string &path2) {
+    return JoinPath({path1, path2});
+  }
   static void JoinPath(const string &path1, const string &path2,
-                       string *output);
+                       string *output) {
+    JoinPath({path1, path2}, output);
+  }
 
   static string Basename(const string &filename);
   static string Dirname(const string &filename);
