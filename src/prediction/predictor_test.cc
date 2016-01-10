@@ -179,7 +179,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
   unique_ptr<MobilePredictor> predictor(
-      new MobilePredictor(new CheckCandSizePredictor(1000),
+      new MobilePredictor(new CheckCandSizePredictor(200),
                           new CheckCandSizePredictor(3)));
   Segments segments;
   {
@@ -195,7 +195,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   DictionaryMock dictionary_mock;
   unique_ptr<MobilePredictor> predictor(
       new MobilePredictor(
-          new CheckCandSizePredictor(1000),
+          new CheckCandSizePredictor(200),
           new UserHistoryPredictor(
               &dictionary_mock,
               UserPosManager::GetUserPosManager()->GetPOSMatcher(),
