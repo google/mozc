@@ -33,7 +33,6 @@
 #include <sstream>  // For DebugString()
 #include <string>
 
-#include "base/freelist.h"
 #include "base/logging.h"
 #include "base/util.h"
 

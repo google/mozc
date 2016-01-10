@@ -33,23 +33,15 @@
 #include <deque>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "base/freelist.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "converter/lattice.h"
 
 namespace mozc {
-
-class Lattice;
-struct Node;
-template <class T> class ObjectPool;
-
-namespace composer {
-class Composer;
-}  // namespace composer
 
 class Segment {
  public:
