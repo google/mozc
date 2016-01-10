@@ -226,9 +226,7 @@
     # This option is only for Linux.
     # You should not set this flag if you want to use "dlopen" to
     # load Mozc's modules. See
-    # - http://code.google.com/p/mozc/issues/detail?id=14
-    # - http://code.google.com/p/protobuf/issues/detail?id=128
-    # - http://code.google.com/p/protobuf/issues/detail?id=370
+    # - https://github.com/google/mozc/issues/14
     # for the background information.
     'use_libprotobuf%': 0,
 
