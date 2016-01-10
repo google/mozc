@@ -2382,7 +2382,7 @@ bool Session::MoveCursorLeft(commands::Command *command) {
   if (context_->GetRequest().crossing_edge_behavior() ==
       commands::Request::COMMIT_WITHOUT_CONSUMING &&
       context_->composer().GetCursor() == 0) {
-    Commit(command);
+    CommitNotTriggeringZeroQuerySuggest(command);
 
     // Move the cursor to the beginning of the values.
     command->mutable_output()->mutable_result()->set_cursor_offset(
