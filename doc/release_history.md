@@ -1,6 +1,39 @@
 Release History
 ===============
 
+2.17.2288.102 - 2.17.2313.102 / *2016-01-03* - *2016-01-10*
+--------------------------------------------------
+You can check out Mozc [2.17.2313.102](https://github.com/google/mozc/commit/2628af6995dbbbb9ccdb52d1160db1dbd5ed3bae) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout 2628af6995dbbbb9ccdb52d1160db1dbd5ed3bae
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2288.102](https://github.com/google/mozc/commit/a86c7d014ac7bf36e06c5567c92ef515b3780783) and [2.17.2313.102](https://github.com/google/mozc/commit/2628af6995dbbbb9ccdb52d1160db1dbd5ed3bae) as follows.
+
+  * Third party libraries:
+    * None.
+  * Build related changes:
+    * None.
+  * Major changes:
+    * Update system dictionary.
+    * Status icons for OS X are updated with Noto font.
+  * Fixed issues:
+    * [#344](https://github.com/google/mozc/issues/344): Support ```icon_prop_key``` entry in ibus-mozc
+    * [#345](https://github.com/google/mozc/issues/345): Mozc for Android keeps crashing
+    * [#347](https://github.com/google/mozc/issues/347): Software keyboard is not rendered correctly on Android 6 if non-material theme is selected
+    * [#350](https://github.com/google/mozc/issues/350): Status icon is not updated when using Windows Store Apps in desktop mode on Windows 10
+    * [#351](https://github.com/google/mozc/issues/351): Mozc cannot be activated in the search box on the task bar when configured to be the default IME on Windows 10
+    * Following issues are not completely fixed yet, but at least worked around.
+      * [#348](https://github.com/google/mozc/issues/348): DirectWrite may fail to render text in certain enviromnents
+      * [#349](https://github.com/google/mozc/issues/349): Word suggestion can be unexpectedly suppressed on Chromium
+  * Total commits:
+    * [29 commits](https://github.com/google/mozc/compare/a86c7d014ac7bf36e06c5567c92ef515b3780783%5E...2628af6995dbbbb9ccdb52d1160db1dbd5ed3bae).
+
+
 2.17.2285.102 - 2.17.2287.102 / *2016-01-01* - *2016-01-02*
 --------------------------------------------------
 You can check out Mozc [2.17.2287.102](https://github.com/google/mozc/commit/ab4569e73bca8d2375262d243f362c7b848646da) as follows.
