@@ -210,5 +210,17 @@
         'testing',
       ],
     },
+    {
+      'target_name': 'mozctest',
+      'type': 'static_library',
+      'sources': [
+        'base/public/mozctest.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base_core',
+        '../base/base.gyp:string_piece',
+        'googletest_lib',
+      ],
+    },
   ],
 }

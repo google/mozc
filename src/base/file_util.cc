@@ -332,19 +332,23 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
 #endif  // OS_WIN
 }
 
-string FileUtil::JoinPath(const string &path1, const string &path2) {
+string FileUtil::JoinPath(const vector<StringPiece> &components) {
   string output;
-  JoinPath(path1, path2, &output);
+  JoinPath(components, &output);
   return output;
 }
 
-void FileUtil::JoinPath(const string &path1, const string &path2,
-                        string *output) {
-  *output = path1;
-  if (path1.size() > 0 && path1[path1.size() - 1] != kFileDelimiter) {
-    *output += kFileDelimiter;
+void FileUtil::JoinPath(const vector<StringPiece> &components, string *output) {
+  output->clear();
+  for (size_t i = 0; i < components.size(); ++i) {
+    if (components[i].empty()) {
+      continue;
+    }
+    if (!output->empty() && output->back() != kFileDelimiter) {
+      output->append(1, kFileDelimiter);
+    }
+    components[i].AppendToString(output);
   }
-  *output += path2;
 }
 
 // TODO(taku): what happens if filename == '/foo/bar/../bar/..

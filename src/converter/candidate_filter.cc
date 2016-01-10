@@ -53,6 +53,8 @@ namespace mozc {
 namespace converter {
 namespace {
 
+const size_t kSizeThresholdForWeakCompound = 10;
+
 const size_t kMaxCandidatesSize = 200;   // how many candidates we expand
 
 // Currently, the cost (logprob) is calcurated as cost = -500 * log(prob).
@@ -79,6 +81,63 @@ const int   kCostOffset              = 6907;
 const int   kStructureCostOffset     = 3453;
 const int   kMinStructureCostOffset  = 1151;
 const int32 kStopEnmerationCacheSize = 15;
+
+// Returns true if the given node sequence is noisy weak compound.
+// Please refer to the comment in FilterCandidateInternal for the idea.
+inline bool IsNoisyWeakCompound(const vector<const Node *> &nodes,
+                                const dictionary::POSMatcher *pos_matcher) {
+  if (nodes.size() <= 1) {
+    return false;
+  }
+  if (nodes[0]->lid != nodes[0]->rid) {
+    // nodes[0] is COMPOUND entry in dictionary.
+    return false;
+  }
+  if (pos_matcher->IsWeakCompoundFillerPrefix(nodes[0]->lid)) {
+    // Word that starts with 'filler' is always noisy.
+    return true;
+  }
+  if (nodes[1]->lid != nodes[1]->rid) {
+    // Some node +  COMPOUND node may be noisy.
+    return true;
+  }
+  if (pos_matcher->IsWeakCompoundNounPrefix(nodes[0]->lid) &&
+      !pos_matcher->IsWeakCompoundNounSuffix(nodes[1]->lid)) {
+    // Noun prefix + not noun
+    return true;
+  }
+  if (pos_matcher->IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
+      !pos_matcher->IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
+    // Verb prefix + not verb
+    return true;
+  }
+  return false;
+}
+
+// Returns true if the given node sequence is connected weak compound.
+// Please refer to the comment in FilterCandidateInternal for the idea.
+inline bool IsConnectedWeakCompound(const vector<const Node *> &nodes,
+                                    const dictionary::POSMatcher *pos_matcher) {
+  if (nodes.size() <= 1) {
+    return false;
+  }
+  if (nodes[0]->lid != nodes[0]->rid ||
+      nodes[1]->lid != nodes[1]->rid) {
+    // nodes[0/1] is COMPOUND entry in dictionary.
+    return false;
+  }
+  if (pos_matcher->IsWeakCompoundNounPrefix(nodes[0]->lid) &&
+      pos_matcher->IsWeakCompoundNounSuffix(nodes[1]->lid)) {
+    // Noun prefix + noun
+    return true;
+  }
+  if (pos_matcher->IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
+      pos_matcher->IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
+    // Verb prefix + verb
+    return true;
+  }
+  return false;
+}
 
 }  // namespace
 
@@ -213,21 +272,43 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::BAD_CANDIDATE;
   }
 
-  // Suppress "書います", "買いて"
-  if (Util::GetScriptType(nodes[0]->value) != Util::HIRAGANA &&
-      ((nodes.size() >= 2 &&
-        pos_matcher_->IsKagyoTaConnectionVerb(nodes[0]->rid) &&
-        pos_matcher_->IsMasuSuffix(nodes[1]->lid)) ||
-       (nodes[0]->lid != nodes[0]->rid &&
-        pos_matcher_->IsKagyoTaConnectionVerb(nodes[0]->lid) &&
-        pos_matcher_->IsMasuSuffix(nodes[0]->rid)) ||
-       (nodes.size() >= 2 &&
-        pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->rid) &&
-        pos_matcher_->IsTeSuffix(nodes[1]->lid)) ||
-       (nodes[0]->lid != nodes[0]->rid &&
-        pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->lid) &&
-        pos_matcher_->IsTeSuffix(nodes[0]->rid)))) {
-    return CandidateFilter::BAD_CANDIDATE;
+  // Suppress "書います", "書いすぎ", "買いて"
+  // Basic idea:
+  //  - WagyoRenyoConnectionVerb(= "動詞,*,*,*,五段・ワ行促音便,連用形",
+  // "買い", "言い", "使い", etc) should not connect to TeSuffix(= "て",
+  // "てる", "ちゃう", "とく", etc).
+  //  - KagyoTaConnectionVerb(= 動詞,*,*,*,五段・カ行(促|イ)音便,連用タ接続",
+  // "書い", "歩い", "言っ", etc) should not connect to verb suffix other
+  // than TeSuffix
+  if (Util::GetScriptType(nodes[0]->value) != Util::HIRAGANA) {
+    if (nodes.size() >= 2) {
+      // For node sequence
+      if (pos_matcher_->IsKagyoTaConnectionVerb(nodes[0]->rid) &&
+          pos_matcher_->IsVerbSuffix(nodes[1]->lid) &&
+          !pos_matcher_->IsTeSuffix(nodes[1]->lid)) {
+        // "書い" | "ます", "過ぎ", etc
+        return CandidateFilter::BAD_CANDIDATE;
+      }
+      if (pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->rid) &&
+          pos_matcher_->IsTeSuffix(nodes[1]->lid)) {
+        // "買い" | "て"
+        return CandidateFilter::BAD_CANDIDATE;
+      }
+    }
+    if (nodes[0]->lid != nodes[0]->rid) {
+      // For compound
+      if (pos_matcher_->IsKagyoTaConnectionVerb(nodes[0]->lid) &&
+          pos_matcher_->IsVerbSuffix(nodes[0]->rid) &&
+          !pos_matcher_->IsTeSuffix(nodes[0]->rid)) {
+        // "書い" | "ます", "過ぎ", etc
+        return CandidateFilter::BAD_CANDIDATE;
+      }
+      if (pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->lid) &&
+          pos_matcher_->IsTeSuffix(nodes[0]->rid)) {
+        // "買い" | "て"
+        return CandidateFilter::BAD_CANDIDATE;
+      }
+    }
   }
 
   // The candidate consists of only one token
@@ -242,10 +323,35 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
+  // Remove noisy candidates from prefix.
+  // For example, "お危機します" for "おききします".
+  //
+  // Basic idea:
+  //   "weak compound": words consist from "prefix + content"
+  //   "connected weak compound": noun prefix("名詞接続") + noun words("体言")
+  //      or verb prefix("動詞接続") + verb words("用言")
+  //   "noisy weak compound": types of prefix and content do not match.
+  //   - We do not allow noisy weak compound except for the top result. Even for
+  //     the top result, we will check other conditions for filtering.
+  //   - We do not allow connected weak compound if the rank is low enough.
+  const bool is_noisy_weak_compound = IsNoisyWeakCompound(nodes, pos_matcher_);
+  const bool is_connected_weak_compound =
+      IsConnectedWeakCompound(nodes, pos_matcher_);
+
+  if (is_noisy_weak_compound && candidate_size >= 1) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+
+  if (is_connected_weak_compound && candidate_size >=
+      kSizeThresholdForWeakCompound) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+
   // don't drop lid/rid are the same as those
   // of top candidate.
   // http://b/issue?id=4285213
-  if (top_candidate_->structure_cost == 0 &&
+  if (!is_noisy_weak_compound &&
+      top_candidate_->structure_cost == 0 &&
       candidate->lid == top_candidate_->lid &&
       candidate->rid == top_candidate_->rid) {
     VLOG(1) << "don't filter lid/rid are the same";
@@ -254,7 +360,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   // "好かっ|たり" vs  "良かっ|たり" have same non_content_value.
   // "良かっ|たり" is also a good candidate but it is not the top candidate.
-  if (top_candidate_ != candidate &&
+  if (!is_noisy_weak_compound &&
+      top_candidate_ != candidate &&
       top_candidate_->content_value != top_candidate_->value &&
       (top_candidate_->value.compare(
           top_candidate_->content_value.size(),
@@ -299,17 +406,6 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       candidate->cost < top_cost + 2302 &&
       candidate->structure_cost < 6907) {
      return CandidateFilter::GOOD_CANDIDATE;
-  }
-
-  // if candidate starts with prefix "お", we'd like to demote
-  // the candidate if the rank of the candidate is below 1 (0-origin).
-  // This is a temporal workaround for fixing "おそう" => "御|総"
-  // TODO(taku): remove it after intorducing a word clustering for noun.
-  if (candidate_size >= 1 && nodes.size() > 1 &&
-      nodes[0]->lid == nodes[0]->rid &&
-      pos_matcher_->IsWeakCompoundPrefix(nodes[0]->lid)) {
-    VLOG(2) << "removing noisy prefix pattern";
-    return CandidateFilter::BAD_CANDIDATE;
   }
 
   // Don't drop personal names aggressivly.

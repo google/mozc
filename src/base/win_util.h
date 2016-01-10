@@ -150,6 +150,9 @@ class WinUtil {
   // http://msdn.microsoft.com/en-us/library/windows/desktop/ms724947.aspx
   static bool IsPerUserInputSettingsEnabled();
 
+  // Returns true if the current process is restricted or in AppContainer.
+  static bool IsProcessSandboxed();
+
  private:
   // Compares |lhs| with |rhs| by CompareStringOrdinal and returns the result
   // in |are_equal|.  If |ignore_case| is true, this function uses system

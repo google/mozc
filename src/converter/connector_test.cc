@@ -34,20 +34,13 @@
 #include <string>
 #include <vector>
 
-#include "base/file_util.h"
 #include "base/mmap.h"
 #include "data_manager/connection_file_reader.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace {
-
-const char kTestConnectionDataImagePath[] =
-    "data_manager/testing/connection_data.data";
-const char kTestConnectionFilePath[] =
-    "data_manager/testing/connection_single_column.txt";
 
 struct ConnectionDataEntry {
   uint16 rid;
@@ -58,16 +51,16 @@ struct ConnectionDataEntry {
 #ifndef OS_NACL
 // Disabled on NaCl since it uses a mock file system.
 TEST(ConnectorTest, CompareWithRawData) {
-  const string path = FileUtil::JoinPath(
-      FLAGS_test_srcdir, kTestConnectionDataImagePath);
+  const string path = testing::GetSourceFileOrDie({
+      "data_manager", "testing", "connection_data.data"});
   Mmap cmmap;
   ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
   std::unique_ptr<Connector> connector(
       new Connector(cmmap.begin(), cmmap.size(), 256));
   ASSERT_EQ(1, connector->GetResolution());
 
-  const string connection_text_path =
-      FileUtil::JoinPath(FLAGS_test_srcdir, kTestConnectionFilePath);
+  const string connection_text_path = testing::GetSourceFileOrDie({
+      "data_manager", "testing", "connection_single_column.txt"});
   vector<ConnectionDataEntry> data;
   for (ConnectionFileReader reader(connection_text_path);
        !reader.done(); reader.Next()) {

@@ -55,6 +55,7 @@ struct InputState {
 };
 
 struct InputBehavior {
+  bool initialized;
   bool disabled;
   bool prefer_kana_input;
   bool use_mode_indicator;

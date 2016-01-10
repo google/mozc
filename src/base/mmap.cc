@@ -255,25 +255,47 @@ bool Mmap::SyncToFile() {
 }
 #endif  // MOZC_USE_PEPPER_FILE_IO
 
-int Mmap::MaybeMLock(const void *addr, size_t len) {
-  // TODO(yukawa): Integrate mozc_cache service.
+// Define a macro (MOZC_HAVE_MLOCK) to indicate mlock support.
 #if defined(OS_WIN) || defined(OS_ANDROID) || defined(OS_NACL)
-  return -1;
+# define MOZC_HAVE_MLOCK 0
 #else  // defined(OS_WIN) || defined(OS_ANDROID) ||
        // defined(OS_NACL)
-  return mlock(addr, len);
+# define MOZC_HAVE_MLOCK 1
 #endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
         // defined(OS_NACL)
+
+#ifndef MOZC_HAVE_MLOCK
+#error "MOZC_HAVE_MLOCK is not defined"
+#endif
+
+#if MOZC_HAVE_MLOCK
+bool Mmap::IsMLockSupported() {
+  return true;
+}
+
+int Mmap::MaybeMLock(const void *addr, size_t len) {
+  return mlock(addr, len);
 }
 
 int Mmap::MaybeMUnlock(const void *addr, size_t len) {
-#if defined(OS_WIN) || defined(OS_ANDROID) || defined(OS_NACL)
-  return -1;
-#else  // defined(OS_WIN) || defined(OS_ANDROID) ||
-       // defined(OS_NACL)
   return munlock(addr, len);
-#endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
-        // defined(OS_NACL)
 }
+
+#else  // MOZC_HAVE_MLOCK
+
+bool Mmap::IsMLockSupported() {
+  return false;
+}
+
+int Mmap::MaybeMLock(const void *addr, size_t len) {
+  return -1;
+}
+
+int Mmap::MaybeMUnlock(const void *addr, size_t len) {
+  return -1;
+}
+#endif  // MOZC_HAVE_MLOCK
+
+#undef MOZC_HAVE_MLOCK
 
 }  // namespace mozc

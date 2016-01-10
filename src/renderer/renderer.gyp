@@ -335,6 +335,7 @@
             '../base/base.gyp:win_font_test_helper',
             '../net/jsoncpp.gyp:jsoncpp',
             '../testing/testing.gyp:gtest_main',
+            '../testing/testing.gyp:mozctest',
             'install_renderer_core_test_data',
             'win32_renderer_core',
           ],

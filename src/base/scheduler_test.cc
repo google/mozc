@@ -40,7 +40,6 @@
 namespace mozc {
 namespace {
 
-
 const int32 kTimeout = 30 * 1000;  // 30 sec.
 const int32 kNoRandomDelay = 0;
 const int32 kImmediately = 0;
@@ -256,7 +255,6 @@ TEST_F(SchedulerTest, DontBlockOtherJobs) {
   // Unblock |blocking_job|.
   EXPECT_TRUE(info.quit_event.Notify());
 }
-
 
 class NameCheckScheduler : public Scheduler::SchedulerInterface {
  public:

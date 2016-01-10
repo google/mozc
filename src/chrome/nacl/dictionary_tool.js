@@ -919,7 +919,8 @@ mozc.DictionaryTool.prototype.findDictionaryEntryIndexFromElement_ =
  * @private
  */
 mozc.DictionaryTool.prototype.getDictionaryEntryElement_ = function(index) {
-  return this.document_.getElementById('dictionary_tool_entry_' + index);
+  return /** @type {HTMLElement} */(
+      this.document_.getElementById('dictionary_tool_entry_' + index));
 };
 
 /**

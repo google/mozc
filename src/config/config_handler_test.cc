@@ -44,13 +44,11 @@
 #include "protocol/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 
-class ConfigHandlerTest : public testing::Test {
+class ConfigHandlerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -265,9 +263,8 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
   for (size_t i = 0; i < arraysize(kDataFiles); ++i) {
     const char *file_name = kDataFiles[i];
-    const string &src_path = FileUtil::JoinPath(
-        FileUtil::JoinPath(FLAGS_test_srcdir, kPathPrefix),
-        FileUtil::JoinPath(KDataDir, file_name));
+    const string &src_path = mozc::testing::GetSourceFileOrDie({
+        "data", "test", "config", file_name});
     const string &dest_path = FileUtil::JoinPath(
         SystemUtil::GetUserProfileDirectory(), file_name);
     ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path))

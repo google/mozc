@@ -41,8 +41,8 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -51,13 +51,8 @@ namespace {
 // Disabled on NaCl since it uses a mock file system.
 void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
   CHECK(test_map);
-
-  const char kCharacterSetTestFile[] =
-      "data/test/character_set/character_set.tsv";
-  const string &path = FileUtil::JoinPath(FLAGS_test_srcdir,
-                                          kCharacterSetTestFile);
-  CHECK(FileUtil::FileExists(path)) << path << " does not exist.";
-
+  const string &path = testing::GetSourceFileOrDie({
+      "data", "test", "character_set", "character_set.tsv"});
   map<string, Util::CharacterSet> character_set_type_map;
   character_set_type_map["ASCII"] = Util::ASCII;
   character_set_type_map["JISX0201"] = Util::JISX0201;

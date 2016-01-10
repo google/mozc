@@ -177,8 +177,10 @@ bool PackedDataManager::Impl::InitWithZippedData(
                                        zipped_system_dictionary_data.size());
   protobuf::io::GzipInputStream gzip_stream(&input);
   protobuf::io::CodedInputStream coded_stream(&gzip_stream);
+
   // Disables the total bytes warning.
   coded_stream.SetTotalBytesLimit(kDefaultTotalBytesLimit, -1);
+
   system_dictionary_data_.reset(new SystemDictionaryData);
   if (!system_dictionary_data_->ParseFromCodedStream(&coded_stream)) {
     LOG(ERROR) << "System dictionary data protobuf format error!";

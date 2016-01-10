@@ -65,6 +65,24 @@ bool EqualLuid(const LUID &L1, const LUID &L2) {
   return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
 }
 
+bool IsProcessSandboxedImpl() {
+  bool is_restricted = false;
+  if (!WinUtil::IsProcessRestricted(::GetCurrentProcess(), &is_restricted)) {
+    return true;
+  }
+  if (is_restricted) {
+    return true;
+  }
+
+  bool in_appcontainer = false;
+  if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
+                                        &in_appcontainer)) {
+    return true;
+  }
+
+  return in_appcontainer;
+}
+
 }  // namespace
 
 HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
@@ -601,6 +619,12 @@ bool WinUtil::IsPerUserInputSettingsEnabled() {
     return false;
   }
   return !is_thread_local;
+}
+
+bool WinUtil::IsProcessSandboxed() {
+  // Thread safety is not required.
+  static bool sandboxed = IsProcessSandboxedImpl();
+  return sandboxed;
 }
 
 ScopedCOMInitializer::ScopedCOMInitializer()

@@ -251,8 +251,8 @@
             'file_verifier_test.cc',
           ],
           'dependencies': [
-            '../../base/base.gyp:base',
             '../../testing/testing.gyp:gtest_main',
+            '../../testing/testing.gyp:mozctest',
             'win32_file_verifier',
           ],
           'variables': {

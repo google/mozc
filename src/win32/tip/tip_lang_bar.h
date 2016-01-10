@@ -96,6 +96,9 @@ class TipLangBar {
   // Updates the selected menu in the language bar.
   HRESULT UpdateMenu(bool enabled, uint32 composition_mode);
 
+  // Returns true if this instance is already initialized.
+  bool IsInitialized() const;
+
  private:
   // Represents the language bar item manager iff the running OS is Windows 8.
   // NOTE: We must use the same instance of this class to initialize and

@@ -37,6 +37,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'config.gyp:config_handler',
         'install_stats_config_util_test_data',
       ],

@@ -8700,6 +8700,60 @@ TEST_F(SessionTest, MoveCursorLeftWithCommit) {
   EXPECT_EQ(-4, command.output().result().cursor_offset());
 }
 
+TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  commands::Request request(*mobile_request_);
+  request.set_special_romanji_table(
+      commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
+  request.set_crossing_edge_behavior(
+      commands::Request::COMMIT_WITHOUT_CONSUMING);
+  SetupZeroQuerySuggestionReady(true, session.get(), &request);
+  commands::Command command;
+
+  InsertCharacterChars("GOOGLE", session.get(), &command);
+  EXPECT_EQ(6, command.output().preedit().cursor());
+  command.Clear();
+
+  session->MoveCursorRight(&command);
+  EXPECT_FALSE(command.output().consumed());
+  ASSERT_TRUE(command.output().has_result());
+  EXPECT_EQ(commands::Result_ResultType_STRING,
+            command.output().result().type());
+  EXPECT_EQ("GOOGLE", command.output().result().value());
+  EXPECT_EQ(0, command.output().result().cursor_offset());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+}
+
+TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  commands::Request request(*mobile_request_);
+  request.set_special_romanji_table(
+      commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
+  request.set_crossing_edge_behavior(
+      commands::Request::COMMIT_WITHOUT_CONSUMING);
+  SetupZeroQuerySuggestionReady(true, session.get(), &request);
+  commands::Command command;
+
+  InsertCharacterChars("GOOGLE", session.get(), &command);
+  EXPECT_EQ(6, command.output().preedit().cursor());
+  command.Clear();
+  for (int i = 5; i >= 0; --i) {
+    session->MoveCursorLeft(&command);
+    EXPECT_EQ(i, command.output().preedit().cursor());
+    command.Clear();
+  }
+
+  session->MoveCursorLeft(&command);
+  EXPECT_FALSE(command.output().consumed());
+  ASSERT_TRUE(command.output().has_result());
+  EXPECT_EQ(commands::Result_ResultType_STRING,
+            command.output().result().type());
+  EXPECT_EQ("GOOGLE", command.output().result().value());
+  EXPECT_EQ(-6, command.output().result().cursor_offset());
+  EXPECT_FALSE(command.output().has_candidates());
+}
+
 TEST_F(SessionTest, CommitHead) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   composer::Table table;

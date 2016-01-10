@@ -49,8 +49,7 @@
 #include "base/win_font_test_helper.h"
 #include "net/jsoncpp.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
+#include "testing/base/public/mozctest.h"
 
 using ::std::min;
 using ::std::max;
@@ -80,8 +79,8 @@ namespace {
 typedef SubdivisionalPixel::SubdivisionalPixelIterator
     SubdivisionalPixelIterator;
 
-class BalloonImageTest : public testing::Test,
-                         public testing::WithParamInterface<const char *> {
+class BalloonImageTest : public ::testing::Test,
+                         public ::testing::WithParamInterface<const char *> {
  public:
   static void SetUpTestCase() {
     InitGdiplus();
@@ -289,11 +288,8 @@ INSTANTIATE_TEST_CASE_P(BalloonImageParameters,
                         ::testing::ValuesIn(kRenderingResultList));
 
 TEST_P(BalloonImageTest, TestImpl) {
-  string expected_image = GetParam();
   const string &expected_image_path =
-      FileUtil::JoinPath(FLAGS_test_srcdir, expected_image);
-  ASSERT_TRUE(FileUtil::FileExists(expected_image_path))
-      << "Reference file is not found: " << expected_image_path;
+      mozc::testing::GetSourceFileOrDie({GetParam()});
   const string json_path = expected_image_path + ".json";
   ASSERT_TRUE(FileUtil::FileExists(json_path))
       << "Manifest file is not found: " << json_path;

@@ -35,9 +35,8 @@
 #include <string>
 #include <vector>
 
-#include "base/file_util.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace handwriting {
@@ -45,9 +44,8 @@ namespace handwriting {
 class ZinniaHandwritingTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    const string filepath = FileUtil::JoinPath(
-        FLAGS_test_srcdir,
-        "handwriting-ja.model");
+    const string filepath = mozc::testing::GetSourceFileOrDie({
+        "handwriting", "handwriting-ja.model"});
     zinnia_.reset(new ZinniaHandwriting(filepath));
   }
 

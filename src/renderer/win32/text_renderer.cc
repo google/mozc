@@ -585,10 +585,16 @@ TextRenderer::~TextRenderer() {
 
 // static
 TextRenderer *TextRenderer::Create() {
-  auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
-  if (dwrite_text_renderer != nullptr) {
-    return dwrite_text_renderer;
-  }
+  // In some environments, DirectWrite cannot render characters in the
+  // candidate window or even worse may cause crash.  As a workaround,
+  // this function always returns new GidTextRenderer().
+  //
+  // TODO: Reactivate the following code when b/23803925 is fixed.
+  //
+  // auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
+  // if (dwrite_text_renderer != nullptr) {
+  //   return dwrite_text_renderer;
+  // }
   return new GdiTextRenderer();
 }
 

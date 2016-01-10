@@ -37,13 +37,10 @@
 #include "base/logging.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace {
-
-const char kTestDir[] = "data/test/calculator/";
 
 // Runs calculation with |expression| and compares the result and |expect|.
 void VerifyCalculation(const CalculatorInterface *calculator,
@@ -152,10 +149,8 @@ TEST(CalculatorTest, BasicTest) {
 // "expression=answer".  Answer is suppressed if the expression is invalid,
 // i.e. it is a false test.
 TEST(CalculatorTest, StressTest) {
-  const string filename = FileUtil::JoinPath(FLAGS_test_srcdir,
-                                             string(kTestDir) + "testset.txt");
-  EXPECT_TRUE(FileUtil::FileExists(filename)) << "Could not read: " << filename;
-
+  const string filename = testing::GetSourceFileOrDie({
+      "data", "test", "calculator", "testset.txt"});
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
   ifstream finput(filename.c_str());

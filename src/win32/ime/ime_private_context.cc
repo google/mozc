@@ -165,14 +165,16 @@ bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
   }
 
   // Try to reflect the current config to the IME behavior.
-  const auto &snapshot =
-      ConfigSnapshot::Get(private_context_allocator->client);
-  auto *behavior = private_context_allocator->ime_behavior;
-  behavior->prefer_kana_input = snapshot.use_kana_input;
-  behavior->use_romaji_key_to_toggle_input_style =
-      snapshot.use_keyboard_to_change_preedit_method;
-  behavior->use_mode_indicator = snapshot.use_mode_indicator;
-  behavior->direct_mode_keys = snapshot.direct_mode_keys;
+  ConfigSnapshot::Info snapshot;
+  if (ConfigSnapshot::Get(private_context_allocator->client, &snapshot)) {
+    auto *behavior = private_context_allocator->ime_behavior;
+    behavior->prefer_kana_input = snapshot.use_kana_input;
+    behavior->use_romaji_key_to_toggle_input_style =
+        snapshot.use_keyboard_to_change_preedit_method;
+    behavior->use_mode_indicator = snapshot.use_mode_indicator;
+    behavior->direct_mode_keys = snapshot.direct_mode_keys;
+    behavior->initialized = true;
+  }
 
   return true;
 }

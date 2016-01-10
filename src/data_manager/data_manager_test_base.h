@@ -31,6 +31,8 @@
 #define MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "testing/base/public/gunit.h"
@@ -50,11 +52,11 @@ class DataManagerTestBase : public ::testing::Test {
                       const size_t rsize,
                       IsBoundaryFunc is_boundary,
                       // The following two are used in connector test.
-                      const char *connection_txt_file,
+                      const string &connection_txt_file,
                       const int expected_resolution,
                       // The following two are used in suggestion filter test
-                      const char *dictionary_files,
-                      const char *suggestion_filter_files);
+                      const vector<string> &dictionary_files,
+                      const vector<string> &suggestion_filter_files);
   virtual ~DataManagerTestBase();
 
   void RunAllTests();
@@ -73,10 +75,10 @@ class DataManagerTestBase : public ::testing::Test {
   const uint16 lsize_;
   const uint16 rsize_;
   IsBoundaryFunc is_boundary_;
-  const char *connection_txt_file_;
+  const string connection_txt_file_;
   const int expected_resolution_;
-  const char *dictionary_files_;
-  const char *suggestion_filter_files_;
+  const vector<string> dictionary_files_;
+  const vector<string> suggestion_filter_files_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManagerTestBase);
 };

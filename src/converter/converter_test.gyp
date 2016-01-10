@@ -112,6 +112,7 @@
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'converter_base.gyp:connector',
       ],
       'variables': {
@@ -126,6 +127,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'converter_base.gyp:pos_id_printer',
       ],
       'variables': {

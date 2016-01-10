@@ -96,7 +96,7 @@ void ProcessLoop() {
         client_pool.DeleteClient(session_id);
         break;
       case mozc::commands::Input::SEND_KEY: {
-        linked_ptr<mozc::client::Client> client =
+        std::shared_ptr<mozc::client::Client> client =
             client_pool.GetClient(session_id);
         CHECK(client.get());
         if (!client->SendKey(command.input().key(),

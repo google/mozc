@@ -38,21 +38,17 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace internal {
-namespace {
-const char kTestIdDef[] =
-    "data/test/dictionary/id.def";
-}  // namespace
 
 class PosIdPrinterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    const string test_id_def_path =
-        FileUtil::JoinPath(FLAGS_test_srcdir, kTestIdDef);
+    const string test_id_def_path = testing::GetSourceFileOrDie({
+        "data", "test", "dictionary", "id.def"});
     pos_id_.reset(new InputFileStream(test_id_def_path.c_str()));
     pos_id_printer_.reset(new PosIdPrinter(pos_id_.get()));
   }

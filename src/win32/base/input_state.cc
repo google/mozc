@@ -39,7 +39,8 @@ InputState::InputState()
 }
 
 InputBehavior::InputBehavior()
-    : disabled(false),
+    : initialized(false),
+      disabled(false),
       prefer_kana_input(false),
       use_mode_indicator(false),
       use_romaji_key_to_toggle_input_style(false) {}

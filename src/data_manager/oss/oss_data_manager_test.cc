@@ -31,6 +31,7 @@
 
 #include "data_manager/data_manager_test_base.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace oss {
@@ -42,23 +43,28 @@ namespace {
 class OssDataManagerTest : public DataManagerTestBase {
  protected:
   OssDataManagerTest()
-      : DataManagerTestBase(new OssDataManager,
-                            kLSize,
-                            kRSize,
-                            IsBoundaryInternal,
-                            "data_manager/oss/connection_single_column.txt",
-                            1,
-                            "data/dictionary_oss/dictionary00.txt,"
-                            "data/dictionary_oss/dictionary01.txt,"
-                            "data/dictionary_oss/dictionary02.txt,"
-                            "data/dictionary_oss/dictionary03.txt,"
-                            "data/dictionary_oss/dictionary04.txt,"
-                            "data/dictionary_oss/dictionary05.txt,"
-                            "data/dictionary_oss/dictionary06.txt,"
-                            "data/dictionary_oss/dictionary07.txt,"
-                            "data/dictionary_oss/dictionary08.txt,"
-                            "data/dictionary_oss/dictionary09.txt",
-                            "data/dictionary_oss/suggestion_filter.txt") {}
+      : DataManagerTestBase(
+            new OssDataManager,
+            kLSize,
+            kRSize,
+            IsBoundaryInternal,
+            mozc::testing::GetSourceFileOrDie(
+                {"data_manager", "oss", "connection_single_column.txt"}),
+            1,
+            mozc::testing::GetSourceFilesInDirOrDie(
+                {"data", "dictionary_oss"},
+                {"dictionary00.txt",
+                 "dictionary01.txt",
+                 "dictionary02.txt",
+                 "dictionary03.txt",
+                 "dictionary04.txt",
+                 "dictionary05.txt",
+                 "dictionary06.txt",
+                 "dictionary07.txt",
+                 "dictionary08.txt",
+                 "dictionary09.txt"}),
+            mozc::testing::GetSourceFilesInDirOrDie(
+                {"data", "dictionary_oss"}, {"suggestion_filter.txt"})) {}
 };
 
 TEST_F(OssDataManagerTest, AllTests) {

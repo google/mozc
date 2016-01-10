@@ -32,7 +32,8 @@
 #ifndef MOZC_UNIX_EMACS_CLIENT_POOL_H_
 #define MOZC_UNIX_EMACS_CLIENT_POOL_H_
 
-#include "base/linked_ptr.h"
+#include <memory>
+
 #include "client/client.h"
 #include "storage/lru_cache.h"
 
@@ -55,10 +56,10 @@ class ClientPool {
 
   // Returns a Client instance.  If the specified session ID is not in this
   // pool, creates a new Client and returns it.
-  linked_ptr<Client> GetClient(int id);
+  std::shared_ptr<Client> GetClient(int id);
 
  private:
-  mozc::storage::LRUCache<int, linked_ptr<Client> > lru_cache_;
+  mozc::storage::LRUCache<int, std::shared_ptr<Client>> lru_cache_;
   int next_id_;
 
   DISALLOW_COPY_AND_ASSIGN(ClientPool);
