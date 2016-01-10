@@ -462,6 +462,10 @@ HRESULT TipLangBar::UpdateMenu(bool enabled, uint32 composition_mode) {
   return result;
 }
 
+bool TipLangBar::IsInitialized() const {
+  return input_button_menu_ || input_mode_button_for_win8_;
+}
+
 }  // namespace tsf
 }  // namespace win32
 }  // namespace mozc

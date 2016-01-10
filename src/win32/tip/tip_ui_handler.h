@@ -57,6 +57,8 @@ class TipUiHandler {
 
   static void OnActivate(TipTextService *text_service);
   static void OnDeactivate(TipTextService *text_service);
+  static void OnDocumentMgrChanged(TipTextService *text_service,
+                                   ITfDocumentMgr *document_manager);
   static void OnFocusChange(TipTextService *text_service,
                             ITfDocumentMgr *focused_document_manager);
   static bool Update(TipTextService *text_service,

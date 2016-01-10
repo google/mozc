@@ -608,9 +608,7 @@ class TipTextServiceImpl
     UninitKeyEventSink();
 
     // Remove our button menus from the language bar.
-    if (!IsImmersiveUI()) {
-      UninitLanguageBar();
-    }
+    UninitLanguageBar();
 
     // Stop advising the ITfFunctionProvider events.
     UninitFunctionProvider();
@@ -716,12 +714,10 @@ class TipTextServiceImpl
       return Deactivate();
     }
 
-    if (!IsImmersiveUI()) {
-      result = InitLanguageBar();
-      if (FAILED(result)) {
-        LOG(ERROR) << "InitLanguageBar failed: " << result;
-        return result;
-      }
+    result = InitLanguageBar();
+    if (FAILED(result)) {
+      LOG(ERROR) << "InitLanguageBar failed: " << result;
+      return result;
     }
 
     // Start advising the keyboard events (ITfKeyEvent) to this object.
@@ -1152,6 +1148,10 @@ class TipTextServiceImpl
     langbar_.UpdateMenu(enabled, mozc_mode);
   }
 
+  virtual bool IsLangbarInitialized() const {
+    return langbar_.IsInitialized();
+  }
+
   // Following functions are private utilities.
   static void StorePointerForCurrentThread(TipTextServiceImpl *impl) {
     if (g_module_unloaded) {
@@ -1182,6 +1182,7 @@ class TipTextServiceImpl
       }
       EnsurePrivateContextExists(context);
     }
+    TipUiHandler::OnDocumentMgrChanged(this, document_mgr);
     TipEditSession::OnSetFocusAsync(this, document_mgr);
     return S_OK;
   }

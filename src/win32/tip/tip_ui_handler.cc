@@ -29,15 +29,84 @@
 
 #include "win32/tip/tip_ui_handler.h"
 
+#define _ATL_NO_AUTOMATIC_NAMESPACE
+#define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <atlbase.h>
+#include <atlcom.h>
+#include <msctf.h>
+
 #include "base/logging.h"
 #include "base/util.h"
+#include "protocol/commands.pb.h"
+#include "win32/tip/tip_input_mode_manager.h"
+#include "win32/tip/tip_status.h"
 #include "win32/tip/tip_text_service.h"
+#include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_handler_conventional.h"
 #include "win32/tip/tip_ui_handler_immersive.h"
+
+using ATL::CComPtr;
+using ::mozc::commands::CompositionMode;
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
+namespace {
+
+void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
+                                    ITfDocumentMgr *document_manager) {
+  if (!text_service) {
+    return;
+  }
+
+  if (!text_service->IsLangbarInitialized()) {
+    // If language bar is not initialized, there is nothing to do here.
+    return;
+  }
+
+  HRESULT result = S_OK;
+  ITfThreadMgr *thread_manager = text_service->GetThreadManager();
+
+  if (thread_manager == nullptr) {
+    return;
+  }
+
+  bool disabled = false;
+  {
+    if (document_manager == nullptr) {
+      // When |document_manager| is null, we should show "disabled" icon
+      // as if |ImmAssociateContext(window_handle, nullptr)| was called.
+      disabled = true;
+    } else {
+      CComPtr<ITfContext> context;
+      result = document_manager->GetTop(&context);
+      if (SUCCEEDED(result)) {
+        disabled = TipStatus::IsDisabledContext(context);
+      }
+    }
+  }
+
+  const TipInputModeManager *input_mode_manager =
+      text_service->GetThreadContext()->GetInputModeManager();
+  const bool open = input_mode_manager->GetEffectiveOpenClose();
+  const CompositionMode mozc_mode =
+      open ? static_cast<CompositionMode>(
+                input_mode_manager->GetEffectiveConversionMode())
+           : commands::DIRECT;
+  text_service->UpdateLangbar(!disabled, static_cast<uint32>(mozc_mode));
+}
+
+bool UpdateInternal(TipTextService *text_service,
+                    ITfContext *context,
+                    TfEditCookie read_cookie) {
+  if (text_service->IsImmersiveUI()) {
+    return TipUiHandlerImmersive::Update(text_service, context, read_cookie);
+  } else {
+    return TipUiHandlerConventional::Update(text_service, context, read_cookie);
+  }
+}
+
+}  // namespace
 
 ITfUIElement *TipUiHandler::CreateUI(UiType type,
                                      TipTextService *text_service,
@@ -76,6 +145,11 @@ void TipUiHandler::OnDeactivate(TipTextService *text_service) {
   }
 }
 
+void TipUiHandler::OnDocumentMgrChanged(TipTextService *text_service,
+                                        ITfDocumentMgr *document_manager) {
+  UpdateLanguageBarOnFocusChange(text_service, document_manager);
+}
+
 void TipUiHandler::OnFocusChange(TipTextService *text_service,
                                  ITfDocumentMgr *focused_document_manager) {
   if (text_service->IsImmersiveUI()) {
@@ -85,16 +159,24 @@ void TipUiHandler::OnFocusChange(TipTextService *text_service,
     TipUiHandlerConventional::OnFocusChange(
         text_service, focused_document_manager);
   }
+  UpdateLanguageBarOnFocusChange(text_service, focused_document_manager);
 }
 
 bool TipUiHandler::Update(TipTextService *text_service,
                           ITfContext *context,
                           TfEditCookie read_cookie) {
-  if (text_service->IsImmersiveUI()) {
-    return TipUiHandlerImmersive::Update(text_service, context, read_cookie);
+  const TipInputModeManager *input_mode_manager =
+      text_service->GetThreadContext()->GetInputModeManager();
+  const bool open = input_mode_manager->GetEffectiveOpenClose();
+  const CompositionMode mozc_mode = static_cast<CompositionMode>(
+      input_mode_manager->GetEffectiveConversionMode());
+  const bool result = UpdateInternal(text_service, context, read_cookie);
+  if (open) {
+    text_service->UpdateLangbar(true, mozc_mode);
   } else {
-    return TipUiHandlerConventional::Update(text_service, context, read_cookie);
+    text_service->UpdateLangbar(true, commands::DIRECT);
   }
+  return result;
 }
 
 bool TipUiHandler::OnDllProcessAttach(HINSTANCE module_handle,
