@@ -52,7 +52,7 @@ IBUS_COMPONENT_PROPS = {
     'version': '0.0.0.0',
     'author': 'Google Inc.',
     'license': 'New BSD',
-    'homepage': 'http://code.google.com/p/mozc/',
+    'homepage': 'https://github.com/google/mozc',
     'textdomain': 'ibus-mozc',
 }
 

@@ -196,7 +196,6 @@ bool GetSurroundingText(IBusEngine *engine,
   guint cursor_pos = 0;
   guint anchor_pos = 0;
   // DO NOT call g_object_unref against this.
-  // http://ibus.googlecode.com/svn/docs/ibus-1.4/IBusText.html
   // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
   IBusText *text = NULL;
   ibus_engine_get_surrounding_text(engine, &text, &cursor_pos,
@@ -339,7 +338,7 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
   // simply resetting the current session in case there is a non-empty
   // preedit text. Note that |RevertSession| is supposed to do nothing when
   // there is no preedit text.
-  // See https://code.google.com/p/mozc/issues/detail?id=255 for details.
+  // See https://github.com/google/mozc/issues/255 for details.
   RevertSession(engine);
   SyncData(false);
 }

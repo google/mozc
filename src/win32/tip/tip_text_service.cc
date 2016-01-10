@@ -127,7 +127,7 @@ const GUID kTipFunctionProvider = {
 
 #else
 
-const char kHelpUrl[] = "http://code.google.com/p/mozc/";
+const char kHelpUrl[] = "https://github.com/google/mozc";
 const char kLogFileName[] = "Mozc_tsf_ui.log";
 const wchar_t kTaskWindowClassName[] = L"Mozc Immersive Task Message Window";
 

@@ -498,7 +498,7 @@ bool KeyTranslator::IsKanaAvailable(guint keyval,
     // When a Japanese keyboard is in use, the yen-sign key and the backslash
     // key generate the same |keyval|. In this case, we have to check |keycode|
     // to return an appropriate string. See the following IBus issue for
-    // details: http://code.google.com/p/ibus/issues/detail?id=52
+    // details: https://github.com/ibus/ibus/issues/73
     if (keyval == '\\' && layout_is_jp) {
       if (keycode == IBUS_bar) {
         *out = "\xe3\x83\xbc";  // "ー"

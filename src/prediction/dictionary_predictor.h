@@ -77,7 +77,7 @@ class DictionaryPredictor : public PredictorInterface {
  protected:
   // Protected members for unittesting
   // For use util method accessing private members, made them protected.
-  // http://code.google.com/p/googletest/wiki/FAQ
+  // https://github.com/google/googletest/blob/master/googletest/docs/FAQ.md
   enum PredictionType {
     // don't need to show any suggestions.
     NO_PREDICTION = 0,
