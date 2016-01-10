@@ -121,7 +121,7 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
 TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
   // mozc::Thread is not designed as value-semantics.
   // So here we use pointers to maintain these instances.
-  vector<BatchGetPathNameThread *> threads(8192);
+  vector<BatchGetPathNameThread *> threads(64);
   for (size_t i = 0; i < threads.size(); ++i) {
     threads[i] = new BatchGetPathNameThread;
     threads[i]->Start();
