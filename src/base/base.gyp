@@ -124,12 +124,14 @@
         'gen_version_def#host',
         'hash',
         'mutex',
-        'scoped_handle',
         'singleton',
         'string_piece',
       ],
       'conditions': [
         ['OS=="win"', {
+          'dependencies': [
+            'scoped_handle',
+          ],
           'link_settings': {
             'msvs_settings': {
               'VCLinkerTool': {
