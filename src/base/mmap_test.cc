@@ -98,36 +98,17 @@ TEST(MmapTest, MmapTest) {
   }
 }
 
-#if defined(OS_WIN)
-TEST(MmapTest, WindowsMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(-1, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr, data_len));
-  free(addr);
+TEST(MmapTest, MaybeMLockTest) {
+  const size_t data_len = 32;
+  std::unique_ptr<void, void (*)(void*)> addr(malloc(data_len), &free);
+  if (Mmap::IsMLockSupported()) {
+    ASSERT_EQ(0, Mmap::MaybeMLock(addr.get(), data_len));
+    EXPECT_EQ(0, Mmap::MaybeMUnlock(addr.get(), data_len));
+  } else {
+    EXPECT_EQ(-1, Mmap::MaybeMLock(addr.get(), data_len));
+    EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr.get(), data_len));
+  }
 }
-#elif defined(OS_MACOSX)
-TEST(MmapTest, MacMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(0, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, Mmap::MaybeMUnlock(addr, data_len));
-  free(addr);
-}
-#else
-TEST(MmapTest, LinuxMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-#if defined(OS_ANDROID) || defined(OS_NACL)
-  EXPECT_EQ(-1, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr, data_len));
-#else  // defined(OS_ANDROID) || defined(OS_NACL)
-  EXPECT_EQ(0, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, Mmap::MaybeMUnlock(addr, data_len));
-#endif  // defined(OS_ANDROID) || defined(OS_NACL)
-  free(addr);
-}
-#endif  // OS_WIN, OS_MACOSX, else.
 
 }  // namespace
 }  // namespace mozc

@@ -67,11 +67,12 @@
         '../../base/base.gyp:base_core',
         '../../config/config.gyp:config_handler',
         '../../data_manager/data_manager.gyp:user_pos_manager',
+        '../../data_manager/oss/oss_data_manager_test.gyp:install_oss_data_manager_test_data',
         '../../request/request.gyp:conversion_request',
         '../../session/session_base.gyp:request_test_util',
         '../../testing/testing.gyp:gtest_main',
+        '../../testing/testing.gyp:mozctest',
         '../dictionary.gyp:dictionary_test_util',
-        'system_dictionary.gyp:install_system_dictionary_test_data',
         'system_dictionary.gyp:system_dictionary',
         'system_dictionary.gyp:system_dictionary_builder',
       ],
@@ -98,29 +99,12 @@
         'test_size': 'small',
       },
     },
-    {
-      'target_name': 'system_dictionary_builder_test',
-      'type': 'executable',
-      'sources': [
-        'system_dictionary_builder_test.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base_core',
-        '../../data_manager/data_manager.gyp:user_pos_manager',
-        '../../testing/testing.gyp:gtest_main',
-        'system_dictionary.gyp:system_dictionary_builder',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'system_dictionary_all_test',
       'type': 'none',
       'dependencies': [
         'key_expansion_table_test',
-        'system_dictionary_builder_test',
         'system_dictionary_codec_test',
         'system_dictionary_test',
         'value_dictionary_test',

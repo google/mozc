@@ -43,6 +43,7 @@
       ],
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
+        '../../testing/testing.gyp:mozctest',
         '../data_manager_test.gyp:data_manager_test_base',
         'oss_data_manager.gyp:oss_data_manager',
         'oss_data_manager.gyp:gen_oss_segmenter_inl_header#host',
@@ -72,6 +73,9 @@
         ],
         'test_data_subdir': 'data/dictionary_oss',
       },
+      'dependencies': [
+        'oss_data_manager.gyp:gen_connection_single_column_txt_for_oss#host',
+      ],
       'includes': ['../../gyp/install_testdata.gypi'],
     },
   ],

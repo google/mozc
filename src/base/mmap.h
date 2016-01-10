@@ -49,17 +49,17 @@ class Mmap : public MmapSyncInterface {
   void Close();
 
   // Following mlock/munlock related functions work based on target environment.
-  // In the case of Android, Native Client, Windows, we don't want to call
-  // actual functions, so these functions do nothing and return -1. In other
-  // cases, these functions call actual mlock/munlock functions and return it's
-  // result.
+  // In Android, Native Client, and Windows, we don't implement mlock, so these
+  // functions returns false and -1. For other target platforms, these functions
+  // call actual mlock/munlock functions and return it's result.
   // On Android, page-out is probably acceptable because
   // - Smaller RAM on the device.
   // - The storage is (usually) solid state thus page-in/out is expected to
   //   be faster.
   // On Linux, in the kernel version >= 2.6.9, user process can mlock. In older
   // kernel, it fails if the process is running in user priviledge.
-  // TODO(team): Check in mac that mlock is really necessary.
+  // TODO(team): Check if mlock is really necessary for Mac.
+  static bool IsMLockSupported();
   static int MaybeMLock(const void *addr, size_t len);
   static int MaybeMUnlock(const void *addr, size_t len);
 

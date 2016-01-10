@@ -57,5 +57,18 @@ string GetSourceDirOrDie(const vector<StringPiece> &components) {
   return path;
 }
 
+vector<string> GetSourceFilesInDirOrDie(
+    const vector<StringPiece> &dir_components,
+    const vector<StringPiece> &filenames) {
+  const string dir = GetSourceDirOrDie(dir_components);
+  vector<string> paths;
+  for (size_t i = 0; i < filenames.size(); ++i) {
+    paths.push_back(FileUtil::JoinPath({dir, filenames[i]}));
+    CHECK(FileUtil::FileExists(paths.back()))
+        << "File doesn't exist: " << paths.back();
+  }
+  return paths;
+}
+
 }  // namespace testing
 }  // namespace mozc

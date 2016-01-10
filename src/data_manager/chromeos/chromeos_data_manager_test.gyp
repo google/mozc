@@ -43,6 +43,7 @@
       ],
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
+        '../../testing/testing.gyp:mozctest',
         '../data_manager_test.gyp:data_manager_test_base',
         'chromeos_data_manager.gyp:chromeos_data_manager',
         'chromeos_data_manager.gyp:gen_chromeos_segmenter_inl_header#host',

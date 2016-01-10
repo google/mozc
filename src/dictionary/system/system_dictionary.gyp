@@ -98,21 +98,5 @@
         'system_dictionary_codec',
       ],
     },
-    {
-      # TODO(noriyukit): Ideally, the copy rule of
-      # dictionary_oss/dictionary00.txt can be shared with one in
-      # data_manager/dictionary_oss/oss_data_manager_test.gyp. However, to avoid
-      # conflict of copy destination name, the copy destination here is changed
-      # from the original one.
-      'target_name': 'install_system_dictionary_test_data',
-      'type': 'none',
-      'variables': {
-        'test_data_subdir': 'data/system_dictionary_test',
-        'test_data': [
-          '../../data/dictionary_oss/dictionary00.txt',
-        ],
-      },
-      'includes': [ '../../gyp/install_testdata.gypi' ],
-    },
   ],
 }

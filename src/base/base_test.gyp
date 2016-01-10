@@ -216,6 +216,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'base.gyp:base_core',
         'install_util_test_data',
       ],

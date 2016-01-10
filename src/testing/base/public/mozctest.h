@@ -58,6 +58,18 @@ string GetSourceFileOrDie(const vector<StringPiece> &components);
 // exist, terminates the program.
 string GetSourceDirOrDie(const vector<StringPiece> &components);
 
+// Gets absolute paths of test resource files in a directory.  If one of files
+// don't exit, terminates the program.
+//
+// vector<string> paths = GetSourceDirOrDie({"my", "dir"}, {"file1", "file2"});
+// paths = {
+//   "/test/srcdir/my/dir/file1",
+//   "/test/srcdir/my/dir/file2",
+// };
+vector<string> GetSourceFilesInDirOrDie(
+    const vector<StringPiece> &dir_components,
+    const vector<StringPiece> &filenames);
+
 }  // namespace testing
 }  // namespace mozc
 

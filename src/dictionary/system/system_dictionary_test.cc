@@ -55,6 +55,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 using std::unique_ptr;
 
@@ -69,38 +70,23 @@ const uint32 kDefaultReverseLookupTestSize = 10000;
 #endif
 }  // namespace
 
-// TODO(noriyukit): Ideally, the copy rule of dictionary_oss/dictionary00.txt
-// can be shared with one in
-// data_manager/dictionary_oss/oss_data_manager_test.gyp. However, to avoid
-// conflict of copy destination name, the copy destination here is changed from
-// the original one. See also comments in system_dictionary_test.gyp.
-DEFINE_string(
-    dictionary_source,
-    "data/system_dictionary_test/dictionary00.txt",
-    "source dictionary file to run test");
-
 DEFINE_int32(dictionary_test_size, 100000,
              "Dictionary size for this test.");
 DEFINE_int32(dictionary_reverse_lookup_test_size, kDefaultReverseLookupTestSize,
              "Number of tokens to run reverse lookup test.");
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
 DECLARE_int32(min_key_length_to_use_small_cost_encoding);
 
 namespace mozc {
 namespace dictionary {
 
-namespace {
-}  // namespace
-
-class SystemDictionaryTest : public testing::Test {
+class SystemDictionaryTest : public ::testing::Test {
  protected:
   SystemDictionaryTest()
       : text_dict_(new TextDictionaryLoader(
           *UserPosManager::GetUserPosManager()->GetPOSMatcher())),
-        dic_fn_(FLAGS_test_tmpdir + "/mozc.dic") {
-    const string dic_path = FileUtil::JoinPath(FLAGS_test_srcdir,
-                                               FLAGS_dictionary_source);
+        dic_fn_(FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc.dic")) {
+    const string dic_path = mozc::testing::GetSourceFileOrDie({
+        "data", "dictionary_oss", "dictionary00.txt"});
     text_dict_->LoadWithLineLimit(dic_path, "", FLAGS_dictionary_test_size);
 
     convreq_.set_request(&request_);

@@ -27,14 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-
-#include "base/file_util.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
 #include "win32/base/file_verifier.h"
 
-DECLARE_string(test_srcdir);
+#include <string>
+
+#include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace win32 {
@@ -48,10 +46,8 @@ class TestableFileVerifier : public FileVerifier {
 };
 
 static string GetTestFile(const string &filename) {
-  string result = FLAGS_test_srcdir;
-  result = FileUtil::JoinPath(result, "data/test/win32/integrity");
-  result = FileUtil::JoinPath(result, filename);
-  return result;
+  return mozc::testing::GetSourcePath({
+      "data", "test", "win32", "integrity", filename});
 }
 
 }  // namespace

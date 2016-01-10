@@ -82,6 +82,7 @@
       ],
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
+        '../../testing/testing.gyp:mozctest',
         'calculator',
         'install_calculator_test_data',
       ],
