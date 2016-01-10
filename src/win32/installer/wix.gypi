@@ -94,6 +94,11 @@
               '-dQtGuid4DllPath=<(qtguid4_dll_path)',
             ],
           }],
+          ['MSVS_VERSION=="2015" and use_qt=="YES" and use_dynamically_linked_qt==1', {
+            'additional_args': [
+              r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
+            ],
+          }],
         ],
         'omaha_guid': 'DDCCD2A9-025E-4142-BCEB-F467B88CF830',
         'omaha_client_key': r'Software\Google\Update\Clients\{<(omaha_guid)}',
