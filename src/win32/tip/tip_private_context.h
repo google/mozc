@@ -63,6 +63,7 @@ class TipPrivateContext {
                     DWORD text_layout_sink_cookie);
   ~TipPrivateContext();
 
+  void EnsureInitialized();
   client::ClientInterface *GetClient();
   SurrogatePairObserver *GetSurrogatePairObserver();
   TipUiElementManager *GetUiElementManager();

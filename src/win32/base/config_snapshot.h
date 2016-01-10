@@ -52,7 +52,7 @@ class ConfigSnapshot {
     Info();
   };
 
-  static Info Get(client::ClientInterface *client);
+  static bool Get(client::ClientInterface *client, Info *info);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(ConfigSnapshot);

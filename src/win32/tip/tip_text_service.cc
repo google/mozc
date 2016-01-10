@@ -887,6 +887,17 @@ class TipTextServiceImpl
   // ITfThreadFocusSink
   virtual HRESULT STDMETHODCALLTYPE OnSetThreadFocus() {
     EnsureKanaLockUnlocked();
+
+    // A temporary workaround for b/24793812.  When previous atempt to
+    // establish conection failed, retry again as if this was the first attempt.
+    // TODO(yukawa): We should give up if this fails a number of times.
+    if (WinUtil::IsProcessSandboxed()) {
+      auto *private_context = GetFocusedPrivateContext();
+      if (private_context != nullptr) {
+        private_context->EnsureInitialized();
+      }
+    }
+
     // While ITfThreadMgrEventSink::OnSetFocus notifies the logical focus inside
     // the application, ITfThreadFocusSink notifies the OS-level keyboard focus
     // events. In both cases, Mozc's UI visibility should be updated.

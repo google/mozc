@@ -79,24 +79,35 @@ TipPrivateContext::TipPrivateContext(DWORD text_edit_sink_cookie,
                                      DWORD text_layout_sink_cookie)
     : state_(new InternalState(text_edit_sink_cookie,
                                text_layout_sink_cookie)) {
-  Capability capability;
-  capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
-  state_->client_->set_client_capability(capability);
-
-  // Try to reflect the current config to the IME behavior.
-  const auto &snapshot = ConfigSnapshot::Get(state_->client_.get());
-  auto *behavior = &state_->input_behavior_;
-  behavior->prefer_kana_input = snapshot.use_kana_input;
-  behavior->use_romaji_key_to_toggle_input_style =
-      snapshot.use_keyboard_to_change_preedit_method;
-  behavior->use_mode_indicator = snapshot.use_mode_indicator;
-  behavior->direct_mode_keys = snapshot.direct_mode_keys;
+  EnsureInitialized();
 }
 
 TipPrivateContext::~TipPrivateContext() {}
 
 ClientInterface *TipPrivateContext::GetClient() {
   return state_->client_.get();
+}
+
+void TipPrivateContext::EnsureInitialized() {
+  if (!state_->input_behavior_.initialized) {
+    state_->client_->Reset();
+
+    Capability capability;
+    capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
+    state_->client_->set_client_capability(capability);
+  }
+
+  // Try to reflect the current config to the IME behavior.
+  ConfigSnapshot::Info snapshot;
+  if (ConfigSnapshot::Get(state_->client_.get(), &snapshot)) {
+    auto *behavior = &state_->input_behavior_;
+    behavior->prefer_kana_input = snapshot.use_kana_input;
+    behavior->use_romaji_key_to_toggle_input_style =
+        snapshot.use_keyboard_to_change_preedit_method;
+    behavior->use_mode_indicator = snapshot.use_mode_indicator;
+    behavior->direct_mode_keys = snapshot.direct_mode_keys;
+    behavior->initialized = true;
+  }
 }
 
 SurrogatePairObserver *TipPrivateContext::GetSurrogatePairObserver() {
