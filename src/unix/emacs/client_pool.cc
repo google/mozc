@@ -47,7 +47,7 @@ int ClientPool::CreateClient() {
       next_id_ = 1;  // Keep next_id_ to be a positive 28-bit integer.
     }
   }
-  lru_cache_.Insert(next_id_, linked_ptr<Client>(new Client()));
+  lru_cache_.Insert(next_id_, std::make_shared<Client>());
   return next_id_++;
 }
 
@@ -55,14 +55,13 @@ void ClientPool::DeleteClient(int id) {
   lru_cache_.Erase(id);
 }
 
-linked_ptr<ClientPool::Client> ClientPool::GetClient(int id) {
-  const linked_ptr<Client> *value = lru_cache_.Lookup(id);
+std::shared_ptr<ClientPool::Client> ClientPool::GetClient(int id) {
+  const std::shared_ptr<Client> *value = lru_cache_.Lookup(id);
   if (value) {
     lru_cache_.Insert(id, *value);  // Put id at the head of LRU.
     return *value;
   } else {
-    Client *client = new Client();
-    linked_ptr<Client> client_ptr(client);
+    std::shared_ptr<Client> client_ptr = std::make_shared<Client>();
     lru_cache_.Insert(id, client_ptr);
     return client_ptr;
   }
