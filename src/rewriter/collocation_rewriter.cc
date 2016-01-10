@@ -54,6 +54,7 @@ using mozc::storage::ExistenceFilter;
 
 namespace {
 const size_t kCandidateSize = 12;
+const int kMaxCostDiff = 3453;  // -500*log(1/1000)
 
 // For collocation, we use two segments.
 enum SegmentLookupType {
@@ -600,6 +601,9 @@ CollocationRewriter::~CollocationRewriter() {}
 
 bool CollocationRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
+  if (!FLAGS_use_collocation) {
+    return false;
+  }
   return RewriteCollocation(segments);
 }
 
@@ -621,6 +625,9 @@ bool CollocationRewriter::RewriteFromPrevSegment(
   vector<string> curs;
   string cur;
   for (size_t i = 0; i < i_max; ++i) {
+    if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {
+      continue;
+    }
     if (IsName(seg->candidate(i))) {
       continue;
     }
@@ -688,6 +695,9 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
   vector<string> curs;
   string cur;
   for (size_t i = 0; i < i_max; ++i) {
+    if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {
+      continue;
+    }
     if (IsName(seg->candidate(i))) {
       continue;
     }
@@ -703,6 +713,10 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
       cur.clear();
       CollocationUtil::GetNormalizedScript(curs[k], true, &cur);
       for (size_t j = 0; j < j_max; ++j) {
+        if (next_seg->candidate(j).cost >
+            next_seg->candidate(0).cost + kMaxCostDiff) {
+          continue;
+        }
         if (!next_seg_ok[j]) {
           continue;
         }
