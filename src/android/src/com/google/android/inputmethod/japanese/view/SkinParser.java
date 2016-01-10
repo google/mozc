@@ -160,6 +160,7 @@ public class SkinParser {
         if ("Drawable".equals(tagName)) {
           TypedArray attributes = resources.obtainAttributes(parser, DRAWABLE_ATTRIBUTES);
           try {
+            int originalDepth = parser.getDepth();
             String name = attributes.getString(DRAWABLE_KEY_NAME_INDEX);
             if (name == null) {
               throw new SkinParserException(parser,
@@ -173,17 +174,20 @@ public class SkinParser {
             if (drawable == null) {
               throw new SkinParserException(parser, "Invalid drawable.");
             }
-            if (parser.nextTag() != XmlResourceParser.END_TAG) {
-              throw new SkinParserException(parser, "End tag for drawable is expected.");
+            // Skip end tags for drawable and <Drawable>.
+            // Unfortunatelly, Drawable.createFromXmlInner() leave the end tag of some drawables.
+            // The behavior of the method depends on tye type of drawable and Android version.
+            // See also: b/23951337 and b/24091330.
+            while (parser.getDepth() > originalDepth) {
+              if (parser.nextTag() != XmlResourceParser.END_TAG) {
+                throw new SkinParserException(parser, "End tag is expected.");
+              }
             }
             Field field = fieldMap.get(name);
             if (field == null) {
               throw new SkinParserException(parser, name + " is undefined field.");
             }
             field.set(skin, drawable);
-            if (parser.nextTag() != XmlResourceParser.END_TAG) {  // Skip end tag.
-              throw new SkinParserException(parser, "</Drawable> is expected but not found.");
-            }
           } finally {
             attributes.recycle();
           }
