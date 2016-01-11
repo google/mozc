@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,36 +27,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef OS_NACL
+// Disabled on NaCl since it uses a mock file system.
+
 #include "converter/pos_id_printer.h"
 
+#include <memory>
 #include <string>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/flags.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace internal {
-namespace {
-const char kTestIdDef[] =
-    "data/test/dictionary/id.def";
-}  // namespace
 
 class PosIdPrinterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    const string test_id_def_path =
-        FileUtil::JoinPath(FLAGS_test_srcdir, kTestIdDef);
+    const string test_id_def_path = testing::GetSourceFileOrDie({
+        "data", "test", "dictionary", "id.def"});
     pos_id_.reset(new InputFileStream(test_id_def_path.c_str()));
     pos_id_printer_.reset(new PosIdPrinter(pos_id_.get()));
   }
 
-  scoped_ptr<InputFileStream> pos_id_;
-  scoped_ptr<PosIdPrinter> pos_id_printer_;
+  std::unique_ptr<InputFileStream> pos_id_;
+  std::unique_ptr<PosIdPrinter> pos_id_printer_;
 };
 
 TEST_F(PosIdPrinterTest, BasicIdTest) {
@@ -80,3 +78,5 @@ TEST_F(PosIdPrinterTest, NullInput) {
 
 }  // namespace internal
 }  // namespace mozc
+
+#endif  // !OS_NACL

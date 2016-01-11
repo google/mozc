@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 // TODO(horo): Write tests.
 
+#ifdef OS_NACL
+
 #include "base/pepper_file_util.h"
 
 #include <ppapi/c/pp_file_info.h>
@@ -44,7 +46,6 @@
 #include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/pepper_scoped_obj.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/unnamed_event.h"
 
@@ -200,7 +201,6 @@ void PepperFileReader::OnRead(int32_t bytes_read) {
   }
 }
 
-
 class PepperFileWriter : public PepperFileOperator {
  public:
   PepperFileWriter(pp::Instance *instance, pp::FileSystem *file_system);
@@ -345,6 +345,62 @@ void PepperFileWriter::OnFlush(int32_t result) {
     return;
   }
   result_ = PP_OK;
+  event_.Notify();
+  return;
+}
+
+class PepperDirectoryCreator : public PepperFileOperator {
+ public:
+  PepperDirectoryCreator(pp::Instance *instance, pp::FileSystem *file_system);
+  virtual ~PepperDirectoryCreator() {}
+  int32_t CreateDirectory(const string &path);
+
+ private:
+  void CreateDirectoryImpl(int32_t result);
+  void OnCreateDirectory(int32_t result);
+
+  string path_;
+  scoped_main_thread_destructed_object<pp::FileRef> file_ref_;
+  pp::CompletionCallbackFactory<PepperDirectoryCreator> cc_factory_;
+  DISALLOW_COPY_AND_ASSIGN(PepperDirectoryCreator);
+};
+
+PepperDirectoryCreator::PepperDirectoryCreator(pp::Instance *instance,
+                                               pp::FileSystem *file_system)
+    : PepperFileOperator(instance, file_system) {
+  cc_factory_.Initialize(this);
+}
+
+int32_t PepperDirectoryCreator::CreateDirectory(const string &path) {
+  VLOG(2) << "PepperDirectoryCreator::CreateDirectory \"" << path << "\"";
+  CHECK(!pp::Module::Get()->core()->IsMainThread())
+      << ("PepperDirectoryCreator::CreateDirectory() can't be called"
+          " in the main thread.");
+  path_ = path;
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      cc_factory_.NewCallback(&PepperDirectoryCreator::CreateDirectoryImpl));
+  event_.Wait(-1);
+  return result_;
+}
+
+void PepperDirectoryCreator::CreateDirectoryImpl(int32_t result) {
+  VLOG(2) << "PepperDirectoryCreator::CreateDirectoryImpl: " << result;
+  file_ref_.reset(new pp::FileRef(*file_system_, path_.c_str()));
+  const int32_t ret = file_ref_->MakeDirectory(
+      PP_MAKEDIRECTORYFLAG_EXCLUSIVE,
+      cc_factory_.NewCallback(&PepperDirectoryCreator::OnCreateDirectory));
+  VLOG(2) << "file_ref_->CreateDirectory ret: " << ret;
+  if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
+    result_ = ret;
+    event_.Notify();
+    return;
+  }
+}
+
+void PepperDirectoryCreator::OnCreateDirectory(int32_t result) {
+  VLOG(2) << "PepperDirectoryCreator::OnCreateDirectory: " << result;
+  result_ = result;
   event_.Notify();
   return;
 }
@@ -498,46 +554,46 @@ void PepperFileRenamer::OnRename(int32_t result) {
   return;
 }
 
-class PepperFileDeleter : public PepperFileOperator {
+class PepperDeleter : public PepperFileOperator {
  public:
-  PepperFileDeleter(pp::Instance *instance, pp::FileSystem *file_system);
-  virtual ~PepperFileDeleter() {}
-  int32_t Delete(const string &filename);
+  PepperDeleter(pp::Instance *instance, pp::FileSystem *file_system);
+  virtual ~PepperDeleter() {}
+  int32_t Delete(const string &path);
 
  private:
   // Called in Delete()
   void DeleteImpl(int32_t result);
   void OnDelete(int32_t result);
 
-  string filename_;
+  string path_;
   scoped_main_thread_destructed_object<pp::FileRef> file_ref_;
-  pp::CompletionCallbackFactory<PepperFileDeleter> cc_factory_;
-  DISALLOW_COPY_AND_ASSIGN(PepperFileDeleter);
+  pp::CompletionCallbackFactory<PepperDeleter> cc_factory_;
+  DISALLOW_COPY_AND_ASSIGN(PepperDeleter);
 };
 
-PepperFileDeleter::PepperFileDeleter(pp::Instance *instance,
-                                     pp::FileSystem *file_system)
+PepperDeleter::PepperDeleter(pp::Instance *instance,
+                             pp::FileSystem *file_system)
     : PepperFileOperator(instance, file_system) {
   cc_factory_.Initialize(this);
 }
 
-int32_t PepperFileDeleter::Delete(const string &filename) {
-  VLOG(2) << "PepperFileDeleter::Delete \"" << filename << "\"";
+int32_t PepperDeleter::Delete(const string &path) {
+  VLOG(2) << "PepperDeleter::Delete \"" << path << "\"";
   CHECK(!pp::Module::Get()->core()->IsMainThread())
-      << "PepperFileDeleter::Delete() can't be called in the main thread.";
-  filename_ = filename;
+      << "PepperDeleter::Delete() can't be called in the main thread.";
+  path_ = path;
   pp::Module::Get()->core()->CallOnMainThread(
       0,
-      cc_factory_.NewCallback(&PepperFileDeleter::DeleteImpl));
+      cc_factory_.NewCallback(&PepperDeleter::DeleteImpl));
   event_.Wait(-1);
   return result_;
 }
 
-void PepperFileDeleter::DeleteImpl(int32_t result) {
-  VLOG(2) << "PepperFileDeleter::DeleteImpl: " << result;
-  file_ref_.reset(new pp::FileRef(*file_system_, filename_.c_str()));
+void PepperDeleter::DeleteImpl(int32_t result) {
+  VLOG(2) << "PepperDeleter::DeleteImpl: " << result;
+  file_ref_.reset(new pp::FileRef(*file_system_, path_.c_str()));
   const int32_t ret = file_ref_->Delete(
-      cc_factory_.NewCallback(&PepperFileDeleter::OnDelete));
+      cc_factory_.NewCallback(&PepperDeleter::OnDelete));
   VLOG(2) << "file_ref_->Delete ret: " << ret;
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
     result_ = ret;
@@ -546,8 +602,8 @@ void PepperFileDeleter::DeleteImpl(int32_t result) {
   }
 }
 
-void PepperFileDeleter::OnDelete(int32_t result) {
-  VLOG(2) << "PepperFileDeleter::OnDelete: " << result;
+void PepperDeleter::OnDelete(int32_t result) {
+  VLOG(2) << "PepperDeleter::OnDelete: " << result;
   result_ = result;
   event_.Notify();
   return;
@@ -562,10 +618,11 @@ class PepperFileSystem : public PepperFileSystemInterface {
   virtual bool DirectoryExists(const string &dirname);
   virtual bool ReadBinaryFile(const string &filename, string *buffer);
   virtual bool WriteBinaryFile(const string &filename, const string &buffer);
-  virtual bool DeleteFile(const string &filename);
-  virtual bool RenameFile(const string &from, const string &to);
-  virtual bool RegisterMmap(Mmap *mmap);
-  virtual bool UnRegisterMmap(Mmap *mmap);
+  virtual bool CreateDirectory(const string &dirname);
+  virtual bool Delete(const string &filename);
+  virtual bool Rename(const string &from, const string &to);
+  virtual bool RegisterMmap(MmapSyncInterface *mmap);
+  virtual bool UnRegisterMmap(MmapSyncInterface *mmap);
   virtual bool SyncMmapToFile();
 
  private:
@@ -577,7 +634,7 @@ class PepperFileSystem : public PepperFileSystemInterface {
   pp::CompletionCallbackFactory<PepperFileSystem> cc_factory_;
   UnnamedEvent event_;
   pp::Instance *instance_;
-  set<Mmap*> mmap_set_;
+  set<MmapSyncInterface*> mmap_set_;
   Mutex mutex_;
   DISALLOW_COPY_AND_ASSIGN(PepperFileSystem);
 };
@@ -670,16 +727,24 @@ bool PepperFileSystem::WriteBinaryFile(const string &filename,
   return writer.Write(filename, buffer) == PP_OK;
 }
 
-bool PepperFileSystem::DeleteFile(const string &filename) {
-  VLOG(2) << "PepperFileSystem::DeleteFile \"" << filename << "\"";
+bool PepperFileSystem::CreateDirectory(const string &dirname) {
+  VLOG(2) << "PepperFileSystem::CreateDirectory \"" << dirname << "\"";
   CHECK(!pp::Module::Get()->core()->IsMainThread());
   CHECK(file_system_.get()) << "PepperFileSystem is not initialized yet";
-  PepperFileDeleter deleter(instance_, file_system_.get());
-  return deleter.Delete(filename) == PP_OK;
+  PepperDirectoryCreator creator(instance_, file_system_.get());
+  return creator.CreateDirectory(dirname) == PP_OK;
 }
 
-bool PepperFileSystem::RenameFile(const string &from, const string &to) {
-  VLOG(2) << "PepperFileSystem::RenameFile from \"" << from << "\""
+bool PepperFileSystem::Delete(const string &path) {
+  VLOG(2) << "PepperFileSystem::Delete \"" << path << "\"";
+  CHECK(!pp::Module::Get()->core()->IsMainThread());
+  CHECK(file_system_.get()) << "PepperFileSystem is not initialized yet";
+  PepperDeleter deleter(instance_, file_system_.get());
+  return deleter.Delete(path) == PP_OK;
+}
+
+bool PepperFileSystem::Rename(const string &from, const string &to) {
+  VLOG(2) << "PepperFileSystem::Rename from \"" << from << "\""
           << " to \"" << to << "\"";
   CHECK(!pp::Module::Get()->core()->IsMainThread());
   CHECK(file_system_.get()) << "PepperFileSystem is not initialized yet";
@@ -687,19 +752,19 @@ bool PepperFileSystem::RenameFile(const string &from, const string &to) {
   return renamer.Rename(from, to) == PP_OK;
 }
 
-bool PepperFileSystem::RegisterMmap(Mmap *mmap) {
+bool PepperFileSystem::RegisterMmap(MmapSyncInterface *mmap) {
   scoped_lock lock(&mutex_);
   return mmap_set_.insert(mmap).second;
 }
 
-bool PepperFileSystem::UnRegisterMmap(Mmap *mmap) {
+bool PepperFileSystem::UnRegisterMmap(MmapSyncInterface *mmap) {
   scoped_lock lock(&mutex_);
   return mmap_set_.erase(mmap);
 }
 
 bool PepperFileSystem::SyncMmapToFile() {
   scoped_lock lock(&mutex_);
-  for (set<Mmap*>::iterator it = mmap_set_.begin();
+  for (set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
        it != mmap_set_.end(); ++it) {
     (*it)->SyncToFile();
   }
@@ -744,23 +809,27 @@ bool PepperFileUtil::ReadBinaryFile(const string &filename, string *buffer) {
 
 bool PepperFileUtil::WriteBinaryFile(const string &filename,
                                      const string &buffer) {
-  DeleteFile(filename);
+  Delete(filename);
   return GetPepperFileSystem()->WriteBinaryFile(filename, buffer);
 }
 
-bool PepperFileUtil::DeleteFile(const string &filename) {
-  return GetPepperFileSystem()->DeleteFile(filename);
+bool PepperFileUtil::CreateDirectory(const string &dirname) {
+  return GetPepperFileSystem()->CreateDirectory(dirname);
 }
 
-bool PepperFileUtil::RenameFile(const string &from, const string &to) {
-  return GetPepperFileSystem()->RenameFile(from, to);
+bool PepperFileUtil::Delete(const string &filename) {
+  return GetPepperFileSystem()->Delete(filename);
 }
 
-bool PepperFileUtil::RegisterMmap(Mmap *mmap) {
+bool PepperFileUtil::Rename(const string &from, const string &to) {
+  return GetPepperFileSystem()->Rename(from, to);
+}
+
+bool PepperFileUtil::RegisterMmap(MmapSyncInterface *mmap) {
   return GetPepperFileSystem()->RegisterMmap(mmap);
 }
 
-bool PepperFileUtil::UnRegisterMmap(Mmap *mmap) {
+bool PepperFileUtil::UnRegisterMmap(MmapSyncInterface *mmap) {
   return GetPepperFileSystem()->UnRegisterMmap(mmap);
 }
 
@@ -769,3 +838,5 @@ bool PepperFileUtil::SyncMmapToFile() {
 }
 
 }  // namespace mozc
+
+#endif  // OS_NACL

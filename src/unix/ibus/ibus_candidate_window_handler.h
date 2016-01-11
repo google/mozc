@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
   virtual ~IBusCandidateWindowHandler();
 
   virtual void Update(IBusEngine *engine, const commands::Output &output);
+  virtual void UpdateCursorRect(IBusEngine *engine);
   virtual void Hide(IBusEngine *engine);
   virtual void Show(IBusEngine *engine);
 

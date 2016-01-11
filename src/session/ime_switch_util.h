@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@ class KeyEvent;
 
 namespace config {
 
+class Config;
+
 // Caveats: This class tries to load config file internally, which is not
 // stable in a client DLL. Use KeyInfoUtil::ExtractSortedDirectModeKeys and
 // KeyInfoUtil::ContainsKey instead.
@@ -52,7 +54,7 @@ class ImeSwitchUtil {
   // Please call this fuction only when the server is not runnning.
   static bool IsDirectModeCommand(const commands::KeyEvent &key);
 
-  static void Reload();
+  static void ReloadConfig(const Config &config);
 
  private:
   // Should never be allocated.

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/version.h"
 #include "converter/boundary_struct.h"
@@ -43,8 +44,8 @@ DEFINE_string(output, "", "Output data file name");
 namespace mozc {
 namespace {
 
-#include "data_manager/@DIR@/user_pos_data.h"
 #include "data_manager/@DIR@/pos_matcher_data.h"
+#include "data_manager/@DIR@/user_pos_data.h"
 
 }  // namespace
 
@@ -62,7 +63,7 @@ bool OutputData(const string &file_path) {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (FLAGS_output.empty()) {
     LOG(FATAL) << "output flag is needed";

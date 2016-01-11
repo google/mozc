@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,39 @@
 #ifndef MOZC_BASE_PORT_H_
 #define MOZC_BASE_PORT_H_
 
+// Check duplicate OS_XXX definition.
+
+#ifdef OS_WIN
+#define MOZC_OS_DEFINED
+#endif  // OS_WIN
+
+#ifdef OS_MACOSX
+#define MOZC_OS_DEFINED
+#endif  // OS_MACOSX
+
+#ifdef OS_ANDROID
+#define MOZC_OS_DEFINED
+#endif  // OS_ANDROID
+
+#ifdef OS_NACL
+#define MOZC_OS_DEFINED
+#endif  // OS_NACL
+
+#ifdef OS_LINUX
+// TODO(matsuzakit): Remove following guard.
+// Currently OS_LINUX and (OS_ANDROID or OS_NACL) are defined at the same time.
+#if !defined(OS_ANDROID) && !defined(OS_NACL)
+#define MOZC_OS_DEFINED
+#endif  // !OS_ANDROID && !OS_NACL
+#endif  // OS_LINUX
+
+#ifndef MOZC_OS_DEFINED
+#error "OS_XXX (e.g., OS_WIN) must be defined."
+#endif  // !MOZC_OS_DEFINED
+
+#undef MOZC_OS_DEFINED
+
+
 
 #include <sys/types.h>
 #include <cstddef>
@@ -50,16 +83,10 @@ typedef unsigned long long uint64;
 typedef long long           int64;
 #endif  // OS_WIN
 
-#define atoi32 atoi
-#define strto32 strtol
-#define strto64 strtoll
-
 #include <stdint.h>
 
 #ifdef _MSC_VER
 #define snprintf _snprintf_s
-#define strtoull _strtoui64
-#define strtoll  _strtoi64
 #endif  // _MSC_VER
 
 template <typename T, size_t N>
@@ -129,9 +156,5 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x)   #x
-
-
-// TODO(yukawa): Simplify following includes
-#include "base/flags.h"
 
 #endif  // MOZC_BASE_PORT_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 #include <QtGui/QtGui>
 #include <QtGui/QPushButton>
 
+#include <memory>
+
 #include "base/logging.h"
 #include "gui/config_dialog/keybinding_editor.h"
 
@@ -55,7 +57,7 @@ class KeyBindingEditorTriggerButton : public QPushButton {
   }
 
  private:
-  scoped_ptr<KeyBindingEditor> editor_;
+  std::unique_ptr<KeyBindingEditor> editor_;
 };
 
 KeyBindingEditorDelegate::KeyBindingEditorDelegate(QObject *parent)

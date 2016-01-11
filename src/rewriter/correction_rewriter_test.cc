@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,14 @@
 
 #include "rewriter/correction_rewriter.h"
 
+#include <memory>
 #include <string>
+
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -64,33 +67,30 @@ Segment::Candidate *AddCandidate(
 
 class CorrectionRewriterTest : public testing::Test {
  protected:
+  CorrectionRewriterTest() {
+    convreq_.set_request(&request_);
+    convreq_.set_config(&config_);
+  }
+
   virtual void SetUp() {
     rewriter_.reset(new CorrectionRewriter(
                         kReadingCorrectionTestItems,
                         arraysize(kReadingCorrectionTestItems)));
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::Config config(default_config_);
-    config.set_use_spelling_correction(true);
-    config::ConfigHandler::SetConfig(config);
+    config::ConfigHandler::GetDefaultConfig(&config_);
+    config_.set_use_spelling_correction(true);
   }
 
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  scoped_ptr<CorrectionRewriter> rewriter_;
-
- private:
-  config::Config default_config_;
+  std::unique_ptr<CorrectionRewriter> rewriter_;
+  ConversionRequest convreq_;
+  commands::Request request_;
+  config::Config config_;
 };
 
 TEST_F(CorrectionRewriterTest, CapabilityTest) {
-  const ConversionRequest request;
-  EXPECT_EQ(RewriterInterface::ALL, rewriter_->capability(request));
+  EXPECT_EQ(RewriterInterface::ALL, rewriter_->capability(convreq_));
 }
 
 TEST_F(CorrectionRewriterTest, RewriteTest) {
-  ConversionRequest request;
   Segments segments;
 
   Segment *segment = AddSegment("gekkyokuwo", &segments);
@@ -101,15 +101,12 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
 
   AddCandidate("gekkyokuwo", "GEKKYOKUwo", "gekkyoku", "GEKKYOKU", segment);
 
-  config::Config config;
-  config.set_use_spelling_correction(false);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_use_spelling_correction(false);
 
-  EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
 
-  config.set_use_spelling_correction(true);
-  config::ConfigHandler::SetConfig(config);
-  EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+  config_.set_use_spelling_correction(true);
+  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
 
   // candidate 0
   EXPECT_EQ(

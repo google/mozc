@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 
 #ifndef MOZC_SESSION_SESSION_SERVER_H_
 #define MOZC_SESSION_SESSION_SERVER_H_
+
+#include <memory>
 
 #include "base/port.h"
 #include "ipc/ipc.h"
@@ -67,12 +69,13 @@ class SessionServer: public IPCServer {
 
  private:
   // Must be defined earlier than session_handler_, which depends on this.
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<session::SessionUsageObserver> usage_observer_;
-  scoped_ptr<SessionHandlerInterface> session_handler_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<session::SessionUsageObserver> usage_observer_;
+  std::unique_ptr<SessionHandlerInterface> session_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionServer);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_SESSION_SESSION_SERVER_H_

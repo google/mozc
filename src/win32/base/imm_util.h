@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,10 +52,6 @@ class ImeUtil {
   // have not tested. If this is true, you cannot freely call SetDefault()
   // in some special situations like CustomAction.
   static bool SetDefault();
-
-  // Returns true if cfmon.exe is running.
-  // ctfmon.exe is running if TSF (Text Service Framework) is enabled.
-  static bool IsCtfmonRunning();
 
   // Activates the IMM32 version of Google Japanese Input for the current
   // process.

@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@
     'compiler_host_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
     # Versioning stuff for Mac.
-    'mac_sdk%': '10.8',
+    'mac_sdk%': '10.9',
     'mac_deployment_target%': '10.7',
 
     # 'conditions' is put inside of 'variables' so that we can use
@@ -212,6 +212,13 @@
     # extracted. This value is ignored when 'use_libprotobuf' is 1.
     'protobuf_root': '<(third_party_dir)/protobuf',
 
+    # For OS X
+    # Assign dummy value to avoid errors of GYP.
+    # TODO: Update this.
+    'mac_breakpad_dir': 'dummy_mac_breakpad_dir',
+    'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
+
+
     # For Android
     'protobuf_java_root': '<(additional_third_party_dir)/protobuf/java/src/main',
 
@@ -219,19 +226,13 @@
     # This option is only for Linux.
     # You should not set this flag if you want to use "dlopen" to
     # load Mozc's modules. See
-    # - http://code.google.com/p/mozc/issues/detail?id=14
-    # - http://code.google.com/p/protobuf/issues/detail?id=128
-    # - http://code.google.com/p/protobuf/issues/detail?id=370
+    # - https://github.com/google/mozc/issues/14
     # for the background information.
     'use_libprotobuf%': 0,
 
-    # use_libzinnia represents if zinnia library is used or not.
-    # This option is only for Linux.
-    'use_libzinnia%': 1,
-
-    # use_libxml represents if libxml library is used or not.
-    # This option is only for Linux.
-    'use_libxml%': 1,
+    # Set '1' to use system-instaleld zinnia library.  Otherwise
+    # zinnia will be built from source as needed.
+    'use_libzinnia%': 0,
 
     # use_libibus represents if ibus library is used or not.
     # This option is only for Linux.
@@ -243,9 +244,6 @@
     # enable_cloud_handwriting represents if cloud handwriting feature is
     # enabled or not.
     'enable_cloud_handwriting%': 0,
-
-    # enable_http_client represents if http client feature is enabled or not.
-    'enable_http_client%': 0,
 
     # enable ambiguous search (a.k.a. KATSUKOU-conversion).
     'enable_ambiguous_search%': 0,
@@ -287,114 +285,8 @@
     },
     'configurations': {
       'Common_Base': {
+        # gui/qt_target_defaults.gypi overrides Common_Base.
         'abstract': 1,
-        'msvs_configuration_attributes': {
-          'CharacterSet': '<(win_char_set_unicode)',
-        },
-        'conditions': [
-          ['branding=="GoogleJapaneseInput"', {
-            'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
-          }, {
-            'defines': ['MOZC_BUILD'],
-          }],
-          ['channel_dev==1', {
-            'defines': ['CHANNEL_DEV'],
-          }],
-          ['OS=="linux"', {
-            'ldflags': [
-              '<@(linux_ldflags)',
-            ],
-          }],
-          ['use_separate_collocation_data==1', {
-            'defines': ['MOZC_USE_SEPARATE_COLLOCATION_DATA'],
-          }],
-          ['use_separate_connection_data==1', {
-            'defines': ['MOZC_USE_SEPARATE_CONNECTION_DATA'],
-          }],
-          ['use_separate_dictionary==1', {
-            'defines': ['MOZC_USE_SEPARATE_DICTIONARY'],
-          }],
-          ['use_packed_dictionary==1', {
-            'defines': ['MOZC_USE_PACKED_DICTIONARY'],
-          }],
-          ['enable_cloud_handwriting==1', {
-            'defines': ['ENABLE_CLOUD_HANDWRITING'],
-          }],
-          ['enable_http_client==1', {
-            # TODO(peria): Considers of moving the definition and control of
-            # enable_http_client and MOZC_ENABLE_HTTP_CLIENT to net/net.gyp.
-            'defines': ['MOZC_ENABLE_HTTP_CLIENT'],
-          }],
-          ['enable_gtk_renderer==1', {
-            'defines': ['ENABLE_GTK_RENDERER'],
-          }],
-          ['enable_unittest==1', {
-            'defines': ['MOZC_ENABLE_UNITTEST'],
-          }],
-          ['target_platform=="Android"', {
-            'defines': ['NO_USAGE_REWRITER'],
-            'target_conditions' : [
-              ['_toolset=="target" and _type=="executable"', {
-                # For unittest:
-                # Android 5.0+ requires standalone native executables to be PIE.
-                # See crbug.com/373219.
-                'ldflags': [
-                  '-pie',
-                ],
-              }],
-              ['_toolset=="target"', {
-                'defines': [
-                  'OS_ANDROID',
-                  # For the ambiguity of wcsstr.
-                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-                  'MOZC_ANDROID_APPLICATION_ID="<(android_application_id)"',
-                ],
-                'cflags': [
-                  # For unittest:
-                  # Android 5.0+ requires standalone native executables to be
-                  # PIE. Note that we can specify this option even for ICS
-                  # unless we ship a standalone native executable.
-                  # See crbug.com/373219.
-                  '-fPIE',
-                ],
-                'ldflags!': [  # Remove all libraries for GNU/Linux.
-                  '<@(linux_ldflags)',
-                ],
-                'ldflags': [
-                  '-llog',
-                ],
-                'conditions': [
-                  ['android_arch=="arm"', {
-                    'ldflags+': [
-                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
-                      '-march=armv7-a',
-                    ],
-                    'cflags': [
-                      # Support only armv7-a. Both LDFLAG and CLFAGS should have this.
-                      '-march=armv7-a',
-                      '-mfloat-abi=softfp',
-                      '-mfpu=vfpv3-d16',
-                      '-mthumb',  # Force thumb interaction set for smaller file size.
-                    ],
-                  }],
-                ],
-              }],
-            ],
-          }],
-          ['target_platform=="NaCl"', {
-            'target_conditions' : [
-              ['_toolset=="target"', {
-                'defines': [
-                  # For the ambiguity of wcsstr.
-                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-                ],
-              }],
-            ],
-          }],
-          ['enable_mode_indicator==1', {
-            'defines': ['MOZC_ENABLE_MODE_INDICATOR'],
-          }],
-        ],
       },
       'x86_Base': {
         'abstract': 1,
@@ -678,11 +570,49 @@
       }],
     ],
     'conditions': [
+      ['branding=="GoogleJapaneseInput"', {
+        'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
+      }, {
+        'defines': ['MOZC_BUILD'],
+      }],
+      ['channel_dev==1', {
+        'defines': ['CHANNEL_DEV'],
+      }],
+      ['OS=="linux"', {
+        'ldflags': [
+          '<@(linux_ldflags)',
+        ],
+      }],
+      ['use_separate_collocation_data==1', {
+        'defines': ['MOZC_USE_SEPARATE_COLLOCATION_DATA'],
+      }],
+      ['use_separate_connection_data==1', {
+        'defines': ['MOZC_USE_SEPARATE_CONNECTION_DATA'],
+      }],
+      ['use_separate_dictionary==1', {
+        'defines': ['MOZC_USE_SEPARATE_DICTIONARY'],
+      }],
+      ['use_packed_dictionary==1', {
+        'defines': ['MOZC_USE_PACKED_DICTIONARY'],
+      }],
+      ['enable_cloud_handwriting==1', {
+        'defines': ['ENABLE_CLOUD_HANDWRITING'],
+      }],
+      ['enable_gtk_renderer==1', {
+        'defines': ['ENABLE_GTK_RENDERER'],
+      }],
+      ['enable_unittest==1', {
+        'defines': ['MOZC_ENABLE_UNITTEST'],
+      }],
       ['OS=="win"', {
+        'variables': {
+          'wtl_dir': '<(additional_third_party_dir)/wtl',
+        },
         'defines': [
           'COMPILER_MSVC',
           'BUILD_MOZC',  # for ime_shared library
           'ID_TRACE_LEVEL=1',
+          'NOMINMAX',
           'OS_WIN',
           'UNICODE',
           'WIN32',
@@ -703,8 +633,11 @@
         ],
         'include_dirs': [
           '<@(msvs_includes)',
-          '<(additional_third_party_dir)/wtl/files/include',
+          '<(wtl_dir)/include',
         ],
+        'msvs_configuration_attributes': {
+          'CharacterSet': '<(win_char_set_unicode)',
+        },
         'msvs_cygwin_shell': 0,
         'msvs_disabled_warnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
         'msvs_settings': {
@@ -762,9 +695,6 @@
         },
       }],
       ['OS=="linux"', {
-        'defines': [
-          'OS_LINUX',
-        ],
         'cflags': [
           '<@(warning_cflags)',
           '-fPIC',
@@ -776,6 +706,65 @@
           '-Wno-deprecated',
         ],
         'conditions': [
+          ['target_platform=="Linux"', {
+            # OS_LINUX is defined always (target and host).
+            'defines': ['OS_LINUX',],
+          }],
+          ['target_platform=="Android"', {
+            'defines': ['NO_USAGE_REWRITER'],
+            'target_conditions' : [
+              ['_toolset=="host"', {
+                'defines': ['OS_LINUX',],
+              }],
+              ['_toolset=="target" and _type=="executable"', {
+                # For unittest:
+                # Android 5.0+ requires standalone native executables to be PIE.
+                # See crbug.com/373219.
+                'ldflags': [
+                  '-pie',
+                ],
+              }],
+              ['_toolset=="target"', {
+                'defines': [
+                  'OS_ANDROID',
+                  # For the ambiguity of wcsstr.
+                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
+                ],
+                'cflags': [
+                  # For unittest:
+                  # Android 5.0+ requires standalone native executables to be
+                  # PIE. Note that we can specify this option even for ICS
+                  # unless we ship a standalone native executable.
+                  # See crbug.com/373219.
+                  '-fPIE',
+                ],
+                'ldflags!': [  # Remove all libraries for GNU/Linux.
+                  '<@(linux_ldflags)',
+                ],
+                'ldflags': [
+                  '-llog',
+                ],
+                'conditions': [
+                  ['android_arch=="arm"', {
+                    'ldflags': [
+                      # Support only armv7-a.
+                      # Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
+                    ],
+                    'cflags': [
+                      # Support only armv7-a.
+                      # Both LDFLAG and CLFAGS should have this.
+                      '-march=armv7-a',
+                      '-mfloat-abi=softfp',
+                      '-mfpu=vfpv3-d16',
+                      # Force thumb interaction set for smaller file size.
+                      '-mthumb',
+                    ],
+                  }],
+                ],
+              }],
+            ],
+          }],
           ['target_platform!="NaCl"', {
             'cflags': [
               '<@(linux_cflags)',
@@ -784,6 +773,7 @@
           ['target_platform=="NaCl"', {
             'target_conditions' : [
               ['_toolset=="host"', {
+                'defines': ['OS_LINUX',],
                 'cflags': [
                   '<@(linux_cflags)',
                 ],
@@ -797,6 +787,9 @@
                 ],
                 'defines': [
                   'MOZC_USE_PEPPER_FILE_IO',
+                  'OS_NACL',
+                  # For the ambiguity of wcsstr.
+                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
                 ],
                 'include_dirs': [
                   '<(nacl_sdk_root)/include',
@@ -824,10 +817,15 @@
           ['LINK', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
           ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
         ],
-        'mac_framework_dirs': [
-          '<(mac_dir)/Releases/GoogleBreakpad',
+        'conditions': [
+          ['branding=="GoogleJapaneseInput"', {
+            'mac_framework_dirs': [
+              '<(mac_breakpad_dir)',
+            ],
+          }],
         ],
         'xcode_settings': {
+          'ARCHS': ['i386'],
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
           'GCC_SYMBOLS_PRIVATE_EXTERN': 'NO',  # No -fvisibility=hidden
           'OTHER_CFLAGS': [

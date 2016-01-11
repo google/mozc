@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "data_manager/packed/system_dictionary_data_packer.h"
 
+#include <memory>
 #include <string>
 
 #include "base/codegen_bytearray_stream.h"
@@ -349,7 +350,7 @@ bool SystemDictionaryDataPacker::Output(const string &file_path,
 bool SystemDictionaryDataPacker::OutputHeader(
     const string &file_path,
     bool use_gzip) {
-  scoped_ptr<ostream> output_stream(
+  std::unique_ptr<ostream> output_stream(
       new mozc::OutputFileStream(file_path.c_str(), ios::out | ios::trunc));
   CodeGenByteArrayOutputStream *codegen_stream;
   output_stream.reset(

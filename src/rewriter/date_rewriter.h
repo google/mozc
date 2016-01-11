@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ class DateRewriter : public RewriterInterface  {
   bool RewriteAd(Segment *segment) const;
   bool RewriteWeekday(Segment *segment) const;
 
-  // When only one conversion segment has four number characters,
+  // When only one conversion segment has consecutive number characters,
   // this function adds date and time candidates.
   // e.g.)
   //   key  -> candidates will be added
@@ -87,8 +87,9 @@ class DateRewriter : public RewriterInterface  {
   //   0101 -> "1月1日、01/01、1時1分,午前1時1分、1:01"
   //   2020 -> "20時20分、午後8時20分、20:20"
   //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
-  bool RewriteFourDigits(const composer::Composer &composer,
-                         Segments *segments) const;
+  //   123  -> "1月23日、01/23、1:23"
+  bool RewriteConsecutiveDigits(const composer::Composer &composer,
+                                Segments *segments) const;
 
   bool AdToEra(int year, vector<string> *results) const;
 

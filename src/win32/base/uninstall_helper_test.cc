@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ const DWORD kJapaneseKLID = 0xE0200411;
 
 wstring ToWideString(const string &str) {
   wstring wide;
-  if (mozc::Util::UTF8ToWide(str.c_str(), &wide) <= 0) {
+  if (mozc::Util::UTF8ToWide(str, &wide) <= 0) {
     return L"";
   }
   return wide;

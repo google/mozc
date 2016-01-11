@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,11 +36,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
+#include "base/double_array.h"
 #include "base/port.h"
 #include "base/string_piece.h"
-
-struct tm;
 
 namespace mozc {
 
@@ -184,9 +182,23 @@ class Util {
     return CharsLen(str.data(), str.size());
   }
 
+  // Converts the first character of UTF8 string starting at |begin| to UCS4.
+  // The read byte length is stored to |mblen|.
   static char32 UTF8ToUCS4(const char *begin,
                            const char *end,
                            size_t *mblen);
+
+  // Converts a UCS4 code point to UTF8 string.
+  static void UCS4ToUTF8(char32 c, string *output);
+
+  // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
+  // |output| is not cleared.
+  static void UCS4ToUTF8Append(char32 c, string *output);
+
+  // Converts a UCS4 code point to UTF8 and stores it to char array.  The result
+  // is terminated by '\0'.  Returns the byte length of converted UTF8 string.
+  // REQUIRES: The output buffer must be longer than 7 bytes.
+  static size_t UCS4ToUTF8(char32 c, char *output);
 
   // Returns true if |s| is split into |first_char32| + |rest|.
   // You can pass NULL to |first_char32| and/or |rest| to ignore the matched
@@ -205,9 +217,6 @@ class Util {
   static bool SplitLastChar32(StringPiece s,
                               StringPiece *rest,
                               char32 *last_char32);
-
-  static void UCS4ToUTF8(char32 c, string *output);
-  static void UCS4ToUTF8Append(char32 c, string *output);
 
 #ifdef OS_WIN
   // Returns how many wide characters are necessary in UTF-16 to represent
@@ -242,10 +251,14 @@ class Util {
   }
 
   // Determines whether the beginning of |str| matches |prefix|.
-  static bool StartsWith(StringPiece str, StringPiece prefix);
+  static bool StartsWith(StringPiece str, StringPiece prefix) {
+    return str.starts_with(prefix);
+  }
 
   // Determines whether the end of |str| matches |suffix|.
-  static bool EndsWith(StringPiece str, StringPiece suffix);
+  static bool EndsWith(StringPiece str, StringPiece suffix) {
+    return str.ends_with(suffix);
+  }
 
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUTF8BOM(string *line);
@@ -266,28 +279,6 @@ class Util {
   // given line.
   static bool ChopReturns(string *line);
 
-  // 32bit Fingerprint
-  static uint32 Fingerprint32(const string &key);
-  static uint32 Fingerprint32(const char *str, size_t length);
-  static uint32 Fingerprint32(const char *str);
-
-  static uint32 Fingerprint32WithSeed(const string &key,
-                                      uint32 seed);
-  static uint32 Fingerprint32WithSeed(const char *str,
-                                      size_t length, uint32 seed);
-  static uint32 Fingerprint32WithSeed(const char *str,
-                                      uint32 seed);
-  static uint32 Fingerprint32WithSeed(uint32 num, uint32 seed);
-
-  // 64bit Fingerprint
-  static uint64 Fingerprint(const string &key);
-  static uint64 Fingerprint(const char *str, size_t length);
-
-  static uint64 FingerprintWithSeed(const string &key, uint32 seed);
-
-  static uint64 FingerprintWithSeed(const char *str,
-                                    size_t length, uint32 seed);
-
   // Generate a random sequence. It uses secure method if possible, or Random()
   // as a fallback method.
   static void GetRandomSequence(char *buf, size_t buf_size);
@@ -305,63 +296,15 @@ class Util {
   // Set the seed of Util::Random().
   static void SetRandomSeed(uint32 seed);
 
-  // Get the current time info using gettimeofday-like functions.
-  // sec: number of seconds from epoch
-  // usec: micro-second passed: [0,1000000)
-  static void GetTimeOfDay(uint64 *sec, uint32 *usec);
-
-  // Get the current time info using time-like function
-  // For Windows, _time64() is used.
-  // For Linux/Mac, time() is used.
-  static uint64 GetTime();
-
-  // Get the current local time to current_time.  Returns true if succeeded.
-  static bool GetCurrentTm(tm *current_time);
-  // Get local time, which is offset_sec seconds after now. Returns true if
-  // succeeded.
-  static bool GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec);
-
-  // Get the system frequency to calculate the time from ticks.
-  static uint64 GetFrequency();
-
-  // Get the current ticks. It may return incorrect value on Virtual Machines.
-  // If you'd like to get a value in secs, it is necessary to divide a result by
-  // GetFrequency().
-  static uint64 GetTicks();
-
-#ifdef __native_client__
-  // Sets the time difference between local time and UTC time in seconds.
-  // We use this function in NaCl Mozc because we can't know the local timezone
-  // in NaCl environment.
-  static void SetTimezoneOffset(int32 timezone_offset_sec);
-#endif  // __native_client__
-
-  // Interface of the helper class.
-  // Default implementation is defined in the .cc file.
-  class ClockInterface {
-   public:
-    virtual ~ClockInterface() {}
-    virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) = 0;
-    virtual uint64 GetTime() = 0;
-    virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) = 0;
-
-    // High accuracy clock.
-    virtual uint64 GetFrequency() = 0;
-    virtual uint64 GetTicks() = 0;
-#ifdef __native_client__
-    virtual void SetTimezoneOffset(int32 timezone_offset_sec) = 0;
-#endif  // __native_client__
-  };
-
-  // This function is provided for test.
-  // The behavior of system clock can be customized by replacing this handler.
-  static void SetClockHandler(Util::ClockInterface *handler);
-
   // Suspends the execution of the current thread until
   // the time-out interval elapses.
   static void Sleep(uint32 msec);
 
   // Japanese utilities for character form transliteration.
+  static void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
+                                      const char *table,
+                                      StringPiece input,
+                                      string *output);
   static void HiraganaToKatakana(StringPiece input, string *output);
   static void HiraganaToHalfwidthKatakana(StringPiece input, string *output);
   static void HiraganaToRomanji(StringPiece input, string *output);
@@ -394,20 +337,11 @@ class Util {
 
   // Returns true if key is an open bracket.  If key is an open bracket,
   // corresponding close bracket is assigned.
-  static bool IsOpenBracket(const string &key, string *close_bracket);
+  static bool IsOpenBracket(StringPiece key, string *close_bracket);
 
   // Returns true if key is a close bracket.  If key is a close bracket,
   // corresponding open bracket is assigned.
-  static bool IsCloseBracket(const string &key, string *open_bracket);
-
-  // Code converter
-#ifndef OS_WIN
-  static void UTF8ToEUC(const string &input, string *output);
-  static void EUCToUTF8(const string &input, string *output);
-#endif  // OS_WIDNWOS
-
-  static void UTF8ToSJIS(const string &input, string *output);
-  static void SJISToUTF8(const string &input, string *output);
+  static bool IsCloseBracket(StringPiece key, string *open_bracket);
 
   static void EncodeURI(const string &input, string *output);
   static void DecodeURI(const string &input, string *output);
@@ -463,7 +397,7 @@ class Util {
   // return script type of string. all chars in str must be
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.
   // If str has mixed scripts, this function returns UNKNOWN_SCRIPT
-  static ScriptType GetScriptType(const string &str);
+  static ScriptType GetScriptType(StringPiece str);
 
   // The same as GetScryptType(), but it ignores symbols
   // in the |str|.

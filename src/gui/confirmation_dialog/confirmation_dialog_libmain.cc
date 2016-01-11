@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 #include <QtGui/QApplication>
 #include <QtGui/QtGui>
+
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"

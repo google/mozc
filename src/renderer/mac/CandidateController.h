@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 namespace mozc {
 namespace client {
 class SendCommandInterface;
-}  // namespace mozc::client
+}  // namespace client
 
 namespace renderer {
 namespace mac {
@@ -61,19 +61,21 @@ class CandidateController : public RendererInterface {
   // Relocate windows to prevent overlaps.
   void AlignWindows();
 
-  // We don't use scoped_ptr<> for those two pointers because we don't
+  // We don't use std::unique_ptr<> for those two pointers because we don't
   // want to include CandidateWindow.h when the user of this class
   // includes this file.  Because CandidateWindow.h and InfolistWindow.h are in
   // Objective-C++, the user file must be .mm files if we use
-  // scoped_ptr<>.
+  // std::unique_ptr<>.
   CandidateWindow *candidate_window_;
   CandidateWindow *cascading_window_;
   InfolistWindow *infolist_window_;
   mozc::commands::RendererCommand command_;
+
   DISALLOW_COPY_AND_ASSIGN(CandidateController);
 };
 
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc
+
 #endif  // MOZC_RENDERER_MAC_CANDIDATE_CONTROLLER_H_

@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,7 @@
         'immutable_converter_interface.cc',
       ],
       'dependencies': [
-        'conversion_request',
+        '../request/request.gyp:conversion_request',
       ],
     },
     {
@@ -141,8 +141,8 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../protocol/protocol.gyp:commands_proto',
+        '../request/request.gyp:conversion_request',
         'segments',
-        'conversion_request',
       ],
     },
     {
@@ -155,17 +155,6 @@
       'dependencies' : [
         '../base/base.gyp:base',
       ]
-    },
-    {
-      'target_name': 'conversion_request',
-      'type': 'static_library',
-      'sources': [
-        'conversion_request.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../protocol/protocol.gyp:commands_proto',
-      ],
     },
     {
       'target_name': 'pos_id_printer',

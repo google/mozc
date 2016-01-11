@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -79,16 +79,7 @@ namespace {
 class UserProfileDirectoryImpl {
  public:
   UserProfileDirectoryImpl();
-  string get() {
-#ifdef __native_client__
-    // Copies string here to prevent Copy-On-Write issues in multi-thread
-    // environment.
-    // TODO(hsumita): Remove this hack if not necessary.
-    return string(dir_.data(), dir_.size());
-#else
-    return dir_;
-#endif  // __native_client__
-  }
+  string get() { return dir_; }
   void set(const string &dir) { dir_ = dir; }
  private:
   string dir_;
@@ -242,10 +233,9 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 #endif  //  GOOGLE_JAPANESE_INPUT_BUILD
 
 #elif defined(OS_ANDROID)
-  // For android, we just use pre-defined directory, which is under the package
-  // directory, asssuming each device has single user.
-  dir = FileUtil::JoinPath("/data/data", kMozcAndroidPackage);
-  dir = FileUtil::JoinPath(dir, ".mozc");
+  // For android, we do nothing here because user profile directory,
+  // of which the path depends on active user,
+  // is injected from Java layer.
 
 #else  // !OS_WIN && !OS_MACOSX && !OS_ANDROID
   char buf[1024];
@@ -382,14 +372,14 @@ string SystemUtil::GetServerDirectory() {
 #elif defined(OS_MACOSX)
   return MacUtil::GetServerDirectory();
 
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #if defined(MOZC_SERVER_DIRECTORY)
   return MOZC_SERVER_DIRECTORY;
 #else
   return "/usr/lib/mozc";
 #endif  // MOZC_SERVER_DIRECTORY
 
-#endif  // OS_WIN, OS_MACOSX, OS_LINUX
+#endif  // OS_WIN, OS_MACOSX, OS_LINUX, ...
 }
 
 string SystemUtil::GetServerPath() {
@@ -460,7 +450,7 @@ string SystemUtil::GetUserNameAsString() {
   return ppw->pw_name;
 
 #else  // OS_ANDROID
-  // OS_MACOSX or OS_LINUX
+  // OS_MACOSX, OS_LINUX or OS_NACL
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
@@ -620,7 +610,7 @@ string GetSessionIdString() {
 #endif  // OS_WIN
 
 string SystemUtil::GetDesktopNameAsString() {
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   const char *display = getenv("DISPLAY");
   if (display == NULL) {
     return "";
@@ -650,7 +640,7 @@ string SystemUtil::GetDesktopNameAsString() {
   }
 
   return (session_id + "." + window_station_name + "." + desktop_name);
-#endif  // OS_LINUX, OS_MACOSX, OS_WIN
+#endif  // OS_LINUX, OS_MACOSX, OS_WIN, ...
 }
 
 #ifdef OS_WIN
@@ -697,61 +687,11 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
 }
 #endif  // OS_WIN
 
-void SystemUtil::CommandLineRotateArguments(int argc, char ***argv) {
-  char *arg = **argv;
-  memmove(*argv, *argv + 1, (argc - 1) * sizeof(**argv));
-  (*argv)[argc - 1] = arg;
-}
-
-bool SystemUtil::CommandLineGetFlag(int argc,
-                                    char **argv,
-                                    string *key,
-                                    string *value,
-                                    int *used_args) {
-  key->clear();
-  value->clear();
-  *used_args = 0;
-  if (argc < 1) {
-    return false;
-  }
-
-  *used_args = 1;
-  const char *start = argv[0];
-  if (start[0] != '-') {
-    return false;
-  }
-
-  ++start;
-  if (start[0] == '-') ++start;
-  const string arg = start;
-  const size_t n = arg.find("=");
-  if (n != string::npos) {
-    *key = arg.substr(0, n);
-    *value = arg.substr(n + 1, arg.size() - n);
-    return true;
-  }
-
-  key->assign(arg);
-  value->clear();
-
-  if (argc == 1) {
-    return true;
-  }
-  start = argv[1];
-  if (start[0] == '-') {
-    return true;
-  }
-
-  *used_args = 2;
-  value->assign(start);
-  return true;
-}
-
 bool SystemUtil::IsPlatformSupported() {
 #if defined(OS_MACOSX)
   // TODO(yukawa): support Mac.
   return true;
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   // TODO(yukawa): support Linux.
   return true;
 #elif defined(OS_WIN)
@@ -987,7 +927,7 @@ string SystemUtil::GetOSVersionString() {
   const string ret = "MacOSX " + MacUtil::GetOSVersionString();
   // TODO(toshiyuki): get more specific info
   return ret;
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_NACL)
   const string ret = "Linux";
   return ret;
 #else  // !OS_WIN && !OS_MACOSX && !OS_LINUX
@@ -1037,7 +977,7 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
     return 0;
   }
   return total_memory;
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const long page_size = sysconf(_SC_PAGESIZE);
   const long number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);

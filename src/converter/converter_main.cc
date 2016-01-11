@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,13 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -41,7 +44,6 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
 #include "converter/pos_id_printer.h"
@@ -51,6 +53,7 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200, "maximum candidates size");
 DEFINE_string(user_profile_dir, "", "path to user profile directory");
@@ -90,8 +93,8 @@ class PosIdPrintUtil {
     return Util::StringPrintf("%s (%d)", pos_string.c_str(), id);
   }
 
-  scoped_ptr<InputFileStream> pos_id_;
-  scoped_ptr<internal::PosIdPrinter> pos_id_printer_;
+  std::unique_ptr<InputFileStream> pos_id_;
+  std::unique_ptr<internal::PosIdPrinter> pos_id_printer_;
 
   friend class Singleton<PosIdPrintUtil>;
   DISALLOW_COPY_AND_ASSIGN(PosIdPrintUtil);
@@ -207,10 +210,10 @@ void PrintCandidate(const Segment &parent, int num,
     lines.push_back("segbdd: " + segbdd_str);
   }
 
-  (*os) << "  " << num << " " << cand.value << endl;
+  (*os) << "  " << num << " " << cand.value << std::endl;
   for (size_t i = 0; i < lines.size(); ++i) {
     if (!lines[i].empty()) {
-      (*os) << "       " << lines[i] << endl;
+      (*os) << "       " << lines[i] << std::endl;
     }
   }
 }
@@ -218,9 +221,9 @@ void PrintCandidate(const Segment &parent, int num,
 void PrintSegment(size_t num, size_t segments_size,
                   const Segment &segment, ostream *os) {
   (*os) << "---------- Segment " << num << "/" << segments_size << " ["
-        << SegmentTypeToString(segment.segment_type())
-        << "] ----------" << endl
-        << segment.key() << endl;
+        << SegmentTypeToString(segment.segment_type()) << "] ----------"
+        << std::endl
+        << segment.key() << std::endl;
   if (FLAGS_show_meta_candidates) {
     for (int i = 0; i < segment.meta_candidates_size(); ++i) {
       PrintCandidate(segment, -i - 1, segment.meta_candidate(i), os);
@@ -261,15 +264,16 @@ bool ExecCommand(const ConverterInterface &converter,
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
     Table table;
-    Composer composer(&table, &request);
+    Composer composer(&table, &request, &config);
     composer.InsertCharacterPreedit(fields[1]);
-    ConversionRequest conversion_request(&composer, &request);
+    ConversionRequest conversion_request(&composer, &request, &config);
     return converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
-    Lattice::SetDebugDisplayNode(atoi32(fields[2].c_str()),  // begin pos
-                                 atoi32(fields[3].c_str()),  // end pos
-                                 fields[4]);
+    Lattice::SetDebugDisplayNode(
+        NumberUtil::SimpleAtoi(fields[2]),  // begin pos
+        NumberUtil::SimpleAtoi(fields[3]),  // end pos
+        fields[4]);
     const bool result = converter.StartConversion(segments, fields[1]);
     Lattice::ResetDebugDisplayNode();
     return result;
@@ -278,30 +282,30 @@ bool ExecCommand(const ConverterInterface &converter,
     return converter.StartReverseConversion(segments, fields[1]);
   } else if (func == "startprediction" || func == "predict" || func == "p") {
     Table table;
-    Composer composer(&table, &request);
+    Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
       composer.InsertCharacterPreedit(fields[1]);
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartPredictionForRequest(conversion_request, segments);
     } else {
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartPredictionForRequest(conversion_request, segments);
     }
   } else if (func == "startsuggestion" || func == "suggest") {
     Table table;
-    Composer composer(&table, &request);
+    Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
       composer.InsertCharacterPreedit(fields[1]);
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartSuggestionForRequest(conversion_request, segments);
     } else {
-      ConversionRequest conversion_request(&composer, &request);
+      ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartSuggestionForRequest(conversion_request, segments);
     }
   } else if (func == "finishconversion" || func == "finish") {
     Table table;
-    Composer composer(&table, &request);
-    ConversionRequest conversion_request(&composer, &request);
+    Composer composer(&table, &request, &config);
+    ConversionRequest conversion_request(&composer, &request, &config);
     return converter.FinishConversion(conversion_request, segments);
   } else if (func == "resetconversion" || func == "reset") {
     return converter.ResetConversion(segments);
@@ -310,8 +314,8 @@ bool ExecCommand(const ConverterInterface &converter,
   } else if (func == "commitsegmentvalue" || func == "commit" || func == "c") {
     CHECK_FIELDS_LENGTH(3);
     return converter.CommitSegmentValue(segments,
-                                        atoi32(fields[1].c_str()),
-                                        atoi32(fields[2].c_str()));
+                                        NumberUtil::SimpleAtoi(fields[1]),
+                                        NumberUtil::SimpleAtoi(fields[2]));
   } else if (func == "commitallandfinish") {
     for (int i = 0; i < segments->conversion_segments_size(); ++i) {
       if (segments->conversion_segment(i).segment_type() !=
@@ -320,39 +324,40 @@ bool ExecCommand(const ConverterInterface &converter,
       }
     }
     Table table;
-    Composer composer(&table, &request);
-    ConversionRequest conversion_request(&composer, &request);
+    Composer composer(&table, &request, &config);
+    ConversionRequest conversion_request(&composer, &request, &config);
     return converter.FinishConversion(conversion_request, segments);
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);
     return converter.FocusSegmentValue(segments,
-                                       atoi32(fields[1].c_str()),
-                                       atoi32(fields[2].c_str()));
+                                       NumberUtil::SimpleAtoi(fields[1]),
+                                       NumberUtil::SimpleAtoi(fields[2]));
   } else if (func == "commitfirstsegment") {
     CHECK_FIELDS_LENGTH(2);
     vector<size_t> singleton_vector;
-    singleton_vector.push_back(static_cast<size_t>(atoi32(fields[1].c_str())));
+    singleton_vector.push_back(NumberUtil::SimpleAtoi(fields[1]));
     return converter.CommitSegments(segments, singleton_vector);
   } else if (func == "freesegmentvalue" || func == "free") {
     CHECK_FIELDS_LENGTH(2);
     return converter.FreeSegmentValue(segments,
-                                      atoi32(fields[1].c_str()));
+                                      NumberUtil::SimpleAtoi(fields[1]));
   } else if (func == "resizesegment" || func == "resize") {
     const ConversionRequest request;
     if (fields.size() == 3) {
       return converter.ResizeSegment(segments,
                                      request,
-                                     atoi32(fields[1].c_str()),
-                                     atoi32(fields[2].c_str()));
+                                     NumberUtil::SimpleAtoi(fields[1]),
+                                     NumberUtil::SimpleAtoi(fields[2]));
     } else if (fields.size() > 3) {
       vector<uint8> new_arrays;
       for (size_t i = 3; i < fields.size(); ++i) {
-        new_arrays.push_back(static_cast<uint8>(atoi32(fields[i].c_str())));
+        new_arrays.push_back(
+            static_cast<uint8>(NumberUtil::SimpleAtoi(fields[i])));
       }
       return converter.ResizeSegment(segments,
                                      request,
-                                     atoi32(fields[1].c_str()),  // start
-                                     atoi32(fields[2].c_str()),
+                                     NumberUtil::SimpleAtoi(fields[1]),
+                                     NumberUtil::SimpleAtoi(fields[2]),
                                      &new_arrays[0],
                                      new_arrays.size());
     }
@@ -373,13 +378,13 @@ bool ExecCommand(const ConverterInterface &converter,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (!FLAGS_user_profile_dir.empty()) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_dir);
   }
 
-  scoped_ptr<mozc::EngineInterface> engine;
+  std::unique_ptr<mozc::EngineInterface> engine;
   mozc::commands::Request request;
   if (FLAGS_engine == "default") {
     LOG(INFO) << "Using default preference and engine";
@@ -397,13 +402,13 @@ int main(int argc, char **argv) {
   mozc::Segments segments;
   string line;
 
-  while (!getline(cin, line).fail()) {
+  while (!getline(std::cin, line).fail()) {
     if (mozc::ExecCommand(*converter, &segments, line, request)) {
       if (FLAGS_output_debug_string) {
-        mozc::PrintSegments(segments, &cout);
+        mozc::PrintSegments(segments, &std::cout);
       }
     } else {
-      cout << "ExecCommand() return false" << endl;
+      std::cout << "ExecCommand() return false" << std::endl;
     }
   }
   return 0;

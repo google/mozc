@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <ppapi/cpp/var.h>
 #include <ppapi/utility/completion_callback_factory.h>
 
+#include <algorithm>
 #include <memory>
 
 #include "base/logging.h"

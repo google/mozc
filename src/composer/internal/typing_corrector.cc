@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 #include <cstring>
 #include <string>
 #include <vector>
+
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "composer/internal/composition.h"
@@ -46,7 +48,7 @@
 
 DEFINE_bool(enable_typing_correction, false,
             "Force enabling typing correction feature "
-            "regardless of GET_CONFIG(use_typing_correction).");
+            "regardless of the specified config.");
 
 namespace mozc {
 namespace composer {
@@ -89,7 +91,8 @@ TypingCorrector::TypingCorrector(const Table *table,
                                  size_t max_correction_query_results)
     : table_(table),
       max_correction_query_candidates_(max_correction_query_candidates),
-      max_correction_query_results_(max_correction_query_results) {
+      max_correction_query_results_(max_correction_query_results),
+      config_(&config::ConfigHandler::DefaultConfig()) {
   Reset();
 }
 
@@ -121,13 +124,14 @@ void TypingCorrector::InsertCharacter(
           + LookupModelCost(top_n_[i].first, key_as_string,
                             *table_->typing_model());
       if (new_cost < TypingModel::kInfinity) {
-        tmp.push_back(make_pair(top_n_[i].first + key_as_string, new_cost));
+        tmp.push_back(
+            std::make_pair(top_n_[i].first + key_as_string, new_cost));
       }
     }
   }
   const size_t cutoff_size = min(max_correction_query_candidates_, tmp.size());
-  partial_sort(tmp.begin(), tmp.begin() + cutoff_size, tmp.end(),
-               KeyAndPenaltyLess());
+  std::partial_sort(tmp.begin(), tmp.begin() + cutoff_size, tmp.end(),
+                    KeyAndPenaltyLess());
   tmp.resize(cutoff_size);
   top_n_.swap(tmp);
 }
@@ -144,7 +148,7 @@ void TypingCorrector::Invalidate() {
 }
 
 bool TypingCorrector::IsAvailable() const {
-  return (GET_CONFIG(use_typing_correction) ||
+  return (config_->use_typing_correction() ||
           FLAGS_enable_typing_correction) &&
          available_ && table_ && table_->typing_model();
 }
@@ -152,6 +156,7 @@ bool TypingCorrector::IsAvailable() const {
 void TypingCorrector::CopyFrom(const TypingCorrector &src) {
   available_ = src.available_;
   table_ = src.table_;
+  config_ = src.config_;
   max_correction_query_candidates_ = src.max_correction_query_candidates_;
   max_correction_query_results_ = src.max_correction_query_results_;
   top_n_ = src.top_n_;
@@ -167,6 +172,9 @@ void TypingCorrector::SetTable(const Table *table) {
   }
 }
 
+void TypingCorrector::SetConfig(const config::Config *config) {
+  config_ = config;
+}
 
 void TypingCorrector::GetQueriesForPrediction(
     vector<TypeCorrectedQuery> *queries) const {

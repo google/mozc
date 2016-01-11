@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -90,6 +90,11 @@ void IBusCandidateWindowHandler::Update(IBusEngine *engine,
                                         const commands::Output &output) {
   UpdateCandidates(engine, output);
   UpdateAuxiliaryText(engine, output);
+}
+
+void IBusCandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
+  // Nothing to do because IBus takes care of where to show its candidate
+  // window.
 }
 
 void IBusCandidateWindowHandler::Hide(IBusEngine *engine) {

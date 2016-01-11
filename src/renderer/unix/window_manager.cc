@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -101,27 +101,19 @@ Rect WindowManager::UpdateCandidateWindow(
   const Size new_window_size = candidate_window_->Update(candidates);
 
   Point new_window_pos = candidate_window_->GetWindowPos();
-  if (candidates.has_window_location()) {
-    if (candidates.window_location() == commands::Candidates::CARET) {
-      DCHECK(candidates.has_caret_rectangle());
-      new_window_pos.x = candidates.caret_rectangle().x();
-      new_window_pos.y = candidates.caret_rectangle().y()
-          + candidates.caret_rectangle().height();
-    } else {
-      DCHECK(candidates.has_composition_rectangle());
-      new_window_pos.x = candidates.composition_rectangle().x();
-      new_window_pos.y = candidates.composition_rectangle().y()
-          + candidates.composition_rectangle().height();
-    }
+  if (command.has_preedit_rectangle()) {
+    new_window_pos.x = command.preedit_rectangle().left();
+    new_window_pos.y = command.preedit_rectangle().bottom();
   }
 
   const Rect working_area = GetMonitorRect(new_window_pos.x, new_window_pos.y);
   const Point alignment_base_point_in_local_window_coord(
       candidate_window_->GetCandidateColumnInClientCord().Left(), 0);
-  const Rect caret_rect(candidates.caret_rectangle().x(),
-                              candidates.caret_rectangle().y(),
-                              candidates.caret_rectangle().width(),
-                              candidates.caret_rectangle().height());
+  const auto &preedit_rect = command.preedit_rectangle();
+  const Rect caret_rect(preedit_rect.left(),
+                        preedit_rect.top(),
+                        preedit_rect.right() - preedit_rect.left(),
+                        preedit_rect.bottom() - preedit_rect.top());
   // |caret_rect| is not always equal to preedit rect but can be an alternative
   // in terms of positional calculation, especially for vertical adjustment in
   // horizontal writing.

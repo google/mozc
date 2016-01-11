@@ -15,7 +15,7 @@
     </message>
     <message utf8="true">
         <location filename="about_dialog.ui" line="80"/>
-        <source>Copyright © 2015 Google Inc. All Rights Reserved.</source>
+        <source>Copyright © 2016 Google Inc. All rights reserved.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25,8 +25,8 @@
     </message>
     <message>
         <location filename="about_dialog.ui" line="133"/>
-        <source>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;http://code.google.com/p/mozc/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;http://code.google.com/p/mozc/issues/list&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished">&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;http://code.google.com/p/mozc/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;製品情報&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;http://code.google.com/p/mozc/issues/list&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;https://github.com/google/mozc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;https://github.com/google/mozc/issues&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished">&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;https://github.com/google/mozc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;製品情報&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;https://github.com/google/mozc/issues&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;body&gt;Google &lt;a href=&quot;file://privacy_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;privacy policy&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>

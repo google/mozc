@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_COMMAND_REWRITER_H_
 #define MOZC_REWRITER_COMMAND_REWRITER_H_
 
+#include "protocol/config.pb.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -50,13 +51,14 @@ class CommandRewriter : public RewriterInterface  {
                        Segments *segments) const;
 
  private:
-  bool RewriteSegment(Segment *segment) const;
+  bool RewriteSegment(const config::Config &config, Segment *segment) const;
 
   // Insert a new IncogitoModeToggle Command candidate.
   // Use segment->candidate(base_pos) as a reference candidate.
   // |insert_pos| is the actual position where the new candidate
   // is inserted.
-  void InsertIncognitoModeToggleCommand(Segment *segment,
+  void InsertIncognitoModeToggleCommand(const config::Config &config,
+                                        Segment *segment,
                                         size_t reference_pos,
                                         size_t insert_pos) const;
 
@@ -64,7 +66,8 @@ class CommandRewriter : public RewriterInterface  {
   // Use segment->candidate(base_pos) as a reference candidate.
   // |insert_pos| is the actual position where the new candidate
   // is inserted.
-  void InsertDisableAllSuggestionToggleCommand(Segment *segment,
+  void InsertDisableAllSuggestionToggleCommand(const config::Config &config,
+                                               Segment *segment,
                                                size_t reference_pos,
                                                size_t insert_pos) const;
 };

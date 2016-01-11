@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,10 +52,10 @@
 #include "base/mutex.h"
 #endif
 
-#if defined(OS_ANDROID) || defined(__native_client__)
+#if defined(OS_ANDROID) || defined(OS_NACL)
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
-#endif  // OS_ANDROID || __native_client__
+#endif  // OS_ANDROID || OS_NACL
 
 #include "base/file_util.h"
 #include "base/singleton.h"
@@ -246,7 +246,7 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 };
 #endif  // OS_ANDROID
 
-#ifdef __native_client__
+#ifdef OS_NACL
 class NaclStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   NaclStatsConfigUtilImpl() {
@@ -263,7 +263,7 @@ class NaclStatsConfigUtilImpl : public StatsConfigUtilInterface {
  private:
   DISALLOW_COPY_AND_ASSIGN(NaclStatsConfigUtilImpl);
 };
-#endif  // __native_client__
+#endif  // OS_NACL
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -294,7 +294,7 @@ typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_ANDROID)
 typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif __native_client__
+#elif defined(OS_NACL)
 typedef NaclStatsConfigUtilImpl DefaultConfigUtilImpl;
 #else
 // Fall back mode.  Use null implementation.

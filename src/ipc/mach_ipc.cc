@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -188,7 +188,7 @@ struct mach_ipc_receive_message {
   mach_msg_trailer_t trailer;
 };
 
-}  // anonymous namespace
+}  // namespace
 
 // Client implementation
 IPCClient::IPCClient(const string &name)

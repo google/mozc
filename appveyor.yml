@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,32 +29,15 @@
 
 version: '{branch} build {build}'
 skip_tags: true
-clone_depth: 1
+clone_depth: 50
 clone_folder: c:\projects\mozc
 init:
 - git config --global core.autocrlf input
 install:
-- git -C src\third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-- set PATH=%PATH%;c:\projects\mozc\src\third_party\depot_tools
-- gclient
-- gclient
-- git submodule add https://github.com/open-source-parsers/jsoncpp.git src/third_party/jsoncpp
-- git -C src/third_party/jsoncpp checkout 11086dd6a7eba04289944367ca82cea71299ed70
-- git submodule add https://chromium.googlesource.com/external/gmock src/third_party/gmock
-- git -C src/third_party/gmock checkout 29763965ab52f24565299976b936d1265cb6a271
-- git submodule add https://chromium.googlesource.com/external/gtest src/third_party/gtest
-- git -C src/third_party/gtest checkout 8245545b6dc9c4703e6496d1efd19e975ad2b038
-- git submodule add https://chromium.googlesource.com/external/gyp src/third_party/gyp
-- git -C src/third_party/gyp checkout cdf037c1edc0ba3b5d25f8e3973661efe00980cc
-- git submodule add https://github.com/google/protobuf.git src/third_party/protobuf
-- git -C src/third_party/protobuf checkout 172019c40bf548908ab09bfd276074c929d48415
-- git submodule add https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git src/third_party/japanese_usage_dictionary
-- git -C src/third_party/japanese_usage_dictionary checkout e5b3425575734c323e1d947009dd74709437b684
-- git submodule add https://chromium.googlesource.com/chromiumos/platform/google-breakpad src/third_party/breakpad
-- git -C src/third_party/breakpad checkout 6afe338f2355bf1bbe4b8f869aeb16b093ae2ab2
-- svn export http://svn.code.sf.net/p/wtl/code/trunk/wtl/Include@587 src/third_party/wtl/files/include
-- svn export http://svn.code.sf.net/p/zinnia/code@16 src/third_party/zinnia/v0_04
+- git submodule update --init --recursive
+- choco install ninja -version 1.6.0
 build_script:
-- python src\build_mozc.py gyp --noqt
-- ninja -C src\out_win\Release mozc_cache_service mozc_renderer mozc_ime mozc_tip32 mozc_broker32 rewriter composer
+- cd src
+- python build_mozc.py gyp --noqt
+- python build_mozc.py build -c Release package
 test: off

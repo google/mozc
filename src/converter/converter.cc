@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,13 +39,13 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
@@ -255,6 +255,7 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
   segments->set_request_type(Segments::CONVERSION);
   immutable_converter_->ConvertForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
+  TrimCandidates(request, segments);
   return IsValidSegments(request, *segments);
 }
 
@@ -268,6 +269,7 @@ bool ConverterImpl::StartConversion(Segments *segments,
   const ConversionRequest default_request;
   immutable_converter_->ConvertForRequest(default_request, segments);
   RewriteAndSuppressCandidates(default_request, segments);
+  TrimCandidates(default_request, segments);
   return IsValidSegments(default_request, *segments);
 }
 
@@ -376,6 +378,7 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
   segments->set_request_type(request_type);
   predictor_->PredictForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
+  TrimCandidates(request, segments);
   if (request_type == Segments::PARTIAL_SUGGESTION ||
       request_type == Segments::PARTIAL_PREDICTION) {
     // Here 1st segment's key is the query string of
@@ -492,7 +495,7 @@ bool ConverterImpl::FinishConversion(const ConversionRequest &request,
 
   segments->clear_revert_entries();
   rewriter_->Finish(request, segments);
-  predictor_->Finish(segments);
+  predictor_->Finish(request, segments);
 
   // Remove the front segments except for some segments which will be
   // used as history segments.
@@ -773,6 +776,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   immutable_converter_->ConvertForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
+  TrimCandidates(request, segments);
   return true;
 }
 
@@ -832,6 +836,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   immutable_converter_->ConvertForRequest(request, segments);
   RewriteAndSuppressCandidates(request, segments);
+  TrimCandidates(request, segments);
   return true;
 }
 
@@ -918,6 +923,28 @@ void ConverterImpl::RewriteAndSuppressCandidates(
         ++j;
       }
     }
+  }
+}
+
+void ConverterImpl::TrimCandidates(const ConversionRequest &request,
+                                   Segments *segments) const {
+  const mozc::commands::Request &request_proto = request.request();
+  if (!request_proto.has_candidates_size_limit()) {
+    return;
+  }
+
+  const int limit = request_proto.candidates_size_limit();
+  for (size_t segment_index = 0;
+       segment_index < segments->conversion_segments_size(); ++segment_index) {
+    Segment *seg = segments->mutable_conversion_segment(segment_index);
+    const int candidates_size = seg->candidates_size();
+    // A segment should have at least one candidate.
+    const int candidates_limit =
+        max(1, limit - static_cast<int>(seg->meta_candidates_size()));
+    if (candidates_size < candidates_limit) {
+      continue;
+    }
+    seg->erase_candidates(candidates_limit, candidates_size - candidates_limit);
   }
 }
 

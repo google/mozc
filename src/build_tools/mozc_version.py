@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,6 @@ VERSION_PROPERTIES = [
     'BUILD',
     'REVISION',
     'ANDROID_VERSION_CODE',
-    'FLAG',
     'TARGET_PLATFORM',
     'ANDROID_APPLICATION_ID',
     'ANDROID_SERVICE_NAME',
@@ -132,12 +131,6 @@ def _ParseVersionTemplateFile(template_path, target_platform,
   # Some properties need to be tweaked.
   template_dict['REVISION'] = _GetRevisionForPlatform(
       template_dict.get('REVISION', None), target_platform)
-  num_of_days = datetime.date.today().toordinal() - MOZC_EPOCH.toordinal()
-  if template_dict['BUILD'] == 'daily':
-    template_dict['BUILD'] = str(num_of_days)
-    template_dict.setdefault('FLAG', 'CONTINUOUS')
-  else:
-    template_dict.setdefault('FLAG', 'RELEASE')
 
   template_dict['ANDROID_VERSION_CODE'] = (
       str(_GetAndroidVersionCode(int(template_dict['BUILD']), android_arch)))
@@ -164,12 +157,12 @@ def _GetAndroidVersionCode(base_version_code, arch):
     RuntimeError: arch is unexpected one or base_version_code is too big.
 
   Version code format:
-   0005BBBBBA
+   0006BBBBBA
    A: ABI (0: Fat, 6: x86_64, 5:arm64, 4:mips64, 3: x86, 2: armeabi-v7a, 1:mips)
    B: ANDROID_VERSION_CODE
 
   Note:
-  - Prefix 5 is introduced because of historical reason.
+  - Prefix 6 is introduced because of historical reason.
     Previously ANDROID_VERSION_CODE (B) was placed after ABI (A) but
     it's found that swpping the order is reasonable.
     Previously version code for x86 was always greater than that for armeabi.
@@ -190,7 +183,7 @@ def _GetAndroidVersionCode(base_version_code, arch):
   if base_version_code >= 10000:
     raise RuntimeError('Version code is greater than 10000. '
                        'It is time to revisit version code scheme.')
-  return int('5%05d%d' % (base_version_code, abi_code))
+  return int('6%05d%d' % (base_version_code, abi_code))
 
 
 def _GetVersionInFormat(properties, version_format):
@@ -273,7 +266,6 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       'BUILD=@BUILD@',
       'REVISION=@REVISION@',
       'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@',
-      'FLAG=@FLAG@',
       'TARGET_PLATFORM=@TARGET_PLATFORM@',
       'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@',
       'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@',

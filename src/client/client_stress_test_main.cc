@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,13 +36,13 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
-#include <iostream>  // NOLINT
+#include <memory>
 
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
@@ -56,44 +56,13 @@ DEFINE_int32(max_keyevents, 100000,
              "test at most |max_keyevents| key sequences");
 DEFINE_string(server_path, "", "specify server path");
 DEFINE_int32(key_duration, 10, "key duration (msec)");
-DEFINE_bool(display_preedit, true, "display predit to tty");
 DEFINE_bool(test_renderer, false, "test renderer");
 DEFINE_bool(test_testsendkey, true, "test TestSendKey");
 
 DECLARE_bool(logtostderr);
 
-namespace mozc {
-namespace {
-
-void DisplayPreedit(const commands::Output &output) {
-  // TODO(taku): display segment attributes
-  if (output.has_preedit()) {
-    string value;
-    for (size_t i = 0; i < output.preedit().segment_size(); ++i) {
-      value += output.preedit().segment(i).value();
-    }
-#ifdef OS_WIN
-    string tmp;
-    Util::UTF8ToSJIS(value, &tmp);
-    cout << tmp << '\r';
-#else
-    cout << value << '\r';
-#endif  // OS_WIN
-  } else if (output.has_result()) {
-#ifdef OS_WIN
-    string tmp;
-    Util::UTF8ToSJIS(output.result().value(), &tmp);
-    cout << tmp << endl;
-#else
-    cout << output.result().value() << endl;
-#endif  // OS_WIN
-  }
-}
-}  // namespace
-}  // namespace mozc
-
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   FLAGS_logtostderr = true;
 
@@ -106,7 +75,7 @@ int main(int argc, char **argv) {
   CHECK(client.EnsureSession()) << "EnsureSession failed";
   CHECK(client.NoOperation()) << "Server is not respoinding";
 
-  scoped_ptr<mozc::renderer::RendererClient> renderer_client;
+  std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
@@ -144,10 +113,11 @@ int main(int argc, char **argv) {
       mozc::Util::Sleep(FLAGS_key_duration);
       keyevents_size++;
       if (keyevents_size % 100 == 0) {
-        cout << keyevents_size << " key events finished" << endl;
+        std::cout << keyevents_size << " key events finished" << std::endl;
       }
       if (FLAGS_max_keyevents < keyevents_size) {
-        cout << "key events reached to " << FLAGS_max_keyevents << endl;
+        std::cout << "key events reached to " << FLAGS_max_keyevents
+                  << std::endl;
         return 0;
       }
       if (FLAGS_test_testsendkey) {
@@ -160,10 +130,6 @@ int main(int argc, char **argv) {
       VLOG(2) << "Sending to Server: " << keys[i].DebugString();
       client.SendKey(keys[i], &output);
       VLOG(2) << "Output of SendKey: " << output.DebugString();
-
-      if (FLAGS_display_preedit) {
-        mozc::DisplayPreedit(output);
-      }
 
       if (renderer_client.get() != NULL) {
         renderer_command.set_type(mozc::commands::RendererCommand::UPDATE);

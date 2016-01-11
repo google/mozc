@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/conversion_request.h"
+#include "rewriter/remove_redundant_candidate_rewriter.h"
+
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
-#include "rewriter/remove_redundant_candidate_rewriter.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -66,16 +67,16 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
 
 TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
   RemoveRedundantCandidateRewriter rewriter;
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   {
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(request));
+    EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
 }
 }  // namespace mozc

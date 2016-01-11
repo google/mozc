@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,12 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/scheduler.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
@@ -73,7 +73,7 @@ void AddToDoubleValueStats(
 uint64 GetTimeInMilliSecond() {
   uint64 second = 0;
   uint32 micro_second = 0;
-  Util::GetTimeOfDay(&second, &micro_second);
+  Clock::GetTimeOfDay(&second, &micro_second);
   return second * 1000 + micro_second / 1000;
 }
 
@@ -162,7 +162,7 @@ void SessionUsageObserver::EvalCreateSession(
   state.set_created_time(GetTimeInMilliSecond());
   // TODO(toshiyuki): LRU?
   if (states->size() <= kMaxSession) {
-    states->insert(make_pair(output.id(), state));
+    states->insert(std::make_pair(output.id(), state));
   }
 }
 
@@ -370,6 +370,35 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
     case commands::SessionCommand::MUSHROOM_SELECTION_DIALOG_OPEN_EVENT:
       UsageStats::IncrementCount("MushroomSelectionDialogOpen");
       break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE stats"
+          << " must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardHeightDipLandscape",
+                             input.command().usage_stats_event_int_value());
+      break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT stats must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardHeightDipPortrait",
+                             input.command().usage_stats_event_int_value());
+      break;
+    case commands::SessionCommand
+        ::SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE stats"
+          << " must have int value.";
+      UsageStats::SetBoolean("SoftwareKeyboardLayoutAdjustmentEnabledLandscape",
+                             input.command().usage_stats_event_int_value() > 0);
+      break;
+    case commands::SessionCommand
+        ::SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT stats"
+          << " must have int value.";
+      UsageStats::SetBoolean("SoftwareKeyboardLayoutAdjustmentEnabledPortrait",
+                             input.command().usage_stats_event_int_value() > 0);
+      break;
     default:
       LOG(DFATAL) << "client side usage stats event has invalid category";
       break;
@@ -561,9 +590,6 @@ void SessionUsageObserver::EvalCommandHandler(
       (input.context().has_input_field_type())) {
     state->set_input_field_type(input.context().input_field_type());
   }
-}
-
-void SessionUsageObserver::Reload() {
 }
 
 }  // namespace session

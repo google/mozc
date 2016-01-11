@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,15 @@
 
 #include "base/mmap.h"
 
-#include <string.h>
+#include <cstring>
+#include <memory>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/scoped_ptr.h"
+#include "base/flags.h"
 #include "base/util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -48,7 +48,7 @@ TEST(MmapTest, MmapTest) {
   const size_t kFileNameSize[] = { 1, 100, 1024, 8192 };
   for (int i = 0; i < arraysize(kFileNameSize); ++i) {
     FileUtil::Unlink(filename);
-    scoped_ptr<char[]> buf(new char[kFileNameSize[i]]);
+    std::unique_ptr<char[]> buf(new char[kFileNameSize[i]]);
     memset(buf.get(), 0, kFileNameSize[i]);
 
     {
@@ -98,36 +98,17 @@ TEST(MmapTest, MmapTest) {
   }
 }
 
-#if defined(OS_WIN)
-TEST(MmapTest, WindowsMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(-1, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr, data_len));
-  free(addr);
+TEST(MmapTest, MaybeMLockTest) {
+  const size_t data_len = 32;
+  std::unique_ptr<void, void (*)(void*)> addr(malloc(data_len), &free);
+  if (Mmap::IsMLockSupported()) {
+    ASSERT_EQ(0, Mmap::MaybeMLock(addr.get(), data_len));
+    EXPECT_EQ(0, Mmap::MaybeMUnlock(addr.get(), data_len));
+  } else {
+    EXPECT_EQ(-1, Mmap::MaybeMLock(addr.get(), data_len));
+    EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr.get(), data_len));
+  }
 }
-#elif defined(OS_MACOSX)
-TEST(MmapTest, MacMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-  EXPECT_EQ(0, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, Mmap::MaybeMUnlock(addr, data_len));
-  free(addr);
-}
-#else
-TEST(MmapTest, LinuxMaybeMLockTest) {
-  size_t data_len = 32;
-  void *addr = malloc(data_len);
-#if defined(OS_ANDROID) || defined(__native_client__)
-  EXPECT_EQ(-1, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr, data_len));
-#else
-  EXPECT_EQ(0, Mmap::MaybeMLock(addr, data_len));
-  EXPECT_EQ(0, Mmap::MaybeMUnlock(addr, data_len));
-#endif  // defined(OS_ANDROID) || defined(__native_client__)
-  free(addr);
-}
-#endif  // OS_WIN, OS_MACOSX, else.
 
 }  // namespace
 }  // namespace mozc

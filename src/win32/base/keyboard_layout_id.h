@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -83,10 +83,12 @@ class KeyboardLayoutID {
   // Set |id_| 'cleared'.
   void clear_id();
 
-private:
+ private:
   DWORD id_;
   bool  has_id_;
 };
+
 }  // namespace win32
 }  // namespace mozc
+
 #endif  // MOZC_WIN32_BASE_KEYBOARD_LAYOUT_ID_H_

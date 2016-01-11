@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,10 @@
 // An utility to mock JNI releated stuff for testing purpose.
 #include <jni.h>
 #include <map>
+#include <memory>
 #include <utility>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace jni {
@@ -108,7 +108,7 @@ class MockJNIEnv {
   map<jbyteArray, pair<jsize, jbyte*> > byte_array_map_;
 
   // Http client's mock injecting point.
-  scoped_ptr<MockJavaHttpClient> mock_http_client_;
+  std::unique_ptr<MockJavaHttpClient> mock_http_client_;
   _jclass mock_http_client_class_;
   MockJMethodId mock_request_;
 

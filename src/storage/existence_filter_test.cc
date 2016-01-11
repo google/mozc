@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,13 @@
 
 #include "storage/existence_filter.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
-#include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -46,8 +46,7 @@ namespace {
 void CheckValues(ExistenceFilter* filter, int m, int n) {
   int false_positives = 0;
   for (int i = 0; i < 2 * n; ++i) {
-    uint64 hash = Util::Fingerprint(reinterpret_cast<const char *>(&i),
-                                    sizeof(i));
+    uint64 hash = Hash::Fingerprint(i);
     bool should_exist = ((i%2) == 0);
     bool actual = filter->Exists(hash);
     if (should_exist) {
@@ -68,8 +67,7 @@ void RunTest(int m, int n) {
 
   for (int i = 0; i < n; ++i) {
     int val = i * 2;
-    uint64 hash = Util::Fingerprint(reinterpret_cast<const char *>(&val),
-                                    sizeof(val));
+    uint64 hash = Hash::Fingerprint(val);
     filter->Insert(hash);
   }
 
@@ -117,21 +115,21 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
       ExistenceFilter::MinFilterSizeInBytesForErrorRate(kErrorRate,
                                                         words.size());
 
-  scoped_ptr<ExistenceFilter> filter(
+  std::unique_ptr<ExistenceFilter> filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
 
   for (int i = 0; i < words.size(); ++i) {
-    filter->Insert(Util::Fingerprint(words[i]));
+    filter->Insert(Hash::Fingerprint(words[i]));
   }
 
   char *buf = NULL;
   size_t size = 0;
   filter->Write(&buf, &size);
-  scoped_ptr<ExistenceFilter> filter_read(
+  std::unique_ptr<ExistenceFilter> filter_read(
       ExistenceFilter::Read(buf, size));
 
   for (int i = 0; i < words.size(); ++i) {
-    EXPECT_TRUE(filter_read->Exists(Util::Fingerprint(words[i])));
+    EXPECT_TRUE(filter_read->Exists(Hash::Fingerprint(words[i])));
   }
 
   delete [] buf;
@@ -154,15 +152,15 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
       ExistenceFilter::MinFilterSizeInBytesForErrorRate(kErrorRate,
                                                         words.size());
 
-  scoped_ptr<ExistenceFilter> filter(
+  std::unique_ptr<ExistenceFilter> filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
 
   for (int i = 0; i < words.size(); ++i) {
-    filter->Insert(Util::Fingerprint(words[i]));
+    filter->Insert(Hash::Fingerprint(words[i]));
   }
 
   for (int i = 0; i < words.size(); ++i) {
-    EXPECT_TRUE(filter->Exists(Util::Fingerprint(words[i])));
+    EXPECT_TRUE(filter->Exists(Hash::Fingerprint(words[i])));
   }
 }
 

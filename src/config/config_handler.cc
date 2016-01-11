@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,15 @@
 #include "config/config_handler.h"
 
 #include <algorithm>
+#include <memory>
 
+#include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "protocol/config.pb.h"
 
@@ -82,10 +82,12 @@ class ConfigHandlerImpl {
     filename_ += NumberUtil::SimpleItoa(CONFIG_VERSION);
     filename_ += ".db";
     Reload();
+    ConfigHandler::GetDefaultConfig(&default_config_);
   }
   virtual ~ConfigHandlerImpl() {}
   const Config &GetConfig() const;
   bool GetConfig(Config *config) const;
+  const Config &DefaultConfig() const;
   const Config &GetStoredConfig() const;
   bool GetStoredConfig(Config *config) const;
   bool SetConfig(const Config &config);
@@ -105,6 +107,7 @@ class ConfigHandlerImpl {
   Config imposed_config_;
   // equals to config_.MergeFrom(imposed_config_)
   Config merged_config_;
+  Config default_config_;
 };
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
@@ -119,6 +122,10 @@ const Config &ConfigHandlerImpl::GetConfig() const {
 bool ConfigHandlerImpl::GetConfig(Config *config) const {
   config->CopyFrom(merged_config_);
   return true;
+}
+
+const Config &ConfigHandlerImpl::DefaultConfig() const {
+  return default_config_;
 }
 
 const Config &ConfigHandlerImpl::GetStoredConfig() const {
@@ -207,7 +214,7 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 // Reload from file
 bool ConfigHandlerImpl::Reload() {
   VLOG(1) << "Reloading config file: " << filename_;
-  scoped_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
+  std::unique_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
   bool ret_code = true;
 
@@ -233,15 +240,7 @@ void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
 }
 
 string ConfigHandlerImpl::GetConfigFileName() {
-#ifdef __native_client__
-  // Copies filename_ string here to prevent Copy-On-Write issues in
-  // multi-thread environment.
-  // See: http://stackoverflow.com/questions/1661154/c-stdstring-in-a-multi-threaded-program/
-  // TODO(hsumita): Remove this hack if not necessary.
-  return string(filename_.data(), filename_.size());
-#else
   return filename_;
-#endif  // __native_client__
 }
 }  // namespace
 
@@ -272,6 +271,7 @@ void ConfigHandler::SetImposedConfig(const Config &config) {
   GetConfigHandlerImpl()->SetImposedConfig(config);
 }
 
+// static
 void ConfigHandler::GetDefaultConfig(Config *config) {
   config->Clear();
   config->set_session_keymap(ConfigHandler::GetDefaultKeyMap());
@@ -306,6 +306,11 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   }
 }
 
+// static
+const Config& ConfigHandler::DefaultConfig() {
+  return GetConfigHandlerImpl()->DefaultConfig();
+}
+
 // Reload from file
 bool ConfigHandler::Reload() {
   return GetConfigHandlerImpl()->Reload();
@@ -323,7 +328,7 @@ string ConfigHandler::GetConfigFileName() {
 void ConfigHandler::SetMetaData(Config *config) {
   GeneralConfig *general_config = config->mutable_general_config();
   general_config->set_config_version(CONFIG_VERSION);
-  general_config->set_last_modified_time(Util::GetTime());
+  general_config->set_last_modified_time(Clock::GetTime());
   general_config->set_last_modified_product_version(Version::GetMozcVersion());
   general_config->set_platform(SystemUtil::GetOSVersionString());
 }
@@ -331,11 +336,11 @@ void ConfigHandler::SetMetaData(Config *config) {
 Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
 #if defined(OS_MACOSX)
   return config::Config::KOTOERI;
-#elif defined(__native_client__)  // OS_MACOSX
+#elif defined(OS_NACL)  // OS_MACOSX
   return config::Config::CHROMEOS;
-#else  // OS_MACOSX or __native_client__
+#else  // OS_MACOSX or OS_NACL
   return config::Config::MSIME;
-#endif  // OS_MACOSX or __native_client__
+#endif  // OS_MACOSX or OS_NACL
 }
 
 }  // namespace config

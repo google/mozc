@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include <unistd.h>  // for getpid()
 
+#include "base/coordinates.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_mock.h"
 #include "testing/base/public/gmock.h"
@@ -110,6 +111,40 @@ MATCHER_P(VisibilityEq, visibility, "") {
   return true;
 }
 
+MATCHER_P(PreeditRectangleEq, rect, "") {
+  if (!arg.has_preedit_rectangle()) {
+    *result_listener
+        << "RendererCommand::preedit_rectangle does not exist";
+    return false;
+  }
+  const auto &actual_rect = arg.preedit_rectangle();
+  if (rect.Left() != actual_rect.left()) {
+    *result_listener << "left field does not match\n"
+                     << "  expected: " << rect.Left() << "\n"
+                     << "  actual:   " << actual_rect.left();
+    return false;
+  }
+  if (rect.Top() != actual_rect.top()) {
+    *result_listener << "top field does not match\n"
+                     << "  expected: " << rect.Top() << "\n"
+                     << "  actual:   " << actual_rect.top();
+    return false;
+  }
+  if (rect.Right() != actual_rect.right()) {
+    *result_listener << "right field does not match\n"
+                     << "  expected: " << rect.Right() << "\n"
+                     << "  actual:   " << actual_rect.right();
+    return false;
+  }
+  if (rect.Bottom() != actual_rect.bottom()) {
+    *result_listener << "bottom field does not match\n"
+                     << "  expected: " << rect.Bottom() << "\n"
+                     << "  actual:   " << actual_rect.bottom();
+    return false;
+  }
+  return true;
+}
+
 MATCHER_P(OutputEq, expected, "") {
   if (expected.Utf8DebugString() != arg.Utf8DebugString()) {
     *result_listener
@@ -129,14 +164,24 @@ MATCHER_P(OutputEq, expected, "") {
 }  // namespace
 
 TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
+  const Rect kExpectedCursorArea(10, 20, 200, 100);
+
+  IBusEngine engine = {};
+  engine.cursor_area.x = kExpectedCursorArea.Left();
+  engine.cursor_area.y = kExpectedCursorArea.Top();
+  engine.cursor_area.width = kExpectedCursorArea.Width();
+  engine.cursor_area.height = kExpectedCursorArea.Height();
+
   {
     SCOPED_TRACE("visibility check. false case");
     Output output;
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false));
-    gtk_candidate_window_handler.SendUpdateCommand(output, false);
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                             VisibilityEq(false),
+                             PreeditRectangleEq(kExpectedCursorArea));
+    gtk_candidate_window_handler.SendUpdateCommand(&engine, output, false);
   }
   {
     SCOPED_TRACE("visibility check. true case");
@@ -144,8 +189,10 @@ TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true));
-    gtk_candidate_window_handler.SendUpdateCommand(output, true);
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                             VisibilityEq(true),
+                             PreeditRectangleEq(kExpectedCursorArea));
+    gtk_candidate_window_handler.SendUpdateCommand(&engine, output, true);
   }
   {
     SCOPED_TRACE("return value check. false case.");
@@ -153,9 +200,12 @@ TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true))
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                             VisibilityEq(true),
+                             PreeditRectangleEq(kExpectedCursorArea))
         .WillOnce(Return(false));
-    EXPECT_FALSE(gtk_candidate_window_handler.SendUpdateCommand(output, true));
+    EXPECT_FALSE(gtk_candidate_window_handler.SendUpdateCommand(
+        &engine, output, true));
   }
   {
     SCOPED_TRACE("return value check. true case.");
@@ -163,13 +213,24 @@ TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true))
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                             VisibilityEq(true),
+                             PreeditRectangleEq(kExpectedCursorArea))
         .WillOnce(Return(true));
-    EXPECT_TRUE(gtk_candidate_window_handler.SendUpdateCommand(output, true));
+    EXPECT_TRUE(gtk_candidate_window_handler.SendUpdateCommand(
+        &engine, output, true));
   }
 }
 
 TEST(GtkCandidateWindowHandlerTest, UpdateTest) {
+  const Rect kExpectedCursorArea(10, 20, 200, 100);
+
+  IBusEngine engine = {};
+  engine.cursor_area.x = kExpectedCursorArea.Left();
+  engine.cursor_area.y = kExpectedCursorArea.Top();
+  engine.cursor_area.width = kExpectedCursorArea.Width();
+  engine.cursor_area.height = kExpectedCursorArea.Height();
+
   const int sample_idx1 = 0;
   const int sample_idx2 = 1;
   const char *sample_candidate1 = "SAMPLE_CANDIDATE1";
@@ -180,8 +241,10 @@ TEST(GtkCandidateWindowHandlerTest, UpdateTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false));
-    gtk_candidate_window_handler.Update(NULL, output);
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                             VisibilityEq(false),
+                             PreeditRectangleEq(kExpectedCursorArea));
+    gtk_candidate_window_handler.Update(&engine, output);
   }
   {
     SCOPED_TRACE("If there is at least one candidate, "
@@ -194,8 +257,10 @@ TEST(GtkCandidateWindowHandlerTest, UpdateTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true));
-    gtk_candidate_window_handler.Update(NULL, output);
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                             VisibilityEq(true),
+                             PreeditRectangleEq(kExpectedCursorArea));
+    gtk_candidate_window_handler.Update(&engine, output);
   }
   {
     SCOPED_TRACE("Update last updated output protobuf object.");
@@ -221,29 +286,49 @@ TEST(GtkCandidateWindowHandlerTest, UpdateTest) {
                              Property(&RendererCommand::output,
                                       OutputEq(output2)))
         .WillOnce(Return(true));
-    gtk_candidate_window_handler.Update(NULL, output1);
+    gtk_candidate_window_handler.Update(&engine, output1);
     EXPECT_THAT(*(gtk_candidate_window_handler.last_update_output_.get()),
                 OutputEq(output1));
-    gtk_candidate_window_handler.Update(NULL, output2);
+    gtk_candidate_window_handler.Update(&engine, output2);
     EXPECT_THAT(*(gtk_candidate_window_handler.last_update_output_.get()),
                 OutputEq(output2));
   }
 }
 
 TEST(GtkCandidateWindowHandlerTest, HideTest) {
+  const Rect kExpectedCursorArea(10, 20, 200, 100);
+
+  IBusEngine engine = {};
+  engine.cursor_area.x = kExpectedCursorArea.Left();
+  engine.cursor_area.y = kExpectedCursorArea.Top();
+  engine.cursor_area.width = kExpectedCursorArea.Width();
+  engine.cursor_area.height = kExpectedCursorArea.Height();
+
   RendererMock *renderer_mock = new RendererMock();
   TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
       renderer_mock);
-  EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false));
-  gtk_candidate_window_handler.Hide(NULL);
+  EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                           VisibilityEq(false),
+                           PreeditRectangleEq(kExpectedCursorArea));
+  gtk_candidate_window_handler.Hide(&engine);
 }
 
 TEST(GtkCandidateWindowHandlerTest, ShowTest) {
+  const Rect kExpectedCursorArea(10, 20, 200, 100);
+
+  IBusEngine engine = {};
+  engine.cursor_area.x = kExpectedCursorArea.Left();
+  engine.cursor_area.y = kExpectedCursorArea.Top();
+  engine.cursor_area.width = kExpectedCursorArea.Width();
+  engine.cursor_area.height = kExpectedCursorArea.Height();
+
   RendererMock *renderer_mock = new RendererMock();
   TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
       renderer_mock);
-  EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true));
-  gtk_candidate_window_handler.Show(NULL);
+  EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
+                           VisibilityEq(true),
+                           PreeditRectangleEq(kExpectedCursorArea));
+  gtk_candidate_window_handler.Show(&engine);
 }
 
 }  // namespace ibus

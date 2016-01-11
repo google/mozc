@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_session.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "base/logging.h"
 #include "base/port.h"
@@ -97,15 +98,14 @@ class UndoDeleteDictionaryCommand : public UserDictionarySession::UndoCommand {
     dictionaries->AddAllocated(dictionary_.release());
 
     // Adjust the position of the reverted dictionary.
-    rotate(dictionaries->pointer_begin() + index_,
-           dictionaries->pointer_end() - 1,
-           dictionaries->pointer_end());
+    std::rotate(dictionaries->pointer_begin() + index_,
+                dictionaries->pointer_end() - 1, dictionaries->pointer_end());
     return true;
   }
 
  private:
   int index_;
-  scoped_ptr<UserDictionary> dictionary_;
+  std::unique_ptr<UserDictionary> dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(UndoDeleteDictionaryCommand);
 };
@@ -128,7 +128,7 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
   }
 
  private:
-  scoped_ptr<UserDictionary> dictionary_;
+  std::unique_ptr<UserDictionary> dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(
       UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand);
@@ -227,8 +227,8 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
       uint64 dictionary_id,
       const vector<pair<int, UserDictionary::Entry*> > deleted_entries)
       : dictionary_id_(dictionary_id), deleted_entries_(deleted_entries) {
-    sort(deleted_entries_.begin(), deleted_entries_.end(),
-         DeleteEntryComparator());
+    std::sort(deleted_entries_.begin(), deleted_entries_.end(),
+              DeleteEntryComparator());
   }
   virtual ~UndoDeleteEntryCommand() {
     for (size_t i = 0; i < deleted_entries_.size(); ++i) {
@@ -452,7 +452,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Undo() {
     return UserDictionaryCommandStatus::NO_UNDO_HISTORY;
   }
 
-  scoped_ptr<UndoCommand> undo_command(undo_history_.back());
+  std::unique_ptr<UndoCommand> undo_command(undo_history_.back());
   undo_history_.pop_back();
   return undo_command->RunUndo(storage_.get()) ?
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS :
@@ -624,12 +624,12 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
   for (size_t i = 0; i < index_list.size(); ++i) {
     const int index = index_list[i];
 
-    deleted_entries.push_back(make_pair(index, data[index]));
+    deleted_entries.push_back(std::make_pair(index, data[index]));
     data[index] = NULL;
   }
 
-  UserDictionary::Entry **tail = remove(
-      data, data + entries->size(), static_cast<UserDictionary::Entry*>(NULL));
+  UserDictionary::Entry **tail = std::remove(
+      data, data + entries->size(), static_cast<UserDictionary::Entry *>(NULL));
   const int remaining_size = tail - data;
   while (entries->size() > remaining_size) {
     entries->ReleaseLast();
@@ -750,6 +750,12 @@ void UserDictionarySession::AddUndoCommand(UndoCommand *undo_command) {
   }
 
   undo_history_.push_back(undo_command);
+}
+
+void UserDictionarySession::ClearDictionariesAndUndoHistory() {
+  ScopedUserDictionaryLocker l(storage_.get());
+  storage_->clear_dictionaries();
+  ClearUndoHistory();
 }
 
 }  // namespace user_dictionary

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ class InputFileStream : public istream {
   void close();
 
  private:
-  stringbuf string_buffer_;
+  std::stringbuf string_buffer_;
 };
 
 // Implementation of ofstream for NaCl.
@@ -79,7 +79,7 @@ class OutputFileStream : public ostream {
 
  private:
   string filename_;
-  stringbuf string_buffer_;
+  std::stringbuf string_buffer_;
   bool write_done_;
 };
 

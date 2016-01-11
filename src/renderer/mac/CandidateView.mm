@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ using mozc::CallOnce;
 // TODO(mukai): integrate and share the code among Win and Mac.
 
 namespace {
-const NSImage *g_LogoImage = NULL;
+const NSImage *g_LogoImage = nullptr;
 int g_column_minimum_width = 0;
 once_t g_OnceForInitializeStyle = MOZC_ONCE_INIT;
 
@@ -487,7 +487,7 @@ const char *Inspect(id obj) {
 - (void)mouseUp:(NSEvent *)event {
   mozc::Point localPos = MacViewUtil::ToPoint(
       [self convertPoint:[event locationInWindow] fromView:nil]);
-  if (command_sender_ == NULL) {
+  if (command_sender_ == nullptr) {
     return;
   }
   if (candidates_.candidate_size() < tableLayout_->number_of_rows()) {

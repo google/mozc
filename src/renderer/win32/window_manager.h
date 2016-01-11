@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,9 @@
 
 #include <windows.h>
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -73,13 +74,13 @@ class WindowManager {
   void PreTranslateMessage(const MSG &message);
 
  private:
-  scoped_ptr<CandidateWindow> main_window_;
-  scoped_ptr<CandidateWindow> cascading_window_;
-  scoped_ptr<CompositionWindowList> composition_window_list_;
-  scoped_ptr<IndicatorWindow> indicator_window_;
-  scoped_ptr<InfolistWindow> infolist_window_;
-  scoped_ptr<LayoutManager> layout_manager_;
-  scoped_ptr<WorkingAreaInterface> working_area_;
+  std::unique_ptr<CandidateWindow> main_window_;
+  std::unique_ptr<CandidateWindow> cascading_window_;
+  std::unique_ptr<CompositionWindowList> composition_window_list_;
+  std::unique_ptr<IndicatorWindow> indicator_window_;
+  std::unique_ptr<InfolistWindow> infolist_window_;
+  std::unique_ptr<LayoutManager> layout_manager_;
+  std::unique_ptr<WorkingAreaInterface> working_area_;
   client::SendCommandInterface *send_command_interface_;
   POINT last_position_;
   int candidates_finger_print_;

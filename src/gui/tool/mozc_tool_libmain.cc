@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,20 @@
 #endif
 
 #include <QtGui/QtGui>
+
+#ifdef OS_MACOSX
+#include <cstdlib>
+#ifndef IGNORE_INVALID_FLAG
+#include <iostream>
+#endif  // IGNORE_INVALID_FLAG
+#endif  // OS_MACOSX
+
 #include "base/const.h"
 #include "base/crash_report_handler.h"
 #include "base/file_util.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
-#ifdef OS_MACOSX
-#include "base/scoped_ptr.h"
-#endif
 #include "base/password_manager.h"
 #include "base/run_level.h"
 #include "base/util.h"
@@ -57,17 +63,8 @@ int RunConfigDialog(int argc, char *argv[]);
 int RunDictionaryTool(int argc, char *argv[]);
 int RunWordRegisterDialog(int argc, char *argv[]);
 int RunErrorMessageDialog(int argc, char *argv[]);
-
-// TODO(yukawa): Remove this macro when Zinnia becomes available on Windows.
-#ifdef USE_ZINNIA
-// Currently the following functions are provided from the same library
-// named "character_pad_lib", which requires Zinnia to be built.
-// So we need to disable both of them when Zinnia is not available.
-// TODO(yukawa): Separate RunCharacterPalette so that we can use it
-//               even when Zinnia is not available.
 int RunCharacterPalette(int argc, char *argv[]);
 int RunHandWriting(int argc, char *argv[]);
-#endif  // USE_ZINNIA
 
 #ifdef OS_WIN
 // (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
@@ -84,13 +81,20 @@ int RunPrelaunchProcesses(int argc, char *argv[]);
 
 #ifdef OS_MACOSX
 namespace {
-char *strdup_with_new(const char *str) {
-  const size_t len = strlen(str);
-  char *v = new char[len + 1];
-  memcpy(v, str, len);
-  v[len] = '\0';
-  return v;
+
+void SetFlagFromEnv(const string &key) {
+  const string flag_name = "FLAGS_" + key;
+  const char *env = getenv(flag_name.c_str());
+  if (env == nullptr) {
+    return;
+  }
+  if (!mozc_flags::SetFlag(key, env)) {
+#ifndef IGNORE_INVALID_FLAG
+    cerr << "Unknown/Invalid flag " << key << endl;
+#endif
+  }
 }
+
 }  // namespace
 #endif  // OS_MACOSX
 
@@ -99,20 +103,14 @@ int RunMozcTool(int argc, char *argv[]) {
     mozc::CrashReportHandler::Initialize(false);
   }
 #ifdef OS_MACOSX
-  // OSX's app won't accept command line flags.
-  // Here we read the flags by using --fromenv option
-  scoped_ptr<char *[]> tmp(new char * [2]);
-  tmp[0] = strdup_with_new(argv[0]);
-  tmp[1] = strdup_with_new(
-       "--fromenv=mode,error_type,confirmation_type,register_prelauncher");
-  int new_argc = 2;
-  char **new_argv = tmp.get();
-  InitGoogle(new_argv[0], &new_argc, &new_argv, false);
-  delete [] tmp[0];
-  delete [] tmp[1];
-#else  // OS_MACOSX
-  InitGoogle(argv[0], &argc, &argv, false);
+  // OSX's app won't accept command line flags.  Here we preset flags from
+  // environment variables.
+  SetFlagFromEnv("mode");
+  SetFlagFromEnv("error_type");
+  SetFlagFromEnv("confirmation_type");
+  SetFlagFromEnv("register_prelauncher");
 #endif  // OS_MACOSX
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
 #ifdef OS_MACOSX
   // In Mac, we shares the same binary but changes the application
@@ -133,12 +131,10 @@ int RunMozcTool(int argc, char *argv[]) {
     // "System Preferences" -> "Accounts" -> "Login items".
     // So we set kProductPrefix to the binary name.
     FLAGS_mode = "prelauncher";
-#ifdef USE_ZINNIA
   } else if (binary_name == "HandWriting") {
     FLAGS_mode = "hand_writing";
   } else if (binary_name == "CharacterPalette") {
     FLAGS_mode = "character_palette";
-#endif  // USE_ZINNIA
   }
 #endif
 
@@ -170,12 +166,10 @@ int RunMozcTool(int argc, char *argv[]) {
     return RunErrorMessageDialog(argc, argv);
   } else if (FLAGS_mode == "about_dialog") {
     return RunAboutDialog(argc, argv);
-#ifdef USE_ZINNIA
   } else if (FLAGS_mode == "character_palette") {
     return RunCharacterPalette(argc, argv);
   } else if (FLAGS_mode == "hand_writing") {
     return RunHandWriting(argc, argv);
-#endif  // USE_ZINNIA
 #ifdef OS_WIN
   } else if (FLAGS_mode == "set_default_dialog") {
     // set_default_dialog is used on Windows only.

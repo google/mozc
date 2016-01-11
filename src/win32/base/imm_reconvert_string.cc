@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ char32 SurrogatePairToUCS4(wchar_t high, wchar_t low) {
   return (((high - 0xD800) & 0x3FF) << 10) +
          ((low - 0xDC00) & 0x3FF) + 0x10000;
 }
-}  // anonymous namespace
+}  // namespace
 
 bool ReconvertString::Compose(const wstring &preceding_text,
                               const wstring &preceding_composition,

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -41,7 +42,6 @@
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/trie.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
@@ -53,12 +53,13 @@
 #include "dictionary/user_pos.h"
 #include "dictionary/user_pos_interface.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
-DECLARE_string(test_tmpdir);
+using std::unique_ptr;
 
 namespace mozc {
 namespace dictionary {
@@ -191,15 +192,26 @@ string GenRandomAlphabet(int size) {
 
 class UserDictionaryTest : public ::testing::Test {
  protected:
+  UserDictionaryTest() {
+    convreq_.set_config(&config_);
+  }
+
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     suppression_dictionary_.reset(new SuppressionDictionary);
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   virtual void TearDown() {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
+
+    // This config initialization will be removed once ConversionRequest can
+    // take config as an injected argument.
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 
   // Workaround for the constructor of UserDictionary being protected.
@@ -249,12 +261,12 @@ class UserDictionaryTest : public ::testing::Test {
     vector<Entry> entries_;
   };
 
-  static void TestLookupPredictiveHelper(const Entry *expected,
-                                         size_t expected_size,
-                                         StringPiece key,
-                                         const UserDictionary &dic) {
+  void TestLookupPredictiveHelper(const Entry *expected,
+                                  size_t expected_size,
+                                  StringPiece key,
+                                  const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupPredictive(key, false, &collector);
+    dic.LookupPredictive(key, convreq_, &collector);
 
     if (expected == NULL || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
@@ -264,13 +276,13 @@ class UserDictionaryTest : public ::testing::Test {
     }
   }
 
-  static void TestLookupPrefixHelper(const Entry *expected,
-                                     size_t expected_size,
-                                     const char *key,
-                                     size_t key_size,
-                                     const UserDictionary &dic) {
+  void TestLookupPrefixHelper(const Entry *expected,
+                              size_t expected_size,
+                              const char *key,
+                              size_t key_size,
+                              const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupPrefix(StringPiece(key, key_size), false, &collector);
+    dic.LookupPrefix(StringPiece(key, key_size), convreq_, &collector);
 
     if (expected == NULL || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
@@ -280,13 +292,13 @@ class UserDictionaryTest : public ::testing::Test {
     }
   }
 
-  static void TestLookupExactHelper(const Entry *expected,
-                                    size_t expected_size,
-                                    const char *key,
-                                    size_t key_size,
-                                    const UserDictionary &dic) {
+  void TestLookupExactHelper(const Entry *expected,
+                             size_t expected_size,
+                             const char *key,
+                             size_t key_size,
+                             const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupExact(StringPiece(key, key_size), &collector);
+    dic.LookupExact(StringPiece(key, key_size), convreq_, &collector);
 
     if (expected == NULL || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
@@ -308,7 +320,7 @@ class UserDictionaryTest : public ::testing::Test {
     for (size_t i = 0; i < size; ++i) {
       encoded_items.push_back(EncodeEntry(array[i]));
     }
-    sort(encoded_items.begin(), encoded_items.end());
+    std::sort(encoded_items.begin(), encoded_items.end());
     string result;
     Util::JoinStrings(encoded_items, "", &result);
     return result;
@@ -356,21 +368,23 @@ class UserDictionaryTest : public ::testing::Test {
   }
 
   // Helper function to lookup comment string from |dic|.
-  static string LookupComment(const UserDictionary& dic,
-                              StringPiece key, StringPiece value) {
+  string LookupComment(const UserDictionary& dic,
+                       StringPiece key, StringPiece value) {
     string comment;
-    dic.LookupComment(key, value, &comment);
+    dic.LookupComment(key, value, convreq_, &comment);
     return comment;
   }
 
-  scoped_ptr<SuppressionDictionary> suppression_dictionary_;
+  unique_ptr<SuppressionDictionary> suppression_dictionary_;
+  ConversionRequest convreq_;
+  config::Config config_;
 
  private:
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {
-  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -433,7 +447,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefix) {
-  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -489,7 +503,7 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupExact) {
-  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -521,7 +535,7 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
-  scoped_ptr<UserDictionary> user_dic(CreateDictionary());
+  unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
   // Create dictionary
@@ -560,12 +574,8 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
 }
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  config.set_incognito_mode(true);
-  config::ConfigHandler::SetConfig(config);
-
-  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  config_.set_incognito_mode(true);
+  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -578,17 +588,15 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
   TestLookupPrefixHelper(NULL, 0, "start", 4, *dic);
   TestLookupPredictiveHelper(NULL, 0, "s", *dic);
 
-  config.set_incognito_mode(false);
-  config::ConfigHandler::SetConfig(config);
-
+  config_.set_incognito_mode(false);
   {
     EntryCollector collector;
-    dic->LookupPrefix("start", false, &collector);
+    dic->LookupPrefix("start", convreq_, &collector);
     EXPECT_FALSE(collector.entries().empty());
   }
   {
     EntryCollector collector;
-    dic->LookupPredictive("s", false, &collector);
+    dic->LookupPredictive("s", convreq_, &collector);
     EXPECT_FALSE(collector.entries().empty());
   }
 }
@@ -624,17 +632,17 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 
   {
-    scoped_ptr<UserDictionary> dic(CreateDictionary());
+    unique_ptr<UserDictionary> dic(CreateDictionary());
     // Wait for async reload called from the constructor.
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
 
     for (int i = 0; i < 32; ++i) {
-      random_shuffle(keys.begin(), keys.end());
+      std::random_shuffle(keys.begin(), keys.end());
       dic->Reload();
       for (int i = 0; i < 1000; ++i) {
         CollectTokenCallback callback;
-        dic->LookupPrefix(keys[i], false, &callback);
+        dic->LookupPrefix(keys[i], convreq_, &callback);
       }
     }
     dic->WaitForReloader();
@@ -658,13 +666,14 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
 
   // Add entries.
   {
-    scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+    unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
     for (int i = 0; i < 100; ++i) {
       EXPECT_TRUE(dic->AddToAutoRegisteredDictionary(
                       "key" + NumberUtil::SimpleItoa(i),
                       "value" + NumberUtil::SimpleItoa(i),
+                      convreq_,
                       user_dictionary::UserDictionary::NOUN));
       dic->WaitForReloader();
     }
@@ -700,15 +709,15 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
 
   // Add same entries.
   {
-    scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+    unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
     EXPECT_TRUE(dic->AddToAutoRegisteredDictionary(
-        "key", "value", user_dictionary::UserDictionary::NOUN));
+        "key", "value", convreq_, user_dictionary::UserDictionary::NOUN));
     dic->WaitForReloader();
     // Duplicated one is not registered.
     EXPECT_FALSE(dic->AddToAutoRegisteredDictionary(
-        "key", "value", user_dictionary::UserDictionary::NOUN));
+        "key", "value", convreq_, user_dictionary::UserDictionary::NOUN));
     dic->WaitForReloader();
   }
 
@@ -726,7 +735,7 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
 }
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
-  scoped_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
+  unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
   const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
@@ -805,7 +814,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 }
 
 TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
-  scoped_ptr<UserDictionary> user_dic(CreateDictionary());
+  unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
   const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
@@ -845,7 +854,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   {
     const char kKey[] = "key0123";
     CollectTokenCallback callback;
-    user_dic->LookupPrefix(kKey, false, &callback);
+    user_dic->LookupPrefix(kKey, convreq_, &callback);
     const vector<Token> &tokens = callback.tokens();
     for (size_t i = 0; i < tokens.size(); ++i) {
       EXPECT_EQ("default", tokens[i].value);
@@ -854,7 +863,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   {
     const char kKey[] = "key";
     CollectTokenCallback callback;
-    user_dic->LookupPredictive(kKey, false, &callback);
+    user_dic->LookupPredictive(kKey, convreq_, &callback);
     const vector<Token> &tokens = callback.tokens();
     for (size_t i = 0; i < tokens.size(); ++i) {
       EXPECT_TRUE(tokens[i].value == "suggest_only" ||
@@ -866,7 +875,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 }
 
 TEST_F(UserDictionaryTest, TestUsageStats) {
-  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
   UserDictionaryStorage storage("");
@@ -912,7 +921,7 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
 }
 
 TEST_F(UserDictionaryTest, LookupComment) {
-  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -925,20 +934,24 @@ TEST_F(UserDictionaryTest, LookupComment) {
   // Entry is in user dictionary but has no comment.
   string comment;
   comment = "prev comment";
-  EXPECT_FALSE(dic->LookupComment("comment_key1", "comment_value2", &comment));
+  EXPECT_FALSE(dic->LookupComment(
+      "comment_key1", "comment_value2", convreq_, &comment));
   EXPECT_EQ("prev comment", comment);
 
   // Usual case: single key-value pair with comment.
-  EXPECT_TRUE(dic->LookupComment("comment_key2", "comment_value2", &comment));
+  EXPECT_TRUE(dic->LookupComment(
+      "comment_key2", "comment_value2", convreq_, &comment));
   EXPECT_EQ("comment", comment);
 
   // There exist two entries having the same key, value and POS.  Since POS is
   // irrelevant to comment lookup, the first nonempty comment should be found.
-  EXPECT_TRUE(dic->LookupComment("comment_key3", "comment_value3", &comment));
+  EXPECT_TRUE(dic->LookupComment(
+      "comment_key3", "comment_value3", convreq_, &comment));
   EXPECT_EQ("comment1", comment);
 
   // White-space only comments should be cleared.
-  EXPECT_FALSE(dic->LookupComment("comment_key4", "comment_value4", &comment));
+  EXPECT_FALSE(dic->LookupComment(
+      "comment_key4", "comment_value4", convreq_, &comment));
   // The previous comment should remain.
   EXPECT_EQ("comment1", comment);
 

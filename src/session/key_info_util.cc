@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 #include "session/key_info_util.h"
 
+#include <algorithm>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -36,7 +38,6 @@
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
@@ -84,13 +85,13 @@ vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(istream *ifs) {
     }
   }
 
-  sort(result.begin(), result.end());
+  std::sort(result.begin(), result.end());
   return result;
 }
 
 vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
       const string &filename) {
-  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
+  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs.get() == NULL) {
     DLOG(FATAL) << "could not open file: " << filename;
     return vector<KeyInformation>();
@@ -124,7 +125,7 @@ bool KeyInfoUtil::ContainsKey(const vector<KeyInformation> &sorted_keys,
   if (!KeyEventUtil::GetKeyInformation(key_event, &key_info)) {
     return false;
   }
-  return binary_search(sorted_keys.begin(), sorted_keys.end(), key_info);
+  return std::binary_search(sorted_keys.begin(), sorted_keys.end(), key_info);
 }
 
 }  // namespace mozc

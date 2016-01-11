@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,13 @@
 #ifndef MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 #define MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
+#include "dictionary/file/codec_interface.h"
 
 namespace mozc {
 namespace dictionary {
@@ -47,7 +48,7 @@ struct DictionaryFileSection;
 
 class DictionaryFile {
  public:
-  DictionaryFile();
+  explicit DictionaryFile(const DictionaryFileCodecInterface *file_codec);
   ~DictionaryFile();
 
   // Open from file
@@ -62,8 +63,10 @@ class DictionaryFile {
   const char *GetSection(const string &section_name, int *len) const;
 
  private:
+  // DictionaryFile does not take the ownership of |file_codec_|.
+  const DictionaryFileCodecInterface *file_codec_;
   // This will be nullptr if the mapping source is given as a pointer.
-  scoped_ptr<Mmap> mapping_;
+  std::unique_ptr<Mmap> mapping_;
   vector<DictionaryFileSection> sections_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryFile);

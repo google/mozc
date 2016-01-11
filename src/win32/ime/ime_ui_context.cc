@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -118,7 +118,7 @@ void SetCharPosition(const IMECHARPOSITION &position,
   rect->set_bottom(position.rcDocument.bottom);
   rect->set_right(position.rcDocument.right);
 }
-}  // Anonymous namespace
+}  // namespace
 
 UIContext::UIContext(HIMC context_handle)
     : context_handle_(context_handle),

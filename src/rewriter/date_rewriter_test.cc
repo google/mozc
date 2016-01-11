@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,19 +30,20 @@
 #include "rewriter/date_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -207,22 +208,13 @@ class DateRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
-  }
-
-  virtual void TearDown() {
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
   }
 };
 
 TEST_F(DateRewriterTest, DateRewriteTest) {
-  scoped_ptr<ClockMock> mock_clock(
+  std::unique_ptr<ClockMock> mock_clock(
       new ClockMock(kTestSeconds, kTestMicroSeconds));
-  Util::SetClockHandler(mock_clock.get());
+  Clock::SetClockForUnitTest(mock_clock.get());
 
   DateRewriter rewriter;
   Segments segments;
@@ -471,7 +463,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     }
   }
 
-  Util::SetClockHandler(NULL);
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(DateRewriterTest, ADToERA) {
@@ -1074,9 +1066,10 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
 TEST_F(DateRewriterTest, NumberRewriterTest) {
   Segments segments;
   DateRewriter rewriter;
-  const commands::Request &request = commands::Request::default_instance();
-  const composer::Composer composer(NULL, &request);
-  const ConversionRequest conversion_request(&composer, &request);
+  const commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
 
   // 0101 is expected 3 time candidate and 2 date candidates
   InitSegment("0101", "0101", &segments);
@@ -1129,6 +1122,53 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   // "日付"
   EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
 
+  // 123 is expected 3 time candidates and 2 date candidates
+  InitSegment("123", "123", &segments);
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+  // "時刻"
+  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+  EXPECT_TRUE(ContainCandidate(segments, "1:23"));
+  // "1時23分"
+  EXPECT_TRUE(ContainCandidate(segments,
+                               "\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
+  // "午前1時23分"
+  EXPECT_TRUE(ContainCandidate(
+      segments,
+      "\xe5\x8d\x88\xe5\x89\x8d\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
+
+  // "日付"
+  EXPECT_EQ(2, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+  EXPECT_TRUE(ContainCandidate(segments, "01/23"));
+  // "1月23日"
+  EXPECT_TRUE(ContainCandidate(segments,
+                               "\x31\xe6\x9c\x88\x32\x33\xe6\x97\xa5"));
+
+  // 346 is expected 3 time candidates and 0 date candidate
+  InitSegment("346", "346", &segments);
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+  // "時刻"
+  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+  EXPECT_TRUE(ContainCandidate(segments, "3:46"));
+  // "3時46分"
+  EXPECT_TRUE(ContainCandidate(segments,
+                               "\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
+  // "午前3時46分"
+  EXPECT_TRUE(ContainCandidate(
+        segments,
+        "\xe5\x8d\x88\xe5\x89\x8d\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
+
+  // "日付"
+  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+
+  // 765 is expected 0 time candidate and 0 date candidate
+  InitSegment("765", "765", &segments);
+  EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
+  // "時刻"
+  EXPECT_EQ(0, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+
+  // "日付"
+  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+
   // Especially for mobile, look at meta candidates' value, too.
   // "あかあか" on 12keys layout will be transliterated to "1212".
   InitMetaSegment(
@@ -1169,9 +1209,11 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
   composer::Table table;
   table.AddRule("222", "c", "");
   table.AddRule("3", "d", "");
-
-  composer::Composer composer(&table, NULL);
-  const ConversionRequest conversion_request(&composer, NULL);
+  const commands::Request request;
+  const config::Config config;
+  composer::Composer composer(&table, &request, &config);
+  ConversionRequest conversion_request;
+  conversion_request.set_composer(&composer);
 
   // Key sequence : 2223
   // Preedit : cd
@@ -1215,19 +1257,19 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
 }
 
 TEST_F(DateRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   DateRewriter rewriter;
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,12 @@
 
 #include "rewriter/calculator_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
@@ -43,6 +42,7 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
 #include "testing/base/public/gunit.h"
@@ -94,6 +94,11 @@ int GetIndexOfCalculatedCandidate(const Segments &segments) {
 
 class CalculatorRewriterTest : public testing::Test {
  protected:
+  CalculatorRewriterTest() {
+    convreq_.set_request(&request_);
+    convreq_.set_config(&config_);
+  }
+
   static bool InsertCandidate(const CalculatorRewriter &calculator_rewriter,
                               const string &value,
                               size_t insert_pos,
@@ -115,26 +120,27 @@ class CalculatorRewriterTest : public testing::Test {
 
     // use mock
     CalculatorFactory::SetCalculator(&calculator_mock_);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::Config config(default_config_);
-    config.set_use_calculator(true);
-    config::ConfigHandler::SetConfig(config);
+    request_.Clear();
+    config::ConfigHandler::GetDefaultConfig(&config_);
+    config_.set_use_calculator(true);
   }
 
   virtual void TearDown() {
     // Clear the mock test calculator
     CalculatorFactory::SetCalculator(NULL);
-    config::ConfigHandler::SetConfig(default_config_);
   }
+
+  ConversionRequest convreq_;
+  commands::Request request_;
+  config::Config config_;
 
  private:
   CalculatorMock calculator_mock_;
-  scoped_ptr<ConverterInterface> converter_mock_;
-  config::Config default_config_;
+  std::unique_ptr<ConverterInterface> converter_mock_;
 };
 
 TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       BuildCalculatorRewriterWithConverterMock());
 
   {
@@ -166,19 +172,18 @@ TEST_F(CalculatorRewriterTest, BasicTest) {
   // Pretend "key" is calculated to "value".
   calculator_mock().SetCalculatePair("key", "value", true);
 
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       BuildCalculatorRewriterWithConverterMock());
   const int counter_at_first = calculator_mock().calculation_counter();
-  const ConversionRequest request;
 
   Segments segments;
   SetSegment("test", "test", &segments);
-  calculator_rewriter->Rewrite(request, &segments);
+  calculator_rewriter->Rewrite(convreq_, &segments);
   EXPECT_EQ(GetIndexOfCalculatedCandidate(segments), -1);
   EXPECT_EQ(calculator_mock().calculation_counter(), counter_at_first + 1);
 
   SetSegment("key", "key", &segments);
-  calculator_rewriter->Rewrite(request, &segments);
+  calculator_rewriter->Rewrite(convreq_, &segments);
   int index = GetIndexOfCalculatedCandidate(segments);
   EXPECT_NE(index, -1);
   EXPECT_EQ(segments.segment(0).candidate(index).value, "value");
@@ -194,10 +199,9 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
-  const ConversionRequest request;
 
   // Push back separated segments.
   Segments segments;
@@ -206,7 +210,7 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   AddSegment("1", "1", &segments);
   AddSegment("=", "=", &segments);
 
-  calculator_rewriter->Rewrite(request, &segments);
+  calculator_rewriter->Rewrite(convreq_, &segments);
   EXPECT_EQ(segments.segments_size(), 1);  // merged
 
   int index = GetIndexOfCalculatedCandidate(segments);
@@ -218,6 +222,27 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
 
   EXPECT_EQ("2", segments.segment(0).candidate(index).value);
   EXPECT_EQ("1+1=2", segments.segment(0).candidate(index + 1).value);
+}
+
+// CalculatorRewriter should convert an expression starting with '='.
+TEST_F(CalculatorRewriterTest, ExpressionStartingWithEqualTest) {
+  // Pretend "=1+1" is calculated to "2".
+  calculator_mock().SetCalculatePair("=1+1", "2", true);
+
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
+      BuildCalculatorRewriterWithConverterMock());
+  const ConversionRequest request;
+
+  Segments segments;
+  SetSegment("=1+1", "=1+1", &segments);
+  calculator_rewriter->Rewrite(request, &segments);
+  int index = GetIndexOfCalculatedCandidate(segments);
+  EXPECT_NE(-1, index);
+  EXPECT_EQ("2", segments.segment(0).candidate(index).value);
+  EXPECT_TRUE(ContainsCalculatedResult(
+      segments.segment(0).candidate(index + 1)));
+  // CalculatorRewriter should append the result to the side '=' exists.
+  EXPECT_EQ("2=1+1", segments.segment(0).candidate(index + 1).value);
 }
 
 // Verify the description of calculator candidate.
@@ -233,15 +258,14 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
 
   // Pretend kExpression is calculated to "3"
   calculator_mock().SetCalculatePair(kExpression, "3", true);
-  const ConversionRequest request;
 
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       BuildCalculatorRewriterWithConverterMock());
 
   Segments segments;
   AddSegment(kExpression, kExpression, &segments);
 
-  calculator_rewriter->Rewrite(request, &segments);
+  calculator_rewriter->Rewrite(convreq_, &segments);
   const int index = GetIndexOfCalculatedCandidate(segments);
 
   EXPECT_EQ(segments.segment(0).candidate(index).description, description);
@@ -250,17 +274,13 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
 }
 
 TEST_F(CalculatorRewriterTest, ConfigTest) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-
   calculator_mock().SetCalculatePair("1+1=", "2", true);
-  const ConversionRequest request;
 
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
   {
     Segments segments;
@@ -268,9 +288,8 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
     AddSegment("+", "+", &segments);
     AddSegment("1", "1", &segments);
     AddSegment("=", "=", &segments);
-    config.set_use_calculator(true);
-    config::ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(calculator_rewriter->Rewrite(request, &segments));
+    config_.set_use_calculator(true);
+    EXPECT_TRUE(calculator_rewriter->Rewrite(convreq_, &segments));
   }
 
   {
@@ -279,45 +298,36 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
     AddSegment("+", "+", &segments);
     AddSegment("1", "1", &segments);
     AddSegment("=", "=", &segments);
-    config.set_use_calculator(false);
-    config::ConfigHandler::SetConfig(config);
-    EXPECT_FALSE(calculator_rewriter->Rewrite(request, &segments));
+    config_.set_use_calculator(false);
+    EXPECT_FALSE(calculator_rewriter->Rewrite(convreq_, &segments));
   }
 }
 
 TEST_F(CalculatorRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
+    request_.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq_));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+    request_.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq_));
   }
 }
 
 TEST_F(CalculatorRewriterTest, EmptyKeyTest) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-
-  const ConversionRequest request;
-  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  scoped_ptr<CalculatorRewriter> calculator_rewriter(
+  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
   {
     Segments segments;
     AddSegment("", "1", &segments);
-    config.set_use_calculator(true);
-    config::ConfigHandler::SetConfig(config);
-    EXPECT_FALSE(calculator_rewriter->Rewrite(request, &segments));
+    config_.set_use_calculator(true);
+    EXPECT_FALSE(calculator_rewriter->Rewrite(convreq_, &segments));
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 #define MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 
+#ifdef OS_NACL
+
 namespace mozc {
 namespace testing {
 
@@ -45,5 +47,7 @@ void WorkAroundEmptyFunctionToAvoidLinkError();
 
 }  // namespace testing
 }  // namespace mozc
+
+#endif  // OS_NACL
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_

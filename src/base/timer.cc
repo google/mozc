@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/timer.h"
+
+#include <memory>
 
 #include "base/logging.h"
 #include "base/thread.h"
@@ -82,7 +84,7 @@ class Timer::TimerThread : public Thread {
   uint32 due_time_;
   uint32 interval_;
   Timer *timer_;
-  scoped_ptr<UnnamedEvent> event_;
+  std::unique_ptr<UnnamedEvent> event_;
 
   DISALLOW_COPY_AND_ASSIGN(TimerThread);
 };

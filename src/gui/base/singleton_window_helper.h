@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,10 +44,10 @@
 #ifndef MOZC_GUI_BASE_SINGLETON_WINDOW_HELPER_H_
 #define MOZC_GUI_BASE_SINGLETON_WINDOW_HELPER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 class ProcessMutex;
@@ -66,10 +66,11 @@ class SingletonWindowHelper {
   bool ActivatePreviousWindow();
 
  private:
-  scoped_ptr<ProcessMutex> mutex_;
+  std::unique_ptr<ProcessMutex> mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(SingletonWindowHelper);
 };
+
 }  // namespace gui
 }  // namespace mozc
 

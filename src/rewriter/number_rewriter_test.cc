@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "rewriter/number_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -37,8 +38,8 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #ifdef MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/packed/packed_data_manager.h"
 #include "data_manager/packed/packed_data_mock.h"
@@ -46,10 +47,8 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::dictionary::POSMatcher;
 
@@ -136,7 +135,7 @@ class NumberRewriterTest : public ::testing::Test {
     // TODO(noriyukit): Currently this test uses mock data manager.  Check if we
     // can remove this registration of packed data manager.
     // Registers mocked PackedDataManager.
-    scoped_ptr<packed::PackedDataManager>
+    std::unique_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
@@ -144,9 +143,6 @@ class NumberRewriterTest : public ::testing::Test {
 #endif  // MOZC_USE_PACKED_DICTIONARY
 
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
     pos_matcher_ = mock_data_manager_.GetPOSMatcher();
   }
 
@@ -175,7 +171,7 @@ struct ExpectResult {
 }  // namespace
 
 TEST_F(NumberRewriterTest, BasicTest) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -247,7 +243,7 @@ TEST_F(NumberRewriterTest, RequestType) {
       TestData(Segments::SUGGESTION, 8),
   };
 
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   for (size_t i = 0; i < arraysize(test_data_list); ++i) {
     TestData& test_data = test_data_list[i];
@@ -266,7 +262,7 @@ TEST_F(NumberRewriterTest, RequestType) {
 }
 
 TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -324,7 +320,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
 }
 
 TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -353,7 +349,7 @@ TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
 }
 
 TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -400,7 +396,7 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
 }
 
 TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
 
   // Special forms doesn't have zeros.
@@ -447,7 +443,7 @@ TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
 }
 
 TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -499,7 +495,7 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
 }
 
 TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -520,7 +516,7 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsZero) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -562,7 +558,7 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsZeroZero) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -602,7 +598,7 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
 }
 
 TEST_F(NumberRewriterTest, NumberIs19Digit) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -686,7 +682,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -791,7 +787,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsGoogol) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -865,7 +861,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
 TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
   // If kanji candidate is higher before we rewrite segments,
   // kanji should have higher raking.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -901,7 +897,7 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
 TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
   // Modify exsisting ranking even if the converter returns unusual results
   // due to dictionary noise, etc.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -948,7 +944,7 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
 }
 
 TEST_F(NumberRewriterTest, EraseExistingCandidates) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -1003,7 +999,7 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
 }
 
 TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   // Expected data to succeed tests.
   const char* kSuccess[][3] = {
@@ -1070,7 +1066,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
 // In this case, NumberRewriter should not clear
 // Segment::Candidate::USER_DICTIONARY bit in the base candidate.
 TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   {
     Segments segments;
     {
@@ -1110,63 +1106,26 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
 
 TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
   // To reproduce issue b/6714268.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
-
-  Segments segments;
-  Segment *segment = segments.push_back_segment();
-  for (int i = 0; i < 20; ++i) {
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetUnknownId();  // Not number POS
-    candidate->rid = pos_matcher_->GetUnknownId();
-    // "いち"
-    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "いち"
-    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "壱"
-    candidate->value = "\xe5\xa3\xb1";
-    // "壱"
-    candidate->content_value = "\xe5\xa3\xb1";
-  }
-  for (int i = 0; i < 20; ++i) {
-    Segment::Candidate *candidate = segment->add_candidate();
-
-    candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();  // Number POS
-    candidate->rid = pos_matcher_->GetNumberId();
-    // "いち"
-    candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "いち"
-    candidate->content_key = "\xe3\x81\x84\xe3\x81\xa1";
-    // "一"
-    candidate->value = "\xe4\xb8\x80";
-    // "一"
-    candidate->content_value = "\xe4\xb8\x80";
-  }
-
-  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
-}
-
-TEST_F(NumberRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
-  scoped_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
   }
 }
 
 TEST_F(NumberRewriterTest, NonNumberNounTest) {
   // Test if "百舌鳥" is not rewritten to "100舌鳥", etc.
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
   Segment *segment = segments.push_back_segment();
   segment->set_key("\xE3\x82\x82\xE3\x81\x9A");  // "もず"
@@ -1182,7 +1141,7 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
 }
 
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
-  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   const char kBubun[] = "\xE9\x83\xA8\xE5\x88\x86";  // "部分"
   Segments segments;
@@ -1220,6 +1179,53 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
     EXPECT_TRUE(
         candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }
+}
+
+TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  const char kBubun[] = "\xE9\x83\xA8\xE5\x88\x86";  // "部分"
+  Segments segments;
+  {
+    Segment *seg = segments.push_back_segment();
+    // "ひとりひとぱっく"
+    seg->set_key("\xe3\x81\xb2\xe3\x81\xa8\xe3\x82\x8a\xe3\x81\xb2"
+                 "\xe3\x81\xa8\xe3\x81\xb1\xe3\x81\xa3\xe3\x81\x8f");
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->lid = pos_matcher_->GetNumberId();
+    candidate->rid = pos_matcher_->GetNumberId();
+    // "ひとり"
+    candidate->key = "\xe3\x81\xb2\xe3\x81\xa8\xe3\x82\x8a";
+    // "一人"
+    candidate->value = "\xe4\xb8\x80\xe4\xba\xba";
+    // "ひとり"
+    candidate->content_key = "\xe3\x81\xb2\xe3\x81\xa8\xe3\x82\x8a";
+    // "一人"
+    candidate->content_value = "\xe4\xb8\x80\xe4\xba\xba";
+    candidate->description = kBubun;
+    candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->consumed_key_size = 3;
+  }
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+
+  ASSERT_EQ(1, segments.conversion_segments_size());
+  const Segment &seg = segments.conversion_segment(0);
+  ASSERT_LE(2, seg.candidates_size());
+  bool found_halfwidth = false;
+  for (size_t i = 0; i < seg.candidates_size(); ++i) {
+    const Segment::Candidate &candidate = seg.candidate(i);
+    // "1人"
+    if (candidate.value != "\x31\xe4\xba\xba") {
+      continue;
+    }
+    found_halfwidth = true;
+    EXPECT_EQ(3, candidate.consumed_key_size);
+    EXPECT_TRUE(Util::StartsWith(candidate.description, kBubun));
+    EXPECT_TRUE(
+        candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  }
+  EXPECT_TRUE(found_halfwidth);
 }
 
 }  // namespace mozc

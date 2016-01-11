@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,15 @@
 #include <Cocoa/Cocoa.h>
 
 #import "DialogsController.h"
+#import "Uninstaller.h"
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 
 int main(int argc, char *argv[]) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
+  [Uninstaller initializeUninstaller];
 
   DialogsController *dialogs = [[[DialogsController alloc] init] autorelease];
   [NSBundle loadNibNamed:@"Dialogs" owner:dialogs];

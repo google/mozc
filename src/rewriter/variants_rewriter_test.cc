@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "rewriter/variants_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -36,19 +37,20 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_manager.h"
+#include "data_manager/packed/packed_data_mock.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 using mozc::config::CharacterFormManager;
 using mozc::config::Config;
-using mozc::config::ConfigHandler;
 using mozc::dictionary::POSMatcher;
 
 namespace mozc {
@@ -71,6 +73,14 @@ class VariantsRewriterTest : public testing::Test {
 
   virtual void SetUp() {
     Reset();
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers mocked PackedDataManager.
+    std::unique_ptr<packed::PackedDataManager>
+        data_manager(new packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
     pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
@@ -80,11 +90,11 @@ class VariantsRewriterTest : public testing::Test {
 
   void Reset() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     CharacterFormManager::GetCharacterFormManager()->ClearHistory();
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    packed::RegisterPackedDataManager(nullptr);
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   void InitSegmentsForAlphabetRewrite(const string &value,
@@ -109,7 +119,7 @@ class VariantsRewriterTest : public testing::Test {
 };
 
 TEST_F(VariantsRewriterTest, RewriteTest) {
-  scoped_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   Segments segments;
   const ConversionRequest request;
 
@@ -249,14 +259,10 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 }
 
 TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
-  scoped_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
-
-  Config config;
-  ConfigHandler::GetDefaultConfig(&config);
-  ConfigHandler::SetConfig(config);
 
   {
     for (int i = 0; i < 10; ++i) {
@@ -654,7 +660,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
 TEST_F(VariantsRewriterTest, RewriteForConversion) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
-  scoped_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   const ConversionRequest request;
   {
     Segments segments;
@@ -712,7 +718,7 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
 TEST_F(VariantsRewriterTest, RewriteForPrediction) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
-  scoped_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   const ConversionRequest request;
   {
     Segments segments;
@@ -752,7 +758,7 @@ TEST_F(VariantsRewriterTest, RewriteForPrediction) {
 TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
-  scoped_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   const ConversionRequest request;
   {
     Segments segments;
@@ -827,7 +833,7 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
 }
 
 TEST_F(VariantsRewriterTest, Capability) {
-  scoped_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   const ConversionRequest request;
   EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
 }

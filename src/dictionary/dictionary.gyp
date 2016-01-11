@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
+        '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         'dictionary_base.gyp:pos_matcher',

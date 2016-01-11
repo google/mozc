@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,10 +46,6 @@ using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CComVariant;
 using std::unique_ptr;
-
-#ifdef min
-#undef min
-#endif  // min
 
 // GUID_PROP_INPUTSCOPE
 GUID kGuidPropInputscope = {

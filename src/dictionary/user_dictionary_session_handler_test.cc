@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "dictionary/user_dictionary_session_handler.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,10 +39,9 @@
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
-
-DECLARE_string(test_tmpdir);
 
 using ::mozc::protobuf::RepeatedPtrField;
 using ::mozc::user_dictionary::UserDictionary;
@@ -192,9 +192,9 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     return status_->entry_size();
   }
 
-  scoped_ptr<UserDictionarySessionHandler> handler_;
-  scoped_ptr<UserDictionaryCommand> command_;
-  scoped_ptr<UserDictionaryCommandStatus> status_;
+  std::unique_ptr<UserDictionarySessionHandler> handler_;
+  std::unique_ptr<UserDictionaryCommand> command_;
+  std::unique_ptr<UserDictionaryCommandStatus> status_;
 
  private:
   string original_user_profile_directory_;
@@ -232,25 +232,46 @@ TEST_F(UserDictionarySessionHandlerTest, NoOperation) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
-#ifdef __native_client__
-  EXPECT_PROTO_EQ("status: UNKNOWN_ERROR", *status_);
-#else
-  const string &user_dictionary_file = GetUserDictionaryFile();
-  // Touch the file.
-  {
-    OutputFileStream output(user_dictionary_file.c_str());
-  }
-  ASSERT_TRUE(FileUtil::FileExists(user_dictionary_file));
-
+#ifdef OS_NACL
+  Clear();
   command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
-  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-
-  // Should never fail.
-  EXPECT_PROTO_EQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
-
-  // The file should be removed.
-  EXPECT_FALSE(FileUtil::FileExists(user_dictionary_file));
-#endif  // __native_client__
+  EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_ERROR,
+            status_->status());
+#else  // OS_NACL
+  // Set up a user dictionary.
+  {
+    Clear();
+    const uint64 session_id = CreateSession();
+    const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+    AddUserDictionaryEntry(session_id, dictionary_id,
+                         "reading", "word", UserDictionary::NOUN, "");
+    AddUserDictionaryEntry(session_id, dictionary_id,
+                         "reading", "word2", UserDictionary::NOUN, "");
+    ASSERT_EQ(2, GetUserDictionaryEntrySize(session_id, dictionary_id));
+    DeleteSession(session_id);
+  }
+  // Test CLEAR_STORAGE command.
+  {
+    Clear();
+    command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
+    EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
+    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
+              status_->status());
+  }
+  // After the command invocation, storage becomes empty.
+  {
+    Clear();
+    const uint64 session_id = CreateSession();
+    command_->set_type(UserDictionaryCommand::GET_STORAGE);
+    command_->set_session_id(session_id);
+    ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+    EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS\n"
+                     "storage <\n"
+                     ">\n",
+                     *status_);
+  }
+#endif  // OS_NACL
 }
 
 TEST_F(UserDictionarySessionHandlerTest, CreateDeleteSession) {

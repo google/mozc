@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,10 +91,10 @@ bool SuffixDictionary::HasValue(StringPiece value) const {
 
 void SuffixDictionary::LookupPredictive(
     StringPiece key,
-    bool,  // use_kana_modifier_insensitive_lookup
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   typedef IteratorAdapter<const SuffixToken *, SuffixTokenKeyAdapter> Iter;
-  pair<Iter, Iter> range = equal_range(
+  pair<Iter, Iter> range = std::equal_range(
       MakeIteratorAdapter(suffix_tokens_, SuffixTokenKeyAdapter()),
       MakeIteratorAdapter(suffix_tokens_ + suffix_tokens_size_,
                           SuffixTokenKeyAdapter()),
@@ -127,16 +127,22 @@ void SuffixDictionary::LookupPredictive(
   }
 }
 
-void SuffixDictionary::LookupPrefix(StringPiece key,
-                                    bool use_kana_modifier_insensitive_lookup,
-                                    Callback *callback) const {
+void SuffixDictionary::LookupPrefix(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
 }
 
-void SuffixDictionary::LookupReverse(StringPiece str,
-                                     Callback *callback) const {
+void SuffixDictionary::LookupExact(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
 }
 
-void SuffixDictionary::LookupExact(StringPiece key, Callback *callback) const {
+void SuffixDictionary::LookupReverse(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
 }
 
 }  // namespace dictionary

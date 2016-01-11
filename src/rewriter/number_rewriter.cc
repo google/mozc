@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,12 +39,12 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/number_compound_util.h"
 
 using mozc::dictionary::POSMatcher;
@@ -112,10 +112,13 @@ RewriteType GetRewriteTypeAndBase(
   arabic_candidate->content_value = arabic_number + number_suffix;
   arabic_candidate->key = c.key;
   arabic_candidate->content_key = c.content_key;
+  arabic_candidate->consumed_key_size = c.consumed_key_size;
   arabic_candidate->cost = c.cost;
   arabic_candidate->structure_cost = c.structure_cost;
   arabic_candidate->lid = c.lid;
   arabic_candidate->rid = c.rid;
+  arabic_candidate->attributes |=
+      c.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
   DCHECK(arabic_candidate->IsValid());
   return KANJI_FIRST;
 }
@@ -204,8 +207,8 @@ void EraseExistingCandidates(
   for (int pos = base_candidate_pos - 1; pos >= 0; --pos) {
     // Simple liner search. |results| size is small. (at most 10 or so)
     const vector<Segment::Candidate>::const_iterator iter =
-        find_if(results.begin(), results.end(),
-                CheckValueOperator(seg->candidate(pos).value));
+        std::find_if(results.begin(), results.end(),
+                     CheckValueOperator(seg->candidate(pos).value));
     if (iter == results.end()) {
       continue;
     }
@@ -304,8 +307,8 @@ void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
   // We don't want to rewrite "千万" to "一千万".
   {
     const string &base_value = seg->candidate(base_candidate_pos).value;
-    vector<Segment::Candidate>::const_iterator itr =
-        find_if(results.begin(), results.end(), CheckValueOperator(base_value));
+    vector<Segment::Candidate>::const_iterator itr = std::find_if(
+        results.begin(), results.end(), CheckValueOperator(base_value));
     if (itr != results.end() &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI_ARABIC) {
@@ -438,7 +441,7 @@ int NumberRewriter::capability(const ConversionRequest &request) const {
 bool NumberRewriter::Rewrite(const ConversionRequest &request,
                              Segments *segments) const {
   DCHECK(segments);
-  if (!GET_CONFIG(use_number_conversion)) {
+  if (!request.config().use_number_conversion()) {
     VLOG(2) << "no use_number_conversion";
     return false;
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,22 @@
 // Qt component of configure dialog for Mozc
 #include "gui/config_dialog/config_dialog.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #ifdef OS_WIN
 #include <QtGui/QWindowsStyle>
 #include <windows.h>
 #endif
 
 #include <QtGui/QMessageBox>
+
 #include <algorithm>
 #include <cstdlib>
+#include <memory>
 #include <sstream>
+
 #include "base/config_file_stream.h"
 #include "base/const.h"
 #include "base/logging.h"
@@ -200,10 +207,10 @@ ConfigDialog::ConfigDialog()
   useJapaneseLayout->hide();
 #endif  // !OS_MACOSX
 
-#ifndef MOZC_ENABLE_MODE_INDICATOR
-  // If not enabled, useModeIndicator checkbox should be invisible.
+#ifndef OS_WIN
+  // Mode indicator is available only on Windows.
   useModeIndicator->hide();
-#endif  // !MOZC_ENABLE_MODE_INDICATOR
+#endif  // !OS_WIN
 
   // signal/slot
   QObject::connect(configDialogButtonBox,
@@ -520,7 +527,7 @@ void GetComboboxForPreeditMethod(const QComboBox *combobox,
     config->set_use_keyboard_to_change_preedit_method(false);
   }
 }
-}  // anonymous namespace
+}  // namespace
 
 
 // TODO(taku)
@@ -815,7 +822,7 @@ void ConfigDialog::EditKeymap() {
     // Load from predefined mapping file.
     const char *keymap_file =
         keymap::KeyMapManager::GetKeyMapFileName(itr->second);
-    scoped_ptr<istream> ifs(
+    std::unique_ptr<istream> ifs(
         ConfigFileStream::LegacyOpen(keymap_file));
     CHECK(ifs.get() != NULL);  // should never happen
     stringstream buffer;

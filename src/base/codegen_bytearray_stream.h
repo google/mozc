@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,12 +43,12 @@
 #define MOZC_BASE_CODEGEN_BYTEARRAY_STREAM_H_
 
 #include <algorithm>
+#include <memory>
 #include <ostream>
 #include <streambuf>
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 #ifdef OS_ANDROID
 // This is used only for code generation, so shouldn't be used from android
@@ -282,7 +282,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #endif
 
   size_t internal_output_buffer_size_;
-  scoped_ptr<char[]> internal_output_buffer_;
+  std::unique_ptr<char[]> internal_output_buffer_;
 
   std::basic_ostream<char> *output_stream_;
   codegenstream::StreamOwner own_output_stream_;

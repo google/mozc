@@ -1,4 +1,4 @@
-# Generate POSMatcher rules:
+# Generates POSMatcher rules:
 #
 # format:
 # FunctionName1 RegexPattern1
@@ -24,27 +24,30 @@ LastName   名詞,固有名詞,人名,姓
 Number      名詞,数,アラビア数字
 KanjiNumber 名詞,数,漢数字
 
-# used in CandidateFilter
-WeakCompoundPrefix ^(接頭詞,名詞接続|接頭詞,丁寧連用形接続|フィラー)
+# Used in CandidateFilter
+WeakCompoundNounPrefix 接頭詞,名詞接続,
+WeakCompoundVerbPrefix 接頭詞,動詞接続,
+WeakCompoundFillerPrefix フィラー,
+WeakCompoundNounSuffix ^名詞,(サ変接続|ナイ形容詞語幹|一般|副詞可能|形容詞語幹)
+WeakCompoundVerbSuffix 動詞,自立
 
-# use in Segmenter
+# Used in Segmenter
 # if the following particles exist at the beggining of a segment,
 # concat them with the next content word.
 # ex.
 # にかく => に書く, not に|書く
 AcceptableParticleAtBeginOfSegment ^助詞,*,*,*,*,*,(が|で|と|に|にて|の|へ|より|も|と|から|は|や)$
 
-# used in UserHistoryRewriter
+# Used in UserHistoryRewriter
 JapanesePunctuations 記号,(句点|読点)
 
-# used in SymbolRewriter
+# Used in SymbolRewriter
 OpenBracket 記号,括弧開
 CloseBracket 記号,括弧閉
 
-# used in SingleKanjiRewriter
+# Used in SingleKanjiRewriter
 GeneralSymbol 記号,一般,
 
-# zipcode
 Zipcode 特殊,郵便番号
 
 # 短縮よみ
@@ -89,14 +92,18 @@ AdverbSegmentSuffix ^助詞,*,*,*,*,*,(から|で|と|に|にて|の|へ|を)$
 # 並立助詞
 ParallelMarker ^助詞,並立助詞
 
-# ます助動詞
-MasuSuffix 助動詞,*,*,*,特殊・(マス|タイ)
+# These rules are used for removing candidate "書います", "書いたい",
+# "書いすぎ", "書った"etc
 
 # て助動詞/助詞
-TeSuffix (助詞,接続助詞,*,*,*,*,て|助動詞,*,*,*,特殊・タ,|動詞,非自立,*,*,一段,*,てる|動詞,非自立,*,*,五段・ワ行促音便,*,ちゃう)
+TeSuffix (助詞,接続助詞,*,*,*,*,(て|ちゃ)|助詞,並列助詞,*,*,*,*,たり|助詞,各助詞,連語,*,*,*,て|助動詞,*,*,*,特殊・タ,|動詞,非自立,*,*,一段,*,てる|助動詞,*,*,*,下二・タ行,連用形,つ|動詞,非自立,*,*,五段・カ行イ音便,*,とく|動詞,非自立,*,*,五段・カ行促音便,*,てく|動詞,非自立,*,*,五段・ラ行,*,(たる|とる)|動詞,非自立,*,*,五段・ワ行促音便,*,(ちゃう|ちまう)|動詞,非自立,*,*,一段,連用形,てる)
 
-# カ行音便 タ接続 "書い"-て "書い"-た
-# This rule is used for removing candidate "書います/書いたい"
+# 助動詞,助詞
+# For "書いX", if X is VerbSuffix and X is not TeSuffix, it is invalid.
+VerbSuffix (^動詞,非自立|^助詞,接続助詞|^助動詞)
+
+# カ行イ音便 タ接続 "書い"-て "書い"-た
+# カ行促音便 タ接続 "言っ"-て "言っ"-た
 KagyoTaConnectionVerb ^動詞,(非自立|自立),*,*,五段・カ行(促音便|イ音便),連用タ接続
 
 # ワ行促音便 連用形 "買っ" -て "買っ"-た

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -239,9 +239,9 @@ bool UserDictionaryUtil::Sanitize(string *str, size_t max_size) {
     const size_t original_size = str->size();
     string::iterator begin = str->begin();
     string::iterator end = str->end();
-    end = remove(begin, end, '\t');
-    end = remove(begin, end, '\n');
-    end = remove(begin, end, '\r');
+    end = std::remove(begin, end, '\t');
+    end = std::remove(begin, end, '\n');
+    end = std::remove(begin, end, '\r');
 
     if (end - begin <= max_size) {
       if (end - begin == original_size) {
@@ -582,11 +582,11 @@ uint64 UserDictionaryUtil::CreateNewDictionaryId(
   while (id == kInvalidDictionaryId) {
     Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
 
-#ifdef  __native_client__
+#ifdef OS_NACL
     // Because JavaScript does not support uint64, we downsize the dictionary id
     // range from uint64 to uint32 in NaCl.
     id = static_cast<uint32>(id);
-#endif  // __native_client__
+#endif  // OS_NACL
 
     // Duplication check.
     for (int i = 0; i < storage.dictionaries_size(); ++i) {
@@ -652,9 +652,9 @@ bool UserDictionaryUtil::DeleteDictionary(
   RepeatedPtrField<user_dictionary::UserDictionary> *dictionaries =
       storage->mutable_dictionaries();
   // Move the target dictionary to the end.
-  rotate(dictionaries->pointer_begin() + index,
-         dictionaries->pointer_begin() + index + 1,
-         dictionaries->pointer_end());
+  std::rotate(dictionaries->pointer_begin() + index,
+              dictionaries->pointer_begin() + index + 1,
+              dictionaries->pointer_end());
 
   if (deleted_dictionary == NULL) {
     dictionaries->RemoveLast();

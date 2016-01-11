@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -210,7 +210,7 @@ BOOL openURL_test(id self, SEL selector, NSURL *url) {
 NSArray *dummy_screens(id self, SEL selector) {
   return [NSArray arrayWithObject:[[[MockScreen alloc] init] autorelease]];
 }
-}  // anonymous namespace
+}  // namespace
 
 
 class MockRenderer : public mozc::renderer::RendererInterface {
@@ -420,10 +420,10 @@ BOOL SendKeyEvent(unsigned short keyCode,
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, UpdateComposedString) {
-  // If preedit is NULL, it still calls setMarkedText, with an empty string.
+  // If preedit is nullptr, it still calls setMarkedText, with an empty string.
   NSMutableAttributedString *expected =
       [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
-  [controller_ updateComposedString:NULL];
+  [controller_ updateComposedString:nullptr];
   EXPECT_TRUE([expected
                 isEqualToAttributedString:[controller_ composedString:nil]]);
 
@@ -474,7 +474,7 @@ TEST_F(GoogleJapaneseInputControllerTest, ClearCandidates) {
 
 TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // When output is null, same as ClearCandidate
-  [controller_ updateCandidates:NULL];
+  [controller_ updateCandidates:nullptr];
   // Run the runloop so "delayedUpdateCandidates" can be called
   [[NSRunLoop currentRunLoop]
       runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
@@ -654,10 +654,7 @@ TEST_F(GoogleJapaneseInputControllerTest, commitText) {
   EXPECT_EQ(1, [mock_client_ getCounter:"insertText:replacementRange:"]);
   EXPECT_TRUE([@"foo" isEqualToString:mock_client_.insertedText]);
   // location has to be cleared after the commit.
-  // Do not use NSNotFound directly in EXPECT_EQ because type checker
-  // gets confused for the comparision of enums.
-  int expected = NSNotFound;
-  EXPECT_EQ(expected, [controller_ replacementRange].location);
+  EXPECT_EQ(NSNotFound, [controller_ replacementRange].location);
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, handleConfig) {

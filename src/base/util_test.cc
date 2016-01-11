@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,37 +32,27 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
-#include <ctime>
 #include <map>
 #include <sstream>
 #include <string>
 
-#include "base/clock_mock.h"
 #include "base/compiler_specific.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/number_util.h"
-#include "base/thread.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
-
 namespace {
 
+#ifndef OS_NACL
+// Disabled on NaCl since it uses a mock file system.
 void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
   CHECK(test_map);
-
-  const char kCharacterSetTestFile[] =
-      "data/test/character_set/character_set.tsv";
-  const string &path = FileUtil::JoinPath(FLAGS_test_srcdir,
-                                          kCharacterSetTestFile);
-  CHECK(FileUtil::FileExists(path)) << path << " does not exist.";
-
+  const string &path = testing::GetSourceFileOrDie({
+      "data", "test", "character_set", "character_set.tsv"});
   map<string, Util::CharacterSet> character_set_type_map;
   character_set_type_map["ASCII"] = Util::ASCII;
   character_set_type_map["JISX0201"] = Util::JISX0201;
@@ -92,9 +82,10 @@ void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
     // We cannot use CHECK_NE here because of overload resolution.
     CHECK(character_set_type_map.end() != itr)
         << "Unknown character set type: " << col[1];
-    test_map->insert(make_pair(ucs4, itr->second));
+    test_map->insert(std::make_pair(ucs4, itr->second));
   }
 }
+#endif  // !OS_NACL
 
 Util::CharacterSet GetExpectedCharacterSet(
     const map<char32, Util::CharacterSet> &test_map,
@@ -110,15 +101,6 @@ Util::CharacterSet GetExpectedCharacterSet(
 }
 
 }  // namespace
-
-class ThreadTest: public Thread {
- public:
-  virtual void Run() {
-    for (int i = 0; i < 3; ++i) {
-      Util::Sleep(1000);
-    }
-  }
-};
 
 TEST(UtilTest, JoinStrings) {
   vector<string> input;
@@ -827,6 +809,33 @@ TEST(UtilTest, UCS4ToUTF8) {
   EXPECT_EQ("\xF0\x90\x80\x80", output);
   Util::UCS4ToUTF8(0x1FFFFF, &output);
   EXPECT_EQ("\xF7\xBF\xBF\xBF", output);
+
+  // Buffer version.
+  char buf[7];
+
+  EXPECT_EQ(0, Util::UCS4ToUTF8(0, buf));
+  EXPECT_EQ(0, strcmp(buf, ""));
+
+  EXPECT_EQ(1, Util::UCS4ToUTF8(0x7F, buf));
+  EXPECT_EQ(0, strcmp("\x7F", buf));
+
+  EXPECT_EQ(2, Util::UCS4ToUTF8(0x80, buf));
+  EXPECT_EQ(0, strcmp("\xC2\x80", buf));
+
+  EXPECT_EQ(2, Util::UCS4ToUTF8(0x7FF, buf));
+  EXPECT_EQ(0, strcmp("\xDF\xBF", buf));
+
+  EXPECT_EQ(3, Util::UCS4ToUTF8(0x800, buf));
+  EXPECT_EQ(0, strcmp("\xE0\xA0\x80", buf));
+
+  EXPECT_EQ(3, Util::UCS4ToUTF8(0xFFFF, buf));
+  EXPECT_EQ(0, strcmp("\xEF\xBF\xBF", buf));
+
+  EXPECT_EQ(4, Util::UCS4ToUTF8(0x10000, buf));
+  EXPECT_EQ(0, strcmp("\xF0\x90\x80\x80", buf));
+
+  EXPECT_EQ(4, Util::UCS4ToUTF8(0x1FFFFF, buf));
+  EXPECT_EQ(0, strcmp("\xF7\xBF\xBF\xBF", buf));
 }
 
 TEST(UtilTest, CharsLen) {
@@ -1479,17 +1488,6 @@ TEST(UtilTest, IsEnglishTransliteration) {
       "\xE6\x9D\xB1\xE4\xBA\xAC"));
 }
 
-TEST(MutexTest, MutexTest) {
-  mozc::Mutex mutex;
-  mozc::scoped_lock l(&mutex);
-}
-
-TEST(ThreadTest, ThreadTest) {
-  ThreadTest test;
-//  test.SetJoinable(true);
-//  test.Join();
-}
-
 TEST(UtilTest, ChopReturns) {
   string line = "line\n";
   EXPECT_TRUE(Util::ChopReturns(&line));
@@ -1514,95 +1512,6 @@ TEST(UtilTest, ChopReturns) {
   line = "line\n\n\n";
   EXPECT_TRUE(Util::ChopReturns(&line));
   EXPECT_EQ("line", line);
-}
-
-// 2020-12-23 13:24:35 (Wed) UTC
-// 123456 [usec]
-const uint64 kTestSeconds = 1608729875uLL;
-const uint32 kTestMicroSeconds = 123456u;
-
-// time utility test with mock clock
-TEST(UtilTest, TimeTestWithMock) {
-  scoped_ptr<ClockMock> mock_clock(
-      new ClockMock(kTestSeconds, kTestMicroSeconds));
-  Util::SetClockHandler(mock_clock.get());
-
-  // GetTime,
-  {
-    EXPECT_EQ(kTestSeconds, Util::GetTime());
-  }
-
-  // GetTimeOfDay
-  {
-    uint64 current_sec;
-    uint32 current_usec;
-    Util::GetTimeOfDay(&current_sec, &current_usec);
-    EXPECT_EQ(kTestSeconds, current_sec);
-    EXPECT_EQ(kTestMicroSeconds, current_usec);
-  }
-
-  // GetCurrentTm
-  // 2020-12-23 13:24:35 (Wed)
-  {
-    tm current_tm;
-    Util::GetCurrentTm(&current_tm);
-    EXPECT_EQ(120, current_tm.tm_year);
-    EXPECT_EQ(11,  current_tm.tm_mon);
-    EXPECT_EQ(23,  current_tm.tm_mday);
-    EXPECT_EQ(13,  current_tm.tm_hour);
-    EXPECT_EQ(24,  current_tm.tm_min);
-    EXPECT_EQ(35,  current_tm.tm_sec);
-    EXPECT_EQ(3,   current_tm.tm_wday);
-  }
-
-  // GetTmWithoutOffsetSecond
-  // 2024/02/23 23:11:15 (Fri)
-  {
-    const int offset_seconds = 100000000;
-    tm offset_tm;
-    Util::GetTmWithOffsetSecond(&offset_tm, offset_seconds);
-    EXPECT_EQ(124, offset_tm.tm_year);
-    EXPECT_EQ(1,   offset_tm.tm_mon);
-    EXPECT_EQ(23,  offset_tm.tm_mday);
-    EXPECT_EQ(23,  offset_tm.tm_hour);
-    EXPECT_EQ(11,  offset_tm.tm_min);
-    EXPECT_EQ(15,  offset_tm.tm_sec);
-    EXPECT_EQ(5,   offset_tm.tm_wday);
-  }
-
-  // GetFrequency / GetTicks
-  {
-    const uint64 kFrequency = 12345;
-    const uint64 kTicks = 54321;
-    mock_clock->SetFrequency(kFrequency);
-    EXPECT_EQ(kFrequency, Util::GetFrequency());
-    mock_clock->SetTicks(kTicks);
-    EXPECT_EQ(kTicks, Util::GetTicks());
-  }
-
-  // unset clock handler
-  Util::SetClockHandler(NULL);
-
-  // GetFrequency / GetTicks without ClockMock
-  {
-    EXPECT_NE(0, Util::GetFrequency());
-    EXPECT_NE(0, Util::GetTicks());
-  }
-}
-
-// time utility test without mock clock
-TEST(UtilTest, TimeTestWithoutMock) {
-  uint64 get_time_of_day_sec, get_time_sec;
-  uint32 get_time_of_day_usec;
-
-  Util::GetTimeOfDay(&get_time_of_day_sec, &get_time_of_day_usec);
-  get_time_sec = Util::GetTime();
-
-  // hmm, unstable test.
-  const int margin = 1;
-  EXPECT_NEAR(get_time_of_day_sec, get_time_sec, margin)
-      << ": This test have possibilities to fail "
-      << "when system is busy and slow.";
 }
 
 TEST(UtilTest, EncodeURI) {
@@ -1641,12 +1550,12 @@ TEST(UtilTest, AppendCGIParams) {
   Util::AppendCGIParams(params, &url);
   EXPECT_TRUE(url.empty());
 
-  params.push_back(make_pair("foo", "b a+r"));
+  params.push_back(std::make_pair("foo", "b a+r"));
   url = "http://mozc.com?";
   Util::AppendCGIParams(params, &url);
   EXPECT_EQ("http://mozc.com?foo=b%20a%2Br", url);
 
-  params.push_back(make_pair("buzz", "mozc"));
+  params.push_back(std::make_pair("buzz", "mozc"));
   url.clear();
   Util::AppendCGIParams(params, &url);
   EXPECT_EQ("foo=b%20a%2Br&buzz=mozc", url);
@@ -2101,9 +2010,13 @@ TEST(UtilTest, FormType) {
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("@!#"));
 }
 
+
+#ifndef OS_NACL
 // We have a snapshot of the result of |Util::GetCharacterSet(ucs4)| in
 // data/test/character_set/character_set.tsv.
 // Compare the result for each character just in case.
+//
+// Disabled on NaCl since it uses a mock file system.
 TEST(UtilTest, CharacterSetFullTest) {
   map<char32, Util::CharacterSet> test_set;
   FillTestCharacterSetMap(&test_set);
@@ -2116,6 +2029,7 @@ TEST(UtilTest, CharacterSetFullTest) {
         << "Character set changed at " << ucs4;
   }
 }
+#endif  // OS_NACL
 
 TEST(UtilTest, CharacterSet_gen_character_set) {
   // [0x00, 0x7f] are ASCII
@@ -2238,36 +2152,6 @@ TEST(UtilTest, IsKanaSymbolContained) {
   EXPECT_TRUE(Util::IsKanaSymbolContained(kFullstop + kSpace));
   EXPECT_FALSE(Util::IsKanaSymbolContained(kSpace));
   EXPECT_FALSE(Util::IsKanaSymbolContained(""));
-}
-
-#ifdef OS_ANDROID
-// At the moment, encoding is not the target of build for Android.
-#else
-TEST(UtilTest, Issue2190350) {
-  string result = "";
-  // \xE3\x81\x82 == Hiragana a in UTF8
-  Util::UTF8ToSJIS("\xE3\x81\x82", &result);
-  EXPECT_EQ(2, result.length());
-  // \x82\xA0 == Hiragana a in Shift-JIS
-  EXPECT_EQ("\x82\xA0", result);
-
-  result = "";
-  Util::SJISToUTF8("\x82\xA0", &result);
-  EXPECT_EQ(3, result.length());
-  EXPECT_EQ("\xE3\x81\x82", result);
-}
-#endif
-
-TEST(UtilTest, Fingerprint32WithSeed_uint32) {
-  const uint32 seed = 0xabcdef;
-
-  const uint32 num = 0x12345678;    // Assumed little endian
-  const uint32 num_hash = Util::Fingerprint32WithSeed(num, seed);
-
-  const char* str = "\x78\x56\x34\x12";
-  const uint32 str_hash = Util::Fingerprint32WithSeed(str, 4, seed);
-
-  EXPECT_EQ(num_hash, str_hash) << num_hash << " != " << str_hash;
 }
 
 TEST(UtilTest, RandomSeedTest) {

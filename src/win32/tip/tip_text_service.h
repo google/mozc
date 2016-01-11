@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,12 @@ class TipTextService : public IUnknown {
   // the reference count of the returned object.
   virtual ITfCompositionSink *CreateCompositionSink(ITfContext *context) = 0;
 
+  // Updates the language bar as needed.  Does nothing if the language bar is
+  // not available.
   virtual void UpdateLangbar(bool enabled, uint32 mozc_mode) = 0;
+
+  // Returns true if the language bar is initialized.
+  virtual bool IsLangbarInitialized() const = 0;
 };
 
 class TipTextServiceFactory {

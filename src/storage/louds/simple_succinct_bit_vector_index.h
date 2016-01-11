@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,20 +42,31 @@ class SimpleSuccinctBitVectorIndex {
  public:
   // The default chunk_size is 32.
   SimpleSuccinctBitVectorIndex()
-      : data_(NULL), length_(0), chunk_size_(32) {
-  }
+      : data_(nullptr),
+        length_(0),
+        chunk_size_(32),
+        lb0_cache_increment_(1),
+        lb1_cache_increment_(1) {}
 
   // chunk_size is in bytes, and must be greater than or equal to 4
   // and power of 2, at the moment, although we may relax the restriction
   // in future if necessary.
   explicit SimpleSuccinctBitVectorIndex(int chunk_size)
-      : data_(NULL), length_(0), chunk_size_(chunk_size) {
-  }
+      : data_(nullptr),
+        length_(0),
+        chunk_size_(chunk_size),
+        lb0_cache_increment_(1),
+        lb1_cache_increment_(1) {}
 
   // Initializes the index. This class doesn't have the ownership of the memory
   // pointed by data, so it is caller's responsibility to manage its life time.
   // The 'data' needs to be aligned to 32-bits.
-  void Init(const uint8 *data, int length);
+  void Init(const uint8 *data, int length,
+            size_t lb0_cache_size, size_t lb1_cache_size);
+
+  void Init(const uint8 *data, int length) {
+    Init(data, length, 0, 0);
+  }
 
   // Resets the internal state, especially releases the allocated memory
   // for the index used internally.
@@ -84,13 +95,19 @@ class SimpleSuccinctBitVectorIndex {
   // Returned index is 0-origin.
   int Select1(int n) const;
 
+  int GetNum1Bits() const { return index_.back(); }
+  int GetNum0Bits() const { return 8 * length_ - index_.back(); }
+
  private:
   const uint8 *data_;
   int length_;
   int chunk_size_;
 
-  // TODO(hidehiko): Create two-level index for more performance.
   vector<int> index_;
+  int lb0_cache_increment_;
+  vector<const int *> lb0_cache_;
+  int lb1_cache_increment_;
+  vector<const int *> lb1_cache_;
 
   DISALLOW_COPY_AND_ASSIGN(SimpleSuccinctBitVectorIndex);
 };

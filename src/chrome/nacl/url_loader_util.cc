@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifdef OS_NACL
+
 #include "chrome/nacl/url_loader_util.h"
 
+#include <algorithm>
 #include <memory>
 
 #include <ppapi/c/pp_file_info.h>
@@ -44,7 +47,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 using std::unique_ptr;
 
@@ -371,3 +373,5 @@ void URLLoaderUtil::StartDownloadToFile(pp::Instance *instance,
 }  // namespace nacl
 }  // namespace chrome
 }  // namespace mozc
+
+#endif  // OS_NACL

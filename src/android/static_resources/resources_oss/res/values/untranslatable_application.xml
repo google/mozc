@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright 2010-2015, Google Inc.
+ Copyright 2010-2016, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@ This file contains strings, which are untranslatable and differ from the OSS
 version.
 -->
 <resources>
-    <string name="pref_about_terms_of_service_url">http://code.google.com/p/mozc/</string>
-    <string name="pref_about_privacy_policy_url">http://code.google.com/p/mozc/</string>
+    <string name="pref_about_terms_of_service_url">https://github.com/google/mozc</string>
+    <string name="pref_about_privacy_policy_url">https://github.com/google/mozc</string>
     <!--
     MiniBrowser can access only the url which matches below pattern.
     This restriction is introduced in order not to show unexpected website in "EULA" activity.

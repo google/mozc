@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,9 @@
 
 #include <QtGui/QDialog>
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/about_dialog/ui_about_dialog.h"
 
 class QImage;
@@ -53,7 +54,7 @@ class AboutDialog : public QDialog,
                     private Ui::AboutDialog {
   Q_OBJECT;
  public:
-  explicit AboutDialog(QWidget *parent = NULL);
+  explicit AboutDialog(QWidget *parent = nullptr);
   void SetLinkCallback(LinkCallbackInterface *callback);
 
   void paintEvent(QPaintEvent *event);
@@ -63,7 +64,7 @@ class AboutDialog : public QDialog,
 
  private:
   LinkCallbackInterface *callback_;
-  scoped_ptr<QImage> product_image_;
+  std::unique_ptr<QImage> product_image_;
 };
 
 }  // namespace mozc::gui

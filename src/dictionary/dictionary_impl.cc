@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,11 @@
 #include "base/logging.h"
 #include "base/string_piece.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "protocol/config.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace dictionary {
@@ -147,72 +146,82 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
 
 void DictionaryImpl::LookupPredictive(
     StringPiece key,
-    bool use_kana_modifier_insensitive_lookup,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   CallbackWithFilter callback_with_filter(
-      GET_CONFIG(use_spelling_correction),
-      GET_CONFIG(use_zip_code_conversion),
-      GET_CONFIG(use_t13n_conversion),
+      conversion_request.config().use_spelling_correction(),
+      conversion_request.config().use_zip_code_conversion(),
+      conversion_request.config().use_t13n_conversion(),
       pos_matcher_,
       suppression_dictionary_,
       callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
     dics_[i]->LookupPredictive(
-        key, use_kana_modifier_insensitive_lookup, &callback_with_filter);
+        key,
+        conversion_request,
+        &callback_with_filter);
   }
 }
 
 void DictionaryImpl::LookupPrefix(
     StringPiece key,
-    bool use_kana_modifier_insensitive_lookup,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   CallbackWithFilter callback_with_filter(
-      GET_CONFIG(use_spelling_correction),
-      GET_CONFIG(use_zip_code_conversion),
-      GET_CONFIG(use_t13n_conversion),
+      conversion_request.config().use_spelling_correction(),
+      conversion_request.config().use_zip_code_conversion(),
+      conversion_request.config().use_t13n_conversion(),
       pos_matcher_,
       suppression_dictionary_,
       callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
     dics_[i]->LookupPrefix(
-        key, use_kana_modifier_insensitive_lookup, &callback_with_filter);
+        key,
+        conversion_request,
+        &callback_with_filter);
   }
 }
 
-void DictionaryImpl::LookupExact(StringPiece key, Callback *callback) const {
+void DictionaryImpl::LookupExact(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   CallbackWithFilter callback_with_filter(
-      GET_CONFIG(use_spelling_correction),
-      GET_CONFIG(use_zip_code_conversion),
-      GET_CONFIG(use_t13n_conversion),
+      conversion_request.config().use_spelling_correction(),
+      conversion_request.config().use_zip_code_conversion(),
+      conversion_request.config().use_t13n_conversion(),
       pos_matcher_,
       suppression_dictionary_,
       callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupExact(key, &callback_with_filter);
+    dics_[i]->LookupExact(key, conversion_request, &callback_with_filter);
   }
 }
 
-void DictionaryImpl::LookupReverse(StringPiece str,
-                                   Callback *callback) const {
+void DictionaryImpl::LookupReverse(
+    StringPiece str,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   CallbackWithFilter callback_with_filter(
-      GET_CONFIG(use_spelling_correction),
-      GET_CONFIG(use_zip_code_conversion),
-      GET_CONFIG(use_t13n_conversion),
+      conversion_request.config().use_spelling_correction(),
+      conversion_request.config().use_zip_code_conversion(),
+      conversion_request.config().use_t13n_conversion(),
       pos_matcher_,
       suppression_dictionary_,
       callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupReverse(str, &callback_with_filter);
+    dics_[i]->LookupReverse(str, conversion_request, &callback_with_filter);
   }
 }
 
 bool DictionaryImpl::LookupComment(StringPiece key, StringPiece value,
+                                   const ConversionRequest &conversion_request,
                                    string *comment) const {
   // TODO(komatsu): UserDictionary should be treated as the highest priority.
   // In the current implementation, UserDictionary is the last node of dics_,
   // but the only dictionary which may return true.
   for (size_t i = 0; i < dics_.size(); ++i) {
-    if (dics_[i]->LookupComment(key, value, comment)) {
+    if (dics_[i]->LookupComment(key, value, conversion_request, comment)) {
       return true;
     }
   }

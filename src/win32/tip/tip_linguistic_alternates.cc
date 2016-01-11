@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,26 +48,6 @@
 
 using ::ATL::CComPtr;
 using ::std::unique_ptr;
-
-// ITfFnGetLinguisticAlternates is available on Windows 8.1 SDK and later.
-#ifndef __ITfFnGetLinguisticAlternates_INTERFACE_DEFINED__
-#define __ITfFnGetLinguisticAlternates_INTERFACE_DEFINED__
-
-// {ea163ce2-7a65-4506-82a3-c528215da64e}
-const IID IID_ITfFnGetLinguisticAlternates = {
-  0xea163ce2, 0x7a65, 0x4506, {0x82, 0xa3, 0xc5, 0x28, 0x21, 0x5d, 0xa6, 0x4e}
-};
-
-// Note: "ea163ce2-7a65-4506-82a3-c528215da64e" is equivalent to
-// IID_ITfFnSearchCandidateProvider
-struct __declspec(uuid("ea163ce2-7a65-4506-82a3-c528215da64e"))
-ITfFnGetLinguisticAlternates : public ITfFunction {
- public:
-  virtual HRESULT STDMETHODCALLTYPE GetAlternates(
-      ITfRange *range,
-      ITfCandidateList **candidate_list) = 0;
-};
-#endif  // !__ITfFnSearchCandidateProvider_INTERFACE_DEFINED__
 
 namespace mozc {
 namespace win32 {

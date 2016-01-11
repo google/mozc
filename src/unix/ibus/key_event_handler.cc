@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,46 +39,6 @@ namespace mozc {
 namespace ibus {
 
 namespace {
-// TODO(hsumita): Removes this class, and moves |data_| into member
-// variables of KeyEventhandler.
-class AdditionalModifiersData {
- public:
-  AdditionalModifiersData() {
-    data_[commands::KeyEvent::LEFT_ALT] = commands::KeyEvent::ALT;
-    data_[commands::KeyEvent::RIGHT_ALT] = commands::KeyEvent::ALT;
-    data_[commands::KeyEvent::LEFT_CTRL] = commands::KeyEvent::CTRL;
-    data_[commands::KeyEvent::RIGHT_CTRL] = commands::KeyEvent::CTRL;
-    data_[commands::KeyEvent::LEFT_SHIFT] = commands::KeyEvent::SHIFT;
-    data_[commands::KeyEvent::RIGHT_SHIFT] = commands::KeyEvent::SHIFT;
-  }
-  const map<uint32, commands::KeyEvent::ModifierKey> &data() {
-    return data_;
-  }
-
- private:
-  map<uint32, commands::KeyEvent::ModifierKey> data_;
-};
-
-// TODO(hsumita): Moves this function into member functions of
-// KeyEventHandler.
-void AddAdditionalModifiers(
-    set<commands::KeyEvent::ModifierKey> *modifier_keys_set) {
-  DCHECK(modifier_keys_set);
-
-  const map<uint32, commands::KeyEvent::ModifierKey> &data =
-      Singleton<AdditionalModifiersData>::get()->data();
-
-  // Adds MODIFIER if there are (LEFT|RIGHT)_MODIFIER like LEFT_SHIFT.
-  for (set<commands::KeyEvent::ModifierKey>::const_iterator it =
-           modifier_keys_set->begin(); it != modifier_keys_set->end(); ++it) {
-    map<uint32, commands::KeyEvent::ModifierKey>::const_iterator item =
-        data.find(*it);
-    if (item != data.end()) {
-      modifier_keys_set->insert(item->second);
-    }
-  }
-}
-
 bool IsModifierToBeSentOnKeyUp(const commands::KeyEvent &key_event) {
   if (key_event.modifier_keys_size() == 0) {
     return false;
@@ -226,7 +186,6 @@ bool KeyEventHandler::ProcessModifiers(bool is_key_up, guint keyval,
       for (size_t i = 0; i < key_event->modifier_keys_size(); ++i) {
         modifiers_to_be_sent_.insert(key_event->modifier_keys(i));
       }
-      AddAdditionalModifiers(&modifiers_to_be_sent_);
     }
     currently_pressed_modifiers_.insert(keyval);
     return false;

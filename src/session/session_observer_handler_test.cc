@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,7 @@ namespace session {
 
 class SessionObserverMock : public SessionObserverInterface {
  public:
-  SessionObserverMock()
-      : eval_count_(0), reloaded_(false) {}
+  SessionObserverMock() : eval_count_(0) {}
   virtual ~SessionObserverMock() {}
 
   void EvalCommandHandler(const commands::Command &command) {
@@ -46,18 +45,8 @@ class SessionObserverMock : public SessionObserverInterface {
     ++eval_count_;
   }
 
-  void Reload() {
-    eval_count_ = 0;
-    reloaded_ = true;
-    command_.Clear();
-  }
-
   int eval_count() const {
     return eval_count_;
-  }
-
-  bool reloaded() const {
-    return reloaded_;
   }
 
   const commands::Command &command() const {
@@ -66,7 +55,6 @@ class SessionObserverMock : public SessionObserverInterface {
 
  private:
   int eval_count_;
-  bool reloaded_;
   commands::Command command_;
   DISALLOW_COPY_AND_ASSIGN(SessionObserverMock);
 };
@@ -86,12 +74,10 @@ TEST(SessionObserverHandlerTest, ObserverTest) {
   handler.EvalCommandHandler(command);
 
   EXPECT_EQ(1, observer1.eval_count());
-  EXPECT_FALSE(observer1.reloaded());
   EXPECT_EQ('a', observer1.command().input().key().key_code());
   EXPECT_TRUE(observer1.command().output().consumed());
 
   EXPECT_EQ(1, observer2.eval_count());
-  EXPECT_FALSE(observer2.reloaded());
   EXPECT_EQ('a', observer2.command().input().key().key_code());
   EXPECT_TRUE(observer2.command().output().consumed());
 
@@ -102,27 +88,12 @@ TEST(SessionObserverHandlerTest, ObserverTest) {
   handler.EvalCommandHandler(command);
 
   EXPECT_EQ(2, observer1.eval_count());
-  EXPECT_FALSE(observer1.reloaded());
   EXPECT_EQ('z', observer1.command().input().key().key_code());
   EXPECT_FALSE(observer1.command().output().consumed());
 
   EXPECT_EQ(2, observer2.eval_count());
-  EXPECT_FALSE(observer2.reloaded());
   EXPECT_EQ('z', observer2.command().input().key().key_code());
   EXPECT_FALSE(observer2.command().output().consumed());
-
-  // Round3: Reload
-  handler.Reload();
-
-  EXPECT_EQ(0, observer1.eval_count());
-  EXPECT_TRUE(observer1.reloaded());
-  EXPECT_FALSE(observer1.command().input().has_key());
-  EXPECT_FALSE(observer1.command().output().has_consumed());
-
-  EXPECT_EQ(0, observer2.eval_count());
-  EXPECT_TRUE(observer2.reloaded());
-  EXPECT_FALSE(observer2.command().input().has_key());
-  EXPECT_FALSE(observer2.command().output().has_consumed());
 }
 
 }  // namespace session

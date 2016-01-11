@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,10 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace {
@@ -73,10 +73,8 @@ bool CorrectionRewriter::LookupCorrection(
   ReadingCorrectionItem key_item;
   key_item.error = key.c_str();
   const ReadingCorrectionItem *result =
-      lower_bound(reading_corrections_,
-                  reading_corrections_ + size_,
-                  key_item,
-                  ReadingCorrectionItemCompare());
+      std::lower_bound(reading_corrections_, reading_corrections_ + size_,
+                       key_item, ReadingCorrectionItemCompare());
   if (result == (reading_corrections_ + size_) ||
       key != result->error) {
     return false;
@@ -111,7 +109,7 @@ CorrectionRewriter::~CorrectionRewriter() {}
 
 bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
                                  Segments *segments) const {
-  if (!GET_CONFIG(use_spelling_correction)) {
+  if (!request.config().use_spelling_correction()) {
     return false;
   }
 

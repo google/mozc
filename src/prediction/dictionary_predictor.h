@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,22 +35,22 @@
 #include <vector>
 
 #include "base/util.h"
+#include "converter/connector.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segmenter.h"
+#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_list.h"
+#include "request/conversion_request.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
-
-class Connector;
-class ConversionRequest;
-class ConverterInterface;
-class ImmutableConverterInterface;
-class Segmenter;
-class Segments;
-class SuggestionFilter;
 
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
@@ -70,12 +70,14 @@ class DictionaryPredictor : public PredictorInterface {
   virtual bool PredictForRequest(const ConversionRequest &request,
                                  Segments *segments) const;
 
+  virtual void Finish(const ConversionRequest &request, Segments *segments);
+
   virtual const string &GetPredictorName() const { return predictor_name_; }
 
  protected:
   // Protected members for unittesting
   // For use util method accessing private members, made them protected.
-  // http://code.google.com/p/googletest/wiki/FAQ
+  // https://github.com/google/googletest/blob/master/googletest/docs/FAQ.md
   enum PredictionType {
     // don't need to show any suggestions.
     NO_PREDICTION = 0,
@@ -103,13 +105,16 @@ class DictionaryPredictor : public PredictorInterface {
 
   struct Result {
     Result() : types(NO_PREDICTION), wcost(0), cost(0), lid(0), rid(0),
-               candidate_attributes(0), consumed_key_size(0) {}
+               candidate_attributes(0), source_info(0),
+               consumed_key_size(0) {}
 
     void InitializeByTokenAndTypes(const dictionary::Token &token,
                                    PredictionTypes types);
     void SetTypesAndTokenAttributes(
         PredictionTypes prediction_types,
         dictionary::Token::AttributesBitfield token_attr);
+    void SetSourceInfoForZeroQuery(
+        ZeroQueryType zero_query_type);
 
     string key;
     string value;
@@ -133,6 +138,9 @@ class DictionaryPredictor : public PredictorInterface {
     // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
     vector<uint32> inner_segment_boundary;
     uint32 candidate_attributes;
+    // Segment::Candidate::SourceInfo.
+    // Will be used for usage stats.
+    uint32 source_info;
     size_t consumed_key_size;
   };
 
@@ -178,12 +186,6 @@ class DictionaryPredictor : public PredictorInterface {
                                          const Segments &segments,
                                          vector<Result> *results) const;
 
-  bool AggregateNumberZeroQueryPrediction(const Segments &segments,
-                                          vector<Result> *results) const;
-
-  bool AggregateZeroQueryPrediction(const Segments &segments,
-                                    vector<Result> *result) const;
-
   void ApplyPenaltyForKeyExpansion(const Segments &segments,
                                    vector<Result> *results) const;
 
@@ -205,7 +207,9 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, GetCandidateCutoffThreshold);
   FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction);
   FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
   FRIEND_TEST(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, TriggerZeroQuerySuggestion);
@@ -220,11 +224,36 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, SetLMCost);
   FRIEND_TEST(DictionaryPredictorTest, SetDescription);
   FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
+  FRIEND_TEST(DictionaryPredictorTest, GetZeroQueryCandidates);
+
+  typedef pair<string, ZeroQueryType> ZeroQueryResult;
+
+  // Looks up the given range and appends zero query candidate list for |key|
+  // to |results|.
+  // Returns false if there is no result for |key|.
+  static bool GetZeroQueryCandidatesForKey(
+      const ConversionRequest &request,
+      const string &key,
+      const ZeroQueryList *begin,
+      const ZeroQueryList *end,
+      vector<ZeroQueryResult> *results);
+
+  static void AppendZeroQueryToResults(
+      const vector<ZeroQueryResult> &candidates,
+      uint16 lid, uint16 rid, vector<Result> *results);
 
   // Returns false if no results were aggregated.
   bool AggregatePrediction(const ConversionRequest &request,
                            Segments *segments,
                            vector<Result> *results) const;
+
+  bool AggregateNumberZeroQueryPrediction(const ConversionRequest &request,
+                                          const Segments &segments,
+                                          vector<Result> *results) const;
+
+  bool AggregateZeroQueryPrediction(const ConversionRequest &request,
+                                    const Segments &segments,
+                                    vector<Result> *result) const;
 
   void SetCost(const ConversionRequest &request,
                const Segments &segments, vector<Result> *results) const;
@@ -245,6 +274,7 @@ class DictionaryPredictor : public PredictorInterface {
   void CheckBigramResult(const dictionary::Token &history_token,
                          const Util::ScriptType history_ctype,
                          const Util::ScriptType last_history_ctype,
+                         const ConversionRequest &request,
                          Result *result) const;
 
   void GetPredictiveResults(const dictionary::DictionaryInterface &dictionary,
@@ -414,6 +444,8 @@ class DictionaryPredictor : public PredictorInterface {
   bool PushBackTopConversionResult(const ConversionRequest &request,
                                    const Segments &segments,
                                    vector<Result> *results) const;
+
+  void MaybeRecordUsageStats(const Segment::Candidate &candidate) const;
 
   // Sets candidate description.
   static void SetDescription(PredictionTypes types,

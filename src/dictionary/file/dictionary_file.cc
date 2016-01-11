@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,11 @@
 namespace mozc {
 namespace dictionary {
 
-DictionaryFile::DictionaryFile() {}
+DictionaryFile::DictionaryFile(
+    const DictionaryFileCodecInterface *file_codec)
+    : file_codec_(file_codec) {
+  DCHECK(file_codec_);
+}
 
 DictionaryFile::~DictionaryFile() {}
 
@@ -52,17 +56,14 @@ bool DictionaryFile::OpenFromFile(const string &file) {
 
 bool DictionaryFile::OpenFromImage(const char *image, int length) {
   sections_.clear();
-  const bool result =
-      DictionaryFileCodecFactory::GetCodec()->ReadSections(
-          image, length, &sections_);
+  const bool result = file_codec_->ReadSections(image, length, &sections_);
   return result;
 }
 
 const char *DictionaryFile::GetSection(const string &section_name,
                                        int *len) const {
   DCHECK(len);
-  const string name =
-      DictionaryFileCodecFactory::GetCodec()->GetSectionName(section_name);
+  const string name = file_codec_->GetSectionName(section_name);
   for (size_t i = 0; i < sections_.size(); ++i) {
     if (sections_[i].name == name) {
       *len = sections_[i].len;

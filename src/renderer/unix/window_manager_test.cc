@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -331,13 +331,12 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
     const Size window_size(35, 45);
     const gint monitor = 0x7777;
 
-    candidates->set_window_location(commands::Candidates::CARET);
     const Rect caret_rect(16, 26, 2, 13);
-    commands::Rectangle *rectangle = candidates->mutable_caret_rectangle();
-    rectangle->set_x(caret_rect.Left());
-    rectangle->set_y(caret_rect.Top());
-    rectangle->set_width(caret_rect.Width());
-    rectangle->set_height(caret_rect.Height());
+    auto *rectangle = command.mutable_preedit_rectangle();
+    rectangle->set_left(caret_rect.Left());
+    rectangle->set_top(caret_rect.Top());
+    rectangle->set_right(caret_rect.Right());
+    rectangle->set_bottom(caret_rect.Bottom());
     const Point expected_window_position(
         caret_rect.Left() - client_cord_rect.Left(),
         caret_rect.Top() + caret_rect.Height());
@@ -400,14 +399,12 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
     const Size window_size(35, 45);
     const gint monitor = 0x7777;
 
-    candidates->set_window_location(commands::Candidates::COMPOSITION);
     const Rect comp_rect(16, 26, 2, 13);
-    commands::Rectangle *rectangle
-        = candidates->mutable_composition_rectangle();
-    rectangle->set_x(comp_rect.Left());
-    rectangle->set_y(comp_rect.Top());
-    rectangle->set_width(comp_rect.Width());
-    rectangle->set_height(comp_rect.Height());
+    auto *rectangle = command.mutable_preedit_rectangle();
+    rectangle->set_left(comp_rect.Left());
+    rectangle->set_top(comp_rect.Top());
+    rectangle->set_right(comp_rect.Right());
+    rectangle->set_bottom(comp_rect.Bottom());
     const Point expected_window_position(
         comp_rect.Left() - client_cord_rect.Left(),
         comp_rect.Top() + comp_rect.Height());

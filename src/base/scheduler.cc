@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,10 @@
 #include <map>
 #include <utility>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/timer.h"
 #include "base/util.h"
@@ -143,7 +143,7 @@ class Job {
 class SchedulerImpl : public Scheduler::SchedulerInterface {
  public:
   SchedulerImpl() {
-    Util::SetRandomSeed(static_cast<uint32>(Util::GetTime()));
+    Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
   }
 
   virtual ~SchedulerImpl() {
@@ -172,8 +172,8 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
       return false;
     }
 
-    pair<map<string, Job>::iterator, bool> insert_result
-        = jobs_.insert(make_pair(job_setting.name(), Job(job_setting)));
+    pair<map<string, Job>::iterator, bool> insert_result =
+        jobs_.insert(std::make_pair(job_setting.name(), Job(job_setting)));
     if (!insert_result.second) {
       LOG(ERROR) << "insert failed";
       return false;

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 
 
 #include <string>
+
 #include "base/port.h"
 
 namespace mozc_flags {
@@ -49,18 +50,16 @@ class FlagRegister {
                const void *default_storage,
                int shorttpe,
                const char *help);
-  virtual ~FlagRegister();
+  ~FlagRegister();
+
  private:
   Flag *flag_;
 };
 
-uint32 ParseCommandLineFlags(int *argc, char*** argv,
-                             bool remove_flags);
-}  // mozc_flags
+uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags);
+bool SetFlag(const string &key, const string &value);
 
-void InitGoogle(const char *arg0,
-                int *argc, char ***argv,
-                bool remove_flags);
+}  // namespace mozc_flags
 
 #define DEFINE_VARIABLE(type, shorttype, name, value, help) \
 namespace mozc_flags_fL##shorttype { \

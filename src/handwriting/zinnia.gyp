@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,62 +28,70 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
-  'variables': {
-   'zinnia_sources': [
-     '<(DEPTH)/third_party/zinnia/v0_04/character.cpp',
-     '<(DEPTH)/third_party/zinnia/v0_04/param.cpp',
-     '<(DEPTH)/third_party/zinnia/v0_04/svm.cpp',
-     '<(DEPTH)/third_party/zinnia/v0_04/feature.cpp',
-     '<(DEPTH)/third_party/zinnia/v0_04/recognizer.cpp',
-     '<(DEPTH)/third_party/zinnia/v0_04/trainer.cpp',
-     '<(DEPTH)/third_party/zinnia/v0_04/libzinnia.cpp',
-     '<(DEPTH)/third_party/zinnia/v0_04/sexp.cpp',
-    ],
-  },
   'targets': [
     {
       'target_name': 'zinnia',
-      'type': 'static_library',
-      'cflags': [
-        '-Wno-type-limits',
-      ],
       'conditions': [
-        ['OS=="linux"', {
-          'conditions': [
-            ['use_libzinnia==1', {
-              'link_settings': {
-                'libraries': [
-                  '<!@(<(pkg_config_command) --libs zinnia)',
-                ],
-              },
-            }, {  # OS=="linux" and use_libzinnia==0
-              'sources': ['<@(zinnia_sources)'],
-              'defines': ['HAVE_CONFIG_H'],
-            }],
+        ['use_libzinnia==1', {
+          'type': 'none',
+          'link_settings': {
+            'libraries': [
+              '<!@(<(pkg_config_command) --libs zinnia)',
+            ],
+          },
+        }, {  # use_libzinnia==0
+          'type': 'static_library',
+          'variables': {
+            'zinnia_src_dir': '<(third_party_dir)/zinnia/zinnia',
+          },
+          'sources': [
+            '<(zinnia_src_dir)/character.cpp',
+            '<(zinnia_src_dir)/param.cpp',
+            '<(zinnia_src_dir)/svm.cpp',
+            '<(zinnia_src_dir)/feature.cpp',
+            '<(zinnia_src_dir)/recognizer.cpp',
+            '<(zinnia_src_dir)/trainer.cpp',
+            '<(zinnia_src_dir)/libzinnia.cpp',
+            '<(zinnia_src_dir)/sexp.cpp',
           ],
-        }],
-        ['OS=="mac"', {
-          'sources': ['<@(zinnia_sources)'],
-          'defines': ['HAVE_CONFIG_H'],
-        }],
-        ['(_toolset=="target" and compiler_target=="clang") or '
-         '(_toolset=="host" and compiler_host=="clang")', {
+          'include_dirs': [
+            # So that dependent file can look up <zinnia.h>
+            '<(zinnia_src_dir)',
+          ],
+          'all_dependent_settings': {
+            'include_dirs': [
+              # So that dependent file can look up <zinnia.h>
+              '<(zinnia_src_dir)',
+            ],
+          },
           'cflags': [
-            '-Wno-missing-field-initializers',
-            '-Wno-tautological-compare',
-          ],
-        }],
-        ['OS=="win"', {
-          'sources': ['<@(zinnia_sources)'],
-          'defines': [
-             'VERSION="0.04"',
-             'PACKAGE="zinnia"',
-             'HAVE_WINDOWS_H',
+            '-Wno-type-limits',
           ],
           'msvs_disabled_warnings': [
             # destructor never returns, potential memory leak
             # http://msdn.microsoft.com/en-us/library/khwfyc5d.aspx
             '4722',  # Zinnia contains this kind of code
+          ],
+          'conditions': [
+            ['target_platform=="Windows"', {
+              'defines': [
+                'HAVE_WINDOWS_H=1',
+                'PACKAGE="zinnia"',
+                'VERSION="0.06"',
+              ],
+            }],
+            ['target_platform=="Linux" or target_platform=="Mac"', {
+              'defines': [
+                'HAVE_CONFIG_H=1'
+              ],
+            }],
+            ['(_toolset=="target" and compiler_target=="clang") or '
+             '(_toolset=="host" and compiler_host=="clang")', {
+               'cflags': [
+                 '-Wno-missing-field-initializers',
+                 '-Wno-tautological-compare',
+               ],
+            }],
           ],
         }],
       ],

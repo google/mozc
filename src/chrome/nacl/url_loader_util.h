@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #ifndef MOZC_CHROME_NACL_URL_LOADER_UTIL_H_
 #define MOZC_CHROME_NACL_URL_LOADER_UTIL_H_
 
+#ifdef OS_NACL
+
 #include <ppapi/cpp/completion_callback.h>
 
 #include <string>
@@ -59,5 +61,7 @@ class URLLoaderUtil {
 }  // namespace nacl
 }  // namespace chrome
 }  // namespace mozc
+
+#endif  // OS_NACL
 
 #endif  // MOZC_CHROME_NACL_URL_LOADER_UTIL_H_

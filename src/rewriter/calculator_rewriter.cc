@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,11 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/calculator/calculator_interface.h"
 
 namespace mozc {
@@ -67,7 +67,7 @@ int CalculatorRewriter::capability(const ConversionRequest &request) const {
 //            a valid expression.
 bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
                                  Segments *segments) const {
-  if (!GET_CONFIG(use_calculator)) {
+  if (!request.config().use_calculator()) {
     return false;
   }
 
@@ -174,8 +174,18 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
       candidate->value = value;
       candidate->content_value = value;
     } else {       // with expression
-      candidate->value = expression + value;
-      candidate->content_value = expression + value;
+      DCHECK(!expression.empty());
+      if (expression.front() == '=') {
+        // Expression starts with '='.
+        // Appends value to the left of expression.
+        candidate->value = value + expression;
+        candidate->content_value = value + expression;
+      } else {
+        // Expression ends with '='.
+        // Appends value to the right of expression.
+        candidate->value = expression + value;
+        candidate->content_value = expression + value;
+      }
     }
   }
 

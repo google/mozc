@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -91,9 +91,11 @@ def MakeSubsetFont(fonttools_path, unicodes, input_font, output_font):
     # to temporary directory and copy the result with renaming.
     shutil.copy(input_font, tempdir)
     temp_input_font = os.path.join(tempdir, os.path.basename(input_font))
-    commands = ['python', os.path.join(fonttools_path, 'subset.py'),
+    python_cmd = 'python'
+    commands = [python_cmd, os.path.join(fonttools_path, 'subset.py'),
                 temp_input_font]
-    commands.extend(['U+%08x' % ord(char) for char in unicodes])
+    commands.extend(['--unicodes=%s' %
+                     ','.join(['U+%08x' % ord(char) for char in unicodes])])
     env = os.environ.copy()
     # In fontTools toolchain, "from fontTools import XXXX" is executed.
     # In order for successfull import, add parent directory of the toolchain
@@ -136,4 +138,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-

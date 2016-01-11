@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -200,7 +200,7 @@ int Connector::GetResolution() const {
 }
 
 void Connector::ClearCache() {
-  fill(cache_key_.get(), cache_key_.get() + cache_size_, kInvalidCacheKey);
+  std::fill(cache_key_.get(), cache_key_.get() + cache_size_, kInvalidCacheKey);
 }
 
 int Connector::LookupCost(uint16 rid, uint16 lid) const {

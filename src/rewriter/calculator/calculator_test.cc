@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,13 +37,10 @@
 #include "base/logging.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace {
-
-const char kTestDir[] = "data/test/calculator/";
 
 // Runs calculation with |expression| and compares the result and |expect|.
 void VerifyCalculation(const CalculatorInterface *calculator,
@@ -57,9 +54,9 @@ void VerifyCalculation(const CalculatorInterface *calculator,
   const double err = fabs(result_val - expected_val);
 
   EXPECT_DOUBLE_EQ(expected_val, result_val)
-      << "comparison: " << result_val << " vs " << expected_val << endl
-      << "error: " << err << endl
-      << "expr = " << expression << endl
+      << "comparison: " << result_val << " vs " << expected_val << std::endl
+      << "error: " << err << std::endl
+      << "expr = " << expression << std::endl
       << "result = " << result;
 }
 
@@ -70,8 +67,7 @@ void VerifyCalculationInString(const CalculatorInterface *calculator,
   string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
       << expression << "  expected = " << expected;
-  EXPECT_EQ(expected, result)
-      << "expr = " << expression << endl;
+  EXPECT_EQ(expected, result) << "expr = " << expression << std::endl;
 }
 
 // Tries to calculate |wrong_key| and returns true if it fails.
@@ -79,10 +75,10 @@ void VerifyRejection(const CalculatorInterface *calculator,
                      const string &wrong_key) {
   string result;
   EXPECT_FALSE(calculator->CalculateString(wrong_key, &result))
-      << "expression: " << wrong_key << endl;
+      << "expression: " << wrong_key << std::endl;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 TEST(CalculatorTest, BasicTest) {
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
@@ -97,6 +93,8 @@ TEST(CalculatorTest, BasicTest) {
   VerifyRejection(calculator, "(5)=");
   // Expression must include at least one number.
   VerifyRejection(calculator, "()=");
+  // Expression with both heading and tailing '='s should be rejected.
+  VerifyRejection(calculator, "=(0-0)=");
 
   // Test for each operators
   VerifyCalculation(calculator, "38+2.5=", "40.5");
@@ -109,6 +107,8 @@ TEST(CalculatorTest, BasicTest) {
   VerifyCalculation(calculator, "2^10=", "1024");
   VerifyCalculation(calculator, "4*-2=", "-8");
   VerifyCalculation(calculator, "-10.3+3.5=", "-6.8");
+  // Expression can starts with '=' instead of ending with '='.
+  VerifyCalculation(calculator, "=-10.3+3.5", "-6.8");
 
   // Full width cases (some operators may appear as full width character).
   // "１２３４５＋６７８９０＝"
@@ -149,10 +149,8 @@ TEST(CalculatorTest, BasicTest) {
 // "expression=answer".  Answer is suppressed if the expression is invalid,
 // i.e. it is a false test.
 TEST(CalculatorTest, StressTest) {
-  const string filename = FileUtil::JoinPath(FLAGS_test_srcdir,
-                                             string(kTestDir) + "testset.txt");
-  EXPECT_TRUE(FileUtil::FileExists(filename)) << "Could not read: " << filename;
-
+  const string filename = testing::GetSourceFileOrDie({
+      "data", "test", "calculator", "testset.txt"});
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
   ifstream finput(filename.c_str());
@@ -183,7 +181,7 @@ TEST(CalculatorTest, StressTest) {
     VerifyCalculation(calculator, query, answer);
 #endif  // !defined(OS_ANDROID) || !defined(__i386__)
   }
-  LOG(INFO) << "done " << lineno << " tests from " << filename << endl;
+  LOG(INFO) << "done " << lineno << " tests from " << filename << std::endl;
 }
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,14 +95,14 @@ struct NBestGenerator::QueueElementComparator {
 inline void NBestGenerator::Agenda::Push(
     const NBestGenerator::QueueElement *element) {
   priority_queue_.push_back(element);
-  push_heap(priority_queue_.begin(), priority_queue_.end(),
-            QueueElementComparator());
+  std::push_heap(priority_queue_.begin(), priority_queue_.end(),
+                 QueueElementComparator());
 }
 
 inline void NBestGenerator::Agenda::Pop() {
   DCHECK(!priority_queue_.empty());
-  pop_heap(priority_queue_.begin(), priority_queue_.end(),
-           QueueElementComparator());
+  std::pop_heap(priority_queue_.begin(), priority_queue_.end(),
+                QueueElementComparator());
   priority_queue_.pop_back();
 }
 
@@ -111,14 +111,16 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const Connector *connector,
                                const POSMatcher *pos_matcher,
                                const Lattice *lattice,
-                               const SuggestionFilter *suggestion_filter)
+                               const SuggestionFilter *suggestion_filter,
+                               bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dic),
       segmenter_(segmenter), connector_(connector), pos_matcher_(pos_matcher),
       lattice_(lattice),
       begin_node_(NULL), end_node_(NULL),
       freelist_(kFreeListSize),
       filter_(new CandidateFilter(
-          suppression_dic, pos_matcher, suggestion_filter)),
+          suppression_dic, pos_matcher, suggestion_filter,
+          apply_suggestion_filter_for_exact_match)),
       viterbi_result_checked_(false),
       check_mode_(STRICT),
       boundary_checker_(NULL) {

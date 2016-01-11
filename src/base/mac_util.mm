@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,10 +61,10 @@ const char kProjectPrefix[] =
 #endif
 
 // Returns the reference of prelauncher login item.
-// If the prelauncher login item does not exist this function returns NULL.
+// If the prelauncher login item does not exist this function returns nullptr.
 // Otherwise you must release the reference.
 LSSharedFileListItemRef GetPrelauncherLoginItem() {
-  LSSharedFileListItemRef prelauncher_item = NULL;
+  LSSharedFileListItemRef prelauncher_item = nullptr;
   scoped_cftyperef<CFURLRef> url(
     CFURLCreateFromFileSystemRepresentation(
         kCFAllocatorDefault, kPrelauncherPath,
@@ -72,23 +72,23 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
   if (!url.get()) {
     LOG(ERROR) << "CFURLCreateFromFileSystemRepresentation error:"
                << " Cannot create CFURL object.";
-    return NULL;
+    return nullptr;
   }
 
   scoped_cftyperef<LSSharedFileListRef> login_items(
       LSSharedFileListCreate(
-          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, NULL));
+          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, nullptr));
   if (!login_items.get()) {
     LOG(ERROR) << "LSSharedFileListCreate error: Cannot get the login items.";
-    return NULL;
+    return nullptr;
   }
 
   scoped_cftyperef<CFArrayRef> login_items_array(
-      LSSharedFileListCopySnapshot(login_items.get(), NULL));
+      LSSharedFileListCopySnapshot(login_items.get(), nullptr));
   if (!login_items_array.get()) {
     LOG(ERROR) << "LSSharedFileListCopySnapshot error:"
                << " Cannot get the login items.";
-    return NULL;
+    return nullptr;
   }
 
   for(CFIndex i = 0; i < CFArrayGetCount(login_items_array.get()); ++i) {
@@ -98,15 +98,15 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
     if (!item) {
       LOG(ERROR) << "CFArrayGetValueAtIndex error:"
                  << " Cannot get the login item.";
-      return NULL;
+      return nullptr;
     }
 
-    CFURLRef item_url_ref = NULL;
-    if (LSSharedFileListItemResolve(item, 0, &item_url_ref, NULL) == noErr) {
+    CFURLRef item_url_ref = nullptr;
+    if (LSSharedFileListItemResolve(item, 0, &item_url_ref, nullptr) == noErr) {
       if (!item_url_ref) {
         LOG(ERROR) << "LSSharedFileListItemResolve error:"
                    << " Cannot get the login item url.";
-        return NULL;
+        return nullptr;
       }
       if (CFEqual(item_url_ref, url.get())) {
         prelauncher_item = item;
@@ -117,7 +117,7 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
 
   return prelauncher_item;
 }
-}  // anonymous namespace
+}  // namespace
 
 string MacUtil::GetLabelForSuffix(const string &suffix) {
   return string(kProjectPrefix) + suffix;
@@ -261,7 +261,7 @@ string MacUtil::GetSerialNumber() {
 bool MacUtil::StartLaunchdService(const string &service_name,
                                   pid_t *pid) {
   int dummy_pid = 0;
-  if (pid == NULL) {
+  if (pid == nullptr) {
     pid = &dummy_pid;
   }
   const string label = GetLabelForSuffix(service_name);
@@ -273,7 +273,7 @@ bool MacUtil::StartLaunchdService(const string &service_name,
                           LAUNCH_KEY_STARTJOB);
   launch_data_t result_data = launch_msg(start_renderer_command);
   launch_data_free(start_renderer_command);
-  if (result_data == NULL) {
+  if (result_data == nullptr) {
     LOG(ERROR) << "Failed to launch the specified service";
     return false;
   }
@@ -287,7 +287,7 @@ bool MacUtil::StartLaunchdService(const string &service_name,
                           LAUNCH_KEY_GETJOB);
   launch_data_t renderer_info = launch_msg(get_renderer_info);
   launch_data_free(get_renderer_info);
-  if (renderer_info == NULL) {
+  if (renderer_info == nullptr) {
     LOG(ERROR) << "Unexpected error: launchd doesn't return the data "
                << "for the service.";
     return false;
@@ -295,7 +295,7 @@ bool MacUtil::StartLaunchdService(const string &service_name,
 
   launch_data_t pid_data = launch_data_dict_lookup(
       renderer_info, LAUNCH_JOBKEY_PID);
-  if (pid_data == NULL) {
+  if (pid_data == nullptr) {
     LOG(ERROR) <<
         "Unexpected error: launchd response doesn't have PID";
     launch_data_free(renderer_info);
@@ -309,7 +309,7 @@ bool MacUtil::StartLaunchdService(const string &service_name,
 bool MacUtil::CheckPrelauncherLoginItemStatus() {
   scoped_cftyperef<LSSharedFileListItemRef> prelauncher_item(
       GetPrelauncherLoginItem());
-  return (prelauncher_item.get() != NULL);
+  return (prelauncher_item.get() != nullptr);
 }
 
 void MacUtil::RemovePrelauncherLoginItem() {
@@ -322,7 +322,7 @@ void MacUtil::RemovePrelauncherLoginItem() {
   }
   scoped_cftyperef<LSSharedFileListRef> login_items(
       LSSharedFileListCreate(
-          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, NULL));
+          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, nullptr));
   if (!login_items.get()) {
     LOG(ERROR) << "LSSharedFileListCreate error: Cannot get the login items.";
     return;
@@ -336,7 +336,7 @@ void MacUtil::AddPrelauncherLoginItem() {
   }
   scoped_cftyperef<LSSharedFileListRef> login_items(
       LSSharedFileListCreate(
-          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, NULL));
+          kCFAllocatorDefault, kLSSharedFileListSessionLoginItems, nullptr));
   if (!login_items.get()) {
     LOG(ERROR) << "LSSharedFileListCreate error: Cannot get the login items.";
     return;
@@ -353,8 +353,8 @@ void MacUtil::AddPrelauncherLoginItem() {
   }
   scoped_cftyperef<LSSharedFileListItemRef> new_item(
       LSSharedFileListInsertItemURL(
-          login_items.get(), kLSSharedFileListItemLast, NULL, NULL, url.get(),
-          NULL, NULL));
+          login_items.get(), kLSSharedFileListItemLast, nullptr, nullptr, url.get(),
+          nullptr, nullptr));
   if (!new_item.get()) {
     LOG(ERROR) << "LSSharedFileListInsertItemURL error:"
                << " Cannot insert the prelauncher to the login items.";

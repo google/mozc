@@ -53,6 +53,7 @@ PREFIX 名詞,固有名詞,人名            800
 PREFIX 助動詞,*,*,*,特殊・ダ,体言接続,だ           3000
 PREFIX 形容詞,自立,*,*,形容詞・アウオ段,ガル接続,ない 9000
 
+PREFIX 名詞,数,漢数字,               500
 PREFIX 名詞,(数|固有名詞|副詞可能|代名詞|一般|サ変接続), 0
 # さかれていた => さ|枯れていた
 PREFIX 副詞,助詞類接続,*,*,*,*,さ    2000
@@ -78,8 +79,8 @@ SUFFIX 接頭詞,名詞接続,*,*,*,*,*,(低|未|非|高|大) 1000
 # major 接頭辞 will be covered by compound
 PREFIX 接頭詞,名詞接続               200
 
-PREFIX 動詞,自立　　　　　　　　　　  200
-PREFIX 動詞,非自立                    3000
+PREFIX 動詞,自立                     200
+PREFIX 動詞,非自立                    4000
 
 # http://mozcsuorg.appspot.com/#issue/167
 # With this demotion, もふる -> も|フル misconversion is fixed and モフる shows

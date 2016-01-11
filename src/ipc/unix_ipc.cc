@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// skip all if non-Linux or Android.
-#if defined(OS_LINUX) && !defined(OS_ANDROID)
+// OS_LINUX only. Note that OS_ANDROID/OS_NACL don't reach here.
+#if defined(OS_LINUX)
 
 #include "ipc/ipc.h"
 
@@ -490,6 +490,6 @@ void IPCServer::Terminate() {
   server_thread_->Terminate();
 }
 
-};  // namespace mozc
+}  // namespace mozc
 
-#endif  // OS_LINUX && !OS_ANDROID
+#endif  // OS_LINUX

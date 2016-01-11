@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,11 @@
 #ifndef MOZC_SESSION_SESSION_CONVERTER_H_
 #define MOZC_SESSION_SESSION_CONVERTER_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
@@ -62,11 +62,9 @@ class CandidateList;
 class SessionConverter : public SessionConverterInterface {
  public:
   SessionConverter(const ConverterInterface *converter,
-                   const commands::Request *request);
+                   const commands::Request *request,
+                   const config::Config *config);
   virtual ~SessionConverter();
-
-  // Updates OperationPreferences.
-  virtual void SetOperationPreferences(const OperationPreferences &preferences);
 
   // Checks if the current state is in the state bitmap.
   virtual bool CheckState(States) const;
@@ -244,6 +242,9 @@ class SessionConverter : public SessionConverterInterface {
   // Sets setting by the request;
   virtual void SetRequest(const commands::Request *request);
 
+  // Sets setting by the config;
+  virtual void SetConfig(const config::Config *config);
+
   // Set setting by the context.
   virtual void OnStartComposition(const commands::Context &context);
 
@@ -259,6 +260,15 @@ class SessionConverter : public SessionConverterInterface {
 
   // Fills protocol buffers with all flatten candidate words.
   void FillAllCandidateWords(commands::CandidateList *candidates) const;
+
+  virtual void set_selection_shortcut(
+      config::Config::SelectionShortcut selection_shortcut) {
+    selection_shortcut_ = selection_shortcut;
+  }
+
+  virtual void set_use_cascading_window(bool use_cascading_window) {
+    use_cascading_window_ = use_cascading_window;
+  }
 
   // Meaning that all the composition characters are consumed.
   // c.f. CommitSuggestionInternal
@@ -298,7 +308,7 @@ class SessionConverter : public SessionConverterInterface {
 
   // Performs the command if the command candidate is selected.  True
   // is returned if a command is performed.
-  bool MaybePerformCommandCandidate(size_t index, size_t size) const;
+  bool MaybePerformCommandCandidate(size_t index, size_t size);
 
   // Updates internal states
   bool UpdateResult(size_t index, size_t size, size_t *consumed_key_size);
@@ -355,7 +365,7 @@ class SessionConverter : public SessionConverterInterface {
   SessionConverterInterface::State state_;
 
   const ConverterInterface *converter_;
-  scoped_ptr<Segments> segments_;
+  std::unique_ptr<Segments> segments_;
   size_t segment_index_;
 
   // Previous suggestions to be merged with the current predictions.
@@ -364,15 +374,21 @@ class SessionConverter : public SessionConverterInterface {
   // Default conversion preferences.
   ConversionPreferences conversion_preferences_;
 
-  // Preferences for user's operation.
-  OperationPreferences operation_preferences_;
+  std::unique_ptr<commands::Result> result_;
 
-  scoped_ptr<commands::Result> result_;
-
-  scoped_ptr<CandidateList> candidate_list_;
+  std::unique_ptr<CandidateList> candidate_list_;
   bool candidate_list_visible_;
 
   const commands::Request *request_;
+  const config::Config *config_;
+
+  // Mutable values of |config_|.  These values may be changed temporaliry per
+  // session.
+  bool use_cascading_window_;
+  config::Config::SelectionShortcut selection_shortcut_;
+
+  // Indicates whether config_ will be updated by the command candidate.
+  Segment::Candidate::Command updated_command_;
 
   // Selected index data of each segments for usage stats.
   vector<int> selected_candidate_indices_;

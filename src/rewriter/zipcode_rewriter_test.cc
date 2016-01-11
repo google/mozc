@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,14 @@
 
 #include "rewriter/zipcode_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #ifdef MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/packed/packed_data_manager.h"
 #include "data_manager/packed/packed_data_mock.h"
@@ -100,7 +101,7 @@ class ZipcodeRewriterTest : public ::testing::Test {
   virtual void SetUp() {
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers mocked PackedDataManager.
-    scoped_ptr<packed::PackedDataManager>
+    std::unique_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
@@ -108,17 +109,9 @@ class ZipcodeRewriterTest : public ::testing::Test {
 #endif  // MOZC_USE_PACKED_DICTIONARY
 
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
   }
 
   virtual void TearDown() {
-    // restore config to default.
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
-
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
@@ -132,45 +125,38 @@ class ZipcodeRewriterTest : public ::testing::Test {
 };
 
 TEST_F(ZipcodeRewriterTest, BasicTest) {
-  scoped_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
+  std::unique_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
 
   const string kZipcode = "107-0052";
   const string kAddress =
      // "東京都港区赤坂"
      "\xE6\x9D\xB1\xE4\xBA\xAC\xE9\x83\xBD\xE6"
      "\xB8\xAF\xE5\x8C\xBA\xE8\xB5\xA4\xE5\x9D\x82";
-  const ConversionRequest default_request;
+  ConversionRequest request;
+  config::Config config;
+  request.set_config(&config);
 
   {
     Segments segments;
     AddSegment("test", "test", NON_ZIPCODE, &segments);
-    EXPECT_FALSE(zipcode_rewriter->Rewrite(default_request, &segments));
+    EXPECT_FALSE(zipcode_rewriter->Rewrite(request, &segments));
   }
 
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_space_character_form(
-        config::Config::FUNDAMENTAL_HALF_WIDTH);
-    config::ConfigHandler::SetConfig(config);
+    config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter->Rewrite(default_request, &segments);
-    EXPECT_TRUE(HasZipcodeAndAddress(segments,
-                                     kZipcode + " " + kAddress));
+    zipcode_rewriter->Rewrite(request, &segments);
+    EXPECT_TRUE(HasZipcodeAndAddress(segments, kZipcode + " " + kAddress));
   }
 
   {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_space_character_form(
-        config::Config::FUNDAMENTAL_FULL_WIDTH);
-    config::ConfigHandler::SetConfig(config);
+    config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter->Rewrite(default_request, &segments);
+    zipcode_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      // "　" (full-width space)
                                      kZipcode + "\xE3\x80\x80" + kAddress));

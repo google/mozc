@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,16 +43,17 @@
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 
@@ -1742,7 +1743,7 @@ bool ExtractYearFromKey(const YearData &year_data,
   if (!NumberUtil::IsArabicNumber(era_year_str)) {
     return false;
   }
-  *year = atoi32(era_year_str.c_str());
+  *year = NumberUtil::SimpleAtoi(era_year_str);
   if (*year <= 0) {
     return false;
   }
@@ -1787,9 +1788,8 @@ bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
     for (size_t j = 0; j < output.size(); ++j) {
       // "元徳", "建武" and "明徳" require dedupe
       const string value(output[j].value + kNenValue);
-      vector<string>::const_iterator found = find(results->begin(),
-                                                  results->end(),
-                                                  value);
+      vector<string>::const_iterator found =
+          std::find(results->begin(), results->end(), value);
       if (found != results->end()) {
         continue;
       }
@@ -1863,7 +1863,7 @@ bool IsValidDate(uint32 year, uint32 month, uint32 day) {
 // Checks given date is valid or not in this year
 bool IsValidDateInThisYear(uint32 month, uint32 day) {
   struct tm t_st;
-  if (!Util::GetTmWithOffsetSecond(&t_st, 0)) {
+  if (!Clock::GetTmWithOffsetSecond(&t_st, 0)) {
     LOG(ERROR) << "GetTmWithOffsetSecond() failed";
     return false;
   }
@@ -2026,7 +2026,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
     vector<string> era;
     switch (type) {
       case REWRITE_DATE: {
-        if (!Util::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
+        if (!Clock::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
           LOG(ERROR) << "GetTmWithOffsetSecond() failed";
           return false;
         }
@@ -2051,7 +2051,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_MONTH: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2065,7 +2065,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_YEAR: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2085,7 +2085,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_CURRENT_TIME: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2099,7 +2099,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
 
       case REWRITE_DATE_AND_CURRENT_TIME: {
-        if (!Util::GetCurrentTm(&t_st)) {
+        if (!Clock::GetCurrentTm(&t_st)) {
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
@@ -2166,7 +2166,7 @@ bool DateRewriter::RewriteYear(Segment *segment) const {
 
 bool DateRewriter::RewriteWeekday(Segment *segment) const {
   struct tm t_st;
-  if (!Util::GetCurrentTm(&t_st)) {
+  if (!Clock::GetCurrentTm(&t_st)) {
     LOG(ERROR) << "GetCurrentTm failed";
     return false;
   }
@@ -2250,7 +2250,10 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   string year_str;
   Util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
 
-  const uint32 year = atoi32(year_str.c_str());
+  uint32 year = 0;
+  if (!NumberUtil::SafeStrToUInt32(year_str, &year)) {
+    return false;
+  }
 
   vector<string> results;
   if (!AdToEra(year, &results)) {
@@ -2302,12 +2305,12 @@ bool DateRewriter::RewriteAd(Segment *segment) const {
 }
 
 namespace {
-bool IsFourDigits(const string &value) {
-  return Util::CharsLen(value) == 4 &&
+bool IsNDigits(const string &value, int n) {
+  return Util::CharsLen(value) == n &&
          Util::GetScriptType(value) == Util::NUMBER;
 }
 
-// Gets four digits if possible.
+// Gets n digits if possible.
 // Following trials will be performed in this order.
 // 1. Checks segment's key.
 // 2. Checks all the meta candidates.
@@ -2319,22 +2322,23 @@ bool IsFourDigits(const string &value) {
 //      - All the meta candidates are based on "cd" (e.g. "CD", "Cd").
 //      Therefore to get "2223" we should access the raw input.
 // Prerequisit: |segments| has only one conversion segment.
-const bool GetFourDigits(const composer::Composer &composer,
-                         const Segments &segments,
-                         string *output) {
+bool GetNDigits(const composer::Composer &composer,
+                const Segments &segments,
+                int n,
+                string *output) {
   DCHECK(output);
   DCHECK_EQ(1, segments.conversion_segments_size());
   const Segment &segment = segments.conversion_segment(0);
 
   // 1. Segment's key
-  if (IsFourDigits(segment.key())) {
+  if (IsNDigits(segment.key(), n)) {
     *output = segment.key();
     return true;
   }
 
   // 2. Meta candidates
   for (size_t i = 0; i < segment.meta_candidates_size(); ++i) {
-    if (IsFourDigits(segment.meta_candidate(i).value)) {
+    if (IsNDigits(segment.meta_candidate(i).value, n)) {
       *output = segment.meta_candidate(i).value;
       return true;
     }
@@ -2346,7 +2350,7 @@ const bool GetFourDigits(const composer::Composer &composer,
   // on partial conversion, segment.key() is different from the size of
   // the whole composition.
   composer.GetRawSubString(0, Util::CharsLen(segment.key()), &raw);
-  if (IsFourDigits(raw)) {
+  if (IsNDigits(raw, n)) {
     *output = raw;
     return true;
   }
@@ -2356,8 +2360,8 @@ const bool GetFourDigits(const composer::Composer &composer,
 }
 }  // namespace
 
-bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
-                                     Segments *segments) const {
+bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
+                                            Segments *segments) const {
   if (segments->conversion_segments_size() != 1) {
     // This method rewrites a segment only when the segments has only
     // one conversion segment.
@@ -2367,8 +2371,10 @@ bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
   }
 
   string key;
-  if (!GetFourDigits(composer, *segments, &key)) {
-    // No four digit key is available.
+  // Currently three and four consecutive digits are converted
+  if (!GetNDigits(composer, *segments, 3, &key) &&
+      !GetNDigits(composer, *segments, 4, &key)) {
+    // No three or four digit key is available.
     return false;
   }
 
@@ -2377,7 +2383,10 @@ bool DateRewriter::RewriteFourDigits(const composer::Composer &composer,
   string number_str;
   Util::FullWidthAsciiToHalfWidthAscii(key, &number_str);
 
-  const uint32 number = atoi32(number_str.c_str());
+  uint32 number = 0;
+  if (!NumberUtil::SafeStrToUInt32(number_str, &number)) {
+    return false;
+  }
   const uint32 upper_number = number / 100;
   const uint32 lower_number = number % 100;
 
@@ -2427,7 +2436,7 @@ int DateRewriter::capability(const ConversionRequest &request) const {
 
 bool DateRewriter::Rewrite(const ConversionRequest &request,
                            Segments *segments) const {
-  if (!GET_CONFIG(use_date_conversion)) {
+  if (!request.config().use_date_conversion()) {
     VLOG(2) << "no use_date_conversion";
     return false;
   }
@@ -2463,7 +2472,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
   }
 
   if (request.has_composer()) {
-    modified |= RewriteFourDigits(request.composer(), segments);
+    modified |= RewriteConsecutiveDigits(request.composer(), segments);
   }
 
   return modified;

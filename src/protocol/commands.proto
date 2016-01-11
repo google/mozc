@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -403,20 +403,16 @@ message SessionCommand {
     // thing but it changes IME state to prediction).
     EXPAND_SUGGESTION = 15;
 
-    // The client can send the current caret position whenever the caret
-    // position is changed. The caret position is used for suggest window
-    // position calculation. This is an optional message. If client can show
-    // suggest window on the correct position, this message can be ignored.
-    SEND_CARET_LOCATION = 16;
+    // Obsolete command. Used only in old IBus client.
+    OBSOLETE_SEND_CARET_LOCATION = 16;
 
     // Obsolete command. Don't simply remove this command for NUM_OF_COMMANDS.
     // TODO(team): Replace this command by useful one.
     OBSOLETE_SEND_LANGUAGE_BAR_COMMAND = 17;
 
-    // When the server is hadling asynchronous request, the server returns the
-    // message with callback request which session_command is GET_ASYNC_RESULT.
-    // After the delay_millisec, the client sends this command to the server.
-    GET_ASYNC_RESULT = 18;
+    // Obsolete command. Don't simply remove this command for NUM_OF_COMMANDS.
+    // TODO(team): Replace this command by useful one.
+    OBSOLETE_GET_ASYNC_RESULT = 18;
 
     // Commit the raw text of the composed string.
     COMMIT_RAW_TEXT = 19;
@@ -482,16 +478,16 @@ message SessionCommand {
     KEYBOARD_FOLD_EVENT = 20;
     KEYBOARD_EXPAND_EVENT = 21;
     MUSHROOM_SELECTION_DIALOG_OPEN_EVENT = 22;
+    SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE = 23;
+    SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT = 24;
+    SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE = 25;
+    SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT = 26;
   }
   optional UsageStatsEvent usage_stats_event = 7;
   optional int32 usage_stats_event_int_value = 9;
 
-  // Specify the current caret location, this is used for suggest window
-  // position calculation. Used with SEND_CARET_LOCATION.
-  optional Rectangle caret_rectangle = 8;
-
-  // Unique number specifying an asynchronous request.
-  optional int32 asynchronous_request_id = 10;
+  // Obsolete command. Used only in old IBus client.
+  optional DeprecatedRectangle deprecated_caret_rectangle = 8;
 };
 
 message Context {
@@ -573,7 +569,7 @@ message Request {
       [default = false] ;  // true for android
 
   // Combine all segments like mobile IME.
-  optional bool combine_all_segments = 3
+  optional bool OBSOLETE_combine_all_segments = 3
       [default = false] ;  // true for android
 
   enum SpecialRomanjiTable {
@@ -766,6 +762,12 @@ message Request {
 
   // Page size of the candidate list.
   optional int32 candidate_page_size = 15 [default = 9];
+
+  // The maximum limit of the candidates size.
+  // If not set, converter doesn't limit the size.
+  // NOTE: Each segment has at least one candidate and meta candidates even if
+  //       this value is set to 0.
+  optional int32 candidates_size_limit = 16;
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
@@ -1023,7 +1025,7 @@ message Status {
   optional CompositionMode comeback_mode = 3;
 };
 
-// This messsage contains which characters are to be deleted by client.
+// This message contains which characters are to be deleted by client.
 // E.g. if current composition and surrounding text are
 //     "この感じは漢字は"
 //                ^^^^^^

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,32 +46,6 @@
 
 using ::ATL::CComPtr;
 using ::std::unique_ptr;
-
-// ITfFnSearchCandidateProvider is available on Windows 8 SDK and later.
-#ifndef __ITfFnSearchCandidateProvider_INTERFACE_DEFINED__
-#define __ITfFnSearchCandidateProvider_INTERFACE_DEFINED__
-
-// {87a2ad8f-f27b-4920-8501-67602280175d}
-const IID IID_ITfFnSearchCandidateProvider = {
-  0x87a2ad8f, 0xf27b, 0x4920, {0x85, 0x01, 0x67, 0x60, 0x22, 0x80, 0x17, 0x5d}
-};
-
-// Note: "87a2ad8f-f27b-4920-8501-67602280175d" is equivalent to
-// IID_ITfFnSearchCandidateProvider
-struct __declspec(uuid("87a2ad8f-f27b-4920-8501-67602280175d"))
-ITfFnSearchCandidateProvider : public ITfFunction {
- public:
-  virtual HRESULT STDMETHODCALLTYPE GetSearchCandidates(
-      BSTR query,
-      BSTR application_id,
-      ITfCandidateList **candidate_list) = 0;
-
-  virtual HRESULT STDMETHODCALLTYPE SetResult(
-      BSTR query,
-      BSTR application_id,
-      BSTR result) = 0;
-};
-#endif  // !__ITfFnSearchCandidateProvider_INTERFACE_DEFINED__
 
 namespace mozc {
 namespace win32 {

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/cpu_stats.h"
-
-#include <string>
 #include <iostream>
+#include <memory>
+#include <string>
+
+#include "base/cpu_stats.h"
 #include "base/flags.h"
-#include "base/thread.h"
+#include "base/init_mozc.h"
 #include "base/port.h"
+#include "base/thread.h"
 #include "base/util.h"
 
 DEFINE_int32(iterations, 1000, "number of iterations");
@@ -58,9 +60,9 @@ class DummyThread : public mozc::Thread {
 }  // namespace
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
-  scoped_ptr<DummyThread[]> threads;
+  std::unique_ptr<DummyThread[]> threads;
 
   if (FLAGS_dummy_threads_size > 0) {
     threads.reset(new DummyThread[FLAGS_dummy_threads_size]);
@@ -70,12 +72,11 @@ int main(int argc, char **argv) {
   }
 
   mozc::CPUStats stats;
-  cout << "NumberOfProcessors: "
-       << stats.GetNumberOfProcessors() << endl;
+  std::cout << "NumberOfProcessors: " << stats.GetNumberOfProcessors()
+            << std::endl;
   for (int i = 0; i < FLAGS_iterations; ++i) {
-    cout << "CPUStats: "
-         << stats.GetSystemCPULoad() << " "
-         << stats.GetCurrentProcessCPULoad() << endl;
+    std::cout << "CPUStats: " << stats.GetSystemCPULoad() << " "
+              << stats.GetCurrentProcessCPULoad() << std::endl;
     mozc::Util::Sleep(FLAGS_polling_duration);
   }
 

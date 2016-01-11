@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ const DWORD kResultUpdateFlags =
      GCS_RESULTCLAUSE);
 const DWORD kPreeditAndResultUpdateFlags =
     (kPreeditUpdateFlags | kResultUpdateFlags);
-}  // anonymous namespace
+}  // namespace
 
 bool CompositionString::Initialize() {
   ::ZeroMemory(this, sizeof(*this));

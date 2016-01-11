@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -79,6 +79,10 @@ const wchar_t kPreloadKeyName[] = L"Keyboard Layout\\Preload";
 // http://msdn.microsoft.com/en-us/library/ms724872(VS.85).aspx
 const DWORD kMaxValueNameLength = 16383;
 
+// Timeout value used by a work around against b/5765783.
+// Note that the following timeout threshold is not well tested.
+// TODO(yukawa): Investigate the best timeout threshold. b/6165722
+const uint32 kWaitForAsmCacheReadyEventTimeout = 10000;  // 10 sec.
 
 // Converts an unsigned integer to a wide string.
 wstring utow(unsigned int i) {
@@ -352,6 +356,10 @@ bool BroadcastNewIME(const KeyboardLayoutInfo &layout) {
     return false;
   }
 
+  // A work around against b/5765783.
+  if (!ImeUtil::WaitForAsmCacheReady(kWaitForAsmCacheReadyEventTimeout)) {
+    DLOG(ERROR) << "ImeUtil::WaitForAsmCacheReady failed.";
+  }
 
   // Broadcasting WM_INPUTLANGCHANGEREQUEST so that existing process in the
   // current session will change their input method to |hkl|. This mechanism

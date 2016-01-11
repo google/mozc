@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,8 @@ class TipUiHandler {
 
   static void OnActivate(TipTextService *text_service);
   static void OnDeactivate(TipTextService *text_service);
+  static void OnDocumentMgrChanged(TipTextService *text_service,
+                                   ITfDocumentMgr *document_manager);
   static void OnFocusChange(TipTextService *text_service,
                             ITfDocumentMgr *focused_document_manager);
   static bool Update(TipTextService *text_service,
@@ -65,6 +67,7 @@ class TipUiHandler {
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiHandler);
 };

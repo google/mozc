@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,16 +60,6 @@
 #include <string.h>
 #include <math.h>
 
-namespace {
-bool IsFinite(double x) {
-#ifdef OS_WIN
-  return _finite(x);
-#else
-  return isfinite(x);
-#endif
-}
-}  // anonymous namespace
-
 // Contents of parser.h is manually inserted here.
 #define PLUS                            1
 #define MINUS                           2
@@ -80,7 +70,7 @@ bool IsFinite(double x) {
 #define NOT                             7
 #define LP                              8
 #define RP                              9
-#define INTEGER                        10 
+#define INTEGER                        10
 // End of parser.h.
 
 struct Result {

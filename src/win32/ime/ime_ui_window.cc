@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include <atlmisc.h>
 #include <strsafe.h>
 
+#include <algorithm>
 #include <memory>
 
 #include "base/const.h"
@@ -349,7 +350,7 @@ class LangBarCallbackImpl : public LangBarCallback {
 
   virtual ULONG AddRef() {
     const LONG count = ::InterlockedIncrement(&reference_count_);
-    return max(count, 0);
+    return static_cast<ULONG>(max(count, static_cast<LONG>(0)));
   }
 
   virtual ULONG Release() {
@@ -615,8 +616,6 @@ class DefaultUIWindow {
           UpdateCandidate(context, kNoEvent);
         } else if (lParam == kNotifyReconvertFromIME) {
           TurnOnIMEAndTryToReconvertFromIME(hwnd_);
-        } else if (lParam == kNotifyDelayedCallback) {
-          SetMozcEventCallbackTimer(context);
         }
         break;
     }
@@ -801,9 +800,6 @@ class DefaultUIWindow {
 
   void OnTimer(WPARAM event_id) {
     switch (event_id) {
-      case kMozcEventCallbackTimerId:
-        OnDeferredMozcEventCallback();
-        break;
       case kDeferredLangBarUpdateTimerId:
         OnDeferredUpdateLangBar();
         break;
@@ -811,9 +807,6 @@ class DefaultUIWindow {
   }
 
  private:
-  // Timer for the delayed callback to Mozc server.
-  static const UINT_PTR kMozcEventCallbackTimerId = 1;
-
   // Timer for the langbar update.
   static const UINT_PTR kDeferredLangBarUpdateTimerId = 2;
   static const DWORD kLangBarUpdateDelayMilliSec = 50;
@@ -837,18 +830,6 @@ class DefaultUIWindow {
     bool enabled;
     commands::CompositionMode mode;
   };
-
-  // Sets the timer that send callback command.
-  void SetMozcEventCallbackTimer(const UIContext &context) {
-    commands::Output output;
-    context.GetLastOutput(&output);
-    if (output.has_callback() && output.callback().has_delay_millisec()) {
-      ::SetTimer(hwnd_,
-                 kMozcEventCallbackTimerId,
-                 output.callback().delay_millisec(),
-                 NULL);
-    }
-  }
 
   // Constructs RendererCommand based on various parameters in the input
   // context.  This implementation is very experimental, should be revised.
@@ -990,13 +971,6 @@ class DefaultUIWindow {
   void OnDeferredUpdateLangBar() {
     UpdateLangBarAndCancelUpdateTimer(deferred_langbar_update_request_.enabled,
                                       deferred_langbar_update_request_.mode);
-  }
-
-  void OnDeferredMozcEventCallback() {
-    ::KillTimer(hwnd_, kMozcEventCallbackTimerId);
-    const HIMC himc = GetSafeHIMC(hwnd_);
-    const bool generate_message = mozc::win32::ImeCore::IsActiveContext(himc);
-    ImeCore::SendCallbackCommand(himc, generate_message);
   }
 
   HWND hwnd_;

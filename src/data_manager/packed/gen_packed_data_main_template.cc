@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,14 @@
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/version.h"
 #include "converter/boundary_struct.h"
 #include "data_manager/packed/system_dictionary_data_packer.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/correction_rewriter.h"
 #include "rewriter/counter_suffix.h"
@@ -53,19 +54,19 @@ DEFINE_bool(use_gzip, false, "use gzip");
 namespace mozc {
 namespace {
 
-#include "data_manager/@DIR@/user_pos_data.h"
-#include "data_manager/@DIR@/pos_matcher_data.h"
-#include "data_manager/@DIR@/pos_group_data.h"
 #include "data_manager/@DIR@/boundary_data.h"
-#include "data_manager/@DIR@/suffix_data.h"
-#include "data_manager/@DIR@/reading_correction_data.h"
-#include "data_manager/@DIR@/segmenter_data.h"
+#include "data_manager/@DIR@/embedded_collocation_data.h"
 #include "data_manager/@DIR@/embedded_collocation_suppression_data.h"
-#include "data_manager/@DIR@/suggestion_filter_data.h"
 #include "data_manager/@DIR@/embedded_connection_data.h"
 #include "data_manager/@DIR@/embedded_dictionary_data.h"
-#include "data_manager/@DIR@/embedded_collocation_data.h"
+#include "data_manager/@DIR@/pos_group_data.h"
+#include "data_manager/@DIR@/pos_matcher_data.h"
+#include "data_manager/@DIR@/reading_correction_data.h"
+#include "data_manager/@DIR@/segmenter_data.h"
+#include "data_manager/@DIR@/suffix_data.h"
+#include "data_manager/@DIR@/suggestion_filter_data.h"
 #include "data_manager/@DIR@/symbol_rewriter_data.h"
+#include "data_manager/@DIR@/user_pos_data.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data.h"
 #endif  // NO_USAGE_REWRITER
@@ -128,7 +129,7 @@ bool OutputData(const string &file_path) {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (FLAGS_output.empty()) {
     LOG(FATAL) << "output flag is needed";

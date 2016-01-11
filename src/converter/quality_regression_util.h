@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,12 @@
 #ifndef MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
 #define MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 class Segments;
@@ -81,12 +82,14 @@ class QualityRegressionUtil {
                       string *actual_value);
 
   void SetRequest(const commands::Request &request);
+  void SetConfig(const config::Config &config);
   static string GetPlatformString(uint32 platform_bitfiled);
 
  private:
   ConverterInterface *converter_;
-  scoped_ptr<commands::Request> request_;
-  scoped_ptr<Segments> segments_;
+  std::unique_ptr<commands::Request> request_;
+  std::unique_ptr<config::Config> config_;
+  std::unique_ptr<Segments> segments_;
 
   DISALLOW_COPY_AND_ASSIGN(QualityRegressionUtil);
 };

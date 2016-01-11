@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@
               'qtgui4_dll_path': '<(qt_dir)/bin/QtGui4.dll',
               'qtguid4_dll_path': '<(qt_dir)/bin/QtGuid4.dll',
             }],
-            ['use_qt=="YES" and use_zinnia=="YES"', {
+            ['use_qt=="YES"', {
               'mozc_zinnia_model_data_path': '<(DEPTH)/third_party/zinnia/tomoe/handwriting-light-ja.model',
             }],
             ['use_dynamically_linked_qt==1', {

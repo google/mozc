@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -71,20 +71,20 @@ def main():
 
   # Copies QtCore.  For codesign, Info.plist should be copied to Resources/.
   CopyFiles(['%s/lib/QtCore.framework/Versions/4/QtCore' % qtdir],
-           '%s/QtCore.framework/Versions/4/QtCore' % target)
+            '%s/QtCore.framework/Versions/4/QtCore' % target)
   CopyFiles(['%s/lib/QtCore.framework/Contents/Info.plist' % qtdir],
-            '%s/QtCore.framework/Resources/' % target)
+            '%s/QtCore.framework/Resources/Info.plist' % target)
 
-  # Copies QtGui.  For codesign, Info.plist should be copied to Resources/.
+  # Copies QtGui.
   CopyFiles(['%s/lib/QtGui.framework/Versions/4/QtGui' % qtdir],
-           '%s/QtGui.framework/Versions/4/QtGui' % target)
-  CopyFiles(['%s/lib/QtGui.framework/Contents/Info.plist' % qtdir],
-            '%s/QtGui.framework/Resources/' % target)
-
+            '%s/QtGui.framework/Versions/4/QtGui' % target)
   # Copies Resources of QtGui
   CopyFiles(['%s/lib/QtGui.framework/Versions/4/Resources' % qtdir],
-           '%s/QtGui.framework/Resources' % target,
-           recursive=True)
+            '%s/QtGui.framework/Resources' % target,
+            recursive=True)
+  # For codesign, Info.plist should be copied to Resources/.
+  CopyFiles(['%s/lib/QtGui.framework/Contents/Info.plist' % qtdir],
+            '%s/QtGui.framework/Resources/Info.plist' % target)
 
   # Changes QtGui id
   cmd = ["install_name_tool", "-id",

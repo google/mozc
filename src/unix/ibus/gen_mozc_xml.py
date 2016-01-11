@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,47 +52,8 @@ IBUS_COMPONENT_PROPS = {
     'version': '0.0.0.0',
     'author': 'Google Inc.',
     'license': 'New BSD',
-    'homepage': 'http://code.google.com/p/mozc/',
+    'homepage': 'https://github.com/google/mozc',
     'textdomain': 'ibus-mozc',
-}
-
-# Information to generate <engines> part of mozc.xml.
-IBUS_ENGINE_COMMON_PROPS = {
-    'description': '%(product_name)s (Japanese Input Method)',
-    'language': 'ja',
-    'icon': '%(ibus_mozc_icon_path)s',
-    'rank': '80',
-}
-
-# Information to generate <engines> part of mozc.xml for IBus 1.5 or later.
-IBUS_1_5_ENGINE_COMMON_PROPS = {
-    'description': '%(product_name)s (Japanese Input Method)',
-    'language': 'ja',
-    'icon': '%(ibus_mozc_icon_path)s',
-    'rank': '80',
-    'symbol': '&#x3042;',
-}
-
-# A dictionary from platform to engines that are used in the platform. The
-# information is used to generate <engines> part of mozc.xml.
-IBUS_ENGINES_PROPS = {
-    # On Linux, we provide only one engine for the Japanese keyboard layout.
-    'Linux': {
-        # DO NOT change the engine name 'mozc-jp'. The names is referenced by
-        # unix/ibus/mozc_engine.cc.
-        'name': ['mozc-jp'],
-        'longname': ['%(product_name)s'],
-        'layout': ['jp'],
-    },
-    # On Linux (IBus >= 1.5), we use special label 'default' for the keyboard
-    # layout.
-    'Linux-IBus1.5': {
-        # DO NOT change the engine name 'mozc-jp'. The names is referenced by
-        # unix/ibus/mozc_engine.cc.
-        'name': ['mozc-jp'],
-        'longname': ['%(product_name)s'],
-        'layout': ['default'],
-    },
 }
 
 # A dictionary from --branding to a product name which is embedded into the
@@ -175,10 +136,10 @@ def OutputCpp(param_dict, component, engine_common, engines):
   print CPP_FOOTER % guard_name
 
 
-def IsIBus15OrGreater(options):
-  """Returns True when the version of ibus-1.0 is 1.5 or greater."""
+def CheckIBusVersion(options, minimum_version):
+  """Tests if ibus version is equal to or greater than the given value."""
   command_line = [options.pkg_config_command, '--exists',
-                  'ibus-1.0 >= 1.5.0']
+                  'ibus-1.0 >= %s' % minimum_version]
   return_code = subprocess.call(command_line)
   if return_code == 0:
     return True
@@ -211,24 +172,46 @@ def main():
   setup_arg = []
   setup_arg.append(os.path.join(options.server_dir, 'mozc_tool'))
   setup_arg.append('--mode=config_dialog')
-  if IsIBus15OrGreater(options):
-    # A tentative workaround against IBus 1.5
-    platform = 'Linux-IBus1.5'
-    common_props = IBUS_1_5_ENGINE_COMMON_PROPS
-  else:
-    platform = 'Linux'
-    common_props = IBUS_ENGINE_COMMON_PROPS
 
-  param_dict = {'product_name': PRODUCT_NAMES[options.branding],
-                'ibus_mozc_path': options.ibus_mozc_path,
-                'ibus_mozc_icon_path': options.ibus_mozc_icon_path}
+  param_dict = {
+      'product_name': PRODUCT_NAMES[options.branding],
+      'ibus_mozc_path': options.ibus_mozc_path,
+      'ibus_mozc_icon_path': options.ibus_mozc_icon_path,
+  }
+
+  engine_common_props = {
+      'description': '%(product_name)s (Japanese Input Method)',
+      'language': 'ja',
+      'icon': '%(ibus_mozc_icon_path)s',
+      'rank': '80',
+  }
+
+  # DO NOT change the engine name 'mozc-jp'. The names is referenced by
+  # unix/ibus/mozc_engine.cc.
+  engines_props = {
+      'name': ['mozc-jp'],
+      'longname': ['%(product_name)s'],
+  }
+
+  # IBus 1.5.11 and greater supports 'icon_prop_key'.
+  # See ibus/ibus@23c45b970b195008a54884a1a9d810e7f8b22c5c
+  if CheckIBusVersion(options, '1.5.11'):
+    # Make sure that the property key 'InputMode' matches to the property name
+    # specified to |ibus_property_new| in unix/ibus/property_handler.cc
+    engine_common_props['icon_prop_key'] = 'InputMode'
+
+  if CheckIBusVersion(options, '1.5.0'):
+    engine_common_props['symbol'] = '&#x3042;'
+    engines_props['layout'] = ['default']
+  else:
+    engines_props['layout'] = ['jp']
 
   if options.output_cpp:
-    OutputCpp(param_dict, IBUS_COMPONENT_PROPS, common_props,
-              IBUS_ENGINES_PROPS[platform])
+    OutputCpp(param_dict, IBUS_COMPONENT_PROPS, engine_common_props,
+              engines_props)
   else:
-    OutputXml(param_dict, IBUS_COMPONENT_PROPS, common_props,
-              IBUS_ENGINES_PROPS[platform], setup_arg)
+    OutputXml(param_dict, IBUS_COMPONENT_PROPS, engine_common_props,
+              engines_props, setup_arg)
   return 0
 
 if __name__ == '__main__':

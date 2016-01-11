@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,6 @@
 #include "base/port.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_util.h"
@@ -147,14 +146,16 @@ void UserDictionarySessionHandler::NoOperation(
 void UserDictionarySessionHandler::ClearStorage(
     const UserDictionaryCommand &command,
     UserDictionaryCommandStatus *status) {
-#ifdef __native_client__
+#ifdef OS_NACL
   // File operation is not supported on NaCl.
   status->set_status(UserDictionaryCommandStatus::UNKNOWN_ERROR);
-#else
-  FileUtil::Unlink(dictionary_path_);
-  status->set_status(
-      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
-#endif
+#else  // OS_NACL
+  // Note: session_ might not be created when ClearStorage is called.  So create
+  // a local session to clear the storage.
+  UserDictionarySession session(dictionary_path_);
+  session.ClearDictionariesAndUndoHistory();
+  status->set_status(session.Save());
+#endif  // OS_NACL
 }
 
 void UserDictionarySessionHandler::CreateSession(

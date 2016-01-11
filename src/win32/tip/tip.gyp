@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -98,6 +98,7 @@
           'dependencies': [
             '../../base/base.gyp:base',
             '../../base/base.gyp:crash_report_handler',
+            '../../base/base.gyp:update_util',
             '../../client/client.gyp:client',
             '../../config/config.gyp:config_handler',
             '../../config/config.gyp:stats_config_util',

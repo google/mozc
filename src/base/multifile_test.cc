@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
     for (int i = 0; i < kNumLines; ++i) {
       string line = Util::StringPrintf("Hi, line %d", i);
       expected_lines.push_back(line);
-      ofs << line << endl;;
+      ofs << line << std::endl;
     }
   }
   EXPECT_EQ(kNumLines, expected_lines.size());
@@ -134,7 +134,7 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
       for (int i = 0; i < kNumLinesPerFile; ++i) {
         string line = Util::StringPrintf("Hi, line %d", ++serial_line_no);
         expected_lines.push_back(line);
-        ofs << line << endl;;
+        ofs << line << std::endl;
       }
     }
   }

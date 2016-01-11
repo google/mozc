@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,33 +31,44 @@
 
 #include <map>
 
-#include "base/port.h"
 #include "base/freelist.h"
+#include "base/port.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 
 namespace mozc {
 namespace keymap {
 
+using config::Config;
+
 // static member variable
 ObjectPool<KeyMapManager> KeyMapFactory::pool_(6);
 KeyMapFactory::KeyMapManagerMap KeyMapFactory::keymaps_;
 
 KeyMapManager *KeyMapFactory::GetKeyMapManager(
-    config::Config::SessionKeymap keymap) {
-  map<config::Config::SessionKeymap, KeyMapManager *>::iterator iter =
-      keymaps_.find(keymap);
+    const Config::SessionKeymap keymap) {
+  KeyMapManagerMap::iterator iter = keymaps_.find(keymap);
 
-  if (iter == keymaps_.end()) {
-    // create new instance
-    KeyMapManager *manager = pool_.Alloc();
-    iter = keymaps_.insert(make_pair(keymap, manager)).first;
+  if (iter != keymaps_.end()) {
+    return iter->second;
   }
 
-  iter->second->ReloadWithKeymap(keymap);
-
-  return iter->second;
+  // create new instance
+  KeyMapManager *manager = pool_.Alloc();
+  keymaps_.insert(make_pair(keymap, manager));
+  manager->Initialize(keymap);
+  return manager;
 }
+
+void KeyMapFactory::ReloadConfig(const Config& config) {
+  KeyMapManagerMap::iterator iter = keymaps_.find(Config::CUSTOM);
+  if (iter == keymaps_.end()) {
+    return;
+  }
+
+  iter->second->ReloadConfig(config);
+}
+
 
 }  // namespace keymap
 }  // namespace mozc

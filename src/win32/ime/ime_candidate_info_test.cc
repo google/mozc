@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "win32/ime/ime_candidate_info.h"
@@ -512,7 +513,7 @@ string ToUTF8(const wstring &wstr) {
   Util::WideToUTF8(wstr, &result);
   return result;
 }
-}  // anonymous namespace
+}  // namespace
 
 // Some games such as EMIL CHRONICLE ONLINE assumes that
 // CANDIDATELIST::dwPageSize never be zero nor grater than 10 despite that

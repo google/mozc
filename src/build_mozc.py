@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -366,12 +366,6 @@ def ParseGypOptions(args=None, values=None):
                     help='Treat compiler warning as error. This option is used '
                     'on Mac and Linux.')
 
-  # Mac
-  parser.add_option('--mac_dir', dest='mac_dir',
-                    help='A path to the root directory of third party '
-                    'libraries for Mac build which will be passed to gyp '
-                    'files.')
-
   # Linux
   parser.add_option('--server_dir', dest='server_dir',
                     default='',
@@ -462,22 +456,6 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='cloud handwriting',
                    macro_name='ENABLE_CLOUD_HANDWRITING',
                    option_name='cloud_handwriting')
-  AddFeatureOption(parser, feature_name='http client',
-                   macro_name='MOZC_ENABLE_HTTP_CLIENT',
-                   option_name='http_client')
-  AddFeatureOption(parser, feature_name='mode_indicator',
-                   macro_name='MOZC_ENABLE_MODE_INDICATOR',
-                   option_name='mode_indicator')
-
-  # TODO(yukawa): Remove this option when Zinnia can be built on Windows with
-  #               enabling Unicode.
-  use_zinnia_default = True
-  if IsWindows():
-    # Zinnia on Windows cannot be enabled because of compile error.
-    use_zinnia_default = False
-  parser.add_option('--use_zinnia', dest='use_zinnia',
-                    default=use_zinnia_default,
-                    help='Use Zinnia if specified.')
 
   if IsWindows():
     parser.add_option('--wix_dir', dest='wix_dir',
@@ -547,11 +525,6 @@ def ParseBuildOptions(args=None, values=None):
   """Parses command line options for the build command."""
   parser = optparse.OptionParser(usage='Usage: %prog build [options]')
   AddCommonOptions(parser)
-  if IsLinux():
-    default_build_concurrency = GetNumberOfProcessors() * 2
-    parser.add_option('--jobs', '-j', dest='jobs',
-                      default=('%d' % default_build_concurrency),
-                      metavar='N', help='run build jobs in parallel')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
 
@@ -576,12 +549,7 @@ def ParseRunTestsOptions(args=None, values=None):
   parser = optparse.OptionParser(
       usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
   AddCommonOptions(parser)
-  if IsLinux():
-    default_build_concurrency = GetNumberOfProcessors() * 2
-    parser.add_option('--jobs', '-j', dest='jobs',
-                      default=('%d' % default_build_concurrency),
-                      metavar='N', help='run build jobs in parallel')
-  default_test_jobs = GetNumberOfProcessors() * 2
+  default_test_jobs = GetNumberOfProcessors()
   parser.add_option('--test_jobs', dest='test_jobs', type='int',
                     default=default_test_jobs,
                     metavar='N', help='run test jobs in parallel')
@@ -784,16 +752,6 @@ def GypMain(options, unused_args, _):
   else:
     gyp_options.extend(['-D', 'warn_as_error=0'])
 
-  # mac_dir should be started with '<(DEPTH)', otherwise some
-  # operations in XCode fails.  So if the mac_dir option is an
-  # absolute path, it will be changed to a relative path.
-  mac_dir = options.mac_dir or '../mac'
-  if os.path.isabs(mac_dir):
-    mac_dir = GetRelPath(mac_dir, GetTopLevelSourceDirectoryName())
-  mac_dir = os.path.join('<(DEPTH)', mac_dir)
-
-  gyp_options.extend(['-D', 'mac_dir=%s' % mac_dir])
-
   if version.IsDevChannel():
     gyp_options.extend(['-D', 'channel_dev=1'])
 
@@ -845,15 +803,6 @@ def GypMain(options, unused_args, _):
                            linux=is_official_dev,
                            windows=is_official_dev,
                            mac=is_official_dev)
-  SetCommandLineForFeature(option_name='http_client',
-                           linux=is_official,
-                           windows=is_official,
-                           mac=is_official,
-                           android=is_official,
-                           # System dictionary is read with HttpClient in NaCl.
-                           nacl=True)
-  SetCommandLineForFeature(option_name='mode_indicator',
-                           windows=True)
 
   gyp_options.extend(['-D', 'target_platform=%s' % options.target_platform])
 
@@ -879,15 +828,9 @@ def GypMain(options, unused_args, _):
   else:
     gyp_options.extend(['-D', 'use_dynamically_linked_qt=0'])
 
-  if options.use_zinnia and target_platform not in ['Android', 'NaCl']:
-    gyp_options.extend(['-D', 'use_zinnia=YES'])
-  else:
-    gyp_options.extend(['-D', 'use_zinnia=NO'])
-
   if (options.target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
     gyp_options.extend(['-D', 'use_libibus=1'])
-
 
   # Dictionary configuration
   if target_platform == 'Android':
@@ -1021,8 +964,7 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
   short_basename = GetBuildShortBaseName(options,
                                          GetMozcVersion().GetTargetPlatform())
   make_command = ninja
-  build_args = ['-j %s' % options.jobs,
-                '-C', '%s/%s' % (short_basename, options.configuration)]
+  build_args = ['-C', '%s/%s' % (short_basename, options.configuration)]
   RunOrDie([make_command] + build_args + target_names)
 
 

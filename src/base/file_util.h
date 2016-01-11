@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,10 @@
 #endif  // OS_WIN
 
 #include <string>
+#include <vector>
 
 #include "base/port.h"
+#include "base/string_piece.h"
 
 // Ad-hoc workaround against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
@@ -57,14 +59,11 @@ namespace mozc {
 
 class FileUtil {
  public:
-  // Some filesystem related methods are disabled on Native Client environment.
-#ifndef MOZC_USE_PEPPER_FILE_IO
   // Creates a directory. Does not create directories in the way to the path.
   static bool CreateDirectory(const string &path);
 
   // Removes an empty directory.
   static bool RemoveDirectory(const string &dirname);
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
   // Removes a file.
   static bool Unlink(const string &filename);
@@ -97,10 +96,18 @@ class FileUtil {
   // Returns true if the file is renamed successfully.
   static bool AtomicRename(const string &from, const string &to);
 
+  // Joins the give path components using the OS-specific path delimiter.
+  static string JoinPath(const vector<StringPiece> &components);
+  static void JoinPath(const vector<StringPiece> &components, string *output);
+
   // Joins the given two path components using the OS-specific path delimiter.
-  static string JoinPath(const string &path1, const string &path2);
+  static string JoinPath(const string &path1, const string &path2) {
+    return JoinPath({path1, path2});
+  }
   static void JoinPath(const string &path1, const string &path2,
-                       string *output);
+                       string *output) {
+    JoinPath({path1, path2}, output);
+  }
 
   static string Basename(const string &filename);
   static string Dirname(const string &filename);

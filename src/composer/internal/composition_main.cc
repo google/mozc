@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 #include <sstream>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "composer/internal/composition.h"
 #include "composer/table.h"
 
@@ -39,7 +40,7 @@ DEFINE_string(table, "system://romanji-hiragana.tsv",
 
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
@@ -50,7 +51,7 @@ int main(int argc, char **argv) {
   string result;
   size_t pos = 0;
 
-  while (getline(cin, command)) {
+  while (getline(std::cin, command)) {
     char initial = command[0];
     if (initial == '-' || (initial >= '0' && initial <= '9')) {
       stringstream ss;
@@ -64,6 +65,6 @@ int main(int argc, char **argv) {
       pos = composition.InsertAt(pos, command);
     }
     composition.GetString(&result);
-    cout << result << " : " << pos << endl;
+    std::cout << result << " : " << pos << std::endl;
   }
 }

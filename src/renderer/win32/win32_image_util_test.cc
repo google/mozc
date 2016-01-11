@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,8 @@
 #include <atlapp.h>
 #include <atlgdi.h>
 #include <atlmisc.h>
-#include <gdiplus.h>
 
+#include <algorithm>
 #include <fstream>
 #include <list>
 #include <memory>
@@ -49,13 +49,15 @@
 #include "base/win_font_test_helper.h"
 #include "net/jsoncpp.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
-DECLARE_string(test_srcdir);
+using ::std::min;
+using ::std::max;
 
-namespace mozc {
-namespace renderer {
-namespace win32 {
-namespace {
+// gdiplus.h must be placed here because it internally depends on
+// global min/max functions.
+// TODO(yukawa): Use WIC (Windows Imaging Component) instead of GDI+.
+#include <gdiplus.h>  // NOLINT
 
 using ::mozc::renderer::win32::internal::GaussianBlur;
 using ::mozc::renderer::win32::internal::SafeFrameBuffer;
@@ -69,11 +71,16 @@ using ::WTL::CLogFont;
 using ::WTL::CPoint;
 using ::WTL::CSize;
 
+namespace mozc {
+namespace renderer {
+namespace win32 {
+namespace {
+
 typedef SubdivisionalPixel::SubdivisionalPixelIterator
     SubdivisionalPixelIterator;
 
-class BalloonImageTest : public testing::Test,
-                         public testing::WithParamInterface<const char *> {
+class BalloonImageTest : public ::testing::Test,
+                         public ::testing::WithParamInterface<const char *> {
  public:
   static void SetUpTestCase() {
     InitGdiplus();
@@ -281,11 +288,8 @@ INSTANTIATE_TEST_CASE_P(BalloonImageParameters,
                         ::testing::ValuesIn(kRenderingResultList));
 
 TEST_P(BalloonImageTest, TestImpl) {
-  string expected_image = GetParam();
   const string &expected_image_path =
-      FileUtil::JoinPath(FLAGS_test_srcdir, expected_image);
-  ASSERT_TRUE(FileUtil::FileExists(expected_image_path))
-      << "Reference file is not found: " << expected_image_path;
+      mozc::testing::GetSourceFileOrDie({GetParam()});
   const string json_path = expected_image_path + ".json";
   ASSERT_TRUE(FileUtil::FileExists(json_path))
       << "Manifest file is not found: " << json_path;

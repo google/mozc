@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -453,14 +453,21 @@ void FocusHierarchyObserver::OnDllProcessDetach(HINSTANCE module_handle,
 FocusHierarchyObserver *FocusHierarchyObserver::Create() {
   // Note: Currently FocusHierarchyObserver is enabled only with Chromium.
   // TODO(yukawa): Extend the target applications.
-  if (BrowserInfo::GetBrowerType() != BrowserInfo::kBrowserTypeChrome) {
-    return new FocusHierarchyObserverNullImpl();
-  }
 
-  auto *impl = FocusHierarchyObserverImpl::Create();
-  if (impl != nullptr) {
-    return impl;
-  }
+  // The following code may affect the issue that the suggest window is not
+  // shown in Chromium.  As a workaround, this function always returns
+  // new FocusHierarchyObserverNullImpl();
+  //
+  // TODO: Reactivate the following code when b/23803984 is properly fixed.
+  //
+  // if (BrowserInfo::GetBrowerType() != BrowserInfo::kBrowserTypeChrome) {
+  //   return new FocusHierarchyObserverNullImpl();
+  // }
+  //
+  // auto *impl = FocusHierarchyObserverImpl::Create();
+  // if (impl != nullptr) {
+  //   return impl;
+  // }
   return new FocusHierarchyObserverNullImpl();
 }
 

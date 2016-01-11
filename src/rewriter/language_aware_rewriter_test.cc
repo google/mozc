@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,17 +29,17 @@
 
 #include "rewriter/language_aware_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #ifdef MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/packed/packed_data_manager.h"
 #include "data_manager/packed/packed_data_mock.h"
@@ -49,11 +49,12 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
-DECLARE_string(test_tmpdir);
+using std::unique_ptr;
 
 using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::Token;
@@ -81,21 +82,17 @@ class LanguageAwareRewriterTest : public testing::Test {
     usage_stats::UsageStats::ClearAllStatsForTest();
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers mocked PackedDataManager.
-    scoped_ptr<packed::PackedDataManager>
+    unique_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
     CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
                                     kPackedSystemDictionary_size)));
     packed::RegisterPackedDataManager(data_manager.release());
 #endif  // MOZC_USE_PACKED_DICTIONARY
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
     dictionary_mock_.reset(new DictionaryMock);
   }
 
   virtual void TearDown() {
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
@@ -110,11 +107,8 @@ class LanguageAwareRewriterTest : public testing::Test {
         dictionary_mock_.get());
   }
 
-  scoped_ptr<DictionaryMock> dictionary_mock_;
+  unique_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
-
- private:
-  config::Config default_config_;
 };
 
 namespace {
@@ -130,7 +124,7 @@ bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
   config::Config default_config;
   table.InitializeWithRequestAndConfig(client_request, default_config);
 
-  composer::Composer composer(&table, &client_request);
+  composer::Composer composer(&table, &client_request, &default_config);
   InsertASCIISequence(key, &composer);
   composer.GetStringForPreedit(composition);
 
@@ -141,7 +135,7 @@ bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
   }
   Segment *segment = segments->mutable_conversion_segment(0);
   segment->set_key(*composition);
-  ConversionRequest request(&composer, &client_request);
+  ConversionRequest request(&composer, &client_request, &default_config);
 
   return rewriter->Rewrite(request, segments);
 }
@@ -167,7 +161,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
                                    "naru",
                                    Token::NONE);
 
-  scoped_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
 
   const string &kPrefix = "\xE2\x86\x92 ";  // "→ "
   const string &kDidYouMean =
@@ -284,7 +278,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
 }
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
-  scoped_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
 
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionTriggered");
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
@@ -327,7 +321,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     config::Config default_config;
     table.InitializeWithRequestAndConfig(client_request, default_config);
 
-    composer::Composer composer(&table, &client_request);
+    composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence("python", &composer);
     composer.GetStringForPreedit(&composition);
     EXPECT_EQ(kPyTeyoN, composition);
@@ -336,7 +330,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     segment->set_key(composition);
-    ConversionRequest request(&composer, &client_request);
+    ConversionRequest request(&composer, &client_request, &default_config);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
 
@@ -346,6 +340,32 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     EXPECT_LT(0, segment->candidates_size());
     rewriter->Finish(request, &segments);
     EXPECT_COUNT_STATS("LanguageAwareSuggestionCommitted", 1);
+  }
+}
+
+TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
+  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+
+  {
+    // "1d*=" is composed to "１ｄ＊＝", which are the full width ascii
+    // characters of "1d*=". We do not want to rewrite full width ascii to
+    // half width ascii by LanguageAwareRewriter.
+    string composition;
+    Segments segments;
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "1d*=",
+                                               &composition, &segments));
+    // "１ｄ＊＝"
+    EXPECT_EQ("\xef\xbc\x91\xef\xbd\x84\xef\xbc\x8a\xef\xbc\x9d", composition);
+  }
+
+  {
+    // "xyzw" is composed to "ｘｙｚｗ". Do not rewrite.
+    string composition;
+    Segments segments;
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "xyzw",
+                                               &composition, &segments));
+    // "ｘｙｚｗ"
+    EXPECT_EQ("\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x97", composition);
   }
 }
 

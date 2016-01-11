@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,23 +29,21 @@
 
 #include "rewriter/symbol_rewriter.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
+#include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -102,9 +100,6 @@ class SymbolRewriterTest : public ::testing::Test {
 
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
 
     // We cannot use mock converter here because SymbolRewriter uses
     // ResizeSegment of converter implementation. However, SymbolRewriter is
@@ -116,16 +111,9 @@ class SymbolRewriterTest : public ::testing::Test {
     data_manager_.reset(new testing::MockDataManager);
   }
 
-  virtual void TearDown() {
-    // Just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-  }
-
-  scoped_ptr<EngineInterface> engine_;
+  std::unique_ptr<EngineInterface> engine_;
   const ConverterInterface *converter_;
-  scoped_ptr<testing::MockDataManager> data_manager_;
+  std::unique_ptr<testing::MockDataManager> data_manager_;
 };
 
 // Note that these tests are using default symbol dictionary.
@@ -296,19 +284,19 @@ TEST_F(SymbolRewriterTest, SetKey) {
 }
 
 TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   SymbolRewriter rewriter(converter_, data_manager_.get());
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
   }
 }
 

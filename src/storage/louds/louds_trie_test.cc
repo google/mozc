@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,64 @@ LoudsTrie::Node Traverse(const LoudsTrie &trie, StringPiece key) {
   return node;
 }
 
-TEST(LoudsTrieTest, NodeBasedApis) {
+struct CacheSizeParam {
+  CacheSizeParam(size_t lb0, size_t lb1, size_t s0, size_t s1, size_t term_lb1)
+      : louds_lb0_cache_size(lb0),
+        louds_lb1_cache_size(lb1),
+        louds_select0_cache_size(s0),
+        louds_select1_cache_size(s1),
+        termvec_lb1_cache_size(term_lb1) {}
+
+  size_t louds_lb0_cache_size;
+  size_t louds_lb1_cache_size;
+  size_t louds_select0_cache_size;
+  size_t louds_select1_cache_size;
+  size_t termvec_lb1_cache_size;
+};
+
+class LoudsTrieTest : public ::testing::TestWithParam<CacheSizeParam> {};
+
+#define INSTANTIATE_TEST_CASE(Generator)                                \
+  INSTANTIATE_TEST_CASE_P(                                              \
+      Generator, LoudsTrieTest,                                         \
+      ::testing::Values(                                                \
+          CacheSizeParam(0, 0, 0, 0, 0),                                \
+          CacheSizeParam(0, 0, 0, 0, 1),                                \
+          CacheSizeParam(0, 0, 0, 1, 0),                                \
+          CacheSizeParam(0, 0, 0, 1, 1),                                \
+          CacheSizeParam(0, 0, 1, 0, 0),                                \
+          CacheSizeParam(0, 0, 1, 0, 1),                                \
+          CacheSizeParam(0, 0, 1, 1, 0),                                \
+          CacheSizeParam(0, 0, 1, 1, 1),                                \
+          CacheSizeParam(0, 1, 0, 0, 0),                                \
+          CacheSizeParam(0, 1, 0, 0, 1),                                \
+          CacheSizeParam(0, 1, 0, 1, 0),                                \
+          CacheSizeParam(0, 1, 0, 1, 1),                                \
+          CacheSizeParam(0, 1, 1, 0, 0),                                \
+          CacheSizeParam(0, 1, 1, 0, 1),                                \
+          CacheSizeParam(0, 1, 1, 1, 0),                                \
+          CacheSizeParam(0, 1, 1, 1, 1),                                \
+          CacheSizeParam(1, 0, 0, 0, 0),                                \
+          CacheSizeParam(1, 0, 0, 0, 1),                                \
+          CacheSizeParam(1, 0, 0, 1, 0),                                \
+          CacheSizeParam(1, 0, 0, 1, 1),                                \
+          CacheSizeParam(1, 0, 1, 0, 0),                                \
+          CacheSizeParam(1, 0, 1, 0, 1),                                \
+          CacheSizeParam(1, 0, 1, 1, 0),                                \
+          CacheSizeParam(1, 0, 1, 1, 1),                                \
+          CacheSizeParam(1, 1, 0, 0, 0),                                \
+          CacheSizeParam(1, 1, 0, 0, 1),                                \
+          CacheSizeParam(1, 1, 0, 1, 0),                                \
+          CacheSizeParam(1, 1, 0, 1, 1),                                \
+          CacheSizeParam(1, 1, 1, 0, 0),                                \
+          CacheSizeParam(1, 1, 1, 0, 1),                                \
+          CacheSizeParam(1, 1, 1, 1, 0),                                \
+          CacheSizeParam(1, 1, 1, 1, 1),                                \
+          CacheSizeParam(2, 2, 2, 2, 2),                                \
+          CacheSizeParam(8, 8, 8, 8, 8),                                \
+          CacheSizeParam(1024, 1024, 1024, 1024, 1024)));
+
+TEST_P(LoudsTrieTest, NodeBasedApis) {
   // Create the following trie (* stands for non-terminal nodes):
   //
   //        *          Key   ID
@@ -92,8 +149,14 @@ TEST(LoudsTrieTest, NodeBasedApis) {
   builder.Add("bd");
   builder.Build();
 
+  const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
+  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+            param.louds_lb0_cache_size,
+            param.louds_lb1_cache_size,
+            param.louds_select0_cache_size,
+            param.louds_select1_cache_size,
+            param.termvec_lb1_cache_size);
 
   char buf[LoudsTrie::kMaxDepth + 1];  // for RestoreKeyString().
 
@@ -293,8 +356,9 @@ TEST(LoudsTrieTest, NodeBasedApis) {
     EXPECT_FALSE(trie.Traverse("xyz", &node));
   }
 }
+INSTANTIATE_TEST_CASE(GenNodeBasedApisTest);
 
-TEST(LoudsTrieTest, HasKey) {
+TEST_P(LoudsTrieTest, HasKey) {
   LoudsTrieBuilder builder;
   builder.Add("a");
   builder.Add("abc");
@@ -303,10 +367,16 @@ TEST(LoudsTrieTest, HasKey) {
   builder.Add("aecd");
   builder.Add("b");
   builder.Add("bcx");
-
   builder.Build();
+
+  const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
+  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+            param.louds_lb0_cache_size,
+            param.louds_lb1_cache_size,
+            param.louds_select0_cache_size,
+            param.louds_select1_cache_size,
+            param.termvec_lb1_cache_size);
 
   EXPECT_TRUE(trie.HasKey("a"));
   EXPECT_TRUE(trie.HasKey("abc"));
@@ -360,8 +430,9 @@ TEST(LoudsTrieTest, ExactSearch) {
   EXPECT_EQ(-1, trie.ExactSearch("bcxyz"));
   trie.Close();
 }
+INSTANTIATE_TEST_CASE(GenHasKeyTest);
 
-TEST(LoudsTrieTest, PrefixSearch) {
+TEST_P(LoudsTrieTest, PrefixSearch) {
   LoudsTrieBuilder builder;
   builder.Add("aa");
   builder.Add("ab");
@@ -373,9 +444,14 @@ TEST(LoudsTrieTest, PrefixSearch) {
   builder.Add("\x01\xFF\xFF");
   builder.Build();
 
+  const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
-
+  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+            param.louds_lb0_cache_size,
+            param.louds_lb1_cache_size,
+            param.louds_select0_cache_size,
+            param.louds_select1_cache_size,
+            param.termvec_lb1_cache_size);
   {
     const StringPiece kKey = "abc";
     vector<RecordCallbackArgs::CallbackArgs> actual;
@@ -434,8 +510,9 @@ TEST(LoudsTrieTest, PrefixSearch) {
     EXPECT_TRUE(actual.empty());
   }
 }
+INSTANTIATE_TEST_CASE(GenPrefixSearchTest);
 
-TEST(LoudsTrieTest, RestoreKeyString) {
+TEST_P(LoudsTrieTest, RestoreKeyString) {
   LoudsTrieBuilder builder;
   builder.Add("aa");
   builder.Add("ab");
@@ -447,10 +524,16 @@ TEST(LoudsTrieTest, RestoreKeyString) {
   builder.Add("abcef");
   builder.Add("abd");
   builder.Add("ebd");
-
   builder.Build();
+
+  const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
+  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+            param.louds_lb0_cache_size,
+            param.louds_lb1_cache_size,
+            param.louds_select0_cache_size,
+            param.louds_select1_cache_size,
+            param.termvec_lb1_cache_size);
 
   char buffer[LoudsTrie::kMaxDepth + 1];
   EXPECT_EQ("aa", trie.RestoreKeyString(builder.GetId("aa"), buffer));
@@ -466,6 +549,7 @@ TEST(LoudsTrieTest, RestoreKeyString) {
   EXPECT_EQ("", trie.RestoreKeyString(-1, buffer));
   trie.Close();
 }
+INSTANTIATE_TEST_CASE(GenRestoreKeyStringTest);
 
 }  // namespace
 }  // namespace louds

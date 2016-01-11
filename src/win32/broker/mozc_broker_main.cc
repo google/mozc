@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 #endif  // OS_WIN
 
 #include "base/crash_report_handler.h"
+#include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/system_util.h"
 #ifdef OS_WIN
 #include "base/winmain.h"
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]) {
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   int result = 0;
 #ifdef OS_WIN

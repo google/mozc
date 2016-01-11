@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -67,26 +67,23 @@ TEST(IteratorAdapterTest, LowerBound) {
     { 4, 14 },
   };
 
-  EXPECT_EQ(
-      kTestData + 3,
-      lower_bound(
-          MakeIteratorAdapter(kTestData, GetField1()),
-          MakeIteratorAdapter(kTestData + arraysize(kTestData), GetField1()),
-          3).base());
+  EXPECT_EQ(kTestData + 3,
+            std::lower_bound(MakeIteratorAdapter(kTestData, GetField1()),
+                             MakeIteratorAdapter(
+                                 kTestData + arraysize(kTestData), GetField1()),
+                             3).base());
 
-  EXPECT_EQ(
-      kTestData + arraysize(kTestData),
-      lower_bound(
-          MakeIteratorAdapter(kTestData, GetField1()),
-          MakeIteratorAdapter(kTestData + arraysize(kTestData), GetField1()),
-          12).base());
+  EXPECT_EQ(kTestData + arraysize(kTestData),
+            std::lower_bound(MakeIteratorAdapter(kTestData, GetField1()),
+                             MakeIteratorAdapter(
+                                 kTestData + arraysize(kTestData), GetField1()),
+                             12).base());
 
-  EXPECT_EQ(
-      kTestData + 2,
-      lower_bound(
-          MakeIteratorAdapter(kTestData, GetField2()),
-          MakeIteratorAdapter(kTestData + arraysize(kTestData), GetField2()),
-          12).base());
+  EXPECT_EQ(kTestData + 2,
+            std::lower_bound(MakeIteratorAdapter(kTestData, GetField2()),
+                             MakeIteratorAdapter(
+                                 kTestData + arraysize(kTestData), GetField2()),
+                             12).base());
 }
 
 TEST(IteratorAdapterTest, Count) {

@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,31 @@
       'toolsets': ['target', 'host'],
       'sources': [
         'codec.cc',
+      ],
+      'dependencies': [
+        'codec_util',
+        '../../base/base.gyp:base_core',
+      ],
+    },
+    {
+      'target_name': 'codec_factory',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'codec_factory.cc',
+      ],
+      'dependencies': [
+        'codec',
+        'codec_util',
+        '../../base/base.gyp:base_core',
+      ],
+    },
+    {
+      'target_name': 'codec_util',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'codec_util.cc',
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',

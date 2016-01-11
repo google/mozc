@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 
 #include <cstring>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/file_stream.h"
@@ -42,7 +43,6 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace storage {
@@ -205,7 +205,7 @@ bool TinyStorageImpl::Open(const string &filename) {
       return false;
     }
 
-    dic_.insert(make_pair(key, value));
+    dic_.insert(std::make_pair(key, value));
   }
 
   if (static_cast<size_t>(begin - mmap.begin()) != mmap.size()) {
@@ -334,7 +334,7 @@ bool TinyStorageImpl::Clear() {
 }  // namespace
 
 StorageInterface *TinyStorage::Create(const char *filename) {
-  scoped_ptr<TinyStorageImpl> storage(new TinyStorageImpl);
+  std::unique_ptr<TinyStorageImpl> storage(new TinyStorageImpl);
   if (!storage->Open(filename)) {
     LOG(ERROR) << "cannot open " << filename;
     return NULL;

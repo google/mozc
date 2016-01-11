@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,6 @@ TEST(VersionTest, VersionNumberTest) {
   const int revision = Version::GetMozcVersionRevision();
   EXPECT_EQ(Version::GetMozcVersion(), Util::StringPrintf(
       "%d.%d.%d.%d", major, minor, build_number, revision));
-}
-
-TEST(VersionTest, BuildTypeTest) {
-  EXPECT_EQ(version::kMozcBuildType, Version::GetMozcBuildType());
 }
 
 TEST(VersionTest, CompareVersion) {

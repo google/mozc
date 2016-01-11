@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,20 @@
 
 {
   'targets': [
+    {
+      'target_name': 'louds_test',
+      'type': 'executable',
+      'sources': [
+        'louds_test.cc',
+      ],
+      'dependencies': [
+        '../../testing/testing.gyp:gtest_main',
+        'louds.gyp:louds',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
     {
       'target_name': 'louds_trie_test',
       'type': 'executable',
@@ -94,6 +108,7 @@
       'dependencies': [
         'bit_stream_test',
         'bit_vector_based_array_test',
+        'louds_test',
         'louds_trie_test',
         'simple_succinct_bit_vector_index_test',
       ],

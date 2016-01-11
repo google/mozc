@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../testing/testing.gyp:gtest_main',
         'dictionary_base.gyp:text_dictionary_loader',
       ],

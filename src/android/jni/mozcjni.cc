@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,17 @@
 
 // JNI wrapper for SessionHandler.
 
+#ifdef OS_ANDROID
+
 #include <jni.h>
+
+#include <memory>
 
 #include "base/android_jni_proxy.h"
 #include "base/android_util.h"
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/scheduler.h"
-#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -69,8 +74,8 @@ class SessionHandlerSingletonAdapter {
 
  private:
   // Must be defined earlier than session_handler_, which depends on this.
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<SessionHandlerInterface> session_handler_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<SessionHandlerInterface> session_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerSingletonAdapter);
 };
@@ -83,10 +88,8 @@ void Initialize(
   // First of all, set the user profile directory.
   SystemUtil::SetUserProfileDirectory(user_profile_directory);
 
-#ifdef MOZC_ENABLE_HTTP_CLIENT
   // Initialize Java native callback proxy.
   JavaHttpClientProxy::SetJavaVM(vm);
-#endif  // MOZC_ENABLE_HTTP_CLIENT
 
   // Initialize dictionary data.
   DataManagerType::SetDictionaryData(dictionary_address, dictionary_size);
@@ -195,14 +198,14 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
      return JNI_EVERSION;
   }
 
-  mozc::Logging::InitLogStream("libmozc.so");
+  mozc::Logging::InitLogStream(
+      mozc::FileUtil::JoinPath(mozc::SystemUtil::GetLoggingDirectory(),
+                               "libmozc.so.log"));
   return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
-#ifdef MOZC_ENABLE_HTTP_CLIENT
   mozc::jni::JavaHttpClientProxy::SetJavaVM(NULL);
-#endif  // MOZC_ENABLE_HTTP_CLIENT
 
   // Delete global references.
   JNIEnv *env = mozc::AndroidUtil::GetEnv(vm);
@@ -212,3 +215,5 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
   }
 }
 }  // extern "C"
+
+#endif  // OS_ANDROID

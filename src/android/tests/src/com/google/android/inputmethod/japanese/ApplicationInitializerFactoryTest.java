@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -260,21 +260,6 @@ public class ApplicationInitializerFactoryTest extends InstrumentationTestCaseWi
   }
 
   @SmallTest
-  public void testGetDimensionForOrientation() {
-    float portraitValue = ApplicationInitializer.getDimensionForOrientation(
-        getInstrumentation().getContext().getResources(),
-        org.mozc.android.inputmethod.japanese.tests.R.dimen.value_for_testing_port_1dip_land_2dip,
-        Configuration.ORIENTATION_PORTRAIT);
-    float landscapeValue = ApplicationInitializer.getDimensionForOrientation(
-        getInstrumentation().getContext().getResources(),
-        org.mozc.android.inputmethod.japanese.tests.R.dimen.value_for_testing_port_1dip_land_2dip,
-        Configuration.ORIENTATION_LANDSCAPE);
-
-    assertTrue("portrait:" + portraitValue + ", landscape:" + landscapeValue,
-               portraitValue != landscapeValue);
-  }
-
-  @SmallTest
   public void testStoreDefaultFullscreenMode() throws IllegalArgumentException {
     class TestParameter extends Parameter {
       final int displayHeightInPixels;
@@ -348,7 +333,7 @@ public class ApplicationInitializerFactoryTest extends InstrumentationTestCaseWi
             testParameter.displayHeightInPixels,
             testParameter.displayWidthInPixels,
             resources.getDimensionPixelOffset(R.dimen.input_frame_height),
-            (int) Math.ceil(ApplicationInitializer.getDimensionForOrientation(
+            (int) Math.ceil(MozcUtil.getDimensionForOrientation(
                 resources, R.dimen.input_frame_height, Configuration.ORIENTATION_LANDSCAPE)),
                 resources.getDimensionPixelOffset(R.dimen.fullscreen_threshold));
         assertEquals("portrait check failed: " + testParameter.toString(),

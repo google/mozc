@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ class PredictorInterface {
                                  Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations.
-  virtual void Finish(Segments *segments) {}
+  virtual void Finish(const ConversionRequest &request, Segments *segments) {}
 
   // Reverts the last Finish operation.
   virtual void Revert(Segments *segments) {}

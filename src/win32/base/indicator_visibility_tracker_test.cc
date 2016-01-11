@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,19 +31,16 @@
 
 #include <memory>
 
+#include "base/clock.h"
+#include "base/clock_mock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-#include "base/clock_mock.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
 
 using std::unique_ptr;
-
-#ifdef MOZC_ENABLE_MODE_INDICATOR
 
 const uint64 kWaitDuration = 500;  // msec
 const VirtualKey AKey = VirtualKey::FromVirtualKey('A');
@@ -54,11 +51,11 @@ class IndicatorVisibilityTrackerTest : public testing::Test {
     clock_mock_.reset(new ClockMock(0, 0));
     // 1 kHz (Accuracy = 1msec)
     clock_mock_->SetFrequency(1000uLL);
-    Util::SetClockHandler(clock_mock_.get());
+    Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
   virtual void TearDown() {
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
   }
 
   void PutForwardMilliseconds(uint64 milli_sec) {
@@ -126,21 +123,6 @@ TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
             tracker.OnKey(AKey, false, false));
   EXPECT_TRUE(tracker.IsVisible());    // KeyUp -> Visible
 }
-
-#else
-
-// Mode Indicator is not supported yet.
-TEST(IndicatorVisibilityTrackerTest, BasicTest) {
-  IndicatorVisibilityTracker tracker;
-
-  EXPECT_FALSE(tracker.IsVisible()) << "Should be hidden by default.";
-
-  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
-            tracker.OnChangeInputMode());
-  EXPECT_FALSE(tracker.IsVisible());    // ChangeInputMode -> Invisible
-}
-
-#endif  // MOZC_ENABLE_MODE_INDICATOR or not
 
 }  // namespace
 

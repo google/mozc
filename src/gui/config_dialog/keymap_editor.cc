@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,22 @@
 
 #include "gui/config_dialog/keymap_editor.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #include <QtCore/QFile>
 #include <QtGui/QFileDialog>
 #include <QtGui/QtGui>
+
 #include <algorithm>  // for unique
 #include <cctype>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/singleton.h"
@@ -503,7 +510,7 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
                import_index < arraysize(kKeyMaps)) {
       const char *keymap_file =
           keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[import_index]);
-      scoped_ptr<istream> ifs(
+      std::unique_ptr<istream> ifs(
           ConfigFileStream::LegacyOpen(keymap_file));
       CHECK(ifs.get() != NULL);  // should never happen
       CHECK(LoadFromStream(ifs.get()));

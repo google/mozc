@@ -11,32 +11,24 @@ Currently, only Ubuntu 14.04 is tested to host the Docker container to build Moz
 
 ```
 mkdir ubuntu14.04 && cd ubuntu14.04
-curl -O https://raw.githubusercontent.com/google/mozc/master/src/docker/ubuntu14.04/Dockerfile
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu14.04/Dockerfile
 sudo docker build --rm -t $USER/mozc_ubuntu14.04 .
 sudo docker run --interactive --tty --rm $USER/mozc_ubuntu14.04
 ```
 
-## Set up Fedora 21 Docker container
-Fedora 21 container is also provided just for your reference.
+## Set up Fedora 23 Docker container
+Fedora 23 container is also provided just for your reference.
 
+Building Mozc for Android is not supported on Fedora 23 due to the lack of OpenJDK 1.7 support.  See [Red Hat Bugzilla – Bug 1190137](https://bugzilla.redhat.com/show_bug.cgi?id=1190137) for details.
 ```
-mkdir fedora21 && cd fedora21
-curl -O https://raw.githubusercontent.com/google/mozc/master/src/docker/fedora21/Dockerfile
-sudo docker build --rm -t $USER/mozc_fedora21 .
-sudo docker run --interactive --tty --rm $USER/mozc_fedora21
+mkdir fedora23 && cd fedora23
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/fedora23/Dockerfile
+sudo docker build --rm -t $USER/mozc_fedora23 .
+sudo docker run --interactive --tty --rm $USER/mozc_fedora23
 ```
 
 ### Hint
 Don't forget to rebuild Docker container when Dockerfile is updated.
-
-### Update the source tree
-If Dockerfile is not updated but GitHub Mozc repository is updated, you can fetch the latest source code as follows.
-
-```
-cd ../
-gclient sync
-cd src/
-```
 
 # Build in the container
 Before explaining detailed build configurations and options, let's walk through the simplest cases to see how it looks like.

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,9 @@
 
 #include "handwriting/zinnia_handwriting.h"
 
+#include <memory>
+#include <string>
+
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mac_util.h"
@@ -45,25 +48,23 @@ const uint32 kBoxSize = 200;
 
 // static
 string ZinniaHandwriting::GetModelFileName() {
-#ifdef OS_MACOSX
+#if defined(MOZC_ZINNIA_MODEL_FILE)
+  const char kModelFile[] = MOZC_ZINNIA_MODEL_FILE;
+  return kModelFile;
+#elif defined(OS_MACOSX)
   // TODO(komatsu): Fix the file name to "handwriting-ja.model" like the
   // Windows implementation regardless which data file is actually
   // used.  See also gui.gyp:hand_writing_mac.
   const char kModelFile[] = "handwriting-light-ja.model";
   return FileUtil::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
-#elif defined(USE_LIBZINNIA)
-  // On Linux, use the model for tegaki-zinnia.
-#if defined(MOZC_ZINNIA_MODEL_FILE)
-  const char kModelFile[] = MOZC_ZINNIA_MODEL_FILE;
-#else
+#elif defined(OS_LINUX)
   const char kModelFile[] =
       "/usr/share/tegaki/models/zinnia/handwriting-ja.model";
-#endif  // MOZC_ZINNIA_MODEL_FILE
   return kModelFile;
 #else
   const char kModelFile[] = "handwriting-ja.model";
   return FileUtil::JoinPath(SystemUtil::GetServerDirectory(), kModelFile);
-#endif  // OS_MACOSX
+#endif
 }
 
 ZinniaHandwriting::ZinniaHandwriting(StringPiece model_file)
@@ -106,9 +107,9 @@ HandwritingStatus ZinniaHandwriting::Recognize(
   }
 
   const int kMaxResultSize = 100;
-  scoped_ptr<zinnia::Result> result(recognizer_->classify(*character_,
-                                                          kMaxResultSize));
-  if (result.get() == NULL) {
+  std::unique_ptr<zinnia::Result> result(
+      recognizer_->classify(*character_, kMaxResultSize));
+  if (result == nullptr) {
     return HANDWRITING_ERROR;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,25 +30,24 @@
 
 #include "base/flags.h"
 
-#include <stdlib.h>  // for atexit, getenv
-#ifdef OS_WIN
-#include <windows.h>
-#endif  // OS_WIN
 #include <cstring>
+#include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "base/crash_report_handler.h"
-#include "base/init.h"
+#include "base/port.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
-#include "base/util.h"
-
-DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
 namespace mozc_flags {
+
+struct Flag {
+  int type;
+  void *storage;
+  const void *default_storage;
+  string help;
+};
 
 namespace {
 
@@ -71,26 +70,57 @@ bool IsTrue(const char *value) {
   return false;
 }
 
+// Wraps std::sto* functions by a template class so that appropriate functions
+// are chosen for platform-dependent integral types by type deduction.  For
+// example, if int64 is defined as long long, then StrToNumberImpl<int64>::Do()
+// is mapped to StrToNumberImpl::Do<long long>().  Here, struct (class) is
+// intentionally used instead of a template function because, if we use a
+// function, compiler may warn of "unused function".
+template <typename T> struct StrToNumberImpl;
+
+template <> struct StrToNumberImpl<int> {
+  static int Do(const string &s) { return std::stoi(s); }
+};
+
+template <> struct StrToNumberImpl<long> {                  // NOLINT
+  static long Do(const string &s) { return std::stol(s); }  // NOLINT
+};
+
+template <> struct StrToNumberImpl<long long> {                   // NOLINT
+  static long long Do(const string &s) { return std::stoll(s); }  // NOLINT
+};
+
+template <> struct StrToNumberImpl<unsigned long> {                   // NOLINT
+  static unsigned long Do(const string &s) { return std::stoul(s); }  // NOLINT
+};
+
+template <> struct StrToNumberImpl<unsigned long long> {  // NOLINT
+  static unsigned long long Do(const string &s) {         // NOLINT
+    return std::stoull(s);
+  }
+};
+
+template <typename T> inline T StrToNumber(const string &s) {
+  return StrToNumberImpl<T>::Do(s);
+}
+
+#if defined(DEBUG) || defined(OS_MACOSX)
+// Defines std::string version of StringPiece::starts_with here to make flags
+// module from independent of string_piece.cc because StringPiece depends on
+// logging.cc etc. and using it causes cyclic dependency.
+inline bool StartsWith(const string &s, const string &prefix) {
+  return s.size() >= prefix.size() &&
+         memcmp(s.data(), prefix.data(), prefix.size()) == 0;
+}
+#endif  // defined(DEBUG) || defined(OS_MACOSX)
+
 }  // namespace
-
-class FlagUtil {
- public:
-  static bool SetFlag(const string &name, const string &value);
-  static void PrintFlags(string *output);
-};
-
-struct Flag {
-  int type;
-  void *storage;
-  const void *default_storage;
-  string help;
-};
 
 FlagRegister::FlagRegister(const char *name,
                            void *storage,
                            const void *default_storage,
                            int shorttpe,
-                           const char *help): flag_(new Flag) {
+                           const char *help) : flag_(new Flag) {
   flag_->type = shorttpe;
   flag_->storage = storage;
   flag_->default_storage = default_storage;
@@ -102,7 +132,7 @@ FlagRegister::~FlagRegister() {
   delete flag_;
 }
 
-bool FlagUtil::SetFlag(const string &name, const string &value) {
+bool SetFlag(const string &name, const string &value) {
   map<string, Flag *>::iterator it = GetFlagMap()->find(name);
   if (it == GetFlagMap()->end()) return false;
   string v = value;
@@ -125,24 +155,22 @@ bool FlagUtil::SetFlag(const string &name, const string &value) {
 
   switch (flag->type) {
     case I:
-      *(reinterpret_cast<int32 *>(flag->storage)) = atoi32(v.c_str());
+      *reinterpret_cast<int32 *>(flag->storage) = StrToNumber<int32>(v);
       break;
     case B:
       *(reinterpret_cast<bool *>(flag->storage)) = IsTrue(v.c_str());
       break;
     case I64:
-      *(reinterpret_cast<int64 *>(flag->storage)) =
-          strtoll(v.c_str(), NULL, 10);
+      *reinterpret_cast<int64 *>(flag->storage) = StrToNumber<int64>(v);
       break;
     case U64:
-      *(reinterpret_cast<uint64 *>(flag->storage)) =
-          strtoull(v.c_str(), NULL, 10);
+      *reinterpret_cast<uint64 *>(flag->storage) = StrToNumber<uint64>(v);
       break;
     case D:
-      *(reinterpret_cast<double *>(flag->storage)) = strtod(v.c_str(), NULL);
+      *reinterpret_cast<double *>(flag->storage) = strtod(v.c_str(), nullptr);
       break;
     case S:
-      *(reinterpret_cast<string *>(flag->storage)) = v;
+      *reinterpret_cast<string *>(flag->storage) = v;
       break;
     default:
       break;
@@ -150,7 +178,11 @@ bool FlagUtil::SetFlag(const string &name, const string &value) {
   return true;
 }
 
-void FlagUtil::PrintFlags(string *output) {
+namespace {
+
+#ifndef IGNORE_HELP_FLAG
+
+void PrintFlags(string *output) {
   ostringstream os;
   for (map<string, Flag *>::const_iterator it = GetFlagMap()->begin();
        it != GetFlagMap()->end(); ++it) {
@@ -189,43 +221,68 @@ void FlagUtil::PrintFlags(string *output) {
   *output = os.str();
 }
 
-uint32 ParseCommandLineFlags(int *argc, char*** argv,
-                             bool remove_flags) {
+#endif  // IGNORE_HELP_FLAG
+
+bool CommandLineGetFlag(int argc,
+                        char **argv,
+                        string *key,
+                        string *value,
+                        int *used_args) {
+  key->clear();
+  value->clear();
+  *used_args = 0;
+  if (argc < 1) {
+    return false;
+  }
+
+  *used_args = 1;
+  const char *start = argv[0];
+  if (start[0] != '-') {
+    return false;
+  }
+
+  ++start;
+  if (start[0] == '-') ++start;
+  const string arg = start;
+  const size_t n = arg.find("=");
+  if (n != string::npos) {
+    *key = arg.substr(0, n);
+    *value = arg.substr(n + 1, arg.size() - n);
+    return true;
+  }
+
+  key->assign(arg);
+  value->clear();
+
+  if (argc == 1) {
+    return true;
+  }
+  start = argv[1];
+  if (start[0] == '-') {
+    return true;
+  }
+
+  *used_args = 2;
+  value->assign(start);
+  return true;
+}
+
+}  // namespace
+
+uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
   int used_argc = 0;
   string key, value;
   for (int i = 1; i < *argc; i += used_argc) {
-    if (!mozc::SystemUtil::CommandLineGetFlag(*argc - i, *argv + i,
-                                              &key, &value, &used_argc)) {
+    if (!CommandLineGetFlag(*argc - i, *argv + i,
+                            &key, &value, &used_argc)) {
       // TODO(komatsu): Do error handling
-      continue;
-    }
-
-    if (key == "fromenv") {
-      vector<string> keys;
-      mozc::Util::SplitStringUsing(value, ",", &keys);
-      for (size_t j = 0; j < keys.size(); ++j) {
-        if (keys[j].empty() || keys[j] == "fromenv") {
-          continue;
-        }
-        string env_key = "FLAGS_";
-        env_key += keys[j];
-        const char *env_value = getenv(env_key.c_str());
-        if (env_value == NULL) {
-          continue;
-        }
-        if (!FlagUtil::SetFlag(keys[j], env_value)) {
-#ifndef IGNORE_INVALID_FLAG
-          cerr << "Unknown/Invalid flag " << key << endl;
-#endif
-        }
-      }
       continue;
     }
 
     if (key == "help") {
 #ifndef IGNORE_HELP_FLAG
       string help;
-      FlagUtil::PrintFlags(&help);
+      PrintFlags(&help);
       cout << help;
       exit(0);
 #endif
@@ -234,19 +291,18 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
     // Ignores unittest specific commandline flags.
     // In the case of Release build, IGNORE_INVALID_FLAG macro is set, so that
     // following condition makes no sense.
-    if (mozc::Util::StartsWith(key, "gtest_") ||
-        mozc::Util::StartsWith(key, "gunit_")) {
+    if (StartsWith(key, "gtest_") || StartsWith(key, "gunit_")) {
       continue;
     }
 #endif  // DEBUG
 #ifdef OS_MACOSX
     // Mac OSX specifies process serial number like -psn_0_217141.
     // Let's ignore it.
-    if (mozc::Util::StartsWith(key, "psn_")) {
+    if (StartsWith(key, "psn_")) {
       continue;
     }
 #endif
-    if (!FlagUtil::SetFlag(key, value)) {
+    if (!SetFlag(key, value)) {
 #ifndef IGNORE_INVALID_FLAG
       cerr << "Unknown/Invalid flag " << key << endl;
       exit(1);
@@ -257,49 +313,4 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
 }
 
 }  // namespace mozc_flags
-
-namespace {
-
-#ifdef OS_WIN
-LONG CALLBACK ExitProcessExceptionFilter(
-    EXCEPTION_POINTERS *ExceptionInfo) {
-  // Currently, we haven't found good way to perform both
-  // "send mininump" and "exit the process gracefully".
-  ::ExitProcess(static_cast<UINT>(-1));
-  return EXCEPTION_EXECUTE_HANDLER;
-}
-#endif  // OS_WIN
-
-void InitGoogleInternal(const char *argv0,
-                        int *argc, char ***argv,
-                        bool remove_flags) {
-  mozc_flags::FlagUtil::SetFlag("program_invocation_name", *argv[0]);
-  mozc_flags::ParseCommandLineFlags(argc, argv, remove_flags);
-  if (*argc > 0) {
-    mozc::Logging::InitLogStream((*argv)[0]);
-  } else {
-    mozc::Logging::InitLogStream();
-  }
-
-  mozc::RunInitializers();  // do all static initialization
-}
-
-}  // namespace
-
-// not install breakpad
-// This function is defined in global namespace.
-void InitGoogle(const char *arg0,
-                int *argc, char ***argv,
-                bool remove_flags) {
-#ifdef OS_WIN
-  // InitGoogle() is supposed to be used for code generator or
-  // other programs which are not included in the production code.
-  // In these code, we don't want to show any error messages when
-  // exceptions are raised. This is important to keep
-  // our continuous build stable.
-  ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
-#endif  // OS_WIN
-
-  InitGoogleInternal(arg0, argc, argv, remove_flags);
-}
 

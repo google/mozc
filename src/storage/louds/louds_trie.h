@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #ifndef MOZC_STORAGE_LOUDS_LOUDS_TRIE_H_
 #define MOZC_STORAGE_LOUDS_LOUDS_TRIE_H_
 
+#include <memory>
+
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "storage/louds/louds.h"
@@ -50,11 +52,22 @@ class LoudsTrie {
   LoudsTrie() : edge_character_(nullptr) {}
   ~LoudsTrie() {}
 
-  // Opens the binary image, and constructs the data structure.
-  // This method doesn't own the "data", so it is caller's reponsibility
-  // to keep the data alive until Close is invoked.
-  // See .cc file for the detailed format of the binary image.
-  bool Open(const uint8 *data);
+  // Opens the binary image and constructs the data structure.  The first four
+  // cache sizes are passed to the underlying LOUDS.  See louds.h for more
+  // information of cache size.  The last one is passed to the underlying
+  // terminal bit vector.  This class doesn't own the "data", so it is caller's
+  // reponsibility to keep the data alive until Close is invoked.  See .cc file
+  // for the detailed format of the binary image.
+  bool Open(const uint8 *data,
+            size_t louds_lb0_cache_size,
+            size_t louds_lb1_cache_size,
+            size_t louds_select0_cache_size,
+            size_t louds_select1_cache_size,
+            size_t termvec_lb1_cache_size);
+
+  bool Open(const uint8 *data) {
+    return Open(data, 0, 0, 0, 0, 0);
+  }
 
   // Destructs the internal data structure explicitly (the destructor will do
   // clean up too).
@@ -89,6 +102,7 @@ class LoudsTrie {
     const int node_id = terminal_bit_vector_.Select1(key_id + 1) + 1;
     louds_.InitNodeFromNodeId(node_id, node);
   }
+
   Node GetTerminalNodeFromKeyId(int key_id) const {
     Node node;
     GetTerminalNodeFromKeyId(key_id, &node);

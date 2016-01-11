@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -810,11 +810,11 @@ bool WinSandbox::SpawnSandboxedProcess(const string &path,
                                        const SecurityInfo &info,
                                        DWORD *pid) {
   wstring wpath;
-  Util::UTF8ToWide(path.c_str(), &wpath);
+  Util::UTF8ToWide(path, &wpath);
   wpath = L"\"" + wpath + L"\"";
   if (!arg.empty()) {
     wstring warg;
-    Util::UTF8ToWide(arg.c_str(), &warg);
+    Util::UTF8ToWide(arg, &warg);
     wpath += L" ";
     wpath += warg;
   }

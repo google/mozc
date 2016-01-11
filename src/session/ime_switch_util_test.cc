@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,20 +43,11 @@
 namespace mozc {
 namespace config {
 
-class ImeSwitchUtilTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    ImeSwitchUtil::Reload();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  }
-};
-
-TEST_F(ImeSwitchUtilTest, PresetTest) {
+TEST(ImeSwitchUtilTest, PresetTest) {
   Config config;
-  ConfigHandler::GetConfig(&config);
+  ConfigHandler::GetDefaultConfig(&config);
   config.set_session_keymap(Config::ATOK);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -80,8 +71,7 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   }
 
   config.set_session_keymap(Config::MSIME);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -99,8 +89,7 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   }
 
   config.set_session_keymap(Config::KOTOERI);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -124,13 +113,11 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   }
 }
 
-TEST_F(ImeSwitchUtilTest, DefaultTest) {
+TEST(ImeSwitchUtilTest, DefaultTest) {
   Config config;
-  ConfigHandler::GetConfig(&config);
+  ConfigHandler::GetDefaultConfig(&config);
   config.set_session_keymap(Config::NONE);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
-  // MSIME for windows, KOTOERI for others
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
@@ -154,13 +141,17 @@ TEST_F(ImeSwitchUtilTest, DefaultTest) {
     commands::KeyEvent key;
     KeyParser::ParseKey("ON", &key);
     key.set_special_key(commands::KeyEvent::ON);
-    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
+    if (ConfigHandler::GetDefaultKeyMap() == config::Config::CHROMEOS) {
+      EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
+    } else {
+      EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
+    }
   }
 }
 
-TEST_F(ImeSwitchUtilTest, CustomTest) {
+TEST(ImeSwitchUtilTest, CustomTest) {
   Config config;
-  ConfigHandler::GetConfig(&config);
+  ConfigHandler::GetDefaultConfig(&config);
 
   const string custom_keymap_table =
       "status\tkey\tcommand\n"
@@ -172,8 +163,7 @@ TEST_F(ImeSwitchUtilTest, CustomTest) {
 
   config.set_session_keymap(Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
+  ImeSwitchUtil::ReloadConfig(config);
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);

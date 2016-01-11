@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -341,13 +341,13 @@ public final class MozcUtil {
   public static int getAbiIndependentVersionCode(Context context) {
     // Version code format:
     // 00000BBBBB or
-    // 0005BBBBBA
+    // 0006BBBBBA
     // A: ABI (0: Fat, 6: x86_64, 5:arm64, 4:mips64, 3: x86, 2: armeabi-v7a, 1:mips)
     // B: ANDROID_VERSION_CODE
     Preconditions.checkNotNull(context);
     int rawVersionCode = getVersionCode(context);
     String versionCode = Integer.toString(getVersionCode(context));
-    if (versionCode.length() == 7 && versionCode.charAt(0) == '5') {
+    if (versionCode.length() == 7 && versionCode.charAt(0) == '6') {
       return Integer.valueOf(versionCode.substring(1, versionCode.length() - 1));
     }
     return rawVersionCode;
@@ -934,5 +934,25 @@ public final class MozcUtil {
    */
   public static float clamp(float value, float min, float max) {
     return Math.max(Math.min(value, max), min);
+  }
+
+  /**
+   * Get a dimension for the specified orientation.
+   * This method may be heavy since it updates the {@code resources} twice.
+   */
+  public static float getDimensionForOrientation(Resources resources, int id, int orientation) {
+    Configuration configuration = resources.getConfiguration();
+    if (configuration.orientation == orientation) {
+      return resources.getDimension(id);
+    }
+
+    Configuration originalConfiguration = new Configuration(resources.getConfiguration());
+    try {
+      configuration.orientation = orientation;
+      resources.updateConfiguration(configuration, null);
+      return resources.getDimension(id);
+    } finally {
+      resources.updateConfiguration(originalConfiguration, null);
+    }
   }
 }

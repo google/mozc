@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,7 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -58,9 +56,12 @@
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_data.h"
+#include "prediction/zero_query_list.h"
 #include "prediction/zero_query_number_data.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
+#include "usage_stats/usage_stats.h"
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.
@@ -77,8 +78,12 @@ DECLARE_bool(enable_typing_correction);
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::Token;
+using mozc::usage_stats::UsageStats;
 
 namespace mozc {
+
+using commands::Request;
+
 namespace {
 
 // Used to emulate positive infinity for cost. This value is set for those
@@ -93,34 +98,6 @@ const int kInfinity = (2 << 20);
 // Number of prediction calls should be minimized.
 const size_t kSuggestionMaxResultsSize = 256;
 const size_t kPredictionMaxResultsSize = 100000;
-
-void GetNumberSuffixArray(const string &history_input,
-                          vector<string> *suffixes) {
-  DCHECK(suffixes);
-  const char kDefault[] = "default";
-  const string default_str(kDefault);
-
-  int default_num = -1;
-  int suffix_num = -1;
-
-  for (int i = 0; i < kZeroQueryNum_size; ++i) {
-    if (default_str == kZeroQueryNum_data[i][0]) {
-      default_num = i;
-    } else if (history_input == kZeroQueryNum_data[i][0]) {
-      suffix_num = i;
-    }
-  }
-  DCHECK_GE(default_num, 0);
-
-  if (suffix_num != -1) {
-    for (int j = 1; kZeroQueryNum_data[suffix_num][j]; ++j) {
-      suffixes->push_back(kZeroQueryNum_data[suffix_num][j]);
-    }
-  }
-  for (int j = 1; kZeroQueryNum_data[default_num][j]; ++j) {
-    suffixes->push_back(kZeroQueryNum_data[default_num][j]);
-  }
-}
 
 // Returns true if the |target| may be reduncant result.
 bool MaybeRedundant(const string &reference, const string &target) {
@@ -163,14 +140,14 @@ bool IsMixedConversionEnabled(const commands::Request& request) {
   return request.mixed_conversion() || FLAGS_enable_mixed_conversion;
 }
 
-bool IsTypingCorrectionEnabled() {
-  return GET_CONFIG(use_typing_correction) ||
+bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
+  return request.config().use_typing_correction() ||
          FLAGS_enable_typing_correction;
 }
 
-struct ZeroQueryRuleCompare {
-  bool operator()(const char **lhs, const char **rhs) const {
-    return (strcmp(lhs[0], rhs[0]) < 0);
+struct ZeroQueryListCompare {
+  bool operator()(const ZeroQueryList &lhs, const ZeroQueryList &rhs) const {
+    return (strcmp(lhs.key, rhs.key) < 0);
   }
 };
 }  // namespace
@@ -181,10 +158,13 @@ class DictionaryPredictor::PredictiveLookupCallback :
   PredictiveLookupCallback(DictionaryPredictor::PredictionTypes types,
                            size_t limit, size_t original_key_len,
                            const set<string> *subsequent_chars,
+                           bool is_zero_query,
                            vector<DictionaryPredictor::Result> *results)
       : penalty_(0), types_(types), limit_(limit),
         original_key_len_(original_key_len),
-        subsequent_chars_(subsequent_chars), results_(results) {}
+        subsequent_chars_(subsequent_chars),
+        is_zero_query_(is_zero_query),
+        results_(results) {}
 
   virtual ResultType OnKey(StringPiece key) {
     if (subsequent_chars_ == NULL) {
@@ -224,6 +204,9 @@ class DictionaryPredictor::PredictiveLookupCallback :
     results_->push_back(Result());
     results_->back().InitializeByTokenAndTypes(token, types_);
     results_->back().wcost += penalty_;
+    if (is_zero_query_ && (types_ & SUFFIX)) {
+      results_->back().SetSourceInfoForZeroQuery(ZERO_QUERY_SUFFIX);
+    }
     if (results_->size() < limit_) {
       return TRAVERSE_CONTINUE;
     } else {
@@ -231,14 +214,16 @@ class DictionaryPredictor::PredictiveLookupCallback :
     }
   }
 
- private:
+ protected:
   int32 penalty_;
   const DictionaryPredictor::PredictionTypes types_;
   const size_t limit_;
   const size_t original_key_len_;
   const set<string> *subsequent_chars_;
+  const bool is_zero_query_;
   vector<DictionaryPredictor::Result> *results_;
 
+ private:
   DISALLOW_COPY_AND_ASSIGN(PredictiveLookupCallback);
 };
 
@@ -249,9 +234,10 @@ class DictionaryPredictor::PredictiveBigramLookupCallback :
                                  size_t limit, size_t original_key_len,
                                  const set<string> *subsequent_chars,
                                  StringPiece history_value,
+                                 bool is_zero_query,
                                  vector<DictionaryPredictor::Result> *results)
       : PredictiveLookupCallback(types, limit, original_key_len,
-                                 subsequent_chars, results),
+                                 subsequent_chars, is_zero_query, results),
         history_value_(history_value) {}
 
   virtual ResultType OnToken(StringPiece key, StringPiece expanded_key,
@@ -262,7 +248,13 @@ class DictionaryPredictor::PredictiveBigramLookupCallback :
         token.value.size() <= history_value_.size()) {
       return TRAVERSE_CONTINUE;
     }
-    return PredictiveLookupCallback::OnToken(key, expanded_key, token);
+    ResultType result_type =
+        PredictiveLookupCallback::OnToken(key, expanded_key, token);
+    if (is_zero_query_) {
+      results_->back().SetSourceInfoForZeroQuery(
+          ZERO_QUERY_BIGRAM);
+    }
+    return result_type;
   }
 
  private:
@@ -312,6 +304,67 @@ DictionaryPredictor::DictionaryPredictor(
       predictor_name_("DictionaryPredictor") {}
 
 DictionaryPredictor::~DictionaryPredictor() {}
+
+void DictionaryPredictor::Finish(
+    const ConversionRequest &request, Segments *segments) {
+  if (segments->request_type() == Segments::REVERSE_CONVERSION) {
+    // Do nothing for REVERSE_CONVERSION.
+    return;
+  }
+
+  const Segment &segment = segments->conversion_segment(0);
+  if (segment.candidates_size() < 1) {
+    VLOG(2) << "candidates size < 1";
+    return;
+  }
+
+  const Segment::Candidate &candidate = segment.candidate(0);
+  if (segment.segment_type() != Segment::FIXED_VALUE) {
+    VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
+    return;
+  }
+
+  MaybeRecordUsageStats(candidate);
+}
+
+void DictionaryPredictor::MaybeRecordUsageStats(
+    const Segment::Candidate &candidate) const {
+  if (candidate.source_info &
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NONE) {
+    UsageStats::IncrementCount(
+        "CommitDictionaryPredictorZeroQueryTypeNone");
+  }
+
+  if (candidate.source_info &
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX) {
+    UsageStats::IncrementCount(
+        "CommitDictionaryPredictorZeroQueryTypeNumberSuffix");
+  }
+
+  if (candidate.source_info &
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON) {
+    UsageStats::IncrementCount(
+        "CommitDictionaryPredictorZeroQueryTypeEmoticon");
+  }
+
+  if (candidate.source_info &
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI) {
+    UsageStats::IncrementCount(
+        "CommitDictionaryPredictorZeroQueryTypeEmoji");
+  }
+
+  if (candidate.source_info &
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM) {
+    UsageStats::IncrementCount(
+        "CommitDictionaryPredictorZeroQueryTypeBigram");
+  }
+
+  if (candidate.source_info &
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX) {
+    UsageStats::IncrementCount(
+        "CommitDictionaryPredictorZeroQueryTypeSuffix");
+  }
+}
 
 bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
                                             Segments *segments) const {
@@ -418,8 +471,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
-  make_heap(results->begin(), results->end(), ResultCostLess());
-
+  std::make_heap(results->begin(), results->end(), ResultCostLess());
 
   const size_t size = min(segments->max_prediction_candidates_size(),
                           results->size());
@@ -434,7 +486,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   for (size_t i = 0; i < results->size(); ++i) {
     // Pop a result from a heap. Please pay attention not to use results->at(i).
-    pop_heap(results->begin(), results->end() - i, ResultCostLess());
+    std::pop_heap(results->begin(), results->end() - i, ResultCostLess());
     const Result &result = results->at(results->size() - i - 1);
 
     if (added >= size || result.cost >= kInfinity) {
@@ -507,8 +559,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     candidate->wcost = result.wcost;
     candidate->cost = result.cost;
     candidate->attributes = result.candidate_attributes;
-    if (!(candidate->attributes & Segment::Candidate::SPELLING_CORRECTION) &&
-        IsLatinInputMode(request)) {
+    if ((!(candidate->attributes & Segment::Candidate::SPELLING_CORRECTION) &&
+         IsLatinInputMode(request)) || (result.types & SUFFIX)) {
       candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
       candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
     }
@@ -526,6 +578,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
         candidate->attributes |= Segment::Candidate::AUTO_PARTIAL_SUGGESTION;
       }
     }
+    candidate->source_info = result.source_info;
     if (result.types & REALTIME) {
       candidate->inner_segment_boundary = result.inner_segment_boundary;
     }
@@ -674,6 +727,39 @@ void DictionaryPredictor::Result::SetTypesAndTokenAttributes(
   if (token_attr & Token::USER_DICTIONARY) {
     candidate_attributes |= (Segment::Candidate::USER_DICTIONARY |
                              Segment::Candidate::NO_VARIANTS_EXPANSION);
+  }
+}
+
+void DictionaryPredictor::Result::SetSourceInfoForZeroQuery(
+    ZeroQueryType type) {
+  switch (type) {
+    case ZERO_QUERY_NONE:
+      source_info |=
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NONE;
+      return;
+    case ZERO_QUERY_NUMBER_SUFFIX:
+      source_info |=
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX;
+      return;
+    case ZERO_QUERY_EMOTICON:
+      source_info |=
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON;
+      return;
+    case ZERO_QUERY_EMOJI:
+      source_info |=
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI;
+      return;
+    case ZERO_QUERY_BIGRAM:
+      source_info |=
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM;
+      return;
+    case ZERO_QUERY_SUFFIX:
+      source_info |=
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX;
+      return;
+    default:
+      LOG(ERROR) << "Should not come here";
+      return;
   }
 }
 
@@ -1285,7 +1371,8 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     }
 
     // Find the Result with minimum cost. Swap it with the beginning element.
-    iter_swap(min_iter, min_element(min_iter, max_iter, ResultWCostLess()));
+    std::iter_swap(min_iter,
+                   std::min_element(min_iter, max_iter, ResultWCostLess()));
 
     const Result &reference_result = *min_iter;
 
@@ -1297,7 +1384,7 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
       if (MaybeRedundant(reference_result.value, iter->value)) {
         // Swap out the redundant result.
         --max_iter;
-        iter_swap(iter, max_iter);
+        std::iter_swap(iter, max_iter);
       } else {
         ++iter;
       }
@@ -1310,9 +1397,9 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
   // [min_iter, max_iter): remaining results.
   // Here, we revive the redundant results up to five in the result cost order.
   const size_t kDoNotDeleteNum = 5;
-  if (distance(max_iter, raw_result.end()) >= kDoNotDeleteNum) {
-    partial_sort(max_iter, max_iter + kDoNotDeleteNum, raw_result.end(),
-                 ResultWCostLess());
+  if (std::distance(max_iter, raw_result.end()) >= kDoNotDeleteNum) {
+    std::partial_sort(max_iter, max_iter + kDoNotDeleteNum, raw_result.end(),
+                      ResultWCostLess());
     max_iter += kDoNotDeleteNum;
   } else {
     max_iter = raw_result.end();
@@ -1352,7 +1439,7 @@ void DictionaryPredictor::AddBigramResultsFromHistory(
     vector<Result> *results) const {
   // Check that history_key/history_value are in the dictionary.
   FindValueCallback find_history_callback(history_value);
-  dictionary_->LookupPrefix(history_key, false, &find_history_callback);
+  dictionary_->LookupPrefix(history_key, request, &find_history_callback);
 
   // History value is not found in the dictionary.
   // User may create this the history candidate from T13N or segment
@@ -1389,7 +1476,7 @@ void DictionaryPredictor::AddBigramResultsFromHistory(
                                           history_value_size - 1, 1));
   for (size_t i = prev_results_size; i < results->size(); ++i) {
     CheckBigramResult(find_history_callback.token(), history_ctype,
-                      last_history_ctype, &(*results)[i]);
+                      last_history_ctype, request, &(*results)[i]);
   }
 }
 
@@ -1399,6 +1486,7 @@ void DictionaryPredictor::CheckBigramResult(
     const Token &history_token,
     const Util::ScriptType history_ctype,
     const Util::ScriptType last_history_ctype,
+    const ConversionRequest &request,
     Result *result) const {
   DCHECK(result);
 
@@ -1460,7 +1548,7 @@ void DictionaryPredictor::CheckBigramResult(
   }
 
   FindValueCallback callback(value);
-  dictionary_->LookupPrefix(key, false, &callback);
+  dictionary_->LookupPrefix(key, request, &callback);
   if (!callback.found()) {
     result->types = NO_PREDICTION;
     return;
@@ -1477,10 +1565,13 @@ void DictionaryPredictor::GetPredictiveResults(
     vector<Result> *results) const {
   if (!request.has_composer() ||
       !FLAGS_enable_expansion_for_dictionary_predictor) {
-    const string input_key = history_key + segments.conversion_segment(0).key();
+    const string &query_key = segments.conversion_segment(0).key();
+    string input_key = history_key;
+    input_key.append(query_key);
+    const bool is_zero_query = query_key.empty();
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      NULL, results);
-    dictionary.LookupPredictive(input_key, false, &callback);
+                                      NULL, is_zero_query, results);
+    dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
 
@@ -1492,12 +1583,13 @@ void DictionaryPredictor::GetPredictiveResults(
   string base;
   set<string> expanded;
   request.composer().GetQueriesForPrediction(&base, &expanded);
-  const string input_key = history_key + base;
+  string input_key = history_key;
+  input_key.append(base);
+  const bool is_zero_query = base.empty();
   PredictiveLookupCallback callback(
       types, lookup_limit, input_key.size(),
-      expanded.empty() ? NULL : &expanded, results);
-  dictionary.LookupPredictive(
-      input_key, request.IsKanaModifierInsensitiveConversion(), &callback);
+      expanded.empty() ? NULL : &expanded, is_zero_query, results);
+  dictionary.LookupPredictive(input_key, request, &callback);
 }
 
 void DictionaryPredictor::GetPredictiveResultsForBigram(
@@ -1511,10 +1603,14 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
     vector<Result> *results) const {
   if (!request.has_composer() ||
       !FLAGS_enable_expansion_for_dictionary_predictor) {
-    const string input_key = history_key + segments.conversion_segment(0).key();
+    const string &query_key = segments.conversion_segment(0).key();
+    string input_key = history_key;
+    input_key.append(query_key);
+    const bool is_zero_query = query_key.empty();
     PredictiveBigramLookupCallback callback(
-        types, lookup_limit, input_key.size(), NULL, history_value, results);
-    dictionary.LookupPredictive(input_key, false, &callback);
+        types, lookup_limit, input_key.size(), NULL, history_value,
+        is_zero_query, results);
+    dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
 
@@ -1526,12 +1622,14 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
   string base;
   set<string> expanded;
   request.composer().GetQueriesForPrediction(&base, &expanded);
-  const string input_key = history_key + base;
+  string input_key = history_key;
+  input_key.append(base);
+  const bool is_zero_query = base.empty();
   PredictiveBigramLookupCallback callback(types, lookup_limit, input_key.size(),
                                           expanded.empty() ? NULL : &expanded,
-                                          history_value, results);
-  dictionary.LookupPredictive(
-      input_key, request.IsKanaModifierInsensitiveConversion(), &callback);
+                                          history_value, is_zero_query,
+                                          results);
+  dictionary.LookupPredictive(input_key, request, &callback);
 }
 
 void DictionaryPredictor::GetPredictiveResultsForEnglish(
@@ -1561,8 +1659,8 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
     string key(input_key);
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), NULL,
-                                      results);
-    dictionary.LookupPredictive(key, false, &callback);
+                                      false, results);
+    dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::UpperString(&results->at(i).value);
     }
@@ -1572,16 +1670,16 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
     string key(input_key);
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), NULL,
-                                      results);
-    dictionary.LookupPredictive(key, false, &callback);
+                                      false, results);
+    dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::CapitalizeString(&results->at(i).value);
     }
   } else {
     // For other cases (lower and as-is), just look up directly.
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      NULL, results);
-    dictionary.LookupPredictive(input_key, false, &callback);
+                                      NULL, false, results);
+    dictionary.LookupPredictive(input_key, request, &callback);
   }
   // If input mode is FULL_ASCII, then convert the results to full-width.
   if (request.composer().GetInputMode() == transliteration::FULL_ASCII) {
@@ -1613,9 +1711,8 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
     const size_t previous_results_size = results->size();
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(),
-        query.expanded.empty() ? NULL : &query.expanded, results);
-    dictionary.LookupPredictive(
-        input_key, request.IsKanaModifierInsensitiveConversion(), &callback);
+        query.expanded.empty() ? NULL : &query.expanded, false, results);
+    dictionary.LookupPredictive(input_key, request, &callback);
 
     for (size_t i = previous_results_size; i < results->size(); ++i) {
       results->at(i).wcost += query.cost;
@@ -1627,41 +1724,111 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
   }
 }
 
-// Returns true if we add zero query result.
-bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
-    const Segments &segments, vector<Result> *results) const {
-  string number_key;
-  if (!GetNumberHistory(segments, &number_key)) {
+// static
+bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
+    const ConversionRequest &request,
+    const string &key, const ZeroQueryList *begin, const ZeroQueryList *end,
+    vector<ZeroQueryResult> *results) {
+  const int32 available_emoji_carrier =
+      request.request().available_emoji_carrier();
+
+  DCHECK(results);
+  results->clear();
+  const ZeroQueryList key_item = {key.c_str(), NULL, 0};
+  const ZeroQueryList *result_rule =
+      std::lower_bound(begin, end, key_item, ZeroQueryListCompare());
+  if (result_rule == end || key != result_rule->key) {
     return false;
   }
 
-  // Use number suffixes and do not add normal zero query.
-  vector<string> suffixes;
-  GetNumberSuffixArray(number_key, &suffixes);
-  DCHECK_GT(suffixes.size(), 0);
+  for (size_t i = 0; i < result_rule->entries_size; ++i) {
+    const ZeroQueryEntry &entry = result_rule->entries[i];
+    if (entry.type != ZERO_QUERY_EMOJI) {
+      results->push_back(make_pair(entry.value, entry.type));
+      continue;
+    }
+    if (available_emoji_carrier & Request::UNICODE_EMOJI &&
+        entry.emoji_type & EMOJI_UNICODE) {
+      results->push_back(make_pair(entry.value, entry.type));
+      continue;
+    }
+
+    if ((available_emoji_carrier & Request::DOCOMO_EMOJI &&
+         entry.emoji_type & EMOJI_DOCOMO) ||
+        (available_emoji_carrier & Request::SOFTBANK_EMOJI &&
+         entry.emoji_type & EMOJI_SOFTBANK) ||
+        (available_emoji_carrier & Request::KDDI_EMOJI &&
+         entry.emoji_type & EMOJI_KDDI)) {
+      string android_pua;
+      Util::UCS4ToUTF8(entry.emoji_android_pua, &android_pua);
+      results->push_back(make_pair(android_pua, entry.type));
+    }
+  }
+  return !results->empty();
+}
+
+// static
+void DictionaryPredictor::AppendZeroQueryToResults(
+    const vector<ZeroQueryResult> &candidates, uint16 lid, uint16 rid,
+    vector<Result> *results) {
   int cost = 0;
 
-  for (size_t i = 0; i < suffixes.size(); ++i) {
-    const auto &suffix = suffixes[i];
+  for (size_t i = 0; i < candidates.size(); ++i) {
     // Increment cost to show the candidates in order.
     const int kSuffixPenalty = 10;
 
     results->push_back(Result());
     Result *result = &results->back();
     result->SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-    result->key = suffix;
-    result->value = suffix;
+    result->SetSourceInfoForZeroQuery(candidates[i].second);
+    result->key = candidates[i].first;
+    result->value = candidates[i].first;
     result->wcost = cost;
-    result->lid = counter_suffix_word_id_;
-    result->rid = counter_suffix_word_id_;
+    result->lid = lid;
+    result->rid = rid;
 
     cost += kSuffixPenalty;
   }
+}
+
+// Returns true if we add zero query result.
+bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
+    const ConversionRequest &request,
+    const Segments &segments, vector<Result> *results) const {
+  string number_key;
+  if (!GetNumberHistory(segments, &number_key)) {
+    return false;
+  }
+
+  vector<ZeroQueryResult> candidates_for_number_key;
+  GetZeroQueryCandidatesForKey(request,
+                               number_key,
+                               kZeroQueryNum_data,
+                               kZeroQueryNum_data + kZeroQueryNum_size,
+                               &candidates_for_number_key);
+
+  vector<ZeroQueryResult> default_candidates_for_number;
+  GetZeroQueryCandidatesForKey(request,
+                               "default",
+                               kZeroQueryNum_data,
+                               kZeroQueryNum_data + kZeroQueryNum_size,
+                               &default_candidates_for_number);
+  DCHECK(!default_candidates_for_number.empty());
+
+  AppendZeroQueryToResults(candidates_for_number_key,
+                           counter_suffix_word_id_,
+                           counter_suffix_word_id_,
+                           results);
+  AppendZeroQueryToResults(default_candidates_for_number,
+                           counter_suffix_word_id_,
+                           counter_suffix_word_id_,
+                           results);
   return true;
 }
 
 // Returns true if we add zero query result.
 bool DictionaryPredictor::AggregateZeroQueryPrediction(
+    const ConversionRequest &request,
     const Segments &segments, vector<Result> *results) const {
   const size_t history_size = segments.history_segments_size();
   if (history_size <= 0) {
@@ -1672,40 +1839,17 @@ bool DictionaryPredictor::AggregateZeroQueryPrediction(
   DCHECK_GT(last_segment.candidates_size(), 0);
   const string &history_value = last_segment.candidate(0).value;
 
-  const char *key_item[] = {history_value.c_str(), 0};
-  const char **key = key_item;
-  // kZeroQueryData_data is a 2-dimensional string array and
-  // sorted by the first string.
-  // For each string array, the first item is a key for zero query prediction,
-  // the rest items are candidates, and the last item is 0.
-  const char ***result_rule =
-      lower_bound(
-          kZeroQueryData_data, kZeroQueryData_data + kZeroQueryData_size,
-          key, ZeroQueryRuleCompare());
-  if (result_rule == (kZeroQueryData_data + kZeroQueryData_size) ||
-      history_value != (*result_rule)[0]) {
+  vector<ZeroQueryResult> candidates;
+  if (!GetZeroQueryCandidatesForKey(request,
+                                    history_value,
+                                    kZeroQueryData_data,
+                                    kZeroQueryData_data + kZeroQueryData_size,
+                                    &candidates)) {
     return false;
   }
 
-  int cost = 0;
-  for (int i = 1; (*result_rule)[i]; ++i) {
-    string candidate = (*result_rule)[i];
-
-    // Increment cost to show the candidates in order.
-    const int kPenalty = 10;
-
-    results->push_back(Result());
-    Result *result = &results->back();
-
-    result->SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-    result->key = candidate;
-    result->value = candidate;
-    result->wcost = cost;
-    result->lid = 0;  // EOS
-    result->rid = 0;  // EOS
-
-    cost += kPenalty;
-  }
+  const uint16 kId = 0;  // EOS
+  AppendZeroQueryToResults(candidates, kId, kId, results);
   return true;
 }
 
@@ -1722,11 +1866,12 @@ void DictionaryPredictor::AggregateSuffixPrediction(
 
   const bool is_zero_query = segments.conversion_segment(0).key().empty();
   if (is_zero_query) {
-    if (AggregateNumberZeroQueryPrediction(segments, results)) {
+    if (AggregateNumberZeroQueryPrediction(request, segments, results)) {
       return;
     }
-    if (AggregateZeroQueryPrediction(segments, results)) {
-      return;
+    if (AggregateZeroQueryPrediction(request, segments, results)) {
+      // Fall through
+      // Appends normal suffix predictions
     }
     // Fall through
     // Use normal suffix predictions
@@ -1815,7 +1960,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
 
   const bool zero_query_suggestion = request.request().zero_query_suggestion();
   if (IsLatinInputMode(request) && !zero_query_suggestion) {
-    if (GET_CONFIG(use_dictionary_suggest)) {
+    if (request.config().use_dictionary_suggest()) {
       // By following the dictionary_suggest config, enable English prediction.
       result |= ENGLISH;
     }
@@ -1825,7 +1970,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
     return result;
   }
 
-  if (!GET_CONFIG(use_dictionary_suggest) &&
+  if (!request.config().use_dictionary_suggest() &&
       segments.request_type() == Segments::SUGGESTION) {
     VLOG(2) << "no_dictionary_suggest";
     return result;
@@ -1875,7 +2020,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
     result |= SUFFIX;
   }
 
-  if (IsTypingCorrectionEnabled() && key_len >= 3) {
+  if (IsTypingCorrectionEnabled(request) && key_len >= 3) {
     result |= TYPING_CORRECTION;
   }
 
@@ -1894,7 +2039,7 @@ bool DictionaryPredictor::ShouldRealTimeConversionEnabled(
   }
 
   return (segments.request_type() == Segments::PARTIAL_SUGGESTION ||
-          GET_CONFIG(use_realtime_conversion) ||
+          request.config().use_realtime_conversion() ||
           IsMixedConversionEnabled(request.request()));
 }
 

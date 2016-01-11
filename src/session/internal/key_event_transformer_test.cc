@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,39 @@
 namespace mozc {
 namespace session {
 namespace {
+
+::testing::AssertionResult IsKeyEventTransformerEq(
+     const KeyEventTransformer &x, const KeyEventTransformer &y) {
+  {
+    if (x.table().size() != y.table().size()) {
+      return ::testing::AssertionFailure() << "Table size differs";
+    }
+
+    KeyEventTransformer::Table::const_iterator x_iter = x.table().begin();
+    KeyEventTransformer::Table::const_iterator y_iter = y.table().begin();
+    while (x_iter != x.table().end() && y_iter != y.table().end()) {
+      if (x_iter->first != y_iter->first) {
+        return ::testing::AssertionFailure() << "Key mismatch: "
+                                             << x_iter->first << " vs "
+                                             << y_iter->first;
+      }
+      if (x_iter->second.DebugString() != y_iter->second.DebugString()) {
+        return ::testing::AssertionFailure()
+            << "Value mismatch for key = " << x_iter->first;
+      }
+      ++x_iter;
+      ++y_iter;
+    }
+  }
+
+  if (x.numpad_character_form() != y.numpad_character_form()) {
+    return ::testing::AssertionFailure()
+        << "numpad_character_form is different: "
+        << x.numpad_character_form() << " vs " << y.numpad_character_form();
+  }
+
+  return ::testing::AssertionSuccess();
+}
 
 void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
                               uint32 expected_key_code,
@@ -268,6 +301,18 @@ TEST(KeyEventTransformerTest, Kana) {
       TestKanaTransformation(kFullMiddleDot, '/', kFullMiddleDot);
     }
   }
+}
+
+TEST(KeyEventTransformerTest, CopyFrom) {
+  KeyEventTransformer x, y;
+
+  config::Config config;
+  config.set_punctuation_method(config::Config::COMMA_PERIOD);
+  x.ReloadConfig(config);
+  EXPECT_FALSE(IsKeyEventTransformerEq(x, y));
+
+  y.CopyFrom(x);
+  EXPECT_TRUE(IsKeyEventTransformerEq(x, y));
 }
 
 }  // namespace session

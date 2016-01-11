@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
         '../base/base.gyp:base',
       ],
       'conditions': [
-        ['enable_http_client==1', {
+        ['branding=="GoogleJapaneseInput"', {
           'conditions': [
             ['OS=="mac"', {
               'sources': [
@@ -83,11 +83,10 @@
                 'http_client_pepper.cc',
               ],
             }],
-            ['target_platform=="Android"', {
-              'dependencies': [
-                '../base/base.gyp:jni_proxy'
-              ],
-            }],
+          ],
+        }, {  # blanding!=GoogleJapaneseInput
+          'sources': [
+            'http_client_null.cc',
           ],
         }],
       ],

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ class RendererInterface;
   NSMutableString *originalString_;
 
   // |cursorPosition_| is the position of cursor in the preedit.  If
-  // no cursor is found, its value should be NSNotFound.
+  // no cursor is found, its value should be -1.
   int cursorPosition_;
 
   // |mode_| stores the current input mode (Direct or conversion).
@@ -117,13 +117,6 @@ class RendererInterface;
   // |menu_| is the NSMenu to be shown in the pulldown menu-list of
   // the IME.
   IBOutlet NSMenu *menu_;
-
-  // |callback_command_| stores the callback message which is recieved from the
-  // server. This callback will be cancelled when the user presses the
-  // subsequent key. In the current implementation, if the subsequent key event
-  // also makes callback, the second callback will be called in the timimg of
-  // the first callback.
-  mozc::commands::Output::Callback callback_command_;
 }
 
 // sendCommand: is called to send SessionCommand to the server

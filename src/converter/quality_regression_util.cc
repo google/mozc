@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 
 #include "converter/quality_regression_util.h"
 
+#include <sstream>  // NOLINT
 #include <string>
 #include <vector>
-#include <sstream>  // NOLINT
 
 #include "base/file_stream.h"
 #include "base/logging.h"
@@ -41,10 +41,10 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace quality_regression {
@@ -152,7 +152,8 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
 
 QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
     : converter_(converter),
-      request_(new commands::Request(commands::Request::default_instance())),
+      request_(new commands::Request),
+      config_(new config::Config),
       segments_(new Segments) {
 }
 
@@ -201,24 +202,24 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 
   if (command == kConversionExpect ||
       command == kConversionNotExpect) {
-    composer::Composer composer(&table, request_.get());
+    composer::Composer composer(&table, request_.get(), config_.get());
     composer.InsertCharacterPreedit(key);
-    ConversionRequest request(&composer, request_.get());
+    ConversionRequest request(&composer, request_.get(), config_.get());
     converter_->StartConversionForRequest(request, segments_.get());
   } else if (command == kReverseConversionExpect ||
     command == kReverseConversionNotExpect) {
     converter_->StartReverseConversion(segments_.get(), key);
   } else if (command == kPredictionExpect ||
              command == kPredictionNotExpect) {
-    composer::Composer composer(&table, request_.get());
+    composer::Composer composer(&table, request_.get(), config_.get());
     composer.InsertCharacterPreedit(key);
-    ConversionRequest request(&composer, request_.get());
+    ConversionRequest request(&composer, request_.get(), config_.get());
     converter_->StartPredictionForRequest(request, segments_.get());
   } else if (command == kSuggestionExpect ||
              command == kSuggestionNotExpect) {
-    composer::Composer composer(&table, request_.get());
+    composer::Composer composer(&table, request_.get(), config_.get());
     composer.InsertCharacterPreedit(key);
-    ConversionRequest request(&composer, request_.get());
+    ConversionRequest request(&composer, request_.get(), config_.get());
     converter_->StartSuggestionForRequest(request, segments_.get());
   } else {
     LOG(FATAL) << "Unknown command: " << command;
@@ -253,7 +254,11 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 }
 
 void QualityRegressionUtil::SetRequest(const commands::Request &request) {
-  request_->CopyFrom(request);
+  *request_ = request;
+}
+
+void QualityRegressionUtil::SetConfig(const config::Config &config) {
+  *config_ = config;
 }
 
 string QualityRegressionUtil::GetPlatformString(uint32 platform_bitfiled) {

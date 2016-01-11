@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,20 +46,20 @@
 #include "base/mac_process.h"
 #endif  // OS_MACOSX
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
 #include <sys/types.h>
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 #include <cstdlib>
+#include <memory>
 #include <vector>
 
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 
@@ -121,16 +121,16 @@ bool Process::OpenBrowser(const string &url) {
 
 #ifdef OS_WIN
   wstring wurl;
-  Util::UTF8ToWide(url.c_str(), &wurl);
+  Util::UTF8ToWide(url, &wurl);
   return ShellExecuteInSystemDir(L"open", wurl.c_str(), NULL, SW_SHOW);
 #endif
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   static const char kBrowserCommand[] = "/usr/bin/xdg-open";
   // xdg-open which uses kfmclient or gnome-open internally works both on KDE
   // and GNOME environments.
   return SpawnProcess(kBrowserCommand, url);
-#endif  // LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 #ifdef OS_MACOSX
   return MacProcess::OpenBrowserForMac(url);
@@ -142,18 +142,18 @@ bool Process::SpawnProcess(const string &path,
                            const string& arg, size_t *pid) {
 #ifdef OS_WIN
   wstring wpath;
-  Util::UTF8ToWide(path.c_str(), &wpath);
+  Util::UTF8ToWide(path, &wpath);
   wpath = L"\"" + wpath + L"\"";
   if (!arg.empty()) {
     wstring warg;
-    Util::UTF8ToWide(arg.c_str(), &warg);
+    Util::UTF8ToWide(arg, &warg);
     wpath += L" ";
     wpath += warg;
   }
 
   // The |lpCommandLine| parameter of CreateProcessW should be writable
-  // so that we create a scoped_ptr<wchar_t[]> here.
-  scoped_ptr<wchar_t[]> wpath2(new wchar_t[wpath.size() + 1]);
+  // so that we create a std::unique_ptr<wchar_t[]> here.
+  std::unique_ptr<wchar_t[]> wpath2(new wchar_t[wpath.size() + 1]);
   if (0 != wcscpy_s(wpath2.get(), wpath.size() + 1, wpath.c_str())) {
     return false;
   }
@@ -187,7 +187,7 @@ bool Process::SpawnProcess(const string &path,
 
   vector<string> arg_tmp;
   Util::SplitStringUsing(arg, " ", &arg_tmp);
-  scoped_ptr<const char * []> argv(new const char *[arg_tmp.size() + 2]);
+  std::unique_ptr<const char * []> argv(new const char *[arg_tmp.size() + 2]);
   argv[0] = path.c_str();
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
     argv[i + 1] = arg_tmp[i].c_str();
@@ -209,7 +209,7 @@ bool Process::SpawnProcess(const string &path,
   }
 #endif
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   // Do not call posix_spawn() for obviously bad path.
   if (!S_ISREG(statbuf.st_mode)) {
     LOG(ERROR) << "Not a regular file: " << path;
@@ -232,7 +232,7 @@ bool Process::SpawnProcess(const string &path,
   // (www.gnu.org/software/libc/manual/html_node/Heap-Consistency-Checking.html)
   const int kOverwrite = 0;  // Do not overwrite.
   ::setenv("MALLOC_CHECK_", "2", kOverwrite);
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
   pid_t tmp_pid = 0;
 
   // Spawn new process.
@@ -403,7 +403,7 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
   }
 #endif  // OS_WIN
 
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   const char kMozcTool[] = "mozc_tool";
   const string arg = "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
@@ -411,7 +411,7 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
   return true;
 }

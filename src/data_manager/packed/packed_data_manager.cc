@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include <memory>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/protobuf/coded_stream.h"
@@ -176,8 +177,10 @@ bool PackedDataManager::Impl::InitWithZippedData(
                                        zipped_system_dictionary_data.size());
   protobuf::io::GzipInputStream gzip_stream(&input);
   protobuf::io::CodedInputStream coded_stream(&gzip_stream);
+
   // Disables the total bytes warning.
   coded_stream.SetTotalBytesLimit(kDefaultTotalBytesLimit, -1);
+
   system_dictionary_data_.reset(new SystemDictionaryData);
   if (!system_dictionary_data_->ParseFromCodedStream(&coded_stream)) {
     LOG(ERROR) << "System dictionary data protobuf format error!";

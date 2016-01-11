@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,12 @@
 
 #include "prediction/predictor.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
 #include "base/flags.h"
 #include "base/logging.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -47,8 +47,8 @@ namespace {
 
 const int kPredictionSize = 100;
 // On Mobile mode PREDICTION (including PARTIAL_PREDICTION) behaves like as
-// conversion so very large limit is preferable.
-const int kMobilePredictionSize = 1000;
+// conversion so the limit is same as conversion's one.
+const int kMobilePredictionSize = 200;
 
 size_t GetCandidatesSize(const Segments &segments) {
   if (segments.conversion_segments_size() <= 0) {
@@ -80,9 +80,10 @@ BasePredictor::BasePredictor(PredictorInterface *dictionary_predictor,
 
 BasePredictor::~BasePredictor() {}
 
-void BasePredictor::Finish(Segments *segments) {
-  user_history_predictor_->Finish(segments);
-  dictionary_predictor_->Finish(segments);
+void BasePredictor::Finish(const ConversionRequest &request,
+                           Segments *segments) {
+  user_history_predictor_->Finish(request, segments);
+  dictionary_predictor_->Finish(request, segments);
 
   if (segments->conversion_segments_size() < 1 ||
       segments->request_type() == Segments::CONVERSION) {
@@ -151,13 +152,14 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
          segments->request_type() == Segments::PARTIAL_PREDICTION ||
          segments->request_type() == Segments::PARTIAL_SUGGESTION);
 
-  if (GET_CONFIG(presentation_mode)) {
+  if (request.config().presentation_mode()) {
     return false;
   }
 
   int size = kPredictionSize;
   if (segments->request_type() == Segments::SUGGESTION) {
-    size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
+    size = min(9,
+               max(1, static_cast<int>(request.config().suggestions_size())));
   }
 
   bool result = false;
@@ -207,7 +209,7 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
          segments->request_type() == Segments::PARTIAL_PREDICTION ||
          segments->request_type() == Segments::PARTIAL_SUGGESTION);
 
-  if (GET_CONFIG(presentation_mode)) {
+  if (request.config().presentation_mode()) {
     return false;
   }
 

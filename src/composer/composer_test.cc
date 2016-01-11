@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "composer/composer.h"
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -126,31 +127,25 @@ class ComposerTest : public testing::Test {
   ComposerTest() {}
 
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
     table_.reset(new Table);
-    default_request_.reset(new Request);
-    composer_.reset(new Composer(table_.get(), default_request_.get()));
+    config_.reset(new Config);
+    request_.reset(new Request);
+    composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
   virtual void TearDown() {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     composer_.reset();
-    default_request_.reset();
+    request_.reset();
+    config_.reset();
     table_.reset();
-
-    // just in case, reset config in test_tmpdir
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
   }
 
-  scoped_ptr<Composer> composer_;
-  scoped_ptr<Table> table_;
-  scoped_ptr<Request> default_request_;
+  std::unique_ptr<Composer> composer_;
+  std::unique_ptr<Table> table_;
+  std::unique_ptr<Request> request_;
+  std::unique_ptr<Config> config_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ComposerTest);
@@ -1063,7 +1058,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer(table_.get(), default_request_.get()));
+  composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
 
   {
     // "a" → "あ" (Hiragana)
@@ -1118,34 +1113,21 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   // test cases differ between ASCII_INPUT_MODE and KATAKANA_INPUT_MODE
 
   {  // ASCII_INPUT_MODE (w/o CapsLock)
-    Config config;
-    ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
-    ConfigHandler::SetConfig(config);
+    config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataAscii[] = {
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair(".", true),
-      make_pair("a", true),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair(".", true),
-      make_pair("a", true),
-      // "あ"
-      make_pair("\xE3\x81\x82", false),
-      make_pair("a", false),
+        std::make_pair("a", false), std::make_pair("A", true),
+        std::make_pair("a", true), std::make_pair("a", true),
+        std::make_pair("A", true), std::make_pair("A", true),
+        std::make_pair("a", false), std::make_pair("A", true),
+        std::make_pair("A", true), std::make_pair("A", true),
+        std::make_pair("a", false), std::make_pair("A", true),
+        std::make_pair(".", true), std::make_pair("a", true),
+        std::make_pair("A", true), std::make_pair("A", true),
+        std::make_pair(".", true), std::make_pair("a", true),
+        // "あ"
+        std::make_pair("\xE3\x81\x82", false), std::make_pair("a", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
@@ -1164,34 +1146,21 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 
   {  // ASCII_INPUT_MODE (w/ CapsLock)
-    Config config;
-    ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
-    ConfigHandler::SetConfig(config);
+    config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataAscii[] = {
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair(".", true),
-      make_pair("A", true),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair(".", true),
-      make_pair("A", true),
-      // "あ"
-      make_pair("\xE3\x81\x82", false),
-      make_pair("A", false),
+        std::make_pair("A", false), std::make_pair("a", true),
+        std::make_pair("A", true), std::make_pair("A", true),
+        std::make_pair("a", true), std::make_pair("a", true),
+        std::make_pair("A", false), std::make_pair("a", true),
+        std::make_pair("a", true), std::make_pair("a", true),
+        std::make_pair("A", false), std::make_pair("a", true),
+        std::make_pair(".", true), std::make_pair("A", true),
+        std::make_pair("a", true), std::make_pair("a", true),
+        std::make_pair(".", true), std::make_pair("A", true),
+        // "あ"
+        std::make_pair("\xE3\x81\x82", false), std::make_pair("A", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
@@ -1210,34 +1179,21 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 
   {  // KATAKANA_INPUT_MODE (w/o CapsLock)
-    Config config;
-    ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
-    ConfigHandler::SetConfig(config);
+    config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataKatakana[] = {
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair("a", false),
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair(".", true),
-      make_pair("a", false),
-      make_pair("A", true),
-      make_pair("A", true),
-      make_pair(".", true),
-      make_pair("a", false),
-      // "あ"
-      make_pair("\xE3\x81\x82", false),
-      make_pair("a", false),
+        std::make_pair("a", false), std::make_pair("A", true),
+        std::make_pair("a", false), std::make_pair("a", false),
+        std::make_pair("A", true), std::make_pair("A", true),
+        std::make_pair("a", false), std::make_pair("A", true),
+        std::make_pair("A", true), std::make_pair("A", true),
+        std::make_pair("a", false), std::make_pair("A", true),
+        std::make_pair(".", true), std::make_pair("a", false),
+        std::make_pair("A", true), std::make_pair("A", true),
+        std::make_pair(".", true), std::make_pair("a", false),
+        // "あ"
+        std::make_pair("\xE3\x81\x82", false), std::make_pair("a", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
@@ -1256,34 +1212,21 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 
   {  // KATAKANA_INPUT_MODE (w/ CapsLock)
-    Config config;
-    ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
-    ConfigHandler::SetConfig(config);
+    config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataKatakana[] = {
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair("A", false),
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair(".", true),
-      make_pair("A", false),
-      make_pair("a", true),
-      make_pair("a", true),
-      make_pair(".", true),
-      make_pair("A", false),
-      // "あ"
-      make_pair("\xE3\x81\x82", false),
-      make_pair("A", false),
+        std::make_pair("A", false), std::make_pair("a", true),
+        std::make_pair("A", false), std::make_pair("A", false),
+        std::make_pair("a", true), std::make_pair("a", true),
+        std::make_pair("A", false), std::make_pair("a", true),
+        std::make_pair("a", true), std::make_pair("a", true),
+        std::make_pair("A", false), std::make_pair("a", true),
+        std::make_pair(".", true), std::make_pair("A", false),
+        std::make_pair("a", true), std::make_pair("a", true),
+        std::make_pair(".", true), std::make_pair("A", false),
+        // "あ"
+        std::make_pair("\xE3\x81\x82", false), std::make_pair("A", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
@@ -1317,7 +1260,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("", src_composition);
 
-    Composer dest(NULL, default_request_.get());
+    Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1333,7 +1276,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "あｎ"
     EXPECT_EQ("\xE3\x81\x82\xEF\xBD\x8E", src_composition);
 
-    Composer dest(NULL, default_request_.get());
+    Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1347,7 +1290,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "あん"
     EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", src_composition);
 
-    Composer dest(NULL, default_request_.get());
+    Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1367,7 +1310,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "AaAAあ"
     EXPECT_EQ("AaAA\xE3\x81\x82", src_composition);
 
-    Composer dest(NULL, default_request_.get());
+    Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1385,7 +1328,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("M", src_composition);
 
-    Composer dest(NULL, default_request_.get());
+    Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1493,11 +1436,8 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 }
 
 TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
-  config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
-  ConfigHandler::SetConfig(config);
-  table_->InitializeWithRequestAndConfig(*default_request_, config);
+  config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
+  table_->InitializeWithRequestAndConfig(*request_, *config_);
   composer_->Reset();
   composer_->SetInputMode(transliteration::HIRAGANA);
   InsertKey("K", composer_.get());
@@ -1533,19 +1473,13 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   EXPECT_EQ("\xE3\x82\xAB\xEF\xBC\xB4\xE3\x81\x82"
             "\xEF\xBD\x8B\xE3\x82\xA2\xE3\x81\xAA",
             preedit);
-
-  config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
-  ConfigHandler::SetConfig(config);
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
-  config.set_preedit_method(Config::ROMAN);
-  config.set_use_auto_ime_turn_off(true);
-  ConfigHandler::SetConfig(config);
+  config_->set_preedit_method(Config::ROMAN);
+  config_->set_use_auto_ime_turn_off(true);
 
-  table_->InitializeWithRequestAndConfig(*default_request_, config);
+  table_->InitializeWithRequestAndConfig(*request_, *config_);
 
   commands::KeyEvent key;
 
@@ -1565,7 +1499,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer(table_.get(), default_request_.get()));
+  composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1636,9 +1570,8 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  config.set_shift_key_mode_switch(Config::OFF);
-  ConfigHandler::SetConfig(config);
-  composer_.reset(new Composer(table_.get(), default_request_.get()));
+  config_->set_shift_key_mode_switch(Config::OFF);
+  composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -1662,14 +1595,10 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
+  config_->set_preedit_method(Config::ROMAN);
+  config_->set_use_auto_ime_turn_off(false);
 
-  config.set_preedit_method(Config::ROMAN);
-  config.set_use_auto_ime_turn_off(false);
-  ConfigHandler::SetConfig(config);
-
-  table_->InitializeWithRequestAndConfig(*default_request_, config);
+  table_->InitializeWithRequestAndConfig(*request_, *config_);
 
   commands::KeyEvent key;
 
@@ -1703,14 +1632,10 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffKana) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
+  config_->set_preedit_method(Config::KANA);
+  config_->set_use_auto_ime_turn_off(true);
 
-  config.set_preedit_method(Config::KANA);
-  config.set_use_auto_ime_turn_off(true);
-  ConfigHandler::SetConfig(config);
-
-  table_->InitializeWithRequestAndConfig(*default_request_, config);
+  table_->InitializeWithRequestAndConfig(*request_, *config_);
 
   commands::KeyEvent key;
 
@@ -2685,12 +2610,8 @@ TEST_F(ComposerTest, Issue2797991_4) {
 
 TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
   {
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    config.set_shift_key_mode_switch(Config::OFF);
-    ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(ConfigHandler::SetConfig(config));
-    table_->InitializeWithRequestAndConfig(*default_request_, config);
+    config_->set_shift_key_mode_switch(Config::OFF);
+    table_->InitializeWithRequestAndConfig(*request_, *config_);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2708,12 +2629,8 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
   }
   composer_->Reset();
   {
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
-    ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(ConfigHandler::SetConfig(config));
-    table_->InitializeWithRequestAndConfig(*default_request_, config);
+    config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
+    table_->InitializeWithRequestAndConfig(*request_, *config_);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2734,12 +2651,8 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
 TEST_F(ComposerTest,
        InputUppercaseInAlphanumericModeWithShiftKeyModeSwitchIsKatakana) {
   {
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
-    ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(ConfigHandler::SetConfig(config));
-    table_->InitializeWithRequestAndConfig(*default_request_, config);
+    config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
+    table_->InitializeWithRequestAndConfig(*request_, *config_);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2804,8 +2717,7 @@ TEST_F(ComposerTest,
   // 2. Type Back-space 6 times ("い")
   // 3. Type "i" (should be "いい")
 
-  config::Config config;
-  table_->InitializeWithRequestAndConfig(*default_request_, config);
+  table_->InitializeWithRequestAndConfig(*request_, *config_);
 
   // i -> "い"
   table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2852,8 +2764,7 @@ TEST_F(ComposerTest,
 TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   // The expectation of this test is the same as MS-IME's
 
-  config::Config config;
-  table_->InitializeWithRequestAndConfig(*default_request_, config);
+  table_->InitializeWithRequestAndConfig(*request_, *config_);
 
   // i -> "い"
   table_->AddRule("i", "\xe3\x81\x84", "");
@@ -3223,12 +3134,11 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   composer_->SetRequest(&request);
-  table_->InitializeWithRequestAndConfig(request,
-                                         config::ConfigHandler::GetConfig());
+  table_->InitializeWithRequestAndConfig(
+      request, config::ConfigHandler::DefaultConfig());
   composer_->InsertCharacter("2");
   EXPECT_EQ("a", GetPreedit(composer_.get()));
   string result;
@@ -3311,14 +3221,9 @@ class MockTypingModel : public TypingModel {
 class TypingCorrectionTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
-    ConfigHandler::GetConfig(&config_backup_);
-
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    config.set_use_typing_correction(true);
-    ConfigHandler::SetConfig(config);
+    config_.reset(new Config);
+    ConfigHandler::GetDefaultConfig(config_.get());
+    config_->set_use_typing_correction(true);
 
     table_.reset(new Table);
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
@@ -3326,13 +3231,9 @@ class TypingCorrectionTest : public ::testing::Test {
     request_.reset(new Request);
     request_->set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-    composer_.reset(new Composer(table_.get(), request_.get()));
+    composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
 
     table_->typing_model_ = Singleton<MockTypingModel>::get();
-  }
-
-  virtual void TearDown() {
-    ConfigHandler::SetConfig(config_backup_);
   }
 
   static bool IsTypingCorrectorClearedOrInvalidated(const Composer &composer) {
@@ -3341,10 +3242,10 @@ class TypingCorrectionTest : public ::testing::Test {
     return queries.empty();
   }
 
-  scoped_ptr<Request> request_;
-  scoped_ptr<Composer> composer_;
-  scoped_ptr<Table> table_;
-  Config config_backup_;
+  std::unique_ptr<Config> config_;
+  std::unique_ptr<Request> request_;
+  std::unique_ptr<Composer> composer_;
+  std::unique_ptr<Table> table_;
 };
 
 TEST_F(TypingCorrectionTest, ResetAfterComposerReset) {

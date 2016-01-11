@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 #ifndef MOZC_BASE_PEPPER_SCOPED_OBJ_H_
 #define MOZC_BASE_PEPPER_SCOPED_OBJ_H_
+
+#ifdef OS_NACL
 
 #include <ppapi/utility/completion_callback_factory.h>
 
@@ -104,5 +106,7 @@ class scoped_main_thread_destructed_object {
 };
 
 }  // namespace mozc
+
+#endif  // OS_NACL
 
 #endif  // MOZC_BASE_PEPPER_SCOPED_OBJ_H_

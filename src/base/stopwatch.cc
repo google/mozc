@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,9 +28,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/stopwatch.h"
-#include "base/util.h"
+
+#include "base/clock.h"
 
 namespace mozc {
+
 Stopwatch Stopwatch::StartNew() {
   Stopwatch stopwatch = Stopwatch();
   stopwatch.Start();
@@ -42,7 +44,7 @@ Stopwatch::Stopwatch()
       frequency_(1000),
       start_timestamp_(0),
       elapsed_timestamp_(0) {
-  frequency_ = Util::GetFrequency();
+  frequency_ = Clock::GetFrequency();
 
   Reset();
 }
@@ -54,14 +56,14 @@ void Stopwatch::Reset() {
 
 void Stopwatch::Start() {
   if (state_ == STOPWATCH_STOPPED) {
-    start_timestamp_ = Util::GetTicks();
+    start_timestamp_ = Clock::GetTicks();
     state_ = STOPWATCH_RUNNING;
   }
 }
 
 void Stopwatch::Stop() {
   if (state_ == STOPWATCH_RUNNING) {
-    const int64 stop_timestamp = Util::GetTicks();
+    const int64 stop_timestamp = Clock::GetTicks();
     elapsed_timestamp_ += (stop_timestamp - start_timestamp_);
     start_timestamp_ = 0;
     state_ = STOPWATCH_STOPPED;
@@ -85,7 +87,7 @@ int64 Stopwatch::GetElapsedTicks() {
     return elapsed_timestamp_;
   }
 
-  const int64 current_timestamp = Util::GetTicks();
+  const int64 current_timestamp = Clock::GetTicks();
   elapsed_timestamp_ += (current_timestamp - start_timestamp_);
   start_timestamp_ = current_timestamp;
 
@@ -95,4 +97,5 @@ int64 Stopwatch::GetElapsedTicks() {
 bool Stopwatch::IsRunning() const {
   return state_ == STOPWATCH_RUNNING;
 }
+
 }  // namespace mozc

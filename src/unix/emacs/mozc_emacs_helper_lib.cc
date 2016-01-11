@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -204,7 +204,7 @@ void PrintMessage(
 string NormalizeSymbol(const string &symbol) {
   string s = symbol;
   mozc::Util::LowerString(&s);
-  replace(s.begin(), s.end(), '_', '-');
+  std::replace(s.begin(), s.end(), '_', '-');
   return s;
 }
 

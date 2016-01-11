@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,9 @@
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
@@ -54,20 +52,11 @@ class UsageStatsUpdaterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
-
     UsageStats::ClearAllStatsForTest();
   }
 
   virtual void TearDown() {
     UsageStats::ClearAllStatsForTest();
-
-    // just in case, reset the config in test_tmpdir
-    Config config;
-    ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
   }
 
  private:
@@ -118,11 +107,6 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
 #ifdef OS_WIN
     "WindowsX64",
     "PerUserInputSettingsEnabled",
-    "CuasEnabled",
-    "MsctfVerMajor",
-    "MsctfVerMinor",
-    "MsctfVerBuild",
-    "MsctfVerRevision",
 #endif  // OS_WIN
 #ifdef OS_MACOSX
     "PrelauncherEnabled",
@@ -136,7 +120,10 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
     EXPECT_STATS_NOT_EXIST(kStatsNames[i]);
   }
 
-  UsageStatsUpdater::UpdateStats();
+  Config config;
+  ConfigHandler::GetDefaultConfig(&config);
+
+  UsageStatsUpdater::UpdateStats(config);
   for (size_t i = 0; i < arraysize(kStatsNames); ++i) {
     EXPECT_STATS_EXIST(kStatsNames[i]);
   }
@@ -147,14 +134,11 @@ TEST_F(UsageStatsUpdaterTest, UpdaterTest) {
     EXPECT_STATS_EXIST(kStatsNames[i]);
   }
 
-  Config config;
-  ConfigHandler::GetDefaultConfig(&config);
   const bool current_mode = config.incognito_mode();
   EXPECT_BOOLEAN_STATS("ConfigIncognito", current_mode);
 
   config.set_incognito_mode(!current_mode);
-  ConfigHandler::SetConfig(config);
-  UsageStatsUpdater::UpdateStats();
+  UsageStatsUpdater::UpdateStats(config);
   EXPECT_BOOLEAN_STATS("ConfigIncognito", !current_mode);
 }
 
@@ -162,8 +146,7 @@ TEST_F(UsageStatsUpdaterTest, IMEActivationKeyCustomizedTest) {
   {  // Default keymap.
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
-    ConfigHandler::SetConfig(config);
-    UsageStatsUpdater::UpdateStats();
+    UsageStatsUpdater::UpdateStats(config);
     EXPECT_BOOLEAN_STATS("IMEActivationKeyCustomized", false);
   }
 
@@ -179,8 +162,7 @@ TEST_F(UsageStatsUpdaterTest, IMEActivationKeyCustomizedTest) {
     ConfigHandler::GetDefaultConfig(&config);
     config.set_session_keymap(Config::CUSTOM);
     config.set_custom_keymap_table(kCustomKeymapTable);
-    ConfigHandler::SetConfig(config);
-    UsageStatsUpdater::UpdateStats();
+    UsageStatsUpdater::UpdateStats(config);
     EXPECT_BOOLEAN_STATS("IMEActivationKeyCustomized", true);
   }
 
@@ -196,8 +178,7 @@ TEST_F(UsageStatsUpdaterTest, IMEActivationKeyCustomizedTest) {
     ConfigHandler::GetDefaultConfig(&config);
     config.set_session_keymap(config::Config::CUSTOM);
     config.set_custom_keymap_table(kCustomKeymapTable);
-    ConfigHandler::SetConfig(config);
-    UsageStatsUpdater::UpdateStats();
+    UsageStatsUpdater::UpdateStats(config);
     EXPECT_BOOLEAN_STATS("IMEActivationKeyCustomized", false);
   }
 }

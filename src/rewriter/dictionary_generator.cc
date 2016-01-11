@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@
 
 #include "base/file_stream.h"
 #include "base/freelist.h"
+#include "base/hash.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
@@ -74,7 +74,7 @@ void Token::MergeFrom(const Token &token) {
 }
 
 uint64 Token::GetID() const {
-  return Util::Fingerprint(key_ + "\t" + value_ + "\t" + pos_);
+  return Hash::Fingerprint(key_ + "\t" + value_ + "\t" + pos_);
 }
 
 static const size_t kTokenSize = 1000;
@@ -98,7 +98,7 @@ void DictionaryGenerator::AddToken(const Token &token) {
     new_token = it->second;
   } else {
     new_token = token_pool_->Alloc();
-    token_map_->insert(make_pair(token.GetID(), new_token));
+    token_map_->insert(std::make_pair(token.GetID(), new_token));
   }
   new_token->MergeFrom(token);
 }
@@ -127,7 +127,7 @@ void GetSortedTokens(const map<uint64, Token *> *token_map,
        ++it) {
     tokens->push_back(it->second);
   }
-  sort(tokens->begin(), tokens->end(), CompareToken());
+  std::sort(tokens->begin(), tokens->end(), CompareToken());
 }
 }  // namespace
 
@@ -174,7 +174,7 @@ bool DictionaryGenerator::Output(const string &filename) const {
         << (token.description().empty()? "": token.description()) << "\t"
         << (token.additional_description().empty()?
             "": token.additional_description());
-    ofs << endl;
+    ofs << std::endl;
   }
   return true;
 }

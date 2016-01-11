@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,15 +33,20 @@
 
 #include "base/android_jni_proxy.h"
 #include "base/android_util.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/system_util.h"
 #include "net/http_client.h"
 
 namespace mozc {
 namespace jni {
 namespace {
+
 void Init() {
-  Logging::InitLogStream("libjnitestingbackdoor.so");
+  Logging::InitLogStream(
+      FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(),
+                         "libjnitestingbackdoor.so.log"));
 }
 
 jbyteArray JNICALL httpRequest(JNIEnv *env,

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,10 @@
 #include <mach/mach.h>  // for mach_port_t
 #endif  // OS_OS_MACOSX
 
+#include <memory>
 #include <string>
 
 #include "base/scoped_handle.h"
-#include "base/scoped_ptr.h"
 #include "base/port.h"
 
 namespace mozc {
@@ -278,7 +278,7 @@ class IPCServer {
   char request_[IPC_REQUESTSIZE];
   char response_[IPC_RESPONSESIZE];
   bool connected_;
-  scoped_ptr<Thread> server_thread_;
+  std::unique_ptr<Thread> server_thread_;
 
 #ifdef OS_WIN
   ScopedHandle pipe_handle_;

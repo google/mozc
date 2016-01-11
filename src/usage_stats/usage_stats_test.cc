@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include <string>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
@@ -72,7 +71,7 @@ TEST_F(UsageStatsTest, GetterTest) {
   // Use actual items, but they do not matter with practical usages.
   const char kCountKey[] = "ShutDown";
   const char kIntegerKey[] = "UserRegisteredWord";
-  const char kBooleanKey[] = "CuasEnabled";
+  const char kBooleanKey[] = "ConfigUseDictionarySuggest";
   const char kTimingKey[] = "ElapsedTimeUSec";
   const char kVirtualKeyboardKey[] = "VirtualKeyboardStats";
 

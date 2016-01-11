@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,15 @@
 #include "base/port.h"
 
 namespace mozc {
+namespace config {
+class Config;
+}  // namespace config
+
 namespace usage_stats {
 
 class UsageStatsUpdater {
  public:
-  static void UpdateStats();
+  static void UpdateStats(const config::Config &config);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UsageStatsUpdater);

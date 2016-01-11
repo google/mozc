@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ static NSString *const kSourceID = @"org.mozc.inputmethod.Japanese";
 // Load the installed Google Japanese Input to the system.
 static void RegisterGoogleJapaneseInput() {
   CFURLRef installedLocationURL = CFURLCreateFromFileSystemRepresentation(
-      NULL,  kInstalledLocation, strlen((const char *)kInstalledLocation), NO);
+      nullptr, kInstalledLocation, strlen((const char *)kInstalledLocation), NO);
   if (installedLocationURL) {
     TISRegisterInputSource(installedLocationURL);
   }
@@ -62,7 +62,7 @@ static void RegisterGoogleJapaneseInput() {
 // Put modes of Google Japanese Input at the list of pull-down menu
 // for IMEs, and make it as the default IME.
 static void ActivateGoogleJapaneseInput() {
-  CFArrayRef sourceList = TISCreateInputSourceList(NULL, true);
+  CFArrayRef sourceList = TISCreateInputSourceList(nullptr, true);
   for (int i = 0; i < CFArrayGetCount(sourceList); ++i) {
     TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(
         sourceList, i));
@@ -94,7 +94,7 @@ static void LoadLaunchdPlistFiles() {
 // Called at the initialization of this module.
 static BOOL IsAlreadyActive() {
   BOOL isActive = NO;
-  CFArrayRef sourceList = TISCreateInputSourceList(NULL, true);
+  CFArrayRef sourceList = TISCreateInputSourceList(nullptr, true);
   for (int i = 0; i < CFArrayGetCount(sourceList); ++i) {
     TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(
         sourceList, i));
@@ -178,7 +178,7 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
     if (![fileManager createDirectoryAtPath:googlePath
                 withIntermediateDirectories:YES
                                  attributes:defaultAttributes
-                                      error:NULL]) {
+                                      error:nullptr]) {
       [pool drain];
       return NO;
     }
@@ -193,7 +193,7 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
     if (![fileManager createDirectoryAtPath:japaneseInputPath
                 withIntermediateDirectories:YES
                                  attributes:japaneseInputAttributes
-                                      error:NULL]) {
+                                      error:nullptr]) {
       [pool drain];
       return NO;
     }

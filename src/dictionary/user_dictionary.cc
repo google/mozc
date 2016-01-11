@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,18 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <set>
 #include <string>
 
 #include "base/compiler_specific.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/stl_util.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -161,7 +162,7 @@ MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
 #endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
         DCHECK_LE(entry.pos(), 255);
 MOZC_CLANG_POP_WARNING();
-        const uint64 fp = Util::Fingerprint(reading +
+        const uint64 fp = Hash::Fingerprint(reading +
                                             "\t" +
                                             entry.value() +
                                             "\t" +
@@ -188,7 +189,7 @@ MOZC_CLANG_POP_WARNING();
     }
 
     // Sort first by key and then by POS ID.
-    sort(this->begin(), this->end(), OrderByKeyThenById());
+    std::sort(this->begin(), this->end(), OrderByKeyThenById());
 
     suppression_dictionary_->UnLock();
 
@@ -232,7 +233,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   }
 
   virtual void Run() {
-    scoped_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
+    std::unique_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
         Singleton<UserDictionaryFileManager>::get()->GetFileName()));
 
     // Load from file
@@ -308,7 +309,7 @@ bool UserDictionary::HasValue(StringPiece value) const {
 
 void UserDictionary::LookupPredictive(
     StringPiece key,
-    bool,  // use_kana_modifier_insensitive_lookup
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
 
@@ -319,15 +320,15 @@ void UserDictionary::LookupPredictive(
   if (tokens_->empty()) {
     return;
   }
-  if (GET_CONFIG(incognito_mode)) {
+  if (conversion_request.config().incognito_mode()) {
     return;
   }
 
   // Find the starting point of iteration over dictionary contents.
   UserPOS::Token key_token;
   key.CopyToString(&key_token.key);
-  vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   Token token;
   for (; it != tokens_->end(); ++it) {
@@ -357,7 +358,8 @@ void UserDictionary::LookupPredictive(
 
 // UserDictionary doesn't support kana modifier insensitive lookup.
 void UserDictionary::LookupPrefix(
-    StringPiece key, bool /*use_kana_modifier_insensitive_lookup*/,
+    StringPiece key,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
 
@@ -368,15 +370,15 @@ void UserDictionary::LookupPrefix(
   if (tokens_->empty()) {
     return;
   }
-  if (GET_CONFIG(incognito_mode)) {
+  if (conversion_request.config().incognito_mode()) {
     return;
   }
 
   // Find the starting point for iteration over dictionary contents.
   UserPOS::Token key_token;
   key_token.key.assign(key.data(), Util::OneCharLen(key.data()));
-  vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   Token token;
   for (; it != tokens_->end(); ++it) {
@@ -413,16 +415,20 @@ void UserDictionary::LookupPrefix(
   }
 }
 
-void UserDictionary::LookupExact(StringPiece key, Callback *callback) const {
+void UserDictionary::LookupExact(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
-  if (key.empty() || tokens_->empty() || GET_CONFIG(incognito_mode)) {
+  if (key.empty() || tokens_->empty() ||
+      conversion_request.config().incognito_mode()) {
     return;
   }
   UserPOS::Token key_token;
   key.CopyToString(&key_token.key);
   typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range =
-      equal_range(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  pair<TokenIterator, TokenIterator> range = std::equal_range(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
   if (range.first == range.second) {
     return;
   }
@@ -443,16 +449,16 @@ void UserDictionary::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-void UserDictionary::LookupReverse(StringPiece str,
-                                   Callback *callback) const {
-  if (GET_CONFIG(incognito_mode)) {
-    return;
-  }
+void UserDictionary::LookupReverse(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
 }
 
 bool UserDictionary::LookupComment(StringPiece key, StringPiece value,
+                                   const ConversionRequest &conversion_request,
                                    string *comment) const {
-  if (key.empty() || GET_CONFIG(incognito_mode)) {
+  if (key.empty() || conversion_request.config().incognito_mode()) {
     return false;
   }
 
@@ -464,8 +470,8 @@ bool UserDictionary::LookupComment(StringPiece key, StringPiece value,
   UserPOS::Token key_token;
   key.CopyToString(&key_token.key);
   typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range =
-      equal_range(tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  pair<TokenIterator, TokenIterator> range = std::equal_range(
+      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
 
   // Set the comment that was found first.
   for (; range.first != range.second; ++range.first) {
@@ -518,13 +524,14 @@ class FindValueCallback : public DictionaryInterface::Callback {
 
 bool UserDictionary::AddToAutoRegisteredDictionary(
     const string &key, const string &value,
+    const ConversionRequest &conversion_request,
     user_dictionary::UserDictionary::PosType pos) {
   if (reloader_->IsRunning()) {
     return false;
   }
 
   FindValueCallback callback(value);
-  LookupExact(key, &callback);
+  LookupExact(key, conversion_request, &callback);
   if (callback.found()) {
     // Already registered.
     return false;

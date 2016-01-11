@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,9 @@
 // Keymap utils of Mozc interface.
 
 #include "session/internal/keymap.h"
+#include "session/internal/keymap-inl.h"
 
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
@@ -40,14 +42,12 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "composer/key_event_util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap-inl.h"
 
 namespace mozc {
 namespace keymap {
@@ -67,25 +67,13 @@ const bool KeyMapManager::kInputModeXCommandSupported = true;
 #endif  // OS_MACOSX
 
 KeyMapManager::KeyMapManager()
-    : keymap_(config::Config::NONE) {
+  : keymap_(config::Config::NONE) {
   InitCommandData();
-  ReloadWithKeymap(GET_CONFIG(session_keymap));
 }
 
 KeyMapManager::~KeyMapManager() {}
 
-bool KeyMapManager::ReloadWithKeymap(
-    const config::Config::SessionKeymap new_keymap) {
-  // If the current keymap is the same with the new keymap and not
-  // CUSTOM, do nothing.
-  if (new_keymap == keymap_ && new_keymap != config::Config::CUSTOM) {
-    return true;
-  }
-
-  keymap_ = new_keymap;
-  const char *keymap_file = GetKeyMapFileName(new_keymap);
-
-  // Clear the previous keymaps.
+void KeyMapManager::Reset() {
   keymap_direct_.Clear();
   keymap_precomposition_.Clear();
   keymap_composition_.Clear();
@@ -93,36 +81,56 @@ bool KeyMapManager::ReloadWithKeymap(
   keymap_zero_query_suggestion_.Clear();
   keymap_suggestion_.Clear();
   keymap_prediction_.Clear();
+}
 
-  if (new_keymap == config::Config::CUSTOM) {
-    const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
-    if (custom_keymap_table.empty()) {
-      LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-      const char *default_keymapfile = GetKeyMapFileName(
-          config::ConfigHandler::GetDefaultKeyMap());
-      return LoadFile(default_keymapfile);
-    }
-#ifndef NO_LOGGING
-    // make a copy of keymap file just for debugging
-    const string filename = ConfigFileStream::GetFileName(keymap_file);
-    OutputFileStream ofs(filename.c_str());
-    if (ofs) {
-      ofs << "# This is a copy of keymap table for debugging." << endl;
-      ofs << "# Nothing happens when you edit this file manually." << endl;
-      ofs << custom_keymap_table;
-    }
-#endif
-    istringstream ifs(custom_keymap_table);
-    return LoadStream(&ifs);
-  }
+bool KeyMapManager::Initialize(const config::Config::SessionKeymap keymap) {
+  keymap_ = keymap;
+  // Clear the previous keymaps.
+  Reset();
 
-  if (keymap_file != NULL && LoadFile(keymap_file)) {
+  const char *keymap_file = GetKeyMapFileName(keymap);
+  if (keymap != config::Config::CUSTOM &&
+      keymap_file != NULL &&
+      LoadFile(keymap_file)) {
     return true;
   }
 
   const char *default_keymapfile = GetKeyMapFileName(
       config::ConfigHandler::GetDefaultKeyMap());
   return LoadFile(default_keymapfile);
+}
+
+bool KeyMapManager::ReloadConfig(const config::Config &config) {
+  // Clear the previous keymaps.
+  Reset();
+
+  if (keymap_ != config::Config::CUSTOM) {
+    return true;
+  }
+
+  const string &custom_keymap_table = config.custom_keymap_table();
+
+  if (custom_keymap_table.empty()) {
+    LOG(WARNING) << "custom_keymap_table is empty. use default setting";
+    const char *default_keymapfile = GetKeyMapFileName(
+        config::ConfigHandler::GetDefaultKeyMap());
+    return LoadFile(default_keymapfile);
+  }
+
+#ifndef NO_LOGGING
+  // make a copy of keymap file just for debugging
+  const char *keymap_file = GetKeyMapFileName(keymap_);
+  const string filename = ConfigFileStream::GetFileName(keymap_file);
+  OutputFileStream ofs(filename.c_str());
+  if (ofs) {
+    ofs << "# This is a copy of keymap table for debugging." << endl;
+    ofs << "# Nothing happens when you edit this file manually." << endl;
+    ofs << custom_keymap_table;
+  }
+#endif
+
+  istringstream ifs(custom_keymap_table);
+  return LoadStream(&ifs);
 }
 
 // static
@@ -160,7 +168,7 @@ const char *KeyMapManager::GetKeyMapFileName(
 }
 
 bool KeyMapManager::LoadFile(const char *filename) {
-  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
+  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs.get() == NULL) {
     LOG(WARNING) << "cannot load keymap table: " << filename;
     return false;

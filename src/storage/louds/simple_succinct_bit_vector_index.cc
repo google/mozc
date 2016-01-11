@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,29 @@
 namespace mozc {
 namespace storage {
 namespace louds {
-
 namespace {
+
+// Simple adapter to convert from 1-bit index to 0-bit index.
+class ZeroBitAdapter : public AdapterBase<int> {
+ public:
+  // Needs to be default constructive to create invalid iterator.
+  ZeroBitAdapter() : index_(nullptr), chunk_size_(0) {}
+
+  ZeroBitAdapter(const vector<int>* index, int chunk_size)
+      : index_(index), chunk_size_(chunk_size) {}
+
+  value_type operator()(const int *ptr) const {
+    // The number of 0-bits
+    //   = (total num bits) - (1-bits)
+    //   = (chunk_size [bytes] * 8 [bits/byte] * (ptr's offset) - (1-bits)
+    return chunk_size_ * 8 * (ptr - index_->data()) - *ptr;
+  }
+
+ private:
+  const vector<int> *index_;
+  int chunk_size_;
+};
+
 #ifdef __GNUC__
 // TODO(hidehiko): Support XMM and 64-bits popcount for 64bits architectures.
 inline int BitCount1(uint32 x) {
@@ -106,18 +127,78 @@ void InitIndex(
 
   CHECK_EQ(chunk_length + 1, index->size());
 }
+
+void InitLowerBound0Cache(const vector<int> &index, int chunk_size,
+                          size_t increment, size_t size,
+                          vector<const int *> *cache) {
+  DCHECK_GT(increment, 0);
+  cache->clear();
+  cache->reserve(size + 2);
+  cache->push_back(index.data());
+  ZeroBitAdapter adapter(&index, chunk_size);
+  for (size_t i = 1; i <= size; ++i) {
+    const int target_index = increment * i;
+    const int *ptr = std::lower_bound(
+        MakeIteratorAdapter(index.data(), adapter),
+        MakeIteratorAdapter(index.data() + index.size(), adapter),
+        target_index).base();
+    cache->push_back(ptr);
+  }
+  cache->push_back(index.data() + index.size());
+}
+
+void InitLowerBound1Cache(const vector<int> &index, int chunk_size,
+                          size_t increment, size_t size,
+                          vector<const int *> *cache) {
+  DCHECK_GT(increment, 0);
+  cache->clear();
+  cache->reserve(size + 2);
+  cache->push_back(index.data());
+  for (size_t i = 1; i <= size; ++i) {
+    const int target_index = increment * i;
+    const int *ptr = std::lower_bound(index.data(), index.data() + index.size(),
+                                      target_index);
+    cache->push_back(ptr);
+  }
+  cache->push_back(index.data() + index.size());
+}
+
 }  // namespace
 
-void SimpleSuccinctBitVectorIndex::Init(const uint8 *data, int length) {
+void SimpleSuccinctBitVectorIndex::Init(const uint8 *data, int length,
+                                        size_t lb0_cache_size,
+                                        size_t lb1_cache_size) {
   data_ = data;
   length_ = length;
   InitIndex(data, length, chunk_size_, &index_);
+
+  // TODO(noriyukit): Currently, we simply use uniform increment width for lower
+  // bound cache.  Nonuniform increment width may improve performance.
+  lb0_cache_increment_ =
+      lb0_cache_size == 0 ? GetNum0Bits() : GetNum0Bits() / lb0_cache_size;
+  if (lb0_cache_increment_ == 0) {
+    lb0_cache_increment_ = 1;
+  }
+  InitLowerBound0Cache(index_, chunk_size_, lb0_cache_increment_,
+                       lb0_cache_size, &lb0_cache_);
+
+  lb1_cache_increment_ =
+      lb1_cache_size == 0 ? GetNum1Bits() : GetNum1Bits() / lb1_cache_size;
+  if (lb1_cache_increment_ == 0) {
+    lb1_cache_increment_ = 1;
+  }
+  InitLowerBound1Cache(index_, chunk_size_, lb1_cache_increment_,
+                       lb1_cache_size, &lb1_cache_);
 }
 
 void SimpleSuccinctBitVectorIndex::Reset() {
-  data_ = NULL;
+  data_ = nullptr;
   length_ = 0;
   index_.clear();
+  lb0_cache_increment_ = 1;
+  lb0_cache_.clear();
+  lb1_cache_increment_ = 1;
+  lb1_cache_.clear();
 }
 
 int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
@@ -141,43 +222,24 @@ int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
   return result;
 }
 
-namespace {
-
-// Simple adapter to convert from 1-bit index to 0-bit index.
-class ZeroBitAdapter : public AdapterBase<int> {
- public:
-  // Needs to be default constructive to create invalid iterator.
-  ZeroBitAdapter() {}
-
-  ZeroBitAdapter(const vector<int>* index, int chunk_size)
-      : index_(index), chunk_size_(chunk_size) {
-  }
-
-  template<typename Iter>
-  value_type operator()(Iter iter) const {
-    // The number of 0-bits
-    //   = (total num bits) - (1-bits)
-    //   = (chunk_size [bytes] * 8 [bits/byte] * (iter's position) - (1-bits)
-    return chunk_size_ * 8 * distance(index_->begin(), iter) - *iter;
-  }
-
- private:
-  const vector<int> *index_;
-  int chunk_size_;
-};
-
-}  // namespace
-
 int SimpleSuccinctBitVectorIndex::Select0(int n) const {
   DCHECK_GT(n, 0);
 
+  // Narrow down the range of |index_| on which lower bound is performed.
+  int lb0_cache_index = n / lb0_cache_increment_;
+  if (lb0_cache_index > lb0_cache_.size() - 2) {
+    lb0_cache_index = lb0_cache_.size() - 2;
+  }
+  DCHECK_GE(lb0_cache_index, 0);
+
   // Binary search on chunks.
   ZeroBitAdapter adapter(&index_, chunk_size_);
-  const vector<int>::const_iterator iter = lower_bound(
-      MakeIteratorAdapter(index_.begin(), adapter),
-      MakeIteratorAdapter(index_.end(), adapter),
-      n).base();
-  const int chunk_index = distance(index_.begin(), iter) - 1;
+  const int *chunk_ptr =
+      std::lower_bound(
+          MakeIteratorAdapter(lb0_cache_[lb0_cache_index], adapter),
+          MakeIteratorAdapter(lb0_cache_[lb0_cache_index + 1], adapter), n)
+          .base();
+  const int chunk_index = (chunk_ptr - index_.data()) - 1;
   DCHECK_GE(chunk_index, 0);
   n -= chunk_size_ * 8 * chunk_index - index_[chunk_index];
 
@@ -206,10 +268,17 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
 int SimpleSuccinctBitVectorIndex::Select1(int n) const {
   DCHECK_GT(n, 0);
 
+  // Narrow down the range of |index_| on which lower bound is performed.
+  int lb1_cache_index = n / lb1_cache_increment_;
+  if (lb1_cache_index > lb1_cache_.size() - 2) {
+    lb1_cache_index = lb1_cache_.size() - 2;
+  }
+  DCHECK_GE(lb1_cache_index, 0);
+
   // Binary search on chunks.
-  const vector<int>::const_iterator iter =
-      lower_bound(index_.begin(), index_.end(), n);
-  const int chunk_index = distance(index_.begin(), iter) - 1;
+  const int *chunk_ptr = std::lower_bound(lb1_cache_[lb1_cache_index],
+                                          lb1_cache_[lb1_cache_index + 1], n);
+  const int chunk_index = (chunk_ptr - index_.data()) - 1;
   DCHECK_GE(chunk_index, 0);
   n -= index_[chunk_index];
 

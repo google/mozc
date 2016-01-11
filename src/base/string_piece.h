@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,10 @@
 #ifndef MOZC_BASE_STRING_PIECE_H_
 #define MOZC_BASE_STRING_PIECE_H_
 
-#include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <iosfwd>
+#include <iterator>
 #include <string>
 
 namespace mozc {
@@ -42,13 +43,13 @@ namespace mozc {
 
 class StringPiece {
  public:
-  typedef size_t size_type;
+  using size_type = size_t;
 
   // We provide non-explicit singleton constructors so users can pass
   // in a "const char*" or a "string" wherever a "StringPiece" is expected.
-  StringPiece() : ptr_(NULL), length_(0) {}
+  StringPiece() : ptr_(nullptr), length_(0) {}
   StringPiece(const char *str)    // NOLINT
-      : ptr_(str), length_((str != NULL) ? strlen(str) : 0) {}
+      : ptr_(str), length_((str != nullptr) ? strlen(str) : 0) {}
   StringPiece(const string &str)  // NOLINT
       : ptr_(str.data()), length_(str.size()) {}
   // Constructs a StringPiece from char ptr and length.
@@ -69,11 +70,11 @@ class StringPiece {
   size_type length() const { return length_; }
   bool empty() const { return length_ == 0; }
 
-  void clear() { ptr_ = NULL; length_ = 0; }
+  void clear() { ptr_ = nullptr; length_ = 0; }
   void set(const char *data, size_type len) { ptr_ = data; length_ = len; }
   void set(const char *str) {
     ptr_ = str;
-    length_ = (str != NULL) ? strlen(str) : 0;
+    length_ = (str != nullptr) ? strlen(str) : 0;
   }
   void set(const void *data, size_type len) {
     ptr_ = reinterpret_cast<const char *>(data);
@@ -111,7 +112,7 @@ class StringPiece {
   }
 
   string as_string() const {
-    // string doesn't like to take a NULL pointer even with a 0 size.
+    // string doesn't like to take a nullptr pointer even with a 0 size.
     return string(!empty() ? data() : "", size());
   }
 

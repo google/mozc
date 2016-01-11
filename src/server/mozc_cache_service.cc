@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,9 @@
 #include <atlstr.h>  // for CString
 #endif  // !NO_LOGGING
 #include <psapi.h>
+
+#include <algorithm>
+
 #include "base/file_util.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
@@ -193,7 +196,7 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
       mozc::FileUtil::JoinPath(mozc::SystemUtil::GetServerDirectory(),
                                "delete_me.txt");
   wstring wtemp_path;
-  mozc::Util::UTF8ToWide(temp_path.c_str(), &wtemp_path);
+  mozc::Util::UTF8ToWide(temp_path, &wtemp_path);
   const HANDLE temp_file = ::CreateFileW(
       wtemp_path.c_str(),
       GENERIC_READ | GENERIC_WRITE,
@@ -272,8 +275,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   }
 
   wstring server_path;
-  mozc::Util::UTF8ToWide(mozc::SystemUtil::GetServerPath().c_str(),
-                         &server_path);
+  mozc::Util::UTF8ToWide(mozc::SystemUtil::GetServerPath(), &server_path);
 
   mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(),
                                               GENERIC_READ,

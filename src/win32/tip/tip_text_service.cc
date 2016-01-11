@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,9 +41,11 @@
 #include <unordered_map>
 
 #include "base/const.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/process.h"
+#include "base/system_util.h"
 #include "base/update_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -99,7 +101,7 @@ const UINT kUpdateUIMessage = WM_USER;
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 const char kHelpUrl[] = "http://www.google.com/support/ime/japanese";
-const char kLogFileName[] = "GoogleJapaneseInput_tsf_ui";
+const char kLogFileName[] = "GoogleJapaneseInput_tsf_ui.log";
 const wchar_t kTaskWindowClassName[] =
     L"Google Japanese Input Task Message Window";
 
@@ -125,8 +127,8 @@ const GUID kTipFunctionProvider = {
 
 #else
 
-const char kHelpUrl[] = "http://code.google.com/p/mozc/";
-const char kLogFileName[] = "Mozc_tsf_ui";
+const char kHelpUrl[] = "https://github.com/google/mozc";
+const char kLogFileName[] = "Mozc_tsf_ui.log";
 const wchar_t kTaskWindowClassName[] = L"Mozc Immersive Task Message Window";
 
 // {F16B7D92-84B0-4AC6-A35B-06EA77180A18}
@@ -150,11 +152,6 @@ const GUID kTipFunctionProvider = {
 };
 
 #endif
-
-// This flag is available in Windows SDK 8.0 and later.
-#ifndef TF_TMF_IMMERSIVEMODE
-#define TF_TMF_IMMERSIVEMODE  0x40000000
-#endif  // !TF_TMF_IMMERSIVEMODE
 
 HRESULT SpawnTool(const string &command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
@@ -611,9 +608,7 @@ class TipTextServiceImpl
     UninitKeyEventSink();
 
     // Remove our button menus from the language bar.
-    if (!IsImmersiveUI()) {
-      UninitLanguageBar();
-    }
+    UninitLanguageBar();
 
     // Stop advising the ITfFunctionProvider events.
     UninitFunctionProvider();
@@ -654,7 +649,8 @@ class TipTextServiceImpl
     StorePointerForCurrentThread(this);
 
     HRESULT result = E_UNEXPECTED;
-    Logging::InitLogStream(kLogFileName);
+    Logging::InitLogStream(
+        FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), kLogFileName));
 
     EnsureKanaLockUnlocked();
 
@@ -718,12 +714,10 @@ class TipTextServiceImpl
       return Deactivate();
     }
 
-    if (!IsImmersiveUI()) {
-      result = InitLanguageBar();
-      if (FAILED(result)) {
-        LOG(ERROR) << "InitLanguageBar failed: " << result;
-        return result;
-      }
+    result = InitLanguageBar();
+    if (FAILED(result)) {
+      LOG(ERROR) << "InitLanguageBar failed: " << result;
+      return result;
     }
 
     // Start advising the keyboard events (ITfKeyEvent) to this object.
@@ -893,6 +887,17 @@ class TipTextServiceImpl
   // ITfThreadFocusSink
   virtual HRESULT STDMETHODCALLTYPE OnSetThreadFocus() {
     EnsureKanaLockUnlocked();
+
+    // A temporary workaround for b/24793812.  When previous atempt to
+    // establish conection failed, retry again as if this was the first attempt.
+    // TODO(yukawa): We should give up if this fails a number of times.
+    if (WinUtil::IsProcessSandboxed()) {
+      auto *private_context = GetFocusedPrivateContext();
+      if (private_context != nullptr) {
+        private_context->EnsureInitialized();
+      }
+    }
+
     // While ITfThreadMgrEventSink::OnSetFocus notifies the logical focus inside
     // the application, ITfThreadFocusSink notifies the OS-level keyboard focus
     // events. In both cases, Mozc's UI visibility should be updated.
@@ -1154,6 +1159,10 @@ class TipTextServiceImpl
     langbar_.UpdateMenu(enabled, mozc_mode);
   }
 
+  virtual bool IsLangbarInitialized() const {
+    return langbar_.IsInitialized();
+  }
+
   // Following functions are private utilities.
   static void StorePointerForCurrentThread(TipTextServiceImpl *impl) {
     if (g_module_unloaded) {
@@ -1184,6 +1193,7 @@ class TipTextServiceImpl
       }
       EnsurePrivateContextExists(context);
     }
+    TipUiHandler::OnDocumentMgrChanged(this, document_mgr);
     TipEditSession::OnSetFocusAsync(this, document_mgr);
     return S_OK;
   }

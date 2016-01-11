@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,16 +30,19 @@
 #include "rewriter/collocation_rewriter.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "base/flags.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/string_piece.h"
 #include "base/util.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
 
@@ -51,6 +54,7 @@ using mozc::storage::ExistenceFilter;
 
 namespace {
 const size_t kCandidateSize = 12;
+const int kMaxCostDiff = 3453;  // -500*log(1/1000)
 
 // For collocation, we use two segments.
 enum SegmentLookupType {
@@ -80,11 +84,11 @@ bool ParseCompound(const StringPiece value, const StringPiece pattern,
 
   // Find the |first_content| candidate and check if it consists of Kanji only.
   StringPiece::const_iterator pattern_begin =
-      find(value.begin(), value.end(), pattern[0]);
+      std::find(value.begin(), value.end(), pattern[0]);
   if (pattern_begin == value.end()) {
     return false;
   }
-  first_content->set(value.data(), distance(value.begin(), pattern_begin));
+  first_content->set(value.data(), std::distance(value.begin(), pattern_begin));
   if (!Util::IsScriptType(*first_content, Util::KANJI)) {
     return false;
   }
@@ -544,12 +548,12 @@ class CollocationRewriter::CollocationFilter {
     string key;
     key.reserve(left.size() + right.size());
     key.assign(left).append(right);
-    const uint64 id = Util::Fingerprint(key);
+    const uint64 id = Hash::Fingerprint(key);
     return filter_->Exists(id);
   }
 
  private:
-  scoped_ptr<ExistenceFilter> filter_;
+  std::unique_ptr<ExistenceFilter> filter_;
 
   DISALLOW_COPY_AND_ASSIGN(CollocationFilter);
 };
@@ -568,12 +572,12 @@ class CollocationRewriter::SuppressionFilter {
     string key;
     key.reserve(cand.content_value.size() + 1 + cand.content_key.size());
     key.assign(cand.content_value).append("\t").append(cand.content_key);
-    const uint64 id = Util::Fingerprint(key);
+    const uint64 id = Hash::Fingerprint(key);
     return filter_->Exists(id);
   }
 
  private:
-  scoped_ptr<ExistenceFilter> filter_;
+  std::unique_ptr<ExistenceFilter> filter_;
 
   DISALLOW_COPY_AND_ASSIGN(SuppressionFilter);
 };
@@ -597,6 +601,9 @@ CollocationRewriter::~CollocationRewriter() {}
 
 bool CollocationRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
+  if (!FLAGS_use_collocation) {
+    return false;
+  }
   return RewriteCollocation(segments);
 }
 
@@ -618,6 +625,9 @@ bool CollocationRewriter::RewriteFromPrevSegment(
   vector<string> curs;
   string cur;
   for (size_t i = 0; i < i_max; ++i) {
+    if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {
+      continue;
+    }
     if (IsName(seg->candidate(i))) {
       continue;
     }
@@ -685,6 +695,9 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
   vector<string> curs;
   string cur;
   for (size_t i = 0; i < i_max; ++i) {
+    if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {
+      continue;
+    }
     if (IsName(seg->candidate(i))) {
       continue;
     }
@@ -700,6 +713,10 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
       cur.clear();
       CollocationUtil::GetNormalizedScript(curs[k], true, &cur);
       for (size_t j = 0; j < j_max; ++j) {
+        if (next_seg->candidate(j).cost >
+            next_seg->candidate(0).cost + kMaxCostDiff) {
+          continue;
+        }
         if (!next_seg_ok[j]) {
           continue;
         }

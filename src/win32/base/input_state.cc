@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,8 @@ InputState::InputState()
 }
 
 InputBehavior::InputBehavior()
-    : disabled(false),
+    : initialized(false),
+      disabled(false),
       prefer_kana_input(false),
       use_mode_indicator(false),
       use_romaji_key_to_toggle_input_style(false) {}

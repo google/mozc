@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,10 @@
 
 
 #ifdef OS_WIN
-// Do not change the order of the following headers required for Windows.
-#include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
-#define ssize_t SSIZE_T
+using ssize_t = SSIZE_T;
 #else
 #include <fcntl.h>
 #include <netdb.h>
@@ -45,12 +43,14 @@
 
 #include <cstddef>
 #include <cstring>
-#include <vector>
+#include <memory>
 #include <string>
+#include <vector>
 
+#include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/number_util.h"
 #include "base/singleton.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
@@ -195,7 +195,7 @@ class RPCServer {
       CHECK_LT(request_size, kMaxRequestSize);
 
       // Receive the body of serialized protobuf.
-      scoped_ptr<char[]> request_str(new char[request_size]);
+      std::unique_ptr<char[]> request_str(new char[request_size]);
       if (!Recv(client_socket,
                 request_str.get(), request_size, FLAGS_rpc_timeout)) {
         LOG(ERROR) << "cannot receive body of request.";
@@ -235,8 +235,8 @@ class RPCServer {
 
  private:
   int server_socket_;
-  scoped_ptr<EngineInterface> engine_;
-  scoped_ptr<SessionHandler> handler_;
+  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<SessionHandler> handler_;
 };
 
 // Standalone RPCClient.
@@ -321,7 +321,7 @@ class RPCClient {
     CHECK_GT(output_size, 0);
     CHECK_LT(output_size, kMaxOutputSize);
 
-    scoped_ptr<char[]> output_str(new char[output_size]);
+    std::unique_ptr<char[]> output_str(new char[output_size]);
     CHECK(Recv(client_socket,
                output_str.get(), output_size, FLAGS_rpc_timeout));
 
@@ -358,7 +358,7 @@ class ScopedWSAData {
 }  // namespace mozc
 
 int main(int argc, char *argv[]) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::ScopedWSAData wsadata;
 

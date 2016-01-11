@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
     # GYP's 'copies' rule cannot copy a whole directory recursively, so we use
     # our own script to copy files.
     'copy_file': ['python', '../../build_tools/copy_file.py'],
-    'shared_intermediate_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/',
+    'shared_intermediate_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)',
     'static_resources_dir': '<(abs_depth)/android/static_resources',
     'sdk_resources_dir': '<(shared_intermediate_mozc_dir)/android/resources',
   },
@@ -153,7 +153,7 @@
             'dummy_make_symbolic_link',
           ],
           'action': [
-            'ln', '-r', '-s', '-f',
+            'ln', '-s', '-f',
             '<(sdk_resources_dir)/res',
             'res',
           ],
@@ -238,6 +238,8 @@
           ],
           'action': [
             'python', '../../data/images/android/template/transform.py',
+            '--input_dir',
+            '<(abs_depth)/data/images/android/template',
             '--output_zip', '<@(_outputs)',
           ],
         },

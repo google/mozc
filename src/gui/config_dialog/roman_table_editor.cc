@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,13 @@
 #include "gui/config_dialog/roman_table_editor.h"
 
 #include <QtGui/QtGui>
+
 #include <cctype>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -84,7 +87,7 @@ RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
 RomanTableEditorDialog::~RomanTableEditorDialog() {}
 
 string RomanTableEditorDialog::GetDefaultRomanTable() {
-  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
+  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
   string line, result;
   vector<string> fields;
@@ -164,7 +167,7 @@ bool RomanTableEditorDialog::LoadFromStream(istream *is) {
 }
 
 bool RomanTableEditorDialog::LoadDefaultRomanTable() {
-  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
+  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
   CHECK(LoadFromStream(ifs.get()));
   return true;

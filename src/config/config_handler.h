@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -85,6 +85,7 @@ class ConfigHandler {
   // Using this function is safer than
   // using an uninitialized config value.
   static void GetDefaultConfig(Config *config);
+  static const Config &DefaultConfig();
 
   // Reloads config from storage.
   //
@@ -107,11 +108,6 @@ class ConfigHandler {
   DISALLOW_IMPLICIT_CONSTRUCTORS(ConfigHandler);
 };
 
-// macro for config field
-// if (GET_CONFIG(incognite_mode) == false) {
-//  }
-#define GET_CONFIG(field) \
-  config::ConfigHandler::GetConfig().field()
 }  // namespace config
 }  // namespace mozc
 

@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
         '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
         'dictionary_file.gyp:codec',
+        'dictionary_file.gyp:codec_factory',
       ],
       'variables': {
         'test_size': 'small',
@@ -53,6 +54,7 @@
       'dependencies': [
         '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
+        'dictionary_file.gyp:codec_factory',
         'dictionary_file.gyp:dictionary_file',
         'dictionary_file.gyp:dictionary_file_builder',
       ],

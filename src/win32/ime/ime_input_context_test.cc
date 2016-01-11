@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ namespace {
 InputContext *AsContext(INPUTCONTEXT *context_pointer) {
   return reinterpret_cast<InputContext *>(context_pointer);
 }
-}  // anonymous namespace
+}  // namespace
 
 TEST(InputContextTest, InitializeTest) {
   // If the conversion mode is not initialized, initialize it with

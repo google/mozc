@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 
 #include "base/const.h"
 #include "base/file_util.h"
+#include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -375,7 +376,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
     vector<wstring> arguments(state.arguments_size());
     arguments.resize(state.arguments_size());
     for (size_t i = 0; i < state.arguments_size(); ++i) {
-      if (Util::UTF8ToWide(state.arguments(i).c_str(), &arguments[i]) <= 0) {
+      if (Util::UTF8ToWide(state.arguments(i), &arguments[i]) <= 0) {
         return false;
       }
     }
@@ -430,7 +431,7 @@ bool GetServiceConfig(const ScopedSCHandle &service_handle,
   buf.swap(*result);
   return true;
 }
-}  // anonymous namespace
+}  // namespace
 
 bool CacheServiceManager::IsInstalled() {
   ScopedSCHandle service_handle;
@@ -482,7 +483,7 @@ wstring CacheServiceManager::GetUnquotedServicePath() {
       FileUtil::JoinPath(SystemUtil::GetServerDirectory(),
                          kMozcCacheServiceExeName);
   wstring wlock_service_path;
-  if (Util::UTF8ToWide(lock_service_path.c_str(), &wlock_service_path) <= 0) {
+  if (Util::UTF8ToWide(lock_service_path, &wlock_service_path) <= 0) {
     return L"";
   }
   return wlock_service_path;

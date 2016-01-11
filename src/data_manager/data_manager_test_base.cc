@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "data_manager/data_manager_test_base.h"
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -48,29 +49,19 @@
 #include "rewriter/counter_suffix.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_srcdir);
-
 using mozc::dictionary::POSMatcher;
 
 namespace mozc {
-namespace {
 
-
-// Get actual file path for testing
-string GetFilePath(const string &path) {
-  return FileUtil::JoinPath(FLAGS_test_srcdir, path);
-}
-
-}  // namespace
-
-DataManagerTestBase::DataManagerTestBase(DataManagerInterface *data_manager,
-                                         const size_t lsize,
-                                         const size_t rsize,
-                                         IsBoundaryFunc is_boundary,
-                                         const char *connection_txt_file,
-                                         const int expected_resolution,
-                                         const char *dictionary_files,
-                                         const char *suggestion_filter_files)
+DataManagerTestBase::DataManagerTestBase(
+    DataManagerInterface *data_manager,
+    const size_t lsize,
+    const size_t rsize,
+    IsBoundaryFunc is_boundary,
+    const string &connection_txt_file,
+    const int expected_resolution,
+    const vector<string> &dictionary_files,
+    const vector<string> &suggestion_filter_files)
     : data_manager_(data_manager),
       lsize_(lsize),
       rsize_(rsize),
@@ -85,7 +76,7 @@ DataManagerTestBase::~DataManagerTestBase() {}
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
   // the expected boundary rule.
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
@@ -96,7 +87,7 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
 }
 
 void DataManagerTestBase::SegmenterTest_LNodeTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
 
   // lnode is BOS
@@ -114,7 +105,7 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_RNodeTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
 
   // rnode is EOS
@@ -132,7 +123,7 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_NodeTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
 
   Node lnode, rnode;
@@ -150,7 +141,7 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
-  scoped_ptr<Segmenter> segmenter(
+  std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
   const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
 
@@ -170,12 +161,12 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
-  scoped_ptr<const Connector> connector(
+  std::unique_ptr<const Connector> connector(
       Connector::CreateFromDataManager(*data_manager_));
   ASSERT_TRUE(connector.get() != NULL);
 
   EXPECT_EQ(expected_resolution_, connector->GetResolution());
-  for (ConnectionFileReader reader(GetFilePath(connection_txt_file_));
+  for (ConnectionFileReader reader(connection_txt_file_);
        !reader.done(); reader.Next()) {
     // Randomly sample test entries because connection data have several
     // millions of entries.
@@ -201,7 +192,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   const double kErrorRatio = 0.0001;
 
   // Load embedded suggestion filter (bloom filter)
-  scoped_ptr<SuggestionFilter> suggestion_filter;
+  std::unique_ptr<SuggestionFilter> suggestion_filter;
   {
     const char *data = NULL;
     size_t size;
@@ -212,12 +203,9 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   // Load the original suggestion filter from file.
   std::unordered_set<string> suggestion_filter_set;
 
-  vector<string> files;
-  Util::SplitStringUsing(suggestion_filter_files_, ",", &files);
-  for (size_t i = 0; i < files.size(); ++i) {
-    const string filter_file = GetFilePath(files[i]);
-    InputFileStream input(filter_file.c_str());
-    CHECK(input) << "cannot open: " << filter_file;
+  for (size_t i = 0; i < suggestion_filter_files_.size(); ++i) {
+    InputFileStream input(suggestion_filter_files_[i].c_str());
+    CHECK(input) << "cannot open: " << suggestion_filter_files_[i];
     string line;
     while (getline(input, line)) {
       if (line.empty() || line[0] == '#') {
@@ -230,15 +218,11 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
 
   LOG(INFO) << "Filter word size:\t" << suggestion_filter_set.size();
 
-  vector<string> dic_files;
-  Util::SplitStringUsing(dictionary_files_, ",", &dic_files);
   size_t false_positives = 0;
   size_t num_words = 0;
-  for (size_t i = 0; i < dic_files.size(); ++i) {
-    LOG(INFO) << dic_files[i];
-    const string dic_file = GetFilePath(dic_files[i]);
-    InputFileStream input(dic_file.c_str());
-    CHECK(input) << "cannot open: " << dic_file;
+  for (size_t i = 0; i < dictionary_files_.size(); ++i) {
+    InputFileStream input(dictionary_files_[i].c_str());
+    CHECK(input) << "cannot open: " << dictionary_files_[i];
     vector<string> fields;
     string line;
     while (getline(input, line)) {

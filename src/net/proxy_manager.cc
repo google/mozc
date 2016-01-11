@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
 
   return final_proxy;
 }
-}  // anonymous namespace
+}  // namespace
 
 // MacProxyManager is a proxy manager for Mac OSX.  It uses
 // CoreService API and SystemConfiguration API to obtain the current
@@ -247,7 +247,7 @@ ProxyManagerInterface *GetProxyManager() {
     return g_proxy_manager;
   }
 }
-}  // anonymous namespace
+}  // namespace
 
 void ProxyManager::SetProxyManager(
     ProxyManagerInterface *proxy_manager) {

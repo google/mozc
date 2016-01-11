@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 
 #include <string>
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
@@ -168,7 +169,7 @@ bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
     return false;
   }
   return SUCCEEDED(edit_session_result);
-};
+}
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
@@ -238,13 +239,13 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
 bool OnUpdateOnOffModeAsync(TipTextService *text_service,
                             ITfContext *context,
                             bool open) {
-  const auto action =text_service->GetThreadContext()->GetInputModeManager()->
+  const auto action = text_service->GetThreadContext()->GetInputModeManager()->
       OnChangeOpenClose(open);
   if (action == TipInputModeManager::kUpdateUI) {
     return OnLayoutChangedAsyncImpl(text_service, context);
   }
   return true;
-};
+}
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
@@ -360,7 +361,7 @@ bool OnSwitchInputModeAsync(TipTextService *text_service,
     return false;
   }
   return SUCCEEDED(edit_session_result);
-};
+}
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
@@ -438,7 +439,7 @@ bool OnSessionCommandAsync(TipTextService *text_service,
     return false;
   }
   return SUCCEEDED(edit_session_result);
-};
+}
 
 bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
                                        ITfContext *context) {

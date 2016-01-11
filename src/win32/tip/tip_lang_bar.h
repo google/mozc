@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,6 +95,9 @@ class TipLangBar {
 
   // Updates the selected menu in the language bar.
   HRESULT UpdateMenu(bool enabled, uint32 composition_mode);
+
+  // Returns true if this instance is already initialized.
+  bool IsInitialized() const;
 
  private:
   // Represents the language bar item manager iff the running OS is Windows 8.

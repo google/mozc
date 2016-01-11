@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "composer/internal/converter.h"
 #include "composer/table.h"
 
@@ -38,7 +39,7 @@ DEFINE_string(table, "system://romanji-hiragana.tsv",
               "preedit conversion table file.");
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
@@ -47,8 +48,8 @@ int main(int argc, char **argv) {
 
   string command;
   string result;
-  while (getline(cin, command)) {
+  while (getline(std::cin, command)) {
     converter.Convert(command, &result);
-    cout << result << endl;
+    std::cout << result << std::endl;
   }
 }

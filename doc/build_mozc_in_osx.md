@@ -8,43 +8,24 @@ We only support OS X 10.7 or later intel only.
 # Software Requirements
 
 Building on Mac requires the following software.
+
   * Xcode
 
 If you don't need to run gui tools like about dialog, config dialog, or dictionary tool, you can omit installing Qt.  Candidate window still shows without Qt.  See below for the detailed information.
 
 # Get the Code
 
-First, you'll need to download the gclient depot tool, and add depot\_tools to your PATH.
+You can download Mozc source code as follows:
 
 ```
-cd ~/
-git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-export PATH=`pwd`/depot_tools:"$PATH"
+mkdir -p ~/work
+cd ~/work
+git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 ```
-
-Then, download the Mozc code from its SVN repository with the gclient command:
-
-```
-mkdir -p ~/work/mozc
-cd ~/work/mozc
-gclient config https://github.com/google/mozc.git --name=. --deps-file=src/DEPS
-gclient sync
-```
-
-This will also download source code of other programs such as googletest and Protocol Buffers.
-Update to the latest revision
-
-Execute the following command to update to the latest revision.
-
-```
-gclient sync
-```
-
-Updating the tree sometimes causes a mysterious build error. Try "build\_mozc.py clean" if it occurs.
 
 # Compilation
 
-First, you'll need to generate Xcode project using a tool called GYP, which is automatically downloaded by "gclient sync":
+First, you'll need to generate Xcode project using a tool called [GYP](https://chromium.googlesource.com/external/gyp).
 
 ```
 cd ~/work/mozc/src

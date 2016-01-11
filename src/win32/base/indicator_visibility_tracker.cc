@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,20 +35,10 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-#ifdef MOZC_ENABLE_MODE_INDICATOR
-const bool kIndicatorSupported = true;
-#else
-const bool kIndicatorSupported = false;
-#endif  // MOZC_ENABLE_MODE_INDICATOR
-
 const double kIgnoreMoveWindowDuration = 500.0;  // msec
 
 IndicatorVisibilityTracker::Action GetDefaultAction(
     bool previously_visible, bool now_visible) {
-  if (!kIndicatorSupported) {
-    return IndicatorVisibilityTracker::kNothing;
-  }
-
   if (previously_visible == now_visible) {
     return IndicatorVisibilityTracker::kNothing;
   }
@@ -130,10 +120,6 @@ IndicatorVisibilityTracker::OnChangeInputMode() {
 }
 
 bool IndicatorVisibilityTracker::IsVisible() const {
-  if (!kIndicatorSupported) {
-    return false;
-  }
-
   return state_->visible;
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "dictionary/dictionary_impl.h"
 
 #include <cstring>
+#include <memory>
 #include <string>
 
 #include "base/port.h"
@@ -46,19 +47,19 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace dictionary {
 namespace {
 
 struct DictionaryData {
-  scoped_ptr<DictionaryInterface> user_dictionary;
-  scoped_ptr<SuppressionDictionary> suppression_dictionary;
+  std::unique_ptr<DictionaryInterface> user_dictionary;
+  std::unique_ptr<SuppressionDictionary> suppression_dictionary;
   const POSMatcher *pos_matcher;
-  scoped_ptr<DictionaryInterface> dictionary;
+  std::unique_ptr<DictionaryInterface> dictionary;
 };
 
 DictionaryData *CreateDictionaryData() {
@@ -68,12 +69,10 @@ DictionaryData *CreateDictionaryData() {
   const char *dictionary_data = NULL;
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
-  DictionaryInterface *sys_dict =
+  SystemDictionary *sys_dict =
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-  DictionaryInterface *val_dict =
-      ValueDictionary::CreateValueDictionaryFromImage(*ret->pos_matcher,
-                                                      dictionary_data,
-                                                      dictionary_size);
+  ValueDictionary *val_dict =
+      new ValueDictionary(*ret->pos_matcher, &sys_dict->value_trie());
   ret->user_dictionary.reset(new UserDictionaryStub);
   ret->suppression_dictionary.reset(new SuppressionDictionary);
   ret->dictionary.reset(new DictionaryImpl(sys_dict,
@@ -88,18 +87,12 @@ DictionaryData *CreateDictionaryData() {
 
 class DictionaryImplTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+  DictionaryImplTest() {
+    convreq_.set_config(&config_);
   }
 
-  virtual void TearDown() {
-    // just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+  virtual void SetUp() {
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   class CheckKeyValueExistenceCallback : public DictionaryInterface::Callback {
@@ -194,13 +187,18 @@ class DictionaryImplTest : public ::testing::Test {
   // Pair of DictionaryInterface's lookup method and query text.
   struct LookupMethodAndQuery {
     void (DictionaryInterface::*lookup_method)(
-        StringPiece, bool, DictionaryInterface::Callback *) const;
+        StringPiece,
+        const ConversionRequest &,
+        DictionaryInterface::Callback *) const;
     const char *query;
   };
+
+  ConversionRequest convreq_;
+  config::Config config_;
 };
 
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
   SuppressionDictionary *s = data->suppression_dictionary.get();
 
@@ -226,7 +224,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   s->UnLock();
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 
@@ -236,13 +234,13 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   s->UnLock();
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 }
 
 TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
 
   // "あぼがど" -> "アボカド", which is in the test dictionary.
@@ -258,27 +256,24 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
 
   // The spelling correction entry (kKey, kValue) should be found if spelling
   // correction flag is set in the config.
-  config::Config config;
-  config.set_use_spelling_correction(true);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_use_spelling_correction(true);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 
   // Without the flag, it should be suppressed.
-  config.set_use_spelling_correction(false);
-  config::ConfigHandler::SetConfig(config);;
+  config_.set_use_spelling_correction(false);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 }
 
 TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
 
   // "100-0000" -> "東京都千代田区", which is in the test dictionary.
@@ -293,27 +288,24 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
 
   // The zip code entry (kKey, kValue) should be found if the flag is set in the
   // config.
-  config::Config config;
-  config.set_use_zip_code_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_use_zip_code_conversion(true);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 
   // Without the flag, it should be suppressed.
-  config.set_use_zip_code_conversion(false);
-  config::ConfigHandler::SetConfig(config);;
+  config_.set_use_zip_code_conversion(false);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 }
 
 TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
   NodeAllocator allocator;
 
@@ -330,37 +322,34 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
 
   // The T13N entry (kKey, kValue) should be found if the flag is set in the
   // config.
-  config::Config config;
-  config.set_use_t13n_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_use_t13n_conversion(true);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
 
   // Without the flag, it should be suppressed.
-  config.set_use_t13n_conversion(false);
-  config::ConfigHandler::SetConfig(config);;
+  config_.set_use_t13n_conversion(false);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
-    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, false, &callback);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }
 }
 
 TEST_F(DictionaryImplTest, LookupComment) {
-  scoped_ptr<DictionaryData> data(CreateDictionaryData());
+  std::unique_ptr<DictionaryData> data(CreateDictionaryData());
   DictionaryInterface *d = data->dictionary.get();
   NodeAllocator allocator;
 
   string comment;
-  EXPECT_FALSE(d->LookupComment("key", "value", &comment));
+  EXPECT_FALSE(d->LookupComment("key", "value", convreq_, &comment));
   EXPECT_TRUE(comment.empty());
 
   // If key or value is "comment", UserDictionaryStub returns
   // "UserDictionaryStub" as comment.
-  EXPECT_TRUE(d->LookupComment("key", "comment", &comment));
+  EXPECT_TRUE(d->LookupComment("key", "comment", convreq_, &comment));
   EXPECT_EQ("UserDictionaryStub", comment);
 }
 

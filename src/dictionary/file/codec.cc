@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,40 +29,17 @@
 
 #include "dictionary/file/codec.h"
 
-#include <algorithm>
 #include <climits>
 
-#include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
+#include "dictionary/file/codec_util.h"
 #include "dictionary/file/section.h"
-
 
 namespace mozc {
 namespace dictionary {
-namespace {
-
-void WriteInt(int value, ostream *ofs) {
-  DCHECK(ofs);
-  ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
-}
-
-int ReadInt(const char *ptr) {
-  DCHECK(ptr);
-  return *reinterpret_cast<const int *>(ptr);
-}
-
-// Round up
-int Rup4(int length) {
-  const int rem = (length % 4);
-  return ((4 - rem) % 4);
-}
-
-}  // namespace
-
 
 DictionaryFileCodec::DictionaryFileCodec() : filemagic_(20110701) {}
 
@@ -76,12 +53,12 @@ void DictionaryFileCodec::WriteSections(
   for (size_t i = 0; i < sections.size(); ++i) {
     WriteSection(sections[i], ofs);
   }
-  WriteInt(0, ofs);
+  filecodec_util::WriteInt(0, ofs);
 }
 
 void DictionaryFileCodec::WriteHeader(ostream *ofs) const {
   DCHECK(ofs);
-  WriteInt(filemagic_, ofs);
+  filecodec_util::WriteInt(filemagic_, ofs);
 }
 
 void DictionaryFileCodec::WriteSection(
@@ -89,7 +66,7 @@ void DictionaryFileCodec::WriteSection(
   DCHECK(ofs);
   const string &name = GetSectionName(section.name);
   VLOG(1) << "section=" << name << " length=" << section.len;
-  WriteInt(section.len, ofs);
+  filecodec_util::WriteInt(section.len, ofs);
 
   const int name_len = name.size() + 1;  // including '\0'
   ofs->write(name.data(), name_len);
@@ -109,24 +86,24 @@ bool DictionaryFileCodec::ReadSections(
     vector<DictionaryFileSection> *sections) const {
   DCHECK(sections);
   const char *ptr = image;
-  const int filemagic = ReadInt(ptr);
+  const int filemagic = filecodec_util::ReadInt(ptr);
   CHECK(filemagic == filemagic_) <<
       "invalid dictionary file magic (recompile dictionary?)";
   ptr += sizeof(filemagic);
 
   int size;
-  while ((size = ReadInt(ptr))) {
+  while ((size = filecodec_util::ReadInt(ptr))) {
     ptr += sizeof(size);
     const string name(ptr);
     VLOG(1) << "section=" << name << " length=" << size;
     const int name_len = name.size() + 1;
     ptr += name_len;
-    ptr += Rup4(name_len);
+    ptr += filecodec_util::Rup4(name_len);
 
     sections->push_back(DictionaryFileSection(ptr, size, name));
 
     ptr += size;
-    ptr += Rup4(size);
+    ptr += filecodec_util::Rup4(size);
     if (image + length < ptr) {
       return false;
     }
@@ -140,24 +117,6 @@ void DictionaryFileCodec::Pad4(int length, ostream *ofs) {
   for (int i = length; (i % 4) != 0; ++i) {
     (*ofs) << static_cast<char>(Util::Random(CHAR_MAX));
   }
-}
-
-namespace {
-DictionaryFileCodecInterface *g_dictionary_file_codec = nullptr;
-}  // namespace
-
-typedef DictionaryFileCodec DefaultCodec;
-
-DictionaryFileCodecInterface *DictionaryFileCodecFactory::GetCodec() {
-  if (g_dictionary_file_codec == nullptr) {
-    return Singleton<DefaultCodec>::get();
-  } else {
-    return g_dictionary_file_codec;
-  }
-}
-
-void DictionaryFileCodecFactory::SetCodec(DictionaryFileCodecInterface *codec) {
-  g_dictionary_file_codec = codec;
 }
 
 }  // namespace dictionary

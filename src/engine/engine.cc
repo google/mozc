@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -159,10 +159,12 @@ void Engine::Init(
   int dictionary_size = 0;
   data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
+  SystemDictionary *sysdic =
+      SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   dictionary_.reset(new DictionaryImpl(
-      SystemDictionary::Builder(dictionary_data, dictionary_size).Build(),
-      ValueDictionary::CreateValueDictionaryFromImage(
-          *data_manager->GetPOSMatcher(), dictionary_data, dictionary_size),
+      sysdic,  // DictionaryImpl takes the ownership
+      new ValueDictionary(*data_manager->GetPOSMatcher(),
+                          &sysdic->value_trie()),
       user_dictionary_.get(),
       suppression_dictionary_.get(),
       data_manager->GetPOSMatcher()));

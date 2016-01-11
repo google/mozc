@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@
         '<(gen_out_dir)/base/moc_window_title_modifier.cc',
         'base/debug_util.cc',
         'base/locale_util.cc',
+        'base/msime_user_dictionary_importer.cc',
         'base/setup_util.cc',
         'base/singleton_window_helper.cc',
         'base/table_util.cc',
@@ -57,10 +58,12 @@
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
+        '../dictionary/dictionary_base.gyp:user_dictionary',
         '../ipc/ipc.gyp:ipc',
         '../ipc/ipc.gyp:window_info_protocol',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
+        'encoding_util',
         'gen_base_files',
       ],
       'includes': [
@@ -387,11 +390,6 @@
             '../protocol/protocol.gyp:commands_proto',
           ],
         }],
-        ['use_libzinnia==1 and OS=="linux"', {
-          'defines': [
-            'USE_LIBZINNIA',
-          ],
-        }],
       ],
     },
     {
@@ -598,6 +596,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
+        'encoding_util',
         'gen_config_dialog_files',
         'gen_dictionary_tool_files',
       ],
@@ -877,6 +876,7 @@
         '../config/config.gyp:stats_config_util',
         'about_dialog_lib',
         'administration_dialog_lib',
+        'character_pad_lib',
         'config_dialog_lib',
         'confirmation_dialog_lib',
         'dictionary_tool_lib',
@@ -897,15 +897,19 @@
           'mac_bundle': 1,
           'xcode_settings': {
             'INSTALL_PATH': '@executable_path/../Frameworks',
+            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_lib_info',
           },
           'dependencies+': [
+            'gen_mozc_tool_lib_info_plist',
             'prelauncher_lib',
           ],
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {
-              'includes': [
-                '../gyp/breakpad_mac.gypi',
-              ],
+              'link_settings': {
+                'libraries': [
+                  '<(mac_breakpad_framework)',
+                ],
+              },
             }],
             ['use_qt=="YES"', {
               'postbuilds': [
@@ -923,14 +927,6 @@
           ],
         }, {
           'type': 'static_library',
-        }],
-        ['use_zinnia=="YES"', {
-          'dependencies+': [
-            'character_pad_lib',
-          ],
-          'defines': [
-            'USE_ZINNIA',
-          ],
         }],
       ],
     },
@@ -1026,6 +1022,37 @@
         }],
       ],
     },
+    {
+      'target_name': 'encoding_util',
+      'type': 'static_library',
+      'sources': [
+        'base/encoding_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base_core',
+      ],
+    },
+    {
+      'target_name': 'encoding_util_test',
+      'type': 'executable',
+      'sources': [
+        'base/encoding_util_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'encoding_util',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'gui_all_test',
+      'type': 'none',
+      'dependencies': [
+        'encoding_util_test',
+      ],
+    },
   ],
   'conditions': [
     ['OS=="win"', {
@@ -1119,6 +1146,28 @@
                 '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
                 '--input',
                 '../data/mac/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+                '--branding', '<(branding)',
+              ],
+            },
+          ],
+        },
+        {
+          'target_name': 'gen_mozc_tool_lib_info_plist',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'mozc_tool_lib info.plist',
+              'inputs': [
+                '../data/mac/mozc_tool_lib_info',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/mozc_tool_lib_info',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist.py',
+                '--output', '<(gen_out_dir)/mozc_tool_lib_info',
+                '--input', '../data/mac/mozc_tool_lib_info',
+                '--version_file', '../mozc_version.txt',
                 '--branding', '<(branding)',
               ],
             },

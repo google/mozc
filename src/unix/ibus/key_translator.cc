@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "unix/ibus/key_translator.h"
 
 #include <map>
+#include <set>
 #include <string>
 
 #include "base/logging.h"
@@ -130,23 +131,23 @@ const struct SpecialKeyMap {
   //   - IBUS_Kana_Lock? IBUS_KEY_Kana_Shift?
 };
 
-const struct ModifierKeyMap {
+const struct ModifierKeyMapData {
   guint from;
   mozc::commands::KeyEvent::ModifierKey to;
-} modifier_key_map[] = {
-  {IBUS_Shift_L, mozc::commands::KeyEvent::LEFT_SHIFT},
-  {IBUS_Shift_R, mozc::commands::KeyEvent::RIGHT_SHIFT},
-  {IBUS_Control_L, mozc::commands::KeyEvent::LEFT_CTRL},
-  {IBUS_Control_R, mozc::commands::KeyEvent::RIGHT_CTRL},
-  {IBUS_Alt_L, mozc::commands::KeyEvent::LEFT_ALT},
-  {IBUS_Alt_R, mozc::commands::KeyEvent::RIGHT_ALT},
+} modifier_key_map_data[] = {
+  {IBUS_Shift_L, mozc::commands::KeyEvent::SHIFT},
+  {IBUS_Shift_R, mozc::commands::KeyEvent::SHIFT},
+  {IBUS_Control_L, mozc::commands::KeyEvent::CTRL},
+  {IBUS_Control_R, mozc::commands::KeyEvent::CTRL},
+  {IBUS_Alt_L, mozc::commands::KeyEvent::ALT},
+  {IBUS_Alt_R, mozc::commands::KeyEvent::ALT},
   {IBUS_LOCK_MASK, mozc::commands::KeyEvent::CAPS},
 };
 
-const struct ModifierMaskMap {
+const struct ModifierMaskMapData {
   guint from;
   mozc::commands::KeyEvent::ModifierKey to;
-} modifier_mask_map[] = {
+} modifier_mask_map_data[] = {
   {IBUS_SHIFT_MASK, mozc::commands::KeyEvent::SHIFT},
   {IBUS_CONTROL_MASK, mozc::commands::KeyEvent::CTRL},
   {IBUS_MOD1_MASK, mozc::commands::KeyEvent::ALT},
@@ -416,7 +417,18 @@ bool KeyTranslator::Translate(guint keyval,
     }
 
     if (i->first & modifiers) {
-      out_event->add_modifier_keys(i->second);
+      // Add a modifier key if doesn't exist.
+      commands::KeyEvent::ModifierKey modifier = i->second;
+      bool found = false;
+      for (int i = 0; i < out_event->modifier_keys_size(); ++i) {
+        if (modifier == out_event->modifier_keys(i)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        out_event->add_modifier_keys(modifier);
+      }
     }
   }
 
@@ -428,13 +440,15 @@ void KeyTranslator::Init() {
     CHECK(special_key_map_.insert(make_pair(special_key_map[i].from,
                                             special_key_map[i].to)).second);
   }
-  for (int i = 0; i < arraysize(modifier_key_map); ++i) {
-    CHECK(modifier_key_map_.insert(make_pair(modifier_key_map[i].from,
-                                             modifier_key_map[i].to)).second);
+  for (int i = 0; i < arraysize(modifier_key_map_data); ++i) {
+    CHECK(modifier_key_map_.insert(
+        make_pair(modifier_key_map_data[i].from,
+                  modifier_key_map_data[i].to)).second);
   }
-  for (int i = 0; i < arraysize(modifier_mask_map); ++i) {
-    CHECK(modifier_mask_map_.insert(make_pair(modifier_mask_map[i].from,
-                                              modifier_mask_map[i].to)).second);
+  for (int i = 0; i < arraysize(modifier_mask_map_data); ++i) {
+    CHECK(modifier_mask_map_.insert(
+        make_pair(modifier_mask_map_data[i].from,
+                  modifier_mask_map_data[i].to)).second);
   }
   for (int i = 0; i < arraysize(kana_map_jp); ++i) {
     CHECK(kana_map_jp_.insert(
@@ -484,7 +498,7 @@ bool KeyTranslator::IsKanaAvailable(guint keyval,
     // When a Japanese keyboard is in use, the yen-sign key and the backslash
     // key generate the same |keyval|. In this case, we have to check |keycode|
     // to return an appropriate string. See the following IBus issue for
-    // details: http://code.google.com/p/ibus/issues/detail?id=52
+    // details: https://github.com/ibus/ibus/issues/73
     if (keyval == '\\' && layout_is_jp) {
       if (keycode == IBUS_bar) {
         *out = "\xe3\x83\xbc";  // "ー"

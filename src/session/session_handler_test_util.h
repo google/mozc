@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,11 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
 #define MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
 
+#include <memory>
 #include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
@@ -93,7 +95,9 @@ class SessionHandlerTestBase : public ::testing::Test {
   int32 flags_last_create_session_timeout_backup_;
   bool flags_restricted_backup_;
 
-  const usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
+  usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerTestBase);
 };
@@ -131,6 +135,7 @@ class TestSessionClient {
   bool UndoOrRewind(commands::Output *output);
   bool SwitchInputMode(commands::CompositionMode composition_mode);
   bool SetRequest(const commands::Request &request, commands::Output *output);
+  bool SetConfig(const config::Config &config, commands::Output *output);
   void SetCallbackText(const string &text);
 
  private:
@@ -139,8 +144,8 @@ class TestSessionClient {
                            bool allow_callback);
 
   uint64 id_;
-  scoped_ptr<SessionObserverInterface> usage_observer_;
-  scoped_ptr<SessionHandlerInterface> handler_;
+  std::unique_ptr<SessionObserverInterface> usage_observer_;
+  std::unique_ptr<SessionHandlerInterface> handler_;
   string callback_text_;
 
   DISALLOW_COPY_AND_ASSIGN(TestSessionClient);

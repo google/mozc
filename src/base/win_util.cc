@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,42 +61,26 @@ void CallAuxUlibInitialize() {
   ::AuxUlibInitialize();
 }
 
-// Adjusts privileges in the process token to be able to shutdown the machine.
-// Returns true if the operation finishes without error.
-// We do not use LOG functions in this function to avoid dependency to CRT.
-bool AdjustPrivilegesForShutdown() {
-  TOKEN_PRIVILEGES ns;
-  HANDLE htoken;
-  LUID LID;
-  LUID_AND_ATTRIBUTES att;
-
-  if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_ADJUST_PRIVILEGES,
-                          &htoken)) {
-    // Cannot open process token
-    return false;
-  }
-
-  if (!::LookupPrivilegeValue(nullptr, SE_SHUTDOWN_NAME, &LID)) {
-    // LookupPrivilegeValue failed
-    return false;
-  }
-
-  att.Attributes = SE_PRIVILEGE_ENABLED;
-  att.Luid = LID;
-  ns.PrivilegeCount = 1;
-  ns.Privileges[0] = att;
-
-  if (!::AdjustTokenPrivileges(htoken, FALSE, &ns, 0, nullptr, nullptr)) {
-    // AdjustTokenPrivileges failed
-    return false;
-  }
-
-  return true;
-}
-
 bool EqualLuid(const LUID &L1, const LUID &L2) {
   return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
+}
+
+bool IsProcessSandboxedImpl() {
+  bool is_restricted = false;
+  if (!WinUtil::IsProcessRestricted(::GetCurrentProcess(), &is_restricted)) {
+    return true;
+  }
+  if (is_restricted) {
+    return true;
+  }
+
+  bool in_appcontainer = false;
+  if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
+                                        &in_appcontainer)) {
+    return true;
+  }
+
+  return in_appcontainer;
 }
 
 }  // namespace
@@ -120,7 +104,7 @@ HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
 
 HMODULE WinUtil::LoadMozcLibrary(const wstring &base_filename) {
   wstring fullpath;
-  Util::UTF8ToWide(SystemUtil::GetServerDirectory().c_str(), &fullpath);
+  Util::UTF8ToWide(SystemUtil::GetServerDirectory(), &fullpath);
   fullpath += L"\\";
   fullpath += base_filename;
 
@@ -186,13 +170,6 @@ bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   }
   *lock_status = (synchronization_held != FALSE);
   return true;
-}
-
-bool WinUtil::Logoff() {
-  if (!AdjustPrivilegesForShutdown()) {
-    return false;
-  }
-  return (::ExitWindowsEx(EWX_LOGOFF, SHTDN_REASON_MINOR_INSTALLATION) != 0);
 }
 
 bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,
@@ -514,11 +491,6 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
   return true;
 }
 
-bool WinUtil::IsCuasEnabled() {
-  // CUAS is always enabled on Vista or later.
-  return true;
-}
-
 bool WinUtil::GetFileSystemInfoFromPath(
     const wstring &path, BY_HANDLE_FILE_INFORMATION *info) {
   // no read access is required.
@@ -647,6 +619,12 @@ bool WinUtil::IsPerUserInputSettingsEnabled() {
     return false;
   }
   return !is_thread_local;
+}
+
+bool WinUtil::IsProcessSandboxed() {
+  // Thread safety is not required.
+  static bool sandboxed = IsProcessSandboxedImpl();
+  return sandboxed;
 }
 
 ScopedCOMInitializer::ScopedCOMInitializer()

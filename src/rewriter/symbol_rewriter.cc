@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,20 +30,20 @@
 #include "rewriter/symbol_rewriter.h"
 
 #include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -352,7 +352,7 @@ int SymbolRewriter::capability(const ConversionRequest &request) const {
 
 bool SymbolRewriter::Rewrite(const ConversionRequest &request,
                              Segments *segments) const {
-  if (!GET_CONFIG(use_symbol_conversion)) {
+  if (!request.config().use_symbol_conversion()) {
     VLOG(2) << "no use_symbol_conversion";
     return false;
   }

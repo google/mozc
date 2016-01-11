@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,9 @@
 #ifndef MOZC_COMPOSER_INTERNAL_TYPING_MODEL_H_
 #define MOZC_COMPOSER_INTERNAL_TYPING_MODEL_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "protocol/commands.pb.h"
 // for FRIEND_TEST()
@@ -82,7 +83,7 @@ class TypingModel {
   size_t GetIndex(StringPiece key) const;
 
   // Radix table, needed by GetIndex.
-  scoped_ptr<unsigned char[]> character_to_radix_table_;
+  std::unique_ptr<unsigned char[]> character_to_radix_table_;
   const size_t characters_size_;
   const uint8 *cost_table_;
   const size_t cost_table_size_;

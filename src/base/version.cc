@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -85,13 +85,8 @@ bool Version::CompareVersion(const string &lhs, const string &rhs) {
   Util::SplitStringUsing(lhs, ".", &vlhs);
   vector<string> vrhs;
   Util::SplitStringUsing(rhs, ".", &vrhs);
-  return lexicographical_compare(vlhs.begin(), vlhs.end(),
-                                 vrhs.begin(), vrhs.end(),
-                                 StringAsIntegerComparator);
-}
-
-Version::BuildType Version::GetMozcBuildType() {
-  return version::kMozcBuildType;
+  return std::lexicographical_compare(vlhs.begin(), vlhs.end(), vrhs.begin(),
+                                      vrhs.end(), StringAsIntegerComparator);
 }
 
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -105,7 +105,7 @@ int GetBaseScreenHeight() {
   return baseFrame.size.height;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 
 CandidateController::CandidateController()
@@ -254,7 +254,7 @@ void CandidateController::AlignWindows() {
   // If there is no need to show cascading window, we just finish the
   // function here.
   if (!command_.output().has_candidates() ||
-      !command_.output().candidates().candidate_size() > 0 ||
+      !(command_.output().candidates().candidate_size() > 0) ||
       !command_.output().candidates().has_subcandidates()) {
     return;
   }

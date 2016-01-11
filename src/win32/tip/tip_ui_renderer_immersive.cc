@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -146,20 +146,18 @@ void CalcLayout(const Candidates &candidates,
     wstring candidate_string;
     const Candidate &candidate = candidates.candidate(i);
     if (candidate.has_value()) {
-      mozc::Util::UTF8ToWide(candidate.value().c_str(), &candidate_string);
+      mozc::Util::UTF8ToWide(candidate.value(), &candidate_string);
     }
     if (candidate.has_annotation()) {
       const commands::Annotation &annotation = candidate.annotation();
       if (annotation.has_prefix()) {
         wstring annotation_prefix;
-        mozc::Util::UTF8ToWide(annotation.prefix().c_str(),
-                                &annotation_prefix);
+        mozc::Util::UTF8ToWide(annotation.prefix(), &annotation_prefix);
         candidate_string = annotation_prefix + candidate_string;
       }
       if (annotation.has_suffix()) {
         wstring annotation_suffix;
-        mozc::Util::UTF8ToWide(annotation.suffix().c_str(),
-                                &annotation_suffix);
+        mozc::Util::UTF8ToWide(annotation.suffix(), &annotation_suffix);
         candidate_string += annotation_suffix;
       }
     }

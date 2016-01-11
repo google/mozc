@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,9 @@
 #ifndef MOZC_STORAGE_EXISTENCE_FILTER_H_
 #define MOZC_STORAGE_EXISTENCE_FILTER_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace storage {
@@ -92,7 +93,7 @@ class ExistenceFilter {
                                                          uint32 n,
                                                          int k);
 
-  scoped_ptr<BlockBitmap> rep_;  // points to bitmap
+  std::unique_ptr<BlockBitmap> rep_;  // points to bitmap
   const uint32 vec_size_;  // size of bitmap (in bits)
   const uint32 expected_nelts_;  // expected number of inserts
   const int32 num_hashes_;  // number of hashes per lookup

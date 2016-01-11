@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_BASE_KEYEVENT_HANDLER_
-#define MOZC_WIN32_BASE_KEYEVENT_HANDLER_
+#ifndef MOZC_WIN32_BASE_KEYEVENT_HANDLER_H_
+#define MOZC_WIN32_BASE_KEYEVENT_HANDLER_H_
 
 #include <windows.h>
 
@@ -146,4 +146,4 @@ class KeyEventHandler {
 };
 }  // namespace win32
 }  // namespace mozc
-#endif  // MOZC_WIN32_BASE_KEYEVENT_HANDLER_
+#endif  // MOZC_WIN32_BASE_KEYEVENT_HANDLER_H_

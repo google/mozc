@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -149,6 +149,7 @@
             'surrogate_pair_observer_test.cc',
           ],
           'dependencies': [
+            '../../base/base_test.gyp:clock_mock',
             '../../client/client.gyp:client',
             '../../testing/testing.gyp:gtest_main',
             'ime_impl_base',
@@ -250,8 +251,8 @@
             'file_verifier_test.cc',
           ],
           'dependencies': [
-            '../../base/base.gyp:base',
             '../../testing/testing.gyp:gtest_main',
+            '../../testing/testing.gyp:mozctest',
             'win32_file_verifier',
           ],
           'variables': {

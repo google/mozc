@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/process.h"
-
 #include <string>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/process.h"
 
 DEFINE_string(open_browser, "", "URL");
 DEFINE_string(spawn_process, "", "path");
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
   if (!FLAGS_open_browser.empty()) {
     if (!mozc::Process::OpenBrowser(FLAGS_open_browser)) {
       LOG(INFO) << "Failed to open: " << FLAGS_open_browser;

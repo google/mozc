@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ class ConfigSnapshot {
     Info();
   };
 
-  static Info Get(client::ClientInterface *client);
+  static bool Get(client::ClientInterface *client, Info *info);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(ConfigSnapshot);

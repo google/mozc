@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ TEST(StringUtilTest, InvalidCases) {
   EXPECT_EQ("", StringUtil::KeyToReadingA(""));
   // KeyToReadingA fails if the resultant string is longer than 512 characters.
   string longa(10000, 'a');
-  EXPECT_EQ("", StringUtil::KeyToReadingA(longa.c_str()));
+  EXPECT_EQ("", StringUtil::KeyToReadingA(longa));
 }
 
 TEST(StringUtilTest, Hiragana) {

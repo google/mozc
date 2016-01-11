@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,10 @@ using ::mozc::renderer::RendererStyle;
 using ::mozc::renderer::RendererStyleHandler;
 
 namespace {
+
+WTL::CRect ToCRect(const Rect &rect) {
+  return WTL::CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
+}
 
 COLORREF GetTextColor(TextRenderer::FONT_TYPE type) {
   switch (type) {
@@ -411,10 +415,10 @@ class DirectWriteTextRenderer : public TextRenderer {
       return;
     }
     CRect total_rect;
-    for (size_t i = 0; i < display_list.size(); ++i) {
-      const auto &item = display_list[i];
-      total_rect.right = max(total_rect.right, item.rect.Right());
-      total_rect.bottom = max(total_rect.right, item.rect.Bottom());
+    for (const auto &item : display_list) {
+      const auto &item_rect = ToCRect(item.rect);
+      total_rect.right = max(total_rect.right, item_rect.right);
+      total_rect.bottom = max(total_rect.bottom, item_rect.bottom);
     }
     HRESULT hr = S_OK;
     hr = dc_render_target_->BindDC(dc, &total_rect);
@@ -581,10 +585,16 @@ TextRenderer::~TextRenderer() {
 
 // static
 TextRenderer *TextRenderer::Create() {
-  auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
-  if (dwrite_text_renderer != nullptr) {
-    return dwrite_text_renderer;
-  }
+  // In some environments, DirectWrite cannot render characters in the
+  // candidate window or even worse may cause crash.  As a workaround,
+  // this function always returns new GidTextRenderer().
+  //
+  // TODO: Reactivate the following code when b/23803925 is fixed.
+  //
+  // auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
+  // if (dwrite_text_renderer != nullptr) {
+  //   return dwrite_text_renderer;
+  // }
   return new GdiTextRenderer();
 }
 

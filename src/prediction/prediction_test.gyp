@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@
         '../converter/converter_base.gyp:segmenter',
         '../converter/converter_base.gyp:segments',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary.gyp:dictionary_mock',
@@ -61,6 +62,7 @@
         '../protocol/protocol.gyp:config_proto',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
+        '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'prediction.gyp:prediction',
       ],
       'variables': {

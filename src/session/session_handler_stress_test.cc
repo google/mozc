@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,23 +30,18 @@
 #include "session/session_handler.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_util.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/gunit.h"
-
-#ifdef OS_ANDROID
-#include "base/mmap.h"
-#include "base/singleton.h"
-#include "data_manager/android/android_data_manager.h"
-#endif
 
 namespace {
 uint32 GenerateRandomSeed() {
@@ -69,60 +64,24 @@ namespace mozc {
 using session::testing::SessionHandlerTestBase;
 using session::testing::TestSessionClient;
 
-namespace {
-#ifdef OS_ANDROID
-// In actual libmozc.so usage, the dictionary data will be given via JNI call
-// because only Java side code knows where the data is.
-// On native code unittest, we cannot do it, so instead we mmap the files
-// and use it.
-// Note that this technique works here because the no other test code doesn't
-// link to this binary.
-// TODO(hidehiko): Get rid of this hack by refactoring Engine/DataManager
-// related code.
-class AndroidInitializer {
- private:
-  AndroidInitializer() {
-    string dictionary_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/dictionary_data");
-    CHECK(dictionary_mmap_.Open(dictionary_data_path.c_str(), "r"));
-    android::AndroidDataManager::SetDictionaryData(
-        dictionary_mmap_.begin(), dictionary_mmap_.size());
-
-    string connection_data_path = FileUtil::JoinPath(
-        FLAGS_test_srcdir, "embedded_data/connection_data");
-    CHECK(connection_mmap_.Open(connection_data_path.c_str(), "r"));
-    android::AndroidDataManager::SetConnectionData(
-        connection_mmap_.begin(), connection_mmap_.size());
-    LOG(ERROR) << "mmap data initialized.";
-  }
-
-  friend class Singleton<AndroidInitializer>;
-
-  Mmap dictionary_mmap_;
-  Mmap connection_mmap_;
-
-  DISALLOW_COPY_AND_ASSIGN(AndroidInitializer);
-};
-#endif  // OS_ANDROID
-}  // namespace
-
 class SessionHandlerStressTest : public SessionHandlerTestBase {
  protected:
   virtual EngineInterface *CreateEngine() {
-#ifdef OS_ANDROID
-    Singleton<AndroidInitializer>::get();
-#endif  // OS_ANDROID
     return EngineFactory::Create();
   }
+
+ private:
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
 };
 
 TEST_F(SessionHandlerStressTest, BasicStressTest) {
   vector<commands::KeyEvent> keys;
   commands::Output output;
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   TestSessionClient client(engine.get());
   size_t keyevents_size = 0;
-  const size_t kMaxEventSize = 10000;
+  const size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
 
   const uint32 random_seed = static_cast<uint32>(FLAGS_random_seed);

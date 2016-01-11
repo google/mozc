@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ namespace renderer {
 namespace {
 // The minimum height of the indicator in the VScrollBar.
 const int kMinimumIndicatorHeight = 1;
-}  // anonymous namespace
+}  // namespace
 
 // ------------------------------------------------------------------------
 // Initializations

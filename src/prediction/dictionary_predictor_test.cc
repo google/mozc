@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -46,7 +47,6 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter.h"
@@ -65,15 +65,19 @@
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_list.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
-using ::testing::_;
+using std::unique_ptr;
 
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::DictionaryMock;
@@ -83,6 +87,7 @@ using mozc::dictionary::SuffixDictionary;
 using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::Token;
+using testing::_;
 
 DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
@@ -271,19 +276,23 @@ class MockDataAndPredictor {
     return dictionary_predictor_.get();
   }
 
+  TestableDictionaryPredictor *mutable_dictionary_predictor() {
+    return dictionary_predictor_.get();
+  }
+
  private:
   const POSMatcher *pos_matcher_;
-  scoped_ptr<SuppressionDictionary> suppression_dictionary_;
-  scoped_ptr<const Connector> connector_;
-  scoped_ptr<const Segmenter> segmenter_;
-  scoped_ptr<const DictionaryInterface> suffix_dictionary_;
-  scoped_ptr<const DictionaryInterface> dictionary_;
+  unique_ptr<SuppressionDictionary> suppression_dictionary_;
+  unique_ptr<const Connector> connector_;
+  unique_ptr<const Segmenter> segmenter_;
+  unique_ptr<const DictionaryInterface> suffix_dictionary_;
+  unique_ptr<const DictionaryInterface> dictionary_;
   DictionaryMock *dictionary_mock_;
-  scoped_ptr<const PosGroup> pos_group_;
-  scoped_ptr<ImmutableConverterInterface> immutable_converter_;
-  scoped_ptr<ConverterMock> converter_;
-  scoped_ptr<const SuggestionFilter> suggestion_filter_;
-  scoped_ptr<TestableDictionaryPredictor> dictionary_predictor_;
+  unique_ptr<const PosGroup> pos_group_;
+  unique_ptr<ImmutableConverterInterface> immutable_converter_;
+  unique_ptr<ConverterMock> converter_;
+  unique_ptr<const SuggestionFilter> suggestion_filter_;
+  unique_ptr<TestableDictionaryPredictor> dictionary_predictor_;
 };
 
 class CallCheckDictionary : public DictionaryInterface {
@@ -297,16 +306,20 @@ class CallCheckDictionary : public DictionaryInterface {
                      bool(StringPiece));
   MOCK_CONST_METHOD3(LookupPredictive,
                      void(StringPiece key,
-                          bool use_kana_modifier_insensitive_lookup,
+                          const ConversionRequest& convreq,
                           Callback *callback));
   MOCK_CONST_METHOD3(LookupPrefix,
                      void(StringPiece key,
-                          bool use_kana_modifier_insensitive_lookup,
+                          const ConversionRequest& convreq,
                           Callback *callback));
-  MOCK_CONST_METHOD2(LookupExact,
-                     void(StringPiece key, Callback *callback));
-  MOCK_CONST_METHOD2(LookupReverse,
-                     void(StringPiece str, Callback *callback));
+  MOCK_CONST_METHOD3(LookupExact,
+                     void(StringPiece key,
+                          const ConversionRequest& convreq,
+                          Callback *callback));
+  MOCK_CONST_METHOD3(LookupReverse,
+                     void(StringPiece str,
+                          const ConversionRequest& convreq,
+                          Callback *callback));
 };
 
 // Action to call the third argument of LookupPrefix with the token
@@ -365,8 +378,6 @@ class MockTypingModel : public mozc::composer::TypingModel {
 class DictionaryPredictorTest : public ::testing::Test {
  public:
   DictionaryPredictorTest() :
-      default_composer_(NULL, &default_request_),
-      default_conversion_request_(&default_composer_, &default_request_),
       default_expansion_flag_(
           FLAGS_enable_expansion_for_dictionary_predictor) {
   }
@@ -379,15 +390,21 @@ class DictionaryPredictorTest : public ::testing::Test {
   virtual void SetUp() {
     FLAGS_enable_expansion_for_dictionary_predictor = false;
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetConfig(&config_backup_);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
+    request_.reset(new commands::Request);
+    config_.reset(new config::Config);
+    config::ConfigHandler::GetDefaultConfig(config_.get());
+    table_.reset(new composer::Table);
+    composer_.reset(
+        new composer::Composer(table_.get(), request_.get(), config_.get()));
+    convreq_.reset(
+        new ConversionRequest(composer_.get(), request_.get(), config_.get()));
+
+    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   virtual void TearDown() {
     FLAGS_enable_expansion_for_dictionary_predictor = false;
-    config::ConfigHandler::SetConfig(config_backup_);
+    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   static void AddWordsToMockDic(DictionaryMock *mock) {
@@ -588,15 +605,13 @@ class DictionaryPredictorTest : public ::testing::Test {
   }
 
   void ExpansionForUnigramTestHelper(bool use_expansion) {
-    config::Config config;
-    config.set_use_dictionary_suggest(true);
-    config.set_use_realtime_conversion(false);
-    config.set_use_kana_modifier_insensitive_conversion(use_expansion);
-    config::ConfigHandler::SetConfig(config);
+    config_->set_use_dictionary_suggest(true);
+    config_->set_use_realtime_conversion(false);
+    config_->set_use_kana_modifier_insensitive_conversion(use_expansion);
 
-    composer::Table table;
-    table.LoadFromFile("system://romanji-hiragana.tsv");
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    table_->LoadFromFile("system://romanji-hiragana.tsv");
+    composer_->SetTable(table_.get());
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor;
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -607,36 +622,32 @@ class DictionaryPredictorTest : public ::testing::Test {
     {
       Segments segments;
       segments.set_request_type(Segments::PREDICTION);
-      commands::Request request;
-      request.set_kana_modifier_insensitive_conversion(use_expansion);
-      composer::Composer composer(&table, &request);
-      InsertInputSequence("gu-g", &composer);
-      const ConversionRequest conversion_request(&composer, &request);
+      request_->set_kana_modifier_insensitive_conversion(use_expansion);
+      InsertInputSequence("gu-g", composer_.get());
       Segment *segment = segments.add_segment();
       CHECK(segment);
       string query;
-      composer.GetQueryForPrediction(&query);
+      composer_->GetQueryForPrediction(&query);
       segment->set_key(query);
 
-      EXPECT_CALL(*check_dictionary, LookupPredictive(_, use_expansion, _));
+      EXPECT_CALL(*check_dictionary,
+                  LookupPredictive(_, ::testing::Ref(*convreq_), _));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateUnigramPrediction(
           TestableDictionaryPredictor::UNIGRAM,
-          conversion_request, segments, &results);
+          *convreq_, segments, &results);
     }
   }
 
   void ExpansionForBigramTestHelper(bool use_expansion) {
-    config::Config config;
-    config.set_use_dictionary_suggest(true);
-    config.set_use_realtime_conversion(false);
-    config.set_use_kana_modifier_insensitive_conversion(use_expansion);
-    config::ConfigHandler::SetConfig(config);
+    config_->set_use_dictionary_suggest(true);
+    config_->set_use_realtime_conversion(false);
+    config_->set_use_kana_modifier_insensitive_conversion(use_expansion);
 
-    composer::Table table;
-    table.LoadFromFile("system://romanji-hiragana.tsv");
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    table_->LoadFromFile("system://romanji-hiragana.tsv");
+    composer_->SetTable(table_.get());
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor;
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -666,42 +677,39 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment = segments.add_segment();
       CHECK(segment);
 
-      commands::Request request;
-      request.set_kana_modifier_insensitive_conversion(use_expansion);
-      composer::Composer composer(&table, &request);
-      InsertInputSequence("m", &composer);
-      const ConversionRequest conversion_request(&composer, &request);
+      request_->set_kana_modifier_insensitive_conversion(use_expansion);
+      InsertInputSequence("m", composer_.get());
       string query;
-      composer.GetQueryForPrediction(&query);
+      composer_->GetQueryForPrediction(&query);
       segment->set_key(query);
 
       // History key and value should be in the dictionary.
-      EXPECT_CALL(*check_dictionary, LookupPrefix(_, _, _))
+      EXPECT_CALL(*check_dictionary,
+                  LookupPrefix(_, ::testing::Ref(*convreq_), _))
           .WillOnce(LookupPrefixOneToken(
               // "ぐーぐる"
               "\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b",
               // "グーグル"
               "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
               1, 1));
-      EXPECT_CALL(*check_dictionary, LookupPredictive(_, use_expansion, _));
+      EXPECT_CALL(*check_dictionary,
+                  LookupPredictive(_, ::testing::Ref(*convreq_), _));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateBigramPrediction(
           TestableDictionaryPredictor::BIGRAM,
-          conversion_request, segments, &results);
+          *convreq_, segments, &results);
     }
   }
 
   void ExpansionForSuffixTestHelper(bool use_expansion) {
-    config::Config config;
-    config.set_use_dictionary_suggest(true);
-    config.set_use_realtime_conversion(false);
-    config.set_use_kana_modifier_insensitive_conversion(use_expansion);
-    config::ConfigHandler::SetConfig(config);
+    config_->set_use_dictionary_suggest(true);
+    config_->set_use_realtime_conversion(false);
+    config_->set_use_kana_modifier_insensitive_conversion(use_expansion);
 
-    composer::Table table;
-    table.LoadFromFile("system://romanji-hiragana.tsv");
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    table_->LoadFromFile("system://romanji-hiragana.tsv");
+    composer_->SetTable(table_.get());
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor.
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -715,21 +723,19 @@ class DictionaryPredictorTest : public ::testing::Test {
       Segment *segment = segments.add_segment();
       CHECK(segment);
 
-      commands::Request request;
-      request.set_kana_modifier_insensitive_conversion(use_expansion);
-      composer::Composer composer(&table, &request);
-      InsertInputSequence("des", &composer);
-      const ConversionRequest conversion_request(&composer, &request);
+      request_->set_kana_modifier_insensitive_conversion(use_expansion);
+      InsertInputSequence("des", composer_.get());
       string query;
-      composer.GetQueryForPrediction(&query);
+      composer_->GetQueryForPrediction(&query);
       segment->set_key(query);
 
-      EXPECT_CALL(*check_dictionary, LookupPredictive(_, use_expansion, _));
+      EXPECT_CALL(*check_dictionary,
+                  LookupPredictive(_, ::testing::Ref(*convreq_), _));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateSuffixPrediction(
           TestableDictionaryPredictor::SUFFIX,
-          conversion_request, segments, &results);
+          *convreq_, segments, &results);
     }
   }
 
@@ -760,25 +766,24 @@ class DictionaryPredictorTest : public ::testing::Test {
       transliteration::TransliterationType input_mode,
       const char *key, const char *expected_prefix,
       const char *expected_values[], size_t expected_values_size) {
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         CreateDictionaryPredictorWithMockData());
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
 
-    composer::Table table;
-    table.LoadFromFile("system://romanji-hiragana.tsv");
-    composer::Composer composer(&table, &default_request());
-    composer.SetInputMode(input_mode);
-    InsertInputSequence(key, &composer);
+    table_->LoadFromFile("system://romanji-hiragana.tsv");
+    composer_->Reset();
+    composer_->SetTable(table_.get());
+    composer_->SetInputMode(input_mode);
+    InsertInputSequence(key, composer_.get());
 
     Segments segments;
     MakeSegmentsForPrediction(key, &segments);
 
     vector<TestableDictionaryPredictor::Result> results;
-    const ConversionRequest conversion_request(&composer, &default_request());
     predictor->AggregateEnglishPrediction(
         TestableDictionaryPredictor::ENGLISH,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
 
     set<string> values;
     for (size_t i = 0; i < results.size(); ++i) {
@@ -794,46 +799,31 @@ class DictionaryPredictorTest : public ::testing::Test {
     }
   }
 
-  const commands::Request &default_request() const {
-    return default_request_;
-  }
-
-  const composer::Composer &default_composer() const {
-    return default_composer_;
-  }
-
-  const ConversionRequest &default_conversion_request() const {
-    return default_conversion_request_;
-  }
-
   void AggregateTypeCorrectingTestHelper(
       const char *key,
       const uint32 *corrected_key_codes,
       const char *expected_values[],
       size_t expected_values_size) {
-    commands::Request qwerty_request;
-    qwerty_request.set_special_romanji_table(
+    request_->set_special_romanji_table(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-    scoped_ptr<MockDataAndPredictor> data_and_predictor(
+    unique_ptr<MockDataAndPredictor> data_and_predictor(
         CreateDictionaryPredictorWithMockData());
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
 
-    composer::Table table;
-    table.LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-    table.typing_model_ = Singleton<MockTypingModel>::get();
-    composer::Composer composer(&table, &qwerty_request);
-    InsertInputSequenceForProbableKeyEvent(key, corrected_key_codes, &composer);
+    table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
+    table_->typing_model_ = Singleton<MockTypingModel>::get();
+    InsertInputSequenceForProbableKeyEvent(
+        key, corrected_key_codes, composer_.get());
 
     Segments segments;
     MakeSegmentsForPrediction(key, &segments);
 
     vector<TestableDictionaryPredictor::Result> results;
-    const ConversionRequest conversion_request(&composer, &qwerty_request);
     predictor->AggregateTypeCorrectingPrediction(
         TestableDictionaryPredictor::TYPING_CORRECTION,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
 
     set<string> values;
     for (size_t i = 0; i < results.size(); ++i) {
@@ -847,53 +837,50 @@ class DictionaryPredictorTest : public ::testing::Test {
     }
   }
 
+  unique_ptr<composer::Composer> composer_;
+  unique_ptr<composer::Table> table_;
+  unique_ptr<ConversionRequest> convreq_;
+  unique_ptr<config::Config> config_;
+  unique_ptr<commands::Request> request_;
+
  private:
-  config::Config config_backup_;
-  const commands::Request default_request_;
-  const composer::Composer default_composer_;
-  const ConversionRequest default_conversion_request_;
   const bool default_expansion_flag_;
-  scoped_ptr<ImmutableConverterInterface> immutable_converter_;
+  unique_ptr<ImmutableConverterInterface> immutable_converter_;
+  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(DictionaryPredictorTest, OnOffTest) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
   // turn off
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(false);
-  config.set_use_realtime_conversion(false);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(false);
+  config_->set_use_realtime_conversion(false);
 
   // "ぐーぐるあ"
   MakeSegmentsForSuggestion
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
-  EXPECT_FALSE(predictor->PredictForRequest(default_conversion_request(),
-                                            &segments));
+  EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 
   // turn on
   // "ぐーぐるあ"
-  config.set_use_dictionary_suggest(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(true);
   MakeSegmentsForSuggestion
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
-  EXPECT_TRUE(predictor->PredictForRequest(default_conversion_request(),
-                                           &segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
   // empty query
   MakeSegmentsForSuggestion("", &segments);
-  EXPECT_FALSE(predictor->PredictForRequest(default_conversion_request(),
-                                            &segments));
+  EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
 TEST_F(DictionaryPredictorTest, PartialSuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   {
     // Set up mock converter.
@@ -908,13 +895,10 @@ TEST_F(DictionaryPredictorTest, PartialSuggestion) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(true);
   // turn on mobile mode
-  commands::Request request;
-  request.set_mixed_conversion(true);
+  request_->set_mixed_conversion(true);
 
   // "ぐーぐるあ"
   segments.Clear();
@@ -923,15 +907,12 @@ TEST_F(DictionaryPredictorTest, PartialSuggestion) {
   Segment *seg = segments.add_segment();
   seg->set_key("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82");
   seg->set_segment_type(Segment::FREE);
-  EXPECT_TRUE(predictor->PredictForRequest(default_conversion_request(),
-                                           &segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
 TEST_F(DictionaryPredictorTest, BigramTest) {
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(true);
 
   // "あ"
   MakeSegmentsForSuggestion("\xE3\x81\x82", &segments);
@@ -941,23 +922,18 @@ TEST_F(DictionaryPredictorTest, BigramTest) {
                          "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB",
                          &segments);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   // "グーグルアドセンス" will be returned.
-  EXPECT_TRUE(predictor->PredictForRequest(default_conversion_request(),
-                                           &segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
 TEST_F(DictionaryPredictorTest, BigramTestWithZeroQuery) {
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config::ConfigHandler::SetConfig(config);
-  commands::Request request;
-  request.set_zero_query_suggestion(true);
-  const ConversionRequest conversion_request(&default_composer(), &request);
+  config_->set_use_dictionary_suggest(true);
+  request_->set_zero_query_suggestion(true);
 
   // current query is empty
   MakeSegmentsForSuggestion("", &segments);
@@ -967,19 +943,17 @@ TEST_F(DictionaryPredictorTest, BigramTestWithZeroQuery) {
                          "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB",
                          &segments);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
-  EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
 // Check that previous candidate never be shown at the current candidate.
 TEST_F(DictionaryPredictorTest, Regression3042706) {
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(true);
 
   // "だい"
   MakeSegmentsForSuggestion("\xE3\x81\xA0\xE3\x81\x84", &segments);
@@ -990,11 +964,11 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
                          "\xE4\xBA\xAC\xE9\x83\xBD",
                          &segments);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
-  EXPECT_TRUE(predictor->PredictForRequest(default_conversion_request(),
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_,
                                            &segments));
   EXPECT_EQ(2, segments.segments_size());   // history + current
   for (int i = 0; i < segments.segment(1).candidates_size(); ++i) {
@@ -1010,19 +984,14 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
 
 TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(false);
-  config::ConfigHandler::SetConfig(config);
-
-  composer::Composer composer(NULL, &default_request());
-  const ConversionRequest conversion_request(&composer, &default_request());
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(false);
 
   // empty segments
   {
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 
   // normal segments
@@ -1033,17 +1002,17 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
                               &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
     segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
     segments.set_request_type(Segments::CONVERSION);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 
   // short key
@@ -1053,13 +1022,13 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
                               &segments);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
     // on prediction mode, return UNIGRAM
     segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 
   // zipcode-like key
@@ -1067,7 +1036,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
     MakeSegmentsForSuggestion("0123", &segments);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 
   // History is short => UNIGRAM
@@ -1078,7 +1047,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
     PrependHistorySegments("A", "A", &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 
   // both History and current segment are long => UNIGRAM|BIGRAM
@@ -1091,7 +1060,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM |
         DictionaryPredictor::BIGRAM,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 
   // Current segment is short => BIGRAM
@@ -1103,7 +1072,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
                            "abc", &segments);
     EXPECT_EQ(
         DictionaryPredictor::BIGRAM,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 
   // Typing correction type shouldn't be appended.
@@ -1113,116 +1082,97 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
         "\xEF\xBD\x90\xE3\x81\xAF\xE3\x82\x88\xE3\x81\x86", &segments);
     EXPECT_FALSE(
         DictionaryPredictor::TYPING_CORRECTION
-        & DictionaryPredictor::GetPredictionTypes(conversion_request,
+        & DictionaryPredictor::GetPredictionTypes(*convreq_,
                                                   segments));
   }
 
   // Input mode is HALF_ASCII or FULL_ASCII => ENGLISH
   {
-    const bool orig_use_dictionary_suggest = config.use_dictionary_suggest();
-    config.set_use_dictionary_suggest(true);
-    config::ConfigHandler::SetConfig(config);
+    config_->set_use_dictionary_suggest(true);
 
     MakeSegmentsForSuggestion("hel", &segments);
 
-    composer.SetInputMode(transliteration::HALF_ASCII);
+    composer_->SetInputMode(transliteration::HALF_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::ENGLISH,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
-    composer.SetInputMode(transliteration::FULL_ASCII);
+    composer_->SetInputMode(transliteration::FULL_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::ENGLISH,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
     // When dictionary suggest is turned off, English prediction should be
     // disabled.
-    config.set_use_dictionary_suggest(false);
-    config::ConfigHandler::SetConfig(config);
+    config_->set_use_dictionary_suggest(false);
 
-    composer.SetInputMode(transliteration::HALF_ASCII);
+    composer_->SetInputMode(transliteration::HALF_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
-    composer.SetInputMode(transliteration::FULL_ASCII);
+    composer_->SetInputMode(transliteration::FULL_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
-    config.set_use_dictionary_suggest(true);
-    config::ConfigHandler::SetConfig(config);
+    config_->set_use_dictionary_suggest(true);
 
     segments.set_request_type(Segments::PARTIAL_SUGGESTION);
-    composer.SetInputMode(transliteration::HALF_ASCII);
+    composer_->SetInputMode(transliteration::HALF_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
-    composer.SetInputMode(transliteration::FULL_ASCII);
+    composer_->SetInputMode(transliteration::FULL_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
-    config.set_use_dictionary_suggest(false);
-    config::ConfigHandler::SetConfig(config);
+    config_->set_use_dictionary_suggest(false);
 
-    composer.SetInputMode(transliteration::HALF_ASCII);
+    composer_->SetInputMode(transliteration::HALF_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::REALTIME,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 
-    composer.SetInputMode(transliteration::FULL_ASCII);
+    composer_->SetInputMode(transliteration::FULL_ASCII);
     EXPECT_EQ(
         DictionaryPredictor::REALTIME,
-        DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
-
-    config.set_use_dictionary_suggest(orig_use_dictionary_suggest);
-    config::ConfigHandler::SetConfig(config);
+        DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
 }
 
 TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithTypingCorrection) {
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(false);
-  config.set_use_typing_correction(true);
-  config::ConfigHandler::SetConfig(config);
-
-  composer::Composer composer(NULL, &default_request());
-  const ConversionRequest conversion_request(&composer, &default_request());
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(false);
+  config_->set_use_typing_correction(true);
 
   // "ｐはよう"
   MakeSegmentsForSuggestion(
       "\xEF\xBD\x90\xE3\x81\xAF\xE3\x82\x88\xE3\x81\x86", &segments);
   EXPECT_EQ(
       DictionaryPredictor::UNIGRAM | DictionaryPredictor::TYPING_CORRECTION,
-      DictionaryPredictor::GetPredictionTypes(conversion_request, segments));
+      DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
 }
 
 TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(false);
-  config::ConfigHandler::SetConfig(config);
-  commands::Request request;
-  request.set_zero_query_suggestion(true);
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(false);
+  request_->set_zero_query_suggestion(true);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
-
-  composer::Composer composer(NULL, &request);
-  const ConversionRequest conversion_request(&composer, &request);
 
   // empty segments
   {
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   // normal segments
@@ -1233,17 +1183,17 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
                               &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
 
     segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
 
     segments.set_request_type(Segments::CONVERSION);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   // short key
@@ -1253,13 +1203,13 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
                               &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
 
     // on prediction mode, return UNIGRAM
     segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   // History is short => UNIGRAM
@@ -1270,7 +1220,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
     PrependHistorySegments("A", "A", &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM | DictionaryPredictor::SUFFIX,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   // both History and current segment are long => UNIGRAM|BIGRAM
@@ -1283,7 +1233,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
         DictionaryPredictor::SUFFIX,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   {
@@ -1295,27 +1245,25 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
     EXPECT_EQ(
         DictionaryPredictor::BIGRAM | DictionaryPredictor::UNIGRAM |
         DictionaryPredictor::SUFFIX,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   {
     MakeSegmentsForSuggestion("", &segments);
     // "て"
-    PrependHistorySegments("\xE3\x81\xA6",
-                           "abc", &segments);
+    PrependHistorySegments("\xE3\x81\xA6", "abc", &segments);
     EXPECT_EQ(
         DictionaryPredictor::SUFFIX,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   {
     MakeSegmentsForSuggestion("A", &segments);
     // "て"
-    PrependHistorySegments("\xE3\x81\xA6",
-                           "abc", &segments);
+    PrependHistorySegments("\xE3\x81\xA6", "abc", &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM | DictionaryPredictor::SUFFIX,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 
   {
@@ -1326,13 +1274,13 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithZeroQuerySuggestion) {
                            "abc", &segments);
     EXPECT_EQ(
         DictionaryPredictor::BIGRAM | DictionaryPredictor::SUFFIX,
-        predictor->GetPredictionTypes(conversion_request, segments));
+        predictor->GetPredictionTypes(*convreq_, segments));
   }
 }
 
 TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
   Segments segments;
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1344,21 +1292,20 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
   MakeSegmentsForSuggestion(kKey, &segments);
 
   vector<DictionaryPredictor::Result> results;
-  const ConversionRequest conversion_request;
 
   predictor->AggregateUnigramPrediction(
       DictionaryPredictor::BIGRAM,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_TRUE(results.empty());
 
   predictor->AggregateUnigramPrediction(
       DictionaryPredictor::REALTIME,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_TRUE(results.empty());
 
   predictor->AggregateUnigramPrediction(
       DictionaryPredictor::UNIGRAM,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_FALSE(results.empty());
 
   for (size_t i = 0; i < results.size(); ++i) {
@@ -1370,11 +1317,10 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
-  const ConversionRequest conversion_request;
 
   {
     Segments segments;
@@ -1388,24 +1334,23 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
     const char kHistoryValue[] =
         "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";
 
-    PrependHistorySegments(kHistoryKey, kHistoryValue,
-                           &segments);
+    PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
     vector<DictionaryPredictor::Result> results;
 
     predictor->AggregateBigramPrediction(
         DictionaryPredictor::UNIGRAM,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_TRUE(results.empty());
 
     predictor->AggregateBigramPrediction(
         DictionaryPredictor::REALTIME,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_TRUE(results.empty());
 
     predictor->AggregateBigramPrediction(
         DictionaryPredictor::BIGRAM,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     for (size_t i = 0; i < results.size(); ++i) {
@@ -1420,6 +1365,10 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
       }
       EXPECT_TRUE(Util::StartsWith(results[i].key, kHistoryKey));
       EXPECT_TRUE(Util::StartsWith(results[i].value, kHistoryValue));
+      // Not zero query
+      EXPECT_FALSE(
+          results[i].source_info &
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
     }
 
     EXPECT_EQ(1, segments.conversion_segments_size());
@@ -1436,20 +1385,65 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
     // "テス"
     const char kHistoryValue[] = "\xE3\x83\x86\xE3\x82\xB9";
 
-    PrependHistorySegments(kHistoryKey, kHistoryValue,
-                           &segments);
+    PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
     vector<DictionaryPredictor::Result> results;
 
     predictor->AggregateBigramPrediction(
         DictionaryPredictor::BIGRAM,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_TRUE(results.empty());
   }
 }
 
+TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  {
+    Segments segments;
+
+    // Zero query
+    MakeSegmentsForSuggestion("", &segments);
+
+    // history is "グーグル"
+    const char kHistoryKey[] =
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    const char kHistoryValue[] =
+        "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";
+
+    PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
+
+    vector<DictionaryPredictor::Result> results;
+
+    predictor->AggregateBigramPrediction(
+        DictionaryPredictor::UNIGRAM, *convreq_, segments, &results);
+    EXPECT_TRUE(results.empty());
+
+    predictor->AggregateBigramPrediction(
+        DictionaryPredictor::REALTIME, *convreq_, segments, &results);
+    EXPECT_TRUE(results.empty());
+
+    predictor->AggregateBigramPrediction(
+        DictionaryPredictor::BIGRAM, *convreq_, segments, &results);
+    EXPECT_FALSE(results.empty());
+
+    for (size_t i = 0; i < results.size(); ++i) {
+      EXPECT_TRUE(Util::StartsWith(results[i].key, kHistoryKey));
+      EXPECT_TRUE(Util::StartsWith(results[i].value, kHistoryValue));
+      // Zero query
+      EXPECT_FALSE(
+          results[i].source_info &
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+    }
+  }
+}
+
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1520,7 +1514,7 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
 }
 
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1559,19 +1553,19 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
 
 TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   testing::MockDataManager data_manager;
-  scoped_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
-  scoped_ptr<ConverterMock> converter(new ConverterMock);
-  scoped_ptr<ImmutableConverterInterface> immutable_converter(
+  unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
+  unique_ptr<ConverterMock> converter(new ConverterMock);
+  unique_ptr<ImmutableConverterInterface> immutable_converter(
       new ImmutableConverterMock);
-  scoped_ptr<const DictionaryInterface> suffix_dictionary(
+  unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const Connector> connector(
+  unique_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const Segmenter> segmenter(
+  unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  scoped_ptr<const SuggestionFilter> suggestion_filter(
+  unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
-  scoped_ptr<TestableDictionaryPredictor> predictor(
+  unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(converter.get(),
                                       immutable_converter.get(),
                                       dictionary.get(),
@@ -1622,19 +1616,18 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
     MakeSegmentsForSuggestion(kKey, &segments);
 
     vector<TestableDictionaryPredictor::Result> results;
-    ConversionRequest request;
-    request.set_use_actual_converter_for_realtime_conversion(false);
+    convreq_->set_use_actual_converter_for_realtime_conversion(false);
 
     predictor->AggregateRealtimeConversion(
-        TestableDictionaryPredictor::UNIGRAM, request, &segments, &results);
+        TestableDictionaryPredictor::UNIGRAM, *convreq_, &segments, &results);
     EXPECT_TRUE(results.empty());
 
     predictor->AggregateRealtimeConversion(
-        TestableDictionaryPredictor::BIGRAM, request, &segments, &results);
+        TestableDictionaryPredictor::BIGRAM, *convreq_, &segments, &results);
     EXPECT_TRUE(results.empty());
 
     predictor->AggregateRealtimeConversion(
-        TestableDictionaryPredictor::REALTIME, request, &segments, &results);
+        TestableDictionaryPredictor::REALTIME, *convreq_, &segments, &results);
 
     ASSERT_EQ(1, results.size());
     EXPECT_EQ(TestableDictionaryPredictor::REALTIME, results[0].types);
@@ -1650,19 +1643,18 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
     MakeSegmentsForSuggestion(kKey, &segments);
 
     vector<TestableDictionaryPredictor::Result> results;
-    ConversionRequest request;
-    request.set_use_actual_converter_for_realtime_conversion(true);
+    convreq_->set_use_actual_converter_for_realtime_conversion(true);
 
     predictor->AggregateRealtimeConversion(
-        TestableDictionaryPredictor::UNIGRAM, request, &segments, &results);
+        TestableDictionaryPredictor::UNIGRAM, *convreq_, &segments, &results);
     EXPECT_TRUE(results.empty());
 
     predictor->AggregateRealtimeConversion(
-        TestableDictionaryPredictor::BIGRAM, request, &segments, &results);
+        TestableDictionaryPredictor::BIGRAM, *convreq_, &segments, &results);
     EXPECT_TRUE(results.empty());
 
     predictor->AggregateRealtimeConversion(
-        TestableDictionaryPredictor::REALTIME, request, &segments, &results);
+        TestableDictionaryPredictor::REALTIME, *convreq_, &segments, &results);
 
     // When |request.use_actual_converter_for_realtime_conversion| is true, the
     // extra label REALTIME_TOP is expected to be added.
@@ -1707,10 +1699,9 @@ class TestSuffixDictionary : public DictionaryInterface {
     return false;
   }
 
-  virtual void LookupPredictive(
-      StringPiece key,
-      bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const {
+  virtual void LookupPredictive(StringPiece key,
+                                const ConversionRequest &conversion_request,
+                                Callback *callback) const {
     Token token;
     for (size_t i = 0; i < arraysize(kSuffixTokens); ++i) {
       const SimpleSuffixToken &suffix_token = kSuffixTokens[i];
@@ -1739,19 +1730,23 @@ class TestSuffixDictionary : public DictionaryInterface {
     }
   }
 
-  virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const {}
+  virtual void LookupPrefix(StringPiece key,
+                            const ConversionRequest &conversion_request,
+                            Callback *callback) const {}
 
-  virtual void LookupExact(StringPiece key, Callback *callback) const {}
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &conversion_request,
+                           Callback *callback) const {}
 
-  virtual void LookupReverse(StringPiece str, Callback *callback) const {}
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &conversion_request,
+                             Callback *callback) const {}
 };
 
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1768,14 +1763,13 @@ TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor);
   data_and_predictor->Init(NULL, new TestSuffixDictionary());
 
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  const ConversionRequest conversion_request;
   Segments segments;
 
   // "あ"
@@ -1787,8 +1781,7 @@ TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
   const char kHistoryValue[] =
       "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";
 
-  PrependHistorySegments(kHistoryKey, kHistoryValue,
-                         &segments);
+  PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
   vector<DictionaryPredictor::Result> results;
 
@@ -1796,41 +1789,81 @@ TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
   // result should be empty.
   predictor->AggregateSuffixPrediction(
       DictionaryPredictor::SUFFIX,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_TRUE(results.empty());
 
   results.clear();
   segments.mutable_conversion_segment(0)->set_key("");
   predictor->AggregateSuffixPrediction(
       DictionaryPredictor::SUFFIX,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_FALSE(results.empty());
 
   results.clear();
   predictor->AggregateSuffixPrediction(
       DictionaryPredictor::UNIGRAM,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_TRUE(results.empty());
 
   predictor->AggregateSuffixPrediction(
       DictionaryPredictor::REALTIME,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_TRUE(results.empty());
 
   predictor->AggregateSuffixPrediction(
       DictionaryPredictor::BIGRAM,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_TRUE(results.empty());
 
   // Candidates generated by AggregateSuffixPrediction should have SUFFIX type.
   results.clear();
-  segments.mutable_conversion_segment(0)->set_key("");
+  // "い"
+  segments.mutable_conversion_segment(0)->set_key("\xe3\x81\x84");
   predictor->AggregateSuffixPrediction(
       DictionaryPredictor::SUFFIX | DictionaryPredictor::BIGRAM,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   EXPECT_FALSE(results.empty());
   for (size_t i = 0; i < results.size(); ++i) {
     EXPECT_EQ(DictionaryPredictor::SUFFIX, results[i].types);
+    // Not zero query
+    EXPECT_FALSE(Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX &
+                 results[i].source_info);
+  }
+}
+
+TEST_F(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction) {
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
+      new MockDataAndPredictor);
+  data_and_predictor->Init(NULL, new TestSuffixDictionary());
+
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  Segments segments;
+
+  // Zero query
+  MakeSegmentsForSuggestion("", &segments);
+
+  // history is "グーグル"
+  const char kHistoryKey[] =
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+  const char kHistoryValue[] =
+      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";
+
+  PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
+
+  vector<DictionaryPredictor::Result> results;
+
+  // Candidates generated by AggregateSuffixPrediction should have SUFFIX type.
+  predictor->AggregateSuffixPrediction(
+      DictionaryPredictor::SUFFIX, *convreq_, segments, &results);
+  EXPECT_FALSE(results.empty());
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(DictionaryPredictor::SUFFIX, results[i].types);
+    // Zero query
+    EXPECT_TRUE(Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX &
+                results[i].source_info);
   }
 }
 
@@ -1928,10 +1961,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config.set_use_typing_correction(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_typing_correction(true);
 
   const char kInputText[] = "gu-huru";
   const uint32 kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
@@ -1951,12 +1981,11 @@ TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   const POSMatcher &pos_matcher = data_and_predictor->pos_matcher();
-  const ConversionRequest conversion_request;
   Segments segments;
 
   {
@@ -1969,7 +1998,7 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
     vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     vector<DictionaryPredictor::Result>::const_iterator target =
@@ -1978,6 +2007,11 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
              results.begin();
          it != results.end(); ++it) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
+
+      EXPECT_TRUE(
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX &
+          it->source_info);
+
       if (it->value == kExpectedValue) {
         target = it;
         break;
@@ -1994,7 +2028,7 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     target = results.end();
     for (vector<DictionaryPredictor::Result>::const_iterator it =
              results.begin();
@@ -2014,12 +2048,11 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
     const char kHistoryKey[] = "66050713";  // A random number
     const char kHistoryValue[] = "66050713";
     const char kExpectedValue[] = "\xE5\x80\x8B";  // "個" (piece)
-    PrependHistorySegments(kHistoryKey, kHistoryValue,
-                           &segments);
+    PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
     vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     bool found = false;
@@ -2028,6 +2061,9 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
          it != results.end(); ++it) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
       if (it->value == kExpectedValue) {
+        EXPECT_TRUE(
+            Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX &
+            it->source_info);
         found = true;
         break;
       }
@@ -2037,12 +2073,11 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   const POSMatcher &pos_matcher = data_and_predictor->pos_matcher();
-  const ConversionRequest conversion_request;
 
   const struct TestCase {
     const char *history_key;
@@ -2090,7 +2125,7 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
     vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     bool found = false;
@@ -2100,6 +2135,9 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
       if (it->value == test_case.find_suffix_value &&
           it->lid == pos_matcher.GetCounterSuffixWordId()) {
+        EXPECT_TRUE(
+          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX &
+          it->source_info);
         found = true;
         break;
       }
@@ -2109,11 +2147,10 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
-  const ConversionRequest conversion_request;
 
   const struct TestCase {
     const char *history_key;
@@ -2137,7 +2174,7 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
     vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
-        conversion_request, segments, &results);
+        *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     bool found = false;
@@ -2157,7 +2194,7 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
 
 TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
   Segments segments;
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2189,7 +2226,7 @@ TEST_F(DictionaryPredictorTest, IsZipCodeRequest) {
 }
 
 TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2256,12 +2293,10 @@ TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
 TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   Segments segments;
   // turn on real-time conversion
-  config::Config config;
-  config.set_use_dictionary_suggest(false);
-  config.set_use_realtime_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(false);
+  config_->set_use_realtime_conversion(true);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2289,10 +2324,9 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
 
   vector<DictionaryPredictor::Result> results;
 
-  ConversionRequest request;
-  request.set_use_actual_converter_for_realtime_conversion(false);
+  convreq_->set_use_actual_converter_for_realtime_conversion(false);
   predictor->AggregateRealtimeConversion(
-      DictionaryPredictor::REALTIME, request, &segments, &results);
+      DictionaryPredictor::REALTIME, *convreq_, &segments, &results);
   ASSERT_EQ(1, results.size());
 
   EXPECT_EQ(DictionaryPredictor::REALTIME, results[0].types);
@@ -2303,12 +2337,10 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
 TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   Segments segments;
   // turn on real-time conversion
-  config::Config config;
-  config.set_use_dictionary_suggest(false);
-  config.set_use_realtime_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(false);
+  config_->set_use_realtime_conversion(true);
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2332,11 +2364,10 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
 
   vector<DictionaryPredictor::Result> results;
 
-  ConversionRequest conversion_request;
-  conversion_request.set_use_actual_converter_for_realtime_conversion(false);
+  convreq_->set_use_actual_converter_for_realtime_conversion(false);
   predictor->AggregateUnigramPrediction(
       DictionaryPredictor::UNIGRAM,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
   ASSERT_FALSE(results.empty());
   EXPECT_NE(0, (results[0].candidate_attributes &
                 Segment::Candidate::SPELLING_CORRECTION));
@@ -2353,7 +2384,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
 
   MakeSegmentsForSuggestion(kKeyWithDe, &segments);
   predictor->AggregateRealtimeConversion(
-      DictionaryPredictor::REALTIME, conversion_request, &segments, &results);
+      DictionaryPredictor::REALTIME, *convreq_, &segments, &results);
   EXPECT_EQ(1, results.size());
 
   EXPECT_EQ(results[0].types, DictionaryPredictor::REALTIME);
@@ -2364,7 +2395,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
 }
 
 TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2408,7 +2439,7 @@ TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
 }
 
 TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2581,28 +2612,24 @@ TEST_F(DictionaryPredictorTest, UnuseExpansionForSuffixTest) {
 
 TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
   FLAGS_enable_expansion_for_dictionary_predictor = true;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(false);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(false);
 
-  composer::Table table;
-  table.LoadFromFile("system://romanji-hiragana.tsv");
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  table_->LoadFromFile("system://romanji-hiragana.tsv");
+  composer_->SetTable(table_.get());
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
-  composer::Composer composer(&table, &default_request());
-  InsertInputSequence("ak", &composer);
-  const ConversionRequest request(&composer, &default_request());
+  InsertInputSequence("ak", composer_.get());
   Segment *segment = segments.add_segment();
   CHECK(segment);
   {
     string query;
-    composer.GetQueryForPrediction(&query);
+    composer_->GetQueryForPrediction(&query);
     segment->set_key(query);
     // "あ"
     EXPECT_EQ("\xe3\x81\x82", query);
@@ -2610,7 +2637,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
   {
     string base;
     set<string> expanded;
-    composer.GetQueriesForPrediction(&base, &expanded);
+    composer_->GetQueriesForPrediction(&base, &expanded);
     // "あ"
     EXPECT_EQ("\xe3\x81\x82", base);
     EXPECT_GT(expanded.size(), 5);
@@ -2661,29 +2688,25 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
 
 TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
   FLAGS_enable_expansion_for_dictionary_predictor = true;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(false);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(false);
 
-  composer::Table table;
-  table.LoadFromFile("system://kana.tsv");
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  table_->LoadFromFile("system://kana.tsv");
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
-  composer::Composer composer(&table, &default_request());
   // "あし"
-  InsertInputSequence("\xe3\x81\x82\xe3\x81\x97", &composer);
-  const ConversionRequest request(&composer, &default_request());
+  InsertInputSequence("\xe3\x81\x82\xe3\x81\x97", composer_.get());
+
   Segment *segment = segments.add_segment();
   CHECK(segment);
   {
     string query;
-    composer.GetQueryForPrediction(&query);
+    composer_->GetQueryForPrediction(&query);
     segment->set_key(query);
     // "あし"
     EXPECT_EQ("\xe3\x81\x82\xe3\x81\x97", query);
@@ -2691,7 +2714,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
   {
     string base;
     set<string> expanded;
-    composer.GetQueriesForPrediction(&base, &expanded);
+    composer_->GetQueriesForPrediction(&base, &expanded);
     // "あ"
     EXPECT_EQ("\xe3\x81\x82", base);
     EXPECT_EQ(2, expanded.size());
@@ -2751,7 +2774,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
 }
 
 TEST_F(DictionaryPredictorTest, SetLMCost) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2812,7 +2835,7 @@ TEST_F(DictionaryPredictorTest, SetLMCost) {
 TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2825,7 +2848,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   MakeSegmentsForPrediction(
       "\xe3\x81\x82\xe3\x81\xbc\xe3\x81\x8c\xe3\x81\xa9", &segments);
 
-  predictor->PredictForRequest(default_conversion_request(), &segments);
+  predictor->PredictForRequest(*convreq_, &segments);
 
   EXPECT_TRUE(FindCandidateByValue(
       segments.conversion_segment(0),
@@ -2836,7 +2859,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
 TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2849,7 +2872,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   MakeSegmentsForPrediction(
       "\xe3\x81\x82\xe3\x81\xbc\xe3\x81\x8c", &segments);
 
-  predictor->PredictForRequest(default_conversion_request(), &segments);
+  predictor->PredictForRequest(*convreq_, &segments);
 
   EXPECT_FALSE(FindCandidateByValue(
       segments.conversion_segment(0),
@@ -2860,7 +2883,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
 TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2875,14 +2898,12 @@ TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
 
   MakeSegmentsForSuggestion(kKey, &segments);
 
-  commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
-  const ConversionRequest conversion_request(&default_composer(), &request);
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
   vector<TestableDictionaryPredictor::Result> results;
   predictor->AggregateUnigramPrediction(
       TestableDictionaryPredictor::UNIGRAM,
-      conversion_request, segments, &results);
+      *convreq_, segments, &results);
 
   // "東京"
   EXPECT_TRUE(FindResultByValue(results, "\xe6\x9d\xb1\xe4\xba\xac"));
@@ -2901,7 +2922,7 @@ TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
 TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2918,11 +2939,8 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
                          "\xe5\xa4\xa7\xe5\xad\xa6",
                          &segments);
 
-  commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
-  const ConversionRequest conversion_request(&default_composer(), &request);
-
-  predictor->PredictForRequest(conversion_request, &segments);
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  predictor->PredictForRequest(*convreq_, &segments);
 
   EXPECT_TRUE(FindCandidateByValue(segments.conversion_segment(0),
                                    // "入試"
@@ -2942,7 +2960,7 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
 TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
   testing::MockDataManager data_manager;
 
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(CreateSystemDictionaryFromDataManager(data_manager),
                            CreateSuffixDictionaryFromDataManager(data_manager));
@@ -2950,8 +2968,7 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
   const POSMatcher &pos_matcher = data_and_predictor->pos_matcher();
 
@@ -3009,7 +3026,7 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
     c->content_value = test_case.value;
     c->rid = test_case.rid;
 
-    predictor->PredictForRequest(default_conversion_request(), &segments);
+    predictor->PredictForRequest(*convreq_, &segments);
     const bool candidates_inserted =
         segments.conversion_segment(0).candidates_size() > 0;
     EXPECT_EQ(test_case.expected_result, candidates_inserted);
@@ -3017,16 +3034,14 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(true);
 
   {
     segments.Clear();
@@ -3036,7 +3051,7 @@ TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
     // "ゆーざー"
     seg->set_key("\xe3\x82\x86\xe3\x83\xbc\xe3\x81\x96\xe3\x83\xbc");
     seg->set_segment_type(Segment::FREE);
-    EXPECT_TRUE(predictor->PredictForRequest(default_conversion_request(),
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_,
                                              &segments));
     EXPECT_EQ(1, segments.conversion_segments_size());
     bool find_yuza_candidate = false;
@@ -3064,7 +3079,7 @@ TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
     seg->set_key(
         "\xe3\x82\x86\xe3\x83\xbc\xe3\x81\x96\xe3\x83\xbc\xe3\x81\xae");
     seg->set_segment_type(Segment::FREE);
-    EXPECT_TRUE(predictor->PredictForRequest(default_conversion_request(),
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_,
                                              &segments));
     EXPECT_EQ(1, segments.conversion_segments_size());
     bool find_yuza_candidate = false;
@@ -3131,19 +3146,19 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
 
 TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   testing::MockDataManager data_manager;
-  scoped_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
-  scoped_ptr<ConverterInterface> converter(new ConverterMock);
-  scoped_ptr<ImmutableConverterInterface> immutable_converter(
+  unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
+  unique_ptr<ConverterInterface> converter(new ConverterMock);
+  unique_ptr<ImmutableConverterInterface> immutable_converter(
       new ImmutableConverterMock);
-  scoped_ptr<const DictionaryInterface> suffix_dictionary(
+  unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  scoped_ptr<const Connector> connector(
+  unique_ptr<const Connector> connector(
       Connector::CreateFromDataManager(data_manager));
-  scoped_ptr<const Segmenter> segmenter(
+  unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  scoped_ptr<const SuggestionFilter> suggestion_filter(
+  unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
-  scoped_ptr<TestableDictionaryPredictor> predictor(
+  unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(converter.get(),
                                       immutable_converter.get(),
                                       dictionary.get(),
@@ -3163,12 +3178,12 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
 
   vector<TestableDictionaryPredictor::Result> results;
   predictor->AggregateRealtimeConversion(
-      TestableDictionaryPredictor::REALTIME, default_conversion_request(),
+      TestableDictionaryPredictor::REALTIME, *convreq_,
       &segments, &results);
 
   // mock results
   EXPECT_EQ(1, results.size());
-  predictor->AddPredictionToCandidates(default_conversion_request(),
+  predictor->AddPredictionToCandidates(*convreq_,
                                        &segments, &results);
   EXPECT_EQ(1, segments.conversion_segments_size());
   EXPECT_EQ(1, segments.conversion_segment(0).candidates_size());
@@ -3184,7 +3199,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3201,13 +3216,13 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
     result->SetTypesAndTokenAttributes(TestableDictionaryPredictor::REALTIME,
                                        Token::NONE);
   }
-  random_shuffle(results.begin(), results.end());
+  std::random_shuffle(results.begin(), results.end());
 
   Segments segments;
   MakeSegmentsForSuggestion("test", &segments);
   segments.set_max_prediction_candidates_size(kTestSize);
 
-  predictor->AddPredictionToCandidates(default_conversion_request(),
+  predictor->AddPredictionToCandidates(*convreq_,
                                        &segments, &results);
 
   EXPECT_EQ(1, segments.conversion_segments_size());
@@ -3219,7 +3234,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
 }
 
 TEST_F(DictionaryPredictorTest, PredictNCandidates) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3241,13 +3256,13 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
       result->cost = i + kInfinity;
     }
   }
-  random_shuffle(results.begin(), results.end());
+  std::random_shuffle(results.begin(), results.end());
 
   Segments segments;
   MakeSegmentsForSuggestion("test", &segments);
   segments.set_max_prediction_candidates_size(kLowCostCandidateSize + 1);
 
-  predictor->AddPredictionToCandidates(default_conversion_request(),
+  predictor->AddPredictionToCandidates(*convreq_,
                                        &segments, &results);
 
   ASSERT_EQ(1, segments.conversion_segments_size());
@@ -3260,15 +3275,13 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
 }
 
 TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
   // turn on mobile mode
-  commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
-  const ConversionRequest conversion_request(&default_composer(), &request);
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
   Segments segments;
   // Note: The suggestion filter entry "フィルター" for test is not
@@ -3280,7 +3293,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
       "\xe3\x81\x9f\xe3\x81\x84\xe3\x81\x97\xe3\x82\x87\xe3\x81\x86",
       &segments);
 
-  EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
   // "フィルター対象"
   EXPECT_TRUE(
       FindCandidateByValue(segments.conversion_segment(0),
@@ -3304,7 +3317,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
       "\xe3\x81\xb5\xe3\x81\x83\xe3\x82\x8b\xe3\x81\x9f\xe3\x83\xbc"
       "\xe3\x81\x9f\xe3\x81\x84\xe3\x81\x97",
       &segments);
-  EXPECT_TRUE(predictor->PredictForRequest(conversion_request, &segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
   // "フィルター対象"
   EXPECT_FALSE(
       FindCandidateByValue(segments.conversion_segment(0),
@@ -3313,7 +3326,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
 }
 
 TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
-  scoped_ptr<MockDataAndPredictor> data_and_predictor(
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3329,12 +3342,272 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
       &segments);
 
   EXPECT_TRUE(predictor->PredictForRequest(
-      default_conversion_request(), &segments));
+      *convreq_, &segments));
   // "フィルター対象"
   EXPECT_FALSE(
       FindCandidateByValue(segments.conversion_segment(0),
                            "\xe3\x83\x95\xe3\x82\xa3\xe3\x83\xab\xe3\x82"
                            "\xbf\xe3\x83\xbc\xe5\xaf\xbe\xe8\xb1\xa1"));
+}
+
+namespace {
+const char *kTestKey0 = "\xe3\x81\x82";  // "あ"
+const ZeroQueryEntry kTestValues0[] = {
+  // emoji exclamation
+  {ZERO_QUERY_EMOJI, "", EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04},
+  {ZERO_QUERY_EMOJI, "\xE2\x9D\x95", EMOJI_UNICODE, 0xfeb0b},  // "❕"
+  {ZERO_QUERY_NONE, "\xE2\x9D\xA3", EMOJI_NONE, 0x0},  // "❣"
+};
+const char *kTestKey1 = "\xe3\x81\x82\xe3\x81\x82";  // "ああ"
+const ZeroQueryEntry kTestValues1[] = {
+  // "( •̀ㅁ•́;)"
+  {
+    ZERO_QUERY_EMOTICON,
+    "\x28\x20\xE2\x80\xA2\xCC\x80\xE3\x85\x81\xE2\x80\xA2\xCC\x81\x3B\x29",
+    EMOJI_NONE, 0x0
+  },
+};
+const ZeroQueryList kTestData_data[] = {
+  {kTestKey0, kTestValues0, 3},
+  {kTestKey1, kTestValues1, 1},
+};
+const size_t kTestData_size = 2;
+
+struct TestEntry {
+  int32 available_emoji_carrier;
+  string key;
+  bool expected_result;
+  // candidate value and ZeroQueryType.
+  vector<string> expected_candidates;
+  vector<int32> expected_types;
+
+  string DebugString() const {
+    string candidates;
+    Util::JoinStrings(expected_candidates, ", ", &candidates);
+    string types;
+    for (size_t i = 0; i < expected_types.size(); ++i) {
+      if (i != 0) {
+        types.append(", ");
+      }
+      types.append(Util::StringPrintf("%d", types[i]));
+    }
+    return Util::StringPrintf(
+        "available_emoji_carrier: %d\n"
+        "key: %s\n"
+        "expected_result: %d\n"
+        "expected_candidates: %s\n"
+        "expected_types: %s",
+        available_emoji_carrier,
+        key.c_str(),
+        expected_result,
+        candidates.c_str(),
+        types.c_str());
+  }
+};
+}  // namespace
+
+TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
+  vector<TestEntry> test_entries;
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "a";
+    entry.expected_result = false;
+    entry.expected_candidates.clear();
+    entry.expected_types.clear();
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "\xe3\x82\x93";  // "ん"
+    entry.expected_result = false;
+    entry.expected_candidates.clear();
+    entry.expected_types.clear();
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "\xe3\x81\x82\xe3\x81\x82";  // "ああ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back(
+        // "( •̀ㅁ•́;)"
+        "\x28\x20\xE2\x80\xA2\xCC\x80\xE3\x85\x81\xE2\x80\xA2\xCC\x81\x3B\x29");
+    entry.expected_types.push_back(ZERO_QUERY_EMOTICON);
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = 0;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    entry.expected_types.push_back(ZERO_QUERY_NONE);
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = commands::Request::UNICODE_EMOJI;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back("\xE2\x9D\x95");   // "❕"
+    entry.expected_types.push_back(ZERO_QUERY_EMOJI);
+
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    entry.expected_types.push_back(ZERO_QUERY_NONE);
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = commands::Request::DOCOMO_EMOJI;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    string candidate;
+    Util::UCS4ToUTF8(0xfeb04, &candidate);  // exclamation
+    entry.expected_candidates.push_back(candidate);
+    entry.expected_types.push_back(ZERO_QUERY_EMOJI);
+
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    entry.expected_types.push_back(ZERO_QUERY_NONE);
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier = commands::Request::KDDI_EMOJI;
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    entry.expected_types.push_back(ZERO_QUERY_NONE);
+    test_entries.push_back(entry);
+  }
+  {
+    TestEntry entry;
+    entry.available_emoji_carrier =
+        (commands::Request::DOCOMO_EMOJI |
+         commands::Request::SOFTBANK_EMOJI |
+         commands::Request::UNICODE_EMOJI);
+    entry.key = "\xe3\x81\x82";  // "あ"
+    entry.expected_result = true;
+    string candidate;
+    Util::UCS4ToUTF8(0xfeb04, &candidate);  // exclamation
+    entry.expected_candidates.push_back(candidate);
+    entry.expected_types.push_back(ZERO_QUERY_EMOJI);
+
+    entry.expected_candidates.push_back("\xE2\x9D\x95");   // "❕"
+    entry.expected_types.push_back(ZERO_QUERY_EMOJI);
+
+    entry.expected_candidates.push_back("\xE2\x9D\xA3");   // "❣"
+    entry.expected_types.push_back(ZERO_QUERY_NONE);
+    test_entries.push_back(entry);
+  }
+
+  for (size_t i = 0; i < test_entries.size(); ++i) {
+    const TestEntry &test_entry = test_entries[i];
+    ASSERT_EQ(test_entry.expected_candidates.size(),
+              test_entry.expected_types.size());
+
+    commands::Request client_request;
+    client_request.set_available_emoji_carrier(
+        test_entry.available_emoji_carrier);
+    composer::Table table;
+    const config::Config &config = config::ConfigHandler::DefaultConfig();
+    composer::Composer composer(&table, &client_request, &config);
+    const ConversionRequest request(&composer, &client_request, &config);
+
+    vector<DictionaryPredictor::ZeroQueryResult> actual_candidates;
+    const bool actual_result =
+        DictionaryPredictor::GetZeroQueryCandidatesForKey(
+            request, test_entry.key,
+            kTestData_data, kTestData_data + kTestData_size,
+            &actual_candidates);
+    EXPECT_EQ(test_entry.expected_result, actual_result)
+        << test_entry.DebugString();
+    for (size_t j = 0; j < test_entry.expected_candidates.size(); ++j) {
+      EXPECT_EQ(test_entry.expected_candidates[j], actual_candidates[j].first)
+          << "Failed at " << j << " : " << test_entry.DebugString();
+      EXPECT_EQ(test_entry.expected_types[j], actual_candidates[j].second)
+          << "Failed at " << j << " : " << test_entry.DebugString();
+    }
+  }
+}
+
+namespace {
+void SetSegmentForCommit(const string &candidate_value,
+                         int candidate_source_info, Segments *segments) {
+  segments->Clear();
+  Segment *segment = segments->add_segment();
+  segment->set_key("");
+  segment->set_segment_type(Segment::FIXED_VALUE);
+  Segment::Candidate *candidate = segment->add_candidate();
+  candidate->key = candidate_value;
+  candidate->content_key = candidate_value;
+  candidate->value = candidate_value;
+  candidate->content_value = candidate_value;
+  candidate->source_info = candidate_source_info;
+}
+}  // namespace
+
+TEST_F(DictionaryPredictorTest, UsageStats) {
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  DictionaryPredictor *predictor =
+      data_and_predictor->mutable_dictionary_predictor();
+
+  Segments segments;
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNone", 0);
+  SetSegmentForCommit(
+      // "★"
+      "\xe2\x98\x85",
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NONE,
+      &segments);
+  predictor->Finish(*convreq_, &segments);
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNone", 1);
+
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNumberSuffix", 0);
+  SetSegmentForCommit(
+      // "個"
+      "\xe5\x80\x8b",
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX,
+      &segments);
+  predictor->Finish(*convreq_, &segments);
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNumberSuffix", 1);
+
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoticon", 0);
+  SetSegmentForCommit(
+      // "＼(^o^)／"
+      "\xef\xbc\xbc\x28\x5e\x6f\x5e\x29\xef\xbc\x8f",
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON,
+      &segments);
+  predictor->Finish(*convreq_, &segments);
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoticon", 1);
+
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoji", 0);
+  SetSegmentForCommit(
+      // "❕"
+      "\xe2\x9d\x95",
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI,
+      &segments);
+  predictor->Finish(*convreq_, &segments);
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoji", 1);
+
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeBigram", 0);
+  SetSegmentForCommit(
+      // "ヒルズ"
+      "\xe3\x83\x92\xe3\x83\xab\xe3\x82\xba",
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM,
+      &segments);
+  predictor->Finish(*convreq_, &segments);
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeBigram", 1);
+
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeSuffix", 0);
+  SetSegmentForCommit(
+      // "が"
+      "\xe3\x81\x8c",
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX,
+      &segments);
+  predictor->Finish(*convreq_, &segments);
+  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeSuffix", 1);
 }
 
 }  // namespace mozc

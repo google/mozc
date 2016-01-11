@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -139,7 +139,7 @@ wstring GetFullPathForSystem(const string& basename) {
   const string fullpath = FileUtil::JoinPath(system_dir, basename);
 
   wstring wfullpath;
-  if (Util::UTF8ToWide(fullpath.c_str(), &wfullpath) <= 0) {
+  if (Util::UTF8ToWide(fullpath, &wfullpath) <= 0) {
     return L"";
   }
 
@@ -206,7 +206,7 @@ unsigned int GetPreloadIndex(const KeyboardLayoutID &klid,
 
 wstring ToWideString(const string &str) {
   wstring wide;
-  if (Util::UTF8ToWide(str.c_str(), &wide) <= 0) {
+  if (Util::UTF8ToWide(str, &wide) <= 0) {
     return L"";
   }
   return wide;
@@ -239,7 +239,7 @@ bool RemoveHotKey(HKL hkl) {
   }
   return succeeded;
 }
-}  // anonymous namespace
+}  // namespace
 
 HRESULT ImmRegistrar::Register(const wstring &ime_filename,
                                const wstring &layout_name,

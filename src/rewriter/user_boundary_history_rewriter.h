@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,11 @@
 #ifndef MOZC_REWRITER_USER_BOUNDARY_HISTORY_REWRITER_H_
 #define MOZC_REWRITER_USER_BOUNDARY_HISTORY_REWRITER_H_
 
-#include <vector>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -68,7 +68,7 @@ class UserBoundaryHistoryRewriter : public RewriterInterface {
                       int type) const;
 
   const ConverterInterface *parent_converter_;
-  scoped_ptr<mozc::storage::LRUStorage> storage_;
+  std::unique_ptr<mozc::storage::LRUStorage> storage_;
 };
 
 }  // namespace mozc

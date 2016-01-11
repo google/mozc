@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -101,6 +101,7 @@
         '../composer/composer.gyp:key_event_util',
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
+        '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         'keymap',
       ],

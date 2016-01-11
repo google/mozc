@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -919,7 +919,8 @@ mozc.DictionaryTool.prototype.findDictionaryEntryIndexFromElement_ =
  * @private
  */
 mozc.DictionaryTool.prototype.getDictionaryEntryElement_ = function(index) {
-  return this.document_.getElementById('dictionary_tool_entry_' + index);
+  return /** @type {HTMLElement} */(
+      this.document_.getElementById('dictionary_tool_entry_' + index));
 };
 
 /**

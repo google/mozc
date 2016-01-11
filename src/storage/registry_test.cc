@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,5 +91,5 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_EQ(expected, value);
   }
 }
-}  // storage
-}  // mozc
+}  // namespace storage
+}  // namespace mozc

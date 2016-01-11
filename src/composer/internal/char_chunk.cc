@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,7 @@ bool GetFromPending(const Table *table, const string &key,
   }
   return true;
 }
-}  // anonymous namespace
+}  // namespace
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator,
                      const Table *table)

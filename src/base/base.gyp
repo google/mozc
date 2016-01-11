@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,7 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        'clock_mock.cc',
         'cpu_stats.cc',
-        'iconv.cc',
         'process.cc',
         'process_mutex.cc',
         'run_level.cc',
@@ -49,8 +47,6 @@
         'stopwatch.cc',
         'timer.cc',
         'unnamed_event.cc',
-        'update_util.cc',
-        'url.cc',
       ],
       'dependencies': [
         'base_core',
@@ -61,11 +57,6 @@
             'mac_process.mm',
             'mac_util.mm',
           ],
-          'link_settings': {
-            'libraries': [
-              '/usr/lib/libiconv.dylib',  # used in iconv.cc
-            ],
-          },
         }],
         ['OS=="win"', {
           'sources': [
@@ -73,24 +64,8 @@
             'win_sandbox.cc',
           ],
         }],
-        # When the target platform is 'Android', build settings are currently
-        # shared among *host* binaries and *target* binaries. This means that
-        # you should implement *host* binaries by using limited libraries
-        # which are also available on NDK.
-        ['OS=="linux" and target_platform!="Android" and '
-         'not (target_platform=="NaCl" and _toolset=="target")', {
-          'defines': [
-            'HAVE_LIBRT=1',
-          ],
-          'link_settings': {
-            'libraries': [
-              '-lrt',  # used in util.cc for Util::GetTicks()/GetFrequency()
-            ],
-          },
-        }],
         ['target_platform=="Android"', {
           'sources!': [
-            'iconv.cc',
             'process.cc',
           ],
         }],
@@ -110,27 +85,32 @@
       ],
     },
     {
+      'target_name': 'url',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'url.cc',
+      ],
+      'dependencies': [
+        'base_core',  # for logging, util, version
+        'singleton',
+      ],
+    },
+    {
       'target_name': 'base_core',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
-        'debug.cc',
         'file_stream.cc',
         'file_util.cc',
-        'flags.cc',
-        'hash.cc',
-        'init.cc',
+        'init_mozc.cc',
+        'japanese_util_rule.cc',
         'logging.cc',
         'mmap.cc',
-        'mutex.cc',
         'number_util.cc',
-        'scoped_handle.cc',
-        'singleton.cc',
-        'string_piece.cc',
         'system_util.cc',
-        'text_converter.cc',
         'text_normalizer.cc',
         'thread.cc',
         'util.cc',
@@ -138,11 +118,20 @@
         'win_util.cc',
       ],
       'dependencies': [
+        'clock',
+        'flags',
         'gen_character_set#host',
         'gen_version_def#host',
+        'hash',
+        'mutex',
+        'singleton',
+        'string_piece',
       ],
       'conditions': [
         ['OS=="win"', {
+          'dependencies': [
+            'scoped_handle',
+          ],
           'link_settings': {
             'msvs_settings': {
               'VCLinkerTool': {
@@ -176,6 +165,82 @@
             'pepper_file_util.cc',
           ],
         }],
+      ],
+    },
+    {
+      'target_name': 'update_util',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'update_util.cc',
+      ],
+    },
+    {
+      'target_name': 'scoped_handle',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'scoped_handle.cc',
+      ],
+    },
+    {
+      'target_name': 'string_piece',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'string_piece.cc',
+      ],
+    },
+    {
+      'target_name': 'mutex',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'mutex.cc',
+      ],
+    },
+    {
+      'target_name': 'singleton',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'singleton.cc',
+      ],
+      'dependencies': [
+        'mutex',
+      ],
+    },
+    {
+      'target_name': 'flags',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'flags.cc',
+      ],
+      'dependencies': [
+        'singleton',
+      ],
+    },
+    {
+      'target_name': 'clock',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'clock.cc',
+      ],
+      'dependencies': [
+        'singleton',
+      ],
+    },
+    {
+      'target_name': 'hash',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'hash.cc',
+      ],
+      'dependencies': [
+        'string_piece',
       ],
     },
     {
@@ -373,6 +438,13 @@
             'crash_report_handler.cc',
           ]
         }],
+      ],
+    },
+    {
+      'target_name': 'debug',
+      'type': 'static_library',
+      'sources': [
+        'debug.cc',
       ],
     },
   ],

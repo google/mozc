@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,6 @@ int RunPostInstallDialog(int argc, char *argv[]) {
       ("post_install_dialog");
 
   mozc::gui::PostInstallDialog dialog;
-  mozc::gui::PostInstallDialog::ShowHelpPageIfRequired();
   dialog.exec();
 
   return 0;

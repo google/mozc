@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,7 @@
 #include <string>
 
 #include "base/const.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -92,7 +93,7 @@ const string NamedEventUtil::GetEventPath(const char *name) {
   //  character."
   const size_t kEventPathLength = 14;
   char buf[32];
-  snprintf(buf, kEventPathLength, "/%llx", Util::Fingerprint(event_name));
+  snprintf(buf, kEventPathLength, "/%llx", Hash::Fingerprint(event_name));
   return buf;
 #endif
 }
@@ -101,7 +102,7 @@ const string NamedEventUtil::GetEventPath(const char *name) {
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), handle_(NULL) {
   wstring event_path;
-  Util::UTF8ToWide(NamedEventUtil::GetEventPath(name).c_str(), &event_path);
+  Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
 
   handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false,
                          event_path.c_str());
@@ -219,7 +220,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
 NamedEventNotifier::NamedEventNotifier(const char *name)
     : handle_(NULL) {
   wstring event_path;
-  Util::UTF8ToWide(NamedEventUtil::GetEventPath(name).c_str(), &event_path);
+  Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
   handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false,
                          event_path.c_str());
   if (handle_ == NULL) {

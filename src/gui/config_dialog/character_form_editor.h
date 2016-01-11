@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,10 @@
 #define MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 
 #include <QtGui/QTableWidget>
+
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "protocol/config.pb.h"
 
 namespace mozc {
@@ -54,10 +56,11 @@ class CharacterFormEditor : public QTableWidget {
   void Save(config::Config *config);
 
  private:
-  scoped_ptr<ComboBoxDelegate> delegate_;
+  std::unique_ptr<ComboBoxDelegate> delegate_;
 };
-}  // gui
-}  // mozc
+
+}  // namespace gui
+}  // namespace mozc
 
 #if defined UI_CONFIG_DIALOG_H
 using mozc::gui::CharacterFormEditor;

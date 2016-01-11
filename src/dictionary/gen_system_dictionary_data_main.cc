@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,15 @@
 //  --output="output.h"
 //  --make_header
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
 #include "data_manager/user_pos_manager.h"
@@ -92,7 +95,7 @@ void GetInputFileName(const string &input_file,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   string system_dictionary_input, reading_correction_input;
   mozc::GetInputFileName(FLAGS_input,
@@ -111,7 +114,7 @@ int main(int argc, char **argv) {
   mozc::dictionary::SystemDictionaryBuilder builder;
   builder.BuildFromTokens(loader.tokens());
 
-  scoped_ptr<ostream> output_stream(
+  std::unique_ptr<ostream> output_stream(
       new mozc::OutputFileStream(FLAGS_output.c_str(),
                                  FLAGS_make_header
                                  ? ios::out

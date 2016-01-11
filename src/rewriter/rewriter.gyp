@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,13 @@
   },
   'targets': [
     {
+      'target_name': 'embedded_dictionary',
+      'type': 'static_library',
+      'sources': [
+        'embedded_dictionary.cc',
+      ],
+    },
+    {
       'target_name': 'rewriter',
       'type': 'static_library',
       'sources': [
@@ -53,7 +60,6 @@
         'date_rewriter.cc',
         'dice_rewriter.cc',
         'dictionary_generator.cc',
-        'embedded_dictionary.cc',
         'emoji_rewriter.cc',
         'emoticon_rewriter.cc',
         'english_variants_rewriter.cc',
@@ -83,15 +89,16 @@
         '../composer/composer.gyp:composer',
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
-        '../converter/converter_base.gyp:conversion_request',
         '../converter/converter_base.gyp:immutable_converter',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
+        '../request/request.gyp:conversion_request',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
+        ':embedded_dictionary',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
       ],

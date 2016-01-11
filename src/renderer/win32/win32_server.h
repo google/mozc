@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 #define MOZC_RENDERER_WIN32_WIN32_SERVER_H_
 
 #include <windows.h>
+
+#include <memory>
 #include <string>
 
 #include "base/mutex.h"
@@ -70,7 +72,7 @@ class Win32Server : public RendererServer,
   string message_;
   Mutex mutex_;
   HANDLE event_;
-  scoped_ptr<WindowManager> window_manager_;
+  std::unique_ptr<WindowManager> window_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(Win32Server);
 };

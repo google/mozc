@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,8 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "base/trie.h"
 #include "dictionary/dictionary_token.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
@@ -116,24 +116,29 @@ class DictionaryInterface {
   // Returns true if the dictionary has an entry for the given value.
   virtual bool HasValue(StringPiece value) const = 0;
 
-  virtual void LookupPredictive(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const = 0;
+  virtual void LookupPredictive(StringPiece key,
+                                const ConversionRequest &conversion_request,
+                                Callback *callback) const = 0;
 
-  virtual void LookupPrefix(
-      StringPiece key, bool use_kana_modifier_insensitive_lookup,
-      Callback *callback) const = 0;
+  virtual void LookupPrefix(StringPiece key,
+                            const ConversionRequest &conversion_request,
+                            Callback *callback) const = 0;
 
-  virtual void LookupExact(StringPiece key, Callback *callback) const = 0;
+  virtual void LookupExact(StringPiece key,
+                           const ConversionRequest &conversion_request,
+                           Callback *callback) const = 0;
 
   // For reverse lookup, the reading is stored in Token::value and the word
   // is stored in Token::key.
-  virtual void LookupReverse(StringPiece str, Callback *callback) const = 0;
+  virtual void LookupReverse(StringPiece str,
+                             const ConversionRequest &conversion_request,
+                             Callback *callback) const = 0;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
   // returned and string is kept as-is.
   virtual bool LookupComment(StringPiece key, StringPiece value,
+                             const ConversionRequest &conversion_request,
                              string *comment) const { return false; }
 
   // Populates cache for LookupReverse().

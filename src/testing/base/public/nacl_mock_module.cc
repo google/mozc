@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifdef OS_NACL
+
 #include <errno.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -40,9 +42,10 @@
 #include <cstring>
 #include <memory>
 
-#include "base/port.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/pepper_file_util.h"
+#include "base/port.h"
 #include "net/http_client_pepper.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -136,10 +139,12 @@ Module* CreateModule() {
   char argv0[] = "NaclModule";
   char *argv_body[] = {argv0, NULL};
   char **argv = argv_body;
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
   testing::InitGoogleTest(&argc, argv);
 
   return new NaclTestModule();
 }
 
 }  // namespace pp
+
+#endif  // OS_NACL

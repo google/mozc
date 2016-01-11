@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,17 +29,17 @@
 
 #include "dictionary/file/codec.h"
 
+#include <memory>
+
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace dictionary {
@@ -117,7 +117,7 @@ class CodecMock : public DictionaryFileCodecInterface {
 };
 
 TEST_F(CodecTest, FactoryTest) {
-  scoped_ptr<CodecMock> codec_mock(new CodecMock);
+  std::unique_ptr<CodecMock> codec_mock(new CodecMock);
   DictionaryFileCodecFactory::SetCodec(codec_mock.get());
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
@@ -185,7 +185,7 @@ TEST_F(CodecTest, DefaultTest) {
 }
 
 TEST_F(CodecTest, CodecTest) {
-  scoped_ptr<DictionaryFileCodec> default_codec(
+  std::unique_ptr<DictionaryFileCodec> default_codec(
       new DictionaryFileCodec);
   DictionaryFileCodecFactory::SetCodec(default_codec.get());
   const DictionaryFileCodecInterface *codec =

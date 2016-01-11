@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "ipc/process_watch_dog.h"
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -43,13 +44,13 @@ class TestProcessWatchDog : public ProcessWatchDog {
  public:
   void Signaled(ProcessWatchDog::SignalType type) {
     EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    const uint64 diff = Util::GetTime() - g_current_time;
+    const uint64 diff = Clock::GetTime() - g_current_time;
     EXPECT_EQ(2, diff);   // allow 1-sec error
   }
 };
 
 TEST(ProcessWatchDog, ProcessWatchDogTest) {
-  g_current_time = Util::GetTime();
+  g_current_time = Clock::GetTime();
 
 #ifndef OS_WIN
   // revoke myself with different parameter

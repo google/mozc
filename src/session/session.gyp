@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,7 @@
       'dependencies': [
         '../client/client.gyp:client',
         '../composer/composer.gyp:composer',
+        '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../engine/engine.gyp:engine_factory',

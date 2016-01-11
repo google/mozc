@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,22 +32,27 @@
 
 #include "composer/internal/mode_switching_handler.h"
 
+#include <cctype>
 #include <string>
 
-#include "base/init.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
-
-REGISTER_MODULE_RELOADER(mode_switching_handler, {
-    mozc::composer::ModeSwitchingHandler::GetModeSwitchingHandler()->Reload();
-  });
 
 namespace mozc {
 namespace composer {
 
 ModeSwitchingHandler::ModeSwitchingHandler() {
-  Reload();
+  // Default patterns are fixed right now.
+  // AddRule(key, display_mode, input_mode);
+  AddRule("google", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
+  AddRule("Google", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
+  AddRule("Chrome", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
+  AddRule("chrome", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
+  AddRule("Android", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
+  AddRule("android", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
+  AddRule("http", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
+  AddRule("www.", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
+  AddRule("\\\\", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
 }
 
 ModeSwitchingHandler::~ModeSwitchingHandler() {}
@@ -56,13 +61,12 @@ bool ModeSwitchingHandler::GetModeSwitchingRule(
     const string &key,
     ModeSwitching *display_mode,
     ModeSwitching *input_mode) const {
-  if (display_mode == NULL || input_mode == NULL) {
-    LOG(ERROR) << "display_mode/input_mode is NULL.";
+  if (display_mode == nullptr || input_mode == nullptr) {
+    LOG(ERROR) << "display_mode/input_mode is nullptr.";
     return false;
   }
 
-  const map<string, pair<ModeSwitching, ModeSwitching> >::const_iterator it =
-      patterns_.find(key);
+  auto it = patterns_.find(key);
   if (it != patterns_.end()) {
     *display_mode = it->second.first;
     *input_mode = it->second.second;
@@ -80,37 +84,20 @@ bool ModeSwitchingHandler::GetModeSwitchingRule(
   return false;
 }
 
-bool ModeSwitchingHandler::IsDriveLetter(const string &key) const {
-  if (key.size() == 3 &&
-      isalpha(key[0]) && key[1] == ':' && key[2] == '\\') {
-    return true;
-  }
-  return false;
+bool ModeSwitchingHandler::IsDriveLetter(const string &key) {
+  return key.size() == 3 &&
+         isalpha(key[0]) && key[1] == ':' && key[2] == '\\';
 }
 
 void ModeSwitchingHandler::AddRule(const string &key,
                                    const ModeSwitching display_mode,
                                    const ModeSwitching input_mode) {
-  patterns_.insert(make_pair(key, make_pair(display_mode, input_mode)));
-}
-
-
-void ModeSwitchingHandler::Reload() {
-  // Default patterns are fixed right now.
-  // AddRule(key, display_mode, input_mode);
-  AddRule("google", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("Google", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("Chrome", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("chrome", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("Android", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("android", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("http", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
-  AddRule("www.", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
-  AddRule("\\\\", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
+  patterns_.emplace(key, std::make_pair(display_mode, input_mode));
 }
 
 ModeSwitchingHandler *ModeSwitchingHandler::GetModeSwitchingHandler() {
   return Singleton<ModeSwitchingHandler>::get();
 }
+
 }  // namespace composer
 }  // namespace mozc

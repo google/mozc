@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>  // NOLINT
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/flags.h"
-#include "base/scoped_ptr.h"
+#include "base/init_mozc.h"
 #include "base/util.h"
 #include "converter/quality_regression_util.h"
 #include "engine/engine_factory.h"
@@ -45,9 +46,9 @@ using mozc::EngineInterface;
 using mozc::quality_regression::QualityRegressionUtil;
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());
 
   vector<QualityRegressionUtil::TestItem> items;
@@ -57,10 +58,10 @@ int main(int argc, char **argv) {
     string actual_value;
     const  bool result = util.ConvertAndTest(items[i], &actual_value);
     if (result) {
-      cout << "OK:\t" << items[i].OutputAsTSV() << endl;
+      std::cout << "OK:\t" << items[i].OutputAsTSV() << std::endl;
     } else {
-      cout << "FAILED:\t" << items[i].OutputAsTSV() << "\t"
-           << actual_value << endl;
+      std::cout << "FAILED:\t" << items[i].OutputAsTSV() << "\t" << actual_value
+                << std::endl;
     }
   }
 

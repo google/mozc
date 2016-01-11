@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,16 +34,18 @@
 #include <cstring>
 #include <ctime>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -72,12 +74,12 @@ const char* GetValue(const char *ptr) {
 }
 
 void Update(char *ptr) {
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint32 last_access_time = static_cast<uint32>(Clock::GetTime());
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
 }
 
 void Update(char *ptr, uint64 fp, const char *value, size_t value_size) {
-  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
+  const uint32 last_access_time = static_cast<uint32>(Clock::GetTime());
   memcpy(ptr,     reinterpret_cast<const char *>(&fp), 8);
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
   memcpy(ptr + 12, value, value_size);
@@ -184,7 +186,7 @@ class LRUStorage::LRUList {
 };
 
 LRUStorage *LRUStorage::Create(const char *filename) {
-  scoped_ptr<LRUStorage> n(new LRUStorage);
+  std::unique_ptr<LRUStorage> n(new LRUStorage);
   if (!n->Open(filename)) {
     LOG(ERROR) << "could not open LRUStorage";
     return NULL;
@@ -196,7 +198,7 @@ LRUStorage *LRUStorage::Create(const char *filename,
                                size_t value_size,
                                size_t size,
                                uint32 seed) {
-  scoped_ptr<LRUStorage> n(new LRUStorage);
+  std::unique_ptr<LRUStorage> n(new LRUStorage);
   if (!n->OpenOrCreate(filename, value_size, size, seed)) {
     LOG(ERROR) << "could not open LRUStorage";
     return NULL;
@@ -311,7 +313,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
     }
   }
 
-  stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
+  std::stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
   string buf;
   set<uint64> seen;   // remove duplicated entries.
@@ -474,8 +476,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
     ary.push_back(begin);
     begin += (value_size_ + 12);
   }
-  stable_sort(ary.begin(), ary.end(),
-              CompareByTimeStamp());
+  std::stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
   lru_list_.reset(new LRUList(size_));
   map_.clear();
@@ -483,7 +484,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
   for (size_t i = 0; i < ary.size(); ++i) {
     if (GetTimeStamp(ary[i]) != 0) {
       Node *node = lru_list_->Add(ary[i]);
-      map_.insert(make_pair(GetFP(ary[i]), node));
+      map_.insert(std::make_pair(GetFP(ary[i]), node));
     } else if (last_item_ == NULL) {
       last_item_ = ary[i];
     }
@@ -506,7 +507,7 @@ const char* LRUStorage::Lookup(const string &key) const {
 
 const char* LRUStorage::Lookup(const string &key,
                                uint32 *last_access_time) const {
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::const_iterator it = map_.find(fp);
   if (it == map_.end()) {
     return NULL;
@@ -529,7 +530,7 @@ bool LRUStorage::GetAllValues(vector<string> *values) const {
     DCHECK(node->value);
     values->push_back(string(GetValue(node->value), value_size_));
   }
-  reverse(values->begin(), values->end());
+  std::reverse(values->begin(), values->end());
   return true;
 }
 
@@ -538,7 +539,7 @@ bool LRUStorage::Touch(const string &key) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value);
@@ -553,7 +554,7 @@ bool LRUStorage::Insert(const string &key, const char *value) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);
@@ -568,12 +569,12 @@ bool LRUStorage::Insert(const string &key, const char *value) {
     }
     lru_list_->MoveToTop(node);
     Update(node->value, fp, value, value_size_);
-    map_.insert(make_pair(fp, node));
+    map_.insert(std::make_pair(fp, node));
   } else if (last_item_ < mmap_->end()) {  // not found, cahce is not FULL
     Node *node = lru_list_->Add(last_item_);
     lru_list_->MoveToTop(node);
     Update(node->value, fp, value, value_size_);
-    map_.insert(make_pair(fp, node));
+    map_.insert(std::make_pair(fp, node));
     last_item_ += (value_size_ + 12);
     if (last_item_ >= mmap_->end()) {
       last_item_ = NULL;
@@ -591,7 +592,7 @@ bool LRUStorage::TryInsert(const string &key, const char *value) {
     return false;
   }
 
-  const uint64 fp = Util::FingerprintWithSeed(key.data(), key.size(), seed_);
+  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
   map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);

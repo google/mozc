@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,16 +47,14 @@ namespace {
 class ImeSwitchUtilImpl {
  public:
   ImeSwitchUtilImpl() {
-    Reload();
+    ReloadConfig(config::ConfigHandler::GetConfig());
   }
 
   bool IsDirectModeCommand(const commands::KeyEvent &key) const {
     return KeyInfoUtil::ContainsKey(direct_mode_keys_, key);
   }
 
-  void Reload() {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
+  void ReloadConfig(const config::Config &config) {
     direct_mode_keys_ = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   }
 
@@ -72,8 +70,8 @@ bool ImeSwitchUtil::IsDirectModeCommand(const commands::KeyEvent &key) {
   return Singleton<ImeSwitchUtilImpl>::get()->IsDirectModeCommand(key);
 }
 
-void ImeSwitchUtil::Reload() {
-  Singleton<ImeSwitchUtilImpl>::get()->Reload();
+void ImeSwitchUtil::ReloadConfig(const config::Config &config) {
+  Singleton<ImeSwitchUtilImpl>::get()->ReloadConfig(config);
 }
 
 }  // namespace config

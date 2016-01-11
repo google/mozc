@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,9 @@
 
 #include "rewriter/number_compound_util.h"
 
+#include <algorithm>
+
 #include "base/iterator_adapter.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/counter_suffix.h"
@@ -96,10 +97,11 @@ bool SplitStringIntoNumberAndCounterSuffix(
   *number = input.substr(0, input.size() - s.size());
   *counter_suffix = s;
   return counter_suffix->empty() ||
-         binary_search(MakeIteratorAdapter(suffix_array, StringPieceAdapter()),
-                       MakeIteratorAdapter(suffix_array + suffix_array_size,
-                                           StringPieceAdapter()),
-                       *counter_suffix);
+         std::binary_search(
+             MakeIteratorAdapter(suffix_array, StringPieceAdapter()),
+             MakeIteratorAdapter(suffix_array + suffix_array_size,
+                                 StringPieceAdapter()),
+             *counter_suffix);
 }
 
 bool IsNumber(const CounterSuffixEntry *suffix_array, size_t suffix_array_size,

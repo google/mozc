@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,8 @@
 #include <windows.h>
 #include <string>
 
+#include "base/string_piece.h"
+
 namespace mozc {
 namespace commands {
 class Preedit;
@@ -48,11 +50,11 @@ class StringUtil {
   // http://msdn.microsoft.com/en-us/library/ms629017(VS.85).aspx
   // This function only supports conversion of Japanese characters (characters
   // covered by code page 932).
-  static wstring KeyToReading(const string &key);
+  static wstring KeyToReading(StringPiece key);
 
   // Returns a UTF8 string converted from the result of KeyToReading.
   // This function is mainly for unittest.
-  static string KeyToReadingA(const string &key);
+  static string KeyToReadingA(StringPiece key);
 
   // Joins all segment strings in |preedit| and returns it.
   static wstring ComposePreeditText(const mozc::commands::Preedit &preedit);

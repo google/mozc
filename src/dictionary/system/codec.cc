@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -818,12 +818,12 @@ void ReadValueInfo(const uint8 *ptr, uint8 flags, int *value_id, int *offset) {
 
 namespace {
 SystemDictionaryCodecInterface *g_system_dictionary_codec = NULL;
-typedef SystemDictionaryCodec DefaultCodec;
+typedef SystemDictionaryCodec DefaultSystemDictionaryCodec;
 }  // namespace
 
 SystemDictionaryCodecInterface *SystemDictionaryCodecFactory::GetCodec() {
   if (g_system_dictionary_codec == NULL) {
-    return Singleton<DefaultCodec>::get();
+    return Singleton<DefaultSystemDictionaryCodec>::get();
   } else {
     return g_system_dictionary_codec;
   }
@@ -833,5 +833,6 @@ void SystemDictionaryCodecFactory::SetCodec(
     SystemDictionaryCodecInterface *codec) {
   g_system_dictionary_codec = codec;
 }
+
 }  // namespace dictionary
 }  // namespace mozc

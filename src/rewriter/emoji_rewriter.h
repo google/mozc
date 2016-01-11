@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,8 @@
 #ifndef MOZC_REWRITER_EMOJI_REWRITER_H_
 #define MOZC_REWRITER_EMOJI_REWRITER_H_
 
-#include <stddef.h>
+#include <cstddef>
 
-#include "base/scoped_ptr.h"
 #include "converter/segments.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"

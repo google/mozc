@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@
 #include <cstring>
 #include <limits>
 #include <map>
+#include <memory>
 #include <queue>
 #include <string>
 #include <utility>
@@ -61,8 +62,10 @@
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/system/codec_interface.h"
+#include "dictionary/system/token_decode_iterator.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
@@ -76,6 +79,21 @@ using mozc::storage::louds::LoudsTrie;
 namespace {
 
 const int kMinTokenArrayBlobSize = 4;
+
+// TODO(noriyukit): The following paramters may not be well optimized.  In our
+// experiments, Select1 is computational burden, so increasing cache size for
+// lb1/select1 may improve performance.
+const size_t kKeyTrieLb0CacheSize = 1 * 1024;
+const size_t kKeyTrieLb1CacheSize = 1 * 1024;
+const size_t kKeyTrieSelect0CacheSize = 4 * 1024;
+const size_t kKeyTrieSelect1CacheSize = 4 * 1024;
+const size_t kKeyTrieTermvecCacheSize = 1 * 1024;
+
+const size_t kValueTrieLb0CacheSize = 1 * 1024;
+const size_t kValueTrieLb1CacheSize = 1 * 1024;
+const size_t kValueTrieSelect0CacheSize = 1 * 1024;
+const size_t kValueTrieSelect1CacheSize = 16 * 1024;
+const size_t kValueTrieTermvecCacheSize = 4 * 1024;
 
 // Expansion table format:
 // "<Character to expand>[<Expanded character 1><Expanded character 2>...]"
@@ -153,149 +171,6 @@ void BuildHiraganaExpansionTable(
     }
   }
 }
-
-// Note that this class is just introduced due to performance reason.
-// Conceptually, it should be in somewhere close to the codec implementation
-// (see comments in Next method for details).
-// However, it is necessary to refactor a bit larger area, especially around
-// codec implementations, to make it happen.
-// Considering the merit to introduce this class, we temporarily put it here.
-// TODO(hidehiko): Move this class into a Codec related file.
-class TokenDecodeIterator {
- public:
-  TokenDecodeIterator(
-      const SystemDictionaryCodecInterface *codec,
-      const LoudsTrie &value_trie,
-      const uint32 *frequent_pos,
-      StringPiece key,
-      const uint8 *ptr)
-      : codec_(codec),
-        value_trie_(&value_trie),
-        frequent_pos_(frequent_pos),
-        key_(key),
-        state_(HAS_NEXT),
-        ptr_(ptr),
-        token_info_(NULL) {
-    key.CopyToString(&token_.key);
-    NextInternal();
-  }
-
-  ~TokenDecodeIterator() {
-  }
-
-  const TokenInfo& Get() const { return token_info_; }
-  bool Done() const { return state_ == DONE; }
-
-  void Next() {
-    DCHECK_NE(state_, DONE);
-    if (state_ == LAST_TOKEN) {
-      state_ = DONE;
-      return;
-    }
-    NextInternal();
-  }
-
- private:
-  enum State {
-    HAS_NEXT,
-    LAST_TOKEN,
-    DONE,
-  };
-
-  void NextInternal() {
-    // Reset token_info with preserving some needed info in previous token.
-    int prev_id_in_value_trie = token_info_.id_in_value_trie;
-    token_info_.Clear();
-    token_info_.token = &token_;
-
-    // Do not clear key in token.
-    token_info_.token->attributes = Token::NONE;
-
-    // This implementation is depending on the internal behavior of DecodeToken
-    // especially which fields are updated or not. Important fields are:
-    // Token::key, Token::value : key and value are never updated.
-    // Token::cost : always updated.
-    // Token::lid, Token::rid : updated iff the pos_type is neither
-    //   FREQUENT_POS nor SAME_AS_PREV_POS.
-    // Token::attributes : updated iff the value is SPELLING_COLLECTION.
-    // TokenInfo::id_in_value_trie : updated iff the value_type is
-    //   DEFAULT_VALUE.
-    // Thus, by not-reseting Token instance intentionally, we can skip most
-    //   SAME_AS_PREV operations.
-    // The exception is Token::attributes. It is not-always set, so we need
-    // reset it everytime.
-    // This kind of structure should be packed in the codec or some
-    // related but new class.
-    int read_bytes;
-    if (!codec_->DecodeToken(ptr_, &token_info_, &read_bytes)) {
-      state_ = LAST_TOKEN;
-    }
-    ptr_ += read_bytes;
-
-    // Fill remaining values.
-    switch (token_info_.value_type) {
-      case TokenInfo::DEFAULT_VALUE: {
-        token_.value.clear();
-        LookupValue(token_info_.id_in_value_trie, &token_.value);
-        break;
-      }
-      case TokenInfo::SAME_AS_PREV_VALUE: {
-        DCHECK_NE(prev_id_in_value_trie, -1);
-        token_info_.id_in_value_trie = prev_id_in_value_trie;
-        // We can keep the current value here.
-        break;
-      }
-      case TokenInfo::AS_IS_HIRAGANA: {
-        token_.value = token_.key;
-        break;
-      }
-      case TokenInfo::AS_IS_KATAKANA: {
-        if (!key_.empty() && key_katakana_.empty()) {
-          Util::HiraganaToKatakana(key_, &key_katakana_);
-        }
-        token_.value = key_katakana_;
-        break;
-      }
-      default: {
-        LOG(DFATAL) << "unknown value_type: " << token_info_.value_type;
-        break;
-      }
-    }
-
-    if (token_info_.accent_encoding_type == TokenInfo::EMBEDDED_IN_TOKEN) {
-      token_.value.append(1, '_')
-                  .append(Util::StringPrintf("%d", token_info_.accent_type));
-    }
-
-    if (token_info_.pos_type == TokenInfo::FREQUENT_POS) {
-      const uint32 pos = frequent_pos_[token_info_.id_in_frequent_pos_map];
-      token_.lid = pos >> 16;
-      token_.rid = pos & 0xffff;
-    }
-  }
-
-  void LookupValue(int id, string *value) const {
-    char buffer[LoudsTrie::kMaxDepth + 1];
-    const StringPiece encoded_value = value_trie_->RestoreKeyString(id, buffer);
-    codec_->DecodeValue(encoded_value, value);
-  }
-
-  const SystemDictionaryCodecInterface *codec_;
-  const LoudsTrie *value_trie_;
-  const uint32 *frequent_pos_;
-
-  const StringPiece key_;
-  // Katakana key will be lazily initialized.
-  string key_katakana_;
-
-  State state_;
-  const uint8 *ptr_;
-
-  TokenInfo token_info_;
-  Token token_;
-
-  DISALLOW_COPY_AND_ASSIGN(TokenDecodeIterator);
-};
 
 inline const uint8 *GetTokenArrayPtr(const BitVectorBasedArray &token_array,
                                      int key_id) {
@@ -489,7 +364,7 @@ class SystemDictionary::ReverseLookupIndex {
       }
     }
 
-    CHECK(index_.get() != NULL);
+    CHECK(index_ != nullptr);
   }
 
   ~ReverseLookupIndex() {}
@@ -500,7 +375,7 @@ class SystemDictionary::ReverseLookupIndex {
          id_itr != id_set.end(); ++id_itr) {
       const ReverseLookupResultArray &result_array = index_[*id_itr];
       for (size_t i = 0; i < result_array.size; ++i) {
-        result_map->insert(make_pair(*id_itr, result_array.results[i]));
+        result_map->insert(std::make_pair(*id_itr, result_array.results[i]));
       }
     }
   }
@@ -508,15 +383,15 @@ class SystemDictionary::ReverseLookupIndex {
  private:
   struct ReverseLookupResultArray {
     ReverseLookupResultArray() : size(0) {}
-    // Use scoped_ptr for reducing memory consumption as possible.
+    // Use std::unique_ptr for reducing memory consumption as possible.
     // Using vector requires 90 MB even when we call resize explicitly.
-    // On the other hand, scoped_ptr requires 57 MB.
-    scoped_ptr<ReverseLookupResult[]> results;
+    // On the other hand, std::unique_ptr requires 57 MB.
+    std::unique_ptr<ReverseLookupResult[]> results;
     size_t size;
   };
 
   // Use scoped array for reducing memory consumption as possible.
-  scoped_ptr<ReverseLookupResultArray[]> index_;
+  std::unique_ptr<ReverseLookupResultArray[]> index_;
   size_t index_size_;
 
   DISALLOW_COPY_AND_ASSIGN(ReverseLookupIndex);
@@ -540,8 +415,10 @@ struct SystemDictionary::Builder::Specification {
   };
 
   Specification(InputType t, const string &fn, const char *p, int l, Options o,
-                const SystemDictionaryCodecInterface *codec)
-      : type(t), filename(fn), ptr(p), len(l), options(o), codec(codec) {}
+                const SystemDictionaryCodecInterface *codec,
+                const DictionaryFileCodecInterface *file_codec)
+      : type(t), filename(fn), ptr(p), len(l), options(o), codec(codec),
+        file_codec(file_codec) {}
 
   InputType type;
 
@@ -554,15 +431,16 @@ struct SystemDictionary::Builder::Specification {
 
   Options options;
   const SystemDictionaryCodecInterface *codec;
+  const DictionaryFileCodecInterface *file_codec;
 };
 
 SystemDictionary::Builder::Builder(const string &filename)
     : spec_(new Specification(Specification::FILENAME,
-                              filename, NULL, -1, NONE, NULL)) {}
+                              filename, nullptr, -1, NONE, nullptr, nullptr)) {}
 
 SystemDictionary::Builder::Builder(const char *ptr, int len)
     : spec_(new Specification(Specification::IMAGE,
-                              "", ptr, len, NONE, NULL)) {}
+                              "", ptr, len, NONE, nullptr, nullptr)) {}
 
 SystemDictionary::Builder::~Builder() {}
 
@@ -579,17 +457,22 @@ SystemDictionary::Builder &SystemDictionary::Builder::SetCodec(
 }
 
 SystemDictionary *SystemDictionary::Builder::Build() {
-  if (spec_->codec == NULL) {
+  if (spec_->codec == nullptr) {
     spec_->codec = SystemDictionaryCodecFactory::GetCodec();
   }
 
-  scoped_ptr<SystemDictionary> instance(new SystemDictionary(spec_->codec));
+  if (spec_->file_codec == nullptr) {
+    spec_->file_codec = DictionaryFileCodecFactory::GetCodec();
+  }
+
+  std::unique_ptr<SystemDictionary> instance(
+      new SystemDictionary(spec_->codec, spec_->file_codec));
 
   switch (spec_->type) {
     case Specification::FILENAME:
       if (!instance->dictionary_file_->OpenFromFile(spec_->filename)) {
         LOG(ERROR) << "Failed to open system dictionary file";
-        return NULL;
+        return nullptr;
       }
       break;
     case Specification::IMAGE:
@@ -601,27 +484,29 @@ SystemDictionary *SystemDictionary::Builder::Build() {
       Mmap::MaybeMLock(spec_->ptr, spec_->len);
       if (!instance->dictionary_file_->OpenFromImage(spec_->ptr, spec_->len)) {
         LOG(ERROR) << "Failed to open system dictionary image";
-        return NULL;
+        return nullptr;
       }
       break;
     default:
       LOG(ERROR) << "Invalid input type.";
-      return NULL;
+      return nullptr;
   }
 
   if (!instance->OpenDictionaryFile(
           (spec_->options & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
     LOG(ERROR) << "Failed to create system dictionary";
-    return NULL;
+    return nullptr;
   }
 
   return instance.release();
 }
 
-SystemDictionary::SystemDictionary(const SystemDictionaryCodecInterface *codec)
-    : frequent_pos_(NULL),
+SystemDictionary::SystemDictionary(
+    const SystemDictionaryCodecInterface *codec,
+    const DictionaryFileCodecInterface *file_codec)
+    : frequent_pos_(nullptr),
       codec_(codec),
-      dictionary_file_(new DictionaryFile) {}
+      dictionary_file_(new DictionaryFile(file_codec)) {}
 
 SystemDictionary::~SystemDictionary() {}
 
@@ -630,7 +515,12 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *key_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForKey(), &len));
-  if (!key_trie_.Open(key_image)) {
+  if (!key_trie_.Open(key_image,
+                      kKeyTrieLb0CacheSize,
+                      kKeyTrieLb1CacheSize,
+                      kKeyTrieSelect0CacheSize,
+                      kKeyTrieSelect1CacheSize,
+                      kKeyTrieTermvecCacheSize)) {
     LOG(ERROR) << "cannot open key trie";
     return false;
   }
@@ -639,7 +529,12 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   const uint8 *value_image = reinterpret_cast<const uint8 *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForValue(), &len));
-  if (!value_trie_.Open(value_image)) {
+  if (!value_trie_.Open(value_image,
+                        kValueTrieLb0CacheSize,
+                        kValueTrieLb1CacheSize,
+                        kValueTrieSelect0CacheSize,
+                        kValueTrieSelect1CacheSize,
+                        kValueTrieTermvecCacheSize)) {
     LOG(ERROR) << "can not open value trie";
     return false;
   }
@@ -650,7 +545,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   frequent_pos_ = reinterpret_cast<const uint32*>(
       dictionary_file_->GetSection(codec_->GetSectionNameForPos(), &len));
-  if (frequent_pos_ == NULL) {
+  if (frequent_pos_ == nullptr) {
     LOG(ERROR) << "can not find frequent pos section";
     return false;
   }
@@ -663,7 +558,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 }
 
 void SystemDictionary::InitReverseLookupIndex() {
-  if (reverse_lookup_index_.get() != NULL) {
+  if (reverse_lookup_index_ != nullptr) {
     return;
   }
   reverse_lookup_index_.reset(new ReverseLookupIndex(codec_, token_array_));
@@ -795,7 +690,8 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
 }
 
 void SystemDictionary::LookupPredictive(
-    StringPiece key, bool use_kana_modifier_insensitive_lookup,
+    StringPiece key,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   // Do nothing for empty key, although looking up all the entries with empty
   // string seems natural.
@@ -809,9 +705,9 @@ void SystemDictionary::LookupPredictive(
     return;
   }
 
-  const KeyExpansionTable &table = use_kana_modifier_insensitive_lookup
-      ? hiragana_expansion_table_
-      : KeyExpansionTable::GetDefaultInstance();
+  const KeyExpansionTable &table =
+      conversion_request.IsKanaModifierInsensitiveConversion() ?
+      hiragana_expansion_table_ : KeyExpansionTable::GetDefaultInstance();
 
   // TODO(noriyukit): Lookup limit should be implemented at caller side by using
   // callback mechanism.  This hard-coding limits the capability and generality
@@ -1106,12 +1002,12 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
 
 void SystemDictionary::LookupPrefix(
     StringPiece key,
-    bool use_kana_modifier_insensitive_lookup,
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
 
-  if (!use_kana_modifier_insensitive_lookup) {
+  if (!conversion_request.IsKanaModifierInsensitiveConversion()) {
     RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, codec_,
                             frequent_pos_, key.data(), encoded_key, callback,
                             SelectAllTokens());
@@ -1127,7 +1023,10 @@ void SystemDictionary::LookupPrefix(
                                    actual_key_buffer, &actual_prefix);
 }
 
-void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
+void SystemDictionary::LookupExact(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   // Find the key in the key trie.
   string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
@@ -1150,8 +1049,10 @@ void SystemDictionary::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-void SystemDictionary::LookupReverse(StringPiece str,
-                                     Callback *callback) const {
+void SystemDictionary::LookupReverse(
+    StringPiece str,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   // 1st step: Hiragana/Katakana are not in the value trie
   // 2nd step: Reverse lookup in value trie
   ReverseLookupCallbackWrapper callback_wrapper(callback);
@@ -1182,7 +1083,7 @@ inline void AddKeyIdsOfAllPrefixes(const LoudsTrie &trie, StringPiece key,
 }  // namespace
 
 void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
-  if (reverse_lookup_index_ != NULL) {
+  if (reverse_lookup_index_ != nullptr) {
     // We don't need to prepare cache for the current reverse conversion,
     // as we have already built the index for reverse lookup.
     return;
@@ -1207,7 +1108,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
 }
 
 void SystemDictionary::ClearReverseLookupCache() const {
-  reverse_lookup_cache_.reset(NULL);
+  reverse_lookup_cache_.reset(nullptr);
 }
 
 namespace {
@@ -1260,12 +1161,12 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   set<int> id_set;
   AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
 
-  ReverseLookupCache *results = NULL;
+  ReverseLookupCache *results = nullptr;
   ReverseLookupCache non_cached_results;
-  if (reverse_lookup_index_ != NULL) {
+  if (reverse_lookup_index_ != nullptr) {
     reverse_lookup_index_->FillResultMap(id_set, &non_cached_results.results);
     results = &non_cached_results;
-  } else if (reverse_lookup_cache_.get() != NULL &&
+  } else if (reverse_lookup_cache_ != nullptr &&
              reverse_lookup_cache_->IsAvailable(id_set)) {
     results = reverse_lookup_cache_.get();
   } else {
@@ -1273,7 +1174,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
     ScanTokens(id_set, &non_cached_results);
     results = &non_cached_results;
   }
-  DCHECK(results != NULL);
+  DCHECK(results != nullptr);
 
   RegisterReverseLookupResults(id_set, *results, callback);
 }
@@ -1288,7 +1189,7 @@ void SystemDictionary::ScanTokens(
       ReverseLookupResult lookup_result;
       lookup_result.tokens_offset = result.tokens_offset;
       lookup_result.id_in_key_trie = result.index;
-      cache->results.insert(make_pair(result.value_id, lookup_result));
+      cache->results.insert(std::make_pair(result.value_id, lookup_result));
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 
 #include "base/logging.h"
 #include "composer/composer.h"
+#include "config/config_handler.h"
+#include "session/internal/keymap_factory.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
@@ -44,8 +46,11 @@ using commands::Request;
 ImeContext::ImeContext()
     : create_time_(0),
       last_command_time_(0),
+      key_event_transformer_(new KeyEventTransformer),
       state_(NONE),
-      request_(&Request::default_instance()) {
+      request_(&Request::default_instance()),
+      config_(&config::ConfigHandler::DefaultConfig()),
+      keymap_(config::ConfigHandler::GetDefaultKeyMap()) {
 }
 ImeContext::~ImeContext() {}
 
@@ -83,6 +88,28 @@ const commands::Request &ImeContext::GetRequest() const {
   return *request_;
 }
 
+void ImeContext::SetConfig(const config::Config *config) {
+  config_ = config;
+
+  DCHECK(converter_.get());
+  converter_->SetConfig(config_);
+
+  DCHECK(composer_.get());
+  composer_->SetConfig(config_);
+
+  DCHECK(key_event_transformer_.get());
+  key_event_transformer_->ReloadConfig(*config_);
+
+  keymap_ = config->session_keymap();
+  keymap::KeyMapFactory::GetKeyMapManager(keymap_);
+  keymap::KeyMapFactory::ReloadConfig(*config_);
+}
+
+const config::Config &ImeContext::GetConfig() const {
+  DCHECK(config_);
+  return *config_;
+}
+
 // static
 void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   DCHECK(dest);
@@ -92,16 +119,15 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
 
   dest->mutable_composer()->CopyFrom(src.composer());
   dest->converter_.reset(src.converter().Clone());
+  dest->key_event_transformer_->CopyFrom(*src.key_event_transformer_);
 
   dest->set_state(src.state());
-  dest->set_keymap(src.keymap());
 
-  dest->request_ = src.request_;
+  dest->SetRequest(src.request_);
+  dest->SetConfig(src.config_);
 
   dest->mutable_client_capability()->CopyFrom(src.client_capability());
   dest->mutable_application_info()->CopyFrom(src.application_info());
-  dest->mutable_composition_rectangle()->CopyFrom(src.composition_rectangle());
-  dest->mutable_caret_rectangle()->CopyFrom(src.caret_rectangle());
   dest->mutable_output()->CopyFrom(src.output());
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/stopwatch.h"
+
+#include <memory>
 #include <numeric>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
-#include "base/scoped_ptr.h"
-#include "base/stopwatch.h"
-#include "base/util.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -44,18 +44,18 @@ class StopwatchTest : public testing::Test {
     clock_mock_.reset(new ClockMock(0, 0));
     // 1GHz (Accuracy = 1ns)
     clock_mock_->SetFrequency(1000000000uLL);
-    Util::SetClockHandler(clock_mock_.get());
+    Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
   void TearDown() {
-    Util::SetClockHandler(NULL);
+    Clock::SetClockForUnitTest(nullptr);
   }
 
   void PutForwardNanoseconds(uint64 nano_sec) {
     clock_mock_->PutClockForwardByTicks(nano_sec);
   }
 
-  scoped_ptr<ClockMock> clock_mock_;
+  std::unique_ptr<ClockMock> clock_mock_;
 };
 
 TEST_F(StopwatchTest, MultipleGetElapsedMillisecondsTest) {

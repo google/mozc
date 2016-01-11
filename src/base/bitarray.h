@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 #define MOZC_BASE_BITARRAY_H_
 
 #include <cstring>   // memset
+#include <memory>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -86,7 +86,7 @@ class BitArray {
   }
 
  private:
-  scoped_ptr<uint32[]> array_;
+  std::unique_ptr<uint32[]> array_;
   const size_t size_;
 
   DISALLOW_COPY_AND_ASSIGN(BitArray);

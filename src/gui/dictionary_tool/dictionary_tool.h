@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,14 +30,15 @@
 #ifndef MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_TOOL_H_
 #define MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_TOOL_H_
 
-#include <string>
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
 #include <QtGui/QSplitterHandle>
 #include <QtGui/QSplitter>
 
+#include <memory>
+#include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"
 #include "dictionary/user_dictionary_importer.h"
 
@@ -191,7 +192,7 @@ class DictionaryTool : public QMainWindow,
 
   ImportDialog *import_dialog_;
   FindDialog   *find_dialog_;
-  scoped_ptr<mozc::user_dictionary::UserDictionarySession> session_;
+  std::unique_ptr<mozc::user_dictionary::UserDictionarySession> session_;
 
   // ID of current selected dictionary. This needs to be maintained
   // separate from selection on the list widget because data is saved
@@ -247,15 +248,16 @@ class DictionaryTool : public QMainWindow,
   // status message
   QString statusbar_message_;
 
-  scoped_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::ClientInterface> client_;
 
   bool is_available_;
 
   // The maximum number of entries for a dictionary currently selected.
   int max_entry_size_;
 
-  scoped_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const UserPOSInterface> user_pos_;
 };
+
 }  // namespace gui
 }  // namespace mozc
 

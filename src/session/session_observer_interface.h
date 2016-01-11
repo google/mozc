@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,6 @@ class SessionObserverInterface {
   virtual ~SessionObserverInterface() {}
 
   virtual void EvalCommandHandler(const commands::Command &command) = 0;
-  virtual void Reload() = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionObserverInterface);

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,8 @@
 #include <string>
 #include <vector>
 
+#include "base/japanese_util_rule.h"
 #include "base/logging.h"
-#include "base/text_converter.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -619,7 +619,7 @@ bool NumberUtil::ArabicToOtherRadixes(
     }
     // "b0" will be "0b" in head of |binary|
     binary.append("b0");
-    reverse(binary.begin(), binary.end());
+    std::reverse(binary.begin(), binary.end());
     // "2進数"
     output->push_back(NumberString(binary, "2\xE9\x80\xB2\xE6\x95\xB0",
                                    NumberString::NUMBER_BIN));
@@ -724,6 +724,16 @@ bool SafeCast(SrcType src, DestType *dest) {
 }
 
 template <>
+bool SafeCast(int64 src, int16 *dest) {
+  if (src < static_cast<int64>(kint16min) ||
+      static_cast<int64>(kint16max) < src) {
+    return false;
+  }
+  *dest = static_cast<int16>(src);
+  return true;
+}
+
+template <>
 bool SafeCast(int64 src, int32 *dest) {
   if (src < static_cast<int64>(kint32min) ||
       static_cast<int64>(kint32max) < src) {
@@ -739,6 +749,15 @@ bool SafeCast(uint64 src, int64 *dest) {
     return false;
   }
   *dest = static_cast<int64>(src);
+  return true;
+}
+
+template <>
+bool SafeCast(uint64 src, uint16 *dest) {
+  if (src > static_cast<uint64>(kuint16max)) {
+    return false;
+  }
+  *dest = static_cast<uint16>(src);
   return true;
 }
 
@@ -776,6 +795,14 @@ bool SafeUnaryNegation(uint64 src, int64 *dest) {
 
 }  // namespace
 
+bool NumberUtil::SafeStrToInt16(StringPiece str, int16 *value) {
+  int64 tmp;
+  if (!SafeStrToInt64(str, &tmp)) {
+    return false;
+  }
+  return SafeCast(tmp, value);
+}
+
 bool NumberUtil::SafeStrToInt32(StringPiece str, int32 *value) {
   int64 tmp;
   if (!SafeStrToInt64(str, &tmp)) {
@@ -799,6 +826,14 @@ bool NumberUtil::SafeStrToInt64(StringPiece str, int64 *value) {
     }
     return SafeUnaryNegation(tmp, value);
   }
+  if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
+    return false;
+  }
+  return SafeCast(tmp, value);
+}
+
+bool NumberUtil::SafeStrToUInt16(StringPiece str, uint16 *value) {
+  uint64 tmp;
   if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
     return false;
   }
@@ -1085,7 +1120,7 @@ bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
 // depending on the maximum number in the sequence.
 bool NormalizeNumbersHelper(const vector<uint64> &numbers,
                             uint64 *number_output) {
-  const auto itr_max = max_element(numbers.begin(), numbers.end());
+  const auto itr_max = std::max_element(numbers.begin(), numbers.end());
   if (itr_max == numbers.end()) {
     return false;  // numbers is empty
   }
@@ -1179,7 +1214,7 @@ bool NormalizeNumbersInternal(StringPiece input,
   return true;
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 // Convert Kanji numbers into Arabic numbers:
 // e.g. "百二十万" -> 1200000
@@ -1208,21 +1243,13 @@ bool NumberUtil::NormalizeNumbersWithSuffix(StringPiece input,
                                   suffix);
 }
 
-namespace {
-
-// Load  Rules
-// TODO(peria): Split following header file.  No need to include Janapese
-//     character constants.
-#include "base/japanese_util_rule.h"
-
-}  // namespace
-
 void NumberUtil::KanjiNumberToArabicNumber(StringPiece input,
                                            string *output) {
-  TextConverter::Convert(kanjinumber_to_arabicnumber_da,
-                         kanjinumber_to_arabicnumber_table,
-                         input,
-                         output);
+  Util::ConvertUsingDoubleArray(
+      japanese_util_rule::kanjinumber_to_arabicnumber_da,
+      japanese_util_rule::kanjinumber_to_arabicnumber_table,
+      input,
+      output);
 }
 
 }  // namespace mozc

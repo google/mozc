@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -68,30 +68,30 @@ class KeyParserData {
     //  CHECK(keymap::KeyType::NUM_KEYTYPES < static_cast<int32>(' '));
     VLOG(1) << "Init KeyParser Data";
 
-    modifiers_map_.insert(make_pair("ctrl", KeyEvent::CTRL));
-    modifiers_map_.insert(make_pair("control", KeyEvent::CTRL));
-    modifiers_map_.insert(make_pair("alt", KeyEvent::ALT));
-    modifiers_map_.insert(make_pair("option", KeyEvent::ALT));
-    modifiers_map_.insert(make_pair("meta", KeyEvent::ALT));
-    modifiers_map_.insert(make_pair("super", KeyEvent::ALT));
-    modifiers_map_.insert(make_pair("hyper", KeyEvent::ALT));
-    modifiers_map_.insert(make_pair("shift", KeyEvent::SHIFT));
-    modifiers_map_.insert(make_pair("caps", KeyEvent::CAPS));
-    modifiers_map_.insert(make_pair("keydown", KeyEvent::KEY_DOWN));
-    modifiers_map_.insert(make_pair("keyup", KeyEvent::KEY_UP));
+    modifiers_map_.insert(std::make_pair("ctrl", KeyEvent::CTRL));
+    modifiers_map_.insert(std::make_pair("control", KeyEvent::CTRL));
+    modifiers_map_.insert(std::make_pair("alt", KeyEvent::ALT));
+    modifiers_map_.insert(std::make_pair("option", KeyEvent::ALT));
+    modifiers_map_.insert(std::make_pair("meta", KeyEvent::ALT));
+    modifiers_map_.insert(std::make_pair("super", KeyEvent::ALT));
+    modifiers_map_.insert(std::make_pair("hyper", KeyEvent::ALT));
+    modifiers_map_.insert(std::make_pair("shift", KeyEvent::SHIFT));
+    modifiers_map_.insert(std::make_pair("caps", KeyEvent::CAPS));
+    modifiers_map_.insert(std::make_pair("keydown", KeyEvent::KEY_DOWN));
+    modifiers_map_.insert(std::make_pair("keyup", KeyEvent::KEY_UP));
 
-    modifiers_map_.insert(make_pair("leftctrl", KeyEvent::CTRL));
-    modifiers_map_.insert(make_pair("leftctrl", KeyEvent::LEFT_CTRL));
-    modifiers_map_.insert(make_pair("rightctrl", KeyEvent::CTRL));
-    modifiers_map_.insert(make_pair("rightctrl", KeyEvent::RIGHT_CTRL));
-    modifiers_map_.insert(make_pair("leftalt", KeyEvent::ALT));
-    modifiers_map_.insert(make_pair("leftalt", KeyEvent::LEFT_ALT));
-    modifiers_map_.insert(make_pair("rightalt", KeyEvent::ALT));
-    modifiers_map_.insert(make_pair("rightalt", KeyEvent::RIGHT_ALT));
-    modifiers_map_.insert(make_pair("leftshift", KeyEvent::SHIFT));
-    modifiers_map_.insert(make_pair("leftshift", KeyEvent::LEFT_SHIFT));
-    modifiers_map_.insert(make_pair("rightshift", KeyEvent::SHIFT));
-    modifiers_map_.insert(make_pair("rightshift", KeyEvent::RIGHT_SHIFT));
+    modifiers_map_.insert(std::make_pair("leftctrl", KeyEvent::CTRL));
+    modifiers_map_.insert(std::make_pair("leftctrl", KeyEvent::LEFT_CTRL));
+    modifiers_map_.insert(std::make_pair("rightctrl", KeyEvent::CTRL));
+    modifiers_map_.insert(std::make_pair("rightctrl", KeyEvent::RIGHT_CTRL));
+    modifiers_map_.insert(std::make_pair("leftalt", KeyEvent::ALT));
+    modifiers_map_.insert(std::make_pair("leftalt", KeyEvent::LEFT_ALT));
+    modifiers_map_.insert(std::make_pair("rightalt", KeyEvent::ALT));
+    modifiers_map_.insert(std::make_pair("rightalt", KeyEvent::RIGHT_ALT));
+    modifiers_map_.insert(std::make_pair("leftshift", KeyEvent::SHIFT));
+    modifiers_map_.insert(std::make_pair("leftshift", KeyEvent::LEFT_SHIFT));
+    modifiers_map_.insert(std::make_pair("rightshift", KeyEvent::SHIFT));
+    modifiers_map_.insert(std::make_pair("rightshift", KeyEvent::RIGHT_SHIFT));
 
     keycode_map_["on"] = KeyEvent::ON;
     keycode_map_["off"] = KeyEvent::OFF;

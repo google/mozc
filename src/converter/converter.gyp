@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,9 +47,9 @@
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction.gyp:prediction_protocol',
         '../protocol/protocol.gyp:commands_proto',
+        '../request/request.gyp:conversion_request',
         '../rewriter/rewriter.gyp:rewriter',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
-        'converter_base.gyp:conversion_request',
         'converter_base.gyp:immutable_converter',
         'converter_base.gyp:immutable_converter_interface',
         'converter_base.gyp:segmenter',

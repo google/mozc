@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/util.h"

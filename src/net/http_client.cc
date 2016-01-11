@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 
 #include "net/http_client.h"
 
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
-#ifdef MOZC_ENABLE_HTTP_CLIENT
 #if defined(OS_WIN)
 #include <windows.h>
 #include <wininet.h>
@@ -39,7 +39,8 @@
 #elif defined(HAVE_CURL)
 #include <curl/curl.h>
 #endif
-#endif  // MOZC_ENABLE_HTTP_CLIENT
+
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 #include "base/compiler_specific.h"
 #include "base/logging.h"
@@ -48,11 +49,18 @@
 #include "base/stopwatch.h"
 #include "base/util.h"
 #include "net/http_client_common.h"
-#ifdef MOZC_ENABLE_HTTP_CLIENT
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+#if defined(OS_MACOSX)
 #include "net/http_client_mac.h"
+#elif defined(OS_NACL)  // OS_MACOSX
 #include "net/http_client_pepper.h"
+#endif  // OS_MACOSX or OS_NACL
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
+#include "net/http_client_null.h"
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
 #include "net/proxy_manager.h"
-#endif  // MOZC_ENABLE_HTTP_CLIENT
 
 namespace mozc {
 // We use a dummy user agent.
@@ -60,7 +68,6 @@ const char *kUserAgent = "Mozilla/5.0";
 const int kOKResponseCode = 200;
 
 namespace {
-#if defined(MOZC_ENABLE_HTTP_CLIENT)
 class HTTPStream {
  public:
   HTTPStream(string *output_string, size_t max_data_size)
@@ -98,6 +105,8 @@ class HTTPStream {
   size_t   max_data_size_;
   size_t   output_size_;
 };
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 #ifdef OS_WIN
 // RAII class for HINTERNET
@@ -227,7 +236,7 @@ bool RequestInternal(HTTPMethodType type,
   uc.dwExtraInfoLength = sizeof(ExtraInfo);
 
   wstring wurl;
-  Util::UTF8ToWide(url.c_str(), &wurl);
+  Util::UTF8ToWide(url, &wurl);
 
   if (!::InternetCrackUrlW(wurl.c_str(), 0, 0, &uc)) {
     LOG(WARNING) << "InternetCrackUrl() failed: "
@@ -288,7 +297,7 @@ bool RequestInternal(HTTPMethodType type,
   for (size_t i = 0; i < option.headers.size(); ++i) {
     const string header = option.headers[i] + "\r\n";
     wstring wheader;
-    Util::UTF8ToWide(header.c_str(), &wheader);
+    Util::UTF8ToWide(header, &wheader);
     if (!::HttpAddRequestHeadersW(handle.get(), wheader.c_str(), -1,
                                   HTTP_ADDREQ_FLAG_ADD |
                                   HTTP_ADDREQ_FLAG_REPLACE)) {
@@ -400,7 +409,7 @@ bool RequestInternal(HTTPMethodType type,
   return true;
 }
 
-#elif defined(OS_MACOSX)
+#elif defined(OS_MACOSX)  // OS_WIN
 
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
@@ -413,7 +422,7 @@ bool RequestInternal(HTTPMethodType type,
                                         output_string);
 }
 
-#elif defined(__native_client__)
+#elif defined(OS_NACL)  // OS_WIN, OS_MACOSX
 
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
@@ -426,7 +435,7 @@ bool RequestInternal(HTTPMethodType type,
                                            output_string);
 }
 
-#elif defined(OS_ANDROID)
+#elif defined(OS_ANDROID)  // OS_WIN, OS_MACOSX, OS_NACL
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
                      const char *post_data,
@@ -578,23 +587,24 @@ bool RequestInternal(HTTPMethodType type,
 
   return result;
 }
-#else  // defined(HAVE_CURL)
-// None of OS_WIN/OS_MACOSX/HAVE_CURL is defined.
+#else  // OS_WIN, OS_MACOSX, OS_NACL, OS_ANDROID, HAVE_CURL
 #error "HttpClient does not support your platform."
-#endif  // defined(HAVE_CURL)
-#else  // defined(MOZC_ENABLE_HTTP_CLIENT)
-// MOZC_ENABLE_HTTP_CLIENT is not defined
+#endif  // OS_WIN, OS_MACOSX, OS_NACL, OS_ANDROID, HAVE_CURL
+
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
+
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
                      const char *post_data,
                      size_t post_size,
                      const HTTPClient::Option &option,
                      string *output_string) {
-  // Null implementation.
-  LOG(ERROR) << "HttpClient is not enabled.";
-  return false;
+  return NullHTTPRequestHandler::Request(type, url,
+                                         post_data, post_size, option,
+                                         output_string);
 }
-#endif  // MOZC_ENABLE_HTTP_CLIENT
+
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 }  // namespace
 

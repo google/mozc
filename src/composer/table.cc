@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,15 @@
 
 #include <istream>  // NOLINT
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
@@ -380,7 +381,7 @@ bool Table::LoadFromString(const string &str) {
 }
 
 bool Table::LoadFromFile(const char *filepath) {
-  scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filepath));
+  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filepath));
   if (ifs.get() == NULL) {
     return false;
   }
@@ -413,7 +414,7 @@ TableAttributes ParseAttributes(const string &input) {
   }
   return attributes;
 }
-}  // anonymous namespace
+}  // namespace
 
 bool Table::LoadFromStream(istream *is) {
   DCHECK(is);
@@ -548,7 +549,7 @@ bool FindBlock(const string &input, const string &open, const string &close,
 
   return true;
 }
-}  // anonymous namespace
+}  // namespace
 
 // static
 string Table::ParseSpecialKey(const string &input) {
@@ -603,7 +604,7 @@ string Table::DeleteSpecialKey(const string &input) {
 // TableContainer
 // ========================================
 TableManager::TableManager()
-    : custom_roman_table_fingerprint_(Util::Fingerprint32("")) {
+    : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {
 }
 
 TableManager::~TableManager() {
@@ -632,7 +633,7 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
       config.has_custom_roman_table() &&
       !config.custom_roman_table().empty()) {
     const uint32 custom_roman_table_fingerprint =
-        Util::Fingerprint32(config.custom_roman_table());
+        Hash::Fingerprint32(config.custom_roman_table());
     if (custom_roman_table_fingerprint != custom_roman_table_fingerprint_) {
       update_custom_roman_table = true;
       custom_roman_table_fingerprint_ = custom_roman_table_fingerprint;
@@ -650,7 +651,7 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
     }
   }
 
-  scoped_ptr<Table> table(new Table());
+  std::unique_ptr<Table> table(new Table());
   if (!table->InitializeWithRequestAndConfig(request, config)) {
     return NULL;
   }
@@ -659,5 +660,6 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
   table_map_[hash] = table_to_cache;
   return table_to_cache;
 }
+
 }  // namespace composer
 }  // namespace mozc

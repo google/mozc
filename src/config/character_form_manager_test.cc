@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,9 +47,6 @@ class CharacterFormManagerTest : public testing::Test {
   virtual void SetUp() {
     // set default user profile directory
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
     CharacterFormManager *manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();
@@ -59,10 +56,6 @@ class CharacterFormManagerTest : public testing::Test {
     CharacterFormManager *manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();
-    // reset config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
   }
 };
 

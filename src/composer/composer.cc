@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 
 #include "composer/composer.h"
 
+#include "base/flags.h"
 #include "base/logging.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
@@ -194,7 +194,9 @@ const size_t kMaxPreeditLength = 256;
 
 }  // namespace
 
-Composer::Composer(const Table *table, const commands::Request *request)
+Composer::Composer(const Table *table,
+                   const commands::Request *request,
+                   const config::Config *config)
     : position_(0),
       is_new_input_(true),
       input_mode_(transliteration::HIRAGANA),
@@ -207,8 +209,10 @@ Composer::Composer(const Table *table, const commands::Request *request)
                         FLAGS_max_typing_correction_query_candidates,
                         FLAGS_max_typing_correction_query_results),
       max_length_(kMaxPreeditLength),
-      request_(request) {
+      request_(request),
+      config_(config) {
   SetInputMode(transliteration::HIRAGANA);
+  typing_corrector_.SetConfig(config);
   Reset();
 }
 
@@ -242,6 +246,11 @@ void Composer::SetTable(const Table *table) {
 
 void Composer::SetRequest(const commands::Request *request) {
   request_ = request;
+}
+
+void Composer::SetConfig(const config::Config *config) {
+  config_ = config;
+  typing_corrector_.SetConfig(config);
 }
 
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
@@ -317,7 +326,7 @@ void Composer::ApplyTemporaryInputMode(const string &input, bool caps_locked) {
   DCHECK(!input.empty());
 
   const config::Config::ShiftKeyModeSwitch switch_mode =
-      GET_CONFIG(shift_key_mode_switch);
+      config_->shift_key_mode_switch();
 
   // Input is NOT an ASCII code.
   if (Util::OneCharLen(input.c_str()) != 1) {
@@ -503,7 +512,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     return false;
   }
 
-  bool is_typing_correction_enabled = GET_CONFIG(use_typing_correction) ||
+  bool is_typing_correction_enabled = config_->use_typing_correction() ||
                                       FLAGS_enable_typing_correction;
   if (key.has_key_string()) {
     if (key.input_style() == commands::KeyEvent::AS_IS ||
@@ -763,7 +772,7 @@ string *GetBaseQueryForPrediction(string *asis_query,
     return trimed_query;
   }
 }
-}  // anonymous namespace
+}  // namespace
 
 void Composer::GetQueryForPrediction(string *output) const {
   string asis_query;
@@ -899,12 +908,12 @@ bool Composer::EnableInsert() const {
 }
 
 void Composer::AutoSwitchMode() {
-  if (!GET_CONFIG(use_auto_ime_turn_off)) {
+  if (!config_->use_auto_ime_turn_off()) {
     return;
   }
 
   // AutoSwitchMode is only available on Roma input
-  if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
+  if (config_->preedit_method() != config::Config::ROMAN) {
     return;
   }
 
@@ -1021,7 +1030,7 @@ enum Script {
 bool IsAlphabetOrNumber(const Script script) {
   return (script == ALPHABET) || (script == NUMBER);
 }
-}  // anonymous namespace
+}  // namespace
 
 // static
 bool Composer::TransformCharactersForNumbers(string *query) {
@@ -1205,6 +1214,7 @@ void Composer::CopyFrom(const Composer &src) {
 
   composition_.reset(src.composition_->Clone());
   request_ = src.request_;
+  config_ = src.config_;
 
   typing_corrector_.CopyFrom(src.typing_corrector_);
 }

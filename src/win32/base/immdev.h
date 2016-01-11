@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_BASE_IME_IMMDEV_H_
-#define MOZC_WIN32_BASE_IME_IMMDEV_H_
+#ifndef MOZC_WIN32_BASE_IMMDEV_H_
+#define MOZC_WIN32_BASE_IMMDEV_H_
 
 #include <imm.h>
 
@@ -296,4 +296,4 @@ typedef struct tagIMEPENDATA {
 #ifdef __cplusplus
 }       // extern "C"
 #endif
-#endif  // MOZC_WIN32_BASE_IME_IMMDEV_H_
+#endif  // MOZC_WIN32_BASE_IMMDEV_H_

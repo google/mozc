@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,10 @@
 #define MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
 
 #include "composer/key_event_util.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
 
 namespace mozc {
-
-namespace commands {
-class KeyEvent;
-}  // namespace commands
-
 namespace keymap {
 
 template<typename T>

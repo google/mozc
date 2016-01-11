@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,14 +31,12 @@
 
 #include "handwriting/zinnia_handwriting.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "base/file_util.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace handwriting {
@@ -46,21 +44,20 @@ namespace handwriting {
 class ZinniaHandwritingTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    const string filepath = FileUtil::JoinPath(
-        FLAGS_test_srcdir,
-        "handwriting-ja.model");
+    const string filepath = mozc::testing::GetSourceFileOrDie({
+        "handwriting", "handwriting-ja.model"});
     zinnia_.reset(new ZinniaHandwriting(filepath));
   }
 
-  scoped_ptr<ZinniaHandwriting> zinnia_;
+  std::unique_ptr<ZinniaHandwriting> zinnia_;
 };
 
 TEST_F(ZinniaHandwritingTest, Recognize) {
   // Initialize a horizontal line like "一".
   Strokes strokes;
   Stroke stroke;
-  stroke.push_back(make_pair(0.2, 0.5));
-  stroke.push_back(make_pair(0.8, 0.5));
+  stroke.push_back(std::make_pair(0.2, 0.5));
+  stroke.push_back(std::make_pair(0.8, 0.5));
   strokes.push_back(stroke);
 
   vector<string> results;

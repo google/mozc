@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,10 +39,10 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -63,7 +64,7 @@ class EmoticonDictionary {
   }
 
  private:
-  scoped_ptr<EmbeddedDictionary> dic_;
+  std::unique_ptr<EmbeddedDictionary> dic_;
 };
 
 class ValueCostCompare {
@@ -105,15 +106,14 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
     sorted_value.push_back(&value[i]);
   }
 
-  sort(sorted_value.begin(), sorted_value.end(), ValueCostCompare());
+  std::sort(sorted_value.begin(), sorted_value.end(), ValueCostCompare());
 
   // after sorting the valeus by |cost|, adjacent candidates
   // will have the same value. It is almost OK to use std::unique to
   // remove dup entries, it is not a perfect way though.
-  sorted_value.erase(unique(sorted_value.begin(),
-                            sorted_value.end(),
-                            IsEqualValue()),
-                     sorted_value.end());
+  sorted_value.erase(
+      std::unique(sorted_value.begin(), sorted_value.end(), IsEqualValue()),
+      sorted_value.end());
 
   for (size_t i = 0; i < sorted_value.size(); ++i) {
     Segment::Candidate *c = NULL;
@@ -260,7 +260,7 @@ int EmoticonRewriter::capability(const ConversionRequest &request) const {
 
 bool EmoticonRewriter::Rewrite(const ConversionRequest &request,
                                Segments *segments) const {
-  if (!GET_CONFIG(use_emoticon_conversion)) {
+  if (!request.config().use_emoticon_conversion()) {
     VLOG(2) << "no use_emoticon_conversion";
     return false;
   }

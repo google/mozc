@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,10 @@
 
 #include <climits>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/stl_util.h"
 #include "base/string_piece.h"
 #include "base/util.h"
@@ -48,7 +48,7 @@ const int kDummyPosId = 1;
 
 bool HasKeyInternal(const map<string, vector<Token *>> &dic, StringPiece key) {
   typedef vector<Token *> TokenPtrVector;
-  for (map<string, vector<Token *> >::const_iterator map_it = dic.begin();
+  for (map<string, vector<Token *>>::const_iterator map_it = dic.begin();
        map_it != dic.end(); ++map_it) {
     const TokenPtrVector &v = map_it->second;
     for (TokenPtrVector::const_iterator it = v.begin(); it != v.end(); ++it) {
@@ -63,7 +63,7 @@ bool HasKeyInternal(const map<string, vector<Token *>> &dic, StringPiece key) {
 bool HasValueInternal(const map<string, vector<Token *>> &dic,
                       StringPiece value) {
   typedef vector<Token *> TokenPtrVector;
-  for (map<string, vector<Token *> >::const_iterator map_it = dic.begin();
+  for (map<string, vector<Token *>>::const_iterator map_it = dic.begin();
        map_it != dic.end(); ++map_it) {
     const TokenPtrVector &v = map_it->second;
     for (TokenPtrVector::const_iterator it = v.begin(); it != v.end(); ++it) {
@@ -77,7 +77,7 @@ bool HasValueInternal(const map<string, vector<Token *>> &dic,
 
 Token *CreateToken(const string &str, const string &key, const string &value,
                    Token::AttributesBitfield attributes) {
-  scoped_ptr<Token> token(new Token());
+  std::unique_ptr<Token> token(new Token());
   token->key = key;
   token->value = value;
   // TODO(noriyukit): Currently, we cannot set cost and POS IDs.
@@ -87,8 +87,8 @@ Token *CreateToken(const string &str, const string &key, const string &value,
   return token.release();
 }
 
-void DeletePtrs(map<string, vector<Token *> > *m) {
-  for (map<string, vector<Token *> >::iterator iter = m->begin();
+void DeletePtrs(map<string, vector<Token *>> *m) {
+  for (map<string, vector<Token *>>::iterator iter = m->begin();
        iter != m->end(); ++iter) {
     STLDeleteElements(&iter->second);
   }
@@ -123,9 +123,9 @@ bool DictionaryMock::HasValue(StringPiece value) const {
 
 void DictionaryMock::LookupPredictive(
     StringPiece key,
-    bool,  // use_kana_modifier_insensitive_lookup
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
-  map<string, vector<Token *> >::const_iterator vector_iter =
+  map<string, vector<Token *>>::const_iterator vector_iter =
       predictive_dictionary_.find(key.as_string());
   if (vector_iter == predictive_dictionary_.end()) {
     return;
@@ -144,14 +144,14 @@ void DictionaryMock::LookupPredictive(
 
 void DictionaryMock::LookupPrefix(
     StringPiece key,
-    bool,  // use_kana_modifier_insensitive_lookup
+    const ConversionRequest &conversion_request,
     Callback *callback) const {
   CHECK(!key.empty());
 
   string prefix;
   for (size_t len = 1; len <= key.size(); ++len) {
     key.substr(0, len).CopyToString(&prefix);
-    map<string, vector<Token *> >::const_iterator iter =
+    map<string, vector<Token *>>::const_iterator iter =
         prefix_dictionary_.find(prefix);
     if (iter == prefix_dictionary_.end()) {
       continue;
@@ -188,8 +188,11 @@ void DictionaryMock::LookupPrefix(
   }
 }
 
-void DictionaryMock::LookupExact(StringPiece key, Callback *callback) const {
-  map<string, vector<Token *> >::const_iterator iter =
+void DictionaryMock::LookupExact(
+    StringPiece key,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
+  map<string, vector<Token *>>::const_iterator iter =
       exact_dictionary_.find(key.as_string());
   if (iter == exact_dictionary_.end()) {
     return;
@@ -206,13 +209,16 @@ void DictionaryMock::LookupExact(StringPiece key, Callback *callback) const {
   }
 }
 
-void DictionaryMock::LookupReverse(StringPiece str, Callback *callback) const {
+void DictionaryMock::LookupReverse(
+    StringPiece str,
+    const ConversionRequest &conversion_request,
+    Callback *callback) const {
   CHECK(!str.empty());
 
   for (int i = 1; i <= str.size(); ++i) {
     StringPiece prefix = str.substr(0, i);
 
-    map<string, vector<Token *> >::const_iterator iter =
+    map<string, vector<Token *>>::const_iterator iter =
         reverse_dictionary_.find(prefix.as_string());
     if (iter == reverse_dictionary_.end()) {
       continue;

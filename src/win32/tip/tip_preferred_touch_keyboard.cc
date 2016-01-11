@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,43 +45,6 @@ namespace tsf {
 namespace {
 
 using ATL::CComPtr;
-
-// SPI_GETTHREADLOCALINPUTSETTINGS is available on Windows 8 SDK and later.
-#ifndef SPI_SETTHREADLOCALINPUTSETTINGS
-#define SPI_SETTHREADLOCALINPUTSETTINGS 0x104F
-#endif  // SPI_SETTHREADLOCALINPUTSETTINGS
-
-// ITfFnGetPreferredTouchKeyboardLayout is available on Windows 8 SDK and later.
-#ifndef TKBL_UNDEFINED
-#define TKBL_UNDEFINED                             0x0000
-#define TKBL_CLASSIC_TRADITIONAL_CHINESE_PHONETIC  0x0404
-#define TKBL_CLASSIC_TRADITIONAL_CHINESE_CHANGJIE  0xF042
-#define TKBL_CLASSIC_TRADITIONAL_CHINESE_DAYI      0xF043
-#define TKBL_OPT_JAPANESE_ABC                      0x0411
-#define TKBL_OPT_KOREAN_HANGUL_2_BULSIK            0x0412
-#define TKBL_OPT_SIMPLIFIED_CHINESE_PINYIN         0x0804
-#define TKBL_OPT_TRADITIONAL_CHINESE_PHONETIC      0x0404
-
-enum TKBLayoutType {
-  TKBLT_UNDEFINED = 0,
-  TKBLT_CLASSIC = 1,
-  TKBLT_OPTIMIZED = 2
-};
-
-// {5F309A41-590A-4ACC-A97F-D8EFFF13FDFC}
-const IID IID_ITfFnGetPreferredTouchKeyboardLayout = {
-  0x5f309a41, 0x590a, 0x4acc, {0xa9, 0x7f, 0xd8, 0xef, 0xff, 0x13, 0xfd, 0xfc}
-};
-
-// Note: "5F309A41-590A-4ACC-A97F-D8EFFF13FDFC" is equivalent to
-// IID_ITfFnGetPreferredTouchKeyboardLayout
-struct __declspec(uuid("5F309A41-590A-4ACC-A97F-D8EFFF13FDFC"))
-ITfFnGetPreferredTouchKeyboardLayout : public ITfFunction {
- public:
-  virtual HRESULT STDMETHODCALLTYPE GetLayout(TKBLayoutType *layout_type,
-                                              WORD *preferred_layout_id) = 0;
-};
-#endif  // !TKBL_UNDEFINED
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =

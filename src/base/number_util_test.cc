@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,66 @@ TEST(NumberUtilTest, SimpleAtoi) {
   EXPECT_EQ(0, NumberUtil::SimpleAtoi("0"));
   EXPECT_EQ(123, NumberUtil::SimpleAtoi("123"));
   EXPECT_EQ(-1, NumberUtil::SimpleAtoi("-1"));
+}
+
+TEST(NumberUtilTest, SafeStrToInt16) {
+  int16 value = 0x4321;
+
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("0", &value));
+  EXPECT_EQ(0, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("+0", &value));
+  EXPECT_EQ(0, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("-0", &value));
+  EXPECT_EQ(0, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16(" \t\r\n\v\f0 \t\r\n\v\f", &value));
+  EXPECT_EQ(0, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16(" \t\r\n\v\f-0 \t\r\n\v\f", &value));
+  EXPECT_EQ(0, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("012345", &value));
+  EXPECT_EQ(12345, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("-012345", &value));
+  EXPECT_EQ(-12345, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("-32768", &value));
+  EXPECT_EQ(kint16min, value);  // min of 16-bit signed integer
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("32767", &value));
+  EXPECT_EQ(kint16max, value);  // max of 16-bit signed integer
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16(" 1", &value));
+  EXPECT_EQ(1, value);
+  value = 0x4321;
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16("2 ", &value));
+  EXPECT_EQ(2, value);
+
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16("0x1234", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16("-32769", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16("32768", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16("18446744073709551616", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16("3e", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16("0.", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16(".0", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16("", &value));
+
+  // Test for StringPiece input.
+  const char *kString = "123 abc 789";
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16(StringPiece(kString, 3),
+                                         &value));
+  EXPECT_EQ(123, value);
+  EXPECT_FALSE(NumberUtil::SafeStrToInt16(StringPiece(kString + 4, 3),
+                                          &value));
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16(StringPiece(kString + 8, 3),
+                                         &value));
+  EXPECT_EQ(789, value);
+  EXPECT_TRUE(NumberUtil::SafeStrToInt16(StringPiece(kString + 7, 4),
+                                         &value));
+  EXPECT_EQ(789, value);
 }
 
 TEST(NumberUtilTest, SafeStrToInt32) {
@@ -166,6 +226,56 @@ TEST(NumberUtilTest, SafeStrToInt64) {
                                           &value));
   EXPECT_TRUE(NumberUtil::SafeStrToInt64(StringPiece(kString + 8, 3),
                                          &value));
+  EXPECT_EQ(789, value);
+}
+
+TEST(NumberUtilTest, SafeStrToUInt16) {
+  uint16 value = 0xBEEF;
+
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16("0", &value));
+  EXPECT_EQ(0, value);
+
+  value = 0xBEEF;
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(" \t\r\n\v\f0 \t\r\n\v\f", &value));
+  EXPECT_EQ(0, value);
+
+  value = 0xBEEF;
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16("012345", &value));
+  EXPECT_EQ(12345, value);
+
+  value = 0xBEEF;
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16("65535", &value));
+  EXPECT_EQ(65535u, value);  // max of 16-bit unsigned integer
+
+  value = 0xBEEF;
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(" 1", &value));
+  EXPECT_EQ(1, value);
+
+  value = 0xBEEF;
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16("2 ", &value));
+  EXPECT_EQ(2, value);
+
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16("-0", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16("0x1234", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16("65536", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16("18446744073709551616", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16("3e", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16("0.", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16(".0", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16("", &value));
+
+  // Test for StringPiece input.
+  const char *kString = "123 abc 789";
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(StringPiece(kString, 3),
+                                          &value));
+  EXPECT_EQ(123, value);
+  EXPECT_FALSE(NumberUtil::SafeStrToUInt16(StringPiece(kString + 4, 3),
+                                           &value));
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(StringPiece(kString + 8, 3),
+                                          &value));
+  EXPECT_EQ(789, value);
+  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(StringPiece(kString + 7, 4),
+                                          &value));
   EXPECT_EQ(789, value);
 }
 

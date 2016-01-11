@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,10 +38,11 @@
 #ifdef OS_WIN
 #include <map>
 #endif  // OS_WIN
+#include <memory>
 #include <string>
+
 #include "base/mutex.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 // For FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
 
@@ -125,9 +126,9 @@ class IPCPathManager {
   // Returns the last modified timestamp of the IPC file.
   time_t GetIPCFileTimeStamp() const;
 
-  scoped_ptr<ProcessMutex> path_mutex_;   // lock ipc path file
-  scoped_ptr<Mutex> mutex_;   // mutex for methods
-  scoped_ptr<ipc::IPCPathInfo> ipc_path_info_;
+  std::unique_ptr<ProcessMutex> path_mutex_;   // lock ipc path file
+  std::unique_ptr<Mutex> mutex_;   // mutex for methods
+  std::unique_ptr<ipc::IPCPathInfo> ipc_path_info_;
   string name_;
   string server_path_;   // cache for server_path
   uint32 server_pid_;    // cache for pid of server_path
@@ -136,6 +137,7 @@ class IPCPathManager {
   map<string, wstring> expected_server_ntpath_cache_;
 #endif  // OS_WIN
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_IPC_IPC_PATH_MANAGER_H_

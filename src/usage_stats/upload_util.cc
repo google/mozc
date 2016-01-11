@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "usage_stats/upload_util.h"
 
+#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "net/http_client.h"

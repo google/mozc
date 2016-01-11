@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "session/session.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,16 +40,17 @@
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
+#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
@@ -61,8 +63,6 @@
 
 using ::mozc::commands::Request;
 using ::mozc::usage_stats::UsageStats;
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -384,15 +384,6 @@ string GetComposition(const commands::Command &command) {
 #define EXPECT_RESULT_AND_KEY(expected_value, expected_key, command)  \
     EXPECT_TRUE(EnsureResultAndKey(expected_value, expected_key, command))
 
-void SetCaretLocation(const commands::Rectangle rectangle, Session *session) {
-  commands::Command command;
-  SetSendCommandCommand(commands::SessionCommand::SEND_CARET_LOCATION,
-                        &command);
-  command.mutable_input()->mutable_command()->mutable_caret_rectangle()->
-      CopyFrom(rectangle);
-  EXPECT_TRUE(session->SendCommand(&command));
-}
-
 void SwitchInputFieldType(commands::Context::InputFieldType type,
                           Session *session) {
   commands::Command command;
@@ -465,7 +456,7 @@ class MockConverterEngineForReset : public EngineInterface {
   }
 
  private:
-  scoped_ptr<ConverterMockForReset> converter_mock_;
+  std::unique_ptr<ConverterMockForReset> converter_mock_;
 };
 
 class ConverterMockForRevert : public ConverterMock {
@@ -523,7 +514,7 @@ class MockConverterEngineForRevert : public EngineInterface {
   }
 
  private:
-  scoped_ptr<ConverterMockForRevert> converter_mock_;
+  std::unique_ptr<ConverterMockForRevert> converter_mock_;
 };
 
 }  // namespace
@@ -532,10 +523,6 @@ class SessionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
 
     UsageStats::ClearAllStatsForTest();
 
@@ -552,11 +539,6 @@ class SessionTest : public testing::Test {
 
   virtual void TearDown() {
     UsageStats::ClearAllStatsForTest();
-
-    // just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
   }
 
   void InsertCharacterChars(const string &chars,
@@ -683,7 +665,7 @@ class SessionTest : public testing::Test {
     session->SetRequest(&request);
     table_.reset(new composer::Table());
     table_->InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::GetConfig());
+        request, config::ConfigHandler::DefaultConfig());
     session->SetTable(table_.get());
   }
 
@@ -722,7 +704,7 @@ class SessionTest : public testing::Test {
 
   void SetComposer(Session *session, ConversionRequest *request) {
     DCHECK(request);
-    request->set_composer(session->get_internal_composer_only_for_unittest());
+    request->set_composer(&session->context().composer());
   }
 
   void SetupMockForReverseConversion(const string &kanji,
@@ -830,6 +812,7 @@ class SessionTest : public testing::Test {
 
       GetConverterMock()->SetCommitSegmentValue(&segments, true);
       command.Clear();
+
       session->Commit(&command);
       EXPECT_FALSE(command.output().has_preedit());
       // "あいうえお"
@@ -841,77 +824,48 @@ class SessionTest : public testing::Test {
     return engine_->mutable_converter_mock();
   }
 
-  // IMPORTANT: Use scoped_ptr and instanciate an object in SetUp() method
+  // IMPORTANT: Use std::unique_ptr and instanciate an object in SetUp() method
   //    if the target object should be initialized *AFTER* global settings
   //    such as user profile dir or global config are set up for unit test.
-  //    If you directly define a variable here without scoped_ptr, its
+  //    If you directly define a variable here without std::unique_ptr, its
   //    constructor will be called *BEFORE* SetUp() is called.
-  scoped_ptr<MockConverterEngine> engine_;
-  scoped_ptr<EngineInterface> mock_data_engine_;
-  scoped_ptr<TransliterationRewriter> t13n_rewriter_;
-  scoped_ptr<composer::Table> table_;
-  scoped_ptr<Request> mobile_request_;
+  std::unique_ptr<MockConverterEngine> engine_;
+  std::unique_ptr<EngineInterface> mock_data_engine_;
+  std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
+  std::unique_ptr<composer::Table> table_;
+  std::unique_ptr<Request> mobile_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+  scoped_data_manager_initializer_for_testing
+      scoped_data_manager_initializer_for_testing_;
 };
 
 // This test is intentionally defined at this location so that this
-// test can ensure that the first SetUp() initialized global
-// config, and table object to the default state.
-// Please do not define another test before this.
+// test can ensure that the first SetUp() initialized table object to
+// the default state.  Please do not define another test before this.
 // FYI, each TEST_F will be eventually expanded into a global variable
 // and global variables in a single translation unit (source file) are
 // always initialized in the order in which they are defined.
 TEST_F(SessionTest, TestOfTestForSetup) {
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  config::ConfigHandler::GetDefaultConfig(&config);
   EXPECT_FALSE(config.has_use_auto_conversion())
-      << "Global config should be initialized for each text fixture.";
+      << "Global config should be initialized for each test fixture.";
 
   // Make sure that the default roman table is initialized.
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     SendKey("a", session.get(), &command);
     // "あ"
     EXPECT_SINGLE_SEGMENT(kHiraganaA, command)
-        << "Global Romaji table should be initialized for each text fixture.";
-  }
-
-  // intentionally leave non-default value so that |TestOfTestForTearDown|
-  // can test it later.
-  config.set_use_auto_conversion(true);
-  config::ConfigHandler::SetConfig(config);
-}
-
-// This test ensures that the TearDown() against |TestOfTestForSetup|
-// restored global config, and table object to the default state
-// Please do not define another test between |TestOfTestForSetup| and
-// this test.
-// FYI, each TEST_F will be eventually expanded into a global variable
-// and global variables in a single translation unit (source file) are
-// always initialized in the order in which they are defined.
-TEST_F(SessionTest, TestOfTestForTearDown) {
-  // Make sure that the initial global config has default value.
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  EXPECT_FALSE(config.has_use_auto_conversion())
-      << "Global config should be initialized for each text fixture.";
-
-  // Make sure that the initial roman table has default value.
-  {
-    scoped_ptr<Session> session(new Session(engine_.get()));
-    InitSessionToPrecomposition(session.get());
-    commands::Command command;
-    SendKey("a", session.get(), &command);
-    // "あ"
-    EXPECT_SINGLE_SEGMENT(kHiraganaA, command)
-        << "Global Romaji table should be initialized for each text fixture.";
+        << "Global Romaji table should be initialized for each test fixture.";
   }
 }
 
 TEST_F(SessionTest, TestSendKey) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -924,8 +878,8 @@ TEST_F(SessionTest, TestSendKey) {
   EXPECT_FALSE(command.output().consumed());
 
   // InsertSpace on Precomposition status
-  // TODO(komatsu): Test both cases of GET_CONFIG(ascii_character_form) is
-  // FULL_WIDTH and HALF_WIDTH after dependency injection of GET_CONFIG.
+  // TODO(komatsu): Test both cases of config.ascii_character_form() is
+  // FULL_WIDTH and HALF_WIDTH.
   TestSendKey("Space", session.get(), &command);
   const bool consumed_on_testsendkey = command.output().consumed();
   SendKey("Space", session.get(), &command);
@@ -946,7 +900,7 @@ TEST_F(SessionTest, TestSendKey) {
 }
 
 TEST_F(SessionTest, SendCommand) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -993,7 +947,7 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
   // test of reseting the history segements
-  scoped_ptr<MockConverterEngineForReset> engine(
+  std::unique_ptr<MockConverterEngineForReset> engine(
       new MockConverterEngineForReset);
   session.reset(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
@@ -1010,7 +964,7 @@ TEST_F(SessionTest, SendCommand) {
 
 TEST_F(SessionTest, SwitchInputMode) {
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -1033,7 +987,7 @@ TEST_F(SessionTest, SwitchInputMode) {
   {
     // Confirm that we can change the mode from DIRECT
     // to other modes directly (without IMEOn command).
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -1064,7 +1018,7 @@ TEST_F(SessionTest, SwitchInputMode) {
 
 TEST_F(SessionTest, RevertComposition) {
   // Issue#2237323
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -1091,7 +1045,7 @@ TEST_F(SessionTest, RevertComposition) {
 }
 
 TEST_F(SessionTest, InputMode) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->InputModeHalfASCII(&command));
@@ -1111,7 +1065,7 @@ TEST_F(SessionTest, InputMode) {
 }
 
 TEST_F(SessionTest, SelectCandidate) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1142,7 +1096,7 @@ TEST_F(SessionTest, SelectCandidate) {
 }
 
 TEST_F(SessionTest, HighlightCandidate) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1177,7 +1131,7 @@ TEST_F(SessionTest, HighlightCandidate) {
 }
 
 TEST_F(SessionTest, Conversion) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1209,7 +1163,7 @@ TEST_F(SessionTest, Conversion) {
 }
 
 TEST_F(SessionTest, SegmentWidthShrink) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1232,7 +1186,7 @@ TEST_F(SessionTest, SegmentWidthShrink) {
 }
 
 TEST_F(SessionTest, ConvertPrev) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1262,7 +1216,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1376,7 +1330,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1469,7 +1423,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1560,7 +1514,7 @@ TEST_F(SessionTest, CommitSegment) {
   Segment::Candidate *candidate;
 
   // Issue#1560608
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1623,7 +1577,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1687,7 +1641,7 @@ TEST_F(SessionTest, Transliterations) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("jishin", session.get(), &command);
@@ -1735,7 +1689,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("jishin", session.get(), &command);
@@ -1773,7 +1727,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
 }
 
 TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1819,7 +1773,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionTest, ConvertToHalfWidth) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("abc", session.get(), &command);
@@ -1856,7 +1810,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("dvd", session.get(), &command);
@@ -1896,16 +1850,17 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
 }
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
-  config::Config config;
-  config.set_use_cascading_window(false);
-  config::ConfigHandler::SetConfig(config);
-
   commands::Command command;
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+
+  config::Config config;
+  config.set_use_cascading_window(false);
+  session->SetConfig(&config);
+
   InitSessionToPrecomposition(session.get());
   InsertCharacterChars("dvd", session.get(), &command);
 
@@ -1946,7 +1901,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 // Convert input string to Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, SwitchKanaType) {
   {  // From composition mode.
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("abc", session.get(), &command);
@@ -1987,7 +1942,7 @@ TEST_F(SessionTest, SwitchKanaType) {
   }
 
   {  // From conversion mode.
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("kanji", session.get(), &command);
@@ -2036,7 +1991,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 
 // Rotate input mode among Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, InputModeSwitchKanaType) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -2127,7 +2082,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
 }
 
 TEST_F(SessionTest, TranslateHalfWidth) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("abc", session.get(), &command);
@@ -2148,7 +2103,7 @@ TEST_F(SessionTest, TranslateHalfWidth) {
 }
 
 TEST_F(SessionTest, UpdatePreferences) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
@@ -2160,12 +2115,12 @@ TEST_F(SessionTest, UpdatePreferences) {
   FillT13Ns(request, &segments);
   GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
-  command.Clear();
-  session->Convert(&command);
-
   SetSendKeyCommand("SPACE", &command);
   command.mutable_input()->mutable_config()->set_use_cascading_window(false);
   session->SendKey(&command);
+  SetSendKeyCommand("SPACE", &command);
+  session->SendKey(&command);
+
   const size_t no_cascading_cand_size =
       command.output().candidates().candidate_size();
 
@@ -2175,10 +2130,17 @@ TEST_F(SessionTest, UpdatePreferences) {
   SetSendKeyCommand("SPACE", &command);
   command.mutable_input()->mutable_config()->set_use_cascading_window(true);
   session->SendKey(&command);
+  SetSendKeyCommand("SPACE", &command);
+  session->SendKey(&command);
+
   const size_t cascading_cand_size =
       command.output().candidates().candidate_size();
 
+#if defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
+  EXPECT_EQ(no_cascading_cand_size, cascading_cand_size);
+#else  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
   EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
+#endif  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
 
   command.Clear();
   session->ConvertCancel(&command);
@@ -2213,7 +2175,7 @@ TEST_F(SessionTest, RomajiInput) {
   table.AddRule("na", "\xe3\x81\xaa", "");
   // This rule makes the "n" rule ambiguous.
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   session->get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(session.get());
 
@@ -2256,7 +2218,7 @@ TEST_F(SessionTest, KanaInput) {
   // "す゛", "ず"
   table.AddRule("\xe3\x81\x99\xe3\x82\x9b", "\xe3\x81\x9a", "");
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   session->get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(session.get());
 
@@ -2310,7 +2272,7 @@ TEST_F(SessionTest, ExceededComposition) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -2347,7 +2309,7 @@ TEST_F(SessionTest, ExceededComposition) {
 }
 
 TEST_F(SessionTest, OutputAllCandidateWords) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -2368,7 +2330,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(0, output.all_candidate_words().focused_index());
     EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2378,13 +2340,13 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(9, output.all_candidate_words().candidates_size());
-#else
+#else  // OS_LINUX || OS_ANDROID || OS_NACL
     // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(11, output.all_candidate_words().candidates_size());
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
   }
 
   command.Clear();
@@ -2396,7 +2358,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(1, output.all_candidate_words().focused_index());
     EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
-#ifdef OS_LINUX
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2406,13 +2368,13 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(9, output.all_candidate_words().candidates_size());
-#else
+#else  // OS_LINUX || OS_ANDROID || OS_NACL
     // [ "あいうえお", "アイウエオ",
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(11, output.all_candidate_words().candidates_size());
-#endif  // OS_LINUX
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL
   }
 }
 
@@ -2464,7 +2426,7 @@ TEST_F(SessionTest, UndoForComposition) {
 }
 
 TEST_F(SessionTest, RequestUndo) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
 
   // It is OK not to check ImeContext::DIRECT because you cannot
   // assign any key event to Undo command in DIRECT mode.
@@ -2492,7 +2454,7 @@ TEST_F(SessionTest, RequestUndo) {
 }
 
 TEST_F(SessionTest, UndoForSingleSegment) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2596,7 +2558,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 
     config::Config config;
     config.set_session_keymap(config::Config::MSIME);
-    config::ConfigHandler::SetConfig(config);
+    session->SetConfig(&config);
 
     command.Clear();
     session->Undo(&command);
@@ -2629,7 +2591,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 }
 
 TEST_F(SessionTest, ClearUndoContextByKeyEvent_Issue5529702) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2664,7 +2626,7 @@ TEST_F(SessionTest, ClearUndoContextByKeyEvent_Issue5529702) {
 }
 
 TEST_F(SessionTest, UndoForMultipleSegments) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2806,7 +2768,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
 }
 
 TEST_F(SessionTest, UndoOrRewind_undo) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2864,7 +2826,7 @@ TEST_F(SessionTest, UndoOrRewind_undo) {
 }
 
 TEST_F(SessionTest, UndoOrRewind_rewind) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get(), *mobile_request_);
 
   Segments segments;
@@ -2896,7 +2858,7 @@ TEST_F(SessionTest, UndoOrRewind_rewind) {
 
 TEST_F(SessionTest, CommitRawText) {
   {  // From composition mode.
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("abc", session.get(), &command);
@@ -2919,7 +2881,7 @@ TEST_F(SessionTest, CommitRawText) {
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
   }
   {  // From conversion mode.
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("abc", session.get(), &command);
@@ -2961,7 +2923,7 @@ TEST_F(SessionTest, CommitRawText_KanaInput) {
   // "す゛", "ず"
   table.AddRule("\xe3\x81\x99\xe3\x82\x9b", "\xe3\x81\x9a", "");
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   session->get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(session.get());
 
@@ -3016,7 +2978,7 @@ TEST_F(SessionTest, CommitRawText_KanaInput) {
 
 TEST_F(SessionTest, ConvertNextPage_PrevPage) {
   commands::Command command;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
 
   InitSessionToPrecomposition(session.get());
 
@@ -3120,7 +3082,7 @@ TEST_F(SessionTest, ConvertNextPage_PrevPage) {
 TEST_F(SessionTest, NeedlessClearUndoContext) {
   // This is a unittest against http://b/3423910.
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3201,17 +3163,14 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
 }
 
 TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Prepare Numpad
   config::Config config;
   config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-  config::ConfigHandler::SetConfig(config);
-  ASSERT_EQ(config::Config::NUMPAD_DIRECT_INPUT,
-            GET_CONFIG(numpad_character_form));
   // Update KeyEventTransformer
-  session->ReloadConfig();
+  session->SetConfig(&config);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
   commands::Capability capability;
@@ -3234,7 +3193,6 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   EXPECT_FALSE(command.output().has_result());
   // "あいうえお"
   EXPECT_PREEDIT(kAiueo, command);
-
   // Direct input
   SendKey("Numpad0", session.get(), &command);
   EXPECT_TRUE(GetComposition(command).empty());
@@ -3251,7 +3209,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
 
 TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
   // This is a unittest against http://b/3423599.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3322,7 +3280,7 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
 
 TEST_F(SessionTest, DCHECKFailureAfterUndo) {
   // This is a unittest against http://b/3437358.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Capability capability;
@@ -3357,7 +3315,7 @@ TEST_F(SessionTest, DCHECKFailureAfterUndo) {
 
 TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
   // This is a unittest against http://b/3423592.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3418,10 +3376,9 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndo_Issue5369632) {
   // This is a unittest against http://b/5369632.
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
-  config::ConfigHandler::SetConfig(config);
-  ASSERT_EQ(config::Config::KANA, GET_CONFIG(preedit_method));
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3515,7 +3472,7 @@ TEST_F(SessionTest, Issue1805239) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3574,7 +3531,7 @@ TEST_F(SessionTest, Issue1816861) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3642,7 +3599,7 @@ TEST_F(SessionTest, Issue1816861) {
 TEST_F(SessionTest, T13NWithResegmentation) {
   // This is a unittest against http://b/3272827
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3751,16 +3708,17 @@ TEST_F(SessionTest, Shortcut) {
 
     config::Config config;
     config.set_selection_shortcut(shortcut);
-    config::ConfigHandler::SetConfig(config);
-    ASSERT_EQ(shortcut, GET_CONFIG(selection_shortcut));
 
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     Segments segments;
     SetAiueo(&segments);
-    ConversionRequest request;
-    SetComposer(session.get(), &request);
+    const ImeContext &context = session->context();
+    ConversionRequest request(&context.composer(),
+                              &context.GetRequest(),
+                              &context.GetConfig());
     FillT13Ns(request, &segments);
     GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
@@ -3783,11 +3741,9 @@ TEST_F(SessionTest, Shortcut) {
 TEST_F(SessionTest, ShortcutWithCapsLock_Issue5655743) {
   config::Config config;
   config.set_selection_shortcut(config::Config::SHORTCUT_ASDFGHJKL);
-  config::ConfigHandler::SetConfig(config);
-  ASSERT_EQ(config::Config::SHORTCUT_ASDFGHJKL,
-            GET_CONFIG(selection_shortcut));
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
 
   Segments segments;
@@ -3823,17 +3779,13 @@ TEST_F(SessionTest, ShortcutWithCapsLock_Issue5655743) {
 }
 
 TEST_F(SessionTest, NumpadKey) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
   config::Config config;
   config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-  config::ConfigHandler::SetConfig(config);
-  ASSERT_EQ(config::Config::NUMPAD_DIRECT_INPUT,
-            GET_CONFIG(numpad_character_form));
-  // Update KeyEventTransformer
-  session->ReloadConfig();
+  session->SetConfig(&config);
 
   // In the Precomposition state, numpad keys should not be consumed.
   EXPECT_TRUE(TestSendKey("Numpad1", session.get(), &command));
@@ -3859,11 +3811,7 @@ TEST_F(SessionTest, NumpadKey) {
   EXPECT_TRUE(GetComposition(command).empty());
 
   config.set_numpad_character_form(config::Config::NUMPAD_HALF_WIDTH);
-  config::ConfigHandler::SetConfig(config);
-  ASSERT_EQ(config::Config::NUMPAD_HALF_WIDTH,
-            GET_CONFIG(numpad_character_form));
-  // Update KeyEventTransformer
-  session->ReloadConfig();
+  session->SetConfig(&config);
 
   // In the Precomposition state, numpad keys should not be consumed.
   EXPECT_TRUE(TestSendKey("Numpad1", session.get(), &command));
@@ -3951,11 +3899,9 @@ TEST_F(SessionTest, KanaSymbols) {
   config::Config config;
   config.set_punctuation_method(config::Config::COMMA_PERIOD);
   config.set_symbol_method(config::Config::CORNER_BRACKET_SLASH);
-  config::ConfigHandler::SetConfig(config);
-  ASSERT_EQ(config::Config::COMMA_PERIOD, GET_CONFIG(punctuation_method));
-  ASSERT_EQ(config::Config::CORNER_BRACKET_SLASH, GET_CONFIG(symbol_method));
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
 
   {
@@ -3988,7 +3934,7 @@ TEST_F(SessionTest, KanaSymbols) {
 
 TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   {  // Basic behavior
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -4006,7 +3952,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 
   {  // Revert back to the previous input mode.
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->InputModeFullKatakana(&command);
@@ -4029,7 +3975,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   // This is a unittest against http://b/2977131.
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -4065,7 +4011,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -4099,7 +4045,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -4137,7 +4083,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
 
 TEST_F(SessionTest, StatusOutput) {
   {  // Basic behavior
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));  // "あ"
@@ -4181,6 +4127,9 @@ TEST_F(SessionTest, StatusOutput) {
     // Global mode should be kept as HIRAGANA
     EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
 
+#ifndef OS_NACL
+    // NaCl doesn't support OFF key.
+
     // When the IME is deactivated, the temporary composition mode is reset.
     EXPECT_TRUE(SendKey("OFF", session.get(), &command));  // "あAaあA"
     ASSERT_TRUE(command.output().has_status());
@@ -4191,10 +4140,11 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::DIRECT, command.output().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+#endif  // !OS_NACL
   }
 
   {  // Katakana mode + Shift key
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->InputModeFullKatakana(&command);
@@ -4220,6 +4170,9 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::FULL_KATAKANA,
               command.output().status().comeback_mode());
 
+#ifndef OS_NACL
+    // NaCl doesn't support OFF key.
+
     // When the IME is deactivated, the temporary composition mode is reset.
     EXPECT_TRUE(SendKey("OFF", session.get(), &command));  // "アA"
     ASSERT_TRUE(command.output().has_status());
@@ -4231,6 +4184,7 @@ TEST_F(SessionTest, StatusOutput) {
     EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
     EXPECT_EQ(commands::FULL_KATAKANA,
               command.output().status().comeback_mode());
+#endif  // !OS_NACL
   }
 }
 
@@ -4264,7 +4218,7 @@ TEST_F(SessionTest, Suggest) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("M", session.get(), &command);
@@ -4354,7 +4308,7 @@ TEST_F(SessionTest, Suggest) {
 }
 
 TEST_F(SessionTest, ExpandSuggestion) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4396,7 +4350,7 @@ TEST_F(SessionTest, ExpandSuggestion) {
 
 TEST_F(SessionTest, ExpandSuggestionDirectMode) {
   // On direct mode, ExpandSuggestion() should do nothing.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   commands::Command command;
 
   session->IMEOff(&command);
@@ -4409,7 +4363,7 @@ TEST_F(SessionTest, ExpandSuggestionDirectMode) {
 
 TEST_F(SessionTest, ExpandSuggestionConversionMode) {
   // On conversion mode, ExpandSuggestion() should do nothing.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4451,7 +4405,7 @@ TEST_F(SessionTest, CommitCandidate_TypingCorrection) {
   candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
   candidate->consumed_key_size = Util::CharsLen(kJueri);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get(), request);
 
   commands::Command command;
@@ -4541,7 +4495,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
     candidate = AddCandidate(kShino, "shino", segment);
   }
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get(), request);
 
   commands::Command command;
@@ -4588,7 +4542,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
 }
 
 TEST_F(SessionTest, ToggleAlphanumericMode) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4696,7 +4650,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
 }
 
 TEST_F(SessionTest, InsertSpace) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4714,7 +4668,7 @@ TEST_F(SessionTest, InsertSpace) {
   // Change the setting to HALF_WIDTH.
   config::Config config;
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-  config::ConfigHandler::SetConfig(config);
+  session->SetConfig(&config);
   command.Clear();
   command.mutable_input()->mutable_key()->CopyFrom(space_key);
   EXPECT_TRUE(session->InsertSpace(&command));
@@ -4724,7 +4678,6 @@ TEST_F(SessionTest, InsertSpace) {
 
   // Change the setting to FULL_WIDTH.
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-  config::ConfigHandler::SetConfig(config);
   command.Clear();
   command.mutable_input()->mutable_key()->CopyFrom(space_key);
   EXPECT_TRUE(session->InsertSpace(&command));
@@ -4735,7 +4688,7 @@ TEST_F(SessionTest, InsertSpace) {
 }
 
 TEST_F(SessionTest, InsertSpaceToggled) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4753,7 +4706,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
   // Change the setting to HALF_WIDTH.
   config::Config config;
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-  config::ConfigHandler::SetConfig(config);
+  session->SetConfig(&config);
   command.Clear();
   command.mutable_input()->mutable_key()->CopyFrom(space_key);
   EXPECT_TRUE(session->InsertSpaceToggled(&command));
@@ -4764,7 +4717,6 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 
   // Change the setting to FULL_WIDTH.
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-  config::ConfigHandler::SetConfig(config);
   command.Clear();
   command.mutable_input()->mutable_key()->CopyFrom(space_key);
   EXPECT_TRUE(session->InsertSpaceToggled(&command));
@@ -4774,7 +4726,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 }
 
 TEST_F(SessionTest, InsertSpaceHalfWidth) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4817,7 +4769,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidth) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4864,18 +4816,18 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
 
 TEST_F(SessionTest, InsertSpaceWithInputMode) {
   // First, test against http://b/6027559
+  config::Config config;
   {
-    config::Config config;
     const string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
         "Composition\tSpace\tInsertSpace\n";
     config.set_session_keymap(config::Config::CUSTOM);
     config.set_custom_keymap_table(custom_keymap_table);
-    config::ConfigHandler::SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4889,7 +4841,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4913,17 +4866,16 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   }
 
   {
-    config::Config config;
     const string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertAlternateSpace\n"
         "Composition\tSpace\tInsertAlternateSpace\n";
     config.set_session_keymap(config::Config::CUSTOM);
     config.set_custom_keymap_table(custom_keymap_table);
-    config::ConfigHandler::SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4939,7 +4891,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4964,7 +4917,6 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 
   // Second, the 1st case filed in http://b/2936141
   {
-    config::Config config;
     const string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
@@ -4973,10 +4925,10 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_custom_keymap_table(custom_keymap_table);
 
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-    config::ConfigHandler::SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4993,7 +4945,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -5019,7 +4972,6 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 
   // Finally, the 2nd case filed in http://b/2936141
   {
-    config::Config config;
     const string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
@@ -5028,10 +4980,10 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_custom_keymap_table(custom_keymap_table);
 
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-    config::ConfigHandler::SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -5043,7 +4995,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_FALSE(command.output().consumed());
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -5079,9 +5032,9 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5121,9 +5074,9 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5162,9 +5115,9 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
       "Precomposition\tShift Space\tInsertHalfSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5203,9 +5156,9 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
       "Precomposition\tShift Space\tInsertFullSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToDirect(session.get());
 
   commands::Command command;
@@ -5250,9 +5203,9 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
       "Direct\tCtrl d\tInsertFullSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToDirect(session.get());
 
   commands::Command command;
@@ -5310,9 +5263,9 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5362,9 +5315,9 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
 
   {
     InitSessionToConversionWithAiueo(session.get());
@@ -5434,7 +5387,7 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5454,7 +5407,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
 }
 
 TEST_F(SessionTest, IsFullWidthInsertSpace) {
-  scoped_ptr<Session> session;
+  std::unique_ptr<Session> session;
   config::Config config;
 
   { // When |empty_command| does not have |empty_command.key().input()| field,
@@ -5462,8 +5415,8 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
     session.reset(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Input empty_input;
@@ -5495,8 +5448,8 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Set config to 'half' -- all mode has to emit half-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-    config::ConfigHandler::SetConfig(config);
     session.reset(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     // Hiragana
@@ -5527,8 +5480,8 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Set config to 'FULL' -- all mode except for DIRECT emits
     // full-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-    config::ConfigHandler::SetConfig(config);
     session.reset(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     // Hiragana
@@ -5562,8 +5515,8 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
     session.reset(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     // Use HALF_KATAKANA for the new input mode
@@ -5628,7 +5581,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 TEST_F(SessionTest, Issue1951385) {
   // This is a unittest against http://b/1951385
   Segments segments;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5669,7 +5622,7 @@ TEST_F(SessionTest, Issue1978201) {
   segment->add_candidate()->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xaa\xac";
   GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->SegmentWidthShrink(&command));
@@ -5690,7 +5643,7 @@ TEST_F(SessionTest, Issue1978201) {
 
 TEST_F(SessionTest, Issue1975771) {
   // This is a unittest against http://b/1975771
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Trigger suggest by pressing "a".
@@ -5724,7 +5677,7 @@ TEST_F(SessionTest, Issue2029466) {
   // "a<tab><ctrl-N>a" raised an exception because CommitFirstSegment
   // did not check if the current status is in conversion or
   // precomposition.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // "a"
@@ -5756,7 +5709,7 @@ TEST_F(SessionTest, Issue2034943) {
   //
   // The composition should have been reset if CommitSegment submitted
   // the all segments (e.g. the size of segments is one).
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("mozu", session.get(), &command);
@@ -5789,7 +5742,7 @@ TEST_F(SessionTest, Issue2034943) {
 
 TEST_F(SessionTest, Issue2026354) {
   // This is a unittest against http://b/2026354
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -5818,7 +5771,7 @@ TEST_F(SessionTest, Issue2066906) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   segment = segments.add_segment();
@@ -5846,7 +5799,7 @@ TEST_F(SessionTest, Issue2066906) {
 
 TEST_F(SessionTest, Issue2187132) {
   // This is a unittest against http://b/2187132
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5875,10 +5828,9 @@ TEST_F(SessionTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
-  config::ConfigHandler::SetConfig(config);
-  ASSERT_EQ(config::Config::KANA, GET_CONFIG(preedit_method));
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -5900,7 +5852,7 @@ TEST_F(SessionTest, Issue2190364) {
 
 TEST_F(SessionTest, Issue1556649) {
   // This is a unittest against http://b/1556649
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("kudoudesu", session.get(), &command);
@@ -5928,7 +5880,7 @@ TEST_F(SessionTest, Issue1518994) {
   // This is a unittest against http://b/1518994.
   // - Can't input space in ascii mode.
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -5944,7 +5896,7 @@ TEST_F(SessionTest, Issue1518994) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -5961,7 +5913,7 @@ TEST_F(SessionTest, Issue1518994) {
 TEST_F(SessionTest, Issue1571043) {
   // This is a unittest against http://b/1571043.
   // - Underline of composition is separated.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("aiu", session.get(), &command);
@@ -5979,7 +5931,7 @@ TEST_F(SessionTest, Issue1571043) {
 TEST_F(SessionTest, Issue1799384) {
   // This is a unittest against http://b/1571043.
   // - ConvertToHiragana converts Vu to U+3094 "ヴ"
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("ravu", session.get(), &command);
@@ -6015,7 +5967,7 @@ TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as
   // www. continues even after committing them
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("www.", session.get(), &command);
@@ -6031,7 +5983,7 @@ TEST_F(SessionTest, Issue2223823) {
   // This is a unittest against http://b/2223823
   // Input mode does not recover like MS-IME by single shift key down
   // and up.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("G", session.get(), &command);
@@ -6047,7 +5999,7 @@ TEST_F(SessionTest, Issue2223823) {
 TEST_F(SessionTest, Issue2223762) {
   // This is a unittest against http://b/2223762.
   // - The first space in half-width alphanumeric mode is full-width.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6060,12 +6012,14 @@ TEST_F(SessionTest, Issue2223762) {
   EXPECT_FALSE(command.output().has_result());
 }
 
+#ifndef OS_NACL
+// NaCl doesn't support Eisu key
 TEST_F(SessionTest, Issue2223755) {
   // This is a unittest against http://b/2223755.
   // - F6 and F7 convert space to half-width.
 
   {  // DisplayAsFullKatakana
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6086,7 +6040,7 @@ TEST_F(SessionTest, Issue2223755) {
   }
 
   {  // ConvertToFullKatakana
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6123,12 +6077,13 @@ TEST_F(SessionTest, Issue2223755) {
     EXPECT_EQ("\xE3\x82\xA2\xE3\x80\x80\xE3\x82\xA4", GetComposition(command));
   }
 }
+#endif  // !OS_NACL
 
 TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
   // - Temporary input mode should not be overridden by a permanent
   //   input mode change.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6147,7 +6102,7 @@ TEST_F(SessionTest, Issue2272745) {
   // This is a unittest against http://b/2272745.
   // A temporary input mode remains when a composition is canceled.
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6159,7 +6114,7 @@ TEST_F(SessionTest, Issue2272745) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6176,11 +6131,10 @@ TEST_F(SessionTest, Issue2282319) {
   // InsertFullSpace is not working in half-width input mode.
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
+  session->SetConfig(&config);
 
   commands::Command command;
   EXPECT_TRUE(session->InputModeHalfASCII(&command));
@@ -6207,11 +6161,10 @@ TEST_F(SessionTest, Issue2297060) {
   // Ctrl-Space is not working
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
+  session->SetConfig(&config);
 
   commands::Command command;
   EXPECT_TRUE(SendKey("Ctrl Space", session.get(), &command));
@@ -6221,19 +6174,14 @@ TEST_F(SessionTest, Issue2297060) {
 TEST_F(SessionTest, Issue2379374) {
   // This is a unittest against http://b/2379374.
   // Numpad ignores Direct input style when typing after conversion.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
-  {  // Set numpad_character_form with NUMPAD_DIRECT_INPUT
-    config::Config config;
-    config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-    config::ConfigHandler::SetConfig(config);
-    ASSERT_EQ(config::Config::NUMPAD_DIRECT_INPUT,
-              GET_CONFIG(numpad_character_form));
-    // Update KeyEventTransformer.
-    session->ReloadConfig();
-  }
+  // Set numpad_character_form with NUMPAD_DIRECT_INPUT
+  config::Config config;
+  config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
+  session->SetConfig(&config);
 
   Segments segments;
   {  // Set mock conversion.
@@ -6247,6 +6195,7 @@ TEST_F(SessionTest, Issue2379374) {
     // "亜"
     candidate->value = "\xE4\xBA\x9C";
     ConversionRequest request;
+    request.set_config(&config);
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
     GetConverterMock()->SetStartConversionForRequest(&segments, true);
@@ -6276,7 +6225,7 @@ TEST_F(SessionTest, Issue2569789) {
   // After typing "google", the input mode does not come back to the
   // previous input mode.
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6291,7 +6240,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6305,7 +6254,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6323,7 +6272,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6341,7 +6290,7 @@ TEST_F(SessionTest, Issue2555503) {
   // This is a unittest against http://b/2555503.
   // Mode respects the previous character too much.
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("a", session.get(), &command);
@@ -6359,11 +6308,13 @@ TEST_F(SessionTest, Issue2555503) {
   EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
 }
 
+#ifndef OS_NACL
+// NaCl doesn't support hankaku/zenkaku key.
 TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
   // Existing preedit should be committed when IME is turned off.
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -6379,13 +6330,16 @@ TEST_F(SessionTest, Issue2791640) {
 
   ASSERT_FALSE(command.output().has_preedit());
 }
+#endif  // !OS_NACL
 
+#ifndef OS_NACL
+// NaCl doesn't support hankaku/zenkaku key.
 TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
   // Existing preedit should be committed when IME is turned off.
 
   // Check "hankaku/zenkaku"
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -6404,7 +6358,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "kanji"
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -6421,23 +6375,23 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
     ASSERT_FALSE(command.output().has_preedit());
   }
 }
-
+#endif  // !OS_NACL
 
 TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
   // for now.
 #ifdef OS_WIN
-  scoped_ptr<Session> session(new Session(engine_.get()));
-  InitSessionToDirect(session.get());
-  commands::Command command;
-
   config::Config config;
   const string custom_keymap_table =
       "status\tkey\tcommand\n"
       "DirectInput\tHiragana\tInputModeHiragana\n";
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
-  config::ConfigHandler::SetConfig(config);
+
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
+  InitSessionToDirect(session.get());
+  commands::Command command;
 
   EXPECT_TRUE(SendKey("Hiragana", session.get(), &command));
   EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -6483,7 +6437,7 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
 
 TEST_F(SessionTest, IMEOnWithModeTest) {
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6500,7 +6454,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT(kHiraganaA, command);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6515,7 +6469,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("\xE3\x82\xA2", command);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6530,7 +6484,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("\xEF\xBD\xB1", command);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6545,7 +6499,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("\xEF\xBD\x81", command);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6562,7 +6516,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
 }
 
 TEST_F(SessionTest, InputModeConsumed) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->InputModeHiragana(&command));
@@ -6592,11 +6546,10 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 #ifdef OS_WIN
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
-  config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
-  ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
   // In MSIME keymap, Hiragana is assigned for
   // ImputModeHiragana in Precomposition.
 
@@ -6607,7 +6560,7 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasComposition) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("a", session.get(), &command);
@@ -6651,7 +6604,7 @@ TEST_F(SessionTest, InputModeOutputHasComposition) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasCandidates) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   Segments segments;
@@ -6706,8 +6659,10 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   EXPECT_TRUE(command.output().has_preedit());
 }
 
+#ifndef OS_NACL
+// NaCl doesn't support KeyEvent::ON|OFF.
 TEST_F(SessionTest, PerformedCommand) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   {
@@ -6753,13 +6708,14 @@ TEST_F(SessionTest, PerformedCommand) {
     EXPECT_COUNT_STATS("Performed_Conversion_Commit", 1);
   }
 }
+#endif  // !OS_NACL
 
 TEST_F(SessionTest, ResetContext) {
-  scoped_ptr<MockConverterEngineForReset> engine(
+  std::unique_ptr<MockConverterEngineForReset> engine(
       new MockConverterEngineForReset);
   ConverterMockForReset *convertermock = engine->mutable_converter_mock();
 
-  scoped_ptr<Session> session(new Session(engine.get()));
+  std::unique_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6776,7 +6732,7 @@ TEST_F(SessionTest, ResetContext) {
 }
 
 TEST_F(SessionTest, ClearUndoOnResetContext) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -6827,11 +6783,11 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
 }
 
 TEST_F(SessionTest, IssueResetConversion) {
-  scoped_ptr<MockConverterEngineForReset> engine(
+  std::unique_ptr<MockConverterEngineForReset> engine(
       new MockConverterEngineForReset);
   ConverterMockForReset *convertermock = engine->mutable_converter_mock();
 
-  scoped_ptr<Session> session(new Session(engine.get()));
+  std::unique_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6847,11 +6803,11 @@ TEST_F(SessionTest, IssueResetConversion) {
 }
 
 TEST_F(SessionTest, IssueRevert) {
-  scoped_ptr<MockConverterEngineForRevert> engine(
+  std::unique_ptr<MockConverterEngineForRevert> engine(
       new MockConverterEngineForRevert);
   ConverterMockForRevert *convertermock = engine->mutable_converter_mock();
 
-  scoped_ptr<Session> session(new Session(engine.get()));
+  std::unique_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6866,11 +6822,11 @@ TEST_F(SessionTest, IssueRevert) {
 
 // Undo command must call RervertConversion
 TEST_F(SessionTest, Issue3428520) {
-  scoped_ptr<MockConverterEngineForRevert> engine(
+  std::unique_ptr<MockConverterEngineForRevert> engine(
       new MockConverterEngineForRevert);
   ConverterMockForRevert *convertermock = engine->mutable_converter_mock();
 
-  scoped_ptr<Session> session(new Session(engine.get()));
+  std::unique_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -6910,7 +6866,11 @@ TEST_F(SessionTest, Issue3428520) {
 
 // Revert command must clear the undo context.
 TEST_F(SessionTest, Issue5742293) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  config::Config config;
+  config.set_session_keymap(config::Config::MSIME);
+
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -6918,9 +6878,6 @@ TEST_F(SessionTest, Issue5742293) {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session->set_client_capability(capability);
 
-  config::Config config;
-  config.set_session_keymap(config::Config::MSIME);
-  config::ConfigHandler::SetConfig(config);
 
   SetUndoContext(session.get());
 
@@ -6946,9 +6903,9 @@ TEST_F(SessionTest, AutoConversion) {
   // Auto Off
   config::Config config;
   config.set_use_auto_conversion(false);
-  config::ConfigHandler::SetConfig(config);
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6961,7 +6918,8 @@ TEST_F(SessionTest, AutoConversion) {
         "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8\xE3\x80\x82", command);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6978,9 +6936,9 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Auto On
   config.set_use_auto_conversion(true);
-  config::ConfigHandler::SetConfig(config);
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -6991,7 +6949,8 @@ TEST_F(SessionTest, AutoConversion) {
     EXPECT_SINGLE_SEGMENT_AND_KEY(kAiueo, kAiueo, command);
   }
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -7006,7 +6965,8 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the pattern number + "."
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -7021,7 +6981,8 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the ".."
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -7034,7 +6995,8 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -7051,7 +7013,8 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for "." only.
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -7063,7 +7026,8 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -7077,7 +7041,8 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Do auto conversion even if romanji-table is modified.
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
     // Modify romanji-table to convert "zz" -> "。"
@@ -7105,7 +7070,6 @@ TEST_F(SessionTest, AutoConversion) {
         for (int pattern = 0; pattern <= 16; ++pattern) {
           config.set_use_auto_conversion(onoff != 0);
           config.set_auto_conversion_key(pattern);
-          config::ConfigHandler::SetConfig(config);
 
           int flag[4];
           flag[0] = static_cast<int>(
@@ -7122,7 +7086,8 @@ TEST_F(SessionTest, AutoConversion) {
               config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
 
           for (int i = 0; i < 4; ++i) {
-            scoped_ptr<Session> session(new Session(engine_.get()));
+            std::unique_ptr<Session> session(new Session(engine_.get()));
+            session->SetConfig(&config);
             InitSessionToPrecomposition(session.get());
             commands::Command command;
 
@@ -7162,7 +7127,7 @@ TEST_F(SessionTest, AutoConversion) {
 TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   // This is a unittest against http://b/3203944.
   // Input mode should not be changed when a space key is typed.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7181,7 +7146,7 @@ TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
 TEST_F(SessionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7214,8 +7179,8 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
 TEST_F(SessionTest, KeitaiInput_toggle) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
-  config::ConfigHandler::SetConfig(config);
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  session->SetConfig(&config);
 
   InitSessionToPrecomposition(session.get(), *mobile_request_);
   commands::Command command;
@@ -7393,11 +7358,11 @@ TEST_F(SessionTest, KeitaiInput_toggle) {
 TEST_F(SessionTest, KeitaiInput_flick) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
-  config::ConfigHandler::SetConfig(config);
   commands::Command command;
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get(), *mobile_request_);
     // "は"
     InsertCharacterCodeAndString('6', "\xE3\x81\xAF", session.get(), &command);
@@ -7414,7 +7379,8 @@ TEST_F(SessionTest, KeitaiInput_flick) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get(), *mobile_request_);
 
     SendKey("6", session.get(), &command);
@@ -7431,7 +7397,8 @@ TEST_F(SessionTest, KeitaiInput_flick) {
   }
 
   {
-    scoped_ptr<Session> session(new Session(engine_.get()));
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    session->SetConfig(&config);
     InitSessionToPrecomposition(session.get(), *mobile_request_);
 
     SendKey("1", session.get(), &command);
@@ -7510,7 +7477,7 @@ TEST_F(SessionTest, KeitaiInput_flick) {
 }
 
 TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   ConversionRequest request;
@@ -7586,7 +7553,7 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
 }
 
 TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   ConversionRequest request;
@@ -7649,7 +7616,7 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
 }
 
 TEST_F(SessionTest, CommitCandidate_suggestion) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get(), *mobile_request_);
 
   Segments segments_mo;
@@ -7672,7 +7639,7 @@ TEST_F(SessionTest, CommitCandidate_suggestion) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   GetConverterMock()->SetFinishConversion(
-      scoped_ptr<Segments>(new Segments).get(), true);
+      std::unique_ptr<Segments>(new Segments).get(), true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
   session->SendCommand(&command);
@@ -7699,7 +7666,7 @@ bool FindCandidateID(const commands::Candidates &candidates,
 }
 
 TEST_F(SessionTest, CommitCandidate_T13N) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get(), *mobile_request_);
 
   {
@@ -7747,7 +7714,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
 #else
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
   GetConverterMock()->SetFinishConversion(
-      scoped_ptr<Segments>(new Segments).get(), true);
+      std::unique_ptr<Segments>(new Segments).get(), true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);
   session->SendCommand(&command);
@@ -7759,7 +7726,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
 }
 
 TEST_F(SessionTest, RequestConvertReverse) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7773,7 +7740,7 @@ TEST_F(SessionTest, RequestConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverse) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7793,7 +7760,7 @@ TEST_F(SessionTest, ConvertReverse) {
 }
 
 TEST_F(SessionTest, EscapeFromConvertReverse) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7820,7 +7787,7 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
 }
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7852,7 +7819,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverse_Issue5687022) {
   // This is a unittest against http://b/5687022
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   const char kInput[] = "abcde";
   const char kReading[] = "abcde";
@@ -7879,7 +7846,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
   // without any text normalization even if the input text contains any
   // special characters which Mozc usually do normalization.
 
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "ゔ"
   const char kInput[] = "\xE3\x82\x94";
@@ -7903,7 +7870,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 }
 
 TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7933,7 +7900,7 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverseFromOffState) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const string kanji_aiueo =
@@ -7951,7 +7918,7 @@ TEST_F(SessionTest, ConvertReverseFromOffState) {
 
 TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   // This is a unittest against http://b/5145295.
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7974,7 +7941,7 @@ TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, LaunchTool) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
 
   {
     commands::Command command;
@@ -8002,7 +7969,7 @@ TEST_F(SessionTest, LaunchTool) {
 }
 
 TEST_F(SessionTest, NotZeroQuerySuggest) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Disable zero query suggest.
@@ -8181,7 +8148,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     command.Clear();
     // FinishConversion is expected to return empty Segments.
     GetConverterMock()->SetFinishConversion(
-        scoped_ptr<Segments>(new Segments).get(), true);
+        std::unique_ptr<Segments>(new Segments).get(), true);
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
@@ -8285,9 +8252,9 @@ TEST_F(SessionTest, Issue4437420) {
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
-  scoped_ptr<composer::Table> table(new composer::Table());
+  std::unique_ptr<composer::Table> table(new composer::Table());
   table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::GetConfig());
+      request, config::ConfigHandler::DefaultConfig());
   session.SetTable(table.get());
   // Type "2*" to produce "A".
   SetSendKeyCommand("2", &command);
@@ -8307,7 +8274,7 @@ TEST_F(SessionTest, Issue4437420) {
   session.SetRequest(&request);
   table.reset(new composer::Table());
   table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::GetConfig());
+      request, config::ConfigHandler::DefaultConfig());
   session.SetTable(table.get());
   // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
@@ -8363,7 +8330,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::GetConfig());
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
 
     // Type "2" to produce "a".
@@ -8408,7 +8375,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::GetConfig());
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
     SetSendKeyCommand("3", &command);
@@ -8454,7 +8421,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::GetConfig());
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
     // Type "3*{<}*{<}", and composition should change
     // "さ"->"ざ"->(No change)->"さ"->(No change).
@@ -8508,7 +8475,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::GetConfig());
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
     // Type "{<}" and do nothing
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
@@ -8591,7 +8558,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::GetConfig());
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
 
     // commit "あ" to push UNDO stack
@@ -8628,13 +8595,12 @@ TEST_F(SessionTest, UndoKeyAction) {
 }
 
 TEST_F(SessionTest, TemporaryKeyMapChange) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
+  config::Config config(config::ConfigHandler::DefaultConfig());
   config.set_session_keymap(config::Config::ATOK);
-  config::ConfigHandler::SetConfig(config);
 
   // Session created with keymap ATOK
   Session session(engine_.get());
+  session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
   EXPECT_EQ(config::Config::ATOK, session.context().keymap());
 
@@ -8654,7 +8620,7 @@ TEST_F(SessionTest, TemporaryKeyMapChange) {
 }
 
 TEST_F(SessionTest, MoveCursor) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -8670,7 +8636,7 @@ TEST_F(SessionTest, MoveCursor) {
 }
 
 TEST_F(SessionTest, MoveCursorRightWithCommit) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   commands::Request request;
   request.CopyFrom(*mobile_request_);
   request.set_special_romanji_table(
@@ -8699,7 +8665,7 @@ TEST_F(SessionTest, MoveCursorRightWithCommit) {
 }
 
 TEST_F(SessionTest, MoveCursorLeftWithCommit) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   commands::Request request;
   request.CopyFrom(*mobile_request_);
   request.set_special_romanji_table(
@@ -8734,8 +8700,62 @@ TEST_F(SessionTest, MoveCursorLeftWithCommit) {
   EXPECT_EQ(-4, command.output().result().cursor_offset());
 }
 
+TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  commands::Request request(*mobile_request_);
+  request.set_special_romanji_table(
+      commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
+  request.set_crossing_edge_behavior(
+      commands::Request::COMMIT_WITHOUT_CONSUMING);
+  SetupZeroQuerySuggestionReady(true, session.get(), &request);
+  commands::Command command;
+
+  InsertCharacterChars("GOOGLE", session.get(), &command);
+  EXPECT_EQ(6, command.output().preedit().cursor());
+  command.Clear();
+
+  session->MoveCursorRight(&command);
+  EXPECT_FALSE(command.output().consumed());
+  ASSERT_TRUE(command.output().has_result());
+  EXPECT_EQ(commands::Result_ResultType_STRING,
+            command.output().result().type());
+  EXPECT_EQ("GOOGLE", command.output().result().value());
+  EXPECT_EQ(0, command.output().result().cursor_offset());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+}
+
+TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  commands::Request request(*mobile_request_);
+  request.set_special_romanji_table(
+      commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
+  request.set_crossing_edge_behavior(
+      commands::Request::COMMIT_WITHOUT_CONSUMING);
+  SetupZeroQuerySuggestionReady(true, session.get(), &request);
+  commands::Command command;
+
+  InsertCharacterChars("GOOGLE", session.get(), &command);
+  EXPECT_EQ(6, command.output().preedit().cursor());
+  command.Clear();
+  for (int i = 5; i >= 0; --i) {
+    session->MoveCursorLeft(&command);
+    EXPECT_EQ(i, command.output().preedit().cursor());
+    command.Clear();
+  }
+
+  session->MoveCursorLeft(&command);
+  EXPECT_FALSE(command.output().consumed());
+  ASSERT_TRUE(command.output().has_result());
+  EXPECT_EQ(commands::Result_ResultType_STRING,
+            command.output().result().type());
+  EXPECT_EQ("GOOGLE", command.output().result().value());
+  EXPECT_EQ(-6, command.output().result().cursor_offset());
+  EXPECT_FALSE(command.output().has_candidates());
+}
+
 TEST_F(SessionTest, CommitHead) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   composer::Table table;
   // "も"
   table.AddRule("mo", "\xe3\x82\x82", "");
@@ -8762,7 +8782,7 @@ TEST_F(SessionTest, CommitHead) {
 }
 
 TEST_F(SessionTest, PasswordWithToggleAlpabetInput) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
 
   commands::Request request;
   request.CopyFrom(*mobile_request_);
@@ -8814,7 +8834,7 @@ TEST_F(SessionTest, PasswordWithToggleAlpabetInput) {
 }
 
 TEST_F(SessionTest, SwitchInputFieldType) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // initial state is NORMAL
@@ -8832,7 +8852,7 @@ TEST_F(SessionTest, SwitchInputFieldType) {
 }
 
 TEST_F(SessionTest, CursorKeysInPasswordMode) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
 
   commands::Request request;
   request.CopyFrom(*mobile_request_);
@@ -8879,19 +8899,18 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
 }
 
 TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   commands::Request request;
 
   request.set_zero_query_suggestion(false);
-  request.set_combine_all_segments(true);
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
   session->SetRequest(&request);
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::GetConfig());
+      request, config::ConfigHandler::DefaultConfig());
   session->SetTable(&table);
 
   SwitchInputFieldType(commands::Context::PASSWORD, session.get());
@@ -8986,12 +9005,12 @@ TEST_F(SessionTest, EditCancel) {
 }
 
 TEST_F(SessionTest, ImeOff) {
-  scoped_ptr<MockConverterEngineForReset> engine(
+  std::unique_ptr<MockConverterEngineForReset> engine(
       new MockConverterEngineForReset);
   ConverterMockForReset *convertermock = engine->mutable_converter_mock();
 
   convertermock->Reset();
-  scoped_ptr<Session> session(new Session(engine.get()));
+  std::unique_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   session->IMEOff(&command);
@@ -9000,8 +9019,8 @@ TEST_F(SessionTest, ImeOff) {
 }
 
 TEST_F(SessionTest, EditCancelAndIMEOff) {
+  config::Config config;
   {
-    config::Config config;
     const string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\thankaku/zenkaku\tCancelAndIMEOff\n"
@@ -9009,7 +9028,6 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
         "Conversion\thankaku/zenkaku\tCancelAndIMEOff\n";
     config.set_session_keymap(config::Config::CUSTOM);
     config.set_custom_keymap_table(custom_keymap_table);
-    config::ConfigHandler::SetConfig(config);
   }
 
   Segments segments_mo;
@@ -9024,6 +9042,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Precomposition and deactivate IME
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9041,6 +9060,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Composition and deactivate IME
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9060,6 +9080,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Suggestion and deactivate IME
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9085,6 +9106,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Conversion and deactivate IME
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToConversionWithAiueo(&session);
 
     commands::Command command;
@@ -9102,6 +9124,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Reverse conversion and deactivate IME
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9134,8 +9157,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
 // TODO(matsuzakit): Update the expected result when b/5955618 is fixed.
 TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
+  config::Config config;
   {
-    config::Config config;
     const string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tESC\tCancel\n"
@@ -9143,7 +9166,6 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
         "Conversion\tESC\tCancel\n";
     config.set_session_keymap(config::Config::CUSTOM);
     config.set_custom_keymap_table(custom_keymap_table);
-    config::ConfigHandler::SetConfig(config);
   }
   Segments segments_mo;
   {
@@ -9159,6 +9181,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
      // Basically this is unusual because there is no character to be canceled
      // when Precomposition state.
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9176,6 +9199,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
 
   {  // Cancel of Composition in password field
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9193,6 +9217,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
 
   {  // Cancel of Conversion in password field
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToConversionWithAiueo(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9210,6 +9235,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
 
   {  // Cancel of Reverse conversion in password field
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9243,8 +9269,8 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
 
 // TODO(matsuzakit): Update the expected result when b/5955618 is fixed.
 TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
+  config::Config config;
   {
-    config::Config config;
     const string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\thankaku/zenkaku\tCancelAndIMEOff\n"
@@ -9252,7 +9278,6 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
         "Conversion\thankaku/zenkaku\tCancelAndIMEOff\n";
     config.set_session_keymap(config::Config::CUSTOM);
     config.set_custom_keymap_table(custom_keymap_table);
-    config::ConfigHandler::SetConfig(config);
   }
   Segments segments_mo;
   {
@@ -9266,6 +9291,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
 
   {  // Cancel of Precomposition and deactivate IME in password field.
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9292,6 +9318,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
 
   {  // Cancel of Composition and deactivate IME in password field
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9318,6 +9345,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
 
   {  // Cancel of Conversion and deactivate IME in password field
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToConversionWithAiueo(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9343,6 +9371,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
 
   {  // Cancel of Reverse conversion and deactivate IME in password field
     Session session(engine_.get());
+    session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9368,384 +9397,6 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
     EXPECT_TRUE(command.output().status().activated())
         << "Congrats! b/5955618 seems to be fixed";
   }
-}
-
-// We use following represenetaion for indicating all state-change pass.
-// State:
-//   [PRECOMP] : Precomposition state
-//   [COMP-L]  : Composition state with cursor at left most.
-//   [COMP-M]  : Composition state with cursor at middle of composition.
-//   [COMP-R]  : Composition state with cursor at right most.
-//   [CONV-L]  : Conversion state with cursor at left most.
-//   [CONV-M]  : Conversion state with cursor at middle of composition.
-// State Change:
-//  "abcdef" means composition characters.
-//  "^" means suggestion/conversion window left-top position
-//  "|" means caret position.
-// NOTE:
-//  It is not necessary to test in case as follows because they never occur.
-//   - [PRECOMP] -> [PRECOMP]
-//   - [PRECOMP] -> [COMP-M] or [COMP-L]
-//   - [PRECOMP] -> [CONV-L] or [CONV-R]
-//  Also it is not necessary to test in case of changing to CONVERSION state,
-//  because conversion window is always shown under current cursor.
-TEST_F(SessionTest, CaretManagePrecompositionToCompositionTest) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
-  InitSessionToPrecomposition(session.get());
-
-  commands::Command command;
-  Segments segments;
-  const int kCaretInitialXpos = 10;
-  commands::Rectangle rectangle;
-  rectangle.set_x(kCaretInitialXpos);
-  rectangle.set_y(0);
-  rectangle.set_width(0);
-  rectangle.set_height(0);
-
-  Segments segments_mo;
-  {
-    segments_mo.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("MO");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  // [PRECOMP] -> [COMP-R]:
-  //  Expectation: -> ^a|
-  SetCaretLocation(rectangle, session.get());
-
-  SendKey("M", session.get(), &command);
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  SendKey("O", session.get(), &command);
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-}
-
-TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
-  Segments segments_m;
-  {
-    segments_m.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_m.add_segment();
-    segment->set_key("M");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  Segments segments_mo;
-  {
-    segments_mo.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("MO");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  Segments segments_moz;
-  {
-    segments_moz.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_moz.add_segment();
-    segment->set_key("MOZ");
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  scoped_ptr<Session> session(new Session(engine_.get()));
-  InitSessionToPrecomposition(session.get());
-  commands::Command command;
-  const int kCaretInitialXpos = 10;
-  commands::Rectangle rectangle;
-  rectangle.set_x(kCaretInitialXpos);
-  rectangle.set_y(0);
-  rectangle.set_width(0);
-  rectangle.set_height(0);
-
-  SetCaretLocation(rectangle, session.get());
-
-  SendKey("M", session.get(), &command);
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  SendKey("O", session.get(), &command);
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  // [COMP-R] -> [COMP-R]:
-  //  Expectation: ^mo| -> ^moz|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_moz, true);
-  SendKey("Z", session.get(), &command);
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  // [COMP-R] -> [COMP-R]:
-  //  Expectation: ^moz| -> ^mo|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  SendKey("Backspace", session.get(), &command);
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  // [COMP-R] -> [COMP-M]:
-  //  Expectation: ^mo| -> ^m|o
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  command.Clear();
-  EXPECT_TRUE(session->MoveCursorLeft(&command));
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  // [COMP-M] -> [COMP-R]:
-  //  Expectation: ^m|o -> ^mo|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  command.Clear();
-  EXPECT_TRUE(session->MoveCursorToEnd(&command));
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  // [COMP-R] -> [COMP-L]:
-  //  Expectation: ^mo| -> ^|mo
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  command.Clear();
-  EXPECT_TRUE(session->MoveCursorToBeginning(&command));
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  // [COMP-L] -> [COMP-M]:
-  //  Expectation: ^|mo -> ^m|o
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  command.Clear();
-  EXPECT_TRUE(session->MoveCursorRight(&command));
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  // [COMP-M] -> [COMP-L]:
-  //  Expectation: ^m|o -> ^m|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
-  command.Clear();
-  EXPECT_TRUE(session->Delete(&command));
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-}
-
-TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
-  // There are two ways to change state from CONVERSION to COMPOSITION,
-  // One is canceling conversion with BS key. In this case cursor location
-  // becomes right most and suggest position is left most.
-  // The second is continuing typing under conversion. If user types key under
-  // conversion, the IME commits selected candidate and creates new composition
-  // at once.
-  // For example:
-  //    KeySequence: 'a' -> SP -> SP -> 'i'
-  //    Expectation: a^|i (a and i are corresponding japanese characters)
-  //    Actual: ^a|i
-  // In the session side, we can only support the former case.
-
-  scoped_ptr<Session> session(new Session(engine_.get()));
-  InitSessionToPrecomposition(session.get());
-
-  commands::Command command;
-  Segments segments;
-  const int kCaretInitialXpos = 10;
-  commands::Rectangle rectangle;
-  rectangle.set_x(kCaretInitialXpos);
-  rectangle.set_y(0);
-  rectangle.set_width(0);
-  rectangle.set_height(0);
-
-  Segments segments_m;
-  {
-    segments_m.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_m.add_segment();
-    segment->set_key("M");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  Segments segments_mo;
-  {
-    segments_mo.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("MO");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  Segments segments_moz;
-  {
-    segments_moz.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_moz.add_segment();
-    segment->set_key("MOZ");
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  Segments segments_m_conv;
-  {
-    segments_m_conv.set_request_type(Segments::CONVERSION);
-    Segment *segment;
-    segment = segments_m_conv.add_segment();
-    segment->set_key("M");
-    segment->add_candidate()->value = "M";
-    segment->add_candidate()->value = "m";
-  }
-
-  scoped_ptr<ConversionRequest> request_m_conv;
-
-  // [CONV-L] -> [COMP-R]
-  //  Expectation: ^|a -> ^a|
-  SetCaretLocation(rectangle, session.get());
-
-  SendKey("M", session.get(), &command);
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  SendKey("O", session.get(), &command);
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  command.Clear();
-  request_m_conv.reset(new ConversionRequest);
-  SetComposer(session.get(), request_m_conv.get());
-  FillT13Ns(*request_m_conv, &segments_m_conv);
-  GetConverterMock()->SetStartConversionForRequest(&segments_m_conv, true);
-  EXPECT_TRUE(session->Convert(&command));
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  command.Clear();
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
-  EXPECT_TRUE(session->ConvertCancel(&command));
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-
-  // [CONV-M] -> [COMP-R]
-  //  Expectation: ^a|b -> ^ab|
-  session.reset(new Session(engine_.get()));
-  InitSessionToPrecomposition(session.get());
-  rectangle.set_x(kCaretInitialXpos);
-
-  SetCaretLocation(rectangle, session.get());
-
-  SendKey("M", session.get(), &command);
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  SendKey("O", session.get(), &command);
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  command.Clear();
-  request_m_conv.reset(new ConversionRequest);
-  SetComposer(session.get(), request_m_conv.get());
-  FillT13Ns(*request_m_conv, &segments_m_conv);
-  GetConverterMock()->SetStartConversionForRequest(&segments_m_conv, true);
-  EXPECT_TRUE(session->Convert(&command));
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  SendSpecialKey(commands::KeyEvent::LEFT, session.get(), &command);
-
-  rectangle.set_x(rectangle.x() + 5);
-  SetCaretLocation(rectangle, session.get());
-
-  command.Clear();
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
-  EXPECT_TRUE(session->ConvertCancel(&command));
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
-}
-
-TEST_F(SessionTest, CaretJumpCaseTest) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
-  InitSessionToPrecomposition(session.get());
-
-  commands::Command command;
-  Segments segments;
-  const int kCaretInitialXpos = 10;
-  const int kCaretInitialYpos = 12;
-  commands::Rectangle rectangle;
-  rectangle.set_x(kCaretInitialXpos);
-  rectangle.set_y(kCaretInitialYpos);
-  rectangle.set_width(0);
-  rectangle.set_height(0);
-
-  Segments segments_mo;
-  {
-    segments_mo.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("MO");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  Segments segments_moz;
-  {
-    segments_moz.set_request_type(Segments::SUGGESTION);
-    Segment *segment;
-    segment = segments_moz.add_segment();
-    segment->set_key("MOZ");
-    segment->add_candidate()->value = "MOZUKU";
-  }
-
-  SetCaretLocation(rectangle, session.get());
-  SendKey("M", session.get(), &command);
-
-  // If Y-position of caret is jumped, composition text area is reset.
-  rectangle.set_y(rectangle.y() + 200);
-  SetCaretLocation(rectangle, session.get());
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
-  SendKey("O", session.get(), &command);
-  EXPECT_EQ(rectangle.y(),
-            command.output().candidates().composition_rectangle().y());
-
-  // Even if X-position of caret is jumped, composition text area is not reset.
-  rectangle.set_x(rectangle.x() + 200);
-  SetCaretLocation(rectangle, session.get());
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_moz, true);
-  SendKey("Z", session.get(), &command);
-  EXPECT_EQ(kCaretInitialXpos,
-            command.output().candidates().composition_rectangle().x());
 }
 
 TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
@@ -9774,9 +9425,9 @@ TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
 TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
   config::Config config;
   config.set_use_auto_conversion(true);
-  config::ConfigHandler::SetConfig(config);
 
   Session session(engine_.get());
+  session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
 
   Segments segments_a_conv;
@@ -9833,7 +9484,7 @@ TEST_F(SessionTest, SuppressSuggestion) {
 }
 
 TEST_F(SessionTest, DeleteHistory) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   Segments segments;
@@ -9911,7 +9562,7 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
 }
 
 TEST_F(SessionTest, IndirectImeOnOff) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   {
@@ -9958,7 +9609,7 @@ TEST_F(SessionTest, IndirectImeOnOff) {
 }
 
 TEST_F(SessionTest, MakeSureIMEOn) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToDirect(session.get());
 
   {
@@ -10010,7 +9661,7 @@ TEST_F(SessionTest, MakeSureIMEOn) {
 }
 
 TEST_F(SessionTest, MakeSureIMEOff) {
-  scoped_ptr<Session> session(new Session(engine_.get()));
+  std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   {

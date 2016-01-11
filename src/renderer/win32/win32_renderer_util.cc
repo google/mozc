@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,16 +36,7 @@
 #include <atlgdi.h>
 #include <atlmisc.h>
 
-// undef min macro, which conflicts with std::numeric_limits<int>::min().
-#if defined(min)
-#undef min
-#endif  // min
-
-// undef max macro, which conflicts with std::numeric_limits<int>::max().
-#if defined(max)
-#undef max
-#endif  // max
-
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>

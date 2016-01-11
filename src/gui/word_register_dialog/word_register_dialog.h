@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,10 @@
 #include <QtCore/QString>
 #include <QtGui/QtGui>
 #include <QtGui/QDialog>
+
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/word_register_dialog/ui_word_register_dialog.h"
 
 namespace mozc {
@@ -111,11 +113,13 @@ class WordRegisterDialog : public QDialog,
   void EnableIME();
 
   bool is_available_;
-  scoped_ptr<mozc::user_dictionary::UserDictionarySession> session_;
-  scoped_ptr<client::ClientInterface> client_;
+  std::unique_ptr<mozc::user_dictionary::UserDictionarySession> session_;
+  std::unique_ptr<client::ClientInterface> client_;
   QString window_title_;
-  scoped_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const UserPOSInterface> user_pos_;
 };
-}  // namespace mozc::gui
+
+}  // namespace gui
 }  // namespace mozc
+
 #endif  // MOZC_GUI_WORD_REGISTER_DIALOG_H_

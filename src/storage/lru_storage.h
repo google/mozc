@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,11 @@
 #define MOZC_STORAGE_LRU_STORAGE_H_
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -138,8 +139,8 @@ class LRUStorage {
   char *end_;
   string filename_;
   map<uint64, Node *> map_;
-  scoped_ptr<LRUList> lru_list_;
-  scoped_ptr<Mmap> mmap_;
+  std::unique_ptr<LRUList> lru_list_;
+  std::unique_ptr<Mmap> mmap_;
 
   DISALLOW_COPY_AND_ASSIGN(LRUStorage);
 };

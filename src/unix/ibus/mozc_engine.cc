@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,10 @@
 #include <sstream>
 #include <string>
 
+#include "base/clock.h"
 #include "base/const.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
@@ -194,7 +196,6 @@ bool GetSurroundingText(IBusEngine *engine,
   guint cursor_pos = 0;
   guint anchor_pos = 0;
   // DO NOT call g_object_unref against this.
-  // http://ibus.googlecode.com/svn/docs/ibus-1.4/IBusText.html
   // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
   IBusText *text = NULL;
   ibus_engine_get_surrounding_text(engine, &text, &cursor_pos,
@@ -243,7 +244,7 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
 }  // namespace
 
 MozcEngine::MozcEngine()
-    : last_sync_time_(Util::GetTime()),
+    : last_sync_time_(Clock::GetTime()),
       key_event_handler_(new KeyEventHandler),
       client_(CreateAndConfigureClient()),
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
@@ -337,7 +338,7 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
   // simply resetting the current session in case there is a non-empty
   // preedit text. Note that |RevertSession| is supposed to do nothing when
   // there is no preedit text.
-  // See https://code.google.com/p/mozc/issues/detail?id=255 for details.
+  // See https://github.com/google/mozc/issues/255 for details.
   RevertSession(engine);
   SyncData(false);
 }
@@ -363,15 +364,6 @@ gboolean MozcEngine::ProcessKeyEvent(
   if (property_handler_->IsDisabled()) {
     return FALSE;
   }
-
-  // Send current caret location to mozc_server to manage suggest window
-  // position.
-  // TODO(nona): Merge SendKey event to reduce IPC cost.
-  // TODO(nona): Add a unit test against b/6209562.
-  SendCaretLocation(engine->cursor_area.x,
-                    engine->cursor_area.y,
-                    engine->cursor_area.width,
-                    engine->cursor_area.height);
 
   // TODO(yusukes): use |layout| in IBusEngineDesc if possible.
   const bool layout_is_jp =
@@ -448,7 +440,7 @@ void MozcEngine::SetCursorLocation(IBusEngine *engine,
                                    gint y,
                                    gint w,
                                    gint h) {
-  // Do nothing
+  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine);
 }
 
 void MozcEngine::SetContentType(IBusEngine *engine,
@@ -649,7 +641,7 @@ void MozcEngine::SyncData(bool force) {
     return;
   }
 
-  const uint64 current_time = Util::GetTime();
+  const uint64 current_time = Clock::GetTime();
   if (force ||
       (current_time >= last_sync_time_ &&
        current_time - last_sync_time_ >= kSyncDataInterval)) {
@@ -716,14 +708,12 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
 
   switch (callback_command.type()) {
     case commands::SessionCommand::UNDO:
-      // As far as I've tested on Ubuntu 11.10, most of applications which
-      // accept 'ibus_engine_delete_surrounding_text' doe not set
-      // IBUS_CAP_SURROUNDING_TEXT bit.
-      // So we should carefully uncomment the following code.
-      // -----
-      // if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
-      //   return false;
-      // }
+      // Having |IBUS_CAP_SURROUNDING_TEXT| does not necessarily mean that the
+      // client supports |ibus_engine_delete_surrounding_text()|, but there is
+      // no other good criteria.
+      if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+        return false;
+      }
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
       if (!GetSurroundingText(engine,
@@ -790,19 +780,6 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
   // TODO(nona): Check executable bit for renderer.
   return gtk_candidate_window_handler_.get();
 #endif  // not ENABLE_GTK_RENDERER
-}
-
-void MozcEngine::SendCaretLocation(uint32 x, uint32 y, uint32 width,
-                                   uint32 height) {
-  commands::Output output;
-  commands::SessionCommand command;
-  command.set_type(commands::SessionCommand::SEND_CARET_LOCATION);
-  commands::Rectangle *caret_rectangle = command.mutable_caret_rectangle();
-  caret_rectangle->set_x(x);
-  caret_rectangle->set_y(y);
-  caret_rectangle->set_width(width);
-  caret_rectangle->set_height(height);
-  client_->SendCommand(command, &output);
 }
 
 }  // namespace ibus

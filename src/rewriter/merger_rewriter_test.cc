@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,9 @@
 
 #include "base/system_util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -105,9 +105,6 @@ class MergerRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
   }
 };
 
@@ -156,7 +153,7 @@ TEST_F(MergerRewriterTest, RewriteSuggestion) {
   segment->push_back_candidate();
   segment->push_back_candidate();
   EXPECT_EQ(4, segment->candidates_size());
-  EXPECT_EQ(3, GET_CONFIG(suggestions_size));
+  EXPECT_EQ(3, request.config().suggestions_size());
 
   EXPECT_TRUE(merger.Rewrite(request, &segments));
   EXPECT_EQ("a.Rewrite();", call_result);
@@ -171,10 +168,10 @@ TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
 
   // Initialize a ConversionRequest with mixed_conversion == true, which
   // should result that the merger rewriter does not trim exceeded suggestions.
-  const composer::Composer *kNullComposer = NULL;
   commands::Request commands_request;
   commands_request.set_mixed_conversion(true);
-  ConversionRequest request(kNullComposer, &commands_request);
+  ConversionRequest request;
+  request.set_request(&commands_request);
   EXPECT_TRUE(request.request().mixed_conversion());
 
   segments.set_request_type(Segments::SUGGESTION);
@@ -191,7 +188,7 @@ TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
   segment->push_back_candidate();
   segment->push_back_candidate();
   EXPECT_EQ(4, segment->candidates_size());
-  EXPECT_EQ(3, GET_CONFIG(suggestions_size));
+  EXPECT_EQ(3, request.config().suggestions_size());
 
   EXPECT_TRUE(merger.Rewrite(request, &segments));
   EXPECT_EQ("a.Rewrite();", call_result);

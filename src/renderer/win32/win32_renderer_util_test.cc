@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <Shlwapi.h>
+#include "renderer/win32/win32_renderer_util.h"
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -42,7 +42,6 @@
 #include "base/win_font_test_helper.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
-#include "renderer/win32/win32_renderer_util.h"
 #include "testing/base/public/gunit.h"
 
 // Following functions should be placed in global namespace for Koenig look-up
@@ -1235,7 +1234,7 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
 
   // Check DPI scale: 100%
   {
-    scoped_ptr<WindowPositionEmulator> emulator(
+    std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
     const HWND hwnd = emulator->RegisterWindow(
         kWindowClassName, kWindowRect, kClientOffset, kClientSize, 1.0);
@@ -1266,7 +1265,7 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
 
   // Interestingly, the following results are independent of DPI scaling.
   {
-    scoped_ptr<WindowPositionEmulator> emulator(
+    std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
     const HWND hwnd = emulator->RegisterWindow(
         kWindowClassName, kWindowRect, kClientOffset, kClientSize, 10.0);

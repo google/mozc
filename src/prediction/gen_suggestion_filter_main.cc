@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <memory>
 #include <string>
 
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/hash.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
@@ -54,7 +57,7 @@ void ReadWords(const string &name, vector<uint64> *words) {
     }
     string lower_value = line;
     mozc::Util::LowerString(&lower_value);
-    words->push_back(mozc::Util::Fingerprint(lower_value));
+    words->push_back(mozc::Hash::Fingerprint(lower_value));
   }
 }
 
@@ -66,7 +69,7 @@ using mozc::storage::ExistenceFilter;
 // read per-line word list and generate
 // bloom filter in raw byte array or header file format
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
 
   if ((FLAGS_input.empty() ||
        FLAGS_output.empty()) && argc > 2) {
@@ -88,7 +91,7 @@ int main(int argc, char **argv) {
 
   LOG(INFO) << "num_bytes: " << num_bytes;
 
-  scoped_ptr<ExistenceFilter> filter(
+  std::unique_ptr<ExistenceFilter> filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
   for (size_t i = 0; i < words.size(); ++i) {
     filter->Insert(words[i]);

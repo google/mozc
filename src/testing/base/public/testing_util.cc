@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "testing/base/public/testing_util.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -37,7 +38,6 @@
 #include "base/protobuf/text_format.h"
 #include "base/protobuf/wire_format.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace testing {
@@ -173,7 +173,7 @@ bool EqualsProtoInternal(
 
   for (int i = 0; i < descriptor->field_count(); ++i) {
     const FieldDescriptor *field = descriptor->field(i);
-    CHECK(field != NULL);
+    CHECK(field != nullptr);
     if (field->is_repeated()) {
       if (!EqualsRepeatedField(
               field, reflection, message1, message2, is_partial)) {
@@ -217,7 +217,7 @@ namespace {
   // Note: Message::New returns an instance of the actual type,
   // so we can convert the string representation of the "actual"'s type,
   // by simply parsing it.
-  scoped_ptr<Message> expect_message(actual.New());
+  std::unique_ptr<Message> expect_message(actual.New());
   TextFormat::Parser parser;
   parser.AllowPartialMessage(is_partial);
   CHECK(parser.ParseFromString(expect, expect_message.get()))

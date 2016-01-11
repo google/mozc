@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "base/port.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/string_piece.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 
@@ -65,6 +67,8 @@ class TypingCorrector {
 
   // Sets a romaji table.
   void SetTable(const Table *table);
+
+  void SetConfig(const config::Config *config);
 
   // Resets this instance as a copy of |src|.
   void CopyFrom(const TypingCorrector &src);
@@ -103,6 +107,7 @@ class TypingCorrector {
   const Table *table_;
   size_t max_correction_query_candidates_;
   size_t max_correction_query_results_;
+  const config::Config *config_;
   string raw_key_;
   vector<KeyAndPenalty> top_n_;
 

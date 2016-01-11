@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 #define MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 
+#include <memory>
 #include <queue>
 #include <set>
 #include <string>
@@ -37,7 +38,6 @@
 #include <vector>
 
 #include "base/freelist.h"
-#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "base/trie.h"
 #include "dictionary/dictionary_interface.h"
@@ -73,7 +73,7 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
   bool Save() const;
 
  private:
-  scoped_ptr<storage::StringStorageInterface> storage_;
+  std::unique_ptr<storage::StringStorageInterface> storage_;
 };
 
 // UserHistoryPredictor is NOT thread safe.
@@ -99,7 +99,7 @@ class UserHistoryPredictor : public PredictorInterface {
                                  Segments *segments) const;
 
   // Hook(s) for all mutable operations.
-  virtual void Finish(Segments *segments);
+  virtual void Finish(const ConversionRequest &request, Segments *segments);
 
   // Revert last Finish operation.
   virtual void Revert(Segments *segments);
@@ -129,7 +129,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   virtual const string &GetPredictorName() const { return predictor_name_; }
 
-  // Used in user_history_sync_util.
+  // From user_history_predictor.proto
   typedef user_history_predictor::UserHistory::Entry Entry;
   typedef user_history_predictor::UserHistory::NextEntry NextEntry;
   typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
@@ -273,6 +273,9 @@ class UserHistoryPredictor : public PredictorInterface {
               ClearHistoryEntry_Trigram_DeleteSecondBigram);
   FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Scenario1);
   FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Scenario2);
+  FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile);
+  FRIEND_TEST(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop);
+  FRIEND_TEST(UserHistoryPredictorTest, UsageStats);
 
   enum MatchType {
     NO_MATCH,            // no match
@@ -386,12 +389,27 @@ class UserHistoryPredictor : public PredictorInterface {
   // |prev_entry| is an optional field. If set NULL, this field is just ignored.
   // This method adds a new result entry with score, pair<score, entry>, to
   // |results|.
-  bool LookupEntry(const string &input_key,
+  bool LookupEntry(RequestType request_type,
+                   const string &input_key,
                    const string &key_base,
                    const Trie<string> *key_expanded,
                    const Entry *entry,
                    const Entry *prev_entry,
                    EntryPriorityQueue *results) const;
+
+  // For the EXACT and RIGHT_PREFIX match, we will generate joined
+  // candidates by looking up the history link.
+  // Gets key value pair and assigns them to |result_key| and |result_value|
+  // for prediction result. The last entry which was joined
+  // will be assigned to |result_last_entry|.
+  // Returns false if we don't have the result for this match.
+  // |left_last_access_time| and |left_most_last_access_time| will be updated
+  // according to the entry lookup.
+  bool GetKeyValueForExactAndRightPrefixMatch(
+      const string &input_key,
+      const Entry *entry, const Entry **result_last_entry,
+      uint64 *left_last_access_time, uint64 *left_most_last_access_time,
+      string *result_key, string *result_value) const;
 
   const Entry *LookupPrevEntry(const Segments &segments,
                                uint32 available_emoji_carrier) const;
@@ -405,6 +423,7 @@ class UserHistoryPredictor : public PredictorInterface {
                                  EntryPriorityQueue *results) const;
 
   void GetResultsFromHistoryDictionary(
+      RequestType request_type,
       const ConversionRequest &request,
       const Segments &segments,
       const Entry *prev_entry,
@@ -415,7 +434,7 @@ class UserHistoryPredictor : public PredictorInterface {
   static void GetInputKeyFromSegments(
       const ConversionRequest &request, const Segments &segments,
       string *input_key, string *base,
-      scoped_ptr<Trie<string> >*expanded);
+      std::unique_ptr<Trie<string>>*expanded);
 
   bool InsertCandidates(RequestType request_type,
                         const ConversionRequest &request, Segments *segments,
@@ -436,7 +455,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // composer() if composer is available. If not, use the key
   // directory. It also use MaybeRomanMisspelledKey() defined
   // below to check the preedit looks missspelled or not.
-  static string GetRomanMisspelledKey(const Segments &segments);
+  static string GetRomanMisspelledKey(const ConversionRequest &request,
+                                      const Segments &segments);
 
   // return true if |key| may contain miss spelling.
   // Currently, this function returns true if
@@ -453,7 +473,8 @@ class UserHistoryPredictor : public PredictorInterface {
       const Entry *entry,
       EntryPriorityQueue *results) const;
 
-  void InsertHistory(bool is_suggestion_selected,
+  void InsertHistory(RequestType request_type,
+                     bool is_suggestion_selected,
                      uint64 last_access_time,
                      Segments *segments);
 
@@ -474,8 +495,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Insert a new |next_entry| into |entry|.
   // it makes a bigram connection from entry to next_entry.
-  void InsertNextEntry(const NextEntry &next_entry,
-                       UserHistoryPredictor::Entry *entry) const;
+  void InsertNextEntry(const NextEntry &next_entry, Entry *entry) const;
 
   static void EraseNextEntries(uint32 fp, Entry *entry);
 
@@ -493,6 +513,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // such like password.
   bool IsPrivacySensitive(const Segments *segments) const;
 
+  void MaybeRecordUsageStats(const Segments &segments) const;
+
   const dictionary::DictionaryInterface *dictionary_;
   const dictionary::POSMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
@@ -500,8 +522,8 @@ class UserHistoryPredictor : public PredictorInterface {
 
   bool content_word_learning_enabled_;
   bool updated_;
-  scoped_ptr<DicCache> dic_;
-  mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;
+  std::unique_ptr<DicCache> dic_;
+  mutable std::unique_ptr<UserHistoryPredictorSyncer> syncer_;
 };
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,19 +32,18 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/stl_util.h"
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/conversion_request.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
@@ -60,6 +59,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
@@ -135,10 +135,7 @@ void InsertCorrectedNodes(size_t pos, const string &key,
   }
   KeyCorrectedNodeListBuilder builder(pos, key, key_corrector,
                                       lattice->node_allocator());
-  dictionary->LookupPrefix(
-      StringPiece(str, length),
-      request.IsKanaModifierInsensitiveConversion(),
-      &builder);
+  dictionary->LookupPrefix(StringPiece(str, length), request, &builder);
   if (builder.tail() != NULL) {
     builder.tail()->bnext = NULL;
   }
@@ -776,17 +773,14 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
     BaseNodeListBuilder builder(
         lattice->node_allocator(),
         lattice->node_allocator()->max_nodes_size());
-    dictionary_->LookupReverse(StringPiece(begin, len), &builder);
+    dictionary_->LookupReverse(StringPiece(begin, len), request, &builder);
     result_node = builder.result();
   } else {
     if (is_prediction) {
       NodeListBuilderWithCacheEnabled builder(
           lattice->node_allocator(),
           lattice->cache_info(begin_pos) + 1);
-      dictionary_->LookupPrefix(
-          StringPiece(begin, len),
-          request.IsKanaModifierInsensitiveConversion(),
-          &builder);
+      dictionary_->LookupPrefix(StringPiece(begin, len), request, &builder);
       result_node = builder.result();
       lattice->SetCacheInfo(begin_pos, len);
     } else {
@@ -794,10 +788,7 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos,
       BaseNodeListBuilder builder(
           lattice->node_allocator(),
           lattice->node_allocator()->max_nodes_size());
-      dictionary_->LookupPrefix(
-          StringPiece(begin, len),
-          request.IsKanaModifierInsensitiveConversion(),
-          &builder);
+      dictionary_->LookupPrefix(StringPiece(begin, len), request, &builder);
       result_node = builder.result();
     }
   }
@@ -1104,7 +1095,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
   // Note that, the average number of lid/rid variation is less than 30 in
   // most cases. So, in order to avoid too many allocations for internal
   // nodes of std::map, we use vector of key-value pairs.
-  typedef vector<pair<int, pair<int, Node*> > > BestMap;
+  typedef vector<pair<int, pair<int, Node*>>> BestMap;
   typedef OrderBy<FirstKey, Less> OrderByFirst;
   BestMap lbest, rbest;
   lbest.reserve(128);
@@ -1119,10 +1110,10 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
       const int rid = lnode->rid;
       BestMap::value_type key(rid, kInvalidValue);
       BestMap::iterator iter =
-          lower_bound(lbest.begin(), lbest.end(), key, OrderByFirst());
+          std::lower_bound(lbest.begin(), lbest.end(), key, OrderByFirst());
       if (iter == lbest.end() || iter->first != rid) {
         lbest.insert(
-            iter, BestMap::value_type(rid, make_pair(lnode->cost, lnode)));
+            iter, BestMap::value_type(rid, std::make_pair(lnode->cost, lnode)));
       } else if (lnode->cost < iter->second.first) {
         iter->second.first = lnode->cost;
         iter->second.second = lnode;
@@ -1141,7 +1132,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
       }
       BestMap::value_type key(rnode->lid, kInvalidValue);
       BestMap::iterator iter =
-          lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+          std::lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
       if (iter == rbest.end() || iter->first != rnode->lid) {
         rbest.insert(iter, key);
       }
@@ -1170,7 +1161,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
       }
       BestMap::value_type key(rnode->lid, kInvalidValue);
       BestMap::iterator iter =
-          lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+          std::lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
       if (iter == rbest.end() || iter->first != rnode->lid ||
           iter->second.second == NULL) {
         continue;
@@ -1267,8 +1258,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
           lattice->node_allocator()->max_nodes_size(),
           pos_matcher_);
       suffix_dictionary_->LookupPredictive(
-          StringPiece(key.data() + pos, key.size() - pos),
-          request.IsKanaModifierInsensitiveConversion(), &builder);
+          StringPiece(key.data() + pos, key.size() - pos), request, &builder);
       if (builder.result() != NULL) {
         lattice->Insert(pos, builder.result());
       }
@@ -1298,8 +1288,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
           lattice->node_allocator()->max_nodes_size(),
           pos_matcher_);
       dictionary_->LookupPredictive(
-          StringPiece(key.data() + pos, key.size() - pos),
-          request.IsKanaModifierInsensitiveConversion(), &builder);
+          StringPiece(key.data() + pos, key.size() - pos), request, &builder);
       if (builder.result() != NULL) {
         lattice->Insert(pos, builder.result());
       }
@@ -1581,10 +1570,10 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
       (segments.request_type() == Segments::CONVERSION);
   // Do not use KeyCorrector if user changes the boundary.
   // http://b/issue?id=2804996
-  scoped_ptr<KeyCorrector> key_corrector;
+  std::unique_ptr<KeyCorrector> key_corrector;
   if (is_conversion && !segments.resized()) {
     KeyCorrector::InputMode mode = KeyCorrector::ROMAN;
-    if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
+    if (request.config().preedit_method() != config::Config::ROMAN) {
       mode = KeyCorrector::KANA;
     }
     key_corrector.reset(new KeyCorrector(key, mode, history_key.size()));
@@ -1677,12 +1666,14 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
     Segments *segments,
     const Lattice &lattice,
     const vector<uint16> &group,
-    size_t max_candidates_size) const {
+    size_t max_candidates_size,
+    FilterType filter_type) const {
   const size_t only_first_segment_candidate_pos =
       segments->conversion_segment(0).candidates_size();
   InsertCandidates(segments, lattice, group,
                    max_candidates_size,
-                   ONLY_FIRST_SEGMENT);
+                   ONLY_FIRST_SEGMENT,
+                   filter_type);
   // Note that inserted candidates might consume the entire key.
   // e.g. key: "なのは", value: "ナノは"
   // Erase them later.
@@ -1807,7 +1798,8 @@ void ImmutableConverterImpl::InsertCandidates(
     const Lattice &lattice,
     const vector<uint16> &group,
     size_t max_candidates_size,
-    InsertCandidatesType type) const {
+    InsertCandidatesType type,
+    FilterType filter_type) const {
   // skip HIS_NODE(s)
   Node *prev = lattice.bos_nodes();
   for (Node *node = lattice.bos_nodes()->next;
@@ -1823,7 +1815,7 @@ void ImmutableConverterImpl::InsertCandidates(
   const bool is_single_segment = (type == SINGLE_SEGMENT);
   NBestGenerator nbest_generator(
       suppression_dictionary_, segmenter_, connector_, pos_matcher_,
-      &lattice, suggestion_filter_);
+      &lattice, suggestion_filter_, (filter_type == DESKTOP));
 
   string original_key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
@@ -1888,6 +1880,9 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                               type == Segments::PARTIAL_PREDICTION ||
                               type == Segments::PARTIAL_SUGGESTION);
 
+  const FilterType filter_type =
+      request.request().mixed_conversion() ? MOBILE : DESKTOP;
+
   if (is_prediction) {
     const size_t max_candidates_size =
         segments->max_prediction_candidates_size();
@@ -1900,7 +1895,8 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
           ((max_candidates_size > kOnlyFirstSegmentCandidateSize) ?
            max_candidates_size - kOnlyFirstSegmentCandidateSize : 1);
       InsertCandidates(segments, lattice, group,
-                       single_segment_candidates_size, SINGLE_SEGMENT);
+                       single_segment_candidates_size, SINGLE_SEGMENT,
+                       filter_type);
 
       // Even if single_segment_candidates_size + kOnlyFirstSegmentCandidateSize
       // is greater than max_candidates_size, we cannot skip
@@ -1916,10 +1912,12 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
           min(max_candidates_size,
               single_segment_candidates_size + kOnlyFirstSegmentCandidateSize);
       InsertFirstSegmentToCandidates(
-          segments, lattice, group, only_first_segment_candidates_size);
+          segments, lattice, group, only_first_segment_candidates_size,
+          filter_type);
     } else {
       InsertCandidates(
-          segments, lattice, group, max_candidates_size, SINGLE_SEGMENT);
+          segments, lattice, group, max_candidates_size, SINGLE_SEGMENT,
+          filter_type);
     }
   } else {
     DCHECK(!request.create_partial_candidates());
@@ -1938,7 +1936,8 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     const size_t old_conversion_segments_size =
         segments->conversion_segments_size();
     InsertCandidates(
-        segments, lattice, group, max_candidates_size, MULTI_SEGMENTS);
+        segments, lattice, group, max_candidates_size, MULTI_SEGMENTS,
+        filter_type);
     if (old_conversion_segments_size > 0) {
       segments->erase_segments(segments->history_segments_size(),
                                old_conversion_segments_size);

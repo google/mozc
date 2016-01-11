@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,9 @@
 
 #include "dictionary/system/system_dictionary.h"
 
+#include <algorithm>
 #include <cstdlib>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -40,6 +42,7 @@
 #include "base/stl_util.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "config/config_handler.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
@@ -47,8 +50,14 @@
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
+
+using std::unique_ptr;
 
 using mozc::dictionary::CollectTokenCallback;
 
@@ -61,43 +70,27 @@ const uint32 kDefaultReverseLookupTestSize = 10000;
 #endif
 }  // namespace
 
-// TODO(noriyukit): Ideally, the copy rule of dictionary_oss/dictionary00.txt
-// can be shared with one in
-// data_manager/dictionary_oss/oss_data_manager_test.gyp. However, to avoid
-// conflict of copy destination name, the copy destination here is changed from
-// the original one. See also comments in system_dictionary_test.gyp.
-DEFINE_string(
-    dictionary_source,
-    "data/system_dictionary_test/dictionary00.txt",
-    "source dictionary file to run test");
-
 DEFINE_int32(dictionary_test_size, 100000,
              "Dictionary size for this test.");
 DEFINE_int32(dictionary_reverse_lookup_test_size, kDefaultReverseLookupTestSize,
              "Number of tokens to run reverse lookup test.");
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
 DECLARE_int32(min_key_length_to_use_small_cost_encoding);
 
 namespace mozc {
 namespace dictionary {
 
-namespace {
-
-const bool kEnableKanaModiferInsensitiveLookup = true;
-const bool kDisableKanaModiferInsensitiveLookup = false;
-
-}  // namespace
-
-class SystemDictionaryTest : public testing::Test {
+class SystemDictionaryTest : public ::testing::Test {
  protected:
   SystemDictionaryTest()
       : text_dict_(new TextDictionaryLoader(
           *UserPosManager::GetUserPosManager()->GetPOSMatcher())),
-        dic_fn_(FLAGS_test_tmpdir + "/mozc.dic") {
-    const string dic_path = FileUtil::JoinPath(FLAGS_test_srcdir,
-                                               FLAGS_dictionary_source);
+        dic_fn_(FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc.dic")) {
+    const string dic_path = mozc::testing::GetSourceFileOrDie({
+        "data", "dictionary_oss", "dictionary00.txt"});
     text_dict_->LoadWithLineLimit(dic_path, "", FLAGS_dictionary_test_size);
+
+    convreq_.set_request(&request_);
+    convreq_.set_config(&config_);
   }
 
   virtual void SetUp() {
@@ -107,11 +100,20 @@ class SystemDictionaryTest : public testing::Test {
     original_flags_min_key_length_to_use_small_cost_encoding_ =
         FLAGS_min_key_length_to_use_small_cost_encoding;
     FLAGS_min_key_length_to_use_small_cost_encoding = kint32max;
+
+    request_.Clear();
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   virtual void TearDown() {
     FLAGS_min_key_length_to_use_small_cost_encoding =
         original_flags_min_key_length_to_use_small_cost_encoding_;
+
+    // This config initialization will be removed once ConversionRequest can
+    // take config as an injected argument.
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 
   void BuildSystemDictionary(const vector <Token *>& tokens,
@@ -120,7 +122,11 @@ class SystemDictionaryTest : public testing::Test {
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
-  scoped_ptr<TextDictionaryLoader> text_dict_;
+  unique_ptr<TextDictionaryLoader> text_dict_;
+
+  ConversionRequest convreq_;
+  config::Config config_;
+  commands::Request request_;
   const string dic_fn_;
   int original_flags_min_key_length_to_use_small_cost_encoding_;
 };
@@ -235,7 +241,7 @@ TEST_F(SystemDictionaryTest, HasValue) {
 
   BuildSystemDictionary(tokens, tokens.size());
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -283,7 +289,7 @@ TEST_F(SystemDictionaryTest, HasValue) {
 
 TEST_F(SystemDictionaryTest, NormalWord) {
   vector<Token *> source_tokens;
-  scoped_ptr<Token> t0(new Token);
+  unique_ptr<Token> t0(new Token);
   // "あ"
   t0->key = "\xe3\x81\x82";
   // "亜"
@@ -294,7 +300,7 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   source_tokens.push_back(t0.get());
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -302,7 +308,7 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   CollectTokenCallback callback;
 
   // Look up by exact key.
-  system_dic->LookupPrefix(t0->key, false, &callback);
+  system_dic->LookupPrefix(t0->key, convreq_, &callback);
   ASSERT_EQ(1, callback.tokens().size());
   EXPECT_TOKEN_EQ(*t0, callback.tokens().front());
 
@@ -310,7 +316,7 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   callback.Clear();
   system_dic->LookupPrefix(
       "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86",  // "あいう"
-      false, &callback);
+      convreq_, &callback);
   ASSERT_EQ(1, callback.tokens().size());
   EXPECT_TOKEN_EQ(*t0, callback.tokens().front());
 
@@ -318,7 +324,7 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   callback.Clear();
   system_dic->LookupPrefix(
       "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F",  // "かきく"
-      false, &callback);
+      convreq_, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 }
 
@@ -355,7 +361,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
   }
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -363,7 +369,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
   // All the tokens should be looked up.
   CollectTokenCallback callback;
   system_dic->LookupPrefix("\xe3\x81\x82",  // "あ"
-                           false, &callback);
+                           convreq_, &callback);
   EXPECT_TOKENS_EQ_UNORDERED(source_tokens, callback.tokens());
 }
 
@@ -371,7 +377,7 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
   const vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -379,7 +385,7 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
   // All the tokens should be looked up.
   for (size_t i = 0; i < source_tokens.size(); ++i) {
     CheckTokenExistenceCallback callback(source_tokens[i]);
-    system_dic->LookupPrefix(source_tokens[i]->key, false, &callback);
+    system_dic->LookupPrefix(source_tokens[i]->key, convreq_, &callback);
     EXPECT_TRUE(callback.found())
         << "Token was not found: " << PrintToken(*source_tokens[i]);
   }
@@ -391,8 +397,8 @@ TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
   // "はひふへほ"
   const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
                     "\xbb";
-  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
-  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+  unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  unique_ptr<Token> t1(CreateToken(k1, "bb"));
 
   vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -400,14 +406,14 @@ TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   // |t0| should be looked up from |k1|.
   CheckTokenExistenceCallback callback(t0.get());
-  system_dic->LookupPrefix(k1, false, &callback);
+  system_dic->LookupPrefix(k1, convreq_, &callback);
   EXPECT_TRUE(callback.found());
 }
 
@@ -428,16 +434,16 @@ class LookupPrefixTestCallback : public SystemDictionary::Callback {
 
   virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
                              const Token &token) {
-    result_.insert(make_pair(token.key, token.value));
+    result_.insert(std::make_pair(token.key, token.value));
     return TRAVERSE_CONTINUE;
   }
 
-  const set<pair<string, string> > &result() const {
+  const set<pair<string, string>> &result() const {
     return result_;
   }
 
  private:
-  set<pair<string, string> > result_;
+  set<pair<string, string>> result_;
 };
 
 }  // namespace
@@ -500,7 +506,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
       "\xE3\x83\x90\xE3\x83\x93\xE3\x83\x96" },
   };
   const size_t kKeyValuesSize = arraysize(kKeyValues);
-  scoped_ptr<Token> tokens[kKeyValuesSize];
+  unique_ptr<Token> tokens[kKeyValuesSize];
   vector<Token *> source_tokens(kKeyValuesSize);
   for (size_t i = 0; i < kKeyValuesSize; ++i) {
     tokens[i].reset(CreateToken(kKeyValues[i].key, kKeyValues[i].value));
@@ -508,7 +514,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   }
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, kKeyValuesSize);
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -517,8 +523,8 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix("\xE3\x81\x82\xE3\x81\x84",  // "あい"
-                             false, &callback);
-    const set<pair<string, string> > &result = callback.result();
+                             convreq_, &callback);
+    const set<pair<string, string>> &result = callback.result();
     // "あ" -- "あい" should be found.
     for (size_t i = 0; i < 5; ++i) {
       const pair<string, string> entry(
@@ -539,9 +545,9 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix(
         "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F",  //"かきく"
-        false,
+        convreq_,
         &callback);
-    const set<pair<string, string> > &result = callback.result();
+    const set<pair<string, string>> &result = callback.result();
     // Only "か" should be found as the callback doesn't traverse the subtree of
     // "かき" due to culling request from LookupPrefixTestCallback::OnKey().
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
@@ -557,9 +563,9 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix(
         "\xE3\x81\x95\xE3\x81\x97\xE3\x81\x99",  // "さしす"
-        false,
+        convreq_,
         &callback);
-    const set<pair<string, string> > &result = callback.result();
+    const set<pair<string, string>> &result = callback.result();
     // Only "さし" should be found as tokens for "さ" is skipped (see
     // LookupPrefixTestCallback::OnKey()).
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
@@ -575,9 +581,9 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix(
         "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4",  // "たちつ"
-        false,
+        convreq_,
         &callback);
-    const set<pair<string, string> > &result = callback.result();
+    const set<pair<string, string>> &result = callback.result();
     // Nothing should be found as the traversal is immediately done after seeing
     // "た"; see LookupPrefixTestCallback::OnKey().
     EXPECT_TRUE(result.empty());
@@ -586,11 +592,14 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   // Test for prefix lookup with key expansion.
   {
     LookupPrefixTestCallback callback;
+    // Use kana modifier insensitive lookup
+    request_.set_kana_modifier_insensitive_conversion(true);
+    config_.set_use_kana_modifier_insensitive_conversion(true);
     system_dic->LookupPrefix(
         "\xE3\x81\xAF\xE3\x81\xB2",  // "はひ"
-        true,  // Use kana modifier insensitive lookup
+        convreq_,
         &callback);
-    const set<pair<string, string> > &result = callback.result();
+    const set<pair<string, string>> &result = callback.result();
     const char *kExpectedKeys[] = {
       "\xE3\x81\xAF",  // "は"
       "\xE3\x81\xB0",  // "ば"
@@ -613,7 +622,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
 
 TEST_F(SystemDictionaryTest, LookupPredictive) {
   vector<Token *> tokens;
-  ScopedElementsDeleter<vector<Token *> > deleter(&tokens);
+  ScopedElementsDeleter<vector<Token *>> deleter(&tokens);
 
   // "まみむめもや" -> "value0"
   tokens.push_back(CreateToken("\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
@@ -630,7 +639,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
     text_dict_->CollectTokens(&source_tokens);  // Load test data.
     BuildSystemDictionary(source_tokens, 10000);
   }
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
@@ -639,13 +648,13 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
   const char *kMamimumemo =
       "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80\xe3\x82\x81\xe3\x82\x82";
   CheckMultiTokensExistenceCallback callback(tokens);
-  system_dic->LookupPredictive(kMamimumemo, false, &callback);
+  system_dic->LookupPredictive(kMamimumemo, convreq_, &callback);
   EXPECT_TRUE(callback.AreAllFound());
 }
 
 TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
   vector<Token *> tokens;
-  ScopedElementsDeleter<vector<Token *> > deleter(&tokens);
+  ScopedElementsDeleter<vector<Token *>> deleter(&tokens);
 
   // "がっこう" -> "学校"
   tokens.push_back(CreateToken(
@@ -657,7 +666,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
       "\xE6\xA0\xBC\xE5\xA5\xBD"));
 
   BuildSystemDictionary(tokens, 100);
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
@@ -667,18 +676,22 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
 
   // Without Kana modifier insensitive lookup flag, nothing is looked up.
   CollectTokenCallback callback;
-  system_dic->LookupPredictive(kKey, false, &callback);
+  request_.set_kana_modifier_insensitive_conversion(false);
+  config_.set_use_kana_modifier_insensitive_conversion(false);
+  system_dic->LookupPredictive(kKey, convreq_, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 
   // With Kana modifier insensitive lookup flag, every token is looked up.
   callback.Clear();
-  system_dic->LookupPredictive(kKey, true, &callback);
+  request_.set_kana_modifier_insensitive_conversion(true);
+  config_.set_use_kana_modifier_insensitive_conversion(true);
+  system_dic->LookupPredictive(kKey, convreq_, &callback);
   EXPECT_TOKENS_EQ_UNORDERED(tokens, callback.tokens());
 }
 
 TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
   vector<Token *> tokens;
-  ScopedElementsDeleter<vector<Token *> > deleter(&tokens);
+  ScopedElementsDeleter<vector<Token *>> deleter(&tokens);
 
   // "あい" -> "ai"
   tokens.push_back(CreateToken("\xe3\x81\x82\xe3\x81\x84", "ai"));
@@ -692,7 +705,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
     text_dict_->CollectTokens(&source_tokens);  // Load test data.
     BuildSystemDictionary(source_tokens, 10000);
   }
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
@@ -702,7 +715,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
   // mechanism.  However, "あい" is looked up as it's short.
   CheckMultiTokensExistenceCallback callback(tokens);
   system_dic->LookupPredictive("\xe3\x81\x82",  // "あ"
-                               false, &callback);
+                               convreq_, &callback);
   EXPECT_TRUE(callback.IsFound(tokens[0]));
   EXPECT_FALSE(callback.IsFound(tokens[1]));
 }
@@ -716,35 +729,35 @@ TEST_F(SystemDictionaryTest, LookupExact) {
   const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
                     "\xbb";
 
-  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
-  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+  unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  unique_ptr<Token> t1(CreateToken(k1, "bb"));
   source_tokens.push_back(t0.get());
   source_tokens.push_back(t1.get());
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   // |t0| should not be looked up from |k1|.
   CheckTokenExistenceCallback callback0(t0.get());
-  system_dic->LookupExact(k1, &callback0);
+  system_dic->LookupExact(k1, convreq_, &callback0);
   EXPECT_FALSE(callback0.found());
   // But |t1| should be found.
   CheckTokenExistenceCallback callback1(t1.get());
-  system_dic->LookupExact(k1, &callback1);
+  system_dic->LookupExact(k1, convreq_, &callback1);
   EXPECT_TRUE(callback1.found());
 
   // Nothing should be found from "hoge".
   CollectTokenCallback callback_hoge;
-  system_dic->LookupExact("hoge", &callback_hoge);
+  system_dic->LookupExact("hoge", convreq_, &callback_hoge);
   EXPECT_TRUE(callback_hoge.tokens().empty());
 }
 
 TEST_F(SystemDictionaryTest, LookupReverse) {
-  scoped_ptr<Token> t0(new Token);
+  unique_ptr<Token> t0(new Token);
   // "ど"
   t0->key = "\xe3\x81\xa9";
   // "ド"
@@ -752,7 +765,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t0->cost = 1;
   t0->lid = 2;
   t0->rid = 3;
-  scoped_ptr<Token> t1(new Token);
+  unique_ptr<Token> t1(new Token);
   // "どらえもん"
   t1->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
   // "ドラえもん"
@@ -760,7 +773,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t1->cost = 1;
   t1->lid = 2;
   t1->rid = 3;
-  scoped_ptr<Token> t2(new Token);
+  unique_ptr<Token> t2(new Token);
   // "といざらす®"
   t2->key = "\xe3\x81\xa8\xe3\x81\x84\xe3\x81\x96\xe3\x82\x89\xe3\x81\x99\xc2"
             "\xae";
@@ -770,7 +783,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t2->cost = 1;
   t2->lid = 2;
   t2->rid = 3;
-  scoped_ptr<Token> t3(new Token);
+  unique_ptr<Token> t3(new Token);
   // "ああああああ"
   // Both t3 and t4 will be encoded into 3 bytes.
   t3->key = "\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82"
@@ -779,11 +792,11 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t3->cost = 32000;
   t3->lid = 1;
   t3->rid = 1;
-  scoped_ptr<Token> t4(new Token);
+  unique_ptr<Token> t4(new Token);
   *t4 = *t3;
   t4->lid = 1;
   t4->rid = 2;
-  scoped_ptr<Token> t5(new Token);
+  unique_ptr<Token> t5(new Token);
   // "いいいいいい"
   // t5 will be encoded into 3 bytes.
   t5->key = "\xe3\x81\x84\xe3\x81\x84\xe3\x81\x84"
@@ -793,7 +806,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t5->lid = 1;
   t5->rid = 1;
   // spelling correction token should not be retrieved by reverse lookup.
-  scoped_ptr<Token> t6(new Token);
+  unique_ptr<Token> t6(new Token);
   // "どらえもん"
   t6->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
   // "ドラえもん"
@@ -802,7 +815,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t6->lid = 2;
   t6->rid = 3;
   t6->attributes = Token::SPELLING_CORRECTION;
-  scoped_ptr<Token> t7(new Token);
+  unique_ptr<Token> t7(new Token);
   // "こんさーと"
   t7->key = "\xe3\x81\x93\xe3\x82\x93\xe3\x81\x95\xe3\x83\xbc\xe3\x81\xa8";
   // "コンサート"
@@ -811,7 +824,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t7->lid = 1;
   t7->rid = 1;
   // "バージョン" should not return a result with the key "ヴァージョン".
-  scoped_ptr<Token> t8(new Token);
+  unique_ptr<Token> t8(new Token);
   // "ばーじょん"
   t8->key = "\xE3\x81\xB0\xE3\x83\xBC\xE3\x81\x98\xE3\x82\x87\xE3\x82\x93";
   // "バージョン"
@@ -834,7 +847,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -844,7 +857,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   for (size_t source_index = 0; source_index < test_size; ++source_index) {
     const Token &source_token = *source_tokens[source_index];
     CollectTokenCallback callback;
-    system_dic->LookupReverse(source_token.value, &callback);
+    system_dic->LookupReverse(source_token.value, convreq_, &callback);
     const vector<Token> &tokens = callback.tokens();
 
     bool found = false;
@@ -883,7 +896,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
     // append "が"
     const string key = t7->value + "\xe3\x81\x8c";
     CollectTokenCallback callback;
-    system_dic->LookupReverse(key, &callback);
+    system_dic->LookupReverse(key, convreq_, &callback);
     const vector<Token> &tokens = callback.tokens();
     bool found = false;
     for (size_t i = 0; i < tokens.size(); ++i) {
@@ -900,13 +913,13 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
   const vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> system_dic_without_index(
+  unique_ptr<SystemDictionary> system_dic_without_index(
       SystemDictionary::Builder(dic_fn_)
       .SetOptions(SystemDictionary::NONE)
       .Build());
   ASSERT_TRUE(system_dic_without_index.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
-  scoped_ptr<SystemDictionary> system_dic_with_index(
+  unique_ptr<SystemDictionary> system_dic_with_index(
       SystemDictionary::Builder(dic_fn_)
       .SetOptions(SystemDictionary::ENABLE_REVERSE_LOOKUP_INDEX)
       .Build());
@@ -919,8 +932,8 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
        size > 0 && it != source_tokens.end(); ++it, --size) {
     const Token &t = **it;
     CollectTokenCallback callback1, callback2;
-    system_dic_without_index->LookupReverse(t.value, &callback1);
-    system_dic_with_index->LookupReverse(t.value, &callback2);
+    system_dic_without_index->LookupReverse(t.value, convreq_, &callback1);
+    system_dic_with_index->LookupReverse(t.value, convreq_, &callback2);
 
     const vector<Token> &tokens1 = callback1.tokens();
     const vector<Token> &tokens2 = callback2.tokens();
@@ -952,13 +965,13 @@ TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
   Token target_token = source_token;
   target_token.key.swap(target_token.value);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
   system_dic->PopulateReverseLookupCache(kDoraemon);
   CheckTokenExistenceCallback callback(&target_token);
-  system_dic->LookupReverse(kDoraemon, &callback);
+  system_dic->LookupReverse(kDoraemon, convreq_, &callback);
   EXPECT_TRUE(callback.found())
       << "Could not find " << PrintToken(source_token);
   system_dic->ClearReverseLookupCache();
@@ -1004,14 +1017,14 @@ TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
   }
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   for (size_t i = 0; i < source_tokens.size(); ++i) {
     CheckTokenExistenceCallback callback(source_tokens[i]);
-    system_dic->LookupPrefix(source_tokens[i]->key, false, &callback);
+    system_dic->LookupPrefix(source_tokens[i]->key, convreq_, &callback);
     EXPECT_TRUE(callback.found())
         << "Token " << i << " was not found: " << PrintToken(*source_tokens[i]);
   }
@@ -1029,7 +1042,7 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   // "がっこう"
   const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
 
-  scoped_ptr<Token> tokens[5];
+  unique_ptr<Token> tokens[5];
   tokens[0].reset(CreateToken(k0, "aa"));
   tokens[1].reset(CreateToken(k1, "bb"));
   tokens[2].reset(CreateToken(k2, "cc"));
@@ -1043,17 +1056,19 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
+
+  request_.set_kana_modifier_insensitive_conversion(true);
+  config_.set_use_kana_modifier_insensitive_conversion(true);
 
   // Prefix search
   for (size_t i = 0; i < arraysize(tokens); ++i) {
     CheckTokenExistenceCallback callback(tokens[i].get());
     // "かつこう" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
-    system_dic->LookupPrefix(
-        k2, kEnableKanaModiferInsensitiveLookup, &callback);
+    system_dic->LookupPrefix(k2, convreq_, &callback);
     EXPECT_TRUE(callback.found())
         << "Token " << i << " was not found: " << PrintToken(*tokens[i]);
   }
@@ -1066,8 +1081,7 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
       expected.push_back(tokens[i].get());
     }
     CheckMultiTokensExistenceCallback callback(expected);
-    system_dic->LookupPredictive(
-        k0, kEnableKanaModiferInsensitiveLookup, &callback);
+    system_dic->LookupPredictive(k0, convreq_, &callback);
     EXPECT_TRUE(callback.AreAllFound());
   }
   {
@@ -1077,21 +1091,20 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
     expected.push_back(tokens[3].get());
     expected.push_back(tokens[4].get());
     CheckMultiTokensExistenceCallback callback(expected);
-    system_dic->LookupPredictive(
-        k1, kEnableKanaModiferInsensitiveLookup, &callback);
+    system_dic->LookupPredictive(k1, convreq_, &callback);
     EXPECT_TRUE(callback.AreAllFound());
   }
 }
 
 TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   // "ていすてぃんぐ", "テイスティング"
-  scoped_ptr<Token> t0(CreateToken(
+  unique_ptr<Token> t0(CreateToken(
       "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
       "\xe3\x81\x83\xe3\x82\x93\xe3\x81\x90",
       "\xe3\x83\x86\xe3\x82\xa4\xe3\x82\xb9\xe3\x83\x86"
       "\xe3\x82\xa3\xe3\x83\xb3\xe3\x82\xb0"));
   // "てすとです", "てすとです"
-  scoped_ptr<Token> t1(CreateToken(
+  unique_ptr<Token> t1(CreateToken(
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99",
       "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99"));
 
@@ -1102,7 +1115,7 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
@@ -1110,9 +1123,10 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   // Lookup |t0| from "ていすていんぐ"
   const string k = "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
       "\xe3\x81\x84\xe3\x82\x93\xe3\x81\x90";
+  request_.set_kana_modifier_insensitive_conversion(true);
+  config_.set_use_kana_modifier_insensitive_conversion(true);
   CheckTokenExistenceCallback callback(t0.get());
-  system_dic->LookupPrefix(k, kEnableKanaModiferInsensitiveLookup,
-                           &callback);
+  system_dic->LookupPrefix(k, convreq_, &callback);
   EXPECT_TRUE(callback.found()) << "Not found: " << PrintToken(*t0);
 }
 
@@ -1128,11 +1142,11 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
   // "がっこう"
   const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
 
-  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
-  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
-  scoped_ptr<Token> t2(CreateToken(k2, "cc"));
-  scoped_ptr<Token> t3(CreateToken(k3, "dd"));
-  scoped_ptr<Token> t4(CreateToken(k4, "ee"));
+  unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  unique_ptr<Token> t1(CreateToken(k1, "bb"));
+  unique_ptr<Token> t2(CreateToken(k2, "cc"));
+  unique_ptr<Token> t3(CreateToken(k3, "dd"));
+  unique_ptr<Token> t4(CreateToken(k4, "ee"));
 
   vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -1144,10 +1158,13 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> system_dic(
+  unique_ptr<SystemDictionary> system_dic(
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
+
+  request_.set_kana_modifier_insensitive_conversion(false);
+  config_.set_use_kana_modifier_insensitive_conversion(false);
 
   // Prefix search
   {
@@ -1161,15 +1178,13 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
     not_to_be_looked_up.push_back(t4.get());
     for (size_t i = 0; i < to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(to_be_looked_up[i]);
-      system_dic->LookupPrefix(
-          k3, kDisableKanaModiferInsensitiveLookup, &callback);
+      system_dic->LookupPrefix(k3, convreq_, &callback);
       EXPECT_TRUE(callback.found())
           << "Token is not found: " << PrintToken(*to_be_looked_up[i]);
     }
     for (size_t i = 0; i < not_to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(not_to_be_looked_up[i]);
-      system_dic->LookupPrefix(
-          k3, kDisableKanaModiferInsensitiveLookup, &callback);
+      system_dic->LookupPrefix(k3, convreq_, &callback);
       EXPECT_FALSE(callback.found())
           << "Token should not be found: "
           << PrintToken(*not_to_be_looked_up[i]);
@@ -1188,15 +1203,13 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
     not_to_be_looked_up.push_back(t4.get());
     for (size_t i = 0; i < to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(to_be_looked_up[i]);
-      system_dic->LookupPredictive(
-          k1, kDisableKanaModiferInsensitiveLookup, &callback);
+      system_dic->LookupPredictive(k1, convreq_, &callback);
       EXPECT_TRUE(callback.found())
           << "Token is not found: " << PrintToken(*to_be_looked_up[i]);
     }
     for (size_t i = 0; i < not_to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(not_to_be_looked_up[i]);
-      system_dic->LookupPredictive(
-          k3, kDisableKanaModiferInsensitiveLookup, &callback);
+      system_dic->LookupPredictive(k3, convreq_, &callback);
       EXPECT_FALSE(callback.found())
           << "Token should not be found: "
           << PrintToken(*not_to_be_looked_up[i]);

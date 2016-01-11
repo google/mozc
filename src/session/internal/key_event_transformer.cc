@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,75 +39,75 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 
+using mozc::commands::KeyEvent;
+using mozc::config::Config;
+
 namespace mozc {
 namespace session {
 
 KeyEventTransformer::KeyEventTransformer() {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  ReloadConfig(config);
+  ReloadConfig(config::ConfigHandler::DefaultConfig());
 }
 
 KeyEventTransformer::~KeyEventTransformer() {
 }
 
-void KeyEventTransformer::ReloadConfig(const config::Config &config) {
+void KeyEventTransformer::ReloadConfig(const Config &config) {
   numpad_character_form_ = config.numpad_character_form();
 
   table_.clear();
-  const config::Config::PunctuationMethod punctuation =
-      config.punctuation_method();
-  if (punctuation == config::Config::COMMA_PERIOD ||
-      punctuation == config::Config::COMMA_TOUTEN) {
-    commands::KeyEvent key_event;
+  const Config::PunctuationMethod punctuation = config.punctuation_method();
+  if (punctuation == Config::COMMA_PERIOD ||
+      punctuation == Config::COMMA_TOUTEN) {
+    KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32>(','));
     // "，"
     key_event.set_key_string("\xef\xbc\x8c");
     // "、"
-    table_.insert(make_pair("\xe3\x80\x81", key_event));
+    table_.insert(std::make_pair("\xe3\x80\x81", key_event));
   }
-  if (punctuation == config::Config::COMMA_PERIOD ||
-      punctuation == config::Config::KUTEN_PERIOD) {
-    commands::KeyEvent key_event;
+  if (punctuation == Config::COMMA_PERIOD ||
+      punctuation == Config::KUTEN_PERIOD) {
+    KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32>('.'));
     // "．"
     key_event.set_key_string("\xef\xbc\x8e");
     // "。"
-    table_.insert(make_pair("\xe3\x80\x82", key_event));
+    table_.insert(std::make_pair("\xe3\x80\x82", key_event));
   }
 
-  const config::Config::SymbolMethod symbol = config.symbol_method();
-  if (symbol == config::Config::SQUARE_BRACKET_SLASH ||
-      symbol == config::Config::SQUARE_BRACKET_MIDDLE_DOT) {
+  const Config::SymbolMethod symbol = config.symbol_method();
+  if (symbol == Config::SQUARE_BRACKET_SLASH ||
+      symbol == Config::SQUARE_BRACKET_MIDDLE_DOT) {
     {
-      commands::KeyEvent key_event;
+      KeyEvent key_event;
       key_event.set_key_code(static_cast<uint32>('['));
       // "［"
       key_event.set_key_string("\xef\xbc\xbb");
       // "「"
-      table_.insert(make_pair("\xe3\x80\x8c", key_event));
+      table_.insert(std::make_pair("\xe3\x80\x8c", key_event));
     }
     {
-      commands::KeyEvent key_event;
+      KeyEvent key_event;
       key_event.set_key_code(static_cast<uint32>(']'));
       // "］"
       key_event.set_key_string("\xef\xbc\xbd");
       // "」"
-      table_.insert(make_pair("\xe3\x80\x8d", key_event));
+      table_.insert(std::make_pair("\xe3\x80\x8d", key_event));
     }
   }
-  if (symbol == config::Config::SQUARE_BRACKET_SLASH ||
-      symbol == config::Config::CORNER_BRACKET_SLASH) {
-    commands::KeyEvent key_event;
+  if (symbol == Config::SQUARE_BRACKET_SLASH ||
+      symbol == Config::CORNER_BRACKET_SLASH) {
+    KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32>('/'));
     // "／"
     key_event.set_key_string("\xef\xbc\x8f");
     // "・"
-    table_.insert(make_pair("\xE3\x83\xBB", key_event));
+    table_.insert(std::make_pair("\xE3\x83\xBB", key_event));
   }
 }
 
-bool KeyEventTransformer::TransformKeyEvent(commands::KeyEvent *key_event) {
+bool KeyEventTransformer::TransformKeyEvent(KeyEvent *key_event) const {
   if (key_event == NULL) {
     LOG(ERROR) << "key_event is NULL";
     return false;
@@ -122,7 +122,7 @@ bool KeyEventTransformer::TransformKeyEvent(commands::KeyEvent *key_event) {
 }
 
 bool KeyEventTransformer::TransformKeyEventForNumpad(
-    commands::KeyEvent *key_event) {
+    KeyEvent *key_event) const {
   DCHECK(key_event);
 
   if (!KeyEventUtil::IsNumpadKey(*key_event)) {
@@ -130,44 +130,44 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
   }
 
   {
-    commands::KeyEvent key_event_origin;
+    KeyEvent key_event_origin;
     key_event_origin.CopyFrom(*key_event);
     KeyEventUtil::NormalizeNumpadKey(key_event_origin, key_event);
   }
 
-  // commands::KeyEvent::SEPARATOR is transformed to Enter.
+  // KeyEvent::SEPARATOR is transformed to Enter.
   if (key_event->has_special_key()) {
-    DCHECK_EQ(commands::KeyEvent::ENTER, key_event->special_key());
+    DCHECK_EQ(KeyEvent::ENTER, key_event->special_key());
     return true;
   }
 
   bool is_full_width = true;
   switch (numpad_character_form_) {
-    case config::Config::NUMPAD_INPUT_MODE:
+    case Config::NUMPAD_INPUT_MODE:
       is_full_width = true;
-      key_event->set_input_style(commands::KeyEvent::FOLLOW_MODE);
+      key_event->set_input_style(KeyEvent::FOLLOW_MODE);
       break;
-    case config::Config::NUMPAD_FULL_WIDTH:
+    case Config::NUMPAD_FULL_WIDTH:
       is_full_width = true;
-      key_event->set_input_style(commands::KeyEvent::AS_IS);
+      key_event->set_input_style(KeyEvent::AS_IS);
       break;
-    case config::Config::NUMPAD_HALF_WIDTH:
+    case Config::NUMPAD_HALF_WIDTH:
       is_full_width = false;
-      key_event->set_input_style(commands::KeyEvent::AS_IS);
+      key_event->set_input_style(KeyEvent::AS_IS);
       break;
-    case config::Config::NUMPAD_DIRECT_INPUT:
+    case Config::NUMPAD_DIRECT_INPUT:
       is_full_width = false;
-      key_event->set_input_style(commands::KeyEvent::DIRECT_INPUT);
+      key_event->set_input_style(KeyEvent::DIRECT_INPUT);
       break;
     default:
       LOG(ERROR) << "Unknown numpad character form value.";
       // Use the same behavior with NUMPAD_HALF_WIDTH as a fallback.
       is_full_width = false;
-      key_event->set_input_style(commands::KeyEvent::AS_IS);
+      key_event->set_input_style(KeyEvent::AS_IS);
       break;
   }
 
-  // All key event except for commands::KeyEvent::SEPARATOR should have key code
+  // All key event except for KeyEvent::SEPARATOR should have key code
   // and it's value should represent a ASCII character since it is generated
   // from numpad key.
   DCHECK(key_event->has_key_code());
@@ -187,8 +187,7 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
   return true;
 }
 
-bool KeyEventTransformer::TransformKeyEventForKana(
-    commands::KeyEvent *key_event) {
+bool KeyEventTransformer::TransformKeyEventForKana(KeyEvent *key_event) const {
   DCHECK(key_event);
 
   if (!key_event->has_key_string()) {
@@ -208,6 +207,11 @@ bool KeyEventTransformer::TransformKeyEventForKana(
 
   key_event->CopyFrom(it->second);
   return true;
+}
+
+void KeyEventTransformer::CopyFrom(const KeyEventTransformer &src) {
+  table_ = src.table_;
+  numpad_character_form_ = src.numpad_character_form_;
 }
 
 }  // namespace session

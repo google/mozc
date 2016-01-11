@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,26 +53,18 @@
 #ifdef OS_ANDROID
 #include "base/const.h"
 #endif  // OS_ANDROID
+#include "base/clock.h"
+#ifndef OS_ANDROID
 #include "base/file_stream.h"
-#include "base/file_util.h"
+#endif  // OS_ANDROID
 #include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
-#include "base/util.h"
 
 DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
 DEFINE_bool(logtostderr,
             false,
             "log messages go to stderr instead of logfiles");
-
-// Even if log_dir is modified in the middle of the process, the
-// logging directory will not be changed because the logging stream is
-// initialized in the very early initialization stage.
-DEFINE_string(log_dir,
-              "",
-              "If specified, logfiles are written into this directory "
-              "instead of the default logging directory.");
 DEFINE_int32(v, 0, "verbose level");
 
 namespace mozc {
@@ -103,12 +95,12 @@ COMPARE_LOG_LEVEL(LOG_SILENT, ANDROID_LOG_SILENT);
 string Logging::GetLogMessageHeader() {
 #ifndef OS_ANDROID
   tm tm_time;
-  Util::GetCurrentTm(&tm_time);
+  Clock::GetCurrentTm(&tm_time);
 
   char buf[512];
   snprintf(buf, sizeof(buf),
            "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d %u "
-#if defined(__native_client__)
+#if defined(OS_NACL)
            "%p",
 #elif defined(OS_LINUX)
            "%lu",
@@ -133,7 +125,7 @@ string Logging::GetLogMessageHeader() {
 #else  // __LP64__
            reinterpret_cast<uint32>(pthread_self())
 #endif  // __LP64__
-#elif defined(__native_client__)
+#elif defined(OS_NACL)
            ::getpid(),
            // pthread_self() returns __nc_basic_thread_data*.
            static_cast<void*>(pthread_self())
@@ -157,7 +149,7 @@ string Logging::GetLogMessageHeader() {
 
 #ifdef NO_LOGGING
 
-void Logging::InitLogStream(const char *argv0) {
+void Logging::InitLogStream(const string &log_file_path) {
 }
 
 void Logging::CloseLogStream() {
@@ -199,7 +191,10 @@ namespace {
 
 class LogStreamImpl {
  public:
-  void Init(const char *argv0);
+  LogStreamImpl();
+  ~LogStreamImpl();
+
+  void Init(const string &log_file_path);
   void Close();
 
   ostream *stream() {
@@ -224,9 +219,6 @@ class LogStreamImpl {
     return support_color_;
   }
 
-  LogStreamImpl();
-  virtual ~LogStreamImpl();
-
  private:
   ostream *stream_;
   int config_verbose_level_;
@@ -238,15 +230,15 @@ LogStreamImpl::LogStreamImpl()
     : stream_(NULL), config_verbose_level_(0), support_color_(false) {
 }
 
-void LogStreamImpl::Init(const char *argv0) {
+void LogStreamImpl::Init(const string &log_file_path) {
   scoped_lock l(&mutex_);
   if (stream_ != NULL) {
     return;
   }
-#ifdef __native_client__
+#ifdef OS_NACL
     // In NaCl, we only use stderr to output logs.
     stream_ = &cerr;
-#else
+#else  // OS_NACL
   if (FLAGS_logtostderr) {
     stream_ = &cerr;
 #ifndef OS_WIN
@@ -261,28 +253,16 @@ void LogStreamImpl::Init(const char *argv0) {
     // framework.
     stream_ = new ostringstream();
 #else
-#ifdef OS_WIN
-    const char *slash = ::strrchr(argv0, '\\');
-#else
-    const char *slash = ::strrchr(argv0, '/');
-#endif
-    const char *program_name = (slash == NULL) ? argv0 : slash + 1;
-    const string log_base = string(program_name) + ".log";
-    const string log_dir =
-        FLAGS_log_dir.empty() ? SystemUtil::GetLoggingDirectory() :
-                                FLAGS_log_dir;
-    const string filename = FileUtil::JoinPath(log_dir, log_base);
-    stream_ = new OutputFileStream(filename.c_str(), ios::app);
+    stream_ = new OutputFileStream(log_file_path.c_str(), ios::app);
 #ifndef OS_WIN
-    ::chmod(filename.c_str(), 0600);
+    ::chmod(log_file_path.c_str(), 0600);
 #endif
 #endif  // OS_ANDROID
   }
-#endif  // __native_client__
+#endif  // OS_NACL
 
   *stream_ << "Log file created at: "
            << Logging::GetLogMessageHeader() << endl;
-  *stream_ << "Program name: " << argv0 << endl;
 }
 
 void LogStreamImpl::Close() {
@@ -299,8 +279,8 @@ LogStreamImpl::~LogStreamImpl() {
 }
 }  // namespace
 
-void Logging::InitLogStream(const char *argv0) {
-  Singleton<LogStreamImpl>::get()->Init(argv0);
+void Logging::InitLogStream(const string &log_file_path) {
+  Singleton<LogStreamImpl>::get()->Init(log_file_path);
 }
 
 void Logging::CloseLogStream() {

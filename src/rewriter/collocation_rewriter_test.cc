@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,15 @@
 #include "rewriter/collocation_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
-#include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -56,6 +56,7 @@ class CollocationRewriterTest : public ::testing::Test {
     const char *content_key;
     const char *value;
     const char *content_value;
+    const int32 cost;
     const uint16 lid;
     const uint16 rid;
   };
@@ -78,18 +79,10 @@ class CollocationRewriterTest : public ::testing::Test {
 
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetConfig(&config_backup_);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
 
     const mozc::testing::MockDataManager data_manager;
     pos_matcher_ = data_manager.GetPOSMatcher();
     collocation_rewriter_.reset(new CollocationRewriter(&data_manager));
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(config_backup_);
   }
 
   // Makes a segment from SegmentData.
@@ -103,6 +96,7 @@ class CollocationRewriterTest : public ::testing::Test {
       cand->content_key = cand_data.content_key;
       cand->value = cand_data.value;
       cand->content_value = cand_data.content_value;
+      cand->cost = cand_data.cost;
       cand->lid = cand_data.lid;
       cand->rid = cand_data.rid;
     }
@@ -135,8 +129,7 @@ class CollocationRewriterTest : public ::testing::Test {
   const POSMatcher *pos_matcher_;
 
  private:
-  config::Config config_backup_;
-  scoped_ptr<const CollocationRewriter> collocation_rewriter_;
+  std::unique_ptr<const CollocationRewriter> collocation_rewriter_;
   DISALLOW_COPY_AND_ASSIGN(CollocationRewriterTest);
 };
 
@@ -155,11 +148,11 @@ TEST_F(CollocationRewriterTest, NekowoKaitai) {
     {kNekowo, kNeko,
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコ"
-     id, id},
+     0, id, id},
     {kNekowo, kNeko,
      // "猫を", "猫"
      "\xE7\x8C\xAB\xE3\x82\x92", "\xE7\x8C\xAB\xE3\x82\x92",
-     id, id},
+     0, id, id},
   };
   const char *kKaitaiHiragana =
       "\xE3\x81\x8B\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "かいたい"
@@ -169,9 +162,9 @@ TEST_F(CollocationRewriterTest, NekowoKaitai) {
   const char *kFeed =
       "\xE9\xA3\xBC\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "飼いたい"
   const CandidateData kKaitaiCands[] = {
-    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
     {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
@@ -207,9 +200,9 @@ TEST_F(CollocationRewriterTest, MagurowoKaitai) {
     {kMagurowo, kMaguro,
      "\xE3\x83\x9E\xE3\x82\xB0\xE3\x83\xAD\xE3\x82\x92",  // "マグロを"
      "\xE3\x83\x9E\xE3\x82\xB0\xE3\x83\xAD",  // "マグロ"
-     id, id},
+     0, id, id},
     // "鮪を", "鮪を"
-    {kMagurowo, kMaguro, "\xE9\xAE\xAA\xE3\x82\x92", "\xE9\xAE\xAA", id, id},
+    {kMagurowo, kMaguro, "\xE9\xAE\xAA\xE3\x82\x92", "\xE9\xAE\xAA", 0, id, id},
   };
   const char *kKaitaiHiragana =
       "\xE3\x81\x8B\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "かいたい"
@@ -219,9 +212,9 @@ TEST_F(CollocationRewriterTest, MagurowoKaitai) {
   const char *kFeed =
       "\xE9\xA3\xBC\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "飼いたい"
   const CandidateData kKaitaiCands[] = {
-    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
     {kMagurowo, kMagurowoCands, arraysize(kMagurowoCands)},
@@ -253,18 +246,18 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
     {kNekowo, kNeko,
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコ"
-     id, id},
+     0, id, id},
     {kNekowo, kNeko,
      // "猫を", "猫"
      "\xE7\x8C\xAB\xE3\x82\x92", "\xE7\x8C\xAB\xE3\x82\x92",
-     id, id},
+     0, id, id},
   };
 
   // "すごく"
   const char *kSugoku = "\xe3\x81\x99\xe3\x81\x94\xe3\x81\x8f";
   const uint16 adverb_id = pos_matcher_->GetAdverbId();
   const CandidateData kSugokuCands[] = {
-    {kSugoku, kSugoku, kSugoku, kSugoku, adverb_id, adverb_id},
+    {kSugoku, kSugoku, kSugoku, kSugoku, 0, adverb_id, adverb_id},
   };
 
   const char *kKaitaiHiragana =
@@ -275,9 +268,9 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
   const char *kFeed =
       "\xE9\xA3\xBC\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "飼いたい"
   const CandidateData kKaitaiCands[] = {
-    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
     {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
@@ -310,17 +303,17 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
     {kNekowo, kNeko,
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコ"
-     id, id},
+     0, id, id},
     {kNekowo, kNeko,
      // "猫を", "猫"
      "\xE7\x8C\xAB\xE3\x82\x92", "\xE7\x8C\xAB\xE3\x82\x92",
-     id, id},
+     0, id, id},
   };
 
   // "すごく"
   const char *kSugoku = "\xe3\x81\x99\xe3\x81\x94\xe3\x81\x8f";
   const CandidateData kSugokuCands[] = {
-    {kSugoku, kSugoku, kSugoku, kSugoku, id, id},
+    {kSugoku, kSugoku, kSugoku, kSugoku, 0, id, id},
   };
 
   const char *kKaitaiHiragana =
@@ -331,9 +324,9 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
   const char *kFeed =
       "\xE9\xA3\xBC\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "飼いたい"
   const CandidateData kKaitaiCands[] = {
-    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, id, id},
-    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
     {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
@@ -353,4 +346,61 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
       "\xa3\xbc\xe3\x81\x84\xe3\x81\x9f\xe3\x81\x84",
       GetTopValue(segments)) << segments.DebugString();
 }
+
+TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
+  // Actually, we want to test for the collocation entries that are NOT in the
+  // data sources, but will be judged as existing entry due to false positive.
+  // However, we can not expect which entry will be false positive, so here
+  // we use the existing entry for this test.
+
+  // Make the following Segments:
+  // "ねこを" | "かいたい"
+  // --------------------
+  // "ネコを" | "買いたい"
+  // "猫を"   | "解体"
+  //         | "飼いたい" (high cost)
+  const char *kNekowo =
+      "\xE3\x81\xAD\xE3\x81\x93\xE3\x82\x92";  // "ねこを"
+  const char *kNeko = "\xE3\x81\xAD\xE3\x81\x93";  // "ねこ"
+  const uint16 id = pos_matcher_->GetUnknownId();
+  const CandidateData kNekowoCands[] = {
+    {kNekowo, kNeko,
+     "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"
+     "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコ"
+     0, id, id},
+    {kNekowo, kNeko,
+     // "猫を", "猫"
+     "\xE7\x8C\xAB\xE3\x82\x92", "\xE7\x8C\xAB\xE3\x82\x92",
+     0, id, id},
+  };
+  const char *kKaitaiHiragana =
+      "\xE3\x81\x8B\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "かいたい"
+  const char *kBuy =
+      "\xE8\xB2\xB7\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "買いたい"
+  const char *kCut = "\xE8\xA7\xA3\xE4\xBD\x93";  // "解体"
+  const char *kFeed =
+      "\xE9\xA3\xBC\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84";  // "飼いたい"
+  const CandidateData kKaitaiCands[] = {
+    {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
+    {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 10000, id, id},
+  };
+  const SegmentData kSegmentData[] = {
+    {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
+    {kKaitaiHiragana, kKaitaiCands, arraysize(kKaitaiCands)},
+  };
+  const SegmentsData kSegments = {kSegmentData, arraysize(kSegmentData)};
+
+  Segments segments;
+  MakeSegments(kSegments, &segments);
+
+  // "猫を飼いたい" should NOT be promoted.
+  EXPECT_FALSE(Rewrite(&segments));
+  EXPECT_NE(
+      // "猫を飼いたい"
+      "\xE7\x8C\xAB\xE3\x82\x92"
+      "\xE9\xA3\xBC\xE3\x81\x84\xE3\x81\x9F\xE3\x81\x84",
+      GetTopValue(segments)) << segments.DebugString();
+}
+
 }  // namespace mozc

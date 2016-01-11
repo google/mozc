@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 #define MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -65,7 +66,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   virtual void Clear();
 
  private:
-  bool IsAvailable(const Segments &segments) const;
+  bool IsAvailable(const ConversionRequest &request,
+                   const Segments &segments) const;
   bool GetScore(const Segments &segments,
                 size_t segment_index,
                 int candidate_index,
@@ -96,7 +98,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                       Segment *segment) const;
 
 
-  scoped_ptr<storage::LRUStorage> storage_;
+  std::unique_ptr<storage::LRUStorage> storage_;
   const dictionary::POSMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;
 };

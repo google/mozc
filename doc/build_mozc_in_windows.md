@@ -13,36 +13,34 @@ Building Mozc on Windows requires the following software.
   * (optinal) [Qt libraries](http://download.qt.io/archive/qt/)
     * Commercial version and LGPL version are available.
 
-# Get the Code
+# Get dependent prebuilt binaries
 
-First, you'll need to download the gclient [depot\_tools](http://dev.chromium.org/developers/how-tos/install-depot-tools), and add ```depot_tools``` to your ```PATH```.
+If you do not have `git`, `python 2.7`, and `ninja` in your build environment, you can use prebuilt binaries in [depot\_tools](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html).  You need to manually unzip `depot_tools.zip` and add the extracted directory into your `PATH`.
 
 ```
 set PATH=%PATH%;c:\work\depot_tools
 ```
 
-Then download the code:
+Then run `gclient` command twice so that dependent libraries can be installed automatically.
 
 ```
-mkdir c:\work\mozc
-cd c:\work\mozc
-gclient config https://github.com/google/mozc.git --name=. --deps-file=src/DEPS
-gclient sync
+gclient
+gclient
 ```
 
-## Update to the latest revision
+# Get the Code
 
-Execute the following command to update to the latest revision.
+You can download Mozc source code as follows:
 
 ```
-gclient sync
+mkdir c:\work
+cd c:\work
+git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 ```
-
-Updating the tree sometimes causes a mysterious build error. Try ```build_mozc.py clean``` if it occurs.
 
 # Compilation
 
-First, you'll need to generate Visual C++ project files using a tool called GYP, which is automatically downloaded by ```gclient sync```:
+First, you'll need to generate Visual C++ project files using a tool called [GYP](https://chromium.googlesource.com/external/gyp).
 
 ```
 cd c:\work\mozc\src
@@ -246,4 +244,4 @@ python build_mozc.py gyp --noqt
 python build_mozc.py runtests -c Release
 ```
 
-Note that you can specify `--qtdir=` option instead of `--noqt' in GYP phase, currently there is no unit test that depends on Qt.
+Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase since currently there is no unit test that depends on Qt.

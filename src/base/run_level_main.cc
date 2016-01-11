@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/run_level.h"
-
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
+#include "base/run_level.h"
 
 DEFINE_bool(server, false, "server mode");
 DEFINE_bool(client, false, "client mode");
@@ -41,7 +41,7 @@ DEFINE_bool(client, false, "client mode");
 // This is a simple command line tool
 // too check RunLevel class
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::RunLevel::RequestType type = mozc::RunLevel::SERVER;
 
@@ -56,16 +56,16 @@ int main(int argc, char **argv) {
 
   switch (run_level) {
     case mozc::RunLevel::NORMAL:
-      cout << "NORMAL" << endl;
+      std::cout << "NORMAL" << std::endl;
       break;
     case mozc::RunLevel::RESTRICTED:
-      cout << "RESTRICTED" << endl;
+      std::cout << "RESTRICTED" << std::endl;
       break;
     case mozc::RunLevel::DENY:
-      cout << "DENY" << endl;
+      std::cout << "DENY" << std::endl;
       break;
     default:
-      cout << "UNKNOWN" << endl;
+      std::cout << "UNKNOWN" << std::endl;
       break;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -147,7 +147,7 @@ bool GetCandidateCount(HIMCC candidate_info_handle, DWORD *count) {
   ::ImmUnlockIMCC(candidate_info_handle);
   return result;
 }
-}  // anonymous namespace
+}  // namespace
 
 CandidateInfo::CandidateInfo()
     : candidate_info_size(0),

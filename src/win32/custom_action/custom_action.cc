@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,7 @@ HRESULT CallSystemDllFunction(const char* dll_name,
 wstring GetMozcComponentPath(const string &filename) {
   const string path = mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
   wstring wpath;
-  mozc::Util::UTF8ToWide(path.c_str(), &wpath);
+  mozc::Util::UTF8ToWide(path, &wpath);
   return wpath;
 }
 
@@ -236,7 +236,8 @@ UINT RemovePreloadKeyByKLID(const mozc::win32::KeyboardLayoutID &klid) {
       klid, default_klid);
   return SUCCEEDED(result) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 }
-}
+
+}  // namespace
 
 BOOL APIENTRY DllMain(HMODULE module,
                       DWORD  ul_reason_for_call,

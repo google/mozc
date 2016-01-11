@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,14 @@
 #ifndef MOZC_GUI_POST_INSTALL_DIALOG_H_
 #define MOZC_GUI_POST_INSTALL_DIALOG_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "gui/post_install_dialog/ui_post_install_dialog.h"
 
 namespace mozc {
 namespace gui {
+
 class SetupUtil;
 
 // Shows additional information to the user after installation.
@@ -49,20 +51,7 @@ class PostInstallDialog : public QDialog,
   PostInstallDialog();
   virtual ~PostInstallDialog();
 
-  // Returns true if log off is required to use Mozc.
-  // However, this function always returns false in all platforms.
-  // TODO(team): remove the functionalities related to logoff_required and
-  //   OnLogoffNow when we are convinced that we no longer need them.
-  //   See b/2899762 for details.
-  bool logoff_required();
-
-  // Shows the help page by opening it with the default browser.
-  // Returns true if page is successfully opened by the browser.
-  static bool ShowHelpPageIfRequired();
-
  protected slots:
-  virtual void OnLogoffNow();
-  virtual void OnLogoffLater();
   virtual void OnOk();
   virtual void OnsetAsDefaultCheckBoxToggled(int state);
   virtual void reject();
@@ -74,11 +63,10 @@ class PostInstallDialog : public QDialog,
   //   the checkbox on the dialog is marked.
   void ApplySettings();
 
-  // Returns true if showing the help page is required.
-  static bool IsShowHelpPageRequired();
-
-  scoped_ptr<SetupUtil> setuputil_;
+  std::unique_ptr<SetupUtil> setuputil_;
 };
+
 }  // namespace gui
 }  // namespace mozc
+
 #endif  // MOZC_GUI_POST_INSTALL_DIALOG_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,9 @@
 #endif
 
 #include <QtGui/QtGui>
+
+#include <memory>
+
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client.h"
@@ -43,7 +46,6 @@
 #ifdef OS_WIN
 #include "win32/base/migration_util.h"
 #endif
-
 
 namespace mozc {
 namespace gui {
@@ -89,7 +91,7 @@ void SetDefaultDialog::reject() {
 }
 
 bool SetDefaultDialog::SetCheckDefault(bool check_default) {
-  scoped_ptr<mozc::client::ClientInterface> client(
+  std::unique_ptr<mozc::client::ClientInterface> client(
       mozc::client::ClientFactory::NewClient());
   if (!client->PingServer() && !client->EnsureConnection()) {
     LOG(ERROR) << "Cannot connect to server";

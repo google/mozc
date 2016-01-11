@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2010-2015, Google Inc.
+ Copyright 2010-2016, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -107,7 +107,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Copyright © 2015 Google Inc. All Rights Reserved.</string>
+        <string>Copyright © 2016 Google Inc. All rights reserved.</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -160,7 +160,7 @@
         </font>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;http://code.google.com/p/mozc/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;http://code.google.com/p/mozc/issues/list&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;https://github.com/google/mozc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;https://github.com/google/mozc/issues&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>

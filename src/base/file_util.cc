@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -100,36 +100,38 @@ void StripWritePreventingAttributesIfExists(const string &filename) {
 }  // namespace
 #endif  // OS_WIN
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
 bool FileUtil::CreateDirectory(const string &path) {
-#ifdef OS_WIN
+#if defined(OS_WIN)
   wstring wide;
-  return (Util::UTF8ToWide(path.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(path, &wide) > 0 &&
           ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
-#else  // OS_WIN
+#elif defined(OS_NACL)  // OS_WIN
+  return PepperFileUtil::CreateDirectory(path);
+#else  // OS_WIN or OS_NACL
   return ::mkdir(path.c_str(), 0700) == 0;
-#endif  // OS_WIN
+#endif  // OS_WIN or OS_NACL
 }
 
 bool FileUtil::RemoveDirectory(const string &dirname) {
 #ifdef OS_WIN
   wstring wide;
-  return (Util::UTF8ToWide(dirname.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(dirname, &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
-#else  // OS_WIN
+#elif defined(OS_NACL)  // OS_WIN
+  return PepperFileUtil::Delete(dirname);
+#else  // OS_WIN or OS_NACL
   return ::rmdir(dirname.c_str()) == 0;
-#endif  // OS_WIN
+#endif  // OS_WIN or OS_NACL
 }
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 bool FileUtil::Unlink(const string &filename) {
 #ifdef OS_WIN
   StripWritePreventingAttributesIfExists(filename);
   wstring wide;
-  return (Util::UTF8ToWide(filename.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::DeleteFileW(wide.c_str()) != 0);
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
-  return PepperFileUtil::DeleteFile(filename);;
+  return PepperFileUtil::Delete(filename);
 #else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
   return ::unlink(filename.c_str()) == 0;
 #endif  // OS_WIN
@@ -138,7 +140,7 @@ bool FileUtil::Unlink(const string &filename) {
 bool FileUtil::FileExists(const string &filename) {
 #ifdef OS_WIN
   wstring wide;
-  return (Util::UTF8ToWide(filename.c_str(), &wide) > 0 &&
+  return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::GetFileAttributesW(wide.c_str()) != -1);
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
   return PepperFileUtil::FileExists(filename);
@@ -151,7 +153,7 @@ bool FileUtil::FileExists(const string &filename) {
 bool FileUtil::DirectoryExists(const string &dirname) {
 #ifdef OS_WIN
   wstring wide;
-  if (Util::UTF8ToWide(dirname.c_str(), &wide) <= 0) {
+  if (Util::UTF8ToWide(dirname, &wide) <= 0) {
     return false;
   }
 
@@ -228,7 +230,7 @@ bool FileUtil::HideFileWithExtraAttributes(const string &filename,
   }
 
   wstring wfilename;
-  Util::UTF8ToWide(filename.c_str(), &wfilename);
+  Util::UTF8ToWide(filename, &wfilename);
 
   const DWORD original_attributes = ::GetFileAttributesW(wfilename.c_str());
   const auto result = ::SetFileAttributesW(
@@ -249,7 +251,7 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
 
 #ifdef OS_WIN
   wstring wto;
-  Util::UTF8ToWide(to.c_str(), &wto);
+  Util::UTF8ToWide(to, &wto);
   StripWritePreventingAttributesIfExists(to);
 #endif  // OS_WIN
 
@@ -270,7 +272,7 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
 
 #ifdef OS_WIN
   wstring wfrom;
-  Util::UTF8ToWide(from.c_str(), &wfrom);
+  Util::UTF8ToWide(from, &wfrom);
   ::SetFileAttributesW(wto.c_str(), ::GetFileAttributesW(wfrom.c_str()));
 #endif  // OS_WIN
 
@@ -301,8 +303,8 @@ bool FileUtil::IsEqualFile(const string &filename1,
 bool FileUtil::AtomicRename(const string &from, const string &to) {
 #ifdef OS_WIN
   wstring fromw, tow;
-  Util::UTF8ToWide(from.c_str(), &fromw);
-  Util::UTF8ToWide(to.c_str(), &tow);
+  Util::UTF8ToWide(from, &fromw);
+  Util::UTF8ToWide(to, &tow);
 
   if (TransactionalMoveFile(fromw, tow)) {
     return true;
@@ -320,8 +322,8 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
 
   return true;
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
-  // TODO(horo): PepperFileUtil::RenameFile() is not atomic operation.
-  return PepperFileUtil::RenameFile(from, to);
+  // TODO(horo): PepperFileUtil::Rename() is not atomic operation.
+  return PepperFileUtil::Rename(from, to);
 #else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
   // Mac OSX: use rename(2), but rename(2) on Mac OSX
   // is not properly implemented, atomic rename is POSIX spec though.
@@ -330,19 +332,23 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
 #endif  // OS_WIN
 }
 
-string FileUtil::JoinPath(const string &path1, const string &path2) {
+string FileUtil::JoinPath(const vector<StringPiece> &components) {
   string output;
-  JoinPath(path1, path2, &output);
+  JoinPath(components, &output);
   return output;
 }
 
-void FileUtil::JoinPath(const string &path1, const string &path2,
-                        string *output) {
-  *output = path1;
-  if (path1.size() > 0 && path1[path1.size() - 1] != kFileDelimiter) {
-    *output += kFileDelimiter;
+void FileUtil::JoinPath(const vector<StringPiece> &components, string *output) {
+  output->clear();
+  for (size_t i = 0; i < components.size(); ++i) {
+    if (components[i].empty()) {
+      continue;
+    }
+    if (!output->empty() && output->back() != kFileDelimiter) {
+      output->append(1, kFileDelimiter);
+    }
+    components[i].AppendToString(output);
   }
-  *output += path2;
 }
 
 // TODO(taku): what happens if filename == '/foo/bar/../bar/..

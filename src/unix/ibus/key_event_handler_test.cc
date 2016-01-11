@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <map>
 #include <memory>
 
+#include "base/clock.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "composer/key_event_util.h"
@@ -50,12 +51,12 @@ class KeyEventHandlerTest : public testing::Test {
     handler_.reset(new KeyEventHandler);
 
     keyval_to_modifier_.clear();
-    keyval_to_modifier_[IBUS_Shift_L] = commands::KeyEvent::LEFT_SHIFT;
-    keyval_to_modifier_[IBUS_Shift_R] = commands::KeyEvent::RIGHT_SHIFT;
-    keyval_to_modifier_[IBUS_Control_L] = commands::KeyEvent::LEFT_CTRL;
-    keyval_to_modifier_[IBUS_Control_R] = commands::KeyEvent::RIGHT_CTRL;
-    keyval_to_modifier_[IBUS_Alt_L] = commands::KeyEvent::LEFT_ALT;
-    keyval_to_modifier_[IBUS_Alt_R] = commands::KeyEvent::RIGHT_ALT;
+    keyval_to_modifier_[IBUS_Shift_L] = commands::KeyEvent::SHIFT;
+    keyval_to_modifier_[IBUS_Shift_R] = commands::KeyEvent::SHIFT;
+    keyval_to_modifier_[IBUS_Control_L] = commands::KeyEvent::CTRL;
+    keyval_to_modifier_[IBUS_Control_R] = commands::KeyEvent::CTRL;
+    keyval_to_modifier_[IBUS_Alt_L] = commands::KeyEvent::ALT;
+    keyval_to_modifier_[IBUS_Alt_R] = commands::KeyEvent::ALT;
   }
 
   // Currently this function does not supports special keys.
@@ -63,7 +64,16 @@ class KeyEventHandlerTest : public testing::Test {
     const map<guint, commands::KeyEvent::ModifierKey>::const_iterator it =
         keyval_to_modifier_.find(keyval);
     if (it != keyval_to_modifier_.end()) {
-      key->add_modifier_keys(it->second);
+      bool found = false;
+      for (int i = 0; i < key->modifier_keys_size(); ++i) {
+        if (key->modifier_keys(i) == it->second) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        key->add_modifier_keys(it->second);
+      }
     } else {
       key->set_key_code(keyval);
     }
@@ -149,8 +159,7 @@ TEST_F(KeyEventHandlerTest, GetKeyEvent) {
     EXPECT_FALSE(handler_->GetKeyEvent(
         IBUS_Alt_L, kDummyKeycode, IBUS_MOD1_MASK,
         config::Config::ROMAN, true, &key));
-    EXPECT_MODIFIERS_TO_BE_SENT(
-        (commands::KeyEvent::LEFT_ALT | commands::KeyEvent::ALT));
+    EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::ALT);
     EXPECT_MODIFIERS_PRESSED();
 
     key.Clear();
@@ -214,8 +223,7 @@ TEST_F(KeyEventHandlerTest, ProcessShiftModifiers) {
   // Shift down
   EXPECT_FALSE(ProcessKey(false, IBUS_Shift_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
-  EXPECT_MODIFIERS_TO_BE_SENT(
-      (commands::KeyEvent::LEFT_SHIFT | commands::KeyEvent::SHIFT));
+  EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::SHIFT);
 
   // "a" down
   key.Clear();
@@ -241,8 +249,7 @@ TEST_F(KeyEventHandlerTest, ProcessShiftModifiers) {
   // Shift down
   EXPECT_FALSE(ProcessKey(false, IBUS_Shift_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
-  EXPECT_MODIFIERS_TO_BE_SENT(
-      (commands::KeyEvent::LEFT_SHIFT | commands::KeyEvent::SHIFT));
+  EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::SHIFT);
 
   // "0" down
   key.Clear();
@@ -271,13 +278,11 @@ TEST_F(KeyEventHandlerTest, ProcessAltModifiers) {
   // Alt down
   EXPECT_FALSE(ProcessKey(false, IBUS_Alt_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
-  EXPECT_MODIFIERS_TO_BE_SENT(
-      (commands::KeyEvent::LEFT_ALT | commands::KeyEvent::ALT));
+  EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::ALT);
 
   // "a" down
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::ALT);
-  key.add_modifier_keys(commands::KeyEvent::LEFT_ALT);
   EXPECT_TRUE(ProcessKey(false, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
@@ -285,7 +290,6 @@ TEST_F(KeyEventHandlerTest, ProcessAltModifiers) {
   // "a" up
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::ALT);
-  key.add_modifier_keys(commands::KeyEvent::LEFT_ALT);
   EXPECT_FALSE(ProcessKey(true, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
@@ -303,13 +307,11 @@ TEST_F(KeyEventHandlerTest, ProcessCtrlModifiers) {
   // Ctrl down
   EXPECT_FALSE(ProcessKey(false, IBUS_Control_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
-  EXPECT_MODIFIERS_TO_BE_SENT(
-      (commands::KeyEvent::LEFT_CTRL | commands::KeyEvent::CTRL));
+  EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::CTRL);
 
   // "a" down
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::CTRL);
-  key.add_modifier_keys(commands::KeyEvent::LEFT_CTRL);
   EXPECT_TRUE(ProcessKey(false, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
@@ -317,7 +319,6 @@ TEST_F(KeyEventHandlerTest, ProcessCtrlModifiers) {
   // "a" up
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::CTRL);
-  key.add_modifier_keys(commands::KeyEvent::LEFT_CTRL);
   EXPECT_FALSE(ProcessKey(true, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
@@ -337,8 +338,7 @@ TEST_F(KeyEventHandlerTest, ProcessShiftModifiersWithCapsLockOn) {
   EXPECT_FALSE(ProcessKeyWithCapsLock(false, IBUS_Shift_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
   EXPECT_MODIFIERS_TO_BE_SENT(
-      (commands::KeyEvent::CAPS | commands::KeyEvent::LEFT_SHIFT |
-       commands::KeyEvent::SHIFT));
+      (commands::KeyEvent::CAPS | commands::KeyEvent::SHIFT));
 
   // "a" down
   key.Clear();
@@ -365,19 +365,15 @@ TEST_F(KeyEventHandlerTest, LeftRightModifiers) {
   // Left-Shift down
   EXPECT_FALSE(ProcessKey(false, IBUS_Shift_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
-  EXPECT_MODIFIERS_TO_BE_SENT(
-      (commands::KeyEvent::LEFT_SHIFT | commands::KeyEvent::SHIFT));
+  EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::SHIFT);
 
   // Right-Shift down
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::SHIFT);
-  key.add_modifier_keys(commands::KeyEvent::LEFT_SHIFT);
   EXPECT_FALSE(ProcessKey(false, IBUS_Shift_R, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
   EXPECT_TRUE(IsPressed(IBUS_Shift_R));
-  EXPECT_MODIFIERS_TO_BE_SENT(
-      (commands::KeyEvent::LEFT_SHIFT | commands::KeyEvent::RIGHT_SHIFT |
-       commands::KeyEvent::SHIFT));
+  EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::SHIFT);
 }
 
 TEST_F(KeyEventHandlerTest, ProcessModifiers) {
@@ -391,8 +387,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiers) {
   EXPECT_TRUE(ProcessKey(true, IBUS_Shift_L, &key));
   EXPECT_NO_MODIFIERS_PRESSED();
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
-  EXPECT_EQ((commands::KeyEvent::SHIFT | commands::KeyEvent::LEFT_SHIFT),
-            KeyEventUtil::GetModifiers(key));
+  EXPECT_EQ(commands::KeyEvent::SHIFT, KeyEventUtil::GetModifiers(key));
 
   // Shift down => Ctrl down => Shift up => Alt down => Ctrl up => Alt up
   key.Clear();
@@ -409,9 +404,8 @@ TEST_F(KeyEventHandlerTest, ProcessModifiers) {
   EXPECT_TRUE(ProcessKey(true, IBUS_Alt_L, &key));
   EXPECT_NO_MODIFIERS_PRESSED();
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
-  EXPECT_EQ((commands::KeyEvent::ALT | commands::KeyEvent::LEFT_ALT |
-             commands::KeyEvent::CTRL | commands::KeyEvent::LEFT_CTRL |
-             commands::KeyEvent::SHIFT | commands::KeyEvent::LEFT_SHIFT),
+  EXPECT_EQ((commands::KeyEvent::ALT | commands::KeyEvent::CTRL |
+             commands::KeyEvent::SHIFT),
             KeyEventUtil::GetModifiers(key));
 }
 
@@ -432,7 +426,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
     IBUS_a,
   };
   const size_t kKeySetSize = arraysize(kKeySet);
-  Util::SetRandomSeed(static_cast<uint32>(Util::GetTime()));
+  Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
 
   const int kTrialNum = 1000;
   for (int trial = 0; trial < kTrialNum; ++trial) {

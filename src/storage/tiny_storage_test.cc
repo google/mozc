@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "storage/tiny_storage.h"
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -37,7 +38,6 @@
 
 #include "base/file_util.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "storage/storage_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -99,7 +99,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
 
   for (int i = 0; i < arraysize(kSize); ++i) {
     FileUtil::Unlink(filename);
-    scoped_ptr<StorageInterface> storage(CreateStorage());
+    std::unique_ptr<StorageInterface> storage(CreateStorage());
 
     // Insert
     map<string, string> target;
@@ -129,7 +129,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
 
     storage->Sync();
 
-    scoped_ptr<StorageInterface> storage2(CreateStorage());
+    std::unique_ptr<StorageInterface> storage2(CreateStorage());
     EXPECT_TRUE(storage2->Open(filename));
     EXPECT_EQ(storage->Size(), storage2->Size());
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,11 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -49,11 +52,11 @@ class DataManagerTestBase : public ::testing::Test {
                       const size_t rsize,
                       IsBoundaryFunc is_boundary,
                       // The following two are used in connector test.
-                      const char *connection_txt_file,
+                      const string &connection_txt_file,
                       const int expected_resolution,
                       // The following two are used in suggestion filter test
-                      const char *dictionary_files,
-                      const char *suggestion_filter_files);
+                      const vector<string> &dictionary_files,
+                      const vector<string> &suggestion_filter_files);
   virtual ~DataManagerTestBase();
 
   void RunAllTests();
@@ -68,14 +71,14 @@ class DataManagerTestBase : public ::testing::Test {
   void SuggestionFilterTest_IsBadSuggestion();
   void CounterSuffixTest_ValidateTest();
 
-  scoped_ptr<DataManagerInterface> data_manager_;
+  std::unique_ptr<DataManagerInterface> data_manager_;
   const uint16 lsize_;
   const uint16 rsize_;
   IsBoundaryFunc is_boundary_;
-  const char *connection_txt_file_;
+  const string connection_txt_file_;
   const int expected_resolution_;
-  const char *dictionary_files_;
-  const char *suggestion_filter_files_;
+  const vector<string> dictionary_files_;
+  const vector<string> suggestion_filter_files_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManagerTestBase);
 };

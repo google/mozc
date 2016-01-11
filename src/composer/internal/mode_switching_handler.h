@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,17 +33,17 @@
 #ifndef MOZC_COMPOSER_INTERNAL_MODE_SWITCHING_HANDLER_H_
 #define MOZC_COMPOSER_INTERNAL_MODE_SWITCHING_HANDLER_H_
 
-#include <cctype>
 #include <map>
 #include <string>
 #include <utility>
 
 namespace mozc {
 namespace composer {
+
 class ModeSwitchingHandler {
  public:
   ModeSwitchingHandler();
-  virtual ~ModeSwitchingHandler();
+  ~ModeSwitchingHandler();
 
   enum ModeSwitching {
     NO_CHANGE,
@@ -60,26 +60,26 @@ class ModeSwitchingHandler {
                             ModeSwitching *display_mode,
                             ModeSwitching *input_mode) const;
 
-  // Matcher to Windows drive letters like "C:\".
-  bool IsDriveLetter(const string &key) const;
+  // Gets the singleton instance of this class.
+  static ModeSwitchingHandler *GetModeSwitchingHandler();
 
-  // Add a rule for mode switching.  |display_mode| affects the
+  // Matcher to Windows drive letters like "C:\".
+  // TODO(team): This static method is internal use only.  It's public for
+  // testing purpose.
+  static bool IsDriveLetter(const string &key);
+
+ private:
+  // Adds a rule for mode switching.  |display_mode| affects the
   // existing composition the user typed.  |input_mode| affects the
   // current input mode to be used for the user's new typing.
   void AddRule(const string &key,
                const ModeSwitching display_mode,
                const ModeSwitching input_mode);
 
-  // Reload instance variables for new config.
-  void Reload();
-
-  // Get the singleton instance of this class.
-  static ModeSwitchingHandler *GetModeSwitchingHandler();
-
- private:
   // map<key, pair<display_mode, input_mode> >.
-  map<string, pair<ModeSwitching, ModeSwitching> > patterns_;
+  map<string, pair<ModeSwitching, ModeSwitching>> patterns_;
 };
+
 }  // namespace composer
 }  // namespace mozc
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/user_boundary_history_rewriter.h"
+
 #include <algorithm>
 #include <deque>
 #include <string>
@@ -38,12 +40,11 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/user_boundary_history_rewriter.h"
 #include "storage/lru_storage.h"
 #include "usage_stats/usage_stats.h"
 
@@ -123,12 +124,12 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (GET_CONFIG(incognito_mode)) {
+  if (request.config().incognito_mode()) {
     VLOG(2) << "incognito mode";
     return;
   }
 
-  if (GET_CONFIG(history_learning_level) !=
+  if (request.config().history_learning_level() !=
       config::Config::DEFAULT_HISTORY) {
     VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
@@ -164,12 +165,12 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
 
 bool UserBoundaryHistoryRewriter::Rewrite(
     const ConversionRequest &request, Segments *segments) const {
-  if (GET_CONFIG(incognito_mode)) {
+  if (request.config().incognito_mode()) {
     VLOG(2) << "incognito mode";
     return false;
   }
 
-  if (GET_CONFIG(history_learning_level) == config::Config::NO_HISTORY) {
+  if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
     VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }
@@ -244,8 +245,8 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     return false;
   }
 
-  deque<pair<string, size_t> > keys(target_segments_size -
-                                    history_segments_size);
+  deque<pair<string, size_t>> keys(target_segments_size -
+                                   history_segments_size);
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
     const Segment &segment = segments->segment(i);
     keys[i - history_segments_size].first = segment.key();

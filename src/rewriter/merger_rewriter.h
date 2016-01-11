@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,10 @@
 
 #include "base/stl_util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -93,7 +93,7 @@ class MergerRewriter : public RewriterInterface {
     if (segments->request_type() == Segments::SUGGESTION &&
         segments->conversion_segments_size() == 1 &&
         !request.request().mixed_conversion()) {
-      const size_t max_suggestions = GET_CONFIG(suggestions_size);
+      const size_t max_suggestions = request.config().suggestions_size();
       Segment *segment = segments->mutable_conversion_segment(0);
       const size_t candidate_size = segment->candidates_size();
       if (candidate_size > max_suggestions) {

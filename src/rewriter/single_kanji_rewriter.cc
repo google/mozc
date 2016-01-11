@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,19 +30,20 @@
 #include "rewriter/single_kanji_rewriter.h"
 
 #include <algorithm>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -86,7 +87,7 @@ class NounPrefixDictionary {
   }
 
  private:
-  scoped_ptr<EmbeddedDictionary> dic_;
+  std::unique_ptr<EmbeddedDictionary> dic_;
 };
 
 struct SingleKanjiListCompare {
@@ -103,8 +104,8 @@ bool LookupKanjiList(const string &key, vector<string> *kanji_list) {
   SingleKanjiList key_item;
   key_item.key = key.c_str();
   const SingleKanjiList *result =
-      lower_bound(kSingleKanjis, kSingleKanjis + arraysize(kSingleKanjis),
-                  key_item, SingleKanjiListCompare());
+      std::lower_bound(kSingleKanjis, kSingleKanjis + arraysize(kSingleKanjis),
+                       key_item, SingleKanjiListCompare());
   if (result == (kSingleKanjis + arraysize(kSingleKanjis)) ||
       key.compare(result->key) != 0) {
     return false;
@@ -126,9 +127,9 @@ void GenerateDescription(const string &key, string *desc) {
   DCHECK(desc);
   KanjiVariantItem key_item;
   key_item.target = key.c_str();
-  const KanjiVariantItem *result =
-      lower_bound(kKanjiVariants, kKanjiVariants + arraysize(kKanjiVariants),
-                  key_item, KanjiVariantItemCompare());
+  const KanjiVariantItem *result = std::lower_bound(
+      kKanjiVariants, kKanjiVariants + arraysize(kKanjiVariants), key_item,
+      KanjiVariantItemCompare());
   if (result == (kKanjiVariants + arraysize(kKanjiVariants)) ||
       key.compare(result->target) != 0) {
     return;
@@ -251,7 +252,7 @@ int SingleKanjiRewriter::capability(const ConversionRequest &request) const {
 
 bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
-  if (!GET_CONFIG(use_single_kanji_conversion)) {
+  if (!request.config().use_single_kanji_conversion()) {
     VLOG(2) << "no use_single_kanji_conversion";
     return false;
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,15 @@
 
 #include "rewriter/focus_candidate_rewriter.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/number_util.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "protocol/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
@@ -70,9 +69,6 @@ class FocusCandidateRewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-
     rewriter_.reset(new FocusCandidateRewriter(&mock_data_manager_));
   }
 
@@ -81,8 +77,7 @@ class FocusCandidateRewriterTest : public ::testing::Test {
   }
 
  private:
-  scoped_ptr<FocusCandidateRewriter> rewriter_;
-  config::Config default_config_;
+  std::unique_ptr<FocusCandidateRewriter> rewriter_;
   testing::MockDataManager mock_data_manager_;
 };
 

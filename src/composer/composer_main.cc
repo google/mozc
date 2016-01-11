@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,35 +27,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "composer/composer.h"
-
 #include <iostream>  // NOLINT
+#include <memory>
 #include <string>
 
 #include "base/flags.h"
-#include "base/scoped_ptr.h"
+#include "base/init_mozc.h"
+#include "composer/composer.h"
 #include "composer/composition_interface.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
 DEFINE_string(table, "system://romanji-hiragana.tsv",
               "preedit conversion table file.");
 
 using ::mozc::commands::Request;
+using ::mozc::config::Config;
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
-  scoped_ptr<mozc::composer::Composer> composer(
-      new mozc::composer::Composer(&table, &Request::default_instance()));
+  std::unique_ptr<mozc::composer::Composer> composer(
+      new mozc::composer::Composer(&table,
+                                   &Request::default_instance(),
+                                   &Config::default_instance()));
 
   string command;
   string left, focused, right;
 
-  while (getline(cin, command)) {
+  while (getline(std::cin, command)) {
     if (command == "<") {
       composer->MoveCursorLeft();
     } else if (command == "<<") {
@@ -84,6 +88,6 @@ int main(int argc, char **argv) {
       composer->InsertCharacter(command);
     }
     composer->GetPreedit(&left, &focused, &right);
-    cout << left << "[" << focused << "]" << right << endl;
+    std::cout << left << "[" << focused << "]" << right << std::endl;
   }
 }

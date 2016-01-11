@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/encryptor.h"
-
 #include <iostream>
 #include <string>
+
+#include "base/encryptor.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
@@ -61,7 +62,7 @@ string Escape(const string &buf) {
 }  // namespace
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (!FLAGS_iv.empty()) {
     CHECK_EQ(16, FLAGS_iv.size()) << "iv size must be 16 byte";
@@ -95,14 +96,14 @@ int main(int argc, char **argv) {
     string buf = FLAGS_test_input;
     string iv_buf(reinterpret_cast<const char *>(key1.iv()), key1.iv_size());
 
-    cout << "Password:  \"" << Escape(FLAGS_password) << "\"" << endl;
-    cout << "Salt:      \"" << Escape(FLAGS_salt) << "\"" << endl;
-    cout << "IV:        \"" << Escape(iv_buf) << "\"" << endl;
-    cout << "Input:     \"" << Escape(buf) << "\"" << endl;
+    std::cout << "Password:  \"" << Escape(FLAGS_password) << "\"" << std::endl;
+    std::cout << "Salt:      \"" << Escape(FLAGS_salt) << "\"" << std::endl;
+    std::cout << "IV:        \"" << Escape(iv_buf) << "\"" << std::endl;
+    std::cout << "Input:     \"" << Escape(buf) << "\"" << std::endl;
     CHECK(mozc::Encryptor::EncryptString(key1, &buf));
-    cout << "Encrypted: \"" << Escape(buf) << "\"" << endl;
+    std::cout << "Encrypted: \"" << Escape(buf) << "\"" << std::endl;
     CHECK(mozc::Encryptor::DecryptString(key2, &buf));
-    cout << "Decrypted: \"" << Escape(buf) << "\"" << endl;
+    std::cout << "Decrypted: \"" << Escape(buf) << "\"" << std::endl;
   } else {
     LOG(ERROR) <<
         "Unknown mode. set --input_file/--output_file/--test_input";

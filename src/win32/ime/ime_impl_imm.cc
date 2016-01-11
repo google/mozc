@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include "google/protobuf/stubs/common.h"
 #include "base/const.h"
 #include "base/crash_report_handler.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/singleton.h"
@@ -50,8 +51,8 @@
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
 #include "win32/base/focus_hierarchy_observer.h"
-#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/immdev.h"
+#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/input_state.h"
 #include "win32/base/string_util.h"
 #include "win32/base/surrogate_pair_observer.h"
@@ -768,11 +769,14 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
     return TRUE;
   }
 
-  // Unfortunately, InitLogStream cannot be placed inside DllMain because it
-  // may internally call LoadSystemLibrary to retrieve user profile directory.
-  // We should definitely avoid using LoadSystemLibrary when the thread owns
-  // loader lock.
-  mozc::Logging::InitLogStream(kProductPrefix "_imm32_ui");
+  // Unfortunately, InitLogStream cannot be placed inside DllMain because we
+  // want to output log to the user profile directory obtained by
+  // mozc::SystemUtil::GetLoggingDirectory(), which internally calls
+  // LoadSystemLibrary.  We should definitely avoid using LoadSystemLibrary when
+  // the thread owns loader lock.
+  mozc::Logging::InitLogStream(
+      mozc::FileUtil::JoinPath(mozc::SystemUtil::GetLoggingDirectory(),
+                               kProductPrefix "_imm32_ui.log"));
 
   mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
   if (context.get() == nullptr) {

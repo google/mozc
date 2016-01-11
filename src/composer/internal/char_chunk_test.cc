@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "composer/internal/char_chunk.h"
+
+#include <memory>
+
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
@@ -397,7 +400,7 @@ TEST(CharChunkTest, SplitChunk) {
   // Split "mo" to "m" and "o".
   CharChunk *left_chunk_ptr = NULL;
   chunk.SplitChunk(Transliterators::LOCAL, 1, &left_chunk_ptr);
-  scoped_ptr<CharChunk> left_chunk(left_chunk_ptr);
+  std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
 
   // The output should be half width "m" rather than full width "ｍ".
   output.clear();
@@ -1060,7 +1063,7 @@ TEST(CharChunkTest, Issue2990253) {
 
   CharChunk *left_new_chunk_ptr = NULL;
   chunk.SplitChunk(Transliterators::HIRAGANA, size_t(1), &left_new_chunk_ptr);
-  scoped_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
+  std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
   {
     string result;
     chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
@@ -1277,7 +1280,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     CharChunk *left_chunk_ptr = NULL;
     EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
                                   0, &left_chunk_ptr));
-    scoped_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ(4, chunk.GetLength(Transliterators::CONVERSION_STRING));
     EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
                                   4, &left_chunk_ptr));
@@ -1292,7 +1295,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     CharChunk *left_chunk_ptr = NULL;
     EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
                                  1, &left_chunk_ptr));
-    scoped_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ("a", left_chunk->conversion());
     EXPECT_EQ("bcd", chunk.conversion());
   }
@@ -1305,7 +1308,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     CharChunk *left_chunk_ptr = NULL;
     EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
                                  2, &left_chunk_ptr));
-    scoped_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ("ab", left_chunk->conversion());
     EXPECT_EQ("cd", chunk.conversion());
   }
@@ -1318,7 +1321,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     CharChunk *left_chunk_ptr = NULL;
     EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
                                  3, &left_chunk_ptr));
-    scoped_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ("abc", left_chunk->conversion());
     EXPECT_EQ("d", chunk.conversion());
   }
@@ -1857,8 +1860,8 @@ TEST(CharChunkTest, Clone) {
   src.ambiguous_ = "ambiguous";
   src.attributes_ = NEW_CHUNK;
 
-  scoped_ptr<CharChunk> dest(new CharChunk(Transliterators::CONVERSION_STRING,
-                                           NULL));
+  std::unique_ptr<CharChunk> dest(
+      new CharChunk(Transliterators::CONVERSION_STRING, NULL));
   EXPECT_FALSE(src.transliterator_ == dest->transliterator_);
   EXPECT_FALSE(src.table_ == dest->table_);
   EXPECT_NE(src.raw_, dest->raw_);

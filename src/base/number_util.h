@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,13 +42,13 @@ namespace mozc {
 // Arabic numbers, Roman numbers, Kanji numbers, and so on.
 class NumberUtil {
  public:
-  // Convert the number to a string and append it to output.
+  // Converts the number to a string and append it to output.
   static string SimpleItoa(int32 number);
   static string SimpleItoa(uint32 number);
   static string SimpleItoa(int64 number);
   static string SimpleItoa(uint64 number);
 
-  // Convert the string to a number and return it.
+  // Converts the string to a number and return it.
   static int SimpleAtoi(StringPiece str);
 
   // Returns true if the given input_string contains only number characters
@@ -150,8 +150,10 @@ class NumberUtil {
 
   // Converts the string to a 32-/64-bit signed/unsigned int.  Returns true if
   // success or false if the string is in the wrong format.
+  static bool SafeStrToInt16(StringPiece str, int16 *value);
   static bool SafeStrToInt32(StringPiece str, int32 *value);
   static bool SafeStrToInt64(StringPiece str, int64 *value);
+  static bool SafeStrToUInt16(StringPiece str, uint16 *value);
   static bool SafeStrToUInt32(StringPiece str, uint32 *value);
   static bool SafeStrToUInt64(StringPiece str, uint64 *value);
   static bool SafeHexStrToUInt32(StringPiece str, uint32 *value);

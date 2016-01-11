@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary_mock',
         '../dictionary/dictionary.gyp:suffix_dictionary',
@@ -90,6 +91,14 @@
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
       ],
+      'conditions': [
+        ['use_packed_dictionary==1 and branding=="Mozc"', {
+          'dependencies': [
+            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_oss#host',
+            '../data_manager/packed/packed_data_manager_base.gyp:packed_data_manager',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'connector_test',
@@ -103,6 +112,7 @@
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'converter_base.gyp:connector',
       ],
       'variables': {
@@ -117,6 +127,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'converter_base.gyp:pos_id_printer',
       ],
       'variables': {

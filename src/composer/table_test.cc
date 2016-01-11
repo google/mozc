@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -94,23 +94,10 @@ class TableTest : public testing::Test {
   TableTest() {}
 
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
+    config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  void SetCustomRomanTable(const string &roman_table) {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_custom_roman_table(roman_table);
-    config::ConfigHandler::SetConfig(config);
-  }
-
-  config::Config default_config_;
+  config::Config config_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(TableTest);
@@ -197,17 +184,11 @@ TEST_F(TableTest, Punctuations) {
     { config::Config::COMMA_TOUTEN, ".",  "\xe3\x80\x82" },
   };
 
-  const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                                "mozc_config_test_tmp");
-  FileUtil::Unlink(config_file);
-  config::ConfigHandler::SetConfigFileName(config_file);
-  config::ConfigHandler::Reload();
   commands::Request request;
 
   for (int i = 0; i < arraysize(test_cases); ++i) {
     config::Config config;
     config.set_punctuation_method(test_cases[i].method);
-    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
     Table table;
     ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
     const Entry *entry = table.LookUp(test_cases[i].input);
@@ -246,17 +227,11 @@ TEST_F(TableTest, Symbols) {
     { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "/",  "\xe3\x83\xbb" },
   };
 
-  const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                                "mozc_config_test_tmp");
-  FileUtil::Unlink(config_file);
-  config::ConfigHandler::SetConfigFileName(config_file);
-  config::ConfigHandler::Reload();
   commands::Request request;
 
   for (int i = 0; i < arraysize(test_cases); ++i) {
     config::Config config;
     config.set_symbol_method(test_cases[i].method);
-    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
     Table table;
     ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
     const Entry *entry = table.LookUp(test_cases[i].input);
@@ -268,16 +243,12 @@ TEST_F(TableTest, Symbols) {
 }
 
 TEST_F(TableTest, KanaSuppressed) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-
-  config.set_preedit_method(config::Config::KANA);
-  config::ConfigHandler::SetConfig(config);
+  config_.set_preedit_method(config::Config::KANA);
 
   commands::Request request;
 
   Table table;
-  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
+  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config_));
 
   const Entry *entry = table.LookUp("a");
   ASSERT_TRUE(entry != NULL);
@@ -289,7 +260,7 @@ TEST_F(TableTest, KanaSuppressed) {
 TEST_F(TableTest, KanaCombination) {
   Table table;
   commands::Request request;
-  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, default_config_));
+  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config_));
   // "か゛"
   const Entry *entry = table.LookUp("\xE3\x81\x8B\xE3\x82\x9B");
   ASSERT_TRUE(entry != NULL);
@@ -424,13 +395,11 @@ TEST_F(TableTest, CustomPunctuationsAndSymbols) {
   custom_roman_table.append("[\tOPEN\n");
   custom_roman_table.append("]\tCLOSE\n");
 
-  SetCustomRomanTable(custom_roman_table);
+  config_.set_custom_roman_table(custom_roman_table);
 
   Table table;
   commands::Request request;
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  table.InitializeWithRequestAndConfig(request, config);
+  table.InitializeWithRequestAndConfig(request, config_);
 
   const Entry *entry = NULL;
   entry = table.LookUp("mozc");
@@ -534,36 +503,36 @@ TEST_F(TableTest, CaseSensitivity) {
   commands::Request request;
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("", "", "");
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("a", "", "");
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("A", "", "");
     EXPECT_TRUE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("a{A}a", "", "");
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("A{A}A", "", "");
     EXPECT_TRUE(table.case_sensitive());
   }
@@ -573,15 +542,13 @@ TEST_F(TableTest, CaseSensitivity) {
 // by the configuration.
 // Currently the case sensitivity is independent from the configuration.
 TEST_F(TableTest, CaseSensitiveByConfiguration) {
-  config::Config config;
   commands::Request request;
   Table table;
 
   // config::Config::OFF
   {
-    config.set_shift_key_mode_switch(config::Config::OFF);
-    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
-    table.InitializeWithRequestAndConfig(request, config);
+    config_.set_shift_key_mode_switch(config::Config::OFF);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     table.AddRule("a", "[a]", "");
     table.AddRule("A", "[A]", "");
@@ -620,9 +587,8 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
 
   // config::Config::ASCII_INPUT_MODE
   {
-    config.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
-    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
-    table.InitializeWithRequestAndConfig(request, config);
+    config_.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     table.AddRule("a", "[a]", "");
     table.AddRule("A", "[A]", "");
@@ -661,9 +627,8 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
 
   // config::Config::KATAKANA_INPUT_MODE
   {
-    config.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
-    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
-    table.InitializeWithRequestAndConfig(request, config);
+    config_.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     table.AddRule("a", "[a]", "");
     table.AddRule("A", "[A]", "");
@@ -723,9 +688,8 @@ TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
 
   {
     Table table;
-    SetCustomRomanTable(kCaseSensitiveRomanTable);
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
+    config::Config config(config::ConfigHandler::DefaultConfig());
+    config.set_custom_roman_table(kCaseSensitiveRomanTable);
     EXPECT_FALSE(table.case_sensitive())
         << "case-sensitive mode should be desabled by default.";
     // Load a custom config with case-sensitive custom roman table.
@@ -740,9 +704,8 @@ TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
   {
     Table table;
     // Load a custom config with case-insensitive custom roman table.
-    SetCustomRomanTable(kCaseInsensitiveRomanTable);
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
+    config::Config config(config::ConfigHandler::DefaultConfig());
+    config.set_custom_roman_table(kCaseInsensitiveRomanTable);
     ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
     EXPECT_FALSE(table.case_sensitive())
         << "Case insensitive roman table should disable case-sensitive mode.";
@@ -756,14 +719,13 @@ TEST_F(TableTest, MobileMode) {
   mozc::commands::Request request;
   request.set_zero_query_suggestion(true);
   request.set_mixed_conversion(true);
-  request.set_combine_all_segments(true);
 
   {
     // To 12keys -> Hiragana mode
     request.set_special_romanji_table(
         mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA);
     mozc::composer::Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     {
       const mozc::composer::Entry *entry = NULL;
       size_t key_length = 0;
@@ -798,7 +760,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     const mozc::composer::Entry *entry = NULL;
     size_t key_length = 0;
     bool fixed = false;
@@ -811,7 +773,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::GODAN_TO_HIRAGANA);
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
     {
       const mozc::composer::Entry *entry = NULL;
       size_t key_length = 0;
@@ -829,7 +791,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::FLICK_TO_HIRAGANA);
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     size_t key_length = 0;
     bool fixed = false;
@@ -844,7 +806,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::NOTOUCH_TO_HIRAGANA);
     Table table;
-    table.InitializeWithRequestAndConfig(request, default_config_);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     size_t key_length = 0;
     bool fixed = false;

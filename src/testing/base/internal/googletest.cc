@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 #include "testing/base/public/googletest.h"
 
 #ifdef OS_WIN
@@ -39,7 +40,7 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/init.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
 
@@ -150,3 +151,4 @@ void InitTestFlags() {
 }
 
 }  // namespace mozc
+

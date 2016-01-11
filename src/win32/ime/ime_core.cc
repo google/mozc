@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -383,23 +383,6 @@ bool ImeCore::SwitchInputMode(
   return UpdateInputContext(himc, output, generate_message);
 }
 
-bool ImeCore::SendCallbackCommand(HIMC himc, bool generate_message) {
-  UIContext context(himc);
-  commands::Output last_output;
-  context.GetLastOutput(&last_output);
-
-  if (!last_output.has_callback()) {
-    return false;
-  }
-
-  mozc::commands::Output output;
-  if (!context.client()->SendCommand(last_output.callback().session_command(),
-                                     &output)) {
-    return false;
-  }
-  return UpdateInputContext(himc, output, generate_message);
-}
-
 DWORD ImeCore::GetSupportableConversionMode(DWORD raw_conversion_mode) {
   // If the initial |fdwConversion| is not a supported combination of flags,
   // we have to update it and then send the IMN_SETCONVERSIONMODE message.
@@ -561,15 +544,7 @@ bool ImeCore::UpdateContext(HIMC himc,
     return UpdateContextMain(himc, next_state, new_output, message_queue);
   }
 
-  // Delayed callback exists.
-  if (new_output.callback().has_delay_millisec()) {
-    message_queue->AddMessage(WM_IME_NOTIFY,
-                              IMN_PRIVATE,
-                              kNotifyDelayedCallback);
-    return UpdateContextMain(himc, next_state, new_output, message_queue);
-  }
-
-  // Immediate callback exists.
+  // Callback exists.
   const SessionCommand &callback_command =
       new_output.callback().session_command();
 

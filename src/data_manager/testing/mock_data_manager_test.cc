@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include "data_manager/data_manager_test_base.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace testing {
@@ -42,14 +43,20 @@ namespace {
 class MockDataManagerTest : public DataManagerTestBase {
  protected:
   MockDataManagerTest()
-      : DataManagerTestBase(new MockDataManager,
-                            kLSize,
-                            kRSize,
-                            IsBoundaryInternal,
-                            "data_manager/testing/connection_single_column.txt",
-                            1,
-                            "data/test/dictionary/dictionary.txt",
-                            "data/test/dictionary/suggestion_filter.txt") {}
+      : DataManagerTestBase(
+            new MockDataManager,
+            kLSize,
+            kRSize,
+            IsBoundaryInternal,
+            mozc::testing::GetSourceFileOrDie(
+                {"data_manager", "testing", "connection_single_column.txt"}),
+            1,
+            mozc::testing::GetSourceFilesInDirOrDie(
+                {"data", "test", "dictionary"},
+                {"dictionary.txt"}),
+            mozc::testing::GetSourceFilesInDirOrDie(
+                {"data", "test", "dictionary"},
+                {"suggestion_filter.txt"})) {}
 };
 
 TEST_F(MockDataManagerTest, AllTests) {

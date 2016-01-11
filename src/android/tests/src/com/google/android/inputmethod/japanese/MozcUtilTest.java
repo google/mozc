@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -248,8 +248,10 @@ public class MozcUtilTest extends InstrumentationTestCaseWithMock {
         new TestData(1, 1),
         new TestData(0, 0),
         new TestData(123456, 123456),
-        new TestData(5000001, 0),
-        new TestData(5123456, 12345),
+        new TestData(5000001, 5000001),
+        new TestData(5123456, 5123456),
+        new TestData(6000001, 0),
+        new TestData(6123456, 12345),
     };
     for (TestData testData : testDataList) {
       try {
@@ -319,5 +321,20 @@ public class MozcUtilTest extends InstrumentationTestCaseWithMock {
       assertEquals(testData.toString(),
                    testData.expectPreffered, MozcUtil.isVoiceInputPreferred(editorInfo));
     }
+  }
+
+  @SmallTest
+  public void testGetDimensionForOrientation() {
+    float portraitValue = MozcUtil.getDimensionForOrientation(
+        getInstrumentation().getContext().getResources(),
+        org.mozc.android.inputmethod.japanese.tests.R.dimen.value_for_testing_port_1dip_land_2dip,
+        Configuration.ORIENTATION_PORTRAIT);
+    float landscapeValue = MozcUtil.getDimensionForOrientation(
+        getInstrumentation().getContext().getResources(),
+        org.mozc.android.inputmethod.japanese.tests.R.dimen.value_for_testing_port_1dip_land_2dip,
+        Configuration.ORIENTATION_LANDSCAPE);
+
+    assertTrue("portrait:" + portraitValue + ", landscape:" + landscapeValue,
+               portraitValue != landscapeValue);
   }
 }

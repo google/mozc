@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,11 @@
 #ifndef MOZC_PREDICTION_PREDICTOR_H_
 #define MOZC_PREDICTION_PREDICTOR_H_
 
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
-#include "converter/conversion_request.h"
 #include "prediction/predictor_interface.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 
@@ -52,7 +52,7 @@ class BasePredictor : public PredictorInterface {
                                  Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations.
-  virtual void Finish(Segments *segments);
+  virtual void Finish(const ConversionRequest &request, Segments *segments);
 
   // Reverts the last Finish operation.
   virtual void Revert(Segments *segments);
@@ -78,8 +78,8 @@ class BasePredictor : public PredictorInterface {
   virtual const string &GetPredictorName() const = 0;
 
  protected:
-  scoped_ptr<PredictorInterface> dictionary_predictor_;
-  scoped_ptr<PredictorInterface> user_history_predictor_;
+  std::unique_ptr<PredictorInterface> dictionary_predictor_;
+  std::unique_ptr<PredictorInterface> user_history_predictor_;
 };
 
 // TODO(team): The name should be DesktopPredictor

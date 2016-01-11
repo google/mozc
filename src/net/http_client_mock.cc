@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -105,4 +105,4 @@ bool HTTPClientMock::DoRequest(const string &url,
   return true;
 }
 
-};  // namespace mozc
+}  // namespace mozc

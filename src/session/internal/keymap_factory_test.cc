@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,18 +61,10 @@ namespace {
 class KeyMapFactoryTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-
     TestKeyMapFactoryProxy::Clear();
   }
 
   virtual void TearDown() {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-
     TestKeyMapFactoryProxy::Clear();
   }
 };
@@ -124,19 +116,17 @@ TEST_F(KeyMapFactoryTest, KeyMapFactoryTest) {
 TEST_F(KeyMapFactoryTest, ReloadWhenGetInstance) {
   commands::KeyEvent key;
   key.set_special_key(commands::KeyEvent::SPACE);
-
   config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
 
   {  // ConvertNext
     const char *kCustomTableConvertNext =
         "status\tkey\tcommand\n"
         "Conversion\tSpace\tConvertNext\n";
     config.set_custom_keymap_table(kCustomTableConvertNext);
-    config::ConfigHandler::SetConfig(config);
 
     KeyMapManager *keymap = KeyMapFactory::GetKeyMapManager(
         config::Config::CUSTOM);
+    keymap->ReloadConfig(config);
     ConversionState::Commands key_command;
     keymap->GetCommandConversion(key, &key_command);
     EXPECT_EQ(ConversionState::CONVERT_NEXT, key_command);
@@ -147,10 +137,10 @@ TEST_F(KeyMapFactoryTest, ReloadWhenGetInstance) {
       "status\tkey\tcommand\n"
       "Conversion\tSpace\tConvertPrev\n";
   config.set_custom_keymap_table(kCustomTableConvertPrev);
-  config::ConfigHandler::SetConfig(config);
 
   KeyMapManager *keymap = KeyMapFactory::GetKeyMapManager(
       config::Config::CUSTOM);
+  keymap->ReloadConfig(config);
   ConversionState::Commands key_command;
   keymap->GetCommandConversion(key, &key_command);
   EXPECT_EQ(ConversionState::CONVERT_PREV, key_command);

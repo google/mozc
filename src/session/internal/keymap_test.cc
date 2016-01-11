@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,22 @@
 
 // Keymap utils of Mozc interface.
 
+#include "session/internal/keymap.h"
+#include "session/internal/keymap-inl.h"
+
+#include <memory>
 #include <sstream>
 #include <vector>
+
 #include "base/config_file_stream.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap-inl.h"
-#include "session/internal/keymap.h"
 #include "session/internal/keymap_factory.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace keymap {
@@ -52,17 +53,6 @@ class KeyMapTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-  }
-
-  virtual void TearDown() {
-    // just in case, reset the config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
   }
 
   bool isInputModeXCommandSupported() const {
@@ -324,7 +314,8 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
 TEST_F(KeyMapTest, LoadStreamWithErrors) {
   KeyMapManager manager;
   vector<string> errors;
-  scoped_ptr<istream> is(ConfigFileStream::LegacyOpen("system://atok.tsv"));
+  std::unique_ptr<istream> is(
+      ConfigFileStream::LegacyOpen("system://atok.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
@@ -544,7 +535,7 @@ TEST_F(KeyMapTest, Reconvert) {
   }
 }
 
-TEST_F(KeyMapTest, ReloadWithKeymap) {
+TEST_F(KeyMapTest, Initialize) {
   KeyMapManager manager;
   config::Config::SessionKeymap keymap_setting;
   commands::KeyEvent key_event;
@@ -552,14 +543,14 @@ TEST_F(KeyMapTest, ReloadWithKeymap) {
 
   {  // ATOK
     keymap_setting = config::Config::ATOK;
-    manager.ReloadWithKeymap(keymap_setting);
+    manager.Initialize(keymap_setting);
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::SEGMENT_WIDTH_EXPAND, conv_command);
   }
   {  // MSIME
     keymap_setting = config::Config::MSIME;
-    manager.ReloadWithKeymap(keymap_setting);
+    manager.Initialize(keymap_setting);
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::SEGMENT_FOCUS_RIGHT, conv_command);
@@ -665,14 +656,14 @@ TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOs_Issue13947207) {
 
   {  // MSIME
     keymap_setting = config::Config::MSIME;
-    manager.ReloadWithKeymap(keymap_setting);
+    manager.Initialize(keymap_setting);
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::INPUT_MODE_HIRAGANA, conv_command);
   }
   {  // CHROMEOS
     keymap_setting = config::Config::CHROMEOS;
-    manager.ReloadWithKeymap(keymap_setting);
+    manager.Initialize(keymap_setting);
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_FALSE(manager.GetCommandConversion(key_event, &conv_command));
   }

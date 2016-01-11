@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,7 +95,7 @@ bool ProcessMutex::LockAndWrite(const string &message) {
   }
 
   wstring wfilename;
-  Util::UTF8ToWide(filename_.c_str(), &wfilename);
+  Util::UTF8ToWide(filename_, &wfilename);
   const DWORD kAttribute =
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
       FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
@@ -176,11 +176,17 @@ ProcessMutex::~ProcessMutex() {
 }
 
 bool ProcessMutex::LockAndWrite(const string &message) {
-  return Singleton<NamedLockManager>::get()->Lock(filename_, message);
+  if (!Singleton<NamedLockManager>::get()->Lock(filename_, message)) {
+    VLOG(1) << filename_ << " is already locked";
+    return false;
+  }
+  locked_ = true;
+  return true;
 }
 
 bool ProcessMutex::UnLock() {
   Singleton<NamedLockManager>::get()->UnLock(filename_);
+  locked_ = false;
   return true;
 }
 
@@ -249,7 +255,7 @@ class FileLockManager {
       return false;   // another server is already running
     }
 
-    fdmap_.insert(make_pair(filename, *fd));
+    fdmap_.insert(std::make_pair(filename, *fd));
 
     return true;
   }

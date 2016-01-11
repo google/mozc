@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,12 @@
 #define MOZC_COMPOSER_TABLE_H_
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "base/trie.h"
 
 namespace mozc {
@@ -153,7 +154,7 @@ class Table {
   void ResetEntrySet();
 
   typedef Trie<const Entry*> EntryTrie;
-  scoped_ptr<EntryTrie> entries_;
+  std::unique_ptr<EntryTrie> entries_;
   typedef set<const Entry*> EntrySet;
   EntrySet entry_set_;
 

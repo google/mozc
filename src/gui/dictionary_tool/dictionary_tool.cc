@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,10 @@
 
 #include "gui/dictionary_tool/dictionary_tool.h"
 
+#if defined(OS_ANDROID) || defined(OS_NACL)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_NACL
+
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
 #include <QtGui/QProgressDialog>
@@ -39,6 +43,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -53,6 +58,8 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "gui/base/encoding_util.h"
+#include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/dictionary_tool/find_dialog.h"
@@ -171,8 +178,8 @@ class UTF16TextLineIterator
 
  private:
   QFile file_;
-  scoped_ptr<QTextStream> stream_;
-  scoped_ptr<QProgressDialog> progress_;
+  std::unique_ptr<QTextStream> stream_;
+  std::unique_ptr<QProgressDialog> progress_;
 };
 
 class MultiByteTextLineIterator
@@ -185,7 +192,7 @@ class MultiByteTextLineIterator
       : encoding_type_(encoding_type),
         ifs_(new InputFileStream(filename.c_str())),
         first_line_(true) {
-    const streampos begin = ifs_->tellg();
+    const std::streampos begin = ifs_->tellg();
     ifs_->seekg(0, ios::end);
     const size_t size = static_cast<size_t>(ifs_->tellg() - begin);
     ifs_->seekg(0, ios::beg);
@@ -228,7 +235,7 @@ class MultiByteTextLineIterator
     // We won't enable it as it increases the binary size.
     if (encoding_type_ == UserDictionaryImporter::SHIFT_JIS) {
       const string input = *line;
-      Util::SJISToUTF8(input, line);
+      EncodingUtil::SJISToUTF8(input, line);
     }
 
     // strip UTF8 BOM
@@ -252,8 +259,8 @@ class MultiByteTextLineIterator
 
  private:
   UserDictionaryImporter::EncodingType encoding_type_;
-  scoped_ptr<InputFileStream> ifs_;
-  scoped_ptr<QProgressDialog> progress_;
+  std::unique_ptr<InputFileStream> ifs_;
+  std::unique_ptr<QProgressDialog> progress_;
   bool first_line_;
 };
 
@@ -643,7 +650,7 @@ void DictionaryTool::SetupDicContentEditor(
   dic_content_->setRowCount(dic->entries_size());
 
   {
-    scoped_ptr<QProgressDialog> progress(CreateProgressDialog(
+    std::unique_ptr<QProgressDialog> progress(CreateProgressDialog(
         tr("Updating the current view data..."),
         this,
         dic->entries_size()));
@@ -886,7 +893,7 @@ void DictionaryTool::ImportHelper(
   SyncToStorage();
 
   // Open dictionary
-  scoped_ptr<UserDictionaryImporter::TextLineIteratorInterface> iter(
+  std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface> iter(
       CreateTextLineIterator(encoding_type, file_name, this));
   if (iter.get() == NULL) {
     LOG(ERROR) << "CreateTextLineIterator returns NULL";
@@ -956,8 +963,15 @@ void DictionaryTool::ImportFromDefaultIME() {
   const int old_size = dic->entries_size();
   const string dic_name = dic_info.item->text().toStdString();
 
-  const UserDictionaryImporter::ErrorType error =
-      UserDictionaryImporter::ImportFromMSIME(dic);
+  UserDictionaryImporter::ErrorType error =
+      UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
+  {
+    std::unique_ptr<UserDictionaryImporter::InputIteratorInterface> iter(
+        MSIMEUserDictionarImporter::Create());
+    if (iter) {
+      error = UserDictionaryImporter::ImportFromIterator(iter.get(), dic);
+    }
+  }
 
   const int added_entries_size = dic->entries_size() - old_size;
 
@@ -1084,7 +1098,7 @@ void DictionaryTool::DeleteWord() {
   setUpdatesEnabled(false);
 
   {
-    scoped_ptr<QProgressDialog> progress(
+    std::unique_ptr<QProgressDialog> progress(
         CreateProgressDialog(
             tr("Deleting the selected words..."),
             this,
@@ -1168,7 +1182,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
   {
     // add |rows.size()| items and remove |rows.size()| items
     const int progress_max = rows.size() * 2;
-    scoped_ptr<QProgressDialog> progress(
+    std::unique_ptr<QProgressDialog> progress(
         CreateProgressDialog(
             tr("Moving the selected words..."),
             this,

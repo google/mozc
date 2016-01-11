@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "converter/gen_segmenter_bitarray.h"
 
 namespace {
@@ -37,7 +38,7 @@ namespace {
 DEFINE_string(output, "", "header filename for google segmenter");
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv, true);
   mozc::SegmenterBitarrayGenerator::GenerateBitarray(
       kLSize, kRSize, &IsBoundaryInternal, FLAGS_output);
   return 0;

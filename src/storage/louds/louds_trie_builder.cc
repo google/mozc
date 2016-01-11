@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,9 +95,9 @@ void LoudsTrieBuilder::Build() {
   CHECK(!built_);
 
   // Initialize for the build. Sort and de-dup the words.
-  sort(word_list_.begin(), word_list_.end());
-  word_list_.erase(
-      unique(word_list_.begin(), word_list_.end()), word_list_.end());
+  std::sort(word_list_.begin(), word_list_.end());
+  word_list_.erase(std::unique(word_list_.begin(), word_list_.end()),
+                   word_list_.end());
   vector<Entry> entry_list;
   entry_list.reserve(word_list_.size());
   for (size_t i = 0; i < word_list_.size(); ++i) {
@@ -191,10 +191,9 @@ void LoudsTrieBuilder::Build() {
     }
 
     // Remove all terminal strings.
-    entry_list.erase(
-        remove_if(entry_list.begin(), entry_list.end(),
-                  EntryLengthLessThan(depth + 1)),
-        entry_list.end());
+    entry_list.erase(std::remove_if(entry_list.begin(), entry_list.end(),
+                                    EntryLengthLessThan(depth + 1)),
+                     entry_list.end());
   }
 
   // Set 32-bits alignment.
@@ -225,7 +224,7 @@ int LoudsTrieBuilder::GetId(const string &word) const {
 
   // Binary search the word.
   vector<string>::const_iterator iter =
-      lower_bound(word_list_.begin(), word_list_.end(), word);
+      std::lower_bound(word_list_.begin(), word_list_.end(), word);
   if (iter == word_list_.end() || *iter != word) {
     // Not found.
     return -1;

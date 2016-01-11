@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,12 +50,6 @@ void SessionObserverHandler::EvalCommandHandler(
     const commands::Command &command) {
   for (ItObservers it = observers_.begin(); it != observers_.end(); ++it) {
     (*it)->EvalCommandHandler(command);
-  }
-}
-
-void SessionObserverHandler::Reload() {
-  for (ItObservers it = observers_.begin(); it != observers_.end(); ++it) {
-    (*it)->Reload();
   }
 }
 

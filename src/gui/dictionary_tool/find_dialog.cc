@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,10 @@
 
 #include "gui/dictionary_tool/find_dialog.h"
 
+#include <algorithm>
 #include <QtGui/QtGui>
+
 #include "base/logging.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace gui {

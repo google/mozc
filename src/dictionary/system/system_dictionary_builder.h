@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,12 @@
 
 #include <deque>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "dictionary/system/words_info.h"
 
 namespace mozc {
@@ -95,9 +95,9 @@ class SystemDictionaryBuilder {
   void SetPosType(KeyInfoList *keyinfomap) const;
   void SetValueType(KeyInfoList *key_info_list) const;
 
-  scoped_ptr<mozc::storage::louds::LoudsTrieBuilder> value_trie_builder_;
-  scoped_ptr<mozc::storage::louds::LoudsTrieBuilder> key_trie_builder_;
-  scoped_ptr<mozc::storage::louds::BitVectorBasedArrayBuilder>
+  std::unique_ptr<mozc::storage::louds::LoudsTrieBuilder> value_trie_builder_;
+  std::unique_ptr<mozc::storage::louds::LoudsTrieBuilder> key_trie_builder_;
+  std::unique_ptr<mozc::storage::louds::BitVectorBasedArrayBuilder>
       token_array_builder_;
 
   // mapping from {left_id, right_id} to POS index (0--255)

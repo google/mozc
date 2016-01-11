@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "renderer/win32/win32_renderer_client.h"
+
+#include <memory>
 
 #include "base/logging.h"
 #include "base/mutex.h"
@@ -189,7 +191,7 @@ SenderThread *CreateSenderThread() {
     return nullptr;
   }
 
-  scoped_ptr<SenderThread> thread(new SenderThread(
+  std::unique_ptr<SenderThread> thread(new SenderThread(
       command_event.take(), quit_event.take()));
 
   // Resume the thread.

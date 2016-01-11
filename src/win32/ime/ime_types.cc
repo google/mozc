@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,11 +44,10 @@ template <LPARAM bit>
 bool BitwiseTest(LPARAM lParam) {
   return (lParam & bit) == bit;
 }
-}  // anonymous namespace
+}  // namespace
 
 const LPARAM kNotifyUpdateUI = 0x10000;
 const LPARAM kNotifyReconvertFromIME = 0x10001;
-const LPARAM kNotifyDelayedCallback = 0x10002;
 
 CompositionChangeAttributes::CompositionChangeAttributes()
     : composition_attribute(false),

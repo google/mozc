@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ipc/ipc.h"
-
 #include <cstring>
 #include <iostream>  // NOLINT
 #include <string>
 #include <vector>
 
 #include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/thread.h"
+#include "ipc/ipc.h"
 
 DEFINE_string(server_address, "ipc_test", "");
 DEFINE_bool(test, false, "automatic test mode");
@@ -96,7 +96,7 @@ class EchoServerThread: public Thread {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv, false);
 
   if (FLAGS_test) {
     mozc::EchoServer con(FLAGS_server_address, 10, 1000);

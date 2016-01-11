@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,12 @@
 #ifndef MOZC_CONVERTER_NBEST_GENERATOR_H_
 #define MOZC_CONVERTER_NBEST_GENERATOR_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/freelist.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "converter/candidate_filter.h"
 #include "converter/segments.h"
 #include "dictionary/suppression_dictionary.h"
@@ -86,7 +86,8 @@ class NBestGenerator {
       const Connector *connector,
       const dictionary::POSMatcher *pos_matcher,
       const Lattice *lattice,
-      const SuggestionFilter *suggestion_filter);
+      const SuggestionFilter *suggestion_filter,
+      bool apply_suggestion_filter_for_exact_match);
   ~NBestGenerator();
 
   // Reset the iterator status.
@@ -182,7 +183,7 @@ class NBestGenerator {
   Agenda agenda_;
   FreeList<QueueElement> freelist_;
   vector<const Node *> nodes_;
-  scoped_ptr<converter::CandidateFilter> filter_;
+  std::unique_ptr<converter::CandidateFilter> filter_;
   bool viterbi_result_checked_;
   BoundaryCheckMode check_mode_;
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,16 @@
 #endif
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/crash_report_handler.h"
-#include "base/init.h"
+#include "base/flags.h"
+#include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
+#include "base/singleton.h"
 #include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
@@ -52,32 +55,12 @@ mozc::SessionServer *g_session_server = NULL;
 }
 
 namespace mozc {
-namespace {
-
-// Calling back a function when the mozc server is shutting down resulted in a
-// lot of crashes as filed in b/2696087.
-// TODO(yukawa): re-enable shutdown handler for Windows.
-#if !defined(OS_WIN)
-// When OS is about to shutdown/logoff,
-// ShutdownSessionCallback is kicked.
-void ShutdownSessionCallback() {
-  VLOG(1) << "ShutdownSessionFunc is called";
-  if (g_session_server != NULL) {
-    g_session_server->Terminate();
-  }
-}
-
-REGISTER_MODULE_SHUTDOWN_HANDLER(shutdown_session,
-                                 ShutdownSessionCallback());
-#endif  // !OS_WIN
-}  // namespace
-
 namespace server {
 
-void InitGoogleAndMozcServer(const char *arg0,
-                             int *argc,
-                             char ***argv,
-                             bool remove_flags) {
+void InitMozcAndMozcServer(const char *arg0,
+                           int *argc,
+                           char ***argv,
+                           bool remove_flags) {
   mozc::SystemUtil::DisableIME();
 
   // Big endian is not supported. The storage for user history is endian
@@ -90,8 +73,8 @@ void InitGoogleAndMozcServer(const char *arg0,
   ::SetProcessShutdownParameters(0x100, SHUTDOWN_NORETRY);
 #endif
 
-  // call GetRunLevel before InitGoogle().
-  // InitGoogle() will do all static initialization and may access
+  // call GetRunLevel before mozc::InitMozc().
+  // mozc::InitMozc() will do all static initialization and may access
   // local resources.
   const mozc::RunLevel::RunLevelType run_level =
       mozc::RunLevel::GetRunLevel(mozc::RunLevel::SERVER);
@@ -104,7 +87,7 @@ void InitGoogleAndMozcServer(const char *arg0,
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-  InitGoogle(arg0, argc, argv, remove_flags);
+  mozc::InitMozc(arg0, argc, argv, remove_flags);
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
     VLOG(1) << "Mozc server starts with timeout mode";
@@ -123,8 +106,8 @@ int MozcServer::Run() {
   }
 
   {
-    scoped_ptr<mozc::SessionServer> session_server
-        (new mozc::SessionServer);
+    std::unique_ptr<mozc::SessionServer> session_server(
+        new mozc::SessionServer);
     g_session_server = session_server.get();
     CHECK(g_session_server);
     if (!g_session_server->Connected()) {
@@ -152,7 +135,7 @@ int MozcServer::Run() {
 }
 
 int MozcServer::Finalize() {
-  mozc::RunFinalizers();
+  mozc::SingletonFinalizer::Finalize();
   return 0;
 }
 

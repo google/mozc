@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,9 +46,13 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/request_test_util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_oss.h"
+#include "data_manager/packed/packed_data_manager.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 
 using mozc::quality_regression::QualityRegressionUtil;
 
@@ -66,15 +71,22 @@ class QualityRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers full-size PackedDataManager.
+    std::unique_ptr<mozc::packed::PackedDataManager> data_manager(
+        new mozc::packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    mozc::packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   virtual void TearDown() {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Unregisters mocked PackedDataManager.
+    mozc::packed::RegisterPackedDataManager(nullptr);
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
@@ -107,9 +119,9 @@ class QualityRegressionTest : public testing::Test {
       line.append("\tActual: ").append(actual_value);
       if (test_result) {
         // use "-1.0" as a dummy expected ratio
-        (*table)[label].push_back(make_pair(-1.0, line));
+        (*table)[label].push_back(std::make_pair(-1.0, line));
       } else {
-        (*table)[label].push_back(make_pair(item.accuracy, line));
+        (*table)[label].push_back(std::make_pair(item.accuracy, line));
       }
     }
 
@@ -129,7 +141,7 @@ class QualityRegressionTest : public testing::Test {
       map<string, vector<pair<float, string>>> *results) {
     for (auto it = results->begin(); it != results->end(); ++it) {
       vector<pair<float, string>> *values = &it->second;
-      sort(values->begin(), values->end());
+      std::sort(values->begin(), values->end());
       size_t correct = 0;
       bool all_passed = true;
       for (const auto &value : *values) {
@@ -169,16 +181,17 @@ class QualityRegressionTest : public testing::Test {
 
 
 TEST_F(QualityRegressionTest, ChromeOSTest) {
-  scoped_ptr<EngineInterface> chromeos_engine(ChromeOsEngineFactory::Create());
-  QualityRegressionUtil util(chromeos_engine->GetConverter());
+  std::unique_ptr<EngineInterface> engine(ChromeOsEngineFactory::Create());
+  QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::CHROMEOS, &util);
 }
 
 // Test for desktop
 TEST_F(QualityRegressionTest, BasicTest) {
-  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
 }
+
 }  // namespace
 }  // namespace mozc

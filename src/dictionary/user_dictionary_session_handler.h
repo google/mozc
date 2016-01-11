@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,10 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_SESSION_HANDLER_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_SESSION_HANDLER_H_
 
+#include <memory>
+#include <string>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace user_dictionary {
@@ -114,7 +116,7 @@ class UserDictionarySessionHandler {
   // but currently only one latest session is held.
   // (From the different point of view, this is LRU with max capacity '1'.)
   uint64 session_id_;
-  scoped_ptr<UserDictionarySession> session_;
+  std::unique_ptr<UserDictionarySession> session_;
   string dictionary_path_;
 
   UserDictionarySession *GetSession(const UserDictionaryCommand &command,

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 #define MOZC_WIN32_TIP_TIP_EDIT_SESSION_H_
 
 #include <msctf.h>
+#include <string>
 
 #include "base/port.h"
 

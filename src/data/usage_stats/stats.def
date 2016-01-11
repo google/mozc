@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,18 @@ CommitAutoPartialSuggestion
 # The number of the commited Unicode/carrier emoji.
 CommitUnicodeEmoji
 CommitCarrierEmoji
+
+# Zero query related
+CommitDictionaryPredictorZeroQueryTypeNone
+CommitDictionaryPredictorZeroQueryTypeNumberSuffix
+CommitDictionaryPredictorZeroQueryTypeEmoticon
+CommitDictionaryPredictorZeroQueryTypeEmoji
+CommitDictionaryPredictorZeroQueryTypeBigram
+CommitDictionaryPredictorZeroQueryTypeSuffix
+
+# User history predictor related
+CommitUserHistoryPredictor
+CommitUserHistoryPredictorZeroQuery
 
 # The count of all events
 SessionAllEvent
@@ -304,9 +316,9 @@ SendCommand_SwitchInputFieldType
 SendCommand_UsageStatsEvent
 SendCommand_UndoOrRewind
 SendCommand_ExpandSuggestion
-SendCommand_SendCaretLocation
+SendCommand_ObsoleteSendCaretLocation
 SendCommand_ObsoleteSendLanguageBarCommand
-SendCommand_GetAsyncResult
+SendCommand_ObsoleteGetAsyncResult
 SendCommand_CommitRawText
 SendCommand_ConvertPrevPage
 SendCommand_ConvertNextPage
@@ -479,22 +491,12 @@ PrelauncherEnabled
 # Use Mode Indicator
 ConfigUseModeIndicator
 
-# Need to show the help page after install (TSF is disabled)
-PostInstallShowPageRequired
-# Need to logoff after install (CUAS is disabled)
-PostInstallLogoffRequired
-# Need to do nothing after install
-PostInstallNothingRequired
 # Set Mozc as default on install
 PostInstallSetDefault
 # Do not set Mozc as default on install
 PostInstallNotSetDefault
 # Push OK button
 PostInstallOkButton
-# Push Logoff Now button
-PostInstallLogoffNowButton
-# Push Logoff Later button
-PostInstallLogoffLaterButton
 # Push reject (x) button
 PostInstallRejectButton
 
@@ -542,18 +544,15 @@ SubmittedCandidateRowGE10
 KeyboardFoldEvent
 KeyboardExpandEvent
 MushroomSelectionDialogOpen
+SoftwareKeyboardHeightDipLandscape
+SoftwareKeyboardHeightDipPortrait
+SoftwareKeyboardLayoutAdjustmentEnabledLandscape
+SoftwareKeyboardLayoutAdjustmentEnabledPortrait
 
 # for windows
 
 # 64 bit
 WindowsX64
-# Msctf version
-MsctfVerMajor
-MsctfVerMinor
-MsctfVerBuild
-MsctfVerRevision
-# CUAS status
-CuasEnabled
 # Windows 8
 PerUserInputSettingsEnabled
 

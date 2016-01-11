@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,10 +35,9 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -49,9 +48,6 @@ class VersionRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
   }
 
   static void AddSegment(const string &key, const string &value,
@@ -84,29 +80,26 @@ class VersionRewriterTest : public testing::Test {
 };
 
 TEST_F(VersionRewriterTest, CapabilityTest) {
-  // default_request is just declared but not touched at all, so it
-  // holds all default values.
-  commands::Request default_request;
-  const ConversionRequest request(NULL, &default_request);
+  // Default request.
+  const ConversionRequest request;
   VersionRewriter rewriter;
-  EXPECT_EQ(RewriterInterface::CONVERSION,
-            rewriter.capability(request));
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
 }
 
 TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
-  commands::Request input;
+  ConversionRequest convreq;
+  commands::Request request;
+  convreq.set_request(&request);
   VersionRewriter rewriter;
 
   {
-    input.set_mixed_conversion(true);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+    request.set_mixed_conversion(true);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
 
   {
-    input.set_mixed_conversion(false);
-    const ConversionRequest request(NULL, &input);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+    request.set_mixed_conversion(false);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
   }
 }
 

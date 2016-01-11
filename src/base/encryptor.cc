@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,8 @@
 #else
 #include <string.h>
 #endif  // platforms (OS_WIN, OS_MACOSX, ...)
+
+#include <memory>
 
 #include "base/logging.h"
 #include "base/password_manager.h"
@@ -198,7 +200,7 @@ bool Encryptor::EncryptString(const Encryptor::Key &key, string *data) {
     return false;
   }
   size_t size = data->size();
-  scoped_ptr<char[]> buf(new char[key.GetEncryptedSize(data->size())]);
+  std::unique_ptr<char[]> buf(new char[key.GetEncryptedSize(data->size())]);
   memcpy(buf.get(), data->data(), data->size());
   if (!Encryptor::EncryptArray(key, buf.get(), &size)) {
     LOG(ERROR) << "EncryptArray() failed";
@@ -214,7 +216,7 @@ bool Encryptor::DecryptString(const Encryptor::Key &key, string *data) {
     return false;
   }
   size_t size = data->size();
-  scoped_ptr<char[]> buf(new char[data->size()]);
+  std::unique_ptr<char[]> buf(new char[data->size()]);
   memcpy(buf.get(), data->data(), data->size());
   if (!Encryptor::DecryptArray(key, buf.get(), &size)) {
     LOG(ERROR) << "DecryptArray() failed";

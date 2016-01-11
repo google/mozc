@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@ class RendererCommand_ApplicationInfo;
 }  // namespace commands
 
 namespace win32 {
+
 struct PrivateContext;
 class IndicatorVisibilityTracker;
 class ImeCore;
@@ -87,11 +88,13 @@ class UIContext {
   bool FillCharPosition(commands::RendererCommand_ApplicationInfo *info) const;
   bool FillCaretInfo(commands::RendererCommand_ApplicationInfo *info) const;
   bool FillFontInfo(commands::RendererCommand_ApplicationInfo *info) const;
+
  private:
   const HIMC context_handle_;
   const ScopedHIMC<INPUTCONTEXT> input_context_;
   const ScopedHIMCC<PrivateContext> private_context_;
 };
+
 }  // namespace win32
 }  // namespace mozc
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 #ifndef MOZC_CONVERTER_CONVERTER_H_
 #define MOZC_CONVERTER_CONVERTER_H_
 
+#include <memory>
 #include <string>
 
-#include "base/scoped_ptr.h"
 #include "converter/converter_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -154,6 +154,11 @@ class ConverterImpl : public ConverterInterface {
   void RewriteAndSuppressCandidates(const ConversionRequest &request,
                                     Segments *segments) const;
 
+  // Limits the number of candidates based on a request.
+  // This method doesn't drop meta candidates for T13n conversion.
+  void TrimCandidates(const ConversionRequest &request,
+                      Segments *segments) const;
+
   // Commits usage stats for committed text.
   // |begin_segment_index| is a index of whole segments. (history and conversion
   // segments)
@@ -170,8 +175,8 @@ class ConverterImpl : public ConverterInterface {
 
   const dictionary::POSMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  scoped_ptr<PredictorInterface> predictor_;
-  scoped_ptr<RewriterInterface> rewriter_;
+  std::unique_ptr<PredictorInterface> predictor_;
+  std::unique_ptr<RewriterInterface> rewriter_;
   const ImmutableConverterInterface *immutable_converter_;
   uint16 general_noun_id_;
 };

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ struct FixedReconvertString : public RECONVERTSTRING {
     dwTargetStrOffset = sizeof(wchar_t) * offset_in_chars;
   }
 };
-}  // anonymous namespace
+}  // namespace
 
 TEST(ReconvertStringTest, BasicTest) {
   FixedReconvertString reconvert_string;

@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -576,6 +576,7 @@
       'product_dir': '<(abs_android_dir)/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:jni_proxy',
         '../dictionary/dictionary.gyp:dictionary',
         '../engine/engine.gyp:engine_factory',
         '../session/session.gyp:session',
@@ -586,7 +587,7 @@
       'ldflags': [
          # -s: Strip unused symbols
          # --version-script: Remove almost all exportable symbols
-         '-Wl,-s,--version-script,<(abs_android_dir)/libmozc.map',
+         '-Wl,-s,--version-script,<(abs_android_dir)/libmozc.lds',
       ],
       'conditions': [
         ['branding=="GoogleJapaneseInput"', {
@@ -617,8 +618,8 @@
       'type': 'none',
       'dependencies': [
         '../base/base_test.gyp:install_util_test_data',
+        '../data_manager/oss/oss_data_manager_test.gyp:install_oss_data_manager_test_data',
         '../data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
-        '../dictionary/system/system_dictionary.gyp:install_system_dictionary_test_data',
         '../config/config_test.gyp:install_stats_config_util_test_data',
         '../rewriter/calculator/calculator.gyp:install_calculator_test_data',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',

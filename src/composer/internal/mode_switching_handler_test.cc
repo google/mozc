@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,89 +27,86 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
 #include "composer/internal/mode_switching_handler.h"
+
+#include <string>
+
 #include "testing/base/public/gunit.h"
-#include "testing/base/public/googletest.h"
 
 namespace mozc {
 namespace composer {
-class ModeSwitchingHandlerTest : public testing::Test {
-  void SetUp() {
-    handler_ = ModeSwitchingHandler::GetModeSwitchingHandler();
-  }
- protected:
-  ModeSwitchingHandler *handler_;
-};
 
-TEST_F(ModeSwitchingHandlerTest, GetModeSwitchingRule) {
+TEST(ModeSwitchingHandlerTest, GetModeSwitchingRule) {
+  ModeSwitchingHandler handler;
+
   ModeSwitchingHandler::ModeSwitching display_mode =
       ModeSwitchingHandler::NO_CHANGE;
   ModeSwitchingHandler::ModeSwitching input_mode =
       ModeSwitchingHandler::NO_CHANGE;
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("google",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("google",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("Google",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("Google",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("Chrome",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("Chrome",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("chrome",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("chrome",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("Android",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("Android",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("android",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("android",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("http",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("http",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("www.",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("www.",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("\\\\",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("\\\\",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
-  EXPECT_TRUE(handler_->GetModeSwitchingRule("C:\\",
-                                             &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("C:\\",
+                                           &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
   // Normal text should return false.
-  EXPECT_FALSE(handler_->GetModeSwitchingRule("foobar",
-                                              &display_mode, &input_mode));
+  EXPECT_FALSE(handler.GetModeSwitchingRule("foobar",
+                                            &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::NO_CHANGE, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::NO_CHANGE, input_mode);
 }
 
-TEST_F(ModeSwitchingHandlerTest, DriveLetters) {
-  EXPECT_TRUE(handler_->IsDriveLetter("C:\\"));
-  EXPECT_TRUE(handler_->IsDriveLetter("c:\\"));
-  EXPECT_FALSE(handler_->IsDriveLetter("C:"));
-  EXPECT_FALSE(handler_->IsDriveLetter("6:\\"));
+TEST(ModeSwitchingHandlerTest, IsDriveLetter) {
+  EXPECT_TRUE(ModeSwitchingHandler::IsDriveLetter("C:\\"));
+  EXPECT_TRUE(ModeSwitchingHandler::IsDriveLetter("c:\\"));
+  EXPECT_FALSE(ModeSwitchingHandler::IsDriveLetter("C:"));
+  EXPECT_FALSE(ModeSwitchingHandler::IsDriveLetter("6:\\"));
 }
+
 }  // namespace composer
 }  // namespace mozc

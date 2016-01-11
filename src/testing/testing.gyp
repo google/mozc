@@ -1,4 +1,4 @@
-# Copyright 2010-2015, Google Inc.
+# Copyright 2010-2016, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -56,16 +56,10 @@
       'type': 'static_library',
       'variables': {
         'gtest_defines': [
-          'GTEST_HAS_TR1_TUPLE=1',
+          'GTEST_LANG_CXX11=1',
+          'GTEST_HAS_TR1_TUPLE=0',  # disable tr1 tuple in favor of C++11 tuple.
         ],
         'conditions': [
-          # TODO(yukawa): Get rid of the following workaround when C++11 is
-          # enabled on all the platforms.
-          ['target_platform!="Windows"', {
-            'gtest_defines': [
-              'GTEST_LANG_CXX11=0',  # non-Windows build is not ready
-            ],
-          }],
           ['_toolset=="target" and target_platform=="Android"', {
             'gtest_defines': [
               'GTEST_HAS_RTTI=0',  # Android NDKr7 requires this.
@@ -214,6 +208,18 @@
         '../base/base.gyp:base_core',
         '../protobuf/protobuf.gyp:protobuf',
         'testing',
+      ],
+    },
+    {
+      'target_name': 'mozctest',
+      'type': 'static_library',
+      'sources': [
+        'base/public/mozctest.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base_core',
+        '../base/base.gyp:string_piece',
+        'googletest_lib',
       ],
     },
   ],

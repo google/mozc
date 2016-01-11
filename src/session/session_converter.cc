@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include <limits>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/text_normalizer.h"
@@ -46,6 +47,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
 #include "session/session_usage_stats_util.h"
@@ -76,18 +78,28 @@ using mozc::config::ConfigHandler;
 
 const size_t kDefaultMaxHistorySize = 3;
 
-void SetPresentationMode(bool enabled) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
-  config.set_presentation_mode(enabled);
-  ConfigHandler::SetConfig(config);
-}
+const char *GetCandidateShortcuts(
+    config::Config::SelectionShortcut selection_shortcut) {
+  // Keyboard shortcut for candidates.
+  const char *kShortcut123456789 = "123456789";
+  const char *kShortcutASDFGHJKL = "asdfghjkl";
+  const char *kNoShortcut = "";
 
-void SetIncognitoMode(bool enabled) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
-  config.set_incognito_mode(enabled);
-  ConfigHandler::SetConfig(config);
+  const char *shortcut = kNoShortcut;
+  switch (selection_shortcut) {
+    case config::Config::SHORTCUT_123456789:
+      shortcut = kShortcut123456789;
+      break;
+    case config::Config::SHORTCUT_ASDFGHJKL:
+      shortcut = kShortcutASDFGHJKL;
+      break;
+    case config::Config::NO_SHORTCUT:
+      break;
+    default:
+      LOG(WARNING) << "Unknown shortcuts type: " << selection_shortcut;
+      break;
+  }
+  return shortcut;
 }
 
 }  // namespace
@@ -96,7 +108,8 @@ const size_t SessionConverter::kConsumedAllCharacters =
     numeric_limits<size_t>::max();
 
 SessionConverter::SessionConverter(const ConverterInterface *converter,
-                                   const Request *request)
+                                   const Request *request,
+                                   const Config *config)
     : SessionConverterInterface(),
       state_(COMPOSITION),
       converter_(converter),
@@ -110,20 +123,11 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
   conversion_preferences_.use_history = true;
   conversion_preferences_.max_history_size = kDefaultMaxHistorySize;
   conversion_preferences_.request_suggestion = true;
-  operation_preferences_.use_cascading_window = true;
-  operation_preferences_.candidate_shortcuts.clear();
   candidate_list_->set_page_size(request->candidate_page_size());
+  SetConfig(config);
 }
 
 SessionConverter::~SessionConverter() {}
-
-void SessionConverter::SetOperationPreferences(
-    const OperationPreferences &preferences) {
-  operation_preferences_.use_cascading_window =
-      preferences.use_cascading_window;
-  operation_preferences_.candidate_shortcuts =
-      preferences.candidate_shortcuts;
-}
 
 bool SessionConverter::CheckState(
     SessionConverterInterface::States states) const {
@@ -150,7 +154,7 @@ bool SessionConverter::ConvertWithPreferences(
   segments_->set_request_type(Segments::CONVERSION);
   SetConversionPreferences(preferences, segments_.get());
 
-  const ConversionRequest conversion_request(&composer, request_);
+  const ConversionRequest conversion_request(&composer, request_, config_);
   if (!converter_->StartConversionForRequest(conversion_request,
                                              segments_.get())) {
     LOG(WARNING) << "StartConversionForRequest() failed";
@@ -338,7 +342,7 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
     if (segments_->conversion_segments_size() != 1) {
       string composition;
       GetPreedit(0, segments_->conversion_segments_size(), &composition);
-      const ConversionRequest conversion_request(&composer, request_);
+      const ConversionRequest conversion_request(&composer, request_, config_);
       converter_->ResizeSegment(segments_.get(),
                                 conversion_request,
                                 0, Util::CharsLen(composition));
@@ -421,7 +425,7 @@ bool SessionConverter::SuggestWithPreferences(
   // Initialize the segments for suggestion.
   SetConversionPreferences(preferences, segments_.get());
 
-  ConversionRequest conversion_request(&composer, request_);
+  ConversionRequest conversion_request(&composer, request_, config_);
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
       !request_->mixed_conversion()) {
@@ -505,7 +509,7 @@ bool SessionConverter::PredictWithPreferences(
   segments_->clear_conversion_segments();
 
   if (predict_expand || predict_first) {
-    ConversionRequest conversion_request(&composer, request_);
+    ConversionRequest conversion_request(&composer, request_, config_);
     conversion_request.set_use_actual_converter_for_realtime_conversion(
         FLAGS_use_actual_converter_for_realtime_conversion);
     if (!converter_->StartPredictionForRequest(conversion_request,
@@ -571,7 +575,7 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   // Without this statement we can add additional candidates into
   // existing segments.
 
-  ConversionRequest conversion_request(&composer, request_);
+  ConversionRequest conversion_request(&composer, request_, config_);
 
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
@@ -681,7 +685,7 @@ void SessionConverter::Commit(const composer::Composer &composer,
                                    GetCandidateIndexForConverter(i));
   }
   CommitUsageStats(state_, context);
-  ConversionRequest conversion_request(&composer, request_);
+  ConversionRequest conversion_request(&composer, request_, config_);
   converter_->FinishConversion(conversion_request, segments_.get());
   ResetState();
 }
@@ -730,7 +734,7 @@ bool SessionConverter::CommitSuggestionInternal(
                                    0,
                                    GetCandidateIndexForConverter(0));
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
-    ConversionRequest conversion_request(&composer, request_);
+    ConversionRequest conversion_request(&composer, request_, config_);
     converter_->FinishConversion(conversion_request, segments_.get());
     DCHECK_EQ(0, segments_->conversion_segments_size());
     ResetState();
@@ -851,7 +855,7 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
                                         segments_.get());
 
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
-  ConversionRequest conversion_request(&composer, request_);
+  ConversionRequest conversion_request(&composer, request_, config_);
   converter_->FinishConversion(conversion_request, segments_.get());
   ResetState();
 }
@@ -931,7 +935,7 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   }
   ResetResult();
 
-  const ConversionRequest conversion_request(&composer, request_);
+  const ConversionRequest conversion_request(&composer, request_, config_);
   if (!converter_->ResizeSegment(segments_.get(),
                                  conversion_request,
                                  segment_index_, delta)) {
@@ -942,8 +946,8 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   // Clears selected index of a focused segment and trailing segments.
   // TODO(hsumita): Keep the indices if the segment type is FIXED_VALUE.
   selected_candidate_indices_.resize(segments_->conversion_segments_size());
-  fill(selected_candidate_indices_.begin() + segment_index_ + 1,
-       selected_candidate_indices_.end(), 0);
+  std::fill(selected_candidate_indices_.begin() + segment_index_ + 1,
+            selected_candidate_indices_.end(), 0);
   UpdateSelectedCandidateIndex();
 }
 
@@ -1044,7 +1048,7 @@ bool SessionConverter::CandidateMoveToShortcut(const char shortcut) {
     return false;
   }
 
-  const string &shortcuts = operation_preferences_.candidate_shortcuts;
+  const string shortcuts(GetCandidateShortcuts(selection_shortcut_));
   if (shortcuts.empty()) {
     VLOG(1) << "No shortcuts";
     return false;
@@ -1076,8 +1080,38 @@ void SessionConverter::SetCandidateListVisible(bool visible) {
 void SessionConverter::PopOutput(
     const composer::Composer &composer, commands::Output *output) {
   FillOutput(composer, output);
+  updated_command_ = Segment::Candidate::DEFAULT_COMMAND;
   ResetResult();
 }
+
+namespace {
+void MaybeFillConfig(Segment::Candidate::Command command,
+                     const config::Config &base_config,
+                     commands::Output *output) {
+  if (command == Segment::Candidate::DEFAULT_COMMAND) {
+    return;
+  }
+
+  *output->mutable_config() = base_config;
+  switch (command) {
+    case Segment::Candidate::ENABLE_INCOGNITO_MODE:
+      output->mutable_config()->set_incognito_mode(true);
+      break;
+    case Segment::Candidate::DISABLE_INCOGNITO_MODE:
+      output->mutable_config()->set_incognito_mode(false);
+      break;
+    case Segment::Candidate::ENABLE_PRESENTATION_MODE:
+      output->mutable_config()->set_presentation_mode(true);
+      break;
+    case Segment::Candidate::DISABLE_PRESENTATION_MODE:
+      output->mutable_config()->set_presentation_mode(false);
+      break;
+    default:
+      LOG(WARNING) << "Unknown command: " << command;
+      break;
+  }
+}
+}  // namespace
 
 void SessionConverter::FillOutput(
     const composer::Composer &composer, commands::Output *output) const {
@@ -1094,6 +1128,9 @@ void SessionConverter::FillOutput(
                                           output->mutable_preedit());
     }
   }
+
+  MaybeFillConfig(updated_command_, *config_, output);
+
   if (!IsActive()) {
     return;
   }
@@ -1115,13 +1152,11 @@ void SessionConverter::FillOutput(
       candidate_list_visible_) {
     FillCandidates(output->mutable_candidates());
   }
-#ifndef __native_client__
+
   // All candidate words
-  // In NaCl, we don't use the all candidate word data.
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
   }
-#endif  // __native_client__
 }
 
 // static
@@ -1134,7 +1169,7 @@ void SessionConverter::SetConversionPreferences(
 
 SessionConverter* SessionConverter::Clone() const {
   SessionConverter *session_converter =
-      new SessionConverter(converter_, request_);
+      new SessionConverter(converter_, request_, config_);
 
   // Copy the members in order of their declarations.
   session_converter->state_ = state_;
@@ -1148,7 +1183,6 @@ SessionConverter* SessionConverter::Clone() const {
   session_converter->segment_index_ = segment_index_;
   session_converter->previous_suggestions_.CopyFrom(previous_suggestions_);
   session_converter->conversion_preferences_ = conversion_preferences();
-  session_converter->operation_preferences_ = operation_preferences_;
   session_converter->result_->CopyFrom(*result_);
 
   if (session_converter->CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
@@ -1158,6 +1192,7 @@ SessionConverter* SessionConverter::Clone() const {
   }
 
   session_converter->request_ = request_;
+  session_converter->config_ = config_;
   session_converter->selected_candidate_indices_ = selected_candidate_indices_;
 
   return session_converter;
@@ -1255,7 +1290,7 @@ size_t SessionConverter::GetConsumedPreeditSize(const size_t index,
 
 bool SessionConverter::MaybePerformCommandCandidate(
     const size_t index,
-    const size_t size) const {
+    const size_t size) {
   // If a candidate has the command attribute, Cancel is performed
   // instead of Commit after executing the specified action.
   for (size_t i = index; i < size; ++i) {
@@ -1268,16 +1303,10 @@ bool SessionConverter::MaybePerformCommandCandidate(
           // Do nothing
           break;
         case Segment::Candidate::ENABLE_INCOGNITO_MODE:
-          SetIncognitoMode(true);
-          break;
         case Segment::Candidate::DISABLE_INCOGNITO_MODE:
-          SetIncognitoMode(false);
-          break;
         case Segment::Candidate::ENABLE_PRESENTATION_MODE:
-          SetPresentationMode(true);
-          break;
         case Segment::Candidate::DISABLE_PRESENTATION_MODE:
-          SetPresentationMode(false);
+          updated_command_ = candidate.command;
           break;
         default:
           LOG(WARNING) << "Unknown command: " << candidate.command;
@@ -1367,7 +1396,7 @@ void SessionConverter::AppendCandidateList() {
 
   // Set transliteration candidates
   CandidateList *transliterations;
-  if (operation_preferences_.use_cascading_window) {
+  if (use_cascading_window_) {
     const bool kNoRotate = false;
     transliterations = candidate_list_->AllocateSubCandidateList(kNoRotate);
     transliterations->set_focused(true);
@@ -1465,7 +1494,7 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
 
   // Shortcut keys
   if (CheckState(PREDICTION | CONVERSION)) {
-    SessionOutput::FillShortcuts(operation_preferences_.candidate_shortcuts,
+    SessionOutput::FillShortcuts(GetCandidateShortcuts(selection_shortcut_),
                                  candidates);
   }
 
@@ -1554,6 +1583,13 @@ void SessionConverter::FillAllCandidateWords(
 void SessionConverter::SetRequest(const commands::Request *request) {
   request_ = request;
   candidate_list_->set_page_size(request->candidate_page_size());
+}
+
+void SessionConverter::SetConfig(const config::Config *config) {
+  config_ = config;
+  updated_command_ = Segment::Candidate::DEFAULT_COMMAND;
+  selection_shortcut_ =  config->selection_shortcut();
+  use_cascading_window_ = config->use_cascading_window();
 }
 
 void SessionConverter::OnStartComposition(const commands::Context &context) {

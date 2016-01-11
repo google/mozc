@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -116,7 +116,7 @@ Rect GetWindowRectForMainWindowFromPreeditRectVertical(
 
   return window_rect;
 }
-}  // anonymous namespace
+}  // namespace
 
 Rect WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
     const Rect &preedit_rect, const Size &window_size,

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -193,7 +194,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
   //   2. Accessing all the tokens that have the same value: Since tokens are
   //      also sorted in order of value, this can be done by finding a range of
   //      tokens that have the same value.
-  sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
+  std::sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
 
   vector<Token *> reading_correction_tokens;
   LoadReadingCorrectionTokens(reading_correction_filename, tokens_,
@@ -233,7 +234,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
 
     // Filter the entry if this key value pair already exists in the system
     // dictionary.
-    if (binary_search(
+    if (std::binary_search(
             MakeIteratorAdapter(ref_sorted_tokens.begin(), AsValueAndKey()),
             MakeIteratorAdapter(ref_sorted_tokens.end(), AsValueAndKey()),
             value_key)) {
@@ -248,7 +249,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     typedef vector<Token *>::const_iterator TokenIterator;
     typedef IteratorAdapter<TokenIterator, AsValue> AsValueIterator;
     typedef pair<AsValueIterator, AsValueIterator> Range;
-    Range range = equal_range(
+    Range range = std::equal_range(
         MakeIteratorAdapter(CBegin(ref_sorted_tokens), AsValue()),
         MakeIteratorAdapter(CEnd(ref_sorted_tokens), AsValue()),
         value_key.first);
@@ -273,7 +274,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // We here assume that the wrong reading appear with 1/100 probability
     // of the original (correct) reading.
     const int kCostPenalty = 2302;      // -log(1/100) * 500;
-    scoped_ptr<Token> token(new Token);
+    std::unique_ptr<Token> token(new Token);
     value_key.second.CopyToString(&token->key);
     token->value = max_cost_token->value;
     token->lid = max_cost_token->lid;
@@ -314,7 +315,7 @@ Token *TextDictionaryLoader::ParseTSV(
     const vector<StringPiece> &columns) const {
   CHECK_LE(5, columns.size()) << "Lack of columns: " << columns.size();
 
-  scoped_ptr<Token> token(new Token);
+  std::unique_ptr<Token> token(new Token);
 
   // Parse key, lid, rid, cost, value.
   Util::NormalizeVoicedSoundMark(columns[0], &token->key);

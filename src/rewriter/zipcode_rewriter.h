@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@ class ZipcodeRewriter : public RewriterInterface  {
   bool InsertCandidate(size_t insert_pos,
                        const string &zipcode,
                        const string &address,
+                       const ConversionRequest &request,
                        Segment *segment) const;
 
   const dictionary::POSMatcher *pos_matcher_;

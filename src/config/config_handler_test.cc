@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,13 +44,11 @@
 #include "protocol/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 
-class ConfigHandlerTest : public testing::Test {
+class ConfigHandlerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -242,13 +240,15 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   ScopedSetConfigFileName scoped_config_file_name(
       "memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
-  EXPECT_EQ(default_incognito_mode, GET_CONFIG(incognito_mode));
+  EXPECT_EQ(default_incognito_mode,
+            config::ConfigHandler::GetConfig().incognito_mode());
 }
 
-#ifndef OS_ANDROID
+#if !defined(OS_ANDROID) && !defined(OS_NACL)
 // Temporarily disable this test because FileUtil::CopyFile fails on
-// Android for some reason.
-// TODO(yukawa): Enable this test on Android.
+// Android for some reason, and on NaCl since it uses mock file system and the
+// mock file system doesn't have a source file.
+// TODO(hsumita): Enable this test on Android and NaCl.
 TEST_F(ConfigHandlerTest, LoadTestConfig) {
   const char kPathPrefix[] = "";
   const char KDataDir[] = "data/test/config";
@@ -263,9 +263,8 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
   for (size_t i = 0; i < arraysize(kDataFiles); ++i) {
     const char *file_name = kDataFiles[i];
-    const string &src_path = FileUtil::JoinPath(
-        FileUtil::JoinPath(FLAGS_test_srcdir, kPathPrefix),
-        FileUtil::JoinPath(KDataDir, file_name));
+    const string &src_path = mozc::testing::GetSourceFileOrDie({
+        "data", "test", "config", file_name});
     const string &dest_path = FileUtil::JoinPath(
         SystemUtil::GetUserProfileDirectory(), file_name);
     ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path))
@@ -283,7 +282,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 #ifdef OS_WIN
     // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
     wstring wdest_path;
-    Util::UTF8ToWide(dest_path.c_str(), &wdest_path);
+    Util::UTF8ToWide(dest_path, &wdest_path);
     ::SetFileAttributesW(wdest_path.c_str(), FILE_ATTRIBUTE_NORMAL);
 #endif  // OS_WIN
 
@@ -292,7 +291,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     EXPECT_FALSE(FileUtil::FileExists(dest_path));
   }
 }
-#endif  // !OS_ANDROID
+#endif  // !OS_ANDROID && !OS_NACL
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   config::Config output;
@@ -301,9 +300,11 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   config::ConfigHandler::GetDefaultConfig(&output);
 #ifdef OS_MACOSX
   EXPECT_EQ(output.session_keymap(), config::Config::KOTOERI);
-#else  // OS_MACOSX
+#elif defined(OS_NACL)  // OS_MACOSX
+  EXPECT_EQ(output.session_keymap(), config::Config::CHROMEOS);
+#else  // OS_MACOSX || OS_NACL
   EXPECT_EQ(output.session_keymap(), config::Config::MSIME);
-#endif
+#endif  // OS_MACOSX || OS_NACL
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {
@@ -345,5 +346,12 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 #endif  // OS_ANDROID && CHANNEL_DEV
+}
+
+TEST_F(ConfigHandlerTest, DefaultConfig) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  EXPECT_EQ(config.DebugString(),
+            config::ConfigHandler::DefaultConfig().DebugString());
 }
 }  // namespace mozc

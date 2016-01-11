@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,9 @@
 #ifndef MOZC_BASE_TIMER_H_
 #define MOZC_BASE_TIMER_H_
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -75,11 +76,12 @@ class Timer {
 
  private:
   class TimerThread;
-  scoped_ptr<TimerThread> timer_thread_;
+  std::unique_ptr<TimerThread> timer_thread_;
   uint32 num_signaled_;
 
   DISALLOW_COPY_AND_ASSIGN(Timer);
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_BASE_TIMER_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,7 @@ class TipPrivateContext {
                     DWORD text_layout_sink_cookie);
   ~TipPrivateContext();
 
+  void EnsureInitialized();
   client::ClientInterface *GetClient();
   SurrogatePairObserver *GetSurrogatePairObserver();
   TipUiElementManager *GetUiElementManager();

@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,11 @@
 
 #include "base/file_stream.h"
 #include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "rewriter/embedded_dictionary.h"
 
 namespace mozc {
-
 namespace {
 
 struct CompilerToken {
@@ -64,6 +64,7 @@ struct CompareByCost {
     return (t1.cost < t2.cost);
   }
 };
+
 }  // namespace
 
 EmbeddedDictionary::EmbeddedDictionary(const EmbeddedDictionary::Token *token,
@@ -82,8 +83,8 @@ EmbeddedDictionary::Lookup(const string &key) const {
   key_token.key = key.c_str();
   key_token.value = NULL;
   key_token.value_size = 0;
-  const Token *result = lower_bound(token_, token_ + size_,
-                                    key_token, TokenCompare());
+  const Token *result =
+      std::lower_bound(token_, token_ + size_, key_token, TokenCompare());
   if (result == (token_ + size_) || key != result->key) {
     return NULL;
   }
@@ -115,22 +116,22 @@ void EmbeddedDictionary::Compile(const string &name,
     CompilerToken token;
     const string &key = fields[0];
     token.value = fields[4];
-    token.lid   = atoi32(fields[1].c_str());
-    token.rid   = atoi32(fields[2].c_str());
-    token.cost  = atoi32(fields[3].c_str());
+    CHECK(NumberUtil::SafeStrToUInt16(fields[1], &token.lid));
+    CHECK(NumberUtil::SafeStrToUInt16(fields[2], &token.rid));
+    CHECK(NumberUtil::SafeStrToInt16(fields[3], &token.cost));
     token.description = (fields.size() > 5) ? fields[5] : "";
     token.additional_description = (fields.size() > 6) ? fields[6] : "";
     dic[key].push_back(token);
   }
 
   ofs << "static const mozc::EmbeddedDictionary::Value k" << name
-      << "_value[] = {" << endl;
+      << "_value[] = {" << std::endl;
 
   size_t value_size = 0;
   for (map<string, vector<CompilerToken> >::iterator it = dic.begin();
        it != dic.end(); ++it) {
     vector<CompilerToken> &vec = it->second;
-    sort(vec.begin(), vec.end(), CompareByCost());
+    std::sort(vec.begin(), vec.end(), CompareByCost());
     for (size_t i = 0; i < vec.size(); ++i) {
       string escaped;
       Util::Escape(vec[i].value, &escaped);
@@ -148,31 +149,31 @@ void EmbeddedDictionary::Compile(const string &name,
         ofs << " \"" << escaped << "\", ";
       }
       ofs << vec[i].lid << ", " << vec[i].rid << ", " << vec[i].cost << " },";
-      ofs << endl;
+      ofs << std::endl;
       ++value_size;
     }
   }
-  ofs << "  { NULL, NULL, NULL, 0, 0, 0 }" << endl;
-  ofs << "};" << endl;
+  ofs << "  { NULL, NULL, NULL, 0, 0, 0 }" << std::endl;
+  ofs << "};" << std::endl;
 
-  ofs << "static const size_t k" << name << "_token_size = "
-      << dic.size() << ";" << endl;
+  ofs << "static const size_t k" << name << "_token_size = " << dic.size()
+      << ";" << std::endl;
 
   ofs << "static const mozc::EmbeddedDictionary::Token k" << name
-      << "_token_data[] = {" << endl;
+      << "_token_data[] = {" << std::endl;
 
   size_t offset = 0;
   for (map<string, vector<CompilerToken> >::const_iterator it = dic.begin();
        it != dic.end(); ++it) {
     string escaped;
     Util::Escape(it->first, &escaped);
-    ofs << "  { \"" << escaped << "\", k" << name << "_value + "
-        << offset << ", " << it->second.size() << "}," << endl;
+    ofs << "  { \"" << escaped << "\", k" << name << "_value + " << offset
+        << ", " << it->second.size() << "}," << std::endl;
     offset += it->second.size();
   }
-  ofs << "  { NULL, " << "k" << name << "_value, " << value_size << " }"
-      << endl;
+  ofs << "  { NULL, "
+      << "k" << name << "_value, " << value_size << " }" << std::endl;
 
-  ofs << "};" << endl;
+  ofs << "};" << std::endl;
 };
 }  // namespace mozc

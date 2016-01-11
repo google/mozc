@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -66,7 +66,7 @@ class ProcessMutexTest : public testing::Test {
   string original_user_profile_dir_;
 };
 
-#ifndef OS_WIN
+#if !defined(OS_WIN) && !defined(OS_NACL)
 TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
   const pid_t pid = ::fork();
   if (pid == 0) {  // child process
@@ -91,7 +91,7 @@ TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
     LOG(FATAL) << "fork() failed";
   }
 }
-#endif
+#endif  // !OS_WIN && !OS_NACL
 
 TEST_F(ProcessMutexTest, BasicTest) {
   ProcessMutex m1(kName);

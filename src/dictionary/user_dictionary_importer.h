@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -196,10 +196,6 @@ class UserDictionaryImporter {
       IMEType ime_type,
       TextLineIteratorInterface *iter,
       user_dictionary::UserDictionary *dic);
-
-  // Import a dictionary from MS-IME's user dictionary.
-  // Only available on Windows
-  static ErrorType ImportFromMSIME(user_dictionary::UserDictionary *dic);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionaryImporter);

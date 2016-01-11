@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,11 +44,11 @@
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
@@ -759,8 +759,10 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 }
 
-bool UserSegmentHistoryRewriter::IsAvailable(const Segments &segments) const {
-  if (GET_CONFIG(incognito_mode)) {
+bool UserSegmentHistoryRewriter::IsAvailable(
+    const ConversionRequest &request,
+    const Segments &segments) const {
+  if (request.config().incognito_mode()) {
     VLOG(2) << "incognito_mode";
     return false;
   }
@@ -792,11 +794,11 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (!IsAvailable(*segments)) {
+  if (!IsAvailable(request, *segments)) {
     return;
   }
 
-  if (GET_CONFIG(history_learning_level) != Config::DEFAULT_HISTORY) {
+  if (request.config().history_learning_level() != Config::DEFAULT_HISTORY) {
     VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }
@@ -941,17 +943,17 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
     return false;
   }
 
-  stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
+  std::stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
   return SortCandidates(scores, segment);
 }
 
 bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                                          Segments *segments) const {
-  if (!IsAvailable(*segments)) {
+  if (!IsAvailable(request, *segments)) {
     return false;
   }
 
-  if (GET_CONFIG(history_learning_level) == Config::NO_HISTORY) {
+  if (request.config().history_learning_level() == Config::NO_HISTORY) {
     VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }
@@ -1018,7 +1020,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
 
-    stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
+    std::stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
     modified |= SortCandidates(scores, segment);
   }
   return modified;

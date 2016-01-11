@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #ifndef MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_INTERFACE_H_
 #define MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_INTERFACE_H_
 
+#include <string>
+
 #include "base/port.h"
 #include "unix/ibus/ibus_header.h"
 
@@ -48,6 +50,10 @@ class CandidateWindowHandlerInterface {
   // based on output argument.
   virtual void Update(IBusEngine *engine,
                       const commands::Output &output) = 0;
+
+  // Updates candidate state. This function also shows or hides candidate window
+  // based on the last |Update| call.
+  virtual void UpdateCursorRect(IBusEngine *engine) = 0;
 
   // Hides candidate window.
   virtual void Hide(IBusEngine *engine) = 0;

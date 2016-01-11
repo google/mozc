@@ -1,4 +1,4 @@
-// Copyright 2010-2015, Google Inc.
+// Copyright 2010-2016, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
 #ifndef MOZC_CONVERTER_CONNECTOR_H_
 #define MOZC_CONVERTER_CONNECTOR_H_
 
+#include <memory>
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -66,8 +66,8 @@ class Connector {
 
   const int cache_size_;
   const uint32 cache_hash_mask_;
-  mutable scoped_ptr<uint32[]> cache_key_;
-  mutable scoped_ptr<int[]> cache_value_;
+  mutable std::unique_ptr<uint32[]> cache_key_;
+  mutable std::unique_ptr<int[]> cache_value_;
 
   DISALLOW_COPY_AND_ASSIGN(Connector);
 };
