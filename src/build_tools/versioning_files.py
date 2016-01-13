@@ -67,8 +67,20 @@ def _GetSha1Digest(file_path):
   return sha.digest()
 
 
+def _GetBuildId():
+  """Returns the build ID or an empty string."""
+  envvar_list = []
+
+  for envvar in envvar_list:
+    # If the value is empty, it should be skipped.
+    if os.environ.get(envvar):
+      return os.environ[envvar]
+  return ''
+
+
 def _VersioningFile(version_string, is_debug, file_path):
   """Creates a versioned file and a information file of the file."""
+  build_id = _GetBuildId()
   file_path_base, ext = os.path.splitext(file_path)
   if is_debug:
     file_path_base += '-Debug'
@@ -81,6 +93,7 @@ def _VersioningFile(version_string, is_debug, file_path):
   sha1_hash_hex = sha1_digest.encode('hex')
   with open('%s.info' % new_file_path, 'w') as output:
     output.write('package\t%s\n' % package)
+    output.write('build_id\t%s\n' % build_id)
     output.write('version\t%s\n' % version_string)
     output.write('size\t%s\n' % file_size)
     output.write('sha1_hash\t%s\n' % sha1_hash)
