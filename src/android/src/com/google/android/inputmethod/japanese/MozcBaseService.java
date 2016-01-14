@@ -1106,8 +1106,11 @@ public class MozcBaseService extends InputMethodService {
       List<TouchEvent> touchEventList) {
     if (keyboardSpecification != null && currentKeyboardSpecification != keyboardSpecification) {
       // Submit composition on the transition from software KB to hardware KB by key event.
+      // This is done only when mozcKeyEvent is non-null (== the key event is a printable
+      // character) in order to avoid clearing pre-selected characters by meta keys.
       if (!currentKeyboardSpecification.isHardwareKeyboard()
-          && keyboardSpecification.isHardwareKeyboard()) {
+          && keyboardSpecification.isHardwareKeyboard()
+          && mozcKeyEvent != null) {
         sessionExecutor.submit(renderResultCallback);
       }
       changeKeyboardSpecificationAndSendKey(
