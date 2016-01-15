@@ -59,7 +59,7 @@ class AndroidJniProxyTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    jvm_.reset(NULL);
+    jvm_.reset();
   }
 
   std::unique_ptr<MockJavaVM> jvm_;

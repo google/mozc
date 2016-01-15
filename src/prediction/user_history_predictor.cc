@@ -431,7 +431,7 @@ uint16 UserHistoryPredictor::revert_id() {
 void UserHistoryPredictor::WaitForSyncer() {
   if (syncer_.get() != nullptr) {
     syncer_->Join();
-    syncer_.reset(nullptr);
+    syncer_.reset();
   }
 }
 
@@ -445,7 +445,7 @@ bool UserHistoryPredictor::CheckSyncerAndDelete() const {
     if (syncer_->IsRunning()) {
       return false;
     } else {
-      syncer_.reset(nullptr);  // remove
+      syncer_.reset();
     }
   }
 

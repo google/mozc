@@ -633,7 +633,7 @@ class TipTextServiceImpl
 
     TipUiHandler::OnDeactivate(this);
 
-    thread_context_.reset(nullptr);
+    thread_context_.reset();
     StorePointerForCurrentThread(nullptr);
 
     return S_OK;

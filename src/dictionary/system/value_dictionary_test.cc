@@ -55,8 +55,8 @@ class ValueDictionaryTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    louds_trie_.reset(nullptr);
-    louds_trie_builder_.reset(nullptr);
+    louds_trie_.reset();
+    louds_trie_builder_.reset();
   }
 
   void AddValue(const string &value) {

@@ -921,7 +921,7 @@ class DefaultUIWindow {
   }
 
   void InvalidateLangBarInfoCache() {
-    langbar_info_cache_.reset(nullptr);
+    langbar_info_cache_.reset();
   }
 
   void SetDeferredLangBarUpdate(bool enabled, commands::CompositionMode mode) {

@@ -251,11 +251,11 @@ void Session::PopUndoContext() {
     return;
   }
   context_.swap(prev_context_);
-  prev_context_.reset(NULL);
+  prev_context_.reset();
 }
 
 void Session::ClearUndoContext() {
-  prev_context_.reset(NULL);
+  prev_context_.reset();
 }
 
 void Session::EnsureIMEIsOn() {

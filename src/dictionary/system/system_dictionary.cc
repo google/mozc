@@ -1108,7 +1108,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
 }
 
 void SystemDictionary::ClearReverseLookupCache() const {
-  reverse_lookup_cache_.reset(nullptr);
+  reverse_lookup_cache_.reset();
 }
 
 namespace {

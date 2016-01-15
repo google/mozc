@@ -138,7 +138,7 @@ void Thread::Start() {
   if (0 != pthread_create(state_->handle_.get(), 0, &Thread::WrapperForPOSIX,
                           static_cast<void *>(this))) {
       state_->is_running_ = false;
-      state_->handle_.reset(nullptr);
+      state_->handle_.reset();
   }
 }
 
@@ -149,7 +149,7 @@ bool Thread::IsRunning() const {
 void Thread::Detach() {
   if (state_->handle_ != nullptr) {
     pthread_detach(*state_->handle_);
-    state_->handle_.reset(nullptr);
+    state_->handle_.reset();
   }
 }
 
@@ -161,7 +161,7 @@ void Thread::Join() {
     return;
   }
   pthread_join(*state_->handle_, nullptr);
-  state_->handle_.reset(nullptr);
+  state_->handle_.reset();
 }
 
 namespace {
@@ -243,7 +243,7 @@ void Thread::Terminate() {
     // pthread_cancel (or pthread_kill in PThreadCancel on Android) is
     // asynchronous. Join the thread to behave like TerminateThread on Windows.
     Join();
-    state_->handle_.reset(nullptr);
+    state_->handle_.reset();
   }
 }
 

@@ -97,7 +97,7 @@ class LanguageAwareRewriterTest : public testing::Test {
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
 #endif  // MOZC_USE_PACKED_DICTIONARY
-    dictionary_mock_.reset(NULL);
+    dictionary_mock_.reset();
     usage_stats::UsageStats::ClearAllStatsForTest();
   }
 

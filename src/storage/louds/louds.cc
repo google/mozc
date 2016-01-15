@@ -83,7 +83,7 @@ void Louds::Init(const uint8 *image, int length,
 
 void Louds::Reset() {
   index_.Reset();
-  select_cache_.reset(nullptr);
+  select_cache_.reset();
   select0_cache_size_ = 0;
   select1_cache_size_ = 0;
 }

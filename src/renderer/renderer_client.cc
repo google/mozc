@@ -285,7 +285,7 @@ class RendererLauncher : public RendererLauncherInterface,
         CallCommand(client.get(), *(pending_command_.get()));
       }
     }
-    pending_command_.reset(NULL);
+    pending_command_.reset();
 
     // |renderer_status_| is also protected by mutex.
     // Until this method finsihs, SetPendingCommand is blocked.

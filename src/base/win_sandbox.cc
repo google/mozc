@@ -882,7 +882,7 @@ class ScopedTokenInfo {
                                num_bytes, &num_bytes)) {
       const DWORD last_error = ::GetLastError();
       DLOG(ERROR) << "GetTokenInformation failed. Last error: " << last_error;
-      buffer_.reset(nullptr);
+      buffer_.reset();
       return;
     }
     initialized_ = true;

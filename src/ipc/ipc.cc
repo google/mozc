@@ -81,7 +81,7 @@ void IPCServer::LoopAndReturn() {
 void IPCServer::Wait() {
   if (server_thread_.get() != NULL) {
     server_thread_->Join();
-    server_thread_.reset(NULL);
+    server_thread_.reset();
   }
 }
 
