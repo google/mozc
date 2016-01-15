@@ -109,6 +109,10 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   bool Exists() const;
 
   // Load user dictionary from the file.
+  // NOTE: If the file is not existent, nothing is updated.
+  //       Therefore if the file is deleted after first load(),
+  //       second load() does nothing so the content loaded by first load()
+  //       is kept as is.
   bool Load();
 
   // Loads user dictionary from the file. Usually, it should be able to

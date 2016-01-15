@@ -381,4 +381,39 @@ string FileUtil::NormalizeDirectorySeparator(const string &path) {
 #endif  // OS_WIN
 }
 
+bool FileUtil::GetModificationTime(const string &filename,
+                                   FileTimeStamp *modified_at) {
+#if defined (OS_WIN)
+  wstring wide;
+  if (!Util::UTF8ToWide(filename, &wide)) {
+    return false;
+  }
+  WIN32_FILE_ATTRIBUTE_DATA info = {};
+  if (!::GetFileAttributesEx(wide.c_str(), GetFileExInfoStandard, &info)) {
+    const auto last_error = ::GetLastError();
+    LOG(ERROR) << "GetFileAttributesEx(" << filename << ") failed. error="
+               << last_error;
+    return false;
+  }
+  *modified_at =
+      (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32)
+      + info.ftLastWriteTime.dwLowDateTime;
+  return true;
+#elif defined(OS_NACL)
+  PP_FileInfo file_info;
+  if (!PepperFileUtil::Query(filename, &file_info)) {
+    return false;
+  }
+  *modified_at = file_info.last_modified_time;
+  return true;
+#else  // OS_WIN or OS_NACL
+  struct stat stat_info;
+  if (::stat(filename.c_str(), &stat_info)) {
+    return false;
+  }
+  *modified_at = stat_info.st_mtime;
+  return true;
+#endif  // OS_WIN or OS_NACL
+}
+
 }  // namespace mozc

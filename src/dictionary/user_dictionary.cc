@@ -36,6 +36,7 @@
 #include <string>
 
 #include "base/compiler_specific.h"
+#include "base/file_util.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mutex.h"
@@ -207,7 +208,7 @@ MOZC_CLANG_POP_WARNING();
 class UserDictionary::UserDictionaryReloader : public Thread {
  public:
   explicit UserDictionaryReloader(UserDictionary *dic)
-      : auto_register_mode_(false), dic_(dic) {
+      : modified_at_(0), auto_register_mode_(false), dic_(dic) {
     DCHECK(dic_);
   }
 
@@ -228,7 +229,23 @@ class UserDictionary::UserDictionaryReloader : public Thread {
     Start();
   }
 
-  void StartReload() {
+  // When the user dictionary exists AND the modification time has been updated,
+  // reloads the dictionary.
+  void MaybeStartReload() {
+    FileTimeStamp modification_time;
+    if (!FileUtil::GetModificationTime(
+        Singleton<UserDictionaryFileManager>::get()->GetFileName(),
+        &modification_time)) {
+      // If the file doesn't exist, return doing nothing.
+      // Therefore if the file is deleted after first reload,
+      // second reload does nothing so the content loaded by first reload
+      // is kept as is.
+      return;
+    }
+    if (modified_at_ == modification_time) {
+      return;
+    }
+    modified_at_ = modification_time;
     Start();
   }
 
@@ -261,6 +278,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   }
 
  private:
+  FileTimeStamp modified_at_;
   Mutex mutex_;
   bool auto_register_mode_;
   UserDictionary *dic_;
@@ -491,7 +509,7 @@ bool UserDictionary::Reload() {
 
   suppression_dictionary_->Lock();
   DCHECK(suppression_dictionary_->IsLocked());
-  reloader_->StartReload();
+  reloader_->MaybeStartReload();
 
   return true;
 }
