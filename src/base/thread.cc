@@ -147,7 +147,10 @@ bool Thread::IsRunning() const {
 }
 
 void Thread::Detach() {
-  state_->handle_.reset(nullptr);
+  if (state_->handle_ != nullptr) {
+    pthread_detach(*state_->handle_);
+    state_->handle_.reset(nullptr);
+  }
 }
 
 void Thread::Join() {
