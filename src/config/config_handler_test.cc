@@ -250,8 +250,6 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
 // mock file system doesn't have a source file.
 // TODO(hsumita): Enable this test on Android and NaCl.
 TEST_F(ConfigHandlerTest, LoadTestConfig) {
-  const char kPathPrefix[] = "";
-  const char KDataDir[] = "data/test/config";
   // TODO(yukawa): Generate test data automatically so that we can keep
   //     the compatibility among variety of config files.
   // TODO(yukawa): Enumerate test data in the directory automatically.
