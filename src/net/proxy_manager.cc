@@ -100,7 +100,7 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
       scoped_cftyperef<CFStringRef> private_runloop_mode(
           CFStringCreateWithBytes(
               NULL, reinterpret_cast<const UInt8 *>(label.data()),
-              label.size(), kCFStringEncodingUTF8, NULL));
+              label.size(), kCFStringEncodingUTF8, false));
       CFRunLoopAddSource(
           CFRunLoopGetCurrent(), runloop_source.get(),
           private_runloop_mode.get());
