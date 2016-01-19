@@ -36,10 +36,7 @@
 namespace mozc {
 namespace {
 
-// http://www.ingrid.org/java/i18n/unicode-sjis.html
-
 // Unicode vender specific character table:
-// http://www.ingrid.org/java/i18n/unicode-sjis.html
 // http://hp.vector.co.jp/authors/VA010341/unicode/
 // http://www.notoinsatu.co.jp/font/omake/OTF_other.pdf
 //
