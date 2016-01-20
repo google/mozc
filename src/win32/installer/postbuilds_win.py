@@ -52,7 +52,7 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--targetpath', dest='targetpath')
   parser.add_option('--pdbpath', dest='pdbpath', default='')
-  parser.add_option('--msvs_version', dest='msvs_version', default='2013',
+  parser.add_option('--msvs_version', dest='msvs_version', default=None,
                     help='Specifies the target MSVS version.')
 
   (opts, _) = parser.parse_args()
