@@ -110,4 +110,13 @@ class MozcJNI {
    * @return Version string of shared object
    */
   private static native String getVersion();
+
+  /**
+   * Sets suppression policy against sending usage stats.
+   *
+   * <p>Never call this method before JNI is loaded.
+   *
+   * @param suppress suppresses sending if true
+   */
+  private static native void suppressSendingStats(boolean suppress);
 }

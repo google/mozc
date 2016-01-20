@@ -235,18 +235,10 @@ ClientIdInterface::~ClientIdInterface() {}
 const uint32 UsageStatsUploader::kDefaultSchedulerDelay = 60*1000;
 // 5 min
 const uint32 UsageStatsUploader::kDefaultSchedulerRandomDelay = 5*60*1000;
-#ifndef OS_ANDROID
 // 5 min
 const uint32 UsageStatsUploader::kDefaultScheduleInterval = 5*60*1000;
 // 2 hours
 const uint32 UsageStatsUploader::kDefaultScheduleMaxInterval = 2*60*60*1000;
-#else  // !OS_ANDROID
-// Reduce the frequency to save battery.
-// 8 hours
-const uint32 UsageStatsUploader::kDefaultScheduleInterval = 8*60*60*1000;
-// 8 hours
-const uint32 UsageStatsUploader::kDefaultScheduleMaxInterval = 8*60*60*1000;
-#endif  // !OS_ANDROID
 
 void UsageStatsUploader::SetClientIdHandler(
     ClientIdInterface *client_id_handler) {

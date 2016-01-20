@@ -266,6 +266,7 @@ class NameCheckScheduler : public Scheduler::SchedulerInterface {
   bool AddJob(const Scheduler::JobSetting &job_setting) {
     return (expected_name_ == job_setting.name());
   }
+  bool HasJob(const string &name) const { return expected_name_ == name; }
 
  private:
   const string expected_name_;

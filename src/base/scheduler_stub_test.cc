@@ -57,8 +57,10 @@ class SchedulerStubTest : public ::testing::Test {
 
 TEST_F(SchedulerStubTest, AddRemoveJob) {
   SchedulerStub scheduler_stub;
+  EXPECT_FALSE(scheduler_stub.HasJob("Test"));
   scheduler_stub.AddJob(Scheduler::JobSetting(
       "Test", 1000, 100000, 5000, 0, &TestFunc, NULL));
+  EXPECT_TRUE(scheduler_stub.HasJob("Test"));
   EXPECT_EQ(0, g_counter);
   scheduler_stub.PutClockForward(1000);
   EXPECT_EQ(0, g_counter);
@@ -82,6 +84,7 @@ TEST_F(SchedulerStubTest, AddRemoveJob) {
   EXPECT_EQ(3, g_counter);
   scheduler_stub.PutClockForward(1000);
   EXPECT_EQ(3, g_counter);
+  EXPECT_FALSE(scheduler_stub.HasJob("Test"));
 }
 
 TEST_F(SchedulerStubTest, BackOff) {

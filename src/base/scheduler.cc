@@ -256,6 +256,10 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     return (jobs_.erase(name) != 0);
   }
 
+  virtual bool HasJob(const string &name) const {
+    return (jobs_.find(name) != jobs_.end());
+  }
+
  private:
   static void TimerCallback(void *param) {
     Job *job = reinterpret_cast<Job *>(param);
@@ -285,10 +289,6 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
       }
       job->set_skip_count(job->backoff_count());
     }
-  }
-
-  bool HasJob(const string &name) const {
-    return (jobs_.find(name) != jobs_.end());
   }
 
   uint32 CalcDelay(const Scheduler::JobSetting &job_setting) {
@@ -326,6 +326,10 @@ bool Scheduler::RemoveJob(const string &name) {
 
 void Scheduler::RemoveAllJobs() {
   GetSchedulerHandler()->RemoveAllJobs();
+}
+
+bool Scheduler::HasJob(const string &name) {
+  return GetSchedulerHandler()->HasJob(name);
 }
 
 void Scheduler::SetSchedulerHandler(SchedulerInterface *handler) {

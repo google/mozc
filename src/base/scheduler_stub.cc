@@ -58,6 +58,10 @@ void SchedulerStub::RemoveAllJobs() {
   jobs_.clear();
 }
 
+bool SchedulerStub::HasJob(const string &name) const {
+  return (jobs_.find(name) != jobs_.end());
+}
+
 void SchedulerStub::PutClockForward(uint64 delta_usec) {
   for (map<string, JobForStub>::iterator itr = jobs_.begin();
        itr != jobs_.end(); ++itr) {

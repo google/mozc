@@ -58,6 +58,18 @@ namespace {
 jobject g_connection_data_buffer;
 jobject g_dictionary_buffer;
 
+// Returns a job setting for usage stats job.
+const Scheduler::JobSetting GetJobSetting() {
+  return Scheduler::JobSetting(
+      "UsageStatsTimer",
+      usage_stats::UsageStatsUploader::kDefaultScheduleInterval,
+      usage_stats::UsageStatsUploader::kDefaultScheduleMaxInterval,
+      usage_stats::UsageStatsUploader::kDefaultSchedulerDelay,
+      usage_stats::UsageStatsUploader::kDefaultSchedulerRandomDelay,
+      &usage_stats::UsageStatsUploader::Send,
+      NULL);
+}
+
 // Adapter class to make a SessionHandlerInterface (held by this class)
 // singleton.
 // Must be accessed via mozc::Singleton<SessionHandlerSingletonAdapter>.
@@ -100,15 +112,7 @@ void Initialize(
       ->AddObserver(Singleton<session::SessionUsageObserver>::get());
 
   // Start usage stats timer.
-  using usage_stats::UsageStatsUploader;
-  mozc::Scheduler::AddJob(Scheduler::JobSetting(
-      "UsageStatsTimer",
-      UsageStatsUploader::kDefaultScheduleInterval,
-      UsageStatsUploader::kDefaultScheduleMaxInterval,
-      UsageStatsUploader::kDefaultSchedulerDelay,
-      UsageStatsUploader::kDefaultSchedulerRandomDelay,
-      &UsageStatsUploader::Send,
-      NULL));
+  mozc::Scheduler::AddJob(GetJobSetting());
 }
 
 // Concrete implementation for MozcJni.evalCommand
@@ -169,6 +173,19 @@ jstring JNICALL getVersion(JNIEnv *env) {
   return env->NewStringUTF(Version::GetMozcVersion().c_str());
 }
 
+void JNICALL suppressSendingStats(JNIEnv *env,
+                                  jobject clazz,
+                                  jboolean suppress) {
+  const Scheduler::JobSetting &jobSetting = GetJobSetting();
+  const string &name = jobSetting.name();
+  const bool hasJob = mozc::Scheduler::HasJob(name);
+  if (suppress && hasJob) {
+    mozc::Scheduler::RemoveJob(name);
+  } else if (!suppress && !hasJob) {
+    mozc::Scheduler::AddJob(jobSetting);
+  }
+}
+
 }  // namespace
 }  // namespace jni
 }  // namespace mozc
@@ -190,6 +207,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
       {"getVersion",
        "()Ljava/lang/String;",
        reinterpret_cast<void*>(&mozc::jni::getVersion)},
+      {"suppressSendingStats",
+       "(Z)V",
+       reinterpret_cast<void*>(&mozc::jni::suppressSendingStats)},
   };
   jclass clazz = env->FindClass(
       "org/mozc/android/inputmethod/japanese/session/MozcJNI");
