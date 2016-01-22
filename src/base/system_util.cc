@@ -936,16 +936,6 @@ string SystemUtil::GetOSVersionString() {
 #endif  // OS_WIN, OS_MACOSX, OS_LINUX
 }
 
-bool SystemUtil::MacOSVersionIsGreaterOrEqual(int32 major,
-                                              int32 minor,
-                                              int32 fix) {
-#ifdef OS_MACOSX
-  return MacUtil::OSVersionIsGreaterOrEqual(major, minor, fix);
-#else
-  return false;
-#endif  // OS_MACOSX
-}
-
 void SystemUtil::DisableIME() {
 #ifdef OS_WIN
   // turn off IME:

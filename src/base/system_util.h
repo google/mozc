@@ -181,9 +181,6 @@ class SystemUtil {
   // TODO(toshiyuki): Add unittests.
   static string GetOSVersionString();
 
-  // returns true if platform is MacOSX and the version is acceptable.
-  static bool MacOSVersionIsGreaterOrEqual(int32 major, int32 minor, int32 fix);
-
   // disable IME in the current process/thread
   static void DisableIME();
 

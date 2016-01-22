@@ -49,14 +49,6 @@ class MacUtil {
   // Returns OS version string like, "Version 10.x (Build xXxxx)".
   static string GetOSVersionString();
 
-  // Gets the OS major, minor and fix version.
-  // Returns false if it fails to obtain the OS version from the system.
-  static bool GetOSVersion(int32 *major, int32 *minor, int32 *fix);
-
-  // Returns true if OS version is greater or equal to the specified version.
-  // Returns false if it fails to obtain the OS version from the system.
-  static bool OSVersionIsGreaterOrEqual(int32 major, int32 minor, int32 fix);
-
   // Returns server directory using OS-specific API.
   static string GetServerDirectory();
 
