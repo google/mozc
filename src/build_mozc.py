@@ -148,10 +148,7 @@ def GetGeneratorName(generator):
   """Gets the generator name based on the platform."""
   if generator:
     return generator
-  elif IsMac():
-    return 'xcode'
-  else:
-    return 'ninja'
+  return 'ninja'
 
 
 def GetPkgConfigCommand():
@@ -880,7 +877,6 @@ def GypMain(options, unused_args, _):
     gyp_options.extend([
         '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
-  # TODO(yukawa): Use ninja on OSX.
   if generator == 'ninja':
     gyp_options.extend(['--generator-output=.'])
     short_basename = GetBuildShortBaseName(options, target_platform)
@@ -947,8 +943,8 @@ def CanonicalTargetToGypFileAndTargetName(target):
   return (gyp_file_name, target_name)
 
 
-def BuildOnLinux(options, targets, unused_original_directory_name):
-  """Build the targets on Linux."""
+def BuildWithNinja(options, targets, unused_original_directory_name):
+  """Build the targets with Ninja."""
   target_names = []
   for target in targets:
     (unused_gyp_file_name, target_name) = (
@@ -966,22 +962,6 @@ def BuildOnLinux(options, targets, unused_original_directory_name):
   make_command = ninja
   build_args = ['-C', '%s/%s' % (short_basename, options.configuration)]
   RunOrDie([make_command] + build_args + target_names)
-
-
-def BuildOnMac(options, targets, original_directory_name):
-  """Build the targets on Mac."""
-  original_directory_relpath = GetRelPath(original_directory_name, os.getcwd())
-  for target in targets:
-    (gyp_file_name, target_name) = CanonicalTargetToGypFileAndTargetName(target)
-    gyp_file_name = os.path.join(original_directory_relpath, gyp_file_name)
-    CheckFileOrDie(gyp_file_name)
-    (xcode_base_name, _) = os.path.splitext(gyp_file_name)
-    RunOrDie(['xcodebuild',
-              '-project', '%s.xcodeproj' % xcode_base_name,
-              '-configuration', options.configuration,
-              '-target', target_name,
-              '-parallelizeTargets',
-              'BUILD_WITH_GYP=1'])
 
 
 def BuildOnWindows(targets):
@@ -1006,15 +986,10 @@ def BuildMain(options, targets, original_directory_name):
   python_path = os.pathsep.join([original_python_path, mozc_root])
   os.environ['PYTHONPATH'] = python_path
 
-  if IsMac():
-    BuildOnMac(options, targets, original_directory_name)
-  elif IsLinux():
-    BuildOnLinux(options, targets, original_directory_name)
-  elif IsWindows():
+  if IsWindows():
     BuildOnWindows(targets)
   else:
-    logging.error('Unsupported platform: %s', os.name)
-    return
+    BuildWithNinja(options, targets, original_directory_name)
 
   # Revert python path.
   os.environ['PYTHONPATH'] = original_python_path

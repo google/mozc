@@ -896,6 +896,9 @@
           'product_name': '<(branding)Tool_lib',
           'mac_bundle': 1,
           'xcode_settings': {
+            # Ninja uses DYLIB_INSTALL_NAME_BASE to specify
+            # where this framework is located.
+            'DYLIB_INSTALL_NAME_BASE': '@executable_path/../Frameworks',
             'INSTALL_PATH': '@executable_path/../Frameworks',
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_lib_info',
           },
