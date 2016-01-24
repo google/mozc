@@ -30,6 +30,6 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_GMOCK_H_
 #define MOZC_TESTING_BASE_PUBLIC_GMOCK_H_
 
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GMOCK_H_
