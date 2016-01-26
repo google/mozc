@@ -227,7 +227,7 @@ bool ConfigHandlerImpl::Reload() {
     ret_code = false;
   }
 
-  // we set default config when file is broekn
+  // we set default config when file is broken
   ret_code |= SetConfigInternal(input_proto);
 
   return ret_code;
