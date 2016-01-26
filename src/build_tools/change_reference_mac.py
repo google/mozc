@@ -28,12 +28,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Change the reference to Qt frameworks.
+"""Change the reference to frameworks.
 
 Typical usage:
 
-  % change_qt_reference_mac.py --qtdir=/path/to/qtdir/ \
-      --target=/path/to/target.app/Contents/MacOS/target
+  % change_reference_mac.py --qtdir=/path/to/qtdir/ \
+      --target=/path/to/target.app/Contents/MacOS/target --branding=Mozc
 """
 
 __author__ = "horo"
@@ -50,10 +50,25 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--qtdir', dest='qtdir')
   parser.add_option('--target', dest='target')
+  parser.add_option('--branding', dest='branding')
 
   (opts, _) = parser.parse_args()
 
   return opts
+
+
+def GetFrameworkPath(name, version):
+  return '%s.framework/Versions/%s/%s' % (name, version, name)
+
+
+def GetReferenceTo(branding, framework):
+  return ('@executable_path/../../../%sTool.app/Contents/Frameworks/%s' %
+          (branding, framework))
+
+
+def InstallNameTool(target, reference_from, reference_to):
+  cmd = ['install_name_tool', '-change', reference_from, reference_to, target]
+  RunOrDie(cmd)
 
 
 def main():
@@ -65,22 +80,39 @@ def main():
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
+  if not opt.branding:
+    PrintErrorAndExit('--branding option is mandatory.')
+
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
   # Changes the reference to QtCore framework from the target application
-  cmd = ["install_name_tool", "-change",
-         "%s/lib/QtCore.framework/Versions/4/QtCore" % qtdir,
-         "@executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore",
-         "%s" % target]
-  RunOrDie(cmd)
+  # From: /path/to/qt/lib/QtCore.framework/Versions/4/QtCore
+  #   To: @executable_path/../../../MozcTool.app/Contents/Frameworks/...
+  qtcore_framework = GetFrameworkPath('QtCore', '4')
+  InstallNameTool(target,
+                  '%s/lib/%s' % (qtdir, qtcore_framework),
+                  GetReferenceTo(opt.branding, qtcore_framework))
 
   # Changes the reference to QtGui framework from the target application
-  cmd = ["install_name_tool", "-change",
-         "%s/lib/QtGui.framework/Versions/4/QtGui" % qtdir,
-         "@executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui",
-         "%s" % target]
-  RunOrDie(cmd)
+  qtgui_framework = GetFrameworkPath('QtGui', '4')
+  InstallNameTool(target,
+                  '%s/lib/%s' % (qtdir, qtgui_framework),
+                  GetReferenceTo(opt.branding, qtgui_framework))
+
+  # Change the reference to $(branding)Tool_lib from the target application
+  # From: @executable_path/../Frameworks/MozcTool_lib.framework/...
+  #   To: @executable_path/../../../MozcTool.app/Contents/Frameworks/...
+  toollib_framework = GetFrameworkPath('%sTool_lib' % opt.branding, 'A')
+  InstallNameTool(target,
+                  '@executable_path/../Frameworks/%s' % toollib_framework,
+                  GetReferenceTo(opt.branding, toollib_framework))
+
+  # Change the reference to GoogleBreakpad from the target application
+  breakpad_framework = GetFrameworkPath('GoogleBreakpad', 'A')
+  InstallNameTool(target,
+                  '@executable_path/../Frameworks/%s' % breakpad_framework,
+                  GetReferenceTo(opt.branding, breakpad_framework))
 
 
 if __name__ == '__main__':

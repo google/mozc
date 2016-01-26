@@ -917,10 +917,11 @@
             ['use_qt=="YES"', {
               'postbuilds': [
                 {
-                  'postbuild_name': 'Change the reference to Qt frameworks.',
+                  'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
-                    'python', '../build_tools/change_qt_reference_mac.py',
+                    'python', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
+                    '--branding', '<(branding)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/<(branding)Tool_lib.framework/Versions/A/<(branding)Tool_lib',
                   ],
@@ -977,10 +978,11 @@
               ],
               'postbuilds': [
                 {
-                  'postbuild_name': 'Change the reference to Qt frameworks.',
+                  'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
-                    'python', '../build_tools/change_qt_reference_mac.py',
+                    'python', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
+                    '--branding', '<(branding)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
                   ],
@@ -990,6 +992,7 @@
                   'action': [
                     'python', '../build_tools/copy_qt_frameworks_mac.py',
                     '--qtdir', '<(qt_dir)',
+                    '--branding', '<(branding)',
                     '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
                   ],
                 },

@@ -33,7 +33,7 @@
 Typical usage:
 
   % python copy_qt_frameworks.py --qtdir=/path/to/qtdir/ \
-      --target=/path/to/target.app/Contents/Frameworks/
+      --target=/path/to/target.app/Contents/Frameworks/ --branding=Mozc
 """
 
 __author__ = "horo"
@@ -51,6 +51,7 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--qtdir', dest='qtdir')
   parser.add_option('--target', dest='target')
+  parser.add_option('--branding', dest='branding')
 
   (opts, _) = parser.parse_args()
 
@@ -65,6 +66,9 @@ def main():
 
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
+
+  if not opt.branding:
+    PrintErrorAndExit('--branding option is mandatory.')
 
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
@@ -86,23 +90,26 @@ def main():
   CopyFiles(['%s/lib/QtGui.framework/Contents/Info.plist' % qtdir],
             '%s/QtGui.framework/Resources/Info.plist' % target)
 
+  base_dir = ('@executable_path/../../../%sTool.app/Contents/Frameworks' %
+              opt.branding)
+
   # Changes QtGui id
-  cmd = ["install_name_tool", "-id",
-         "@executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui",
-         "%s/QtGui.framework/Versions/4/QtGui" % target]
+  cmd = ['install_name_tool', '-id',
+         '%s/QtGui.framework/Versions/4/QtGui' % base_dir,
+         '%s/QtGui.framework/Versions/4/QtGui' % target]
   RunOrDie(cmd)
 
   # Changes QtCore id
-  cmd = ["install_name_tool", "-id",
-         "@executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore",
+  cmd = ['install_name_tool', '-id',
+         '%s/QtCore.framework/Versions/4/QtCore' % base_dir,
          '%s/QtCore.framework/Versions/4/QtCore' % target]
   RunOrDie(cmd)
 
   # Changes the reference to QtCore framework from QtGui
-  cmd = ["install_name_tool", "-change",
-         "%s/lib/QtCore.framework/Versions/4/QtCore" % qtdir,
-         "@executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore",
-         "%s/QtGui.framework/Versions/4/QtGui" % target]
+  cmd = ['install_name_tool', '-change',
+         '%s/lib/QtCore.framework/Versions/4/QtCore' % qtdir,
+         '%s/QtCore.framework/Versions/4/QtCore' % base_dir,
+         '%s/QtGui.framework/Versions/4/QtGui' % target]
   RunOrDie(cmd)
 
 
