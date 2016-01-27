@@ -36,6 +36,7 @@
 namespace mozc {
 namespace {
 
+#ifdef OS_WIN
 // Unicode vender specific character table:
 // http://hp.vector.co.jp/authors/VA010341/unicode/
 // http://www.notoinsatu.co.jp/font/omake/OTF_other.pdf
@@ -45,75 +46,35 @@ namespace {
 // Windows CP932 (shift-jis) maps WAVE_DASH to FULL_WIDTH_TILDA.
 // Since the font of WAVE-DASH is ugly on Windows, here we convert WAVE-DHASH to
 // FULL_WIDTH_TILDA as CP932 does.
-#ifdef OS_WIN
-inline char32 ConvertVenderSpecificCharacter(char32 c) {
+//
+// As Unicode has became the defact default encoding.  We have reduced
+// the number of characters to be normalized.
+inline char32 NormalizeCharForWindows(char32 c) {
   switch (c) {
-    case 0x00A5:   // YEN SIGN
-      return 0x005C;   // REVERSE SOLIDUS
-      break;
-    case 0x203E:   // OVERLINE
-      return 0x007E;  // TILDE
-      break;
     case 0x301C:  // WAVE DASH
       return 0xFF5E;   // FULLWIDTH TILDE
       break;
-    case 0x2016:   // DOUBLE VERTICAL LINE
-      return 0x2225;   // PARALLEL TO
-      break;
     case 0x2212:  // MINUS SIGN
       return 0xFF0D;   // FULLWIDTH HYPHEN MINUS
-      break;
-    case 0x00A2:   // CENT SIGN
-      return 0xFFE0;    // FULLWIDTH CENT SIGN
-      break;
-    case 0x00A3:   // POUND SIGN
-      return 0xFFE1;   // FULLWIDTH POUND SIGN
-      break;
-    case 0x00AC:   // NOT SIGN
-      return 0xFFE2;   // FULLWIDTH NOT SIGN
       break;
     default:
       return c;
       break;
   }
 }
-
-#else   // MAC & Linux
-inline char32 ConvertVenderSpecificCharacter(char32 c) {
-  return c;
-}
-#endif
-
-void ConvertVenderSpecificString(StringPiece input, string *output) {
-  output->clear();
-  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    Util::UCS4ToUTF8Append(ConvertVenderSpecificCharacter(iter.Get()), output);
-  }
-}
+#endif  // OS_WIN
 
 }  // namespace
 
-void TextNormalizer::NormalizePreeditText(StringPiece input, string *output) {
-  string tmp;
-  // This is a workaround for hiragana v'
-  //  Util::StringReplace(input, "ゔ", "ヴ", true, &tmp);
-  Util::StringReplace(input, "\xE3\x82\x94", "\xE3\x83\xB4", true, &tmp);
-  ConvertVenderSpecificString(tmp, output);
-}
-
-void TextNormalizer::NormalizeTransliterationText(StringPiece input,
-                                                  string *output) {
-  // Do the same thing with NormalizePreeditText at this morment.
-  NormalizePreeditText(input, output);
-}
-
-void TextNormalizer::NormalizeConversionText(StringPiece input,
-                                             string *output) {
-  ConvertVenderSpecificString(input, output);
-}
-
-void TextNormalizer::NormalizeCandidateText(StringPiece input, string *output) {
-  ConvertVenderSpecificString(input, output);
+void TextNormalizer::NormalizeText(StringPiece input, string *output) {
+#ifdef OS_WIN
+  output->clear();
+  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
+    Util::UCS4ToUTF8Append(NormalizeCharForWindows(iter.Get()), output);
+  }
+#else
+  input.CopyToString(output);
+#endif
 }
 
 }  // namespace mozc

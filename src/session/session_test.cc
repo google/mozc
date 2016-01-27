@@ -5928,41 +5928,6 @@ TEST_F(SessionTest, Issue1571043) {
   }
 }
 
-TEST_F(SessionTest, Issue1799384) {
-  // This is a unittest against http://b/1571043.
-  // - ConvertToHiragana converts Vu to U+3094 "ヴ"
-  std::unique_ptr<Session> session(new Session(engine_.get()));
-  InitSessionToPrecomposition(session.get());
-  commands::Command command;
-  InsertCharacterChars("ravu", session.get(), &command);
-  // TODO(komatsu) "ヴ" might be preferred on Mac.
-  // "らヴ"
-  EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4", GetComposition(command));
-
-  {  // Initialize GetConverterMock() to generate t13n candidates.
-    Segments segments;
-    Segment *segment;
-    segments.set_request_type(Segments::CONVERSION);
-    segment = segments.add_segment();
-    // "らヴ"
-    segment->set_key("\xE3\x82\x89\xE3\x83\xB4");
-    Segment::Candidate *candidate;
-    candidate = segment->add_candidate();
-    // "らぶ"
-    candidate->value = "\xE3\x82\x89\xE3\x81\xB6";
-    ConversionRequest request;
-    SetComposer(session.get(), &request);
-    FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
-  }
-
-  command.Clear();
-  EXPECT_TRUE(session->ConvertToHiragana(&command));
-
-  // "らヴ"
-  EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4", GetComposition(command));
-}
-
 TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as

@@ -598,35 +598,6 @@ TEST_F(TransliterationRewriterTest, NoRewriteTest) {
   EXPECT_EQ(0, segments.conversion_segment(0).meta_candidates_size());
 }
 
-TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
-  std::unique_ptr<TransliterationRewriter> t13n_rewriter(
-      CreateTransliterationRewriter());
-
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request(), &default_config());
-
-  // "らゔ"
-  composer.InsertCharacterPreedit("\xE3\x82\x89\xE3\x82\x94");
-
-  Segments segments;
-  {  // Initialize segments.
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-    // "らゔ"
-    segment->set_key("\xE3\x82\x89\xE3\x82\x94");
-    segment->add_candidate()->value = "LOVE";
-  }
-
-  ConversionRequest request(&composer, &default_request(), &default_config());
-  EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
-  EXPECT_EQ(1, segments.segments_size());
-  const Segment &seg = segments.segment(0);
-  // "らヴ"
-  EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4",
-            seg.meta_candidate(transliteration::HIRAGANA).value);
-}
-
 TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
   ConversionRequest convreq;
   commands::Request request;

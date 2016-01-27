@@ -132,7 +132,7 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
   }
   tokens[0].CopyToString(&label);
   tokens[1].CopyToString(&key);
-  TextNormalizer::NormalizeCandidateText(tokens[2], &expected_value);
+  TextNormalizer::NormalizeText(tokens[2], &expected_value);
   tokens[3].CopyToString(&command);
   expected_rank  = NumberUtil::SimpleAtoi(tokens[4]);
   NumberUtil::SafeStrToDouble(tokens[5], &accuracy);

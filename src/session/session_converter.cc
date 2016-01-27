@@ -848,7 +848,7 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   string key, preedit, normalized_preedit;
   composer.GetQueryForConversion(&key);
   composer.GetStringForSubmission(&preedit);
-  TextNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
+  TextNormalizer::NormalizeText(preedit, &normalized_preedit);
   SessionOutput::FillPreeditResult(preedit, result_.get());
 
   ConverterUtil::InitSegmentsFromString(key, normalized_preedit,
@@ -872,7 +872,7 @@ void SessionConverter::CommitHead(
   }
   preedit = Util::SubString(preedit, 0, *consumed_key_size);
   string composition;
-  TextNormalizer::NormalizePreeditText(preedit, &composition);
+  TextNormalizer::NormalizeText(preedit, &composition);
   SessionOutput::FillPreeditResult(composition, result_.get());
 }
 

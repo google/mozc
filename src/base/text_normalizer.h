@@ -41,10 +41,7 @@ namespace mozc {
 
 class TextNormalizer {
  public:
-  static void NormalizePreeditText(StringPiece input, string *output);
-  static void NormalizeTransliterationText(StringPiece input, string *output);
-  static void NormalizeConversionText(StringPiece input, string *output);
-  static void NormalizeCandidateText(StringPiece input, string *output);
+  static void NormalizeText(StringPiece input, string *output);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TextNormalizer);

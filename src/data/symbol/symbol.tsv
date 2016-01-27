@@ -38,6 +38,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	／	すらっしゅ しゃせん ・ / きごう ななめ	スラッシュ		GENERAL
 記号	＼	ばっくすらっしゅ ぎゃくしゃせん ・ / \ きごう しゃせん すらっしゅ ななめ	バックスラッシュ		GENERAL
 記号	〜	にょろ なみ から ー - ~ きごう より	波ダッシュ		GENERAL
+記号	∥	| || たてぼう たてせん きごう	縦線		SYMBOL
 記号	‖	| || たてぼう たてせん きごう	縦線		SYMBOL
 記号	｜	| たてぼう たてせん きごう	縦線		GENERAL
 句読点	…	。。。 .  ... ・・・  ・ てん きごう あまり さんてん さんてんりーだ	三点リーダ		SYMBOL OTHER

@@ -3067,18 +3067,29 @@ TEST_F(SessionConverterTest, Issue1978201) {
 TEST_F(SessionConverterTest, Issue1981020) {
   SessionConverter converter(
       convertermock_.get(), request_.get(), config_.get());
-  // hiragana "ヴヴヴヴ"
-  composer_->InsertCharacterPreedit(
-      "\xE3\x82\x94\xE3\x82\x94\xE3\x82\x94\xE3\x82\x94");
+  // "〜〜〜〜" U+301C * 4
+  const string wave_dash_301c =
+      "\xE3\x80\x9C\xE3\x80\x9C\xE3\x80\x9C\xE3\x80\x9C";
+  composer_->InsertCharacterPreedit(wave_dash_301c);
   Segments segments;
   convertermock_->SetFinishConversion(&segments, true);
   converter.CommitPreedit(*composer_, Context::default_instance());
   convertermock_->GetFinishConversion(&segments);
-  // katakana "ヴヴヴヴ"
-  EXPECT_EQ("\xE3\x83\xB4\xE3\x83\xB4\xE3\x83\xB4\xE3\x83\xB4",
+
+#ifdef OS_WIN
+  // "～～～～" U+FF5E * 4
+  const string fullwidth_tilde_ff5e =
+      "\xEF\xBD\x9E\xEF\xBD\x9E\xEF\xBD\x9E\xEF\xBD\x9E";
+  EXPECT_EQ(fullwidth_tilde_ff5e,
             segments.conversion_segment(0).candidate(0).value);
-  EXPECT_EQ("\xE3\x83\xB4\xE3\x83\xB4\xE3\x83\xB4\xE3\x83\xB4",
+  EXPECT_EQ(fullwidth_tilde_ff5e,
             segments.conversion_segment(0).candidate(0).content_value);
+#else  // OS_WIN
+  EXPECT_EQ(wave_dash_301c,
+            segments.conversion_segment(0).candidate(0).value);
+  EXPECT_EQ(wave_dash_301c,
+            segments.conversion_segment(0).candidate(0).content_value);
+#endif  // OS_WIN
 }
 
 TEST_F(SessionConverterTest, Issue2029557) {

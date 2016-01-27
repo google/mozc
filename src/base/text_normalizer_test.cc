@@ -36,25 +36,26 @@
 
 namespace mozc {
 
-TEST(TextNormalizerTest, NormalizePreeditText) {
+TEST(TextNormalizerTest, NormalizeText) {
   string output;
   // "めかぶ"
-  TextNormalizer::NormalizePreeditText(
-      "\xe3\x82\x81\xe3\x81\x8b\xe3\x81\xb6", &output);
+  TextNormalizer::NormalizeText("\xe3\x82\x81\xe3\x81\x8b\xe3\x81\xb6",
+                                &output);
   // "めかぶ"
   EXPECT_EQ("\xe3\x82\x81\xe3\x81\x8b\xe3\x81\xb6", output);
 
   // "ゔぁいおりん"
-  TextNormalizer::NormalizePreeditText("\xe3\x82\x94\xe3\x81\x81\xe3\x81\x84"
-                                          "\xe3\x81\x8a\xe3\x82\x8a\xe3\x82"
-                                          "\x93", &output);
-  // "ヴぁいおりん"
-  EXPECT_EQ("\xe3\x83\xb4\xe3\x81\x81\xe3\x81\x84\xe3\x81\x8a\xe3\x82\x8a\xe3"
-            "\x82\x93", output);
+  TextNormalizer::NormalizeText("\xe3\x82\x94\xe3\x81\x81\xe3\x81\x84"
+                                "\xe3\x81\x8a\xe3\x82\x8a\xe3\x82\x93",
+                                &output);
+  // "ゔぁいおりん"
+  EXPECT_EQ("\xe3\x82\x94\xe3\x81\x81\xe3\x81\x84"
+            "\xe3\x81\x8a\xe3\x82\x8a\xe3\x82\x93",
+            output);
 
   // "ぐ〜ぐる"
-  TextNormalizer::NormalizePreeditText("\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90"
-                                          "\xe3\x82\x8b", &output);
+  TextNormalizer::NormalizeText("\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90"
+                                "\xe3\x82\x8b", &output);
 #ifdef OS_WIN
   // "ぐ～ぐる"
   EXPECT_EQ("\xe3\x81\x90\xef\xbd\x9e\xe3\x81\x90\xe3\x82\x8b", output);
@@ -62,58 +63,25 @@ TEST(TextNormalizerTest, NormalizePreeditText) {
   // "ぐ〜ぐる"
   EXPECT_EQ("\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90\xe3\x82\x8b", output);
 #endif
-}
 
-TEST(TextNormalizerTest, NormalizeTransliterationText) {
-  string output;
-  // "めかぶ"
-  TextNormalizer::NormalizeTransliterationText(
-      "\xe3\x82\x81\xe3\x81\x8b\xe3\x81\xb6", &output);
-  // "めかぶ"
-  EXPECT_EQ("\xe3\x82\x81\xe3\x81\x8b\xe3\x81\xb6", output);
-
-  // "ゔぁいおりん"
-  TextNormalizer::NormalizeTransliterationText(
-      "\xe3\x82\x94\xe3\x81\x81\xe3\x81\x84"
-      "\xe3\x81\x8a\xe3\x82\x8a\xe3\x82\x93",
+  // "１−２−３": "−" is U+2212
+  TextNormalizer::NormalizeText(
+      "\xEF\xBC\x91\xE2\x88\x92\xEF\xBC\x92\xE2\x88\x92\xEF\xBC\x93",
       &output);
-  // "ヴぁいおりん"
-  EXPECT_EQ("\xe3\x83\xb4\xe3\x81\x81\xe3\x81\x84\xe3\x81\x8a\xe3\x82\x8a\xe3"
-            "\x82\x93", output);
-
-  // "ぐ〜ぐる"
-  TextNormalizer::NormalizeTransliterationText(
-      "\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90\xe3\x82\x8b", &output);
 #ifdef OS_WIN
-  // "ぐ～ぐる"
-  EXPECT_EQ("\xe3\x81\x90\xef\xbd\x9e\xe3\x81\x90\xe3\x82\x8b", output);
+  // "１－２－３": "－" is U+FF0D
+  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8D\xEF\xBC\x92\xEF\xBC\x8D\xEF\xBC\x93",
+            output);
 #else
-  // "ぐ〜ぐる"
-  EXPECT_EQ("\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90\xe3\x82\x8b", output);
+  // "１−２−３": "−" is U+2212
+  EXPECT_EQ("\xEF\xBC\x91\xE2\x88\x92\xEF\xBC\x92\xE2\x88\x92\xEF\xBC\x93",
+            output);
 #endif
-}
 
-TEST(TextNormalizerTest, NormalizeCandidateText) {
-#ifdef OS_WIN
-  string output;
-  // "ぐ〜ぐる"
-  TextNormalizer::NormalizeCandidateText("\xe3\x81\x90\xe3\x80\x9c\xe3\x81"
-                                            "\x90\xe3\x82\x8b", &output);
-  // "ぐ～ぐる"
-  EXPECT_EQ("\xe3\x81\x90\xef\xbd\x9e\xe3\x81\x90\xe3\x82\x8b", output);
-  // "−"
-  TextNormalizer::NormalizeCandidateText("\xe2\x88\x92", &output);
-  // "－"
-  EXPECT_EQ("\xef\xbc\x8d", output);
-  // "¢"
-  TextNormalizer::NormalizeCandidateText("\xc2\xa2", &output);
-  // "￠"
-  EXPECT_EQ("\xef\xbf\xa0", output);
-  // "‖"
-  TextNormalizer::NormalizeCandidateText("\xe2\x80\x96", &output);
-  // "∥"
-  EXPECT_EQ("\xe2\x88\xa5", output);
-#endif
+  // "¥298": "¥" is U+00A5
+  TextNormalizer::NormalizeText("\xC2\xA5\x32\x39\x38", &output);
+  // U+00A5 is no longer normalized.
+  EXPECT_EQ("\xC2\xA5\x32\x39\x38", output);
 }
 
 }  // namespace mozc
