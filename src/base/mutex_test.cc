@@ -82,7 +82,7 @@ TEST(MutexTest, MutexBasicTest) NO_THREAD_SAFETY_ANALYSIS {
   g_counter = 0;
   Mutex mutex;
   MutexTestThread t(&mutex, 1, 1000);
-  t.Start();
+  t.Start("MutextBasicTest");
 
   Util::Sleep(100);  // still g_counter is locked
   scoped_lock lockA(&mutex);  // get mutex 2nd
@@ -101,7 +101,7 @@ TEST(MutexTest, TryLockTest) NO_THREAD_SAFETY_ANALYSIS {
     MutexTestSleepThread t(&mutex, 1);
 
     EXPECT_TRUE(mutex.TryLock());
-    t.Start();
+    t.Start("TryLockTest");
     Util::Sleep(100);
     EXPECT_EQ(0, g_counter);
     mutex.Unlock();
@@ -111,7 +111,7 @@ TEST(MutexTest, TryLockTest) NO_THREAD_SAFETY_ANALYSIS {
     {
       scoped_try_lock lock(&mutex);
       EXPECT_TRUE(lock.locked());
-      t.Start();
+      t.Start("TryLockTest");
       Util::Sleep(100);
       EXPECT_EQ(1, g_counter);
     }
@@ -134,7 +134,7 @@ TEST(MutexTest, TryLockTest) NO_THREAD_SAFETY_ANALYSIS {
     uint64 start_sec;
     uint32 start_usec;
     Clock::GetTimeOfDay(&start_sec, &start_usec);
-    t.Start();
+    t.Start("TryLockTest");
 
     Util::Sleep(100);
     EXPECT_EQ(1, g_counter);
@@ -165,7 +165,7 @@ TEST(MutexTest, MutexBatchTest) {
   }
 
   for (int i = 0; i < kThreadsSize; ++i) {
-    threads[i]->Start();
+    threads[i]->Start("MutextBatchTest");
   }
 
   for (int i = 0; i < kThreadsSize; ++i) {
@@ -228,7 +228,7 @@ TEST(MutexTest, ReaderWriterTest) {
   }
 
   for (size_t i = 0; i < kThreadsSize; ++i) {
-    threads[i]->Start();
+    threads[i]->Start("ReaderWriterTest");
   }
 
   const uint32 kSleepTime = 500;  // 500 msec

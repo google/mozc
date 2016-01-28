@@ -72,7 +72,7 @@ void IPCServer::LoopAndReturn() {
   if (server_thread_.get() == NULL) {
     server_thread_.reset(new IPCServerThread(this));
     server_thread_->SetJoinable(true);
-    server_thread_->Start();
+    server_thread_->Start("IPCServer");
   } else {
     LOG(WARNING) << "Another thead is already running";
   }

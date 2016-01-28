@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
   if (FLAGS_dummy_threads_size > 0) {
     threads.reset(new DummyThread[FLAGS_dummy_threads_size]);
     for (int i = 0; i < FLAGS_dummy_threads_size; ++i) {
-      threads[i].Start();
+      threads[i].Start("CpuStatsMain");
     }
   }
 

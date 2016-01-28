@@ -470,7 +470,7 @@ bool UserHistoryPredictor::AsyncLoad() {
   syncer_.reset(new UserHistoryPredictorSyncer(
       this,
       UserHistoryPredictorSyncer::LOAD));
-  syncer_->Start();
+  syncer_->Start("UserHistoryPredictor:Load");
 
   return true;
 }
@@ -487,7 +487,7 @@ bool UserHistoryPredictor::AsyncSave() {
   syncer_.reset(new UserHistoryPredictorSyncer(
       this,
       UserHistoryPredictorSyncer::SAVE));
-  syncer_->Start();
+  syncer_->Start("UserHistoryPredictor:Save");
 
   return true;
 }

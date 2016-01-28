@@ -65,7 +65,8 @@ struct ThreadInternalState {
   bool joinable_;
 };
 
-void Thread::Start() {
+void Thread::Start(const string &thread_name) {
+  // TODO(mozc-dev): Set thread name.
   if (IsRunning()) {
     return;
   }
@@ -127,7 +128,7 @@ struct ThreadInternalState {
   bool joinable_;
 };
 
-void Thread::Start() {
+void Thread::Start(const string &thread_name) {
   if (IsRunning()) {
     return;
   }
@@ -139,6 +140,14 @@ void Thread::Start() {
                           static_cast<void *>(this))) {
       state_->is_running_ = false;
       state_->handle_.reset();
+  } else {
+#if defined(OS_NACL)
+    // NaCl doesn't support setname.
+#elif defined(OS_MACOSX)
+    pthread_setname_np(thread_name.c_str());
+#else  // !(OS_NACL | OS_MACOSX)
+    pthread_setname_np(*state_->handle_, thread_name.c_str());
+#endif  // !(OS_NACL | OS_MACOSX)
   }
 }
 

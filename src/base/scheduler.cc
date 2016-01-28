@@ -118,7 +118,7 @@ class QueueTimer final {
   }
 
   void Start() {
-    timer_thread_.Start();
+    timer_thread_.Start("QueueTimer");
   }
 
  private:

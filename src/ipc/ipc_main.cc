@@ -102,12 +102,12 @@ int main(int argc, char **argv) {
     mozc::EchoServer con(FLAGS_server_address, 10, 1000);
     mozc::EchoServerThread server_thread_main(&con);
     server_thread_main.SetJoinable(true);
-    server_thread_main.Start();
+    server_thread_main.Start("IpcMain");
 
     vector<mozc::MultiConnections> cons(FLAGS_num_threads);
     for (size_t i = 0; i < cons.size(); ++i) {
       cons[i].SetJoinable(true);
-      cons[i].Start();
+      cons[i].Start("MultiConnections");
     }
     for (size_t i = 0; i < cons.size(); ++i) {
       cons[i].Join();

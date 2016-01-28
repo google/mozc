@@ -106,7 +106,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
 
   EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
 
-  watchdog.Start();  // start
+  watchdog.Start("SessionWatchDogTest");  // start
 
   mozc::Util::Sleep(100);
   EXPECT_TRUE(watchdog.IsRunning());
@@ -145,7 +145,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
 
   EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
 
-  watchdog.Start();  // start
+  watchdog.Start("SessionWatchDogCPUStatsTest");  // start
 
   mozc::Util::Sleep(100);
   EXPECT_TRUE(watchdog.IsRunning());

@@ -31,6 +31,7 @@
 #define MOZC_BASE_THREAD_H_
 
 #include <memory>
+#include <string>
 
 #include "base/port.h"
 
@@ -45,7 +46,7 @@ class Thread {
 
   virtual void Run() = 0;
 
-  void Start();
+  void Start(const string &thread_name);
   bool IsRunning() const;
   void SetJoinable(bool joinable);
   void Join();

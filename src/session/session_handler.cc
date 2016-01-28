@@ -216,7 +216,7 @@ bool SessionHandler::IsAvailable() const {
 bool SessionHandler::StartWatchDog() {
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   if (!session_watch_dog_->IsRunning()) {
-    session_watch_dog_->Start();
+    session_watch_dog_->Start("WatchDog");
   }
   return session_watch_dog_->IsRunning();
 #else  // MOZC_DISABLE_SESSION_WATCHDOG

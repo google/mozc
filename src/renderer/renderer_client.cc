@@ -125,7 +125,7 @@ class RendererLauncher : public RendererLauncherInterface,
     path_ = path;
     disable_renderer_path_check_ = disable_renderer_path_check;
     ipc_client_factory_interface_ = ipc_client_factory_interface;
-    Thread::Start();
+    Thread::Start("Renderer");
   }
 
   void Run() {

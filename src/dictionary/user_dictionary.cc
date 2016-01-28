@@ -226,7 +226,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
       value_ = value;
       pos_ = pos;
     }
-    Start();
+    Start("UserDictionaryReloader");
   }
 
   // When the user dictionary exists AND the modification time has been updated,
@@ -246,7 +246,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
       return;
     }
     modified_at_ = modification_time;
-    Start();
+    Start("UserDictionaryReloader");
   }
 
   virtual void Run() {

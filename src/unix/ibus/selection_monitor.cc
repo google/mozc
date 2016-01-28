@@ -548,7 +548,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface,
 
   // Implements SelectionMonitorInterface::StartMonitoring.
   virtual void StartMonitoring() {
-    Thread::Start();
+    Thread::Start("SelectionMonitor");
   }
 
   // Implements SelectionMonitorInterface::QueryQuit.

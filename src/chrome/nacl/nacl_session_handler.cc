@@ -438,7 +438,7 @@ class NaclSessionHandlerInstance : public pp::Instance {
 NaclSessionHandlerInstance::NaclSessionHandlerInstance(PP_Instance instance)
     : pp::Instance(instance) {
   mozc_thread_.reset(new MozcSessionHandlerThread(this, &message_queue_));
-  mozc_thread_->Start();
+  mozc_thread_->Start("NaclSessionHandler");
 }
 
 void NaclSessionHandlerInstance::HandleMessage(const pp::Var &var_message) {

@@ -62,7 +62,7 @@ class TestThread : public Thread {
 TEST(ThreadTest, BasicThreadTest) {
   {
     TestThread t(1000);
-    t.Start();
+    t.Start("BasicThreadTest");
     EXPECT_TRUE(t.IsRunning());
     t.Join();
     EXPECT_FALSE(t.IsRunning());
@@ -72,7 +72,7 @@ TEST(ThreadTest, BasicThreadTest) {
   {
     TestThread t(1000);
     t.clear_invoked();
-    t.Start();
+    t.Start("BasicThreadTest");
 
     Util::Sleep(3000);
     EXPECT_FALSE(t.IsRunning());
@@ -82,7 +82,7 @@ TEST(ThreadTest, BasicThreadTest) {
 
   {
     TestThread t(3000);
-    t.Start();
+    t.Start("BasicThreadTest");
     Util::Sleep(1000);
     t.Terminate();
     Util::Sleep(100);
@@ -94,19 +94,19 @@ TEST(ThreadTest, RestartTest) {
   {
     TestThread t(1000);
     t.clear_invoked();
-    t.Start();
+    t.Start("RestartTest");
     EXPECT_TRUE(t.IsRunning());
     t.Join();
     EXPECT_TRUE(t.invoked());
     EXPECT_FALSE(t.IsRunning());
     t.clear_invoked();
-    t.Start();
+    t.Start("RestartTest");
     EXPECT_TRUE(t.IsRunning());
     t.Join();
     EXPECT_TRUE(t.invoked());
     EXPECT_FALSE(t.IsRunning());
     t.clear_invoked();
-    t.Start();
+    t.Start("RestartTest");
     EXPECT_TRUE(t.IsRunning());
     t.Join();
     EXPECT_TRUE(t.invoked());
