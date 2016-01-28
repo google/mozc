@@ -33,7 +33,7 @@
 Typical usage:
 
   % change_reference_mac.py --qtdir=/path/to/qtdir/ \
-      --target=/path/to/target.app/Contents/MacOS/target --branding=Mozc
+      --target=/path/to/target.app/Contents/MacOS/target
 """
 
 __author__ = "horo"
@@ -50,7 +50,6 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--qtdir', dest='qtdir')
   parser.add_option('--target', dest='target')
-  parser.add_option('--branding', dest='branding')
 
   (opts, _) = parser.parse_args()
 
@@ -61,9 +60,9 @@ def GetFrameworkPath(name, version):
   return '%s.framework/Versions/%s/%s' % (name, version, name)
 
 
-def GetReferenceTo(branding, framework):
-  return ('@executable_path/../../../%sTool.app/Contents/Frameworks/%s' %
-          (branding, framework))
+def GetReferenceTo(framework):
+  return ('@executable_path/../../../GuiTool.app/Contents/Frameworks/%s' %
+          framework)
 
 
 def InstallNameTool(target, reference_from, reference_to):
@@ -80,9 +79,6 @@ def main():
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
-  if not opt.branding:
-    PrintErrorAndExit('--branding option is mandatory.')
-
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
@@ -92,27 +88,27 @@ def main():
   qtcore_framework = GetFrameworkPath('QtCore', '4')
   InstallNameTool(target,
                   '%s/lib/%s' % (qtdir, qtcore_framework),
-                  GetReferenceTo(opt.branding, qtcore_framework))
+                  GetReferenceTo(qtcore_framework))
 
   # Changes the reference to QtGui framework from the target application
   qtgui_framework = GetFrameworkPath('QtGui', '4')
   InstallNameTool(target,
                   '%s/lib/%s' % (qtdir, qtgui_framework),
-                  GetReferenceTo(opt.branding, qtgui_framework))
+                  GetReferenceTo(qtgui_framework))
 
   # Change the reference to $(branding)Tool_lib from the target application
   # From: @executable_path/../Frameworks/MozcTool_lib.framework/...
   #   To: @executable_path/../../../MozcTool.app/Contents/Frameworks/...
-  toollib_framework = GetFrameworkPath('%sTool_lib' % opt.branding, 'A')
+  toollib_framework = GetFrameworkPath('GuiTool_lib', 'A')
   InstallNameTool(target,
                   '@executable_path/../Frameworks/%s' % toollib_framework,
-                  GetReferenceTo(opt.branding, toollib_framework))
+                  GetReferenceTo(toollib_framework))
 
   # Change the reference to GoogleBreakpad from the target application
   breakpad_framework = GetFrameworkPath('GoogleBreakpad', 'A')
   InstallNameTool(target,
                   '@executable_path/../Frameworks/%s' % breakpad_framework,
-                  GetReferenceTo(opt.branding, breakpad_framework))
+                  GetReferenceTo(breakpad_framework))
 
 
 if __name__ == '__main__':

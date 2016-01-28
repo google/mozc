@@ -33,7 +33,7 @@
 Typical usage:
 
   % python copy_qt_frameworks.py --qtdir=/path/to/qtdir/ \
-      --target=/path/to/target.app/Contents/Frameworks/ --branding=Mozc
+      --target=/path/to/target.app/Contents/Frameworks/
 """
 
 __author__ = "horo"
@@ -51,7 +51,6 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--qtdir', dest='qtdir')
   parser.add_option('--target', dest='target')
-  parser.add_option('--branding', dest='branding')
 
   (opts, _) = parser.parse_args()
 
@@ -113,17 +112,13 @@ def main():
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
-  if not opt.branding:
-    PrintErrorAndExit('--branding option is mandatory.')
-
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
   CopyQt(qtdir, 'QtCore', '4', target)
   CopyQt(qtdir, 'QtGui', '4', target, copy_resources=True)
 
-  ref_to = ('@executable_path/../../../%sTool.app/Contents/Frameworks' %
-            opt.branding)
+  ref_to = '@executable_path/../../../GuiTool.app/Contents/Frameworks'
   ChangeReferences(qtdir, 'QtCore', '4', target, ref_to)
   ChangeReferences(qtdir, 'QtGui', '4', target, ref_to, references=['QtCore'])
 

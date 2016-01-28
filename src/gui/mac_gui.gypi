@@ -45,7 +45,6 @@
           'action': [
             'python', '../build_tools/change_reference_mac.py',
             '--qtdir', '<(qt_dir)',
-            '--branding', '<(branding)',
             '--target',
             '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
           ],

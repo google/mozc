@@ -313,7 +313,7 @@
                 '<(PRODUCT_DIR)/<(branding)Converter.app',
                 '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
                 '<(PRODUCT_DIR)/<(branding)Renderer.app',
-                '<(PRODUCT_DIR)/<(branding)Tool.app',
+                '<(PRODUCT_DIR)/GuiTool.app',
                 '<(PRODUCT_DIR)/AboutDialog.app',
                 '<(PRODUCT_DIR)/CharacterPalette.app',
                 '<(PRODUCT_DIR)/ConfigDialog.app',

@@ -893,7 +893,7 @@
       'conditions': [
         ['OS=="mac"', {
           'type': 'shared_library',
-          'product_name': '<(branding)Tool_lib',
+          'product_name': 'GuiTool_lib',
           'mac_bundle': 1,
           'xcode_settings': {
             # Ninja uses DYLIB_INSTALL_NAME_BASE to specify
@@ -921,9 +921,8 @@
                   'action': [
                     'python', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
-                    '--branding', '<(branding)',
                     '--target',
-                    '${BUILT_PRODUCTS_DIR}/<(branding)Tool_lib.framework/Versions/A/<(branding)Tool_lib',
+                    '${BUILT_PRODUCTS_DIR}/GuiTool_lib.framework/Versions/A/GuiTool_lib',
                   ],
                 },
               ],
@@ -958,7 +957,7 @@
         ['OS=="mac"', {
           'product_name': '<(product_name)',
           'variables': {
-            'product_name': '<(branding)Tool',
+            'product_name': 'GuiTool',
           },
           'dependencies': [
             'gen_mozc_tool_info_plist',
@@ -967,7 +966,7 @@
             ['use_qt=="YES"', {
               'variables': {
                 'copying_frameworks': [
-                  '<(PRODUCT_DIR)/<(branding)Tool_lib.framework',
+                  '<(PRODUCT_DIR)/GuiTool_lib.framework',
                 ],
               },
               # We include this gypi file here because the variables
@@ -982,7 +981,6 @@
                   'action': [
                     'python', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
-                    '--branding', '<(branding)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
                   ],
@@ -992,7 +990,6 @@
                   'action': [
                     'python', '../build_tools/copy_qt_frameworks_mac.py',
                     '--qtdir', '<(qt_dir)',
-                    '--branding', '<(branding)',
                     '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
                   ],
                 },
