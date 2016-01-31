@@ -36,7 +36,7 @@
           'type': 'none',
           'link_settings': {
             'libraries': [
-              '<!@(<(pkg_config_command) --libs zinnia)',
+              '<!@(pkg-config --libs zinnia)',
             ],
           },
         }, {  # use_libzinnia==0

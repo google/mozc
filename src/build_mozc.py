@@ -151,15 +151,6 @@ def GetGeneratorName(generator):
   return 'ninja'
 
 
-def GetPkgConfigCommand():
-  """Get the pkg-config command name.
-
-  Returns:
-    pkg-config config command name.
-  """
-  return os.environ.get('PKG_CONFIG', 'pkg-config')
-
-
 # TODO(team): Move this to build_tools/util.py
 def PkgExists(*packages):
   """Return if the specified package exists or not.
@@ -171,7 +162,7 @@ def PkgExists(*packages):
     True if the specified package exists.
   """
   try:
-    command_line = [GetPkgConfigCommand(), '--exists']
+    command_line = ['pkg-config', '--exists']
     command_line.extend(packages)
     RunOrDie(command_line)
     return True
@@ -845,16 +836,6 @@ def GypMain(options, unused_args, _):
     gyp_options.extend(['-D', 'use_separate_dictionary=0'])
     gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
     gyp_options.extend(['-D', 'use_packed_dictionary=0'])
-
-  # Specifying pkg-config command.  Some environment (such like
-  # cross-platform ChromeOS build) requires us to call a different
-  # command for pkg-config.  Here we catch the environment variable
-  # and use the specified command instead of actual pkg-config
-  # command.
-  if IsLinux():
-    gyp_options.extend(['-D', 'pkg_config_command=%s' % GetPkgConfigCommand()])
-  else:
-    gyp_options.extend(['-D', 'pkg_config_command='])
 
   if target_platform == 'NaCl':
     if options.nacl_sdk_root:

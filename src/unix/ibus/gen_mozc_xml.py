@@ -138,8 +138,7 @@ def OutputCpp(param_dict, component, engine_common, engines):
 
 def CheckIBusVersion(options, minimum_version):
   """Tests if ibus version is equal to or greater than the given value."""
-  command_line = [options.pkg_config_command, '--exists',
-                  'ibus-1.0 >= %s' % minimum_version]
+  command_line = ['pkg-config', '--exists', 'ibus-1.0 >= %s' % minimum_version]
   return_code = subprocess.call(command_line)
   if return_code == 0:
     return True
@@ -164,9 +163,6 @@ def main():
   parser.add_option('--server_dir', dest='server_dir', default='',
                     help='The absolute directory path to be installed the '
                     'server executable.')
-  parser.add_option('--pkg_config_command', dest='pkg_config_command',
-                    default='pkg-config',
-                    help='The path to pkg-config command.')
   (options, unused_args) = parser.parse_args()
 
   setup_arg = []

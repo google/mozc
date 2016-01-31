@@ -53,14 +53,14 @@
       },
       'all_dependent_settings': {
         'cflags': [
-          '<!@(<(pkg_config_command) --cflags <@(target_libs))',
+          '<!@(pkg-config --cflags <@(target_libs))',
         ],
         'link_settings': {
           'libraries': [
-            '<!@(<(pkg_config_command) --libs-only-l <@(target_libs))',
+            '<!@(pkg-config --libs-only-l <@(target_libs))',
           ],
           'ldflags': [
-            '<!@(<(pkg_config_command) --libs-only-L <@(target_libs))',
+            '<!@(pkg-config --libs-only-L <@(target_libs))',
           ],
         },
       },
@@ -83,7 +83,6 @@
             './gen_mozc_xml.py',
             '--branding=Mozc',
             '--server_dir=<(server_dir)',
-            '--pkg_config_command=<(pkg_config_command)',
             '--ibus_mozc_path=<(ibus_mozc_path)',
             '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
           ],
@@ -287,14 +286,14 @@
           },
           'all_dependent_settings': {
             'cflags': [
-              '<!@(<(pkg_config_command) --cflags <@(target_libs))',
+              '<!@(pkg-config --cflags <@(target_libs))',
             ],
             'link_settings': {
               'libraries': [
-                '<!@(<(pkg_config_command) --libs-only-l <@(target_libs))',
+                '<!@(pkg-config --libs-only-l <@(target_libs))',
               ],
               'ldflags': [
-                '<!@(<(pkg_config_command) --libs-only-L <@(target_libs))',
+                '<!@(pkg-config --libs-only-L <@(target_libs))',
               ],
             },
             'defines': [

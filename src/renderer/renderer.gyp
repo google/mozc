@@ -533,14 +533,14 @@
           },
           'all_dependent_settings': {
             'cflags': [
-              '<!@(<(pkg_config_command) --cflags <@(target_pkgs))',
+              '<!@(pkg-config --cflags <@(target_pkgs))',
             ],
             'link_settings': {
               'libraries': [
-                '<!@(<(pkg_config_command) --libs-only-l <@(target_pkgs))',
+                '<!@(pkg-config --libs-only-l <@(target_pkgs))',
               ],
               'ldflags': [
-                '<!@(<(pkg_config_command) --libs-only-L <@(target_pkgs))',
+                '<!@(pkg-config --libs-only-L <@(target_pkgs))',
               ],
             },
           },

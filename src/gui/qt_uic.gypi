@@ -35,8 +35,8 @@
     'conditions': [
       ['qt_dir', {
         'uic_path': '<(qt_dir)/bin/uic<(EXECUTABLE_SUFFIX)',
-      }, 'pkg_config_command', {
-        'uic_path': '<!(<(pkg_config_command) --variable=uic_location QtGui)',
+      }, 'target_platform=="Linux"', {
+        'uic_path': '<!(pkg-config --variable=uic_location QtGui)',
       }, {
         'uic_path': 'uic<(EXECUTABLE_SUFFIX)',
       }],

@@ -252,11 +252,6 @@
     # enable typing correction.
     'enable_typing_correction%': 0,
 
-    # The pkg-config command to get the cflags/ldflags for Linux
-    # builds.  We make it customizable to allow building in a special
-    # environment such like cross-platform build.
-    'pkg_config_command%': 'pkg-config',
-
     'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
   },
   'target_defaults': {

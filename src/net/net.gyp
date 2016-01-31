@@ -64,17 +64,17 @@
             ['target_platform=="Linux"', {
               # Enable libcurl
               'cflags': [
-                '<!@(<(pkg_config_command) --cflags libcurl)',
+                '<!@(pkg-config --cflags libcurl)',
               ],
               'defines': [
                 'HAVE_CURL=1',
               ],
               'link_settings': {
                 'ldflags': [
-                  '<!@(<(pkg_config_command) --libs-only-L libcurl)',
+                  '<!@(pkg-config --libs-only-L libcurl)',
                 ],
                 'libraries': [
-                  '<!@(<(pkg_config_command) --libs-only-l libcurl)',
+                  '<!@(pkg-config --libs-only-l libcurl)',
                 ],
               },
             }],
