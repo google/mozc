@@ -32,20 +32,14 @@
   'conditions': [['use_qt=="YES"', {
 
   'variables': {
-    'includes': ['qt_vars.gypi'],
     'conditions': [
       ['qt_dir', {
         'rcc_path': '<(qt_dir)/bin/rcc<(EXECUTABLE_SUFFIX)',
+      }, 'pkg_config_command', {
+        # seems that --variable=rcc_location is not supported
+        'rcc_path': '<!(<(pkg_config_command) --variable=exec_prefix QtGui)/bin/rcc',
       }, {
-        'conditions': [
-          ['pkg_config_command', {
-            # seems that --variable=rcc_location is not supported
-            'rcc_path':
-              '<!(<(pkg_config_command) --variable=exec_prefix QtGui)/bin/rcc',
-          }, {
-            'rcc_path': '<(qt_dir_env)/bin/rcc<(EXECUTABLE_SUFFIX)',
-          }],
-        ],
+        'rcc_path': 'rcc<(EXECUTABLE_SUFFIX)',
       }],
     ],
   },

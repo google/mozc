@@ -32,7 +32,6 @@
   'conditions': [['use_qt=="YES"', {
 
   'variables': {
-    'includes': ['qt_vars.gypi'],
     'conditions': [
       ['use_dynamically_linked_qt==1', {
         'libfile_postfix_for_win': '4',
@@ -59,10 +58,6 @@
               ['qt_dir', {
                 'AdditionalLibraryDirectories': [
                   '<(qt_dir)/lib',
-                ],
-              }, {
-                'AdditionalLibraryDirectories': [
-                  '<(qt_dir_env)/lib',
                 ],
               }],
             ],

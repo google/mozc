@@ -35,21 +35,16 @@
   'conditions': [['use_qt=="YES"', {
 
   'variables': {
-    'includes': ['qt_vars.gypi'],
     'conditions': [
       ['qt_dir', {
         'qt_cflags': [],
         'qt_include_dirs': ['<(qt_dir)/include'],
+      }, 'pkg_config_command', {
+        'qt_cflags': ['<!@(<(pkg_config_command) --cflags QtGui QtCore)'],
+        'qt_include_dirs': [],
       }, {
-        'conditions': [
-          ['pkg_config_command', {
-            'qt_cflags': ['<!@(<(pkg_config_command) --cflags QtGui QtCore)'],
-            'qt_include_dirs': [],
-          }, {
-            'qt_cflags': [],
-            'qt_include_dirs': ['<(qt_dir_env)/include'],
-          }],
-        ],
+        'qt_cflags': [],
+        'qt_include_dirs': [],
       }],
     ],
   },
