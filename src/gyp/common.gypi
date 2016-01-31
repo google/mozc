@@ -281,10 +281,6 @@
       'debug_extra_cflags%': ['-O0', '-g'],
     },
     'configurations': {
-      'Common_Base': {
-        # gui/qt_target_defaults.gypi overrides Common_Base.
-        'abstract': 1,
-      },
       'x86_Base': {
         'abstract': 1,
         'msvs_settings': {
@@ -494,24 +490,24 @@
       # Concrete configurations
       #
       'Debug': {
-        'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
+        'inherit_from': ['x86_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
       },
       'Release': {
-        'inherit_from': ['Common_Base', 'x86_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
+        'inherit_from': ['x86_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
       },
       'conditions': [
         ['OS=="win"', {
           'DebugDynamic': {
-            'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Dynamic_Debug_CRT_Base'],
+            'inherit_from': ['x86_Base', 'Debug_Base', 'Win_Dynamic_Debug_CRT_Base'],
           },
           'ReleaseDynamic': {
-            'inherit_from': ['Common_Base', 'x86_Base', 'Release_Base', 'Win_Dynamic_Release_CRT_Base'],
+            'inherit_from': ['x86_Base', 'Release_Base', 'Win_Dynamic_Release_CRT_Base'],
           },
           'Debug_x64': {
-            'inherit_from': ['Common_Base', 'x64_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
+            'inherit_from': ['x64_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
           },
           'Release_x64': {
-            'inherit_from': ['Common_Base', 'x64_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
+            'inherit_from': ['x64_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
           },
         }],
       ],

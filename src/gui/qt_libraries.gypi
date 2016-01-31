@@ -55,7 +55,37 @@
   # TODO(yukawa): Use 'link_settings' so that linker settings can be passed
   #     to executables and loadable modules.
   'conditions': [
-    ['OS=="mac"', {
+    ['qt_dir and target_platform=="Windows"', {
+      'configurations': {
+        'Debug_Base': {
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalLibraryDirectories': [
+                '<(qt_dir)/lib',
+              ],
+              'AdditionalDependencies': [
+                'QtCored4.lib',
+                'QtGuid4.lib',
+              ],
+            },
+          },
+        },
+        'Release_Base': {
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalLibraryDirectories': [
+                '<(qt_dir)/lib',
+              ],
+              'AdditionalDependencies': [
+                'QtCore4.lib',
+                'QtGui4.lib',
+              ],
+            },
+          },
+        },
+      },
+    }],
+    ['target_platform=="Mac"', {
       'conditions': [
         ['qt_dir', {
           # Supposing Qt libraries in qt_dir will be built as static libraries.
@@ -79,7 +109,7 @@
         '$(SDKROOT)/System/Library/Frameworks/Carbon.framework',
       ]
     }],
-    ['OS=="linux"', {
+    ['target_platform=="Linux"', {
       'conditions': [
         ['qt_dir', {
           'libraries': [

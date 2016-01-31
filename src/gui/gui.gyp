@@ -39,9 +39,6 @@
       }],
     ],
   },
-  'includes': [
-    'qt_target_defaults.gypi',
-  ],
   'targets': [
     {
       'target_name': 'gui_base',
