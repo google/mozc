@@ -94,7 +94,7 @@
               '-dQtGuid4DllPath=<(qtguid4_dll_path)',
             ],
           }],
-          ['MSVS_VERSION=="2015" and use_qt=="YES" and use_dynamically_linked_qt==1', {
+          ['MSVS_VERSION=="2015" and use_qt=="YES"', {
             'additional_args': [
               r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
             ],

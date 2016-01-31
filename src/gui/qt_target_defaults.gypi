@@ -31,29 +31,12 @@
 {
   'conditions': [['use_qt=="YES"', {
 
-  'variables': {
-    'conditions': [
-      ['use_dynamically_linked_qt==1', {
-        'libfile_postfix_for_win': '4',
-        'win32_dlls_for_qt': [],
-      }, {  # else
-        'libfile_postfix_for_win': '',
-        'win32_dlls_for_qt': [
-          'winmm.lib',
-          'ws2_32.lib',
-        ],
-      }],
-    ],
-  },
   # MSVS specific settings
   'target_defaults': {
     'configurations': {
       'Common_Base': {
         'msvs_settings': {
           'VCLinkerTool': {
-            'AdditionalDependencies': [
-              '<@(win32_dlls_for_qt)',
-            ],
             'conditions': [
               ['qt_dir', {
                 'AdditionalLibraryDirectories': [
@@ -68,8 +51,8 @@
         'msvs_settings': {
           'VCLinkerTool': {
             'AdditionalDependencies': [
-              'QtCored<(libfile_postfix_for_win).lib',
-              'QtGuid<(libfile_postfix_for_win).lib',
+              'QtCored4.lib',
+              'QtGuid4.lib',
             ],
           },
         },
@@ -78,8 +61,8 @@
         'msvs_settings': {
           'VCLinkerTool': {
             'AdditionalDependencies': [
-              'QtCore<(libfile_postfix_for_win).lib',
-              'QtGui<(libfile_postfix_for_win).lib',
+              'QtCore4.lib',
+              'QtGui4.lib',
             ],
           },
         },

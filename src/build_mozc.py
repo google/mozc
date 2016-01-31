@@ -791,25 +791,6 @@ def GypMain(options, unused_args, _):
   if IsWindows():
     gyp_options.extend(['-G', 'msvs_version=%s' % options.msvs_version])
 
-  # On Windows, we need to determine if <qtdir>/lib/Qt*.lib are import
-  # libraries for Qt DLLs or statically-linked libraries. Here we assume that
-  # Qt*.lib are import libraries when <qtdir>/lib/QtCore.prl contains
-  # 'QT_SHARED' in the definition of 'QMAKE_PRL_DEFINES'.
-  use_dynamically_linked_qt = False
-  if IsWindows() and not options.noqt and options.qtdir:
-    qtcore_prl_path = os.path.join(
-        os.path.abspath(options.qtdir), 'lib', 'QtCore.prl')
-    with open(qtcore_prl_path) as qtcore_prl_file:
-      for line in qtcore_prl_file:
-        if ('QMAKE_PRL_DEFINES' in line) and ('QT_SHARED' in line):
-          use_dynamically_linked_qt = True
-          break
-
-  if use_dynamically_linked_qt:
-    gyp_options.extend(['-D', 'use_dynamically_linked_qt=1'])
-  else:
-    gyp_options.extend(['-D', 'use_dynamically_linked_qt=0'])
-
   if (options.target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
     gyp_options.extend(['-D', 'use_libibus=1'])
@@ -878,16 +859,15 @@ def GypMain(options, unused_args, _):
     out_dir = os.path.join(GetTopLevelSourceDirectoryName(), 'out_win')
     AddPythonPathToEnvironmentFilesForWindows(out_dir)
 
-  # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
-  # and debug symbols into Mozc's build directory. This is important because:
-  # - We can easily back up all the artifacts if relevant product binaries and
-  #   debug symbols are placed at the same place.
-  # - Some post-build tools such as bind.exe can easily look up the dependent
-  #   DLLs (QtCore4.dll and QtQui4.dll in this case).
-  # Perhaps the following code can also be implemented in gyp, but we atopt
-  # this ad hock workaround as a first step.
-  # TODO(yukawa): Implement the following logic in gyp, if magically possible.
-  if use_dynamically_linked_qt:
+    # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
+    # and debug symbols into Mozc's build directory. This is important because:
+    # - We can easily back up all the artifacts if relevant product binaries and
+    #   debug symbols are placed at the same place.
+    # - Some post-build tools such as bind.exe can easily look up the dependent
+    #   DLLs (QtCore4.dll and QtQui4.dll in this case).
+    # Perhaps the following code can also be implemented in gyp, but we atopt
+    # this ad hock workaround as a first step.
+    # TODO(yukawa): Implement the following logic in gyp, if magically possible.
     abs_qtdir = os.path.abspath(options.qtdir)
     abs_qt_bin_dir = os.path.join(abs_qtdir, 'bin')
     abs_qt_lib_dir = os.path.join(abs_qtdir, 'lib')
