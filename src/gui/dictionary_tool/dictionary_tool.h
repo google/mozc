@@ -77,13 +77,7 @@ class DictionaryTool : public QMainWindow,
   // modifications on data before closing the window.
   void closeEvent(QCloseEvent *event);
 
-  void paintEvent(QPaintEvent *event);
-
   bool eventFilter(QObject *obj, QEvent *event);
-
-#ifdef OS_WIN
-  bool winEvent(MSG * message, long * result);
-#endif  // OS_WIN
 
  private slots:
   void CreateDictionary();

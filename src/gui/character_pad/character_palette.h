@@ -84,10 +84,6 @@ class CharacterPalette :  public QMainWindow,
   void itemSelected(const QTableWidgetItem *item);
 
  protected:
-#ifdef OS_WIN
-  bool winEvent(MSG *message, long *result);
-#endif  // OS_WIN
-
   std::unique_ptr<client::ClientInterface> client_;
   bool usage_stats_enabled_;
 

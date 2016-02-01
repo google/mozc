@@ -50,14 +50,6 @@
 
 namespace {
 
-#ifdef OS_WIN
-void InstallStyleSheet(const string &style_sheet) {
-  QFile file(style_sheet.c_str());
-  file.open(QFile::ReadOnly);
-  qApp->setStyleSheet(QLatin1String(file.readAll()));
-}
-#endif  // OS_WIN
-
 enum {
   CHARACTER_PALETTE,
   HAND_WRITING
@@ -100,18 +92,6 @@ int RunCharacterPad(int argc, char *argv[],
   const LONG style = ::GetWindowLong(window->winId(), GWL_EXSTYLE)
                      | WS_EX_NOACTIVATE | WS_EX_APPWINDOW;
   ::SetWindowLong(window->winId(), GWL_EXSTYLE, style);
-
-  // Aero
-  window->setContentsMargins(0, 0, 0, 0);
-  mozc::gui::WinUtil::InstallStyleSheetsFiles(
-      ":character_pad_win_aero_style.qss",
-      ":character_pad_win_style.qss");
-  if (mozc::gui::WinUtil::IsCompositionEnabled()) {
-    mozc::gui::WinUtil::ExtendFrameIntoClientArea(window.get());
-    InstallStyleSheet(":character_pad_win_aero_style.qss");
-  } else {
-    InstallStyleSheet(":character_pad_win_style.qss");
-  }
 #endif
 
   window->show();

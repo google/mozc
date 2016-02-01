@@ -535,17 +535,9 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   InstallStyleSheet(":mac_style.qss");
 #endif
 
-  // for Window Aero Glass support
+  // for Windows-like style
 #ifdef OS_WIN
-  setContentsMargins(0, 0, 0, 0);
-  WinUtil::InstallStyleSheetsFiles(":win_aero_style.qss",
-                                   ":win_style.qss");
-  if (gui::WinUtil::IsCompositionEnabled()) {
-    WinUtil::ExtendFrameIntoClientArea(this);
-    InstallStyleSheet(":win_aero_style.qss");
-  } else {
-    InstallStyleSheet(":win_style.qss");
-  }
+  InstallStyleSheet(":win_style.qss");
 #endif
 
   StartMonitoringUserEdit();
@@ -1598,26 +1590,6 @@ bool DictionaryTool::IsWritableToExport(const string &file_name) {
   }
 }
 
-void DictionaryTool::paintEvent(QPaintEvent *event) {
-#ifdef OS_WIN
-  if (!gui::WinUtil::IsCompositionEnabled()) {
-    return;
-  }
-
-  const QRect message_rect = WinUtil::GetTextRect(this, statusbar_message_);
-  const int kMargin = 2;
-  const int kGlowSize = 10;
-  const QRect rect(QPoint(kMargin,
-                          this->height() - statusbar_->height()),
-                   QPoint(message_rect.width() + kMargin + kGlowSize * 2,
-                          this->height()));
-
-  statusbar_->clearMessage();
-  QPainter painter(this);
-  WinUtil::DrawThemeText(statusbar_message_, rect, kGlowSize, &painter);
-#endif
-}
-
 void DictionaryTool::UpdateUIStatus() {
   const bool is_enable_new_dic =
       dic_list_->count() < session_->mutable_storage()->max_dictionary_size();
@@ -1646,35 +1618,7 @@ void DictionaryTool::UpdateUIStatus() {
     statusbar_message_.clear();
   }
 
-#ifdef OS_WIN
-  if (!gui::WinUtil::IsCompositionEnabled()) {
-    statusbar_->showMessage(statusbar_message_);
-  } else {
-    update();
-  }
-#else
   statusbar_->showMessage(statusbar_message_);
-#endif
 }
-
-#ifdef OS_WIN
-bool DictionaryTool::winEvent(MSG *message, long *result) {
-  if (message != NULL &&
-      message->message == WM_LBUTTONDOWN &&
-      toolbar_->cursor().shape() == Qt::ArrowCursor &&
-      WinUtil::IsCompositionEnabled()) {
-    const QWidget *widget = qApp->widgetAt(
-        mapToGlobal(QPoint(message->lParam & 0xFFFF,
-                           (message->lParam >> 16) & 0xFFFF)));
-    if (widget == statusbar_ || widget == toolbar_) {
-      ::PostMessage(message->hwnd, WM_NCLBUTTONDOWN,
-                    static_cast<WPARAM>(HTCAPTION), message->lParam);
-      return true;
-    }
-  }
-
-  return QWidget::winEvent(message, result);
-}
-#endif
 }  // namespace gui
 }  // namespace mozc

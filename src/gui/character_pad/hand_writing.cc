@@ -301,25 +301,6 @@ void HandWriting::itemSelected(const QListWidgetItem *item) {
   client_->SendCommand(command, &dummy_output);
 }
 
-#ifdef OS_WIN
-bool HandWriting::winEvent(MSG *message, long *result) {
-  if (message != NULL &&
-      message->message == WM_LBUTTONDOWN &&
-      WinUtil::IsCompositionEnabled()) {
-    const QWidget *widget = qApp->widgetAt(
-        mapToGlobal(QPoint(message->lParam & 0xFFFF,
-                           (message->lParam >> 16) & 0xFFFF)));
-    if (widget == centralwidget) {
-      ::PostMessage(message->hwnd, WM_NCLBUTTONDOWN,
-                    static_cast<WPARAM>(HTCAPTION), message->lParam);
-      return true;
-    }
-  }
-
-  return QWidget::winEvent(message, result);
-}
-#endif  // OS_WIN
-
 #ifdef ENABLE_CLOUD_HANDWRITING
 bool HandWriting::TryToEnableCloudHandwriting() {
   if (IsCloudHandwritingAllowed(client_.get())) {
