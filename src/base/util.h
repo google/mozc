@@ -355,7 +355,9 @@ class Util {
 
   // Escape any characters into \x prefixed hex digits.
   // ex.  "ABC" => "\x41\x42\x43".
-  static void Escape(const string &input, string *output);
+  static void Escape(StringPiece input, string *output);
+  static string Escape(StringPiece input);
+  static bool Unescape(StringPiece input, string *output);
 
   // Escape any characters into % prefixed hex digits.
   // ex. "ABC" => "%41%42%43"
@@ -439,13 +441,20 @@ class Util {
     CHARACTER_SET_SIZE,
   };
 
-  // return CharacterSet
+  // Returns CharacterSet.
   static CharacterSet GetCharacterSet(char32 ucs4);
 
-  // return CharacterSet of string.
+  // Returns CharacterSet of string.
   // if the given string contains multiple charasets, return
   // the maximum character set.
   static CharacterSet GetCharacterSet(const string &str);
+
+  // Serializes uint64 into a string of eight byte.
+  static string SerializeUint64(uint64 x);
+
+  // Deserializes a string serialized by SerializeUint64.  Returns false if the
+  // length of s is not eight or s is in an invalid format.
+  static bool DeserializeUint64(StringPiece s, uint64 *x);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(Util);

@@ -147,4 +147,20 @@ void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
 }
 #endif  // MOZC_USE_PEPPER_FILE_IO
 
+// Common implementations.
+
+void InputFileStream::ReadToString(string *s) {
+  seekg(0, end);
+  const size_t size = tellg();
+  seekg(0, beg);
+  s->resize(size);
+  read(&(*s)[0], size);
+}
+
+string InputFileStream::Read() {
+  string s;
+  ReadToString(&s);
+  return s;
+}
+
 }  // namespace mozc

@@ -1,0 +1,78 @@
+// Copyright 2010-2016, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+syntax = "proto2";
+
+package mozc;
+
+// DataSet packs multiple files into one file in the following file format:
+//
+//        File structure           Byte offset
+// +--------------------------+ <- 0
+// | Magic (arbitrary bytes)  |
+// +--------------------------+
+// | Padding 0                |
+// +--------------------------+ <- entries(0).offset()
+// | File data 0              |
+// +--------------------------+ <- entries(0).offset() + entries(0).size()
+// | Padding 1                |
+// +--------------------------+ <- entries(1).offset()
+// | File data 1              |
+// +--------------------------+ <- entries(1).offset() + entries(1).size()
+// |                          |
+// |         ...              |
+// |                          |
+// +--------------------------+ <- FILESIZE - 8 - size(Metadata)
+// | Metadata                 |
+// +--------------------------+ <- FILESIZE - 8
+// | Metadata size (8 bytes)  |
+// +--------------------------+ <- FILESIZE
+//
+// Here, padding N is inserted to align File data N at a desired boundary.
+// Metadata section is the serialized data of the following protocol message:
+message DataSetMetadata {
+  // Entry stores the information necessary to find file contents in the data
+  // set file.
+  message Entry {
+    // Name can be used to search for this file.
+    optional string name = 1;
+
+    // Offset is the position from the beginning of the data set file at which
+    // this file data starts.
+    optional uint64 offset = 2;
+
+    // The byte length of this file data.
+    optional uint64 size = 3;
+
+    // TODO(noriyukit): Add checksum so that data can be verified at runtime.
+  }
+
+  // The entries must be ordered in the same order of data chunks.
+  repeated Entry entries = 1;
+}

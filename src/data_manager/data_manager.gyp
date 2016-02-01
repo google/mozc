@@ -65,5 +65,69 @@
         '../base/base.gyp:base',
       ],
     },
+    {
+      'target_name': 'genproto_dataset_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'dataset.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'dataset_proto',
+      'type': 'static_library',
+      'toolsets': [ 'target', 'host' ],
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/dataset.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_dataset_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_dataset_proto#host',
+      ],
+    },
+    {
+      'target_name': 'dataset_writer',
+      'type': 'static_library',
+      'toolsets': [ 'target', 'host' ],
+      'sources': [
+        'dataset_writer.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dataset_proto',
+      ],
+    },
+    {
+      'target_name': 'dataset_reader',
+      'type': 'static_library',
+      'toolsets': [ 'target', 'host' ],
+      'sources': [
+        'dataset_reader.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dataset_proto',
+      ],
+    },
+    {
+      'target_name': 'dataset_writer_main',
+      'type': 'executable',
+      'toolsets': [ 'host' ],
+      'sources': [
+        'dataset_writer_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dataset_writer',
+        'dataset_proto',
+      ],
+    },
   ],
 }

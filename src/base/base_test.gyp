@@ -392,6 +392,55 @@
         'base.gyp:multifile',
       ],
     },
+    {
+      'target_name': 'gen_embedded_file_test_data',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_embedded_file_test_data',
+          'variables': {
+            'input': 'embedded_file.h',
+            'gen_header_path': '<(gen_out_dir)/embedded_file_test_data.h',
+          },
+          'inputs': [
+            '<(input)',
+          ],
+          'outputs': [
+            '<(gen_header_path)',
+          ],
+          'action': [
+            'python', '../build_tools/embed_file.py',
+            '--input', '<(input)',
+            '--name', 'kEmbeddedFileTestData',
+            '--output', '<(gen_header_path)',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'install_embedded_file_h',
+      'type': 'none',
+      'variables': {
+        # Copy the test data for embedded file test.
+        'test_data_subdir': 'base',
+        'test_data': ['../<(test_data_subdir)/embedded_file.h'],
+      },
+      'includes': [ '../gyp/install_testdata.gypi' ],
+    },
+    {
+      'target_name': 'embedded_file_test',
+      'type': 'executable',
+      'sources': [
+        'embedded_file_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
+        'gen_embedded_file_test_data#host',
+        'install_embedded_file_h',
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',
@@ -402,6 +451,7 @@
         'clock_mock_test',
         'clock_test',
         'config_file_stream_test',
+        'embedded_file_test',
         'encryptor_test',
         'file_util_test',
         'hash_test',

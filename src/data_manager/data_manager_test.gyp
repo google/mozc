@@ -69,6 +69,38 @@
         }],
       ],
     },
+    {
+      'target_name': 'dataset_writer_test',
+      'type': 'executable',
+      'toolsets': [ 'target' ],
+      'sources': [
+        'dataset_writer_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
+        '../testing/testing.gyp:testing',
+        'data_manager.gyp:dataset_proto',
+        'data_manager.gyp:dataset_writer',
+      ],
+    },
+    {
+      'target_name': 'dataset_reader_test',
+      'type': 'executable',
+      'toolsets': [ 'target' ],
+      'sources': [
+        'dataset_reader_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:testing',
+        'data_manager.gyp:dataset_proto',
+        'data_manager.gyp:dataset_reader',
+        'data_manager.gyp:dataset_writer',
+      ],
+    },
   ],
   'conditions': [
     ['use_packed_dictionary==1', {

@@ -1568,6 +1568,32 @@ TEST(UtilTest, Escape) {
   EXPECT_EQ("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0", escaped);
 }
 
+TEST(UtilTest, Unescape) {
+  string unescaped;
+  // "らむだ"
+  EXPECT_TRUE(Util::Unescape("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0",
+                             &unescaped));
+  EXPECT_EQ("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0", unescaped);
+
+  // "Mozc"
+  EXPECT_TRUE(Util::Unescape("\\x4D\\x6F\\x7A\\x63", &unescaped));
+  EXPECT_EQ("Mozc", unescaped);
+
+  // A binary sequence (upper case)
+  EXPECT_TRUE(Util::Unescape("\\x00\\x01\\xEF\\xFF", &unescaped));
+  EXPECT_EQ(string("\x00\x01\xEF\xFF", 4), unescaped);
+
+  // A binary sequence (lower case)
+  EXPECT_TRUE(Util::Unescape("\\x00\\x01\\xef\\xff", &unescaped));
+  EXPECT_EQ(string("\x00\x01\xEF\xFF", 4), unescaped);
+
+  EXPECT_TRUE(Util::Unescape("", &unescaped));
+  EXPECT_TRUE(unescaped.empty());
+
+  EXPECT_FALSE(Util::Unescape("\\AB\\CD\\EFG", &unescaped));
+  EXPECT_FALSE(Util::Unescape("\\01\\XY", &unescaped));
+}
+
 TEST(UtilTest, EscapeUrl) {
   string escaped;
   // "らむだ"
@@ -2456,6 +2482,41 @@ TEST(UtilTest, SplitLastChar32) {
     c = 0;
     EXPECT_FALSE(Util::SplitLastChar32("\xF0\x80\x80\xAF", &rest, &c));
     EXPECT_EQ(0, c);
+  }
+}
+
+TEST(UtilTest, SerializeAndDeserializeUint64) {
+  struct {
+    const char* str;
+    uint64 value;
+  } kCorrectPairs[] = {
+    {"\x00\x00\x00\x00\x00\x00\x00\x00", 0},
+    {"\x00\x00\x00\x00\x00\x00\x00\xFF", kuint8max},
+    {"\x00\x00\x00\x00\x00\x00\xFF\xFF", kuint16max},
+    {"\x00\x00\x00\x00\xFF\xFF\xFF\xFF", kuint32max},
+    {"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", kuint64max},
+    {"\x01\x23\x45\x67\x89\xAB\xCD\xEF", 0x0123456789ABCDEF},
+    {"\xFE\xDC\xBA\x98\x76\x54\x32\x10", 0xFEDCBA9876543210},
+  };
+
+  for (size_t i = 0; i < arraysize(kCorrectPairs); ++i) {
+    const string serialized(kCorrectPairs[i].str, 8);
+    EXPECT_EQ(serialized, Util::SerializeUint64(kCorrectPairs[i].value));
+
+    uint64 v;
+    EXPECT_TRUE(Util::DeserializeUint64(serialized, &v));
+    EXPECT_EQ(kCorrectPairs[i].value, v);
+  }
+
+  // Invalid patterns for DeserializeUint64.
+  const char* kFalseCases[] = {
+    "",
+    "abc",
+    "helloworld",
+  };
+  for (size_t i = 0; i < arraysize(kFalseCases); ++i) {
+    uint64 v;
+    EXPECT_FALSE(Util::DeserializeUint64(kFalseCases[i], &v));
   }
 }
 
