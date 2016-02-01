@@ -32,6 +32,7 @@
 #include <string>
 
 #include "base/file_stream.h"
+#include "base/port.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
@@ -41,12 +42,15 @@ namespace {
 // base/embedded_file.h is embedded as kEmbeddedFileTestData.
 #include "base/embedded_file_test_data.h"
 
+#ifndef OS_NACL
+// NaCl test doesn't support real file system, so currently disabled.
 TEST(EmbeddedFileTest, Basic) {
   const string expected = InputFileStream(
       testing::GetSourceFileOrDie({"base", "embedded_file.h"}).c_str(),
       ios_base::in | ios_base::binary).Read();
   EXPECT_EQ(expected, LoadEmbeddedFile(kEmbeddedFileTestData));
 }
+#endif  // OS_NACL
 
 }  // namespace
 }  // namespace mozc
