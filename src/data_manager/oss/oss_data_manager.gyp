@@ -54,6 +54,9 @@
       '<(platform_data_dir)/reading_correction.tsv',
     ],
     'gen_test_dictionary': 'false',
+    # TODO(noriyukit): This variable is not yet used.
+    # Migrate data format to new one.
+    'magic_number': '',
   },
   # This 'includes' defines the following targets:
   #   - oss_data_manager  (type: static_library)

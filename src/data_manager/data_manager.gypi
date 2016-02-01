@@ -66,10 +66,12 @@
       'dependencies': [
         '<(dataset_tag)_data_manager_base.gyp:<(dataset_tag)_user_pos_manager',
         '<(mozc_dir)/base/base.gyp:base',
+        '<(mozc_dir)/data_manager/data_manager.gyp:dataset_reader',
         '<(mozc_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_dir)/rewriter/rewriter.gyp:embedded_dictionary',
         'gen_<(dataset_tag)_embedded_data#host',
+        'gen_embedded_mozc_dataset_for_<(dataset_tag)#host',
       ],
       'conditions': [
         ['target_platform!="Android"', {
@@ -77,6 +79,79 @@
             '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_rewriter_data.h',
           ]
         }],
+      ],
+      'defines': [
+        'MOZC_DATASET_MAGIC_NUMBER="<(magic_number)"',
+      ],
+    },
+    {
+      'target_name': 'gen_embedded_mozc_dataset_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        'gen_mozc_dataset_for_<(dataset_tag)',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_embedded_mozc_dataset_for_<(dataset_tag)',
+          'variables': {
+            'mozc_data': '<(gen_out_dir)/mozc.data',
+          },
+          'inputs': [
+            '<(mozc_data)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/mozc_data.h',
+          ],
+          'action': [
+            'python', '<(mozc_dir)/build_tools/embed_file.py',
+            '--input=<(gen_out_dir)/mozc.data',
+            '--name=kMozcDataSet',
+            '--output=<(gen_out_dir)/mozc_data.h',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_mozc_dataset_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        '../data_manager.gyp:dataset_writer_main',
+        'gen_separate_connection_data_for_<(dataset_tag)#host',
+        'gen_separate_dictionary_data_for_<(dataset_tag)#host',
+        'gen_separate_collocation_data_for_<(dataset_tag)#host',
+        'gen_separate_collocation_suppression_data_for_<(dataset_tag)#host',
+        'gen_separate_suggestion_filter_data_for_<(dataset_tag)#host',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_mozc_dataset_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(PRODUCT_DIR)/dataset_writer_main<(EXECUTABLE_SUFFIX)',
+            'dictionary': '<(gen_out_dir)/system.dictionary',
+            'connection': '<(gen_out_dir)/connection_data.data',
+            'collocation': '<(gen_out_dir)/collocation_data.data',
+            'collocation_supp': '<(gen_out_dir)/collocation_suppression_data.data',
+            'suggestion_filter': '<(gen_out_dir)/suggestion_filter_data.data',
+          },
+          'inputs': [
+            '<(dictionary)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/mozc.data',
+          ],
+          'action': [
+            '<(generator)',
+            '--magic=<(magic_number)',
+            '--output=<(gen_out_dir)/mozc.data',
+            'coll:32:<(gen_out_dir)/collocation_data.data',
+            'cols:32:<(gen_out_dir)/collocation_suppression_data.data',
+            'conn:32:<(gen_out_dir)/connection_data.data',
+            'dict:32:<(gen_out_dir)/system.dictionary',
+            'sugg:32:<(gen_out_dir)/suggestion_filter_data.data',
+          ],
+        },
       ],
     },
     {
@@ -643,6 +718,40 @@
       ],
     },
     {
+      'target_name': 'gen_separate_collocation_suppression_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        '../../rewriter/rewriter_base.gyp:gen_collocation_suppression_data_main#host',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_separate_collocation_suppression_data',
+          'variables': {
+            'generator' : '<(PRODUCT_DIR)/gen_collocation_suppression_data_main<(EXECUTABLE_SUFFIX)',
+            'input_files%': [
+              '<(platform_data_dir)/collocation_suppression.txt',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/collocation_suppression_data.data',
+          ],
+          'action': [
+            '<(generator)',
+            '--suppression_data=<@(input_files)',
+            '--binary_mode',
+            '--output=<(gen_out_dir)/collocation_suppression_data.data',
+          ],
+          'message': ('[<(dataset_tag)] Generating ' +
+                      '<(gen_out_dir)/collocation_suppression_data.data'),
+        },
+      ],
+    },
+    {
       'target_name': 'gen_embedded_suggestion_filter_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
@@ -673,6 +782,40 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/suggestion_filter_data.h'),
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_suggestion_filter_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        '../../prediction/prediction_base.gyp:gen_suggestion_filter_main#host',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_separate_suggestion_filter_data',
+          'variables': {
+            'generator' : '<(PRODUCT_DIR)/gen_suggestion_filter_main<(EXECUTABLE_SUFFIX)',
+            'input_files%': [
+              '<(platform_data_dir)/suggestion_filter.txt',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/suggestion_filter_data.data',
+          ],
+          'action': [
+            '<(generator)',
+            '--input=<@(input_files)',
+            '--header=false',
+            '--output=<(gen_out_dir)/suggestion_filter_data.data',
+          ],
+          'message': ('[<(dataset_tag)] Generating ' +
+                      '<(gen_out_dir)/suggestion_filter_data.data'),
         },
       ],
     },
