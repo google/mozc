@@ -35,7 +35,7 @@
 #endif  // OS_ANDROID || OS_NACL
 
 #ifdef OS_WIN
-#include <QtGui/QWindowsStyle>
+#include <QtGui/QApplication>
 #include <windows.h>
 #endif
 
@@ -304,10 +304,10 @@ ConfigDialog::ConfigDialog()
   // if the current application is not elevated by UAC,
   // add a shield icon
   if (!mozc::RunLevel::IsElevatedByUAC()) {
-    QWindowsStyle style;
-    QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
-    launchAdministrationDialogButton->setIcon(vista_icon);
-    launchAdministrationDialogButtonForUsageStats->setIcon(vista_icon);
+    const QIcon &vista_shield_icon =
+        QApplication::style()->standardIcon(QStyle::SP_VistaShield);
+    launchAdministrationDialogButton->setIcon(vista_shield_icon);
+    launchAdministrationDialogButtonForUsageStats->setIcon(vista_shield_icon);
   }
 
   usageStatsCheckBox->setDisabled(true);
