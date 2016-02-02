@@ -30,6 +30,10 @@
 #include "gui/config_dialog/roman_table_editor.h"
 
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QMessageBox>
+#endif
 
 #include <cctype>
 #include <memory>

@@ -30,7 +30,11 @@
 #include "gui/config_dialog/combobox_delegate.h"
 
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QComboBox>
+#else
 #include <QtGui/QComboBox>
+#endif
 
 namespace mozc {
 namespace gui {

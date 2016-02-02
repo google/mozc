@@ -29,7 +29,11 @@
 
 #include "gui/base/table_util.h"
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QTableWidget>
+#else
 #include <QtGui/QTableWidget>
+#endif
 
 namespace mozc {
 namespace gui {

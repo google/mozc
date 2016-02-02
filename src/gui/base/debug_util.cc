@@ -31,10 +31,33 @@
 #include "gui/base/debug_util.h"
 
 #include "base/logging.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 namespace gui {
 
+#ifdef MOZC_USE_QT5
+void DebugUtil::MessageHandler(QtMsgType type,
+                               const QMessageLogContext &context,
+                               const QString &q_msg) {
+  QByteArray q_ba = q_msg.toUtf8();
+  const StringPiece msg(q_ba.constData(), q_ba.size());
+  switch (type) {
+    case QtDebugMsg:
+      LOG(INFO) << msg;
+      break;
+    case QtWarningMsg:
+      LOG(WARNING) << msg;
+      break;
+    case QtCriticalMsg:
+      LOG(ERROR) << msg;
+      break;
+    case QtFatalMsg:
+      LOG(FATAL) << msg;
+      break;
+  }
+}
+#else  // ! MOZC_USE_QT5
 void DebugUtil::MessageHandler(QtMsgType type, const char *msg) {
   switch (type) {
     case QtDebugMsg:
@@ -51,6 +74,7 @@ void DebugUtil::MessageHandler(QtMsgType type, const char *msg) {
       break;
   }
 }
+#endif  // ! MOZC_USE_QT5
 
 }  // namespace gui
 }  // namespace mozc

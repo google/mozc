@@ -200,6 +200,14 @@ QString toJapaneseReading(const char *str) {
     return QString::fromUtf8(str);
   }
 }
+
+QString toHtmlEscaped(const QString &text) {
+#ifdef MOZC_USE_QT5
+  return text.toHtmlEscaped();
+#else
+  return Qt::escape(text);
+#endif
+}
 }  // namespace
 
 // static
@@ -208,13 +216,13 @@ QString UnicodeUtil::GetToolTip(const QFont &font, const QString &text) {
       ("<center><span style=\"font-size: 24pt; font-family: %1\">").arg
       (font.family());
 
-  info += Qt::escape(text);
+  info += toHtmlEscaped(text);
   info += "</span></center>";
 
   const QString desc = LookupUnicodeData(text);
   if (!desc.isEmpty()) {
     info += "<center><span>";
-    info += Qt::escape(desc);
+    info += toHtmlEscaped(desc);
     info += "</span></center>";
   }
 
@@ -224,31 +232,31 @@ QString UnicodeUtil::GetToolTip(const QFont &font, const QString &text) {
   if (unihan != NULL) {
     if (unihan->japanese_kun != NULL) {
       info += "<tr><td>" + QObject::tr("Kun Reading") + ":</td><td>";
-      info += Qt::escape(toJapaneseReading(unihan->japanese_kun));
+      info += toHtmlEscaped(toJapaneseReading(unihan->japanese_kun));
       info += "</td></tr>";
     }
     if (unihan->japanese_on != NULL) {
       info += "<tr><td>" + QObject::tr("On Reading") + ":</td><td>";
-      info += Qt::escape(toJapaneseReading(unihan->japanese_on));
+      info += toHtmlEscaped(toJapaneseReading(unihan->japanese_on));
       info += "</td></tr>";
     }
     // Since radical/total_storkes defined in Unihan database are not
     // reliable, we currently don't want to display them.
     // if (unihan->radical != NULL) {
     //   info += "<tr><td>" + QObject::tr("Radical") + ":</td><td>";
-    //   info += Qt::escape(QString::fromUtf8(unihan->radical));
+    //   info += toHtmlEscaped(QString::fromUtf8(unihan->radical));
     //   info += "</td></tr>";
     // }
     // if (unihan->total_strokes > 0) {
     //   QString tmp;
     //   tmp.sprintf("%d", unihan->total_strokes);
     //   info += "<tr><td>" + QObject::tr("Total Strokes") + ":</td><td>";
-    //   info += Qt::escape(tmp);
+    //   info += toHtmlEscaped(tmp);
     //   info += "</td></tr>";
     // }
     if (unihan->IRG_jsource != NULL) {
       info += "<tr><td>" + QObject::tr("Source") + ":</td><td>";
-      info += Qt::escape(QString::fromUtf8(unihan->IRG_jsource));
+      info += toHtmlEscaped(QString::fromUtf8(unihan->IRG_jsource));
       info += "</td></tr>";
     }
   }

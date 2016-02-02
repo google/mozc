@@ -29,7 +29,11 @@
 
 #include "gui/administration_dialog/administration_dialog.h"
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QMessageBox>
+#else
 #include <QtGui/QMessageBox>
+#endif
 #include "base/run_level.h"
 #include "config/stats_config_util.h"
 #include "server/cache_service_manager.h"

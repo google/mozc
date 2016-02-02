@@ -35,11 +35,19 @@
 #endif  // OS_ANDROID || OS_NACL
 
 #ifdef OS_WIN
+#ifdef MOZC_USE_QT5
+#include <QtGui/QGuiApplication>
+#else
 #include <QtGui/QApplication>
+#endif
 #include <windows.h>
 #endif
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QMessageBox>
+#else
 #include <QtGui/QMessageBox>
+#endif
 
 #include <algorithm>
 #include <cstdlib>

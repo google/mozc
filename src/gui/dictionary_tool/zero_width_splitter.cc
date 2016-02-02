@@ -30,7 +30,11 @@
 #include "gui/dictionary_tool/zero_width_splitter.h"
 
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QSplitter>
+#else
 #include <QtGui/QSplitter>
+#endif
 
 void ZeroWidthSplitterHandle::paintEvent(QPaintEvent *event) {
 #ifdef OS_MACOSX

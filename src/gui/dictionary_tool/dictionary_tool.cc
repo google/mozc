@@ -35,7 +35,16 @@
 
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QProgressDialog>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QInputDialog>
+#include <QtWidgets/QShortcut>
+#else
 #include <QtGui/QProgressDialog>
+#endif
 
 #ifdef OS_WIN
 #include <Windows.h>
@@ -388,7 +397,11 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // We fix the row height so that paint() is executed faster.
   // This changes allows DictionaryTool handle about 1M words.
+#ifdef MOZC_USE_QT5
+  dic_content_->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+#else
   dic_content_->verticalHeader()->setResizeMode(QHeaderView::Fixed);
+#endif
   dic_content_->verticalHeader()->setDefaultSectionSize(
       GetTableHeight(dic_content_));
 

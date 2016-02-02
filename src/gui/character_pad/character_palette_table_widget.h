@@ -30,7 +30,11 @@
 #ifndef MOZC_GUI_CHARACTER_PAD_CHARACTER_PALETTE_TABLE_WIDGET_H_
 #define MOZC_GUI_CHARACTER_PAD_CHARACTER_PALETTE_TABLE_WIDGET_H_
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QTableWidget>
+#else
 #include <QtGui/QTableWidget>
+#endif
 
 class QTextCodec;
 class QTableWidgetItem;

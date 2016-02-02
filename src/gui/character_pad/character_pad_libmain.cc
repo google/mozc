@@ -31,7 +31,11 @@
 #include <windows.h>
 #endif
 
+#ifdef MOZC_USE_QT5
+#include <QtGui/QGuiApplication>
+#else
 #include <QtGui/QApplication>
+#endif
 #include <QtCore/QFile>
 
 #include <memory>
@@ -84,14 +88,15 @@ int RunCharacterPad(int argc, char *argv[],
   // Set Top-Most bit:
   //   Use SWP_NOACTIVATE so that the GUI window will not get focus from the
   //   application which is currently active. b/5516521
-  ::SetWindowPos(window->winId(), HWND_TOPMOST, 0, 0, 0, 0,
+  HWND window_handle = reinterpret_cast<HWND>(window->winId());
+  ::SetWindowPos(window_handle, HWND_TOPMOST, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
   // Set WS_EX_NOACTIVATE so that the GUI window will not be activated by mouse
   // click.
-  const LONG style = ::GetWindowLong(window->winId(), GWL_EXSTYLE)
+  const LONG style = ::GetWindowLong(window_handle, GWL_EXSTYLE)
                      | WS_EX_NOACTIVATE | WS_EX_APPWINDOW;
-  ::SetWindowLong(window->winId(), GWL_EXSTYLE, style);
+  ::SetWindowLong(window_handle, GWL_EXSTYLE, style);
 #endif
 
   window->show();
