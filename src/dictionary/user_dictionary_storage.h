@@ -115,18 +115,6 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   //       is kept as is.
   bool Load();
 
-  // Loads user dictionary from the file. Usually, it should be able to
-  // read both files in the older format, whose pos is numbered '3',
-  // and in the newer format, whose pos is numbered '5' in enum format.
-  // Load() declared above handles to fill the gap actually. So in most cases
-  // what clients of this class need is just invoke Load().
-  // However, there are some special cases that a client doesn't want to
-  // fill the gap automatically. For such cases, this class provides the
-  // method to do it.
-  // TODO(hidehiko,peria): Remove this method when we get rid of supporting
-  //   older format in sync.
-  bool LoadWithoutMigration();
-
   // Serialzie user dictionary to local file.
   // Need to call Lock() the dictionary before calling Save().
   bool Save();
@@ -199,16 +187,12 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   static string default_sync_dictionary_name();
 
  private:
-  // Load the data from |file_name_|. This method migrates older file format
-  // based on given flags.
-  bool LoadAndMigrateDictionaries(bool run_migration);
-
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.
   bool IsValidDictionaryName(const string &name);
 
   // Load the data from file_name actually.
-  bool LoadInternal(bool run_migration);
+  bool LoadInternal();
 
   string file_name_;
   bool locked_;

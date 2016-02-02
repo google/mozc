@@ -30,8 +30,6 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_TESTING_UTIL_H_
 #define MOZC_TESTING_BASE_PUBLIC_TESTING_UTIL_H_
 
-#include <string>
-
 #include "base/port.h"
 #include "base/protobuf/message.h"
 #include "testing/base/public/gunit.h"
@@ -110,13 +108,6 @@ template<typename T>
 
 #define EXPECT_PROTO_PEQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::PartiallyEqualsProto, expect, actual)
-
-// Returns serialized string of the given unknown_field_set.
-// The main purpose of this method is to make a test which interact with
-// binary-serialized protocol buffer directly, such as protobuf format
-// change migration.
-string SerializeUnknownFieldSetAsString(
-    const mozc::protobuf::UnknownFieldSet &unknown_field_set);
 
 }  // namespace testing
 }  // namespace mozc

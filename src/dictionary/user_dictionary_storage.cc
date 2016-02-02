@@ -92,7 +92,7 @@ bool UserDictionaryStorage::Exists() const {
   return FileUtil::FileExists(file_name_);
 }
 
-bool UserDictionaryStorage::LoadInternal(bool run_migration) {
+bool UserDictionaryStorage::LoadInternal() {
   InputFileStream ifs(file_name_.c_str(), ios::binary);
   if (!ifs) {
     if (Exists()) {
@@ -123,29 +123,17 @@ bool UserDictionaryStorage::LoadInternal(bool run_migration) {
     }
   }
 
-  // Maybe this is just older file format.
-  // Note that the data in older format can be parsed "successfully,"
-  // so that it is necessary to run migration code from the older format to
-  // the newer format.
-  if (run_migration) {
-    if (!UserDictionaryUtil::ResolveUnknownFieldSet(this)) {
-      LOG(ERROR) << "Failed to resolve older fields.";
-      // Do *NOT* return false even if resolving is somehow failed,
-      // because some entries may get succeeded to be migrated.
-    }
-  }
-
   return true;
 }
 
-bool UserDictionaryStorage::LoadAndMigrateDictionaries(bool run_migration) {
+bool UserDictionaryStorage::Load() {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   bool result = false;
 
   // Check if the user dictionary exists or not.
   if (Exists()) {
-    result = LoadInternal(run_migration);
+    result = LoadInternal();
   } else {
     // This is also an expected scenario: e.g., clean installation, unit tests.
     VLOG(1) << "User dictionary file has not been created.";
@@ -164,42 +152,6 @@ bool UserDictionaryStorage::LoadAndMigrateDictionaries(bool run_migration) {
 
   return result;
 }
-
-namespace {
-
-const bool kRunMigration = true;
-
-}  // namespace
-
-bool UserDictionaryStorage::Load() {
-  return LoadAndMigrateDictionaries(kRunMigration);
-}
-
-bool UserDictionaryStorage::LoadWithoutMigration() {
-  return LoadAndMigrateDictionaries(!kRunMigration);
-}
-
-namespace {
-
-bool SerializeUserDictionaryStorageToOstream(
-    const user_dictionary::UserDictionaryStorage &input_storage,
-    ostream *stream) {
-#ifdef OS_ANDROID
-  // To keep memory usage low, we do not copy the input storage on mobile.
-  // Fortunately, on mobile, we don't need to think about users who re-install
-  // older version after a new version is installed. So, we don't need to
-  // fill the deprecated field here.
-  return input_storage.SerializeToOstream(stream);
-#else
-  // To support backward compatibility, we set deprecated field temporarily.
-  // TODO(hidehiko): remove this after migration.
-  user_dictionary::UserDictionaryStorage storage(input_storage);
-  UserDictionaryUtil::FillDesktopDeprecatedPosField(&storage);
-  return storage.SerializeToOstream(stream);
-#endif  // OS_ANDROID
-}
-
-}  // namespace
 
 bool UserDictionaryStorage::Save() {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
@@ -224,7 +176,7 @@ bool UserDictionaryStorage::Save() {
       return false;
     }
 
-    if (!SerializeUserDictionaryStorageToOstream(*this, &ofs)) {
+    if (!SerializeToOstream(&ofs)) {
       LOG(ERROR) << "SerializeToString failed";
       last_error_type_ = SYNC_FAILURE;
       return false;

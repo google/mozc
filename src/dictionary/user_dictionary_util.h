@@ -139,17 +139,6 @@ class UserDictionaryUtil {
   static user_dictionary::UserDictionary::PosType ToPosType(
       const char *string_pos_type);
 
-  // Tries to resolve the unknown fields in UserDictionary.
-  // This is introduced for the change of protobuf refactoring.
-  static bool ResolveUnknownFieldSet(
-      user_dictionary::UserDictionaryStorage *storage);
-
-  // To keep a way to re-install old stable version (1.5 or earlier),
-  // we temporarily fill the legacy (deprecated) pos field in string format
-  // on desktop version.
-  static void FillDesktopDeprecatedPosField(
-      user_dictionary::UserDictionaryStorage *storage);
-
   // Generates a new dictionary id, i.e. id which is not in the storage.
   static uint64 CreateNewDictionaryId(
       const user_dictionary::UserDictionaryStorage &storage);
