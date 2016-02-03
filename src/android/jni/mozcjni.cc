@@ -119,8 +119,7 @@ void Initialize(
 jbyteArray JNICALL evalCommand(JNIEnv *env,
                                jclass clazz,
                                jbyteArray in_bytes_array) {
-  jboolean is_copy = false;
-  jbyte *in_bytes = env->GetByteArrayElements(in_bytes_array, &is_copy);
+  jbyte *in_bytes = env->GetByteArrayElements(in_bytes_array, nullptr);
   const jsize in_size = env->GetArrayLength(in_bytes_array);
   mozc::commands::Command command;
   command.ParseFromArray(in_bytes, in_size);
@@ -132,7 +131,7 @@ jbyteArray JNICALL evalCommand(JNIEnv *env,
 
   const int out_size = command.ByteSize();
   jbyteArray out_bytes_array = env->NewByteArray(out_size);
-  jbyte *out_bytes = env->GetByteArrayElements(out_bytes_array, &is_copy);
+  jbyte *out_bytes = env->GetByteArrayElements(out_bytes_array, nullptr);
   command.SerializeToArray(out_bytes, out_size);
 
   // Use 0 to copy out_bytes to out_bytes_array.
@@ -150,9 +149,8 @@ void JNICALL onPostLoad(JNIEnv *env,
   g_dictionary_buffer = env->NewGlobalRef(dictionary_buffer);
   g_connection_data_buffer = env->NewGlobalRef(connection_data_buffer);
 
-  jboolean is_copy = JNI_FALSE;
   const char *utf8_user_profile_directory_path =
-      env->GetStringUTFChars(user_profile_directory_path, &is_copy);
+      env->GetStringUTFChars(user_profile_directory_path, nullptr);
 
   JavaVM *vm = NULL;
   env->GetJavaVM(&vm);
@@ -163,10 +161,8 @@ void JNICALL onPostLoad(JNIEnv *env,
       env->GetDirectBufferCapacity(dictionary_buffer),
       env->GetDirectBufferAddress(connection_data_buffer),
       env->GetDirectBufferCapacity(connection_data_buffer));
-  if (is_copy) {
-    env->ReleaseStringUTFChars(user_profile_directory_path,
-                               utf8_user_profile_directory_path);
-  }
+  env->ReleaseStringUTFChars(user_profile_directory_path,
+                             utf8_user_profile_directory_path);
 }
 
 jstring JNICALL getVersion(JNIEnv *env) {
