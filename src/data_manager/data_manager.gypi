@@ -137,7 +137,7 @@
           'variables': {
             'generator': '<(PRODUCT_DIR)/dataset_writer_main<(EXECUTABLE_SUFFIX)',
             'dictionary': '<(gen_out_dir)/system.dictionary',
-            'connection': '<(gen_out_dir)/connection_data.data',
+            'connection': '<(gen_out_dir)/connection.data',
             'collocation': '<(gen_out_dir)/collocation_data.data',
             'collocation_supp': '<(gen_out_dir)/collocation_suppression_data.data',
             'suggestion_filter': '<(gen_out_dir)/suggestion_filter_data.data',
@@ -154,7 +154,7 @@
             '--output=<(gen_out_dir)/<(out_mozc_data)',
             'coll:32:<(gen_out_dir)/collocation_data.data',
             'cols:32:<(gen_out_dir)/collocation_suppression_data.data',
-            'conn:32:<(gen_out_dir)/connection_data.data',
+            'conn:32:<(gen_out_dir)/connection.data',
             'dict:32:<(gen_out_dir)/system.dictionary',
             'sugg:32:<(gen_out_dir)/suggestion_filter_data.data',
           ],
@@ -400,7 +400,7 @@
             '<(special_pos_file)',
           ],
           'outputs': [
-            '<(gen_out_dir)/connection_data.data',
+            '<(gen_out_dir)/connection.data',
           ],
           'action': [
             'python', '<(mozc_dir)/data_manager/gen_connection_data.py',
@@ -418,7 +418,7 @@
             '<(use_1byte_cost_flag)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/connection_data.data'),
+                      '<(gen_out_dir)/connection.data'),
         },
       ],
     },

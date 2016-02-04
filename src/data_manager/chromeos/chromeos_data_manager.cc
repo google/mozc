@@ -30,6 +30,7 @@
 #include "data_manager/chromeos/chromeos_data_manager.h"
 #include "data_manager/chromeos/chromeos_data_manager_factory.h"
 
+#include "base/embedded_file.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -56,37 +57,41 @@ void DeleteDataManager(const DataManagerInterface *data_manager) {
 }
 
 namespace {
+
+// kCrosMozcDataSet is defined.
+#include "data_manager/chromeos/cros_mozc_data.h"
+
+#ifndef MOZC_DATASET_MAGIC_NUMBER
+#error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"
+#endif  // MOZC_DATASET_MAGIC_NUMBER
+
+const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
+
 // kLidGroup[] is defined in the following automatically generated header file.
 #include "data_manager/chromeos/pos_group_data.h"
 }  // namespace
+
+ChromeOsDataManager::ChromeOsDataManager() {
+  const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
+  CHECK(manager_.InitFromArray(LoadEmbeddedFile(kCrosMozcDataSet), magic))
+      << "Embedded cros_mozc_data.h is broken";
+}
+
+ChromeOsDataManager::~ChromeOsDataManager() = default;
 
 const uint8 *ChromeOsDataManager::GetPosGroupData() const {
   DCHECK(kLidGroup != NULL);
   return kLidGroup;
 }
 
-namespace {
-// Automatically generated header containing the definitions of
-// kConnectionData_data and kConnectionData_size.
-#include "data_manager/chromeos/embedded_connection_data.h"
-}  // namespace
-
 void ChromeOsDataManager::GetConnectorData(const char **data,
                                            size_t *size) const {
-  *data = kConnectionData_data;
-  *size = kConnectionData_size;
+  manager_.GetConnectorData(data, size);
 }
-
-namespace {
-// Automatically generated header containing the definitions of
-// kDictionaryData_data[] and kDictionaryData_size.
-#include "data_manager/chromeos/embedded_dictionary_data.h"
-}  // namespace
 
 void ChromeOsDataManager::GetSystemDictionaryData(
     const char **data, int *size) const {
-  *data = kDictionaryData_data;
-  *size = kDictionaryData_size;
+  manager_.GetSystemDictionaryData(data, size);
 }
 
 namespace {
@@ -132,36 +137,19 @@ void ChromeOsDataManager::GetReadingCorrectionData(
   *size = arraysize(kReadingCorrections);
 }
 
-namespace {
-// Include CollocationData::kExistenceData and
-// CollocationData::kExistenceFilter_size.
-#include "data_manager/chromeos/embedded_collocation_data.h"
-// Include CollocationSuppressionData::kExistenceFilter_data and
-// CollocationSuppressionData::kExistenceFilter_size.
-#include "data_manager/chromeos/embedded_collocation_suppression_data.h"
-}  // namespace
-
 void ChromeOsDataManager::GetCollocationData(const char **array,
                                              size_t *size) const {
-  *array = CollocationData::kExistenceFilter_data;
-  *size = CollocationData::kExistenceFilter_size;
+  manager_.GetCollocationData(array, size);
 }
 
 void ChromeOsDataManager::GetCollocationSuppressionData(const char **array,
                                                         size_t *size) const {
-  *array = CollocationSuppressionData::kExistenceFilter_data;
-  *size = CollocationSuppressionData::kExistenceFilter_size;
+  manager_.GetCollocationSuppressionData(array, size);
 }
-
-namespace {
-// Include kSuggestionFilterData_data and kSuggestionFilterData_size.
-#include "data_manager/chromeos/suggestion_filter_data.h"
-}  // namespace
 
 void ChromeOsDataManager::GetSuggestionFilterData(const char **data,
                                                   size_t *size) const {
-  *data = kSuggestionFilterData_data;
-  *size = kSuggestionFilterData_size;
+  manager_.GetSuggestionFilterData(data, size);
 }
 
 namespace {

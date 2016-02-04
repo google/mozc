@@ -29,6 +29,7 @@
 
 #include "data_manager/testing/mock_data_manager.h"
 
+#include "base/embedded_file.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "converter/boundary_struct.h"
@@ -44,39 +45,43 @@ using mozc::dictionary::SuffixToken;
 
 namespace mozc {
 namespace testing {
-
 namespace {
+
+// EmbeddedFile kMockMozcDataSet is defined in this header file.
+#include "data_manager/testing/mock_mozc_data.h"
+
+#ifndef MOZC_DATASET_MAGIC_NUMBER
+#error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"
+#endif  // MOZC_DATASET_MAGIC_NUMBER
+
+const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
+
 // kLidGroup[] is defined in the following automatically generated header file.
 #include "data_manager/testing/pos_group_data.h"
+
 }  // namespace
+
+MockDataManager::MockDataManager() {
+  const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
+  CHECK(manager_.InitFromArray(LoadEmbeddedFile(kMockMozcDataSet), magic))
+      << "Embedded mock_mozc_data.h is broken";
+}
+
+MockDataManager::~MockDataManager() = default;
 
 const uint8 *MockDataManager::GetPosGroupData() const {
   DCHECK(kLidGroup != NULL);
   return kLidGroup;
 }
 
-namespace {
-// Automatically generated header containing the definitions of
-// kConnectionData_data and kConnectionData_size. We don't embed it when
-// connection data is supplied from outside.
-#include "data_manager/testing/embedded_connection_data.h"
-}  // namespace
-
-void MockDataManager::GetConnectorData(const char **data, size_t *size) const {
-  *data = kConnectionData_data;
-  *size = kConnectionData_size;
+void MockDataManager::GetConnectorData(const char **data,
+                                       size_t *size) const {
+  manager_.GetConnectorData(data, size);
 }
 
-namespace {
-// Automatically generated header containing the definitions of
-// kDictionaryData_data[] and kDictionaryData_size.
-#include "data_manager/testing/embedded_dictionary_data.h"
-}  // namespace
-
-void MockDataManager::GetSystemDictionaryData(
-    const char **data, int *size) const {
-  *data = kDictionaryData_data;
-  *size = kDictionaryData_size;
+void MockDataManager::GetSystemDictionaryData(const char **data,
+                                              int *size) const {
+  manager_.GetSystemDictionaryData(data, size);
 }
 
 namespace {
@@ -122,36 +127,19 @@ void MockDataManager::GetReadingCorrectionData(
   *size = arraysize(kReadingCorrections);
 }
 
-namespace {
-// Include CollocationData::kExistenceFilter_data and
-// CollocationData::kExistenceFilter_size.
-#include "data_manager/testing/embedded_collocation_data.h"
-// Include CollocationSuppressionData::kExistenceFilter_data and
-// CollocationSuppressionData::kExistenceFilter_size.
-#include "data_manager/testing/embedded_collocation_suppression_data.h"
-}  // namespace
-
 void MockDataManager::GetCollocationData(const char **array,
                                          size_t *size) const {
-  *array = CollocationData::kExistenceFilter_data;
-  *size = CollocationData::kExistenceFilter_size;
+  manager_.GetCollocationData(array, size);
 }
 
 void MockDataManager::GetCollocationSuppressionData(const char **array,
                                                     size_t *size) const {
-  *array = CollocationSuppressionData::kExistenceFilter_data;
-  *size = CollocationSuppressionData::kExistenceFilter_size;
+  manager_.GetCollocationSuppressionData(array, size);
 }
-
-namespace {
-// Include kSuggestionFilterData_data and kSuggestionFilterData_size.
-#include "data_manager/testing/suggestion_filter_data.h"
-}  // namespace
 
 void MockDataManager::GetSuggestionFilterData(const char **data,
                                               size_t *size) const {
-  *data = kSuggestionFilterData_data;
-  *size = kSuggestionFilterData_size;
+  manager_.GetSuggestionFilterData(data, size);
 }
 
 namespace {

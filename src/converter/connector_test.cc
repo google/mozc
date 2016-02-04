@@ -52,7 +52,7 @@ struct ConnectionDataEntry {
 // Disabled on NaCl since it uses a mock file system.
 TEST(ConnectorTest, CompareWithRawData) {
   const string path = testing::GetSourceFileOrDie({
-      "data_manager", "testing", "connection_data.data"});
+      "data_manager", "testing", "connection.data"});
   Mmap cmmap;
   ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
   std::unique_ptr<Connector> connector(

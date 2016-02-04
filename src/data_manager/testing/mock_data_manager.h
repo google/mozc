@@ -31,6 +31,7 @@
 #define MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 
 #include "base/port.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
 
 namespace mozc {
@@ -38,8 +39,8 @@ namespace testing {
 
 class MockDataManager : public MockUserPosManager {
  public:
-  MockDataManager() {}
-  virtual ~MockDataManager() {}
+  MockDataManager();
+  virtual ~MockDataManager();
 
   virtual const uint8 *GetPosGroupData() const;
   virtual void GetConnectorData(const char **data, size_t *size) const;
@@ -70,6 +71,7 @@ class MockDataManager : public MockUserPosManager {
                                            size_t *size) const;
 
  private:
+  DataManager manager_;
   DISALLOW_COPY_AND_ASSIGN(MockDataManager);
 };
 

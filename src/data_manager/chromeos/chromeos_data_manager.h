@@ -32,14 +32,15 @@
 
 #include "base/port.h"
 #include "data_manager/chromeos/chromeos_user_pos_manager.h"
+#include "data_manager/data_manager.h"
 
 namespace mozc {
 namespace chromeos {
 
 class ChromeOsDataManager : public ChromeOsUserPosManager {
  public:
-  ChromeOsDataManager() {}
-  virtual ~ChromeOsDataManager() {}
+  ChromeOsDataManager();
+  virtual ~ChromeOsDataManager();
 
   virtual const uint8 *GetPosGroupData() const;
   virtual void GetConnectorData(const char **data, size_t *size) const;
@@ -70,6 +71,7 @@ class ChromeOsDataManager : public ChromeOsUserPosManager {
                                            size_t *size) const;
 
  private:
+  DataManager manager_;
   DISALLOW_COPY_AND_ASSIGN(ChromeOsDataManager);
 };
 
