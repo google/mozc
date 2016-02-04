@@ -48,6 +48,12 @@
 # - dictionary_files: A list of dictionary source files.
 # - gen_test_dictionary: 'true' or 'false'. When 'true', generate test
 #       dictionary with test POS data.
+# - magic_number: Magic number to be embedded in a data set file.
+# - out_mozc_data: Output file name for mozc data set.
+# - out_mozc_data_header: Output C++ header file of the embedded version of
+#       mozc data set file.
+# - mozc_data_vername: C++ variable name for the embedded mozc data set file.
+#       This variable is defined in out_mozc_data_header.
 {
   'targets': [
     {
@@ -66,6 +72,7 @@
       'dependencies': [
         '<(dataset_tag)_data_manager_base.gyp:<(dataset_tag)_user_pos_manager',
         '<(mozc_dir)/base/base.gyp:base',
+        '<(mozc_dir)/data_manager/data_manager.gyp:data_manager',
         '<(mozc_dir)/data_manager/data_manager.gyp:dataset_reader',
         '<(mozc_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
@@ -95,19 +102,19 @@
         {
           'action_name': 'gen_embedded_mozc_dataset_for_<(dataset_tag)',
           'variables': {
-            'mozc_data': '<(gen_out_dir)/mozc.data',
+            'mozc_data': '<(gen_out_dir)/<(out_mozc_data)',
           },
           'inputs': [
             '<(mozc_data)',
           ],
           'outputs': [
-            '<(gen_out_dir)/mozc_data.h',
+            '<(gen_out_dir)/<(out_mozc_data_header)',
           ],
           'action': [
             'python', '<(mozc_dir)/build_tools/embed_file.py',
-            '--input=<(gen_out_dir)/mozc.data',
-            '--name=kMozcDataSet',
-            '--output=<(gen_out_dir)/mozc_data.h',
+            '--input=<(gen_out_dir)/<(out_mozc_data)',
+            '--name=<(mozc_data_varname)',
+            '--output=<(gen_out_dir)/<(out_mozc_data_header)',
           ],
         },
       ],
@@ -139,12 +146,12 @@
             '<(dictionary)',
           ],
           'outputs': [
-            '<(gen_out_dir)/mozc.data',
+            '<(gen_out_dir)/<(out_mozc_data)',
           ],
           'action': [
             '<(generator)',
             '--magic=<(magic_number)',
-            '--output=<(gen_out_dir)/mozc.data',
+            '--output=<(gen_out_dir)/<(out_mozc_data)',
             'coll:32:<(gen_out_dir)/collocation_data.data',
             'cols:32:<(gen_out_dir)/collocation_suppression_data.data',
             'conn:32:<(gen_out_dir)/connection_data.data',
@@ -426,6 +433,7 @@
         'additional_inputs%': [],
         'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
         'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
+        'gen_test_dictionary_flag': '<(gen_test_dictionary)',
       },
       'actions': [
         {
@@ -444,6 +452,7 @@
             '<(generator)',
             '--input=<(input_files)',
             '--output=<(gen_out_dir)/system.dictionary',
+            '--gen_test_dictionary=<(gen_test_dictionary_flag)',
           ],
           'message': 'Generating <(gen_out_dir)/system.dictionary.',
         },

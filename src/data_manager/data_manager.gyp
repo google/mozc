@@ -34,6 +34,18 @@
   },
   'targets': [
     {
+      'target_name': 'data_manager',
+      'type': 'static_library',
+      'toolsets': [ 'target', 'host' ],
+      'sources': [
+        'data_manager.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dataset_reader',
+      ],
+    },
+    {
       'target_name': 'user_pos_manager',
       'type': 'none',
       'toolsets': [ 'target', 'host' ],
