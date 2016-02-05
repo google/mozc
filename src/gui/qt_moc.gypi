@@ -33,10 +33,10 @@
 
   'variables': {
     'conditions': [
-      ['qt_dir', {
-        'moc_path': '<(qt_dir)/bin/moc<(EXECUTABLE_SUFFIX)',
-      }, 'target_platform=="Linux"', {
+      ['target_platform=="Linux"', {
         'moc_path': '<!(pkg-config --variable=moc_location QtGui)',
+      }, 'qt_dir', {
+        'moc_path': '<(qt_dir)/bin/moc<(EXECUTABLE_SUFFIX)',
       }, {
         'moc_path': 'moc<(EXECUTABLE_SUFFIX)',
       }],

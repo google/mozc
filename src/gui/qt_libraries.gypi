@@ -36,12 +36,12 @@
 
   'variables': {
     'conditions': [
-      ['qt_dir', {
-        'qt_cflags': [],
-        'qt_include_dirs': ['<(qt_dir)/include'],
-      }, 'target_platform=="Linux"', {
+      ['target_platform=="Linux"', {
         'qt_cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
         'qt_include_dirs': [],
+      }, 'qt_dir', {
+        'qt_cflags': [],
+        'qt_include_dirs': ['<(qt_dir)/include'],
       }, {
         'qt_cflags': [],
         'qt_include_dirs': [],
@@ -110,28 +110,8 @@
       ]
     }],
     ['target_platform=="Linux"', {
-      'conditions': [
-        ['qt_dir', {
-          'libraries': [
-            '-L<(qt_dir)/lib',
-            '-lQtGui',
-            '-lQtCore',
-            # Supposing Qt libraries in qt_dir will be built as static libraries
-            # without support of pkg-config, we need to list all the
-            # dependencies of QtGui.
-            # See http://doc.qt.nokia.com/4.7/requirements-x11.html
-            # pthread library is removed because it must not be specific to Qt.
-            '<!@(pkg-config --libs-only-L --libs-only-l'
-            ' xrender xrandr xcursor xfixes xinerama fontconfig freetype2'
-            ' xi xt xext x11'
-            ' sm ice'
-            ' gobject-2.0)',
-          ],
-        }, {
-          'libraries': [
-            '<!@(pkg-config --libs QtGui QtCore)',
-          ],
-        }],
+      'libraries': [
+        '<!@(pkg-config --libs QtGui QtCore)',
       ],
     }],
     # Workarounds related with clang.

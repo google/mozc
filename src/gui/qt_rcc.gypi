@@ -33,11 +33,11 @@
 
   'variables': {
     'conditions': [
-      ['qt_dir', {
-        'rcc_path': '<(qt_dir)/bin/rcc<(EXECUTABLE_SUFFIX)',
-      }, 'target_platform=="Linux"', {
+      ['target_platform=="Linux"', {
         # seems that --variable=rcc_location is not supported
         'rcc_path': '<!(pkg-config --variable=exec_prefix QtGui)/bin/rcc',
+      }, 'qt_dir', {
+        'rcc_path': '<(qt_dir)/bin/rcc<(EXECUTABLE_SUFFIX)',
       }, {
         'rcc_path': 'rcc<(EXECUTABLE_SUFFIX)',
       }],

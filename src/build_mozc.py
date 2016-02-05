@@ -339,9 +339,6 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--gypdir', dest='gypdir',
                     help='Specifies the location of GYP to be used.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
-  parser.add_option('--qtdir', dest='qtdir',
-                    default=os.getenv('QTDIR', None),
-                    help='Qt base directory to be used.')
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
@@ -451,6 +448,11 @@ def ParseGypOptions(args=None, values=None):
     # as follows.
     parser.add_option('--msvs_version', dest='msvs_version', default='2013',
                       help='Specifies the target MSVS version.')
+
+  if IsWindows() or IsMac():
+    parser.add_option('--qtdir', dest='qtdir',
+                      default=os.getenv('QTDIR', None),
+                      help='Qt base directory to be used.')
 
   return parser.parse_args(args, values)
 
@@ -673,19 +675,23 @@ def GypMain(options, unused_args, _):
 
   if options.noqt or target_platform in ['Android', 'NaCl']:
     gyp_options.extend(['-D', 'use_qt=NO'])
-  else:
-    if options.target_platform == 'Linux' and not options.qtdir:
-      # Check if Qt libraries are installed.
-      system_qt_found = PkgExists('QtCore >= 4.0', 'QtCore < 5.0',
-                                  'QtGui >= 4.0', 'QtGui < 5.0')
-      if not system_qt_found:
-        PrintErrorAndExit('Qt4 is required to build GUI Tool. '
-                          'Specify --noqt to skip building GUI Tool.')
-    gyp_options.extend(['-D', 'use_qt=YES'])
-  if options.qtdir:
-    gyp_options.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
-  else:
     gyp_options.extend(['-D', 'qt_dir='])
+  elif options.target_platform == 'Linux':
+    gyp_options.extend(['-D', 'use_qt=YES'])
+    gyp_options.extend(['-D', 'qt_dir='])
+
+    # Check if Qt libraries are installed.
+    system_qt_found = PkgExists('QtCore >= 4.0', 'QtCore < 5.0',
+                                'QtGui >= 4.0', 'QtGui < 5.0')
+    if not system_qt_found:
+      PrintErrorAndExit('Qt4 is required to build GUI Tool. '
+                        'Specify --noqt to skip building GUI Tool.')
+  else:
+    gyp_options.extend(['-D', 'use_qt=YES'])
+    if options.qtdir:
+      gyp_options.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
+    else:
+      gyp_options.extend(['-D', 'qt_dir='])
 
   if options.target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
