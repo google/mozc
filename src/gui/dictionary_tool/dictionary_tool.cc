@@ -119,14 +119,6 @@ QProgressDialog *CreateProgressDialog(
   return progress;
 }
 
-#if defined(OS_WIN) || defined(OS_MACOSX)
-void InstallStyleSheet(const QString &filename) {
-  QFile file(filename);
-  file.open(QFile::ReadOnly);
-  qApp->setStyleSheet(QLatin1String(file.readAll()));
-}
-#endif
-
 // Use QTextStream to read UTF16 text -- we can't use ifstream,
 // since ifstream cannot handle Wide character.
 class UTF16TextLineIterator
@@ -371,9 +363,14 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   setContextMenuPolicy(Qt::NoContextMenu);
 
   // toolbar
+  toolbar_->setFloatable(false);
+  toolbar_->setMovable(false);
   dic_menu_button_ = new QPushButton(tr("Tools"), this);
+  dic_menu_button_->setFlat(true);
   new_word_button_ = new QPushButton(tr("Add"), this);
+  new_word_button_->setFlat(true);
   delete_word_button_ = new QPushButton(tr("Remove"), this);
+  delete_word_button_->setFlat(true);
   toolbar_->addWidget(dic_menu_button_);
   toolbar_->addWidget(new_word_button_);
   toolbar_->addWidget(delete_word_button_);
@@ -545,12 +542,6 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   // for Mac-like style
 #ifdef OS_MACOSX
   setUnifiedTitleAndToolBarOnMac(true);
-  InstallStyleSheet(":mac_style.qss");
-#endif
-
-  // for Windows-like style
-#ifdef OS_WIN
-  InstallStyleSheet(":win_style.qss");
 #endif
 
   StartMonitoringUserEdit();
