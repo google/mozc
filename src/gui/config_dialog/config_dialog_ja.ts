@@ -227,7 +227,7 @@
     <message>
         <location filename="config_dialog.ui" line="446"/>
         <source>Emoji conversion</source>
-        <translation>Unicode 6 絵文字変換</translation>
+        <translation>Unicode 絵文字変換</translation>
     </message>
     <message>
         <location filename="config_dialog.ui" line="465"/>
