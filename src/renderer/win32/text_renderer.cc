@@ -321,23 +321,12 @@ class DirectWriteTextRenderer : public TextRenderer {
     if (FAILED(hr)) {
       return nullptr;
     }
-    const auto kernel32 = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-    const auto get_user_default_locale_name =
-        reinterpret_cast<GetUserDefaultLocaleNamePtr>(
-            ::GetProcAddress(kernel32, "GetUserDefaultLocaleName"));
-    if (get_user_default_locale_name == nullptr) {
-      return nullptr;
-    }
-    return new DirectWriteTextRenderer(
-        d2d_factory, dwrite_factory, interop, get_user_default_locale_name);
+    return new DirectWriteTextRenderer(d2d_factory, dwrite_factory, interop);
   }
   virtual ~DirectWriteTextRenderer() {
   }
 
  private:
-  typedef int (WINAPI *GetUserDefaultLocaleNamePtr)(LPWSTR locale_name,
-                                                    int locale_name_buffer_len);
-
   typedef HRESULT (WINAPI *D2D1CreateFactoryPtr)(
       D2D1_FACTORY_TYPE factory_type,
       const IID &iid,
@@ -352,12 +341,10 @@ class DirectWriteTextRenderer : public TextRenderer {
   DirectWriteTextRenderer(
       ID2D1Factory *d2d2_factory,
       IDWriteFactory *dwrite_factory,
-      IDWriteGdiInterop *dwrite_interop,
-      GetUserDefaultLocaleNamePtr get_user_default_locale_name)
+      IDWriteGdiInterop *dwrite_interop)
       : d2d2_factory_(d2d2_factory),
         dwrite_factory_(dwrite_factory),
-        dwrite_interop_(dwrite_interop),
-        get_user_default_locale_name_(get_user_default_locale_name) {
+        dwrite_interop_(dwrite_interop) {
     OnThemeChanged();
   }
 
@@ -530,7 +517,7 @@ class DirectWriteTextRenderer : public TextRenderer {
     }
 
     wchar_t locale_name[LOCALE_NAME_MAX_LENGTH] = {};
-    if (get_user_default_locale_name_(locale_name, arraysize(locale_name))
+    if (::GetUserDefaultLocaleName(locale_name, arraysize(locale_name))
         == 0) {
       return nullptr;
     }
@@ -573,7 +560,6 @@ class DirectWriteTextRenderer : public TextRenderer {
   mutable CComPtr<ID2D1DCRenderTarget> dc_render_target_;
   CComPtr<IDWriteGdiInterop> dwrite_interop_;
   vector<RenderInfo> render_info_;
-  GetUserDefaultLocaleNamePtr get_user_default_locale_name_;
 
   DISALLOW_COPY_AND_ASSIGN(DirectWriteTextRenderer);
 };

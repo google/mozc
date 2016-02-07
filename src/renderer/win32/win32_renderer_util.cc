@@ -35,6 +35,7 @@
 #include <atlapp.h>
 #include <atlgdi.h>
 #include <atlmisc.h>
+#include <winuser.h>
 
 #include <algorithm>
 #include <limits>
@@ -43,6 +44,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
 #include "protocol/renderer_command.pb.h"
@@ -661,7 +663,8 @@ class NativeWorkingAreaAPI : public WorkingAreaInterface {
 class NativeWindowPositionAPI : public WindowPositionInterface {
  public:
   NativeWindowPositionAPI()
-    : logical_to_physical_point_(GetLogicalToPhysicalPoint()) {
+      : logical_to_physical_point_for_per_monitor_dpi_(
+            GetLogicalToPhysicalPointForPerMonitorDPI()) {
   }
 
   virtual ~NativeWindowPositionAPI() {}
@@ -676,13 +679,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     if (!::IsWindow(window_handle)) {
       return false;
     }
-    if (logical_to_physical_point_ == NULL) {
-      // In Windows XP, LogicalToPhysicalPoint API is not available.
-      // In this case, we simply returns the specified coordinate and returns
-      // true.
-      *physical_coordinate = logical_coordinate;
-      return true;
-    }
+
     // The attached window is likely to be a child window but only root
     // windows are fully supported by LogicalToPhysicalPoint API.  Using
     // root window handle instead of target window handle is likely to make
@@ -700,8 +697,21 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     // coordinates to a DPI-aware process and convert them to physical screen
     // coordinates by LogicalToPhysicalPoint API.
     *physical_coordinate = logical_coordinate;
-    return logical_to_physical_point_(root_window_handle,
-                                      physical_coordinate) != FALSE;
+
+    // Despite its name, LogicalToPhysicalPoint API no longer converts
+    // coordinates on Windows 8.1 and later. We must use
+    // LogicalToPhysicalPointForPerMonitorDPI API instead when it is available.
+    // See http://go.microsoft.com/fwlink/?LinkID=307061
+    if (SystemUtil::IsWindows8_1OrLater()) {
+      if (logical_to_physical_point_for_per_monitor_dpi_ == nullptr) {
+        return false;
+      }
+      return logical_to_physical_point_for_per_monitor_dpi_(
+          root_window_handle, physical_coordinate) != FALSE;
+    }
+    // On Windows 8 and prior, it's OK to rely on LogicalToPhysicalPoint API.
+    return ::LogicalToPhysicalPoint(
+        root_window_handle, physical_coordinate) != FALSE;
   }
 
   // This method is not const to implement Win32WindowInterface.
@@ -749,33 +759,26 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   }
 
  private:
-  typedef BOOL (WINAPI *FPLogicalToPhysicalPoint)(HWND window_handle,
-                                                  POINT *point);
-  static FPLogicalToPhysicalPoint GetLogicalToPhysicalPoint() {
-    // LogicalToPhysicalPoint API is available in Vista or later.
+  typedef BOOL (WINAPI *LogicalToPhysicalPointForPerMonitorDPIFunc)(
+      HWND window_handle, POINT *point);
+  static LogicalToPhysicalPointForPerMonitorDPIFunc
+  GetLogicalToPhysicalPointForPerMonitorDPI() {
+    // LogicalToPhysicalPointForPerMonitorDPI API is available on Windows 8.1
+    // and later.
+    if (!SystemUtil::IsWindows8_1OrLater()) {
+      return nullptr;
+    }
+
     const HMODULE module = WinUtil::GetSystemModuleHandle(L"user32.dll");
     if (module == nullptr) {
       return nullptr;
     }
-    // Despite its name, LogicalToPhysicalPoint API no longer converts
-    // coordinates on Windows 8.1 and later. We must use
-    // LogicalToPhysicalPointForPerMonitorDPI API instead when it is available.
-    // See http://go.microsoft.com/fwlink/?LinkID=307061
-    void *function = ::GetProcAddress(
-        module, "LogicalToPhysicalPointForPerMonitorDPI");
-    if (function == nullptr) {
-      // When LogicalToPhysicalPointForPerMonitorDPI API does not exist but
-      // LogicalToPhysicalPoint API exists, LogicalToPhysicalPoint works fine.
-      // This is the case on Windows Vista, Windows 7 and Windows 8.
-      function = ::GetProcAddress(module, "LogicalToPhysicalPoint");
-      if (function == nullptr) {
-        return nullptr;
-      }
-    }
-    return reinterpret_cast<FPLogicalToPhysicalPoint>(function);
+    return reinterpret_cast<LogicalToPhysicalPointForPerMonitorDPIFunc>(
+        ::GetProcAddress(module, "LogicalToPhysicalPointForPerMonitorDPI"));
   }
 
-  FPLogicalToPhysicalPoint logical_to_physical_point_;
+  const LogicalToPhysicalPointForPerMonitorDPIFunc
+  logical_to_physical_point_for_per_monitor_dpi_;
 
   DISALLOW_COPY_AND_ASSIGN(NativeWindowPositionAPI);
 };

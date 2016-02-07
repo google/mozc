@@ -445,19 +445,6 @@ bool WinUtil::GetNtPath(const wstring &dos_path, wstring *nt_path) {
 
   nt_path->clear();
 
-  typedef DWORD (WINAPI *GetFinalPathNameByHandleWFunc)(
-      __in HANDLE file,
-      __out wchar_t *buffer,
-      __in DWORD buffer_num_chars,
-      __in DWORD flags);
-  GetFinalPathNameByHandleWFunc get_final_path_name_by_handle =
-      reinterpret_cast<GetFinalPathNameByHandleWFunc>(
-          ::GetProcAddress(WinUtil::GetSystemModuleHandle(L"kernel32.dll"),
-                           "GetFinalPathNameByHandleW"));
-  if (get_final_path_name_by_handle == nullptr) {
-    return false;
-  }
-
   ScopedHandle file_handle(::CreateFileW(
       dos_path.c_str(), 0,
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -472,7 +459,7 @@ bool WinUtil::GetNtPath(const wstring &dos_path, wstring *nt_path) {
   const size_t kMaxPath = 4096;
   unique_ptr<wchar_t[]> ntpath_buffer(
       new wchar_t[kMaxPath]);
-  const DWORD copied_len_without_null = get_final_path_name_by_handle(
+  const DWORD copied_len_without_null = ::GetFinalPathNameByHandleW(
       file_handle.get(),
       ntpath_buffer.get(),
       kMaxPath,
