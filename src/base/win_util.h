@@ -76,13 +76,10 @@ class WinUtil {
   // implicit link.
   static bool IsDLLSynchronizationHeld(bool *lock_held);
 
-  // Returns true if |lhs| and |rhs| are treated as the same string by the OS.
-  // This function internally uses CompareStringOrdinal, or
-  // RtlCompareUnicodeString as a fallback, or _wcsicmp_l with LANG "English"
-  // as a final fallback, as Michael Kaplan recommended in his blog.
-  // http://blogs.msdn.com/b/michkap/archive/2007/09/14/4900107.aspx
-  // See the comment and implementation of Win32EqualString, NativeEqualString
-  // and CrtEqualString for details.
+  // Compares |lhs| with |rhs| by CompareStringOrdinal API and returns the
+  // result.  If |ignore_case| is true, this function uses system upper-case
+  // table for case-insensitive equality like Win32 path names or registry
+  // names.
   // Although this function ignores the rest part of given string when NUL
   // character is found, you should not pass such a string in principle.
   static bool SystemEqualString(
@@ -154,37 +151,6 @@ class WinUtil {
   static bool IsProcessSandboxed();
 
  private:
-  // Compares |lhs| with |rhs| by CompareStringOrdinal and returns the result
-  // in |are_equal|.  If |ignore_case| is true, this function uses system
-  // upper-case table for case-insensitive equality like Win32 path names or
-  // registry names.
-  // Returns false if CompareStringOrdinal is not available.
-  // http://msdn.microsoft.com/en-us/library/ff561854.aspx
-  static bool Win32EqualString(const wstring &lhs, const wstring &rhs,
-                               bool ignore_case, bool *are_equal);
-
-  // Compares |lhs| with |rhs| by RtlEqualUnicodeString and returns the result
-  // in |are_equal|.
-  // Returns false if RtlEqualUnicodeString is not available.
-  // http://msdn.microsoft.com/en-us/library/ff561854.aspx
-  static bool NativeEqualString(const wstring &lhs, const wstring &rhs,
-                                bool ignore_case, bool *are_equal);
-
-  // Compares |lhs| with |rhs| by CRT functions and returns the result
-  // in |are_equal|.  Note that this function internally uses _wcsicmp_l
-  // with LANG "English" to check the case-insensitive equality if
-  // |ignore_case| is true.  Unfortunately, _wcsicmp_l with LANG "English" is
-  // not compatible with CompareStringOrdinal/RtlEqualUnicodeString in terms of
-  // U+03C2 (GREEK SMALL LETTER FINAL SIGMA) and U+03A3 (GREEK CAPITAL LETTER
-  // SIGMA).  See the following article for details.
-  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-  static void CrtEqualString(const wstring &lhs, const wstring &rhs,
-                             bool ignore_case, bool *are_equal);
-
-  FRIEND_TEST(WinUtilTest, Win32EqualStringTest);
-  FRIEND_TEST(WinUtilTest, NativeEqualStringTest);
-  FRIEND_TEST(WinUtilTest, CrtEqualStringTest);
-
   DISALLOW_IMPLICIT_CONSTRUCTORS(WinUtil);
 };
 

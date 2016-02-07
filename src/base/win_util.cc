@@ -172,84 +172,8 @@ bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   return true;
 }
 
-bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,
-                               bool ignore_case, bool *are_equal) {
-  const int compare_result = ::CompareStringOrdinal(
-      lhs.c_str(), lhs.size(), rhs.c_str(), rhs.size(),
-      (ignore_case ? TRUE : FALSE));
-
-  if (are_equal != nullptr) {
-    *are_equal = (compare_result == CSTR_EQUAL);
-  }
-
-  return true;
-}
-
-bool WinUtil::NativeEqualString(const wstring &lhs, const wstring &rhs,
-                                bool ignore_case, bool *are_equal) {
-  // http://msdn.microsoft.com/en-us/library/ff561854.aspx
-  typedef BOOLEAN (NTAPI *FPRtlEqualUnicodeString)(
-      __in PCUNICODE_STRING String1,
-      __in PCUNICODE_STRING String2,
-      __in BOOLEAN CaseInSensitive);
-
-  const HMODULE ntdll = GetSystemModuleHandle(L"ntdll.dll");
-  if (ntdll == nullptr) {
-    LOG(ERROR) << "GetSystemModuleHandle failed";
-    return false;
-  }
-
-  const FPRtlEqualUnicodeString rtl_equal_unicode_string =
-      reinterpret_cast<FPRtlEqualUnicodeString>(
-          ::GetProcAddress(ntdll, "RtlEqualUnicodeString"));
-  if (rtl_equal_unicode_string == nullptr) {
-    return false;
-  }
-
-  const UNICODE_STRING lhs_string = {
-    lhs.size(),                     // Length
-    lhs.size() + sizeof(wchar_t),   // MaximumLength
-    const_cast<PWSTR>(lhs.c_str())  // Buffer
-  };
-  const UNICODE_STRING rhs_string = {
-    rhs.size(),                     // Length
-    rhs.size() + sizeof(wchar_t),   // MaximumLength
-    const_cast<PWSTR>(rhs.c_str())  // Buffer
-  };
-  const BOOL compare_result = rtl_equal_unicode_string(
-    &lhs_string, &rhs_string, (ignore_case ? TRUE : FALSE));
-
-  if (are_equal != nullptr) {
-    *are_equal = (compare_result != FALSE);
-  }
-
-  return true;
-}
-
-void WinUtil::CrtEqualString(const wstring &lhs, const wstring &rhs,
-                             bool ignore_case, bool *are_equal) {
-  if (are_equal == nullptr) {
-    return;
-  }
-
-  if (!ignore_case) {
-    DCHECK_NE(nullptr, are_equal);
-    *are_equal = (rhs == lhs);
-    return;
-  }
-
-  const _locale_t locale_id = _create_locale(LC_ALL, "English");
-  const int compare_result = _wcsicmp_l(lhs.c_str(), rhs.c_str(), locale_id);
-  _free_locale(locale_id);
-
-  DCHECK_NE(nullptr, are_equal);
-  *are_equal = (compare_result == 0);
-}
-
 bool WinUtil::SystemEqualString(
       const wstring &lhs, const wstring &rhs, bool ignore_case) {
-  bool are_equal = false;
-
   // We assume a string instance never contains NUL character in principle.
   // So we will raise an error to notify the unexpected situation in debug
   // builds.  In production, however, we will admit such an instance and
@@ -263,19 +187,12 @@ bool WinUtil::SystemEqualString(
   const wstring &lhs_null_trimmed = lhs.substr(0, lhs_null_pos);
   const wstring &rhs_null_trimmed = rhs.substr(0, rhs_null_pos);
 
-  if (Win32EqualString(
-          lhs_null_trimmed, rhs_null_trimmed, ignore_case, &are_equal)) {
-    return are_equal;
-  }
+  const int compare_result = ::CompareStringOrdinal(
+      lhs_null_trimmed.data(), lhs_null_trimmed.size(),
+      rhs_null_trimmed.data(), rhs_null_trimmed.size(),
+      (ignore_case ? TRUE : FALSE));
 
-  if (NativeEqualString(
-          lhs_null_trimmed, rhs_null_trimmed, ignore_case, &are_equal)) {
-    return are_equal;
-  }
-
-  CrtEqualString(lhs_null_trimmed, rhs_null_trimmed, ignore_case, &are_equal);
-
-  return are_equal;
+  return compare_result == CSTR_EQUAL;
 }
 
 bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
