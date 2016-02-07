@@ -83,13 +83,11 @@
               'debug_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC140_DebugCRT_x86.msm',
               'release_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC140_CRT_x86.msm',
             }],
-            ['qt_dir and use_qt=="YES"', {
+            ['use_qt=="YES"', {
               'qtcore4_dll_path': '<(qt_dir)/bin/QtCore4.dll',
               'qtcored4_dll_path': '<(qt_dir)/bin/QtCored4.dll',
               'qtgui4_dll_path': '<(qt_dir)/bin/QtGui4.dll',
               'qtguid4_dll_path': '<(qt_dir)/bin/QtGuid4.dll',
-            }],
-            ['use_qt=="YES"', {
               'mozc_zinnia_model_data_path': '<(DEPTH)/third_party/zinnia/tomoe/handwriting-light-ja.model',
             }],
           ],
