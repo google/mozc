@@ -33,7 +33,6 @@
 //
 #define IDS_FORMAT_VERSION_INFO         103
 #define IDS_UNEXPECTED_ERROR            104
-#define IDS_UNSUPPORTED_PLATFORM        105
 #define IDS_FORMAT_FUNCTION_AND_LINE    106
 
 // Next default values for new objects

@@ -121,12 +121,6 @@ class SystemUtil {
   static bool EnsureVitalImmutableDataIsAvailable();
 #endif  // OS_WIN
 
-  // Return true if the OS is supported.
-  // [OS_MACOSX] This function never returns false.
-  // [OS_LINUX, OS_ANDROID, OS_NACL] This function never returns false.
-  // TODO(yukawa): support Mac and Linux.
-  static bool IsPlatformSupported();
-
   // returns true if the version of Windows is 6.1 or later.
   static bool IsWindows7OrLater();
 

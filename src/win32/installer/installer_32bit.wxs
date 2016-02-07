@@ -87,6 +87,11 @@
         InstallerVersion='405' InstallPrivileges='elevated'
         Compressed='yes'/>
 
+    <Condition
+        Message='Google 日本語入力をインストールするには Windows 7 Service Pack 1、Windows 8、Windows 8.1、または Windows 10 のいずれかにアップグレードする必要があります。'>
+      ((VersionNT = 601) AND (ServicePackLevel &gt;= 1)) OR (VersionNT &gt; 601)
+    </Condition>
+
     <!-- Check if the user have the administrative privileges. -->
     <Condition
         Message='Google 日本語入力をインストールするには管理者権限が必要です。'>

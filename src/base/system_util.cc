@@ -687,59 +687,6 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
 }
 #endif  // OS_WIN
 
-bool SystemUtil::IsPlatformSupported() {
-#if defined(OS_MACOSX)
-  // TODO(yukawa): support Mac.
-  return true;
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
-  // TODO(yukawa): support Linux.
-  return true;
-#elif defined(OS_WIN)
-  // Sometimes we suffer from version lie of GetVersion(Ex) such as
-  // http://b/2430094
-  // This is why we use VerifyVersionInfo here instead of GetVersion(Ex).
-
-  // You can find a table of version number for each version of Windows in
-  // the following page.
-  // http://msdn.microsoft.com/en-us/library/ms724833.aspx
-  {
-    // Windows 7 <= |OSVERSION|: supported
-    OSVERSIONINFOEX osvi = {};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 1;
-    DWORDLONG conditional = 0;
-    VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-    const DWORD typemask = VER_MAJORVERSION | VER_MINORVERSION;
-    if (::VerifyVersionInfo(&osvi, typemask, conditional) != 0) {
-      return true;  // supported
-    }
-  }
-  {
-    // Windows Vista SP2 <= |OSVERSION| < Windows 7: supported
-    OSVERSIONINFOEX osvi = {};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 0;
-    osvi.wServicePackMajor = 2;
-    DWORDLONG conditional = 0;
-    VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-    const DWORD typemask = VER_MAJORVERSION | VER_MINORVERSION |
-                           VER_SERVICEPACKMAJOR;
-    if (::VerifyVersionInfo(&osvi, typemask, conditional) != 0) {
-      return true;  // supported
-    }
-  }
-  // |OSVERSION| < Windows Vista SP2: not supported
-  return false;  // not support
-#else  // !OS_LINUX && !OS_MACOSX && !OS_WIN
-#error "Unsupported platform".
-#endif  // OS_LINUX, OS_MACOSX, OS_WIN
-}
-
 bool SystemUtil::IsWindows7OrLater() {
 #ifdef OS_WIN
   static const bool result = ::IsWindows7OrGreater();
