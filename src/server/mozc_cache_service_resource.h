@@ -30,7 +30,7 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by TextService_template.rc
-//
+// CAUTION: Update installer_{32,64}bit.wxs when you change the following IDs.
 #define IDS_DISPLAYNAME 100
 #define IDS_DESCRIPTION 101
 

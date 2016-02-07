@@ -309,22 +309,22 @@
                   Checksum='yes' Source='$(var.MozcCacheService32Path)'
                   Vital='yes' KeyPath='yes' />
               <!--
-                Localized description of a Win32 service is not supported until
-                Windows Vista.
+                To use localized description, set Description as follows:
+                  Description='@[#GoogleIMEJaCacheService.exe],-N'
+                where N is the resource ID for the description.
                 http://msdn.microsoft.com/en-us/library/ms685156.aspx
-                To use localized description in Vista or later,
-                set Description like this:
-                  Description='@[#GoogleIMEJaCacheService.exe],-100'
-                where 100 is the resource ID for the description.
 
-                Parameters 'Name', 'DisplayName', 'Description' have to be
-                synced manually to the ones defined in cache_manager.
+                See server/mozc_cache_service_resource.h for resource IDs
+                used below.
+
+                The servie name specified in 'Name' needs to be the same to
+                |mozc::kMozcCacheServiceName| defined in base/const.h.
                 TODO(yukawa): Share these parameters. http://b/2357270
               -->
               <ServiceInstall Id='GoogleIMEJaCacheService'
                   Name='GoogleIMEJaCacheService'
-                  DisplayName='Google Japanese Input Cache Service'
-                  Description='Google 日本語入力 の辞書を常に物理メモリに配置し、変換を高速化します。停止しても日本語入力はできますが、パフォーマンスが低下する場合があります。'
+                  DisplayName='@[#GoogleIMEJaCacheService.exe],-100'
+                  Description='@[#GoogleIMEJaCacheService.exe],-101'
                   Type='ownProcess' Start='auto' ErrorControl='normal' />
               <!--
                 The following entry which stops our cache service both on
