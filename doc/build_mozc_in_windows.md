@@ -3,7 +3,7 @@ How to build Mozc in Windows
 
 # System Requirements
 
-64-bit Windows is required to build Mozc for Windows. Mozc itself is expected to work on Windows Vista SP2 and later, including 32-bit Windows.
+64-bit Windows is required to build Mozc for Windows. Mozc itself is expected to work on Windows 7 and later, including 32-bit Windows.
 
 # Software Requirements
 
