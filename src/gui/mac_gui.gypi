@@ -35,6 +35,11 @@
       'sources': [
         'tool/mozc_tool_main.cc',
       ],
+      'conditions': [
+        ['qt_ver==5', {
+          'mac_bundle_resources': ['../data/mac/qt.conf'],
+        }],
+      ],
       'dependencies': [
         'gen_mozc_tool_info_plist',
         'mozc_tool_lib',
@@ -44,6 +49,7 @@
           'postbuild_name': 'Change the reference to frameworks',
           'action': [
             'python', '../build_tools/change_reference_mac.py',
+            '--qtver', '<(qt_ver)',
             '--qtdir', '<(qt_dir)',
             '--target',
             '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',

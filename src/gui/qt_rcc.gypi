@@ -34,8 +34,14 @@
   'variables': {
     'conditions': [
       ['target_platform=="Linux"', {
-        # seems that --variable=rcc_location is not supported
-        'rcc_path': '<!(pkg-config --variable=exec_prefix QtGui)/bin/rcc',
+        'conditions': [
+          ['qt_ver==5', {
+            'rcc_path': '<!(pkg-config --variable=host_bins Qt5Core)/rcc',
+          }, {
+            # seems that --variable=rcc_location is not supported
+            'rcc_path': '<!(pkg-config --variable=exec_prefix QtGui)/bin/rcc',
+          }],
+        ],
       }, 'qt_dir', {
         'rcc_path': '<(qt_dir)/bin/rcc<(EXECUTABLE_SUFFIX)',
       }, {

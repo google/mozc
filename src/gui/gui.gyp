@@ -917,6 +917,7 @@
                   'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
                     'python', '../build_tools/change_reference_mac.py',
+                    '--qtver', '<(qt_ver)',
                     '--qtdir', '<(qt_dir)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/GuiTool_lib.framework/Versions/A/GuiTool_lib',
@@ -966,6 +967,11 @@
                   '<(PRODUCT_DIR)/GuiTool_lib.framework',
                 ],
               },
+              'conditions': [
+                ['qt_ver==5', {
+                  'mac_bundle_resources': ['../data/mac/qt.conf'],
+                }],
+              ],
               # We include this gypi file here because the variables
               # in a condition cannot be refferred from the gypi file
               # included outside from the condition.
@@ -977,6 +983,7 @@
                   'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
                     'python', '../build_tools/change_reference_mac.py',
+                    '--qtver', '<(qt_ver)',
                     '--qtdir', '<(qt_dir)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
@@ -986,6 +993,7 @@
                   'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
                   'action': [
                     'python', '../build_tools/copy_qt_frameworks_mac.py',
+                    '--qtver', '<(qt_ver)',
                     '--qtdir', '<(qt_dir)',
                     '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
                   ],

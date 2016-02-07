@@ -37,8 +37,15 @@
   'variables': {
     'conditions': [
       ['target_platform=="Linux"', {
-        'qt_cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
-        'qt_include_dirs': [],
+        'conditions': [
+          ['qt_ver==5', {
+            'qt_cflags': ['<!@(pkg-config --cflags Qt5Widgets Qt5Gui Qt5Core)'],
+            'qt_include_dirs': [],
+          }, {
+            'qt_cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
+            'qt_include_dirs': [],
+          }],
+        ],
       }, 'qt_dir', {
         'qt_cflags': [],
         'qt_include_dirs': ['<(qt_dir)/include'],
@@ -63,9 +70,19 @@
               'AdditionalLibraryDirectories': [
                 '<(qt_dir)/lib',
               ],
-              'AdditionalDependencies': [
-                'QtCored4.lib',
-                'QtGuid4.lib',
+              'conditions': [
+                ['qt_ver==5', {
+                  'AdditionalDependencies': [
+                    'Qt5Cored.lib',
+                    'Qt5Guid.lib',
+                    'Qt5Widgetsd.lib',
+                  ],
+                }, {
+                  'AdditionalDependencies': [
+                    'QtCored4.lib',
+                    'QtGuid4.lib',
+                  ],
+                }],
               ],
             },
           },
@@ -76,9 +93,19 @@
               'AdditionalLibraryDirectories': [
                 '<(qt_dir)/lib',
               ],
-              'AdditionalDependencies': [
-                'QtCore4.lib',
-                'QtGui4.lib',
+              'conditions': [
+                ['qt_ver==5', {
+                  'AdditionalDependencies': [
+                    'Qt5Core.lib',
+                    'Qt5Gui.lib',
+                    'Qt5Widgets.lib',
+                  ],
+                }, {
+                  'AdditionalDependencies': [
+                    'QtCore4.lib',
+                    'QtGui4.lib',
+                  ],
+                }],
               ],
             },
           },
@@ -98,9 +125,19 @@
             'mac_framework_dirs': [
               '<(qt_dir)/lib',
             ],
-            'libraries': [
-              '<(qt_dir)/lib/QtCore.framework',
-              '<(qt_dir)/lib/QtGui.framework',
+            'conditions': [
+              ['qt_ver==5', {
+                'libraries': [
+                  '<(qt_dir)/lib/QtCore.framework',
+                  '<(qt_dir)/lib/QtGui.framework',
+                  '<(qt_dir)/lib/QtWidgets.framework',
+                ]
+              }, {
+                'libraries': [
+                  '<(qt_dir)/lib/QtCore.framework',
+                  '<(qt_dir)/lib/QtGui.framework',
+                ]
+              }],
             ],
           },
         }],
@@ -110,8 +147,16 @@
       ]
     }],
     ['target_platform=="Linux"', {
-      'libraries': [
-        '<!@(pkg-config --libs QtGui QtCore)',
+      'conditions': [
+        ['qt_ver==5', {
+          'libraries': [
+            '<!@(pkg-config --libs Qt5Widgets Qt5Gui Qt5Core)',
+          ],
+        }, {
+          'libraries': [
+            '<!@(pkg-config --libs QtGui QtCore)',
+          ],
+        }],
       ],
     }],
     # Workarounds related with clang.

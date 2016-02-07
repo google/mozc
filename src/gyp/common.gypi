@@ -597,6 +597,9 @@
       ['enable_unittest==1', {
         'defines': ['MOZC_ENABLE_UNITTEST'],
       }],
+      ['qt_ver==5', {
+        'defines': ['MOZC_USE_QT5'],
+      }],
       ['OS=="win"', {
         'variables': {
           'wtl_dir': '<(additional_third_party_dir)/wtl',

@@ -339,6 +339,7 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--gypdir', dest='gypdir',
                     help='Specifies the location of GYP to be used.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
+  parser.add_option('--qtver', dest='qtver', choices=('4', '5'), default='4')
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
@@ -488,6 +489,7 @@ def ExpandMetaTarget(options, meta_target_name):
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:DiskImage']
   elif target_platform == 'Windows':
+    # TODO(yukawa, komatsu): Support Qt5
     targets = ['out_win/%s:mozc_win32_build32' % options.configuration]
     build_dir = os.path.abspath(os.path.join(
         GetBuildBaseName(options, target_platform),
@@ -673,6 +675,7 @@ def GypMain(options, unused_args, _):
   if options.branding:
     gyp_options.extend(['-D', 'branding=%s' % options.branding])
 
+  # Qt configurations
   if options.noqt or target_platform in ['Android', 'NaCl']:
     gyp_options.extend(['-D', 'use_qt=NO'])
     gyp_options.extend(['-D', 'qt_dir='])
@@ -681,17 +684,22 @@ def GypMain(options, unused_args, _):
     gyp_options.extend(['-D', 'qt_dir='])
 
     # Check if Qt libraries are installed.
-    system_qt_found = PkgExists('QtCore >= 4.0', 'QtCore < 5.0',
-                                'QtGui >= 4.0', 'QtGui < 5.0')
+    if options.qtver == '5':
+      system_qt_found = PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets')
+    else:
+      system_qt_found = PkgExists('QtCore >= 4.0', 'QtCore < 5.0',
+                                  'QtGui >= 4.0', 'QtGui < 5.0')
     if not system_qt_found:
-      PrintErrorAndExit('Qt4 is required to build GUI Tool. '
+      PrintErrorAndExit('Qt is required to build GUI Tool. '
                         'Specify --noqt to skip building GUI Tool.')
+
   else:
     gyp_options.extend(['-D', 'use_qt=YES'])
     if options.qtdir:
       gyp_options.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
     else:
       gyp_options.extend(['-D', 'qt_dir='])
+  gyp_options.extend(['-D', 'qt_ver=%s' % options.qtver])
 
   if options.target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
