@@ -41,7 +41,6 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/win_util.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 
@@ -283,25 +282,9 @@ class GdiTextRenderer : public TextRenderer {
 class DirectWriteTextRenderer : public TextRenderer {
  public:
   static DirectWriteTextRenderer *Create() {
-    const auto d2d1 = WinUtil::LoadSystemLibrary(L"d2d1.dll");
-    const auto d2d1_create_factory  =
-        reinterpret_cast<D2D1CreateFactoryPtr>(
-            ::GetProcAddress(d2d1, "D2D1CreateFactory"));
-    if (d2d1_create_factory == nullptr) {
-      return nullptr;
-    }
-
-    const auto dwrite = WinUtil::LoadSystemLibrary(L"dwrite.dll");
-    const auto dwrite_create_factory  =
-        reinterpret_cast<DWriteCreateFactoryPtr>(
-            ::GetProcAddress(dwrite, "DWriteCreateFactory"));
-    if (dwrite_create_factory == nullptr) {
-      return nullptr;
-    }
-
     HRESULT hr = S_OK;
     CComPtr<ID2D1Factory> d2d_factory;
-    hr = d2d1_create_factory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
+    hr = ::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
                              __uuidof(ID2D1Factory),
                              nullptr,
                              reinterpret_cast<void **>(&d2d_factory));
@@ -309,7 +292,7 @@ class DirectWriteTextRenderer : public TextRenderer {
       return nullptr;
     }
     CComPtr<IDWriteFactory> dwrite_factory;
-    hr = dwrite_create_factory(
+    hr = ::DWriteCreateFactory(
         DWRITE_FACTORY_TYPE_SHARED,
         __uuidof(IDWriteFactory),
         reinterpret_cast<IUnknown **>(&dwrite_factory));
@@ -327,17 +310,6 @@ class DirectWriteTextRenderer : public TextRenderer {
   }
 
  private:
-  typedef HRESULT (WINAPI *D2D1CreateFactoryPtr)(
-      D2D1_FACTORY_TYPE factory_type,
-      const IID &iid,
-      const D2D1_FACTORY_OPTIONS *factory_options,
-      void **factory);
-
-  typedef HRESULT (WINAPI *DWriteCreateFactoryPtr)(
-      DWRITE_FACTORY_TYPE factory_type,
-      const IID &iid,
-      IUnknown **factory);
-
   DirectWriteTextRenderer(
       ID2D1Factory *d2d2_factory,
       IDWriteFactory *dwrite_factory,

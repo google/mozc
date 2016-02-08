@@ -361,6 +361,16 @@
             '../protocol/protocol.gyp:renderer_proto',
             'renderer_style_handler',
           ],
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'd2d1.lib',
+                  'dwrite.lib',
+                ],
+              },
+            },
+          },
         },
         {
           'target_name': 'gen_pbgra32_bitmap',
