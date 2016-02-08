@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef OS_WIN
-#define PSAPI_VERSION 1  // for <psapi.h>
 #include <windows.h>
 #if !defined(NO_LOGGING)
 #include <atlbase.h>
