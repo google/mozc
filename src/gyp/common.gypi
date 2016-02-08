@@ -576,14 +576,8 @@
           '<@(linux_ldflags)',
         ],
       }],
-      ['use_separate_collocation_data==1', {
-        'defines': ['MOZC_USE_SEPARATE_COLLOCATION_DATA'],
-      }],
-      ['use_separate_connection_data==1', {
-        'defines': ['MOZC_USE_SEPARATE_CONNECTION_DATA'],
-      }],
-      ['use_separate_dictionary==1', {
-        'defines': ['MOZC_USE_SEPARATE_DICTIONARY'],
+      ['use_separate_dataset==1', {
+        'defines': ['MOZC_USE_SEPARATE_DATASET'],
       }],
       ['use_packed_dictionary==1', {
         'defines': ['MOZC_USE_PACKED_DICTIONARY'],

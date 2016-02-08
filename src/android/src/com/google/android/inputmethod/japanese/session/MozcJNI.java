@@ -47,16 +47,13 @@ class MozcJNI {
   /**
    * Loads and initializes the JNI library.
    *
-   * @param dictionaryBuffer the buffer pointing the system dictionary
-   * @param connectionDataBuffer the buffer pointing the connection data
+   * @param mozcDataBuffer the buffer pointing to the mozc data (model, dictionary, etc.)
    * @param expectedVersion expected version name of .so
    */
   static void load(
-      String userProfileDirectoryPath, Buffer dictionaryBuffer, Buffer connectionDataBuffer,
-      String expectedVersion) {
+      String userProfileDirectoryPath, Buffer mozcDataBuffer, String expectedVersion) {
     Preconditions.checkNotNull(userProfileDirectoryPath);
-    Preconditions.checkNotNull(dictionaryBuffer);
-    Preconditions.checkNotNull(connectionDataBuffer);
+    Preconditions.checkNotNull(mozcDataBuffer);
     Preconditions.checkNotNull(expectedVersion);
 
     if (isLoaded) {
@@ -81,7 +78,7 @@ class MozcJNI {
         message.append(" Server:").append(nativeVersion);
         throw new UnsatisfiedLinkError(message.toString());
       }
-      onPostLoad(userProfileDirectoryPath, dictionaryBuffer, connectionDataBuffer);
+      onPostLoad(userProfileDirectoryPath, mozcDataBuffer);
       isLoaded = true;
       MozcLog.d("end MozcJNI#load " + System.nanoTime());
     }
@@ -104,7 +101,7 @@ class MozcJNI {
    * of dictionary data from Java as only Java knows where the data is in our context.
    */
   private static synchronized native void onPostLoad(
-      String userProfileDirectoryPath, Buffer dictionaryData, Buffer connectionData);
+      String userProfileDirectoryPath, Buffer mozcDataBuffer);
 
   /**
    * @return Version string of shared object

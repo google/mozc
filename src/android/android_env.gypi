@@ -52,7 +52,7 @@
       '<(android_home)/extras/android/support/v13/android-support-v13.jar',
     ],
     'shared_intermediate_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/',
-    'test_connection_data': '<(shared_intermediate_mozc_dir)/data_manager/testing/connection.data',
+    'test_mozc_dataset': '<(shared_intermediate_mozc_dir)/data_manager/testing/mock_mozc.data',
     'test_connection_text_data': '<(shared_intermediate_mozc_dir)/data_manager/testing/connection_single_column.txt',
     # e.g. xxxx/out_android/gtest_report
     'test_report_dir': '<(SHARED_INTERMEDIATE_DIR)/../../gtest_report',
@@ -75,8 +75,7 @@
         # and Fedora (jsr-305.jar).
         # TODO(yukawa): We should not rely on "find" command here.
         'jsr305_jar_path': '<!(find /usr/share/java -name "jsr305.jar" -o -name "jsr-305.jar")',
-        'dictionary_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/system.dictionary',
-        'connection_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/connection.data',
+        'mozc_dataset': '<(shared_intermediate_mozc_dir)/data_manager/oss/mozc.imy',
         'connection_text_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/connection_single_column.txt',
         'native_test_small_targets': [
           'oss_data_manager_test',

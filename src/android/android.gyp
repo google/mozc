@@ -206,9 +206,8 @@
       'target_name': 'assets',
       'type': 'none',
       'dependencies': [
-        'assets_connection_data',
         'assets_credits',
-        'assets_dictionary',
+        'assets_mozc_dataset',
         'assets_touch_stat_data',
       ]
     },
@@ -224,45 +223,19 @@
       }],
     },
     {
-      'target_name': 'assets_connection_data',
+      'target_name': 'assets_mozc_dataset',
       'type': 'none',
       'conditions': [
-        ['use_separate_connection_data==1',
+        ['use_separate_dataset==1',
           {
             'actions': [
               {
-                'action_name': 'assets_copy_connection_data',
+                'action_name': 'assets_copy_dataset',
                 'inputs': [
-                  '<(connection_data)',
+                    '<(mozc_dataset)',
                 ],
                 'outputs': [
-                  '<(sdk_asset_dir)/connection.data.imy',
-                ],
-                'action': [
-                  # Note that multiple output files cannot be handled
-                  # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
-                ],
-              },
-            ],
-          },
-        ],
-      ],
-    },
-    {
-      'target_name': 'assets_dictionary',
-      'type': 'none',
-      'conditions': [
-        ['use_separate_dictionary==1',
-          {
-            'actions': [
-              {
-                'action_name': 'assets_copy_dictionary',
-                'inputs': [
-                  '<(dictionary_data)'
-                ],
-                'outputs': [
-                  '<(sdk_asset_dir)/system.dictionary.imy',
+                  '<(sdk_asset_dir)/mozc.imy',
                 ],
                 'action': [
                   # Note that multiple output files cannot be handled
@@ -647,11 +620,10 @@
           'action': [
             'python', 'run_android_test.py',
             '--android_home=<(android_home)',
-            '--mozc_connection_data_file=<(connection_data)',
             '--mozc_connection_text_data_file=<(connection_text_data)',
             '--mozc_data_dir=<(mozc_data_dir)',
-            '--mozc_dictionary_data_file=<(dictionary_data)',
-            '--mozc_test_connection_data_file=<(test_connection_data)',
+            '--mozc_dataset_file=<(mozc_dataset)',
+            '--mozc_test_dataset_file=<(test_mozc_dataset)',
             '--mozc_test_connection_text_data_file=<(test_connection_text_data)',
             '--native_abi=<(abi)',
             '--output_report_dir=<(test_report_dir)',

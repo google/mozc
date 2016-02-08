@@ -29,6 +29,7 @@
 
 #include "data_manager/oss/oss_data_manager.h"
 
+#include "base/embedded_file.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "converter/boundary_struct.h"
@@ -44,80 +45,68 @@ using mozc::dictionary::SuffixToken;
 
 namespace mozc {
 namespace oss {
-
 namespace {
+
+const char *g_mozc_data_address = nullptr;
+size_t g_mozc_data_size = 0;
+
+#ifdef MOZC_USE_SEPARATE_DATASET
+const EmbeddedFile kOssMozcDataSet = {nullptr, 0};
+#else
+// kOssMozcDataSet is embedded.
+#include "data_manager/oss/mozc_imy.h"
+#endif  // MOZC_USE_SEPARATE_DATASET
+
+#ifndef MOZC_DATASET_MAGIC_NUMBER
+#error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"
+#endif  // MOZC_DATASET_MAGIC_NUMBER
+
+const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
+
 // kLidGroup[] is defined in the following automatically generated header file.
 #include "data_manager/oss/pos_group_data.h"
+
 }  // namespace
+
+OssDataManager::OssDataManager() {
+  const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
+  if (g_mozc_data_address != nullptr) {
+    const StringPiece data(g_mozc_data_address, g_mozc_data_size);
+    CHECK(manager_.InitFromArray(data, magic))
+        << "Image set by SetMozcDataSet() is broken";
+    return;
+  }
+#ifdef MOZC_USE_SEPARATE_DATASET
+  LOG(FATAL)
+      << "When MOZC_USE_SEPARATE_DATASET build flag is defined, "
+      << "OssDataManager::SetMozcDataSet() must be called before "
+      << "instantiation of OssDataManager instances.";
+#endif  // MOZC_USE_SEPARATE_DATASET
+  CHECK(manager_.InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
+      << "Embedded mozc_imy.h for OSS is broken";
+}
+
+OssDataManager::~OssDataManager() = default;
 
 const uint8 *OssDataManager::GetPosGroupData() const {
   DCHECK(kLidGroup != NULL);
   return kLidGroup;
 }
 
-namespace {
-#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
-const char *kConnectionData_data = NULL;
-const size_t kConnectionData_size = 0;
-#else  // MOZC_USE_SEPARATE_CONNECTION_DATA
-// Automatically generated header containing the definitions of
-// kConnectionData_data and kConnectionData_size. We don't embed it when
-// connection data is supplied from outside.
-#include "data_manager/oss/embedded_connection_data.h"
-#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
-
-char *g_connection_data_address = const_cast<char *>(kConnectionData_data);
-int g_connection_data_size = kConnectionData_size;
-}  // namespace
-
-#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
-void OssDataManager::SetConnectionData(void *address, size_t size) {
-  g_connection_data_address = reinterpret_cast<char *>(address);
-  g_connection_data_size = size;
-  DCHECK(g_connection_data_address);
-  DCHECK_GT(g_connection_data_size, 0);
+// Both pointers can be nullptr when the DataManager is reset on testing.
+void OssDataManager::SetMozcDataSet(void *address, size_t size) {
+  g_mozc_data_address = reinterpret_cast<char *>(address);
+  g_mozc_data_size = size;
 }
-#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
 
 void OssDataManager::GetConnectorData(const char **data, size_t *size) const {
-#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
-    if (!g_connection_data_address || g_connection_data_size == 0) {
-      LOG(FATAL) << "Connection data is not yet set.";
-      CHECK(false);
-    }
-#endif
-  *data = g_connection_data_address;
-  *size = g_connection_data_size;
+  manager_.GetConnectorData(data, size);
 }
-
-namespace {
-#ifdef MOZC_USE_SEPARATE_DICTIONARY
-const char *kDictionaryData_data = NULL;
-const size_t kDictionaryData_size = 0;
-#else  // MOZC_USE_SEPARATE_DICTIONARY
-// Automatically generated header containing the definitions of
-// kDictionaryData_data[] and kDictionaryData_size.
-#include "data_manager/oss/embedded_dictionary_data.h"
-#endif  // MOZC_USE_SEPARATE_DICTIONARY
-
-char *g_dictionary_address = const_cast<char *>(kDictionaryData_data);
-int g_dictionary_size = kDictionaryData_size;
-}  // namespace
 
 void OssDataManager::GetSystemDictionaryData(
     const char **data, int *size) const {
-  *data = g_dictionary_address;
-  *size = g_dictionary_size;
+  manager_.GetSystemDictionaryData(data, size);
 }
-
-#ifdef MOZC_USE_SEPARATE_DICTIONARY
-void OssDataManager::SetDictionaryData(void *address, size_t size) {
-  g_dictionary_address = reinterpret_cast<char *>(address);
-  g_dictionary_size = size;
-  DCHECK(g_dictionary_address);
-  DCHECK_GT(g_dictionary_size, 0);
-}
-#endif  // MOZC_USE_SEPARATE_DICTIONARY
 
 namespace {
 // Automatically generated headers containing data set for segmenter.
@@ -162,62 +151,19 @@ void OssDataManager::GetReadingCorrectionData(
   *size = arraysize(kReadingCorrections);
 }
 
-namespace {
-#ifdef MOZC_USE_SEPARATE_COLLOCATION_DATA
-namespace CollocationData {
-const char *kExistenceFilter_data = NULL;
-const size_t kExistenceFilter_size = 0;
-}  // namespace CollocationData
-#else  // MOZC_USE_SEPARATE_COLLOCATION_DATA
-// Include CollocationData::kExistenceFilter_data and
-// CollocationData::kExistenceFilter_size.
-#include "data_manager/oss/embedded_collocation_data.h"
-#endif  // MOZC_USE_SEPARATE_COLLOCATION_DATA
-
-char *g_collocation_data_address =
-    const_cast<char *>(CollocationData::kExistenceFilter_data);
-int g_collocation_data_size = CollocationData::kExistenceFilter_size;
-
-// Include CollocationSuppressionData::kExistenceFilter_data and
-// CollocationSuppressionData::kExistenceFilter_size.
-#include "data_manager/oss/embedded_collocation_suppression_data.h"
-}  // namespace
-
-#ifdef MOZC_USE_SEPARATE_COLLOCATION_DATA
-void OssDataManager::SetCollocationData(void *address, size_t size) {
-  g_collocation_data_address = reinterpret_cast<char *>(address);
-  g_collocation_data_size = size;
-  DCHECK(g_collocation_data_address);
-  DCHECK_GT(g_collocation_data_size, 0);
-}
-#endif  // MOZC_USE_SEPARATE_COLLOCATION_DATA
-
 void OssDataManager::GetCollocationData(const char **array,
                                         size_t *size) const {
-#ifdef MOZC_USE_SEPARATE_COLLOCATION_DATA
-    if (!g_collocation_data_address || g_collocation_data_size == 0) {
-      LOG(FATAL) << "Collocation data is not yet set.";
-    }
-#endif  // MOZC_USE_SEPARATE_COLLOCATION_DATA
-  *array = g_collocation_data_address;
-  *size = g_collocation_data_size;
+  manager_.GetCollocationData(array, size);
 }
 
 void OssDataManager::GetCollocationSuppressionData(const char **array,
                                                    size_t *size) const {
-  *array = CollocationSuppressionData::kExistenceFilter_data;
-  *size = CollocationSuppressionData::kExistenceFilter_size;
+  manager_.GetCollocationSuppressionData(array, size);
 }
-
-namespace {
-// Include kSuggestionFilterData_data and kSuggestionFilterData_size.
-#include "data_manager/oss/suggestion_filter_data.h"
-}  // namespace
 
 void OssDataManager::GetSuggestionFilterData(const char **data,
                                              size_t *size) const {
-  *data = kSuggestionFilterData_data;
-  *size = kSuggestionFilterData_size;
+  manager_.GetSuggestionFilterData(data, size);
 }
 
 namespace {

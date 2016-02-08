@@ -812,23 +812,17 @@ def GypMain(options, unused_args, _):
   # Dictionary configuration
   if target_platform == 'Android':
     gyp_options.extend(['-D', 'dictionary=small'])
-    gyp_options.extend(['-D', 'use_separate_collocation_data=0'])
-    gyp_options.extend(['-D', 'use_separate_connection_data=1'])
-    gyp_options.extend(['-D', 'use_separate_dictionary=1'])
+    gyp_options.extend(['-D', 'use_separate_dataset=1'])
     gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=1'])
     gyp_options.extend(['-D', 'use_packed_dictionary=0'])
   elif target_platform == 'NaCl':
     gyp_options.extend(['-D', 'dictionary=desktop'])
-    gyp_options.extend(['-D', 'use_separate_collocation_data=0'])
-    gyp_options.extend(['-D', 'use_separate_connection_data=0'])
-    gyp_options.extend(['-D', 'use_separate_dictionary=0'])
+    gyp_options.extend(['-D', 'use_separate_dataset=0'])
     gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
     gyp_options.extend(['-D', 'use_packed_dictionary=1'])
   else:
     gyp_options.extend(['-D', 'dictionary=desktop'])
-    gyp_options.extend(['-D', 'use_separate_collocation_data=0'])
-    gyp_options.extend(['-D', 'use_separate_connection_data=0'])
-    gyp_options.extend(['-D', 'use_separate_dictionary=0'])
+    gyp_options.extend(['-D', 'use_separate_dataset=0'])
     gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
     gyp_options.extend(['-D', 'use_packed_dictionary=0'])
 

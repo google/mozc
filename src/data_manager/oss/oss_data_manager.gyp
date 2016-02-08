@@ -54,11 +54,11 @@
       '<(platform_data_dir)/reading_correction.tsv',
     ],
     'gen_test_dictionary': 'false',
-    # Hex-escaped string of "\xEFG\0\0gleJaIME\r\n"
-    'magic_number': '\\xEF\\x47\\x00\\x00\\x67\\x6C\\x65\\x4A\\x61\\x49\\x4D\\x45\\x0D\\x0A',
+    # Hex-escaped string of "\xEFMOZC\r\n"
+    'magic_number': "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A",
     'mozc_data_varname': 'kOssMozcDataSet',
-    'out_mozc_data': 'oss_mozc.data',
-    'out_mozc_data_header': 'oss_mozc_data.h',
+    'out_mozc_data': 'mozc.imy',
+    'out_mozc_data_header': 'mozc_imy.h',
   },
   # This 'includes' defines the following targets:
   #   - oss_data_manager  (type: static_library)

@@ -193,7 +193,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'conditions': [
-        ['use_separate_dictionary==1',{
+        ['use_separate_dataset==1',{
             'dependencies': [
               'gen_separate_dictionary_data_for_<(dataset_tag)#host',
             ],
@@ -211,7 +211,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'conditions': [
-        ['use_separate_connection_data==1',{
+        ['use_separate_dataset==1',{
             'dependencies': [
               'gen_separate_connection_data_for_<(dataset_tag)#host',
             ],

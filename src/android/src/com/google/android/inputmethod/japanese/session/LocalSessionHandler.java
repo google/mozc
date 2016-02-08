@@ -56,8 +56,7 @@ class LocalSessionHandler implements SessionHandler {
   // The file name of the system dictionary and connection data file in the apk.
   // This is determined in build.xml.
   // ".imy" extentions expects the the entry is uncompressed.
-  private static final String DICTIONARY_FILE_NAME = "assets/system.dictionary.imy";
-  private static final String CONNECTION_DATA_FILE_NAME = "assets/connection.data.imy";
+  private static final String DATASET_FILE_NAME = "assets/mozc.imy";
 
   @Override
   public void initialize(Context context) {
@@ -77,12 +76,10 @@ class LocalSessionHandler implements SessionHandler {
         }
       }
 
-      // Get buffers for the dictionary from the raw .apk file.
+      // Get a buffer for the dictionary from the raw .apk file.
       ZipFile zipfile = new ZipFile(info.sourceDir);
-      Buffer dictionaryBuffer =
-          ZipFileUtil.getBuffer(zipfile, DICTIONARY_FILE_NAME);
-      Buffer connectionDataBuffer =
-          ZipFileUtil.getBuffer(zipfile, CONNECTION_DATA_FILE_NAME);
+      Buffer dataSetBuffer =
+          ZipFileUtil.getBuffer(zipfile, DATASET_FILE_NAME);
 
       // Get Java package's version name, to check the version consistency with libmozc.so
       // Note that obtained version name is suffixed by android architecture (e.g., -arm).
@@ -94,8 +91,7 @@ class LocalSessionHandler implements SessionHandler {
       }
 
       // Load the shared object.
-      MozcJNI.load(userProfileDirectory.getAbsolutePath(),
-                   dictionaryBuffer, connectionDataBuffer, matcher.group(1));
+      MozcJNI.load(userProfileDirectory.getAbsolutePath(), dataSetBuffer, matcher.group(1));
     } catch (IOException e) {
       MozcLog.e("Failed to load system dictionary.", e);
       throw new RuntimeException(e);

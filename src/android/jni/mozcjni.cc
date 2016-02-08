@@ -55,8 +55,7 @@ typedef mozc::oss::OssDataManager DataManagerType;
 namespace mozc {
 namespace jni {
 namespace {
-jobject g_connection_data_buffer;
-jobject g_dictionary_buffer;
+jobject g_mozc_data_buffer;
 
 // Returns a job setting for usage stats job.
 const Scheduler::JobSetting GetJobSetting() {
@@ -92,26 +91,21 @@ class SessionHandlerSingletonAdapter {
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerSingletonAdapter);
 };
 
-void Initialize(
-    JavaVM *vm,
-    const char *user_profile_directory,
-    void *dictionary_address, int dictionary_size,
-    void *connection_data_address, int connection_data_size) {
+void Initialize(JavaVM *vm, const char *user_profile_directory,
+                void *mozc_data_address, int mozc_data_size) {
   // First of all, set the user profile directory.
   SystemUtil::SetUserProfileDirectory(user_profile_directory);
 
-  // Initialize Java native callback proxy.
+  // Initializes Java native callback proxy.
   JavaHttpClientProxy::SetJavaVM(vm);
 
-  // Initialize dictionary data.
-  DataManagerType::SetDictionaryData(dictionary_address, dictionary_size);
-  DataManagerType::SetConnectionData(connection_data_address,
-                                     connection_data_size);
+  // Initializes mozc data.
+  DataManagerType::SetMozcDataSet(mozc_data_address, mozc_data_size);
 
   mozc::Singleton<SessionHandlerSingletonAdapter>::get()->getHandler()
       ->AddObserver(Singleton<session::SessionUsageObserver>::get());
 
-  // Start usage stats timer.
+  // Starts usage stats timer.
   mozc::Scheduler::AddJob(GetJobSetting());
 }
 
@@ -143,11 +137,9 @@ jbyteArray JNICALL evalCommand(JNIEnv *env,
 void JNICALL onPostLoad(JNIEnv *env,
                         jclass clazz,
                         jstring user_profile_directory_path,
-                        jobject dictionary_buffer,
-                        jobject connection_data_buffer) {
-  // Keep the global references of the buffers.
-  g_dictionary_buffer = env->NewGlobalRef(dictionary_buffer);
-  g_connection_data_buffer = env->NewGlobalRef(connection_data_buffer);
+                        jobject mozc_data_buffer) {
+  // Keep the global references of the buffer.
+  g_mozc_data_buffer = env->NewGlobalRef(mozc_data_buffer);
 
   const char *utf8_user_profile_directory_path =
       env->GetStringUTFChars(user_profile_directory_path, nullptr);
@@ -155,12 +147,9 @@ void JNICALL onPostLoad(JNIEnv *env,
   JavaVM *vm = NULL;
   env->GetJavaVM(&vm);
 
-  Initialize(
-      vm, utf8_user_profile_directory_path,
-      env->GetDirectBufferAddress(dictionary_buffer),
-      env->GetDirectBufferCapacity(dictionary_buffer),
-      env->GetDirectBufferAddress(connection_data_buffer),
-      env->GetDirectBufferCapacity(connection_data_buffer));
+  Initialize(vm, utf8_user_profile_directory_path,
+             env->GetDirectBufferAddress(mozc_data_buffer),
+             env->GetDirectBufferCapacity(mozc_data_buffer));
   env->ReleaseStringUTFChars(user_profile_directory_path,
                              utf8_user_profile_directory_path);
 }
@@ -198,7 +187,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
        "([B)[B",
        reinterpret_cast<void*>(&mozc::jni::evalCommand)},
       {"onPostLoad",
-       "(Ljava/lang/String;Ljava/nio/Buffer;Ljava/nio/Buffer;)V",
+       "(Ljava/lang/String;Ljava/nio/Buffer;)V",
        reinterpret_cast<void*>(&mozc::jni::onPostLoad)},
       {"getVersion",
        "()Ljava/lang/String;",
@@ -226,8 +215,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
   // Delete global references.
   JNIEnv *env = mozc::AndroidUtil::GetEnv(vm);
   if (env) {
-    env->DeleteGlobalRef(mozc::jni::g_connection_data_buffer);
-    env->DeleteGlobalRef(mozc::jni::g_dictionary_buffer);
+    env->DeleteGlobalRef(mozc::jni::g_mozc_data_buffer);
   }
 }
 }  // extern "C"
