@@ -573,14 +573,15 @@ TextRenderer::~TextRenderer() {
 TextRenderer *TextRenderer::Create() {
   // In some environments, DirectWrite cannot render characters in the
   // candidate window or even worse may cause crash.  As a workaround,
-  // this function always returns new GidTextRenderer().
-  //
-  // TODO: Reactivate the following code when b/23803925 is fixed.
-  //
-  // auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
-  // if (dwrite_text_renderer != nullptr) {
-  //   return dwrite_text_renderer;
-  // }
+  // we try to use DirectWrite only on Windows 8.1 and later.
+  // TODO(yukawa): Reactivate the following code for older OSes when
+  // the root cause of b/23803925 is identified.
+  if (SystemUtil::IsWindows8_1OrLater()) {
+    auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
+    if (dwrite_text_renderer != nullptr) {
+      return dwrite_text_renderer;
+    }
+  }
   return new GdiTextRenderer();
 }
 
