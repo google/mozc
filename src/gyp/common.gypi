@@ -284,18 +284,6 @@
       'x86_Base': {
         'abstract': 1,
         'msvs_settings': {
-          'VCCLCompilerTool': {
-            'conditions': [
-              ['compiler_target=="msvs" and compiler_target_version_int>=1700', {
-                # Windows 7 and prior still support CPUs that lack of SSE/SSE2.
-                # So we explicitly disable them. We can change this setting to
-                # /arch:SSE2 once Windows 7 is unsupported in Mozc.
-                # Note that Visual C++ 2010 does not have /arch:IA32 and
-                # does not use these enhanced instruction set by default.
-                'AdditionalOptions': '/arch:IA32',
-              }],
-            ],
-          },
           'VCLibrarianTool': {
             'AdditionalLibraryDirectories': [
               '<@(msvs_libs_x86)',
