@@ -114,6 +114,7 @@ class SystemDictionaryDataPacker {
 #endif  // NO_USAGE_REWRITER
   void SetCounterSuffixSortedArray(
       const CounterSuffixEntry *suffix_array, size_t size);
+  void SetMozcData(const string &data, const string &magic);
 
   bool Output(const string &file_path, bool use_gzip);
   bool OutputHeader(const string &file_path, bool use_gzip);

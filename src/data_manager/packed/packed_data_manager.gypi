@@ -76,12 +76,15 @@
           'action_name': 'gen_packed_data_<(dataset_tag)',
           'inputs': [
             '<(PRODUCT_DIR)/gen_packed_data_main_<(dataset_tag)<(EXECUTABLE_SUFFIX)',
+            '<(gen_out_dir)/../<(dataset_dir)/<(mozc_dataset)',
           ],
           'outputs': [
             '<(gen_out_dir)/packed_data_<(dataset_tag)',
           ],
           'action': [
             '<(PRODUCT_DIR)/gen_packed_data_main_<(dataset_tag)<(EXECUTABLE_SUFFIX)',
+            '--mozc_data=<(gen_out_dir)/../<(dataset_dir)/<(mozc_dataset)',
+            '--mozc_data_magic=<(mozc_dataset_magic)',
             '--output=<(gen_out_dir)/packed_data_<(dataset_tag)',
             '--logtostderr',
           ],
@@ -89,6 +92,7 @@
       ],
       'dependencies': [
         'gen_packed_data_main_<(dataset_tag)',
+        '../<(dataset_dir)/<(dataset_tag)_data_manager.gyp:gen_mozc_dataset_for_<(dataset_tag)',
       ],
     },
     {
@@ -100,12 +104,15 @@
           'action_name': 'gen_packed_data_<(dataset_tag)',
           'inputs': [
             '<(PRODUCT_DIR)/gen_packed_data_main_<(dataset_tag)<(EXECUTABLE_SUFFIX)',
+            '<(gen_out_dir)/../<(dataset_dir)/<(mozc_dataset)',
           ],
           'outputs': [
             '<(gen_out_dir)/packed_data_<(dataset_tag).h',
           ],
           'action': [
             '<(PRODUCT_DIR)/gen_packed_data_main_<(dataset_tag)<(EXECUTABLE_SUFFIX)',
+            '--mozc_data=<(gen_out_dir)/../<(dataset_dir)/<(mozc_dataset)',
+            '--mozc_data_magic=<(mozc_dataset_magic)',
             '--output=<(gen_out_dir)/packed_data_<(dataset_tag).h',
             '--logtostderr',
             '--make_header',
@@ -125,12 +132,15 @@
           'action_name': 'gen_packed_data_<(dataset_tag)',
           'inputs': [
             '<(PRODUCT_DIR)/gen_packed_data_main_<(dataset_tag)<(EXECUTABLE_SUFFIX)',
+            '<(gen_out_dir)/../<(dataset_dir)/<(mozc_dataset)',
           ],
           'outputs': [
             '<(gen_out_dir)/zipped_data_<(dataset_tag)',
           ],
           'action': [
             '<(PRODUCT_DIR)/gen_packed_data_main_<(dataset_tag)<(EXECUTABLE_SUFFIX)',
+            '--mozc_data=<(gen_out_dir)/../<(dataset_dir)/<(mozc_dataset)',
+            '--mozc_data_magic=<(mozc_dataset_magic)',
             '--output=<(gen_out_dir)/zipped_data_<(dataset_tag)',
             '--logtostderr',
             '--use_gzip',

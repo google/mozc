@@ -38,6 +38,7 @@
 #include "base/protobuf/gzip_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "converter/boundary_struct.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
@@ -118,6 +119,7 @@ class PackedDataManager::Impl {
   const void *GetRangeTablesForTest() const;
   void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
                                    size_t *size) const;
+  StringPiece GetMozcData() const;
 
  private:
   // Non-const struct of POSMatcher::Range
@@ -151,6 +153,7 @@ class PackedDataManager::Impl {
   unique_ptr<UsageDictItem[]> usage_data_value_;
 #endif  // NO_USAGE_REWRITER
   unique_ptr<CounterSuffixEntry[]> counter_suffix_data_;
+  DataManager manager_;
 };
 
 PackedDataManager::Impl::Impl()
@@ -488,6 +491,15 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
       }
     }
   }
+
+  // Initialize |manager_| (PackedDataManager for light doesn't have mozc data).
+  if (system_dictionary_data_->has_mozc_data() &&
+      !manager_.InitFromArray(system_dictionary_data_->mozc_data(),
+                              system_dictionary_data_->mozc_data_magic())) {
+    LOG(ERROR) << "Failed to initialize mozc data";
+    return false;
+  }
+
   return true;
 }
 
@@ -507,8 +519,7 @@ const uint8 *PackedDataManager::Impl::GetPosGroupData() const {
 void PackedDataManager::Impl::GetConnectorData(
     const char **data,
     size_t *size) const {
-  *data = system_dictionary_data_->connection_data().data();
-  *size = system_dictionary_data_->connection_data().size();
+  manager_.GetConnectorData(data, size);
 }
 
 void PackedDataManager::Impl::GetSegmenterData(
@@ -530,8 +541,7 @@ void PackedDataManager::Impl::GetSegmenterData(
 void PackedDataManager::Impl::GetSystemDictionaryData(
     const char **data,
     int *size) const {
-  *data = system_dictionary_data_->dictionary_data().data();
-  *size = system_dictionary_data_->dictionary_data().size();
+  manager_.GetSystemDictionaryData(data, size);
 }
 
 void PackedDataManager::Impl::GetSuffixDictionaryData(
@@ -549,24 +559,21 @@ void PackedDataManager::Impl::GetReadingCorrectionData(
 }
 
 void PackedDataManager::Impl::GetCollocationData(
-  const char **array,
-  size_t *size) const {
-  *array = system_dictionary_data_->collocation_data().data();
-  *size = system_dictionary_data_->collocation_data().size();
+    const char **array,
+    size_t *size) const {
+  manager_.GetCollocationData(array, size);
 }
 
 void PackedDataManager::Impl::GetCollocationSuppressionData(
     const char **array,
     size_t *size) const {
-  *array = system_dictionary_data_->collocation_suppression_data().data();
-  *size = system_dictionary_data_->collocation_suppression_data().size();
+  manager_.GetCollocationSuppressionData(array, size);
 }
 
 void PackedDataManager::Impl::GetSuggestionFilterData(
     const char **data,
     size_t *size) const {
-  *data = system_dictionary_data_->suggestion_filter_data().data();
-  *size = system_dictionary_data_->suggestion_filter_data().size();
+  manager_.GetSuggestionFilterData(data, size);
 }
 
 void PackedDataManager::Impl::GetSymbolRewriterData(
@@ -603,6 +610,9 @@ void PackedDataManager::Impl::GetCounterSuffixSortedArray(
   *size = system_dictionary_data_->counter_suffix_data_size();
 }
 
+StringPiece PackedDataManager::Impl::GetMozcData() const {
+  return StringPiece(system_dictionary_data_->mozc_data());
+}
 
 PackedDataManager::PackedDataManager() {
 }
@@ -756,6 +766,10 @@ const uint16 *PackedDataManager::GetRuleIdTableForTest() const {
 
 const void *PackedDataManager::GetRangeTablesForTest() const {
   return manager_impl_->GetRangeTablesForTest();
+}
+
+StringPiece PackedDataManager::GetMozcData() const {
+  return manager_impl_->GetMozcData();
 }
 
 void RegisterPackedDataManager(PackedDataManager *packed_data_manager) {

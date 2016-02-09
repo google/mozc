@@ -33,6 +33,7 @@
 #include <memory>
 
 #include "base/port.h"
+#include "base/string_piece.h"
 #include "data_manager/data_manager_interface.h"
 
 namespace mozc {
@@ -41,7 +42,8 @@ namespace packed {
 class PackedDataManager : public DataManagerInterface {
  public:
   PackedDataManager();
-  virtual ~PackedDataManager();
+  ~PackedDataManager() override;
+
   // Initializes the PackedDataManager with packed system dictionary data.
   // Returns false if initialization fails.
   bool Init(const string &system_dictionary_data);
@@ -50,35 +52,35 @@ class PackedDataManager : public DataManagerInterface {
 
   static PackedDataManager *GetUserPosManager();
 
-  virtual const dictionary::UserPOS::POSToken *GetUserPOSData() const;
-  virtual const dictionary::POSMatcher *GetPOSMatcher() const;
-  virtual const uint8 *GetPosGroupData() const;
-  virtual void GetConnectorData(const char **data, size_t *size) const;
-  virtual void GetSegmenterData(
-      size_t *l_num_elements, size_t *r_num_elements,
-      const uint16 **l_table, const uint16 **r_table,
-      size_t *bitarray_num_bytes, const char **bitarray_data,
-      const BoundaryData **boundary_data) const;
-  virtual void GetSystemDictionaryData(const char **data, int *size) const;
-  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **data,
-                                       size_t *size) const;
-  virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
-                                        size_t *size) const;
-  virtual void GetCollocationData(const char **array, size_t *size) const;
-  virtual void GetCollocationSuppressionData(const char **array,
-                                             size_t *size) const;
-  virtual void GetSuggestionFilterData(const char **data, size_t *size) const;
-  virtual void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
-                                     size_t *size) const;
+  const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
+  const dictionary::POSMatcher *GetPOSMatcher() const override;
+  const uint8 *GetPosGroupData() const override;
+  void GetConnectorData(const char **data, size_t *size) const override;
+  void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
+                        const uint16 **l_table, const uint16 **r_table,
+                        size_t *bitarray_num_bytes, const char **bitarray_data,
+                        const BoundaryData **boundary_data) const override;
+  void GetSystemDictionaryData(const char **data, int *size) const override;
+  void GetSuffixDictionaryData(const dictionary::SuffixToken **data,
+                               size_t *size) const override;
+  void GetReadingCorrectionData(const ReadingCorrectionItem **array,
+                                size_t *size) const override;
+  void GetCollocationData(const char **array, size_t *size) const override;
+  void GetCollocationSuppressionData(const char **array,
+                                     size_t *size) const override;
+  void GetSuggestionFilterData(const char **data, size_t *size) const override;
+  void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
+                             size_t *size) const override;
 #ifndef NO_USAGE_REWRITER
-  virtual void GetUsageRewriterData(
+  void GetUsageRewriterData(
       const ConjugationSuffix **base_conjugation_suffix,
       const ConjugationSuffix **conjugation_suffix_data,
       const int **conjugation_suffix_data_index,
-      const UsageDictItem **usage_data_value) const;
+      const UsageDictItem **usage_data_value) const override;
 #endif  // NO_USAGE_REWRITER
-  virtual void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
-                                           size_t *size) const;
+  void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+                                   size_t *size) const override;
+  StringPiece GetMozcData() const;
 
  private:
   friend class PackedDataTestBase;

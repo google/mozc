@@ -132,10 +132,22 @@ message SystemDictionaryData {
   }
   optional UsageRewriterData usage_rewriter_data = 11;
 
-  optional bytes suggestion_filter_data = 12;
-  optional bytes connection_data = 13;
-  optional bytes dictionary_data = 14;
-  optional bytes collocation_data = 15;
-  optional bytes collocation_suppression_data = 16;
+  reserved 12;  // DEPRECATED: optional bytes suggestion_filter_data = 12;
+  reserved 13;  // DEPRECATED: optional bytes connection_data = 13;
+  reserved 14;  // DEPRECATED: optional bytes dictionary_data = 14;
+  reserved 15;  // DEPRECATED: optional bytes collocation_data = 15;
+  reserved 16;  // DEPRECATED: optional bytes collocation_suppression_data = 16;
+
   repeated string counter_suffix_data = 17;
+
+  // TODO(noriyukit): This field contains a binary image of a new data set file.
+  // All the data in this proto should be migrated to this field, and finally
+  // remove SystemDictionaryData proto.
+  optional bytes mozc_data = 18;
+
+  // TODO(noriyukit): Packed data manager needs to load a few data set files
+  // with different magic number.  Currently, the valid magic number is stored
+  // in this proto but we should remove this logic.  In future, this proto will
+  // be removed, so this issue will be resolved too.
+  optional bytes mozc_data_magic = 19;
 };

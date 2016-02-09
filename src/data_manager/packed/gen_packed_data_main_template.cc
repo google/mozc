@@ -29,9 +29,11 @@
 
 #include <string>
 
+#include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/util.h"
 #include "base/version.h"
 #include "converter/boundary_struct.h"
 #include "data_manager/packed/system_dictionary_data_packer.h"
@@ -46,6 +48,8 @@
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
 
+DEFINE_string(mozc_data, "", "Data set file to be packed");
+DEFINE_string(mozc_data_magic, "", "Magic number for data set file");
 DEFINE_string(output, "", "Output data file name");
 DEFINE_string(dictionary_version, "", "dictionary version");
 DEFINE_bool(make_header, false, "make header mode");
@@ -55,16 +59,11 @@ namespace mozc {
 namespace {
 
 #include "data_manager/@DIR@/boundary_data.h"
-#include "data_manager/@DIR@/embedded_collocation_data.h"
-#include "data_manager/@DIR@/embedded_collocation_suppression_data.h"
-#include "data_manager/@DIR@/embedded_connection_data.h"
-#include "data_manager/@DIR@/embedded_dictionary_data.h"
 #include "data_manager/@DIR@/pos_group_data.h"
 #include "data_manager/@DIR@/pos_matcher_data.h"
 #include "data_manager/@DIR@/reading_correction_data.h"
 #include "data_manager/@DIR@/segmenter_data.h"
 #include "data_manager/@DIR@/suffix_data.h"
-#include "data_manager/@DIR@/suggestion_filter_data.h"
 #include "data_manager/@DIR@/symbol_rewriter_data.h"
 #include "data_manager/@DIR@/user_pos_data.h"
 #ifndef NO_USAGE_REWRITER
@@ -99,15 +98,6 @@ bool OutputData(const string &file_path) {
                           arraysize(kCompressedRIDTable),
                           kSegmenterBitArrayData_data,
                           kSegmenterBitArrayData_size);
-  packer.SetSuggestionFilterData(kSuggestionFilterData_data,
-                                 kSuggestionFilterData_size);
-  packer.SetConnectionData(kConnectionData_data, kConnectionData_size);
-  packer.SetDictionaryData(kDictionaryData_data, kDictionaryData_size);
-  packer.SetCollocationData(CollocationData::kExistenceFilter_data,
-                            CollocationData::kExistenceFilter_size);
-  packer.SetCollocationSuppressionData(
-      CollocationSuppressionData::kExistenceFilter_data,
-      CollocationSuppressionData::kExistenceFilter_size);
   packer.SetSymbolRewriterData(kSymbolData_token_data, kSymbolData_token_size);
 #ifndef NO_USAGE_REWRITER
   packer.SetUsageRewriterData(kConjugationNum,
@@ -119,6 +109,13 @@ bool OutputData(const string &file_path) {
 #endif  // NO_USAGE_REWRITER
   packer.SetCounterSuffixSortedArray(kCounterSuffixes,
                                      arraysize(kCounterSuffixes));
+
+  string magic;
+  CHECK(Util::Unescape(FLAGS_mozc_data_magic, &magic))
+      << "Invalid hex-escaped string: " << FLAGS_mozc_data_magic;
+  packer.SetMozcData(InputFileStream(FLAGS_mozc_data.c_str(),
+                                     ios_base::in | ios_base::binary).Read(),
+                     magic);
   if (FLAGS_make_header) {
     return packer.OutputHeader(file_path, FLAGS_use_gzip);
   } else {
@@ -131,13 +128,10 @@ bool OutputData(const string &file_path) {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
 
-  if (FLAGS_output.empty()) {
-    LOG(FATAL) << "output flag is needed";
-    return 1;
-  }
-  if (!mozc::OutputData(FLAGS_output)) {
-    LOG(FATAL) << "Data output error : "<< FLAGS_output;
-    return 1;
-  }
+  CHECK(!FLAGS_mozc_data.empty()) << "--mozc_data is required";
+  CHECK(!FLAGS_output.empty()) << "--output flag is required";
+  CHECK(mozc::OutputData(FLAGS_output))
+      << "Data output error: "<< FLAGS_output;
+
   return 0;
 }

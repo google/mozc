@@ -34,9 +34,9 @@
 
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/protobuf/gzip_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
-#include "base/logging.h"
 #include "base/version.h"
 #include "converter/boundary_struct.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
@@ -196,46 +196,6 @@ void SystemDictionaryDataPacker::SetSegmenterData(
                                 segmenter_bit_array_data_size);
 }
 
-void SystemDictionaryDataPacker::SetSuggestionFilterData(
-    const void *suggestion_filter_data,
-    size_t suggestion_filter_data_size) {
-  system_dictionary_->set_suggestion_filter_data(
-    suggestion_filter_data,
-    suggestion_filter_data_size);
-}
-
-void SystemDictionaryDataPacker::SetConnectionData(
-    const void *connection_data,
-    size_t connection_data_size) {
-  system_dictionary_->set_connection_data(
-    connection_data,
-    connection_data_size);
-}
-
-void SystemDictionaryDataPacker::SetDictionaryData(
-    const void *dictionary_data,
-    size_t dictionary_data_size) {
-  system_dictionary_->set_dictionary_data(
-    dictionary_data,
-    dictionary_data_size);
-}
-
-void SystemDictionaryDataPacker::SetCollocationData(
-    const void *collocation_data,
-    size_t collocation_data_size) {
-  system_dictionary_->set_collocation_data(
-    collocation_data,
-    collocation_data_size);
-}
-
-void SystemDictionaryDataPacker::SetCollocationSuppressionData(
-    const void *collocation_suppression_data,
-    size_t collocation_suppression_data_size) {
-  system_dictionary_->set_collocation_suppression_data(
-    collocation_suppression_data,
-    collocation_suppression_data_size);
-}
-
 void SystemDictionaryDataPacker::SetSymbolRewriterData(
     const mozc::EmbeddedDictionary::Token *token_data,
     size_t token_size) {
@@ -325,6 +285,12 @@ void SystemDictionaryDataPacker::SetCounterSuffixSortedArray(
     const string suffix_str(suffix_array[i].suffix, suffix_array[i].size);
     system_dictionary_->add_counter_suffix_data(suffix_str);
   }
+}
+
+void SystemDictionaryDataPacker::SetMozcData(const string &data,
+                                             const string &magic) {
+  system_dictionary_->set_mozc_data(data);
+  system_dictionary_->set_mozc_data_magic(magic);
 }
 
 bool SystemDictionaryDataPacker::Output(const string &file_path,

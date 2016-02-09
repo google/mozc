@@ -29,80 +29,85 @@
 
 {
   'variables': {
-    'relative_dir': 'data_manager/packed',
+    'relative_dir': 'data_manager',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
   'targets': [
     {
-      'target_name': 'packed_data_manager',
+      'target_name': 'data_manager',
       'type': 'static_library',
-      'toolsets': [ 'host', 'target' ],
+      'toolsets': [ 'target', 'host' ],
       'sources': [
-        'packed_data_manager.cc',
-        'system_dictionary_format_version.h',
+        'data_manager.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
-        '../data_manager_base.gyp:data_manager',
-        'system_dictionary_data_protocol',
+        '../base/base.gyp:base',
+        'dataset_reader',
       ],
     },
     {
-      'target_name': 'system_dictionary_data_protocol',
-      'type': 'static_library',
-      'toolsets': [ 'host', 'target' ],
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/system_dictionary_data.pb.cc',
-      ],
-      'dependencies': [
-        '../../protobuf/protobuf.gyp:protobuf',
-        'genproto_system_dictionary_data#host',
-      ],
-      'export_dependent_settings': [
-        'genproto_system_dictionary_data#host',
-      ],
-    },
-    {
-      'target_name': 'genproto_system_dictionary_data',
+      'target_name': 'genproto_dataset_proto',
       'type': 'none',
       'toolsets': ['host'],
       'sources': [
-        'system_dictionary_data.proto',
+        'dataset.proto',
       ],
       'includes': [
-        '../../protobuf/genproto.gypi',
+        '../protobuf/genproto.gypi',
       ],
     },
     {
-      'target_name': 'system_dictionary_data_packer',
+      'target_name': 'dataset_proto',
       'type': 'static_library',
-      'toolsets': [ 'host', 'target' ],
+      'toolsets': [ 'target', 'host' ],
+      'hard_dependency': 1,
       'sources': [
-        'system_dictionary_data_packer.cc',
-        'system_dictionary_format_version.h',
+        '<(proto_out_dir)/<(relative_dir)/dataset.pb.cc',
       ],
       'dependencies': [
-        'system_dictionary_data_protocol',
-        '../../base/base.gyp:base',
-        '../../dictionary/dictionary_base.gyp:pos_matcher',
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_dataset_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_dataset_proto#host',
       ],
     },
-  ],
-  'conditions': [
-    ['use_packed_dictionary==1', {
-      'variables': {
-        'dataset_dir': 'testing',
-        'dataset_tag': 'mock',
-      },
-      'includes': [ 'packed_data_manager_base.gypi' ],
-    }],
-    ['branding=="Mozc"', {
-      'variables': {
-        'dataset_dir': 'oss',
-        'dataset_tag': 'oss',
-      },
-      'includes': [ 'packed_data_manager_base.gypi' ],
-    }],
+    {
+      'target_name': 'dataset_writer',
+      'type': 'static_library',
+      'toolsets': [ 'target', 'host' ],
+      'sources': [
+        'dataset_writer.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dataset_proto',
+      ],
+    },
+    {
+      'target_name': 'dataset_reader',
+      'type': 'static_library',
+      'toolsets': [ 'target', 'host' ],
+      'sources': [
+        'dataset_reader.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dataset_proto',
+      ],
+    },
+    {
+      'target_name': 'dataset_writer_main',
+      'type': 'executable',
+      'toolsets': [ 'host' ],
+      'sources': [
+        'dataset_writer_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dataset_writer',
+        'dataset_proto',
+      ],
+    },
   ],
 }

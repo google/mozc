@@ -37,6 +37,8 @@
       'variables': {
         'dataset_dir': 'testing',
         'dataset_tag': 'mock',
+        'mozc_dataset': 'mock_mozc.data',
+        'mozc_dataset_magic': '\\x4D\\x4F\\x43\\x4B',  # MOCK
       },
       'includes': [ 'packed_data_manager.gypi' ],
     }],
@@ -44,6 +46,9 @@
       'variables': {
         'dataset_dir': 'oss',
         'dataset_tag': 'oss',
+        'mozc_dataset': 'mozc.imy',
+        # Hex-escaped string of "\xEFMOZC\r\n"
+        'mozc_dataset_magic': "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A",
       },
       'includes': [ 'packed_data_manager.gypi' ],
     }],

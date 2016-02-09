@@ -72,8 +72,8 @@
       'dependencies': [
         '<(dataset_tag)_data_manager_base.gyp:<(dataset_tag)_user_pos_manager',
         '<(mozc_dir)/base/base.gyp:base',
-        '<(mozc_dir)/data_manager/data_manager.gyp:data_manager',
-        '<(mozc_dir)/data_manager/data_manager.gyp:dataset_reader',
+        '<(mozc_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_dir)/data_manager/data_manager_base.gyp:dataset_reader',
         '<(mozc_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_dir)/rewriter/rewriter.gyp:embedded_dictionary',
@@ -124,7 +124,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../data_manager.gyp:dataset_writer_main',
+        '../data_manager_base.gyp:dataset_writer_main',
         'gen_separate_connection_data_for_<(dataset_tag)#host',
         'gen_separate_dictionary_data_for_<(dataset_tag)#host',
         'gen_separate_collocation_data_for_<(dataset_tag)#host',
@@ -439,7 +439,19 @@
         {
           'action_name': 'gen_separate_dictionary_data',
           'variables': {
-             'input_files%': '<(dictionary_files)',
+            'input_files%': '<(dictionary_files)',
+            'additional_inputs': [],
+            'additional_actions': [],
+            'conditions': [
+              ['use_packed_dictionary==1', {
+                'additional_inputs': [
+                  '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
+                ],
+                'additional_actions': [
+                  '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
+                ],
+              }],
+            ],
           },
           'inputs': [
             '<@(input_files)',
@@ -453,6 +465,7 @@
             '--input=<(input_files)',
             '--output=<(gen_out_dir)/system.dictionary',
             '--gen_test_dictionary=<(gen_test_dictionary_flag)',
+            '<@(additional_actions)',
           ],
           'message': 'Generating <(gen_out_dir)/system.dictionary.',
         },
