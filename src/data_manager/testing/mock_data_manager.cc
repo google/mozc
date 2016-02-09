@@ -56,9 +56,6 @@ namespace {
 
 const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
-// kLidGroup[] is defined in the following automatically generated header file.
-#include "data_manager/testing/pos_group_data.h"
-
 }  // namespace
 
 MockDataManager::MockDataManager() {
@@ -70,8 +67,7 @@ MockDataManager::MockDataManager() {
 MockDataManager::~MockDataManager() = default;
 
 const uint8 *MockDataManager::GetPosGroupData() const {
-  DCHECK(kLidGroup != NULL);
-  return kLidGroup;
+  return manager_.GetPosGroupData();
 }
 
 void MockDataManager::GetConnectorData(const char **data,

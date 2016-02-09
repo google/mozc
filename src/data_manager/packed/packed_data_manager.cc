@@ -512,8 +512,7 @@ const POSMatcher *PackedDataManager::Impl::GetPOSMatcher() const {
 }
 
 const uint8 *PackedDataManager::Impl::GetPosGroupData() const {
-  return reinterpret_cast<const uint8 *>(
-      system_dictionary_data_->lid_group_data().data());
+  return manager_.GetPosGroupData();
 }
 
 void PackedDataManager::Impl::GetConnectorData(

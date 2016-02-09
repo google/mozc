@@ -54,13 +54,13 @@ class DataManager : public DataManagerInterface {
   void GetCollocationSuppressionData(const char **array,
                                      size_t *size) const override;
   void GetSuggestionFilterData(const char **data, size_t *size) const override;
+  const uint8 *GetPosGroupData() const override;
 
   // The following interfaces are not yet implemented.
   // TODO(noriyukit): Implements all the interfaces by migrating embedded C++
   // structures to a data set file.
   const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
   const dictionary::POSMatcher *GetPOSMatcher() const override;
-  const uint8 *GetPosGroupData() const override;
   void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
                         const uint16 **l_table, const uint16 **r_table,
                         size_t *bitarray_num_bytes, const char **bitarray_data,
@@ -88,6 +88,7 @@ class DataManager : public DataManagerInterface {
   StringPiece suggestion_filter_data_;
   StringPiece collocation_data_;
   StringPiece collocation_suppression_data_;
+  StringPiece pos_group_data_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

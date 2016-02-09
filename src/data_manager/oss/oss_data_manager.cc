@@ -63,9 +63,6 @@ const EmbeddedFile kOssMozcDataSet = {nullptr, 0};
 
 const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
-// kLidGroup[] is defined in the following automatically generated header file.
-#include "data_manager/oss/pos_group_data.h"
-
 }  // namespace
 
 OssDataManager::OssDataManager() {
@@ -89,8 +86,7 @@ OssDataManager::OssDataManager() {
 OssDataManager::~OssDataManager() = default;
 
 const uint8 *OssDataManager::GetPosGroupData() const {
-  DCHECK(kLidGroup != NULL);
-  return kLidGroup;
+  return manager_.GetPosGroupData();
 }
 
 // Both pointers can be nullptr when the DataManager is reset on testing.

@@ -129,14 +129,6 @@ void SystemDictionaryDataPacker::SetBoundaryData(
   }
 }
 
-void SystemDictionaryDataPacker::SetLidGroupData(
-    const void *lid_group_data,
-    size_t lid_group_data_size) {
-  system_dictionary_->set_lid_group_data(
-    lid_group_data,
-    lid_group_data_size);
-}
-
 void SystemDictionaryDataPacker::SetSuffixTokens(
     const SuffixToken *suffix_tokens,
     size_t suffix_tokens_count) {

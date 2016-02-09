@@ -63,6 +63,10 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     LOG(ERROR) << "Cannot find a collocation suprression";
     return false;
   }
+  if (!reader.Get("posg", &pos_group_data_)) {
+    LOG(ERROR) << "Cannot find a POS group data";
+    return false;
+  }
   return true;
 }
 
@@ -104,8 +108,7 @@ const dictionary::POSMatcher *DataManager::GetPOSMatcher() const {
 }
 
 const uint8 *DataManager::GetPosGroupData() const {
-  LOG(FATAL) << "Not implemented";
-  return nullptr;
+  return reinterpret_cast<const uint8 *>(pos_group_data_.data());
 }
 
 void DataManager::GetSegmenterData(

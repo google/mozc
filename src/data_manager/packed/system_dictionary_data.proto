@@ -61,7 +61,7 @@ message SystemDictionaryData {
   };
   optional PosMatcherData pos_matcher_data = 4;
 
-  optional bytes lid_group_data = 5;
+  reserved 5;  // DEPRECATED: optional bytes lid_group_data = 5;
 
   message BoundaryData {
     optional uint32 prefix_penalty = 1;

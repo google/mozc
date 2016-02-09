@@ -59,7 +59,6 @@ namespace mozc {
 namespace {
 
 #include "data_manager/@DIR@/boundary_data.h"
-#include "data_manager/@DIR@/pos_group_data.h"
 #include "data_manager/@DIR@/pos_matcher_data.h"
 #include "data_manager/@DIR@/reading_correction_data.h"
 #include "data_manager/@DIR@/segmenter_data.h"
@@ -85,7 +84,6 @@ bool OutputData(const string &file_path) {
   // elements are not required at runtime.
   packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
                            kRangeTables, arraysize(kRangeTables) - 1);
-  packer.SetLidGroupData(kLidGroup, arraysize(kLidGroup));
   packer.SetBoundaryData(kBoundaryData, arraysize(kBoundaryData));
   packer.SetSuffixTokens(kSuffixTokens, arraysize(kSuffixTokens));
   packer.SetReadingCorretions(kReadingCorrections,

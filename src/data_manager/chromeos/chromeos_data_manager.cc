@@ -67,8 +67,6 @@ namespace {
 
 const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
-// kLidGroup[] is defined in the following automatically generated header file.
-#include "data_manager/chromeos/pos_group_data.h"
 }  // namespace
 
 ChromeOsDataManager::ChromeOsDataManager() {
@@ -80,8 +78,7 @@ ChromeOsDataManager::ChromeOsDataManager() {
 ChromeOsDataManager::~ChromeOsDataManager() = default;
 
 const uint8 *ChromeOsDataManager::GetPosGroupData() const {
-  DCHECK(kLidGroup != NULL);
-  return kLidGroup;
+  return manager_.GetPosGroupData();
 }
 
 void ChromeOsDataManager::GetConnectorData(const char **data,

@@ -64,9 +64,6 @@ class SystemDictionaryDataPacker {
       size_t rule_id_table_count,
       const dictionary::POSMatcher::Range *const *range_tables,
       size_t range_tables_count);
-  void SetLidGroupData(
-      const void *lid_group_data,
-      size_t lid_group_data_size);
   void SetBoundaryData(
       const BoundaryData *boundary_data,
       size_t boundary_data_count);

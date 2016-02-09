@@ -130,6 +130,7 @@
         'gen_separate_collocation_data_for_<(dataset_tag)#host',
         'gen_separate_collocation_suppression_data_for_<(dataset_tag)#host',
         'gen_separate_suggestion_filter_data_for_<(dataset_tag)#host',
+        'gen_separate_pos_group_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -141,9 +142,15 @@
             'collocation': '<(gen_out_dir)/collocation_data.data',
             'collocation_supp': '<(gen_out_dir)/collocation_suppression_data.data',
             'suggestion_filter': '<(gen_out_dir)/suggestion_filter_data.data',
+            'pos_group': '<(gen_out_dir)/pos_group.data',
           },
           'inputs': [
             '<(dictionary)',
+            '<(connection)',
+            '<(collocation)',
+            '<(collocation_supp)',
+            '<(suggestion_filter)',
+            '<(pos_group)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -157,6 +164,7 @@
             'conn:32:<(gen_out_dir)/connection.data',
             'dict:32:<(gen_out_dir)/system.dictionary',
             'sugg:32:<(gen_out_dir)/suggestion_filter_data.data',
+            'posg:8:<(gen_out_dir)/pos_group.data',
           ],
         },
       ],
@@ -173,7 +181,6 @@
         'gen_embedded_connection_data_for_<(dataset_tag)#host',
         'gen_embedded_counter_suffix_data_for_<(dataset_tag)#host',
         'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
-        'gen_embedded_pos_group_data_for_<(dataset_tag)#host',
         'gen_embedded_reading_correction_data_for_<(dataset_tag)#host',
         'gen_embedded_segmenter_data_for_<(dataset_tag)#host',
         'gen_embedded_suffix_data_for_<(dataset_tag)#host',
@@ -225,31 +232,33 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_pos_group_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_pos_group_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'actions': [
         {
-          'action_name': 'gen_embedded_pos_group_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_pos_group_data_for_<(dataset_tag)',
           'variables': {
-            'input_files': [
-              '<(platform_data_dir)/id.def',
-              '<(common_data_dir)/rules/special_pos.def',
-              '<(common_data_dir)/rules/user_segment_history_pos_group.def',
-            ],
+            'id_def': '<(platform_data_dir)/id.def',
+            'special_pos': '<(common_data_dir)/rules/special_pos.def',
+            'pos_group_def': '<(common_data_dir)/rules/user_segment_history_pos_group.def',
           },
           'inputs': [
             '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
+            '<(id_def)',
+            '<(special_pos)',
+            '<(pos_group_def)',
           ],
           'outputs': [
-            '<(gen_out_dir)/pos_group_data.h',
+            '<(gen_out_dir)/pos_group.data',
           ],
           'action': [
-            'python', '<(mozc_dir)/build_tools/redirect.py',
-            '<(gen_out_dir)/pos_group_data.h',
+            'python',
             '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
+            '--id_def=<(platform_data_dir)/id.def',
+            '--special_pos=<(common_data_dir)/rules/special_pos.def',
+            '--pos_group_def=<(common_data_dir)/rules/user_segment_history_pos_group.def',
+            '--output=<(gen_out_dir)/pos_group.data',
           ],
         },
       ],
