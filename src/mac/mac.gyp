@@ -32,6 +32,7 @@
     'relative_dir': 'mac',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'build_type': 'stable',
+    'mac_auto_updater_dir%': '',
   },
   # Add a dummy target because at least one target is needed in a gyp file.
   'targets': [
@@ -538,6 +539,7 @@
                 '--version_file', '../mozc_version.txt',
                 '--gen_out_dir', '<(gen_out_dir)',
                 '--build_dir', '<(PRODUCT_DIR)',
+                '--auto_updater_dir', '<(mac_auto_updater_dir)',
                 '--build_type', '<(build_type)',
               ],
             },
