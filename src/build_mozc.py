@@ -732,17 +732,6 @@ def GypMain(options, unused_args, _):
   gyp_options.extend(['-D', 'build_short_base=%s' %
                       GetBuildShortBaseName(options, target_platform)])
 
-  disable_unittest_if_not_available = True
-  if disable_unittest_if_not_available:
-    required_modules = ['gmock', 'gtest']
-    for module in required_modules:
-      module_dir = os.path.abspath(
-          os.path.join(GetTopLevelSourceDirectoryName(), 'third_party', module))
-      if not os.path.exists(module_dir):
-        logging.warning('%s not found. Disabling unittest.', module)
-        gyp_options.extend(['-D', 'enable_unittest=0'])
-        break
-
   if options.warn_as_error:
     gyp_options.extend(['-D', 'warn_as_error=1'])
   else:

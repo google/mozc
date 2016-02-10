@@ -120,9 +120,6 @@
     'msvs_libs_x86%': [],
     'msvs_libs_x64%': [],
 
-    # enable_unittest represents if gtest-based unittest is available or not.
-    'enable_unittest%': '1',
-
     'conditions': [
       ['OS=="win"', {
         'conditions': [
@@ -575,9 +572,6 @@
       }],
       ['enable_gtk_renderer==1', {
         'defines': ['ENABLE_GTK_RENDERER'],
-      }],
-      ['enable_unittest==1', {
-        'defines': ['MOZC_ENABLE_UNITTEST'],
       }],
       ['qt_ver==5', {
         'defines': ['MOZC_USE_QT5'],
