@@ -707,6 +707,9 @@ def GypMain(options, unused_args, _):
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
 
+  if options.target_platform == 'Linux':
+    gyp_options.extend(['-D', 'enable_gtk_renderer=1'])
+
   android_home = GetAndroidHome(options)
   android_ndk_home = GetAndroidNdkHome(options)
   if target_platform == 'Android':

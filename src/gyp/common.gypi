@@ -33,6 +33,7 @@
 # You may find cool techniques in the following *.gypi file.
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
+  'includes': ['defines.gypi'],
   'variables': {
     # Top directory of third party libraries.
     'third_party_dir': '<(DEPTH)/third_party',
@@ -162,15 +163,10 @@
         'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
       ['target_platform=="Linux"', {
-        # enable_gtk_renderer represents if mozc_renderer is supported on Linux
-        # or not.
         'compiler_target': 'clang',
         'compiler_target_version_int': 304,  # Clang 3.4 or higher
         'compiler_host': 'clang',
         'compiler_host_version_int': 304,  # Clang 3.4 or higher
-        'enable_gtk_renderer%': 1,
-      }, {  # else
-        'enable_gtk_renderer%': 0,
       }],
     ],
     'msvc_disabled_warnings': [
@@ -203,7 +199,6 @@
 
     'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
     'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
-    'branding%': 'Mozc',
     # use_qt is 'YES' only if you want to use GUI binaries.
     'use_qt%': 'YES',
 
@@ -236,13 +231,6 @@
     # use_libibus represents if ibus library is used or not.
     # This option is only for Linux.
     'use_libibus%': 0,
-
-    # a flag whether the current build is dev-channel or not.
-    'channel_dev%': '0',
-
-    # enable_cloud_handwriting represents if cloud handwriting feature is
-    # enabled or not.
-    'enable_cloud_handwriting%': 0,
 
     # enable ambiguous search (a.k.a. KATSUKOU-conversion).
     'enable_ambiguous_search%': 0,
@@ -548,33 +536,10 @@
       }],
     ],
     'conditions': [
-      ['branding=="GoogleJapaneseInput"', {
-        'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
-      }, {
-        'defines': ['MOZC_BUILD'],
-      }],
-      ['channel_dev==1', {
-        'defines': ['CHANNEL_DEV'],
-      }],
       ['OS=="linux"', {
         'ldflags': [
           '<@(linux_ldflags)',
         ],
-      }],
-      ['use_separate_dataset==1', {
-        'defines': ['MOZC_USE_SEPARATE_DATASET'],
-      }],
-      ['use_packed_dictionary==1', {
-        'defines': ['MOZC_USE_PACKED_DICTIONARY'],
-      }],
-      ['enable_cloud_handwriting==1', {
-        'defines': ['ENABLE_CLOUD_HANDWRITING'],
-      }],
-      ['enable_gtk_renderer==1', {
-        'defines': ['ENABLE_GTK_RENDERER'],
-      }],
-      ['qt_ver==5', {
-        'defines': ['MOZC_USE_QT5'],
       }],
       ['OS=="win"', {
         'variables': {
