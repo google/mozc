@@ -203,9 +203,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
      return JNI_EVERSION;
   }
 
-  mozc::Logging::InitLogStream(
-      mozc::FileUtil::JoinPath(mozc::SystemUtil::GetLoggingDirectory(),
-                               "libmozc.so.log"));
+  mozc::Logging::InitLogStream("");  // Andorid doesn't stream log to a file.
   return JNI_VERSION_1_6;
 }
 
