@@ -199,8 +199,6 @@
 
     'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
     'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
-    # use_qt is 'YES' only if you want to use GUI binaries.
-    'use_qt%': 'YES',
 
     # server_dir represents the directory where mozc_server is
     # installed. This option is only for Linux.
@@ -215,27 +213,6 @@
     # TODO: Update this.
     'mac_breakpad_dir': 'dummy_mac_breakpad_dir',
     'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
-
-    # use_libprotobuf represents if protobuf library is used or not.
-    # This option is only for Linux.
-    # You should not set this flag if you want to use "dlopen" to
-    # load Mozc's modules. See
-    # - https://github.com/google/mozc/issues/14
-    # for the background information.
-    'use_libprotobuf%': 0,
-
-    # Set '1' to use system-instaleld zinnia library.  Otherwise
-    # zinnia will be built from source as needed.
-    'use_libzinnia%': 0,
-
-    # use_libibus represents if ibus library is used or not.
-    # This option is only for Linux.
-    'use_libibus%': 0,
-
-    # enable ambiguous search (a.k.a. KATSUKOU-conversion).
-    'enable_ambiguous_search%': 0,
-    # enable typing correction.
-    'enable_typing_correction%': 0,
 
     'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
   },
@@ -784,6 +761,8 @@
           'OTHER_CPLUSPLUSFLAGS': [
             '$(inherited)',
           ],
+          'SYMROOT': '<(build_base)',
+          'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
         },
         'link_settings': {
           'libraries': [
@@ -894,8 +873,4 @@
       ],
     }],
   ],
-  'xcode_settings': {
-    'SYMROOT': '<(build_base)',
-    'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
-  },
 }

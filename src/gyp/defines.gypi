@@ -27,8 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# defines.gypi is supposed to contain configurable define macros and
-# gyp variables to switch those define macros.
+# defines.gypi is supposed to contain configurable options represented by
+# gyp variables and define macros.
 # gyp variables should be configurable by build_mozc.py.
 {
   'variables': {
@@ -47,8 +47,33 @@
     # or not.
     'enable_gtk_renderer%': '0',
 
+    # enable ambiguous search (a.k.a. KATSUKOU-conversion).
+    'enable_ambiguous_search%': '0',
+
+    # enable typing correction.
+    'enable_typing_correction%': '0',
+
+    # use_qt is 'YES' only if you want to use GUI binaries.
+    'use_qt%': 'YES',
+
     # Qt version.  It should be either of 4 or 5.
     'qt_ver%' : '4',
+
+    # use_libprotobuf represents if protobuf library is used or not.
+    # This option is only for Linux.
+    # You should not set this flag if you want to use "dlopen" to
+    # load Mozc's modules. See
+    # - https://github.com/google/mozc/issues/14
+    # for the background information.
+    'use_libprotobuf%': '0',
+
+    # Set '1' to use system-instaleld zinnia library.  Otherwise
+    # zinnia will be built from source as needed.
+    'use_libzinnia%': '0',
+
+    # use_libibus represents if ibus library is used or not.
+    # This option is only for Linux.
+    'use_libibus%': '0',
   },
   'target_defaults': {
     'conditions': [
