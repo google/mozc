@@ -33,7 +33,6 @@
 #include <memory>
 
 #include "base/port.h"
-#include "converter/boundary_struct.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/user_pos.h"
@@ -64,9 +63,6 @@ class SystemDictionaryDataPacker {
       size_t rule_id_table_count,
       const dictionary::POSMatcher::Range *const *range_tables,
       size_t range_tables_count);
-  void SetBoundaryData(
-      const BoundaryData *boundary_data,
-      size_t boundary_data_count);
   void SetSuffixTokens(
       const dictionary::SuffixToken *suffix_tokens,
       size_t suffix_tokens_count);

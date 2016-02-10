@@ -33,7 +33,6 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/version.h"
-#include "converter/boundary_struct.h"
 #include "data_manager/packed/system_dictionary_data_packer.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"

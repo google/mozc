@@ -63,11 +63,7 @@ message SystemDictionaryData {
 
   reserved 5;  // DEPRECATED: optional bytes lid_group_data = 5;
 
-  message BoundaryData {
-    optional uint32 prefix_penalty = 1;
-    optional uint32 suffix_penalty = 2;
-  };
-  repeated BoundaryData boundary_data = 6;
+  reserved 6;  // DEPRECATED: repeated BoundaryData boundary_data = 6;
 
   message SuffixToken {
     optional string key = 1;

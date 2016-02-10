@@ -37,7 +37,6 @@
 #include "base/protobuf/coded_stream.h"
 #include "base/protobuf/gzip_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
-#include "converter/boundary_struct.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
@@ -96,7 +95,7 @@ class PackedDataManager::Impl {
       size_t *l_num_elements, size_t *r_num_elements,
       const uint16 **l_table, const uint16 **r_table,
       size_t *bitarray_num_bytes, const char **bitarray_data,
-      const BoundaryData **boundary_data) const;
+      const uint16 **boundary_data) const;
   void GetSystemDictionaryData(const char **data, int *size) const;
   void GetSuffixDictionaryData(const SuffixToken **data,
                                size_t *size) const;
@@ -134,7 +133,6 @@ class PackedDataManager::Impl {
   unique_ptr<uint16[]> rule_id_table_;
   unique_ptr<POSMatcher::Range *[]> range_tables_;
   unique_ptr<Range[]> range_table_items_;
-  unique_ptr<BoundaryData[]> boundary_data_;
   unique_ptr<SuffixToken[]> suffix_tokens_;
   unique_ptr<ReadingCorrectionItem[]> reading_corrections_;
   size_t compressed_l_size_;
@@ -285,16 +283,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
     range_table_items_[range_index].lower = static_cast<uint16>(0xFFFF);
     range_table_items_[range_index].upper = static_cast<uint16>(0xFFFF);
     ++range_index;
-  }
-
-  // Makes boundary data.
-  boundary_data_.reset(
-      new BoundaryData[system_dictionary_data_->boundary_data_size()]);
-  for (size_t i = 0; i < system_dictionary_data_->boundary_data_size(); ++i) {
-    const SystemDictionaryData::BoundaryData &boundary_data =
-        system_dictionary_data_->boundary_data(i);
-    boundary_data_[i].prefix_penalty = boundary_data.prefix_penalty();
-    boundary_data_[i].suffix_penalty = boundary_data.suffix_penalty();
   }
 
   // Makes suffix data.
@@ -525,7 +513,7 @@ void PackedDataManager::Impl::GetSegmenterData(
     size_t *l_num_elements, size_t *r_num_elements,
     const uint16 **l_table, const uint16 **r_table,
     size_t *bitarray_num_bytes, const char **bitarray_data,
-    const BoundaryData **boundary_data) const {
+    const uint16 **boundary_data) const {
   *l_num_elements = compressed_l_size_;
   *r_num_elements = compressed_r_size_;
   *l_table = compressed_lid_table_.get();
@@ -534,7 +522,7 @@ void PackedDataManager::Impl::GetSegmenterData(
       system_dictionary_data_->segmenter_data().bit_array_data().size();
   *bitarray_data =
       system_dictionary_data_->segmenter_data().bit_array_data().data();
-  *boundary_data = boundary_data_.get();
+  *boundary_data = manager_.GetBoundaryData();
 }
 
 void PackedDataManager::Impl::GetSystemDictionaryData(
@@ -689,7 +677,7 @@ void PackedDataManager::GetSegmenterData(
     size_t *l_num_elements, size_t *r_num_elements,
     const uint16 **l_table, const uint16 **r_table,
     size_t *bitarray_num_bytes, const char **bitarray_data,
-    const BoundaryData **boundary_data) const {
+    const uint16 **boundary_data) const {
   manager_impl_->GetSegmenterData(l_num_elements,
                                   r_num_elements,
                                   l_table,

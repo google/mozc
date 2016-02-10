@@ -59,7 +59,7 @@ class PackedDataManager : public DataManagerInterface {
   void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
                         const uint16 **l_table, const uint16 **r_table,
                         size_t *bitarray_num_bytes, const char **bitarray_data,
-                        const BoundaryData **boundary_data) const override;
+                        const uint16 **boundary_data) const override;
   void GetSystemDictionaryData(const char **data, int *size) const override;
   void GetSuffixDictionaryData(const dictionary::SuffixToken **data,
                                size_t *size) const override;

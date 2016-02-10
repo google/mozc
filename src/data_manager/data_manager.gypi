@@ -60,7 +60,6 @@
       'target_name': '<(dataset_tag)_data_manager',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/boundary_data.h',
         '<(gen_out_dir)/embedded_connection_data.h',
         '<(gen_out_dir)/embedded_dictionary_data.h',
         '<(gen_out_dir)/segmenter_data.h',
@@ -131,6 +130,7 @@
         'gen_separate_collocation_suppression_data_for_<(dataset_tag)#host',
         'gen_separate_suggestion_filter_data_for_<(dataset_tag)#host',
         'gen_separate_pos_group_data_for_<(dataset_tag)#host',
+        'gen_separate_boundary_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -143,6 +143,7 @@
             'collocation_supp': '<(gen_out_dir)/collocation_suppression_data.data',
             'suggestion_filter': '<(gen_out_dir)/suggestion_filter_data.data',
             'pos_group': '<(gen_out_dir)/pos_group.data',
+            'boundary': '<(gen_out_dir)/boundary.data',
           },
           'inputs': [
             '<(dictionary)',
@@ -151,6 +152,7 @@
             '<(collocation_supp)',
             '<(suggestion_filter)',
             '<(pos_group)',
+            '<(boundary)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -165,6 +167,7 @@
             'dict:32:<(gen_out_dir)/system.dictionary',
             'sugg:32:<(gen_out_dir)/suggestion_filter_data.data',
             'posg:8:<(gen_out_dir)/pos_group.data',
+            'bdry:16:<(gen_out_dir)/boundary.data',
           ],
         },
       ],
@@ -175,7 +178,6 @@
       'toolsets': ['host'],
       'dependencies': [
         '<(dataset_tag)_data_manager_base.gyp:gen_<(dataset_tag)_embedded_data_light',
-        'gen_embedded_boundary_data_for_<(dataset_tag)#host',
         'gen_embedded_collocation_data_for_<(dataset_tag)#host',
         'gen_embedded_collocation_suppression_data_for_<(dataset_tag)#host',
         'gen_embedded_connection_data_for_<(dataset_tag)#host',
@@ -557,34 +559,36 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_boundary_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_boundary_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'actions': [
         {
-          'action_name': 'gen_embedded_boundary_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_boundary_data_for_<(dataset_tag)',
           'variables': {
-            # ordering-sensitive
-            'input_files': [
-              '<(boundary_def)',
-              '<(platform_data_dir)/id.def',
-            ],
+            'boundary_def_var': '<(boundary_def)',
+            'id_def': '<(platform_data_dir)/id.def',
+            'special_pos': '<(common_data_dir)/rules/special_pos.def',
           },
           'inputs': [
             '<(mozc_dir)/converter/gen_boundary_data.py',
-            '<@(input_files)',
+            '<(boundary_def_var)',
+            '<(id_def)',
+            '<(special_pos)',
           ],
           'outputs': [
-            '<(gen_out_dir)/boundary_data.h',
+            '<(gen_out_dir)/boundary.data',
           ],
           'action': [
-            'python', '<(mozc_dir)/build_tools/redirect.py',
-            '<(gen_out_dir)/boundary_data.h',
+            'python',
             '<(mozc_dir)/converter/gen_boundary_data.py',
-            '<@(input_files)',
+            '--boundary_def=<(boundary_def)',
+            '--id_def=<(platform_data_dir)/id.def',
+            '--special_pos=<(common_data_dir)/rules/special_pos.def',
+            '--output=<(gen_out_dir)/boundary.data',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/boundary_data.h.'),
+                      '<(gen_out_dir)/boundary.data'),
         },
       ],
     },

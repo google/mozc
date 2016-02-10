@@ -60,11 +60,15 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     return false;
   }
   if (!reader.Get("cols", &collocation_suppression_data_)) {
-    LOG(ERROR) << "Cannot find a collocation suprression";
+    LOG(ERROR) << "Cannot find a collocation suprression data";
     return false;
   }
   if (!reader.Get("posg", &pos_group_data_)) {
     LOG(ERROR) << "Cannot find a POS group data";
+    return false;
+  }
+  if (!reader.Get("bdry", &boundary_data_)) {
+    LOG(ERROR) << "Cannot find a boundary data";
     return false;
   }
   return true;
@@ -114,7 +118,7 @@ const uint8 *DataManager::GetPosGroupData() const {
 void DataManager::GetSegmenterData(
     size_t *l_num_elements, size_t *r_num_elements, const uint16 **l_table,
     const uint16 **r_table, size_t *bitarray_num_bytes,
-    const char **bitarray_data, const BoundaryData **boundary_data) const {
+    const char **bitarray_data, const uint16 **boundary_data) const {
   LOG(FATAL) << "Not implemented";
 }
 

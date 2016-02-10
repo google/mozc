@@ -93,7 +93,6 @@ void ChromeOsDataManager::GetSystemDictionaryData(
 
 namespace {
 // Automatically generated headers containing data set for segmenter.
-#include "data_manager/chromeos/boundary_data.h"
 #include "data_manager/chromeos/segmenter_data.h"
 }  // namespace
 
@@ -101,14 +100,14 @@ void ChromeOsDataManager::GetSegmenterData(
     size_t *l_num_elements, size_t *r_num_elements,
     const uint16 **l_table, const uint16 **r_table,
     size_t *bitarray_num_bytes, const char **bitarray_data,
-    const BoundaryData **boundary_data) const {
+    const uint16 **boundary_data) const {
   *l_num_elements = kCompressedLSize;
   *r_num_elements = kCompressedRSize;
   *l_table = kCompressedLIDTable;
   *r_table = kCompressedRIDTable;
   *bitarray_num_bytes = kSegmenterBitArrayData_size;
   *bitarray_data = kSegmenterBitArrayData_data;
-  *boundary_data = kBoundaryData;
+  *boundary_data = manager_.GetBoundaryData();
 }
 
 namespace {

@@ -38,7 +38,6 @@
 #include "base/protobuf/gzip_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "base/version.h"
-#include "converter/boundary_struct.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
 #include "dictionary/suffix_dictionary_token.h"
@@ -115,17 +114,6 @@ void SystemDictionaryDataPacker::SetPosMatcherData(
       range->set_lower(range_tables[i][j].lower);
       range->set_upper(range_tables[i][j].upper);
     }
-  }
-}
-
-void SystemDictionaryDataPacker::SetBoundaryData(
-    const BoundaryData *boundary_data,
-    size_t boundary_data_count) {
-  for (size_t i = 0; i < boundary_data_count; ++i) {
-    SystemDictionaryData::BoundaryData *boundary =
-        system_dictionary_->add_boundary_data();
-    boundary->set_prefix_penalty(boundary_data[i].prefix_penalty);
-    boundary->set_suffix_penalty(boundary_data[i].suffix_penalty);
   }
 }
 

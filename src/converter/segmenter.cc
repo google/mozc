@@ -32,7 +32,6 @@
 #include "base/bitarray.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "converter/boundary_struct.h"
 #include "converter/node.h"
 #include "data_manager/data_manager_interface.h"
 
@@ -46,7 +45,7 @@ Segmenter *Segmenter::CreateFromDataManager(
   const uint16 *r_table = nullptr;
   size_t bitarray_num_bytes = 0;
   const char *bitarray_data = nullptr;
-  const BoundaryData *boundary_data = nullptr;
+  const uint16 *boundary_data = nullptr;
   data_manager.GetSegmenterData(&l_num_elements, &r_num_elements,
                                 &l_table, &r_table,
                                 &bitarray_num_bytes, &bitarray_data,
@@ -60,7 +59,7 @@ Segmenter *Segmenter::CreateFromDataManager(
 Segmenter::Segmenter(
     size_t l_num_elements, size_t r_num_elements, const uint16 *l_table,
     const uint16 *r_table, size_t bitarray_num_bytes,
-    const char *bitarray_data, const BoundaryData *boundary_data)
+    const char *bitarray_data, const uint16 *boundary_data)
     : l_num_elements_(l_num_elements), r_num_elements_(r_num_elements),
       l_table_(l_table), r_table_(r_table),
       bitarray_num_bytes_(bitarray_num_bytes),
@@ -109,11 +108,11 @@ bool Segmenter::IsBoundary(uint16 rid, uint16 lid) const {
 }
 
 int32 Segmenter::GetPrefixPenalty(uint16 lid) const {
-  return boundary_data_[lid].prefix_penalty;
+  return boundary_data_[2 * lid];
 }
 
 int32 Segmenter::GetSuffixPenalty(uint16 rid) const {
-  return boundary_data_[rid].suffix_penalty;
+  return boundary_data_[2 * rid + 1];
 }
 
 }  // namespace mozc

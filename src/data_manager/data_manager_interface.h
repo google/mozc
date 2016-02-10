@@ -36,7 +36,6 @@
 
 namespace mozc {
 
-struct BoundaryData;
 struct CounterSuffixEntry;
 struct ReadingCorrectionItem;
 #ifndef NO_USAGE_REWRITER
@@ -73,7 +72,7 @@ class DataManagerInterface {
       size_t *l_num_elements, size_t *r_num_elements,
       const uint16 **l_table, const uint16 **r_table,
       size_t *bitarray_num_bytes, const char **bitarray_data,
-      const BoundaryData **boundary_data) const = 0;
+      const uint16 **boundary_data) const = 0;
 
   // Returns the address of system dictionary data and its size.
   virtual void GetSystemDictionaryData(const char **data, int *size) const = 0;

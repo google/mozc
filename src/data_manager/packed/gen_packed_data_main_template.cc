@@ -35,7 +35,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "converter/boundary_struct.h"
 #include "data_manager/packed/system_dictionary_data_packer.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -58,7 +57,6 @@ DEFINE_bool(use_gzip, false, "use gzip");
 namespace mozc {
 namespace {
 
-#include "data_manager/@DIR@/boundary_data.h"
 #include "data_manager/@DIR@/pos_matcher_data.h"
 #include "data_manager/@DIR@/reading_correction_data.h"
 #include "data_manager/@DIR@/segmenter_data.h"
@@ -84,7 +82,6 @@ bool OutputData(const string &file_path) {
   // elements are not required at runtime.
   packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
                            kRangeTables, arraysize(kRangeTables) - 1);
-  packer.SetBoundaryData(kBoundaryData, arraysize(kBoundaryData));
   packer.SetSuffixTokens(kSuffixTokens, arraysize(kSuffixTokens));
   packer.SetReadingCorretions(kReadingCorrections,
                               arraysize(kReadingCorrections));

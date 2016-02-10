@@ -64,7 +64,7 @@ class DataManager : public DataManagerInterface {
   void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
                         const uint16 **l_table, const uint16 **r_table,
                         size_t *bitarray_num_bytes, const char **bitarray_data,
-                        const BoundaryData **boundary_data) const override;
+                        const uint16 **boundary_data) const override;
 
   void GetSuffixDictionaryData(const dictionary::SuffixToken **data,
                                size_t *size) const override;
@@ -82,6 +82,13 @@ class DataManager : public DataManagerInterface {
   void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
                                    size_t *size) const override;
 
+  // TODO(noriyukit): This function gives boundary data, which is a partial
+  // result of GetSegmenterData() above.  Implement the full GetSegmenterData()
+  // and remove this function.
+  const uint16 *GetBoundaryData() const {
+    return reinterpret_cast<const uint16*>(boundary_data_.data());
+  }
+
  private:
   StringPiece connection_data_;
   StringPiece dictionary_data_;
@@ -89,6 +96,7 @@ class DataManager : public DataManagerInterface {
   StringPiece collocation_data_;
   StringPiece collocation_suppression_data_;
   StringPiece pos_group_data_;
+  StringPiece boundary_data_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

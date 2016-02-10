@@ -36,7 +36,6 @@ namespace mozc {
 
 class DataManagerInterface;
 struct Node;
-struct BoundaryData;
 
 class Segmenter {
  public:
@@ -47,7 +46,7 @@ class Segmenter {
   Segmenter(size_t l_num_elements, size_t r_num_elements,
             const uint16 *l_table, const uint16 *r_table,
             size_t bitarray_num_bytes, const char *bitarray_data,
-            const BoundaryData *boundary_data);
+            const uint16 *boundary_data);
   ~Segmenter();
 
   bool IsBoundary(const Node &lnode, const Node &rnode,
@@ -66,7 +65,7 @@ class Segmenter {
   const uint16 *r_table_;
   const size_t bitarray_num_bytes_;
   const char *bitarray_data_;
-  const BoundaryData *boundary_data_;
+  const uint16 *boundary_data_;
 
   DISALLOW_COPY_AND_ASSIGN(Segmenter);
 };
