@@ -11,6 +11,7 @@ Building on Mac requires the following software.
 
   * Xcode
   * [Ninja](https://github.com/ninja-build/ninja)
+  * [Qt4](https://download.qt.io/official_releases/qt/4.8/)
 
 If you don't need to run gui tools like about dialog, config dialog, or dictionary tool, you can omit installing Qt.  Candidate window still shows without Qt.  See below for the detailed information.
 
@@ -42,6 +43,25 @@ python build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gy
 # Executables
 
 Executables are written in `~/wok/mozc/src/out_mac/Release` for Release builds, and `~/work/mozc/src/out_mac/Debug` for Debug builds. For instance, you'll have `~/work/mozc/src/out_mac/Release/Mozc.app` once the build finishes successfully in the Release mode.
+
+# GUI tools
+
+To build GUI tools, you need to specify --qtdir instead of --noqt.
+
+```
+GYP_DEFINES="mac_sdk=10.7 mac_deployment_target=10.7" python build_mozc.py gyp --qtdir ~/myqt
+```
+
+In the above case, `~/myqt` should contain Qt's sources, headers and libraries built from `configure` and `make`.
+
+Then you can build `executable`s defined in `gui/gui.gyp`.  Here is an example to build the config dialog.
+
+```
+python build_mozc.py build -c Release gui/gui.gyp:config_dialog_main
+```
+
+These executables are linked with the libraries in `~/myqt`.  You might want to change it with `install_name_tool`.
+
 
 # Clean up the Tree
 
