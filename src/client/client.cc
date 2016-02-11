@@ -198,7 +198,7 @@ void Client::DumpHistorySnapshot(const string &filename,
   OutputFileStream output(snapshot_file.c_str(), ios::app);
 
   output << "---- Start history snapshot for " << label << std::endl;
-  output << "Created at " << Logging::GetLogMessageHeader() << endl;
+  output << "Created at " << Logging::GetLogMessageHeader() << std::endl;
   output << "Version " << Version::GetMozcVersion() << std::endl;
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     output << history_inputs_[i].DebugString();
