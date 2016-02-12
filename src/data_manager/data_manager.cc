@@ -31,6 +31,7 @@
 
 #include "base/logging.h"
 #include "data_manager/dataset_reader.h"
+#include "protocol/segmenter_data.pb.h"
 
 namespace mozc {
 
@@ -69,6 +70,32 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
   }
   if (!reader.Get("bdry", &boundary_data_)) {
     LOG(ERROR) << "Cannot find a boundary data";
+    return false;
+  }
+  {
+    StringPiece memblock;
+    if (!reader.Get("segmenter_sizeinfo", &memblock)) {
+      LOG(ERROR) << "Cannot find a segmenter size info";
+      return false;
+    }
+    converter::SegmenterDataSizeInfo sizeinfo;
+    if (!sizeinfo.ParseFromArray(memblock.data(), memblock.size())) {
+      LOG(ERROR) << "Failed to parse SegmenterDataSizeInfo";
+      return false;
+    }
+    segmenter_compressed_lsize_ = sizeinfo.compressed_lsize();
+    segmenter_compressed_rsize_ = sizeinfo.compressed_rsize();
+  }
+  if (!reader.Get("segmenter_ltable", &segmenter_ltable_)) {
+    LOG(ERROR) << "Cannot find a segmenter ltable";
+    return false;
+  }
+  if (!reader.Get("segmenter_rtable", &segmenter_rtable_)) {
+    LOG(ERROR) << "Cannot find a segmenter rtable";
+    return false;
+  }
+  if (!reader.Get("segmenter_bitarray", &segmenter_bitarray_)) {
+    LOG(ERROR) << "Cannot find a segmenter bit-array";
     return false;
   }
   return true;
@@ -119,7 +146,13 @@ void DataManager::GetSegmenterData(
     size_t *l_num_elements, size_t *r_num_elements, const uint16 **l_table,
     const uint16 **r_table, size_t *bitarray_num_bytes,
     const char **bitarray_data, const uint16 **boundary_data) const {
-  LOG(FATAL) << "Not implemented";
+  *l_num_elements = segmenter_compressed_lsize_;
+  *r_num_elements = segmenter_compressed_rsize_;
+  *l_table = reinterpret_cast<const uint16 *>(segmenter_ltable_.data());
+  *r_table = reinterpret_cast<const uint16 *>(segmenter_rtable_.data());
+  *bitarray_num_bytes = segmenter_bitarray_.size();
+  *bitarray_data = segmenter_bitarray_.data();
+  *boundary_data = reinterpret_cast<const uint16 *>(boundary_data_.data());
 }
 
 void DataManager::GetSuffixDictionaryData(const dictionary::SuffixToken **data,

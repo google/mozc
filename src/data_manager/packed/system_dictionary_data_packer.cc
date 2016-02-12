@@ -153,29 +153,6 @@ void SystemDictionaryDataPacker::SetReadingCorretions(
   }
 }
 
-void SystemDictionaryDataPacker::SetSegmenterData(
-    size_t compressed_l_size,
-    size_t compressed_r_size,
-    const uint16 *compressed_lid_table,
-    size_t compressed_lid_table_size,
-    const uint16 *compressed_rid_table,
-    size_t compressed_rid_table_size,
-    const char *segmenter_bit_array_data,
-    size_t segmenter_bit_array_data_size) {
-  SystemDictionaryData::SegmenterData *segmenter =
-      system_dictionary_->mutable_segmenter_data();
-  segmenter->set_compressed_l_size(compressed_l_size);
-  segmenter->set_compressed_r_size(compressed_r_size);
-  for (size_t i = 0; i < compressed_lid_table_size; ++i) {
-    segmenter->add_compressed_lid_table(compressed_lid_table[i]);
-  }
-  for (size_t i = 0; i < compressed_rid_table_size; ++i) {
-    segmenter->add_compressed_rid_table(compressed_rid_table[i]);
-  }
-  segmenter->set_bit_array_data(segmenter_bit_array_data,
-                                segmenter_bit_array_data_size);
-}
-
 void SystemDictionaryDataPacker::SetSymbolRewriterData(
     const mozc::EmbeddedDictionary::Token *token_data,
     size_t token_size) {

@@ -32,14 +32,18 @@
 #include "converter/gen_segmenter_bitarray.h"
 
 namespace {
-#include "data_manager/chromeos/chromeos_segmenter_inl.h"
+#include "data_manager/chromeos/segmenter_inl.h"
 }
 
-DEFINE_string(output, "", "header filename for chromeos segmenter");
+DEFINE_string(output_size_info, "", "Serialized SegmenterDataSizeInfo");
+DEFINE_string(output_ltable, "", "LTable array");
+DEFINE_string(output_rtable, "", "RTable array");
+DEFINE_string(output_bitarray, "", "Segmenter bitarray");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, true);
   mozc::SegmenterBitarrayGenerator::GenerateBitarray(
-      kLSize, kRSize, &IsBoundaryInternal, FLAGS_output);
+      kLSize, kRSize, &IsBoundaryInternal, FLAGS_output_size_info,
+      FLAGS_output_ltable, FLAGS_output_rtable, FLAGS_output_bitarray);
   return 0;
 }

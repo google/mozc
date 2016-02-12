@@ -69,15 +69,6 @@ class SystemDictionaryDataPacker {
   void SetReadingCorretions(
       const ReadingCorrectionItem *reading_corrections,
       size_t reading_corrections_count);
-  void SetSegmenterData(
-      size_t compressed_l_size,
-      size_t compressed_r_size,
-      const uint16 *compressed_lid_table,
-      size_t compressed_lid_table_size,
-      const uint16 *compressed_rid_table,
-      size_t compressed_rid_table_size,
-      const char *segmenter_bit_array_data,
-      size_t segmenter_bit_array_data_size);
   void SetSuggestionFilterData(
       const void *suggestion_filter_data,
       size_t suggestion_filter_data_size);

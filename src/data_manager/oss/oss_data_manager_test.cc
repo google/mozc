@@ -37,7 +37,7 @@ namespace mozc {
 namespace oss {
 
 namespace {
-#include "data_manager/oss/oss_segmenter_inl.h"
+#include "data_manager/oss/segmenter_inl.h"
 }  // namespace
 
 class OssDataManagerTest : public DataManagerTestBase {

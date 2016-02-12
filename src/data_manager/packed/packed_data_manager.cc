@@ -135,10 +135,6 @@ class PackedDataManager::Impl {
   unique_ptr<Range[]> range_table_items_;
   unique_ptr<SuffixToken[]> suffix_tokens_;
   unique_ptr<ReadingCorrectionItem[]> reading_corrections_;
-  size_t compressed_l_size_;
-  size_t compressed_r_size_;
-  unique_ptr<uint16[]> compressed_lid_table_;
-  unique_ptr<uint16[]> compressed_rid_table_;
   unique_ptr<EmbeddedDictionary::Value[]> symbol_data_values_;
   size_t symbol_data_token_size_;
   unique_ptr<EmbeddedDictionary::Token[]> symbol_data_tokens_;
@@ -155,9 +151,7 @@ class PackedDataManager::Impl {
 };
 
 PackedDataManager::Impl::Impl()
-    : compressed_l_size_(0),
-      compressed_r_size_(0),
-      symbol_data_token_size_(0) {
+    : symbol_data_token_size_(0) {
 }
 
 PackedDataManager::Impl::~Impl() {
@@ -334,22 +328,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
     }
   }
 
-  // Makes segment data.
-  const SystemDictionaryData::SegmenterData &segmenter_data =
-      system_dictionary_data_->segmenter_data();
-  compressed_l_size_ = segmenter_data.compressed_l_size();
-  compressed_r_size_ = segmenter_data.compressed_r_size();
-  compressed_lid_table_.reset(
-      new uint16[segmenter_data.compressed_lid_table_size()]);
-  for (size_t i = 0; i < segmenter_data.compressed_lid_table_size(); ++i) {
-    compressed_lid_table_[i] = segmenter_data.compressed_lid_table(i);
-  }
-  compressed_rid_table_.reset(
-      new uint16[segmenter_data.compressed_rid_table_size()]);
-  for (size_t i = 0; i < segmenter_data.compressed_rid_table_size(); ++i) {
-    compressed_rid_table_[i] = segmenter_data.compressed_rid_table(i);
-  }
-
   // Makes symbol dictionary data.
   const SystemDictionaryData::EmbeddedDictionary &symbol_dictionary =
       system_dictionary_data_->symbol_dictionary();
@@ -514,15 +492,8 @@ void PackedDataManager::Impl::GetSegmenterData(
     const uint16 **l_table, const uint16 **r_table,
     size_t *bitarray_num_bytes, const char **bitarray_data,
     const uint16 **boundary_data) const {
-  *l_num_elements = compressed_l_size_;
-  *r_num_elements = compressed_r_size_;
-  *l_table = compressed_lid_table_.get();
-  *r_table = compressed_rid_table_.get();
-  *bitarray_num_bytes =
-      system_dictionary_data_->segmenter_data().bit_array_data().size();
-  *bitarray_data =
-      system_dictionary_data_->segmenter_data().bit_array_data().data();
-  *boundary_data = manager_.GetBoundaryData();
+  manager_.GetSegmenterData(l_num_elements, r_num_elements, l_table, r_table,
+                            bitarray_num_bytes, bitarray_data, boundary_data);
 }
 
 void PackedDataManager::Impl::GetSystemDictionaryData(

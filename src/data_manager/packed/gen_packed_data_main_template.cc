@@ -59,7 +59,6 @@ namespace {
 
 #include "data_manager/@DIR@/pos_matcher_data.h"
 #include "data_manager/@DIR@/reading_correction_data.h"
-#include "data_manager/@DIR@/segmenter_data.h"
 #include "data_manager/@DIR@/suffix_data.h"
 #include "data_manager/@DIR@/symbol_rewriter_data.h"
 #include "data_manager/@DIR@/user_pos_data.h"
@@ -85,14 +84,6 @@ bool OutputData(const string &file_path) {
   packer.SetSuffixTokens(kSuffixTokens, arraysize(kSuffixTokens));
   packer.SetReadingCorretions(kReadingCorrections,
                               arraysize(kReadingCorrections));
-  packer.SetSegmenterData(kCompressedLSize,
-                          kCompressedRSize,
-                          kCompressedLIDTable,
-                          arraysize(kCompressedLIDTable),
-                          kCompressedRIDTable,
-                          arraysize(kCompressedRIDTable),
-                          kSegmenterBitArrayData_data,
-                          kSegmenterBitArrayData_size);
   packer.SetSymbolRewriterData(kSymbolData_token_data, kSymbolData_token_size);
 #ifndef NO_USAGE_REWRITER
   packer.SetUsageRewriterData(kConjugationNum,

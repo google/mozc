@@ -37,7 +37,7 @@ namespace mozc {
 namespace testing {
 
 namespace {
-#include "data_manager/testing/mock_segmenter_inl.h"
+#include "data_manager/testing/segmenter_inl.h"
 }  // namespace
 
 class MockDataManagerTest : public DataManagerTestBase {

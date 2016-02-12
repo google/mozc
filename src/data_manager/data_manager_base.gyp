@@ -42,6 +42,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../protocol/protocol.gyp:segmenter_data_proto',
         'dataset_reader',
       ],
     },

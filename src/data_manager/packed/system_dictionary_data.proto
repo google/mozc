@@ -81,14 +81,7 @@ message SystemDictionaryData {
   };
   repeated ReadingCorrectionItem reading_corrections = 8;
 
-  message SegmenterData {
-    optional uint32 compressed_l_size = 1;
-    optional uint32 compressed_r_size = 2;
-    repeated uint32 compressed_lid_table = 3;
-    repeated uint32 compressed_rid_table = 4;
-    optional bytes bit_array_data = 5;
-  }
-  optional SegmenterData segmenter_data = 9;
+  reserved 9;  // DEPRECATED: optional SegmenterData segmenter_data = 9;
 
   message EmbeddedDictionary {
     message Value {

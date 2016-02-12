@@ -82,13 +82,6 @@ class DataManager : public DataManagerInterface {
   void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
                                    size_t *size) const override;
 
-  // TODO(noriyukit): This function gives boundary data, which is a partial
-  // result of GetSegmenterData() above.  Implement the full GetSegmenterData()
-  // and remove this function.
-  const uint16 *GetBoundaryData() const {
-    return reinterpret_cast<const uint16*>(boundary_data_.data());
-  }
-
  private:
   StringPiece connection_data_;
   StringPiece dictionary_data_;
@@ -97,6 +90,11 @@ class DataManager : public DataManagerInterface {
   StringPiece collocation_suppression_data_;
   StringPiece pos_group_data_;
   StringPiece boundary_data_;
+  size_t segmenter_compressed_lsize_;
+  size_t segmenter_compressed_rsize_;
+  StringPiece segmenter_ltable_;
+  StringPiece segmenter_rtable_;
+  StringPiece segmenter_bitarray_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

@@ -60,9 +60,6 @@
       'target_name': '<(dataset_tag)_data_manager',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/embedded_connection_data.h',
-        '<(gen_out_dir)/embedded_dictionary_data.h',
-        '<(gen_out_dir)/segmenter_data.h',
         '<(gen_out_dir)/suffix_data.h',
         '<(gen_out_dir)/symbol_rewriter_data.h',
         '<(mozc_dir)/dictionary/pos_group.h',
@@ -144,6 +141,10 @@
             'suggestion_filter': '<(gen_out_dir)/suggestion_filter_data.data',
             'pos_group': '<(gen_out_dir)/pos_group.data',
             'boundary': '<(gen_out_dir)/boundary.data',
+            'segmenter_sizeinfo': '<(gen_out_dir)/segmenter_sizeinfo.data',
+            'segmenter_ltable': '<(gen_out_dir)/segmenter_ltable.data',
+            'segmenter_rtable': '<(gen_out_dir)/segmenter_rtable.data',
+            'segmenter_bitarray': '<(gen_out_dir)/segmenter_bitarray.data',
           },
           'inputs': [
             '<(dictionary)',
@@ -153,6 +154,10 @@
             '<(suggestion_filter)',
             '<(pos_group)',
             '<(boundary)',
+            '<(segmenter_sizeinfo)',
+            '<(segmenter_ltable)',
+            '<(segmenter_rtable)',
+            '<(segmenter_bitarray)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -166,8 +171,12 @@
             'conn:32:<(gen_out_dir)/connection.data',
             'dict:32:<(gen_out_dir)/system.dictionary',
             'sugg:32:<(gen_out_dir)/suggestion_filter_data.data',
-            'posg:8:<(gen_out_dir)/pos_group.data',
-            'bdry:16:<(gen_out_dir)/boundary.data',
+            'posg:32:<(gen_out_dir)/pos_group.data',
+            'bdry:32:<(gen_out_dir)/boundary.data',
+            'segmenter_sizeinfo:32:<(gen_out_dir)/segmenter_sizeinfo.data',
+            'segmenter_ltable:32:<(gen_out_dir)/segmenter_ltable.data',
+            'segmenter_rtable:32:<(gen_out_dir)/segmenter_rtable.data',
+            'segmenter_bitarray:32:<(gen_out_dir)/segmenter_bitarray.data'
           ],
         },
       ],
@@ -184,7 +193,6 @@
         'gen_embedded_counter_suffix_data_for_<(dataset_tag)#host',
         'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
         'gen_embedded_reading_correction_data_for_<(dataset_tag)#host',
-        'gen_embedded_segmenter_data_for_<(dataset_tag)#host',
         'gen_embedded_suffix_data_for_<(dataset_tag)#host',
         'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host',
         'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)#host',
@@ -502,16 +510,16 @@
             '<@(input_files)',
           ],
           'outputs': [
-            '<(gen_out_dir)/<(dataset_tag)_segmenter_inl.h',
+            '<(gen_out_dir)/segmenter_inl.h',
           ],
           'action': [
             'python', '<(mozc_dir)/build_tools/redirect.py',
-            '<(gen_out_dir)/<(dataset_tag)_segmenter_inl.h',
+            '<(gen_out_dir)/segmenter_inl.h',
             '<(mozc_dir)/converter/gen_segmenter_code.py',
             '<@(input_files)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/<(dataset_tag)_segmenter_inl.h.'),
+                      '<(gen_out_dir)/segmenter_inl.h.'),
         },
       ],
     },
@@ -531,7 +539,7 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_segmenter_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_segmenter_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
@@ -539,7 +547,7 @@
       ],
       'actions': [
         {
-          'action_name': 'gen_embedded_segmenter_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_segmenter_data_for_<(dataset_tag)',
           'variables': {
             'generator': '<(PRODUCT_DIR)/gen_<(dataset_tag)_sbm<(EXECUTABLE_SUFFIX)'
           },
@@ -547,14 +555,19 @@
             '<(generator)',
           ],
           'outputs': [
-            '<(gen_out_dir)/segmenter_data.h',
+            '<(gen_out_dir)/segmenter_sizeinfo.data',
+            '<(gen_out_dir)/segmenter_ltable.data',
+            '<(gen_out_dir)/segmenter_rtable.data',
+            '<(gen_out_dir)/segmenter_bitarray.data',
           ],
           'action': [
             '<(generator)',
-            '--output=<(gen_out_dir)/segmenter_data.h',
+            '--output_size_info=<(gen_out_dir)/segmenter_sizeinfo.data',
+            '--output_ltable=<(gen_out_dir)/segmenter_ltable.data',
+            '--output_rtable=<(gen_out_dir)/segmenter_rtable.data',
+            '--output_bitarray=<(gen_out_dir)/segmenter_bitarray.data',
           ],
-          'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/segmenter_data.h.'),
+          'message': ('[<(dataset_tag)] Generating segmenter data files'),
         },
       ],
     },
