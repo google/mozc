@@ -106,19 +106,13 @@ def GetBuildShortBaseName(options, target_platform):
   """
   if options.build_base:
     return options.build_base
-  # For some reason, xcodebuild does not accept absolute path names for
-  # the -project parameter. Convert the original_directory_name to a
-  # relative path from the build top level directory.
+
   if target_platform is None:
     target_platform = options.target_platform
   build_base = ''
 
-  generator = GetGeneratorName(options.ensure_value('gyp_generator', None))
   if target_platform == 'Windows':
-    if generator == 'ninja':
-      build_base = 'out_win'
-    else:
-      build_base = 'out_win_msvs'
+    build_base = 'out_win'
   elif target_platform == 'Mac':
     build_base = 'out_mac'
   elif target_platform == 'Linux':
@@ -142,13 +136,6 @@ def GetBuildBaseName(options, target_platform):
     build_base = os.path.join(GetTopLevelSourceDirectoryName(), build_base)
 
   return build_base
-
-
-def GetGeneratorName(generator):
-  """Gets the generator name based on the platform."""
-  if generator:
-    return generator
-  return 'ninja'
 
 
 # TODO(team): Move this to build_tools/util.py
@@ -292,16 +279,6 @@ def AddCommonOptions(parser):
   return parser
 
 
-def AddGeneratorOption(parser):
-  """Generator option is used by gyp and clean."""
-  options = {'dest': 'gyp_generator',
-             'help': 'Specifies the generator for GYP.'}
-  if IsWindows():
-    options['default'] = 'ninja'
-  parser.add_option('--gyp_generator', **options)
-  return parser
-
-
 def AddTargetPlatformOption(parser):
   # Linux environment can build for Linux, Android and NaCl.
   # --target_platform option enables this script to know which build
@@ -332,7 +309,6 @@ def ParseGypOptions(args=None, values=None):
   """Parses command line options for the gyp command."""
   parser = optparse.OptionParser(usage='Usage: %prog gyp [options]')
   AddCommonOptions(parser)
-  AddGeneratorOption(parser)
   default_branding = 'Mozc'
   parser.add_option('--branding', dest='branding', default=default_branding,
                     help='Specifies the branding. [default: %default]')
@@ -346,9 +322,8 @@ def ParseGypOptions(args=None, values=None):
   AddTargetPlatformOption(parser)
 
   # Mac and Linux
-  warn_as_error_default = False
   parser.add_option('--warn_as_error', action='store_true',
-                    dest='warn_as_error', default=warn_as_error_default,
+                    dest='warn_as_error', default=(default_branding != 'Mozc'),
                     help='Treat compiler warning as error. This option is used '
                     'on Mac and Linux.')
 
@@ -384,6 +359,10 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--android_ndk_home', dest='android_ndk_home', default=None,
                     help='[Android build only] A path to the Android NDK Home. '
                     'If not specified, automatically detected from PATH.')
+  parser.add_option('--android_hide_icon', action='store_true',
+                    dest='android_hide_icon', default=False)
+  parser.add_option('--android_release_icon', action='store_true',
+                    dest='android_release_icon', default=False)
 
   # NaCl
   parser.add_option('--nacl_sdk_root', dest='nacl_sdk_root', default='',
@@ -517,14 +496,6 @@ def ParseBuildOptions(args=None, values=None):
 
   (options, args) = parser.parse_args(args, values)
 
-  # Debug_Android and Release_Android have been deprecated.
-  # As migration process, throw exception with description.
-  # TODO(matsuzakit): Remove this block later.
-  if (options.configuration == 'Debug_Android'
-      or options.configuration == 'Release_Android'):
-    raise RuntimeError('%s has been deprecated. Use Debug or Release instead.'
-                       % options.configuration)
-
   targets = []
   for arg in args:
     targets.extend(ExpandMetaTarget(options, arg))
@@ -560,7 +531,6 @@ def ParseCleanOptions(args=None, values=None):
   parser = optparse.OptionParser(
       usage='Usage: %prog clean [-- build options]')
   AddCommonOptions(parser)
-  AddGeneratorOption(parser)
   AddTargetPlatformOption(parser)
 
   return parser.parse_args(args, values)
@@ -590,7 +560,7 @@ def AddPythonPathToEnvironmentFilesForWindows(out_dir):
       x64_file.write(x64_content)
 
 
-def GypMain(options, unused_args, _):
+def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
   # Generate a version definition file.
   logging.info('Generating version definition file...')
@@ -647,10 +617,8 @@ def GypMain(options, unused_args, _):
     RunOrDie([sys.executable, gyp_check_script,
               '--expected=%s' % expected_gyp_module_path])
 
-  # Determine the generator name.
-  generator = GetGeneratorName(options.gyp_generator)
-  os.environ['GYP_GENERATORS'] = generator
-  logging.info('Build tool: %s', generator)
+  # Set the generator name.
+  os.environ['GYP_GENERATORS'] = 'ninja'
 
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames(options)
@@ -730,6 +698,14 @@ def GypMain(options, unused_args, _):
   gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
   gyp_options.extend(['-D', 'android_application_id=%s' %
                       options.android_application_id])
+  if options.android_hide_icon:
+    gyp_options.extend(['-D', 'android_hide_icon=1'])
+  else:
+    gyp_options.extend(['-D', 'android_hide_icon=0'])
+  if options.android_release_icon:
+    gyp_options.extend(['-D', 'android_release_icon=1'])
+  else:
+    gyp_options.extend(['-D', 'android_release_icon=0'])
   gyp_options.extend(['-D', 'build_base=%s' %
                       GetBuildBaseName(options, target_platform)])
   gyp_options.extend(['-D', 'build_short_base=%s' %
@@ -833,10 +809,9 @@ def GypMain(options, unused_args, _):
     gyp_options.extend([
         '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
-  if generator == 'ninja':
-    gyp_options.extend(['--generator-output=.'])
-    short_basename = GetBuildShortBaseName(options, target_platform)
-    gyp_options.extend(['-G', 'output_dir=%s' % short_basename])
+  gyp_options.extend(['--generator-output=.'])
+  short_basename = GetBuildShortBaseName(options, target_platform)
+  gyp_options.extend(['-G', 'output_dir=%s' % short_basename])
 
   # Enable cross-compile
   # TODO(yukawa): Enable GYP_CROSSCOMPILE for Windows.
@@ -855,7 +830,7 @@ def GypMain(options, unused_args, _):
   logging.info('Done')
 
   # For internal Ninja build on Windows, set up environment files
-  if IsWindows() and generator == 'ninja':
+  if IsWindows():
     out_dir = os.path.join(GetTopLevelSourceDirectoryName(), 'out_win')
     AddPythonPathToEnvironmentFilesForWindows(out_dir)
 
@@ -888,6 +863,12 @@ def GypMain(options, unused_args, _):
       RunOrDie(copy_commands)
 
 
+def GetNinjaPath():
+  """Returns the path to Ninja."""
+  ninja = 'ninja'
+  if IsWindows():
+    ninja = 'ninja.exe'
+  return ninja
 
 
 def CanonicalTargetToGypFileAndTargetName(target):
@@ -898,7 +879,7 @@ def CanonicalTargetToGypFileAndTargetName(target):
   return (gyp_file_name, target_name)
 
 
-def BuildWithNinja(options, targets, unused_original_directory_name):
+def BuildWithNinja(options, targets):
   """Build the targets with Ninja."""
   target_names = []
   for target in targets:
@@ -906,7 +887,7 @@ def BuildWithNinja(options, targets, unused_original_directory_name):
         CanonicalTargetToGypFileAndTargetName(target))
     target_names.append(target_name)
 
-  ninja = 'ninja'
+  ninja = GetNinjaPath()
 
   if hasattr(options, 'android_device'):
     # Only for android testing.
@@ -921,7 +902,7 @@ def BuildWithNinja(options, targets, unused_original_directory_name):
 
 def BuildOnWindows(targets):
   """Build the target on Windows."""
-  ninja = 'ninja.exe'
+  ninja = GetNinjaPath()
 
   for target in targets:
     tokens = target.split(':')
@@ -930,7 +911,7 @@ def BuildOnWindows(targets):
     RunOrDie([ninja, '-C', target_dir] + tokens)
 
 
-def BuildMain(options, targets, original_directory_name):
+def BuildMain(options, targets):
   """The main function for the 'build' command."""
   if not targets:
     PrintErrorAndExit('No build target is specified.')
@@ -944,7 +925,7 @@ def BuildMain(options, targets, original_directory_name):
   if IsWindows():
     BuildOnWindows(targets)
   else:
-    BuildWithNinja(options, targets, original_directory_name)
+    BuildWithNinja(options, targets)
 
   # Revert python path.
   os.environ['PYTHONPATH'] = original_python_path
@@ -1034,7 +1015,7 @@ def RunTests(build_base, configuration, parallel_num):
     raise RunOrDieError('\n'.join([error_text] + failed_tests))
 
 
-def RunTestsOnAndroid(options, build_args, original_directory_name):
+def RunTestsOnAndroid(options, build_args):
   """Run a test suite for the Android version."""
   try:
     emulators = []
@@ -1125,14 +1106,14 @@ def RunTestsOnAndroid(options, build_args, original_directory_name):
       # Makefile parameter.
       setattr(build_options, 'android_device', ','.join(serialnumbers))
       logging.info('build_options=%s', build_options)
-      BuildMain(build_options, build_targets, original_directory_name)
+      BuildMain(build_options, build_targets)
   finally:
     # Terminate the emulators.
     for emulator in emulators:
       emulator.Terminate()
 
 
-def RunTestsOnNaCl(targets, build_args, original_directory_name):
+def RunTestsOnNaCl(targets, build_args):
   """Run a test suite for the NaCl version."""
   # Currently we can only run the limited test set which is defined as
   # nacl_test_targets in nacl_extension.gyp.
@@ -1142,10 +1123,10 @@ def RunTestsOnNaCl(targets, build_args, original_directory_name):
   (build_options, build_targets) = ParseBuildOptions(
       build_args + [nacl_gyp + ':run_nacl_test'])
   # Run the test suite in NaCl.
-  BuildMain(build_options, build_targets, original_directory_name)
+  BuildMain(build_options, build_targets)
 
 
-def RunTestsMain(options, args, original_directory_name):
+def RunTestsMain(options, args):
   """The main function for 'runtests' command."""
   # extracting test targets and build flags.  To avoid parsing build
   # options from ParseRunTestsOptions(), user has to specify the test
@@ -1185,7 +1166,7 @@ def RunTestsMain(options, args, original_directory_name):
 
   target_platform = GetMozcVersion().GetTargetPlatform()
   if target_platform == 'NaCl':
-    return RunTestsOnNaCl(targets, build_options, original_directory_name)
+    return RunTestsOnNaCl(targets, build_options)
 
   if not targets:
     # TODO(yukawa): Change the notation rule of 'targets' to reduce the gap
@@ -1200,11 +1181,11 @@ def RunTestsMain(options, args, original_directory_name):
 
   # Build the test targets
   (build_opts, build_args) = ParseBuildOptions(build_options + targets)
-  BuildMain(build_opts, build_args, original_directory_name)
+  BuildMain(build_opts, build_args)
 
   # Run tests actually
   if target_platform == 'Android':
-    RunTestsOnAndroid(options, build_options, original_directory_name)
+    RunTestsOnAndroid(options, build_options)
   else:
     RunTests(GetBuildBaseName(options, target_platform), options.configuration,
              options.test_jobs)
@@ -1265,7 +1246,7 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     RemoveDirectoryRecursively(directory_name)
 
 
-def CleanMain(options, args, _):
+def CleanMain(options, args):
   """The main function for the 'clean' command."""
   CleanBuildFilesAndDirectories(options, args)
 
@@ -1290,9 +1271,7 @@ def main():
   if len(sys.argv) < 2:
     ShowHelpAndExit()
 
-  # Remember the original current directory name.
-  original_directory_name = os.getcwd()
-  # Move to the top level source directory only once since os.chdir
+  # Move to the Mozc root source directory only once since os.chdir
   # affects functions in os.path and that causes troublesome errors.
   MoveToTopLevelSourceDirectory()
 
@@ -1318,7 +1297,7 @@ def main():
     logging.getLogger().setLevel(logging.DEBUG)
 
   # Execute build.
-  procedure[1](cmd_opts, cmd_args, original_directory_name)
+  procedure[1](cmd_opts, cmd_args)
 
 
 if __name__ == '__main__':
