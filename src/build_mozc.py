@@ -71,12 +71,12 @@ if not IsWindows():
   from build_tools.android_util import Emulator
 
 SRC_DIR = '.'
-# We need to obtain the absolute path of this script before we
-# call MoveToTopLevelSourceDirectory(), which may change the
-# current directory.
+# We need to obtain the absolute path of this script before change directory.
 # Note that if any import above has already changed the current
 # directory, this code cannot work anymore.
-ABS_SCRIPT_PATH = os.path.abspath(__file__)
+ABS_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+MOZC_ROOT = ABS_SCRIPT_DIR
+EXT_THIRD_PARTY_DIR = os.path.join(MOZC_ROOT, 'third_party')
 
 sys.path.append(SRC_DIR)
 
@@ -133,7 +133,7 @@ def GetBuildBaseName(options, target_platform):
   # On Linux, seems there is no way to specify the build_base directory
   # inside common.gypi
   if IsWindows() or IsMac():
-    build_base = os.path.join(GetTopLevelSourceDirectoryName(), build_base)
+    build_base = os.path.join(MOZC_ROOT, build_base)
 
   return build_base
 
@@ -205,20 +205,6 @@ def GetGypFileNames(options):
   return gyp_file_names
 
 
-def GetTopLevelSourceDirectoryName():
-  """Gets the top level source directory name."""
-  script_file_directory_name = os.path.dirname(ABS_SCRIPT_PATH)
-  if SRC_DIR == '.':
-    return script_file_directory_name
-  num_components = len(SRC_DIR.split('/'))
-  return os.path.join(script_file_directory_name, *(['..'] * num_components))
-
-def GetAdditionalThirdPartyDir():
-  """Returns the addtitional third party dir."""
-  additional_third_party_path = 'third_party'
-  return os.path.abspath(os.path.join(GetTopLevelSourceDirectoryName(),
-                                      additional_third_party_path))
-
 def GetAndroidHome(options):
   """Gets the root directory of the SDK from options, ANDROID_HOME or PATH."""
 
@@ -257,16 +243,6 @@ def GetAndroidNdkHome(options):
       return android_ndk_home
     else:
       return None
-
-
-def MoveToTopLevelSourceDirectory():
-  """Moves to the build top level directory."""
-  os.chdir(GetTopLevelSourceDirectoryName())
-
-
-def GetBuildScriptDirectoryName():
-  """Gets the directory name of this script."""
-  return os.path.dirname(ABS_SCRIPT_PATH)
 
 
 def AddCommonOptions(parser):
@@ -540,7 +516,7 @@ def ParseCleanOptions(args=None, values=None):
 
 def AddPythonPathToEnvironmentFilesForWindows(out_dir):
   """Add PYTHONPATH to environment files for Ninja."""
-  python_path_root = GetTopLevelSourceDirectoryName()
+  python_path_root = MOZC_ROOT
   python_path = os.path.abspath(python_path_root)
   original_python_paths = os.environ.get('PYTHONPATH', '')
   if original_python_paths:
@@ -593,8 +569,7 @@ def GypMain(options, unused_args):
     # third_party/gyp/gyp_main.py can find its own library modules (they are
     # installed under 'third_party/gyp/pylib') rather than system-installed
     # GYP modules.
-    gyp_dir = os.path.abspath(os.path.join(
-        GetTopLevelSourceDirectoryName(), 'third_party', 'gyp'))
+    gyp_dir = os.path.abspath(os.path.join(MOZC_ROOT, 'third_party', 'gyp'))
     gyp_main_file = os.path.join(gyp_dir, 'gyp_main.py')
     # Make sure |gyp_main_file| exists.
     if not os.path.exists(gyp_main_file):
@@ -611,8 +586,7 @@ def GypMain(options, unused_args):
     # location is expected one. By using this script, make sure
     # 'import gyp' actually loads 'third_party/gyp/pylib/gyp'.
     gyp_check_script = os.path.join(
-        GetBuildScriptDirectoryName(), 'build_tools',
-        'ensure_gyp_module_path.py')
+        ABS_SCRIPT_DIR, 'build_tools', 'ensure_gyp_module_path.py')
     expected_gyp_module_path = os.path.join(gyp_dir, 'pylib', 'gyp')
     RunOrDie([sys.executable, gyp_check_script,
               '--expected=%s' % expected_gyp_module_path])
@@ -631,10 +605,8 @@ def GypMain(options, unused_args):
   gyp_options = ['--depth=.', '--include=%s/gyp/common.gypi' % SRC_DIR]
 
 
-  mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
-  gyp_options.extend(['-D', 'abs_depth=%s' % mozc_root])
-  gyp_options.extend(['-D', ('additional_third_party_dir=%s'
-                             % GetAdditionalThirdPartyDir())])
+  gyp_options.extend(['-D', 'abs_depth=%s' % MOZC_ROOT])
+  gyp_options.extend(['-D', ('ext_third_party_dir=%s' % EXT_THIRD_PARTY_DIR)])
 
   gyp_options.extend(['-D', 'python_executable=%s' % sys.executable])
 
@@ -831,7 +803,7 @@ def GypMain(options, unused_args):
 
   # For internal Ninja build on Windows, set up environment files
   if IsWindows():
-    out_dir = os.path.join(GetTopLevelSourceDirectoryName(), 'out_win')
+    out_dir = os.path.join(MOZC_ROOT, 'out_win')
     AddPythonPathToEnvironmentFilesForWindows(out_dir)
 
     # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
@@ -848,7 +820,7 @@ def GypMain(options, unused_args):
     abs_qt_lib_dir = os.path.join(abs_qtdir, 'lib')
     abs_out_win_dir = GetBuildBaseName(options, target_platform)
     copy_script = os.path.join(
-        GetBuildScriptDirectoryName(), 'build_tools', 'copy_dll_and_symbol.py')
+        ABS_SCRIPT_DIR, 'build_tools', 'copy_dll_and_symbol.py')
     copy_modes = [
         {'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4'},
         {'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4'}]
@@ -918,8 +890,8 @@ def BuildMain(options, targets):
 
   # Add the mozc root directory to PYTHONPATH.
   original_python_path = os.environ.get('PYTHONPATH', '')
-  mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
-  python_path = os.pathsep.join([original_python_path, mozc_root])
+  depot_path = MOZC_ROOT
+  python_path = os.pathsep.join([original_python_path, depot_path])
   os.environ['PYTHONPATH'] = python_path
 
   if IsWindows():
@@ -1273,7 +1245,7 @@ def main():
 
   # Move to the Mozc root source directory only once since os.chdir
   # affects functions in os.path and that causes troublesome errors.
-  MoveToTopLevelSourceDirectory()
+  os.chdir(MOZC_ROOT)
 
   command = sys.argv[1]
   args = sys.argv[2:]

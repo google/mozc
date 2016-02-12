@@ -39,7 +39,7 @@
     'third_party_dir': '<(DEPTH)/third_party',
 
     # Top directory of additional third party libraries.
-    'additional_third_party_dir%': '<(abs_depth)/third_party',
+    'ext_third_party_dir%': '<(abs_depth)/third_party',
 
     # Compiler to build binaries that run in the target environment.
     # e.g. "clang", "gcc", "msvs".
@@ -520,7 +520,7 @@
       }],
       ['OS=="win"', {
         'variables': {
-          'wtl_dir': '<(additional_third_party_dir)/wtl',
+          'wtl_dir': '<(ext_third_party_dir)/wtl',
         },
         'defines': [
           'COMPILER_MSVC',
