@@ -98,24 +98,18 @@ def GetBuildShortBaseName(target_platform):
     RuntimeError: if target_platform is not supported.
   """
 
-  if target_platform is None:
-    raise RuntimeError('target_platform is None.')
-  build_base = ''
+  platform_dict = {
+      'Windows': 'out_win',
+      'Mac': 'out_mac',
+      'Linux': 'out_linux',
+      'Android': 'out_android',
+      'NaCl': 'out_nacl'
+  }
 
-  if target_platform == 'Windows':
-    build_base = 'out_win'
-  elif target_platform == 'Mac':
-    build_base = 'out_mac'
-  elif target_platform == 'Linux':
-    build_base = 'out_linux'
-  elif target_platform == 'Android':
-    build_base = 'out_android'
-  elif target_platform == 'NaCl':
-    build_base = 'out_nacl'
-  else:
-    raise RuntimeError('Unsupported platform: %s' % target_platform)
+  if target_platform not in platform_dict:
+    raise RuntimeError('Unkown target_platform: ' + (target_platform or 'None'))
 
-  return build_base
+  return platform_dict[target_platform]
 
 
 def GetBuildBaseName(target_platform):
@@ -232,9 +226,14 @@ def GetAndroidNdkHome(options):
 def AddCommonOptions(parser):
   """Adds the options common among the commands."""
   parser.add_option('--verbose', '-v', dest='verbose',
-                    action='store_true', default=False,
+                    action='callback', callback=ParseVerbose,
                     help='show verbose message.')
   return parser
+
+
+def ParseVerbose(unused_option, unused_opt_str, unused_value, unused_parser):
+  # Set log level to DEBUG if required.
+  logging.getLogger().setLevel(logging.DEBUG)
 
 
 def AddTargetPlatformOption(parser):
@@ -263,7 +262,7 @@ def GetDefaultWixPath():
   return abs_path
 
 
-def ParseGypOptions(args=None, values=None):
+def ParseGypOptions(args):
   """Parses command line options for the gyp command."""
   parser = optparse.OptionParser(usage='Usage: %prog gyp [options]')
   AddCommonOptions(parser)
@@ -392,7 +391,7 @@ def ParseGypOptions(args=None, values=None):
                       default=os.getenv('QTDIR', None),
                       help='Qt base directory to be used.')
 
-  return parser.parse_args(args, values)
+  return parser.parse_args(args)
 
 
 def ExpandMetaTarget(options, meta_target_name):
@@ -445,14 +444,14 @@ def ExpandMetaTarget(options, meta_target_name):
   return targets
 
 
-def ParseBuildOptions(args=None, values=None):
+def ParseBuildOptions(args):
   """Parses command line options for the build command."""
   parser = optparse.OptionParser(usage='Usage: %prog build [options]')
   AddCommonOptions(parser)
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
 
-  (options, args) = parser.parse_args(args, values)
+  (options, args) = parser.parse_args(args)
 
   targets = []
   for arg in args:
@@ -460,7 +459,7 @@ def ParseBuildOptions(args=None, values=None):
   return (options, targets)
 
 
-def ParseRunTestsOptions(args=None, values=None):
+def ParseRunTestsOptions(args):
   """Parses command line options for the runtests command."""
   parser = optparse.OptionParser(
       usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
@@ -481,17 +480,17 @@ def ParseRunTestsOptions(args=None, values=None):
                     'you test on. '
                     'If not specified emulators are launched and used.')
 
-  return parser.parse_args(args, values)
+  return parser.parse_args(args)
 
 
-def ParseCleanOptions(args=None, values=None):
+def ParseCleanOptions(args):
   """Parses command line options for the clean command."""
   parser = optparse.OptionParser(
       usage='Usage: %prog clean [-- build options]')
   AddCommonOptions(parser)
   AddTargetPlatformOption(parser)
 
-  return parser.parse_args(args, values)
+  return parser.parse_args(args)
 
 
 
@@ -824,32 +823,27 @@ def GetNinjaPath():
   return ninja
 
 
-def CanonicalTargetToGypFileAndTargetName(target):
-  """Parses the target string."""
+def GetNinjaTargetName(target):
+  """Extracts the build target name for Ninja."""
   if ':' not in target:
     PrintErrorAndExit('Invalid target: %s' % target)
-  (gyp_file_name, target_name) = target.split(':')
-  return (gyp_file_name, target_name)
+  (_, target_name) = target.split(':')
+  return target_name
 
 
 def BuildWithNinja(options, targets):
   """Build the targets with Ninja."""
-  target_names = []
-  for target in targets:
-    (unused_gyp_file_name, target_name) = (
-        CanonicalTargetToGypFileAndTargetName(target))
-    target_names.append(target_name)
-
-  ninja = GetNinjaPath()
-
   if hasattr(options, 'android_device'):
     # Only for android testing.
     os.environ['ANDROID_DEVICES'] = options.android_device
 
   short_basename = GetBuildShortBaseName(GetMozcVersion().GetTargetPlatform())
-  make_command = ninja
-  build_args = ['-C', '%s/%s' % (short_basename, options.configuration)]
-  RunOrDie([make_command] + build_args + target_names)
+  build_arg = '%s/%s' % (short_basename, options.configuration)
+
+  ninja = GetNinjaPath()
+
+  ninja_targets = [GetNinjaTargetName(target) for target in targets]
+  RunOrDie([ninja, '-C', build_arg] + ninja_targets)
 
 
 def BuildOnWindows(targets):
@@ -857,10 +851,8 @@ def BuildOnWindows(targets):
   ninja = GetNinjaPath()
 
   for target in targets:
-    tokens = target.split(':')
-    target_dir = tokens[0]
-    tokens.pop(0)
-    RunOrDie([ninja, '-C', target_dir] + tokens)
+    (build_arg, target_name) = target.split(':')
+    RunOrDie([ninja, '-C', build_arg, target_name])
 
 
 def BuildMain(options, targets):
@@ -1141,8 +1133,9 @@ def RunTestsMain(options, args):
              options.test_jobs)
 
 
-def CleanBuildFilesAndDirectories(options, unused_args):
-  """Cleans build files and directories."""
+def CleanMain(options, unused_args):
+  """The main function for the 'clean' command."""
+
   # File and directory names to be removed.
   file_names = []
   directory_names = []
@@ -1200,11 +1193,6 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     RemoveDirectoryRecursively(directory_name)
 
 
-def CleanMain(options, args):
-  """The main function for the 'clean' command."""
-  CleanBuildFilesAndDirectories(options, args)
-
-
 def ShowHelpAndExit():
   """Shows the help message."""
   print 'Usage: build_mozc.py COMMAND [ARGS]'
@@ -1232,26 +1220,21 @@ def main():
   command = sys.argv[1]
   args = sys.argv[2:]
 
-  command_to_procedure = {
-      'gyp': (ParseGypOptions, GypMain),
-      'build': (ParseBuildOptions, BuildMain),
-      'runtests': (ParseRunTestsOptions, RunTestsMain),
-      'clean': (ParseCleanOptions, CleanMain)}
-
-  procedure = command_to_procedure.get(command, None)
-  if procedure is None:
+  if command == 'gyp':
+    (cmd_opts, cmd_args) = ParseGypOptions(args)
+    GypMain(cmd_opts, cmd_args)
+  elif command == 'build':
+    (cmd_opts, cmd_args) = ParseBuildOptions(args)
+    BuildMain(cmd_opts, cmd_args)
+  elif command == 'runtests':
+    (cmd_opts, cmd_args) = ParseRunTestsOptions(args)
+    RunTestsMain(cmd_opts, cmd_args)
+  elif command == 'clean':
+    (cmd_opts, cmd_args) = ParseCleanOptions(args)
+    CleanMain(cmd_opts, cmd_args)
+  else:
     logging.error('Unknown command: %s', command)
     ShowHelpAndExit()
-
-  # Parse options.
-  (cmd_opts, cmd_args) = procedure[0](args)
-
-  # Set log level to DEBUG if required.
-  if cmd_opts.verbose:
-    logging.getLogger().setLevel(logging.DEBUG)
-
-  # Execute build.
-  procedure[1](cmd_opts, cmd_args)
 
 
 if __name__ == '__main__':
