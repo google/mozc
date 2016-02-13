@@ -87,28 +87,19 @@ def GetMozcVersion():
   return mozc_version.MozcVersion('%s/mozc_version.txt' % SRC_DIR)
 
 
-def GetBuildShortBaseName(options, target_platform):
+def GetBuildShortBaseName(target_platform):
   """Returns the build base directory.
 
-  Determination priority is;
-  1. options.build_base
-  2. target_platform (typically in mozc_version.txt)
-  3. options.target_platform
-
   Args:
-    options: Options which might have build_base and/or target_platform
-    target_platform: Target platform (typically read from mozc_version.txt)
-      This can be None.
+    target_platform: Target platform.
   Returns:
     Build base directory.
   Raises:
     RuntimeError: if target_platform is not supported.
   """
-  if options.build_base:
-    return options.build_base
 
   if target_platform is None:
-    target_platform = options.target_platform
+    raise RuntimeError('target_platform is None.')
   build_base = ''
 
   if target_platform == 'Windows':
@@ -127,15 +118,8 @@ def GetBuildShortBaseName(options, target_platform):
   return build_base
 
 
-def GetBuildBaseName(options, target_platform):
-  build_base = GetBuildShortBaseName(options, target_platform)
-
-  # On Linux, seems there is no way to specify the build_base directory
-  # inside common.gypi
-  if IsWindows() or IsMac():
-    build_base = os.path.join(MOZC_ROOT, build_base)
-
-  return build_base
+def GetBuildBaseName(target_platform):
+  return os.path.join(MOZC_ROOT, GetBuildShortBaseName(target_platform))
 
 
 # TODO(team): Move this to build_tools/util.py
@@ -247,8 +231,6 @@ def GetAndroidNdkHome(options):
 
 def AddCommonOptions(parser):
   """Adds the options common among the commands."""
-  parser.add_option('--build_base', dest='build_base',
-                    help='Specifies the base directory of the built binaries.')
   parser.add_option('--verbose', '-v', dest='verbose',
                     action='store_true', default=False,
                     help='show verbose message.')
@@ -447,7 +429,7 @@ def ExpandMetaTarget(options, meta_target_name):
     # TODO(yukawa, komatsu): Support Qt5
     targets = ['out_win/%s:mozc_win32_build32' % options.configuration]
     build_dir = os.path.abspath(os.path.join(
-        GetBuildBaseName(options, target_platform),
+        GetBuildBaseName(target_platform),
         '%sDynamic' % options.configuration))
     qtcore_dll = os.path.join(build_dir, 'QtCore4.dll')
     qtcored_dll = os.path.join(build_dir, 'QtCored4.dll')
@@ -619,7 +601,7 @@ def GypMain(options, unused_args):
   if options.noqt or target_platform in ['Android', 'NaCl']:
     gyp_options.extend(['-D', 'use_qt=NO'])
     gyp_options.extend(['-D', 'qt_dir='])
-  elif options.target_platform == 'Linux':
+  elif target_platform == 'Linux':
     gyp_options.extend(['-D', 'use_qt=YES'])
     gyp_options.extend(['-D', 'qt_dir='])
 
@@ -641,13 +623,13 @@ def GypMain(options, unused_args):
       gyp_options.extend(['-D', 'qt_dir='])
   gyp_options.extend(['-D', 'qt_ver=%s' % options.qtver])
 
-  if options.target_platform == 'Windows' and options.wix_dir:
+  if target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
     gyp_options.extend(['-D', 'wix_dir=%s' % options.wix_dir])
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
 
-  if options.target_platform == 'Linux':
+  if target_platform == 'Linux':
     gyp_options.extend(['-D', 'enable_gtk_renderer=1'])
 
   android_home = GetAndroidHome(options)
@@ -679,9 +661,9 @@ def GypMain(options, unused_args):
   else:
     gyp_options.extend(['-D', 'android_release_icon=0'])
   gyp_options.extend(['-D', 'build_base=%s' %
-                      GetBuildBaseName(options, target_platform)])
+                      GetBuildBaseName(target_platform)])
   gyp_options.extend(['-D', 'build_short_base=%s' %
-                      GetBuildShortBaseName(options, target_platform)])
+                      GetBuildShortBaseName(target_platform)])
 
   if options.warn_as_error:
     gyp_options.extend(['-D', 'warn_as_error=1'])
@@ -721,12 +703,11 @@ def GypMain(options, unused_args):
     if not option_name:
       raise ValueError('"option_name" should be specified')
 
-    default_enabled = False
     default_enabled = {'Windows': windows,
                        'Mac': mac,
                        'Linux': linux,
                        'Android': android,
-                       'NaCl': nacl}[options.target_platform]
+                       'NaCl': nacl}[target_platform]
     enable_option_name = 'enable_%s' % option_name
     enabled = options.ensure_value(enable_option_name, default_enabled)
     gyp_options.extend(['-D',
@@ -740,12 +721,12 @@ def GypMain(options, unused_args):
                            windows=is_official_dev,
                            mac=is_official_dev)
 
-  gyp_options.extend(['-D', 'target_platform=%s' % options.target_platform])
+  gyp_options.extend(['-D', 'target_platform=%s' % target_platform])
 
   if IsWindows():
     gyp_options.extend(['-G', 'msvs_version=%s' % options.msvs_version])
 
-  if (options.target_platform == 'Linux' and
+  if (target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
     gyp_options.extend(['-D', 'use_libibus=1'])
 
@@ -770,7 +751,7 @@ def GypMain(options, unused_args):
     if options.nacl_sdk_root:
       nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
     else:
-      nacl_sdk_root = os.path.abspath(os.path.join(GetAdditionalThirdPartyDir(),
+      nacl_sdk_root = os.path.abspath(os.path.join(EXT_THIRD_PARTY_DIR,
                                                    'nacl_sdk', 'pepper_40'))
     if not os.path.isdir(nacl_sdk_root):
       PrintErrorAndExit('The nacl_sdk_root directory (%s) does not exist.'
@@ -782,7 +763,7 @@ def GypMain(options, unused_args):
         '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
   gyp_options.extend(['--generator-output=.'])
-  short_basename = GetBuildShortBaseName(options, target_platform)
+  short_basename = GetBuildShortBaseName(target_platform)
   gyp_options.extend(['-G', 'output_dir=%s' % short_basename])
 
   # Enable cross-compile
@@ -818,7 +799,7 @@ def GypMain(options, unused_args):
     abs_qtdir = os.path.abspath(options.qtdir)
     abs_qt_bin_dir = os.path.join(abs_qtdir, 'bin')
     abs_qt_lib_dir = os.path.join(abs_qtdir, 'lib')
-    abs_out_win_dir = GetBuildBaseName(options, target_platform)
+    abs_out_win_dir = GetBuildBaseName(target_platform)
     copy_script = os.path.join(
         ABS_SCRIPT_DIR, 'build_tools', 'copy_dll_and_symbol.py')
     copy_modes = [
@@ -865,8 +846,7 @@ def BuildWithNinja(options, targets):
     # Only for android testing.
     os.environ['ANDROID_DEVICES'] = options.android_device
 
-  short_basename = GetBuildShortBaseName(options,
-                                         GetMozcVersion().GetTargetPlatform())
+  short_basename = GetBuildShortBaseName(GetMozcVersion().GetTargetPlatform())
   make_command = ninja
   build_args = ['-C', '%s/%s' % (short_basename, options.configuration)]
   RunOrDie([make_command] + build_args + target_names)
@@ -997,7 +977,7 @@ def RunTestsOnAndroid(options, build_args):
     else:
       # Temporary AVDs are created beneath android_sdk_home.
       android_sdk_home = os.path.join(
-          GetBuildBaseName(options, GetMozcVersion().GetTargetPlatform()),
+          GetBuildBaseName(GetMozcVersion().GetTargetPlatform()),
           options.configuration,
           'android_sdk_home')
       android_home = GetAndroidHome(options)
@@ -1127,14 +1107,12 @@ def RunTestsMain(options, args):
         target = '%s%s.gyp:%s_all_test' % (args[i], dirname, dirname)
     targets.append(target)
 
-  # configuration and build_base flags are shared among runtests options and
+  # configuration flags are shared among runtests options and
   # build options.
   if 'jobs' in vars(options).keys():
     build_options.extend(['-j', options.jobs])
   if options.configuration:
     build_options.extend(['-c', options.configuration])
-  if options.build_base:
-    build_options.extend(['--build_base', options.build_base])
 
   target_platform = GetMozcVersion().GetTargetPlatform()
   if target_platform == 'NaCl':
@@ -1159,7 +1137,7 @@ def RunTestsMain(options, args):
   if target_platform == 'Android':
     RunTestsOnAndroid(options, build_options)
   else:
-    RunTests(GetBuildBaseName(options, target_platform), options.configuration,
+    RunTests(GetBuildBaseName(target_platform), options.configuration,
              options.test_jobs)
 
 
@@ -1186,10 +1164,14 @@ def CleanBuildFilesAndDirectories(options, unused_args):
                                                     '*.xcodeproj')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
 
-  target_platform = GetBuildBaseName(options,
-                                     GetMozcVersion().GetTargetPlatform())
-  if target_platform:
-    directory_names.append(target_platform)
+  # mozc_version.txt does not always exist.
+  version_file = '%s/mozc_version.txt' % SRC_DIR
+  if os.path.exists(version_file):
+    file_names.append(version_file)
+    build_base = GetBuildBaseName(GetMozcVersion().GetTargetPlatform())
+    if build_base:
+      directory_names.append(build_base)
+
   if IsLinux():
     # Remove auto-generated files.
     file_names.append(os.path.join(SRC_DIR, 'android', 'AndroidManifest.xml'))
