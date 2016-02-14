@@ -88,7 +88,6 @@ class ConfigHandlerImpl {
   const Config &GetConfig() const;
   bool GetConfig(Config *config) const;
   const Config &DefaultConfig() const;
-  const Config &GetStoredConfig() const;
   bool GetStoredConfig(Config *config) const;
   bool SetConfig(const Config &config);
   void SetImposedConfig(const Config &config);
@@ -126,10 +125,6 @@ bool ConfigHandlerImpl::GetConfig(Config *config) const {
 
 const Config &ConfigHandlerImpl::DefaultConfig() const {
   return default_config_;
-}
-
-const Config &ConfigHandlerImpl::GetStoredConfig() const {
-  return stored_config_;
 }
 
 // return stored Config
@@ -251,10 +246,6 @@ const Config &ConfigHandler::GetConfig() {
 // Returns current Config
 bool ConfigHandler::GetConfig(Config *config) {
   return GetConfigHandlerImpl()->GetConfig(config);
-}
-
-const Config &ConfigHandler::GetStoredConfig() {
-  return GetConfigHandlerImpl()->GetStoredConfig();
 }
 
 // Returns Stored Config

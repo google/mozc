@@ -192,7 +192,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     EXPECT_EQ(expected, output.incognito_mode());
     output = config::ConfigHandler::GetConfig();
     EXPECT_EQ(expected, output.incognito_mode());
-    output = config::ConfigHandler::GetStoredConfig();
+    config::ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
 
     // Reload and check.
@@ -203,7 +203,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     EXPECT_EQ(expected, output.incognito_mode());
     output = config::ConfigHandler::GetConfig();
     EXPECT_EQ(expected, output.incognito_mode());
-    output = config::ConfigHandler::GetStoredConfig();
+    config::ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
 
     // Unset imposed config.
@@ -215,7 +215,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     EXPECT_EQ(stored_config_value, output.incognito_mode());
     output = config::ConfigHandler::GetConfig();
     EXPECT_EQ(stored_config_value, output.incognito_mode());
-    output = config::ConfigHandler::GetStoredConfig();
+    config::ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
   }
 }

@@ -53,10 +53,6 @@ class ConfigHandler {
   // Returns current config.
   static bool GetConfig(Config *config);
 
-  // Returns current config.
-  // If imposed config is not set, the result is the same as GetConfig().
-  static const Config &GetStoredConfig();
-
   // Returns stored config.
   // If imposed config is not set, the result is the same as GetConfig().
   static bool GetStoredConfig(Config *config);
