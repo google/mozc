@@ -33,14 +33,8 @@
 # You may find cool techniques in the following *.gypi file.
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
-  'includes': ['defines.gypi'],
+  'includes': ['defines.gypi', 'directories.gypi'],
   'variables': {
-    # Top directory of third party libraries.
-    'third_party_dir': '<(DEPTH)/third_party',
-
-    # Top directory of additional third party libraries.
-    'ext_third_party_dir%': '<(abs_depth)/third_party',
-
     # Compiler to build binaries that run in the target environment.
     # e.g. "clang", "gcc", "msvs".
     'compiler_target%': '',
@@ -190,25 +184,6 @@
       # http://msdn.microsoft.com/en-us/library/vstudio/ttcz0bys.aspx
       '4996',
     ],
-
-    'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
-    'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
-
-    # server_dir represents the directory where mozc_server is
-    # installed. This option is only for Linux.
-    'server_dir%': '/usr/lib/mozc',
-
-    # Represents the directory where the source code of protobuf is
-    # extracted. This value is ignored when 'use_libprotobuf' is 1.
-    'protobuf_root': '<(third_party_dir)/protobuf',
-
-    # For OS X
-    # Assign dummy value to avoid errors of GYP.
-    # TODO: Update this.
-    'mac_breakpad_dir': 'dummy_mac_breakpad_dir',
-    'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
-
-    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
   },
   'target_defaults': {
     'variables': {
@@ -513,9 +488,6 @@
         ],
       }],
       ['OS=="win"', {
-        'variables': {
-          'wtl_dir': '<(ext_third_party_dir)/wtl',
-        },
         'defines': [
           'COMPILER_MSVC',
           'BUILD_MOZC',  # for ime_shared library
@@ -772,9 +744,6 @@
   },
   'conditions': [
     ['target_platform=="NaCl"', {
-      'variables': {
-        'pnacl_bin_dir%': '<(nacl_sdk_root)/toolchain/linux_pnacl/bin',
-      },
       'make_global_settings': [
         ['AR', '<(pnacl_bin_dir)/pnacl-ar'],
         ['CC', '<(pnacl_bin_dir)/pnacl-clang'],
@@ -801,10 +770,6 @@
       ],
     }],
     ['target_platform=="Android"', {
-      'variables': {
-        'ndk_bin_dir%':
-            '<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)/bin',
-      },
       'conditions': [
         ['android_arch=="arm"', {
           'variables': {
