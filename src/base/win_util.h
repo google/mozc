@@ -154,6 +154,15 @@ class WinUtil {
   // Returns true if the current process is restricted or in AppContainer.
   static bool IsProcessSandboxed();
 
+  // Execute ShellExecute API with given parameters on the system directory,
+  // which is expected to be more appropriate than tha directory where the
+  // executable exist, because installer can rename the executable to another
+  // directory and delete the application directory.
+  static bool ShellExecuteInSystemDir(
+      const wchar_t *verb,
+      const wchar_t *file,
+      const wchar_t *parameters);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(WinUtil);
 };

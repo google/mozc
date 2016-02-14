@@ -36,6 +36,7 @@
 #include <Psapi.h>
 #include <Stringapiset.h>
 #include <Winternl.h>
+#include <shellapi.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -537,6 +538,21 @@ bool WinUtil::IsProcessSandboxed() {
   // Thread safety is not required.
   static bool sandboxed = IsProcessSandboxedImpl();
   return sandboxed;
+}
+
+bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb,
+                                      const wchar_t *file,
+                                      const wchar_t *parameters) {
+  const auto result = static_cast<uint32>(reinterpret_cast<uintptr_t>(
+      ::ShellExecuteW(0, verb, file, parameters, SystemUtil::GetSystemDir(),
+                      SW_SHOW)));
+  LOG_IF(ERROR, result <= 32)
+      << "ShellExecute failed."
+      << ", error:" << result
+      << ", verb: " << verb
+      << ", file: " << file
+      << ", parameters: " << parameters;
+  return result > 32;
 }
 
 ScopedCOMInitializer::ScopedCOMInitializer()

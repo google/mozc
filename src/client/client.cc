@@ -33,7 +33,6 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#include <ShellAPI.h>
 #else
 #include <unistd.h>
 #endif  // OS_WIN
@@ -54,6 +53,10 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+
+#ifdef OS_WIN
+#include "base/win_util.h"
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
 #include "base/mac_process.h"
@@ -874,17 +877,8 @@ bool Client::LaunchTool(const string &mode, const string &extra_arg) {
     // In Windows XP, cannot use "runas", instead, administration
     // dialog is launched with normal process with "open"
     // http://b/2415191
-    const int result =
-        reinterpret_cast<int>(::ShellExecute(0,
-                                             L"runas",
-                                             wpath.c_str(),
-                                             L"--mode=administration_dialog",
-                                             SystemUtil::GetSystemDir(),
-                                             SW_SHOW));
-    if (result <= 32) {
-      LOG(ERROR) << "::ShellExecute failed: " << result;
-      return false;
-    }
+    return WinUtil::ShellExecuteInSystemDir(
+        L"runas", wpath.c_str(), L"--mode=administration_dialog");
 #endif  // OS_WIN
 
     return false;
