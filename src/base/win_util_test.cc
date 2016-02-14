@@ -96,6 +96,24 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   EXPECT_FALSE(is_lock_held());
 }
 
+TEST(WinUtilTest, WindowHandleTest) {
+  // Should round-trip as long as the handle value is in uint32 range.
+  const HWND k32bitSource = reinterpret_cast<HWND>(
+      static_cast<uintptr_t>(0x1234));
+  EXPECT_EQ(k32bitSource, WinUtil::DecodeWindowHandle(
+      WinUtil::EncodeWindowHandle(k32bitSource)));
+
+#if defined(_M_X64)
+  // OK to drop higher 32-bit.
+  const HWND k64bitSource = reinterpret_cast<HWND>(
+      static_cast<uintptr_t>(0xf0f1f2f3e4e5e6e7ULL));
+  const HWND k64bitExpected = reinterpret_cast<HWND>(
+      static_cast<uintptr_t>(0x00000000e4e5e6e7ULL));
+  EXPECT_EQ(k64bitExpected, WinUtil::DecodeWindowHandle(
+      WinUtil::EncodeWindowHandle(k64bitSource)));
+#endif  // _M_X64
+}
+
 TEST(WinUtilTest, SystemEqualStringTest) {
   EXPECT_TRUE(WinUtil::SystemEqualString(
       L"abc",

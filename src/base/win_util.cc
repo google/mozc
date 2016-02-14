@@ -172,6 +172,14 @@ bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   return true;
 }
 
+uint32 WinUtil::EncodeWindowHandle(HWND window_handle) {
+  return static_cast<uint32>(reinterpret_cast<uintptr_t>(window_handle));
+}
+
+HWND WinUtil::DecodeWindowHandle(uint32 window_handle_value) {
+  return reinterpret_cast<HWND>(static_cast<uintptr_t>(window_handle_value));
+}
+
 bool WinUtil::SystemEqualString(
       const wstring &lhs, const wstring &rhs, bool ignore_case) {
   // We assume a string instance never contains NUL character in principle.

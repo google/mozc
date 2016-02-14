@@ -76,6 +76,10 @@ class WinUtil {
   // implicit link.
   static bool IsDLLSynchronizationHeld(bool *lock_held);
 
+  // Encapsulates the process of converting HWND into a fixed-size integer.
+  static uint32 EncodeWindowHandle(HWND window_handle);
+  static HWND DecodeWindowHandle(uint32 window_handle_value);
+
   // Compares |lhs| with |rhs| by CompareStringOrdinal API and returns the
   // result.  If |ignore_case| is true, this function uses system upper-case
   // table for case-insensitive equality like Win32 path names or registry

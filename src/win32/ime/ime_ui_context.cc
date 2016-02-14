@@ -40,6 +40,7 @@
 
 #include <strsafe.h>
 
+#include "base/win_util.h"
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
@@ -458,7 +459,7 @@ bool UIContext::FillCaretInfo(ApplicationInfo *info) const {
   rect->set_right(thread_info.rcCaret.right);
   rect->set_bottom(thread_info.rcCaret.bottom);
 
-  caret->set_target_window_handle(reinterpret_cast<uint32>(
+  caret->set_target_window_handle(WinUtil::EncodeWindowHandle(
       thread_info.hwndCaret));
 
   return true;

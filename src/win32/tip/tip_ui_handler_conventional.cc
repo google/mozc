@@ -38,6 +38,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/win_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_client.h"
@@ -181,7 +182,7 @@ bool FillCaretInfo(ApplicationInfo *app_info) {
   rect->set_right(thread_info.rcCaret.right);
   rect->set_bottom(thread_info.rcCaret.bottom);
 
-  caret->set_target_window_handle(reinterpret_cast<uint32>(
+  caret->set_target_window_handle(WinUtil::EncodeWindowHandle(
       thread_info.hwndCaret));
 
   return true;
@@ -197,7 +198,8 @@ bool FillWindowHandle(ITfContext *context, ApplicationInfo *app_info) {
   if (FAILED(context_view->GetWnd(&window_handle))) {
     return false;
   }
-  app_info->set_target_window_handle(reinterpret_cast<uint32>(window_handle));
+  app_info->set_target_window_handle(
+      WinUtil::EncodeWindowHandle(window_handle));
   return true;
 }
 
@@ -251,7 +253,7 @@ bool FillCharPosition(TipPrivateContext *private_context,
   }
 
   const HWND window_handle =
-      reinterpret_cast<HWND>(app_info->target_window_handle());
+      WinUtil::DecodeWindowHandle(app_info->target_window_handle());
 
   CComPtr<ITfRange> range =
       has_composition ? GetCompositionRange(context, read_cookie)
@@ -342,8 +344,8 @@ void UpdateCommand(TipTextService *text_service,
   app_info->set_input_framework(ApplicationInfo::TSF);
   app_info->set_process_id(::GetCurrentProcessId());
   app_info->set_thread_id(::GetCurrentThreadId());
-  app_info->set_receiver_handle(
-      reinterpret_cast<int32>(text_service->renderer_callback_window_handle()));
+  app_info->set_receiver_handle(WinUtil::EncodeWindowHandle(
+      text_service->renderer_callback_window_handle()));
 
   CComQIPtr<ITfUIElementMgr> ui_element_manager(
       text_service->GetThreadManager());

@@ -238,7 +238,7 @@ bool ExtractParams(
   if (!app_info.has_target_window_handle()) {
     return false;
   }
-  const HWND target_window = reinterpret_cast<HWND>(
+  const HWND target_window = WinUtil::DecodeWindowHandle(
       app_info.target_window_handle());
 
   *params->window_handle.mutable_value() = target_window;
@@ -361,7 +361,7 @@ bool ExtractParams(
         caret_info.has_caret_rect() &&
         IsValidRect(caret_info.caret_rect()) &&
         caret_info.has_target_window_handle()) {
-      const HWND caret_window = reinterpret_cast<HWND>(
+      const HWND caret_window = WinUtil::DecodeWindowHandle(
           caret_info.target_window_handle());
       const CRect caret_rect_in_client_coord(ToRect(caret_info.caret_rect()));
       // It seems (0, 0, 0, 0) represents that the application does not have a
@@ -955,10 +955,10 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   HWND GetNextWindowHandle() const {
     if (window_map_.size() > 0) {
       const HWND last_hwnd = window_map_.rbegin()->first;
-      return reinterpret_cast<HWND>(
-          reinterpret_cast<BYTE *>(last_hwnd) + sizeof(last_hwnd));
+      return WinUtil::DecodeWindowHandle(
+          WinUtil::EncodeWindowHandle(last_hwnd) + 7);
     }
-    return reinterpret_cast<HWND>(0x12345678);
+    return WinUtil::DecodeWindowHandle(0x12345678);
   }
 
   // This method is not const to implement Win32WindowInterface.
@@ -1781,7 +1781,7 @@ bool LayoutManager::LayoutCompositionWindow(
     return true;
   }
   const mozc::commands::Output &output = command.output();
-  const HWND target_window_handle = reinterpret_cast<HWND>(
+  const HWND target_window_handle = WinUtil::DecodeWindowHandle(
       command.application_info().target_window_handle());
 
   const mozc::commands::RendererCommand::ApplicationInfo &app =
@@ -2531,7 +2531,7 @@ int LayoutManager::GetCompatibilityMode(
   if (!app_info.has_target_window_handle()) {
     return COMPATIBILITY_MODE_NONE;
   }
-  const HWND target_window = reinterpret_cast<HWND>(
+  const HWND target_window = WinUtil::DecodeWindowHandle(
       app_info.target_window_handle());
 
   if (!window_position_->IsWindow(target_window)) {

@@ -245,8 +245,8 @@ void UpdateCommand(const UIContext &context,
   app_info.set_process_id(::GetCurrentProcessId());
   app_info.set_thread_id(::GetCurrentThreadId());
   app_info.set_target_window_handle(
-      reinterpret_cast<uint32>(target_window.m_hWnd));
-  app_info.set_receiver_handle(reinterpret_cast<uint32>(ui_window));
+      WinUtil::EncodeWindowHandle(target_window.m_hWnd));
+  app_info.set_receiver_handle(WinUtil::EncodeWindowHandle(ui_window));
   app_info.set_input_framework(ApplicationInfo::IMM32);
   int visibility = ApplicationInfo::ShowUIDefault;
   if (show_composition_window) {
