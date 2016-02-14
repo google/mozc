@@ -9,7 +9,7 @@ How to build Mozc in Windows
 
 Building Mozc on Windows requires the following software.
 
-  * [Visual Studio 2013 Community Edition](http://visualstudio.com/free), or any greater edition.
+  * [Visual Studio 2015 Community Edition](http://visualstudio.com/free), or any greater edition.
   * (optinal) [Qt libraries](http://download.qt.io/archive/qt/)
     * Commercial version and LGPL version are available.
 

@@ -124,12 +124,6 @@
     'conditions': [
       ['OS=="win"', {
         'conditions': [
-          ['MSVS_VERSION=="2013"', {
-            'compiler_target': 'msvs',
-            'compiler_target_version_int': 1800,  # Visual C++ 2013 or higher
-            'compiler_host': 'msvs',
-            'compiler_host_version_int': 1800,  # Visual C++ 2013 or higher
-          }],
           ['MSVS_VERSION=="2015"', {
             'compiler_target': 'msvs',
             'compiler_target_version_int': 1900,  # Visual C++ 2015 or higher

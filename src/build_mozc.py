@@ -379,13 +379,6 @@ def ParseGypOptions(args):
                       default=GetDefaultWixPath(),
                       help='A path to the binary directory of wix.')
 
-    # For internal Windows builds, gyp is expected to generate solution files
-    # for Visual Studio 2013, which is a default compiler for Mozc.  However,
-    # you can specify the target version explicitly via 'msvs_version' option
-    # as follows.
-    parser.add_option('--msvs_version', dest='msvs_version', default='2013',
-                      help='Specifies the target MSVS version.')
-
   if IsWindows() or IsMac():
     parser.add_option('--qtdir', dest='qtdir',
                       default=os.getenv('QTDIR', None),
@@ -585,7 +578,6 @@ def GypMain(options, unused_args):
   logging.info('Building GYP command line...')
   gyp_options = ['--depth=.', '--include=%s/gyp/common.gypi' % SRC_DIR]
 
-
   gyp_options.extend(['-D', 'abs_depth=%s' % MOZC_ROOT])
   gyp_options.extend(['-D', ('ext_third_party_dir=%s' % EXT_THIRD_PARTY_DIR)])
 
@@ -723,7 +715,7 @@ def GypMain(options, unused_args):
   gyp_options.extend(['-D', 'target_platform=%s' % target_platform])
 
   if IsWindows():
-    gyp_options.extend(['-G', 'msvs_version=%s' % options.msvs_version])
+    gyp_options.extend(['-G', 'msvs_version=2015'])
 
   if (target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
