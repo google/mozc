@@ -163,7 +163,11 @@ public class EmojiRenderableChecker {
         // widget, but not on Canvas class, for some reason (maybe for animation support).
         // So, even if we can see the Emoji code points in TextView on the device, Canvas#drawText
         // will render a fallback glyph.
-        StaticLayout layout = new StaticLayout(string, mPaint, TEST_FONT_SIZE,
+        // <p/>
+        // Note that, on some devices, StaticLayout may modify the passed TextPaint instance.
+        // We have to pass a new TextPaint instance instead of mPaint, in order to avoid affecting
+        // following mPaint.measureText() calls.
+        StaticLayout layout = new StaticLayout(string, new TextPaint(mPaint), TEST_FONT_SIZE,
                 Alignment.ALIGN_NORMAL, 1, 0, false);
         layout.draw(mCanvas);
 
