@@ -190,7 +190,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     output.Clear();
     EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
     EXPECT_EQ(expected, output.incognito_mode());
-    output = config::ConfigHandler::GetConfig();
+    config::ConfigHandler::GetConfig(&output);
     EXPECT_EQ(expected, output.incognito_mode());
     config::ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
@@ -201,7 +201,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     output.Clear();
     EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
     EXPECT_EQ(expected, output.incognito_mode());
-    output = config::ConfigHandler::GetConfig();
+    config::ConfigHandler::GetConfig(&output);
     EXPECT_EQ(expected, output.incognito_mode());
     config::ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
@@ -213,7 +213,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     output.Clear();
     EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
     EXPECT_EQ(stored_config_value, output.incognito_mode());
-    output = config::ConfigHandler::GetConfig();
+    config::ConfigHandler::GetConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
     config::ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
@@ -240,8 +240,9 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   ScopedSetConfigFileName scoped_config_file_name(
       "memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
-  EXPECT_EQ(default_incognito_mode,
-            config::ConfigHandler::GetConfig().incognito_mode());
+  config::Config updated_config;
+  config::ConfigHandler::GetConfig(&updated_config);
+  EXPECT_EQ(default_incognito_mode, updated_config.incognito_mode());
 }
 
 #if !defined(OS_ANDROID) && !defined(OS_NACL)

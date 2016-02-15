@@ -74,7 +74,7 @@ bool GetConfigSnapshotForSandboxedProcess(ClientInterface *client,
 StaticConfigSnapshot GetConfigSnapshotForNonSandboxedProcess() {
   Config config;
   // config1.db should be readable in this case.
-  config.CopyFrom(config::ConfigHandler::GetConfig());
+  config::ConfigHandler::GetConfig(&config);
 
   StaticConfigSnapshot snapshot = {};
   snapshot.use_kana_input = (config.preedit_method() == Config::KANA);

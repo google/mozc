@@ -47,7 +47,9 @@ namespace {
 class ImeSwitchUtilImpl {
  public:
   ImeSwitchUtilImpl() {
-    ReloadConfig(config::ConfigHandler::GetConfig());
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    ReloadConfig(config);
   }
 
   bool IsDirectModeCommand(const commands::KeyEvent &key) const {

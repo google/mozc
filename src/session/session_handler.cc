@@ -258,7 +258,11 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 
 bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
-  SetConfig(config::ConfigHandler::GetConfig());
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    SetConfig(config);
+  }
   engine_->Reload();
   return true;
 }
@@ -656,7 +660,11 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
-  SetConfig(config::ConfigHandler::GetConfig());
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    SetConfig(config);
+  }
 
   // session is not empty.
   last_session_empty_time_ = 0;

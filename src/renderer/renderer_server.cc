@@ -182,7 +182,8 @@ RendererServer::RendererServer()
   VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef NO_LOGGING
-  const config::Config &config = config::ConfigHandler::GetConfig();
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
   Logging::SetConfigVerboseLevel(config.verbose_level());
 #endif  // NO_LOGGING
 }

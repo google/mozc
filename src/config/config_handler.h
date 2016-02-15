@@ -48,9 +48,6 @@ enum {
 class ConfigHandler {
  public:
   // Returns current config.
-  static const Config &GetConfig();
-
-  // Returns current config.
   static bool GetConfig(Config *config);
 
   // Returns stored config.
@@ -78,8 +75,8 @@ class ConfigHandler {
 
   // Gets default config value.
   //
-  // Using this function is safer than
-  // using an uninitialized config value.
+  // Using these functions are safer than using an uninitialized config value.
+  // These functions are also thread-safe.
   static void GetDefaultConfig(Config *config);
   static const Config &DefaultConfig();
 

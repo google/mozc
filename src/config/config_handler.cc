@@ -85,7 +85,6 @@ class ConfigHandlerImpl {
     ConfigHandler::GetDefaultConfig(&default_config_);
   }
   virtual ~ConfigHandlerImpl() {}
-  const Config &GetConfig() const;
   bool GetConfig(Config *config) const;
   const Config &DefaultConfig() const;
   bool GetStoredConfig(Config *config) const;
@@ -111,10 +110,6 @@ class ConfigHandlerImpl {
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
   return Singleton<ConfigHandlerImpl>::get();
-}
-
-const Config &ConfigHandlerImpl::GetConfig() const {
-  return merged_config_;
 }
 
 // return current Config
@@ -238,10 +233,6 @@ string ConfigHandlerImpl::GetConfigFileName() {
   return filename_;
 }
 }  // namespace
-
-const Config &ConfigHandler::GetConfig() {
-  return GetConfigHandlerImpl()->GetConfig();
-}
 
 // Returns current Config
 bool ConfigHandler::GetConfig(Config *config) {

@@ -50,7 +50,8 @@ namespace {
 
 // Prints a greeting message when a process starts.
 void PrintGreetingMessage() {
-  const mozc::config::Config &config = mozc::config::ConfigHandler::GetConfig();
+  mozc::config::Config config;
+  mozc::config::ConfigHandler::GetConfig(&config);
   const char *preedit_method = "unknown";
   switch (config.preedit_method()) {
     case mozc::config::Config::ROMAN:

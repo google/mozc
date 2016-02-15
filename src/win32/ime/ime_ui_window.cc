@@ -98,7 +98,8 @@ volatile bool g_module_unloaded = false;
 static once_t g_launch_set_default_dialog = MOZC_ONCE_INIT;
 
 void LaunchSetDefaultDialog() {
-  const config::Config &config = config::ConfigHandler::GetConfig();
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
   if (config.has_check_default() && !config.check_default()) {
     // User opted out the default IME checking. Do nothing.
     return;
