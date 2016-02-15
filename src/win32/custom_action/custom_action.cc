@@ -118,7 +118,9 @@ wstring GetMozcComponentPath(const string &filename) {
 wstring GetProperty(MSIHANDLE msi, const wstring &name) {
   DWORD num_buf = 0;
   // Obtains the size of the property's string, without null termination.
-  UINT result = MsiGetProperty(msi, name.c_str(), L"", &num_buf);
+  // Note: |MsiGetProperty()| requires non-null writable buffer.
+  wchar_t dummy_buffer[1] = {L'\0'};
+  UINT result = MsiGetProperty(msi, name.c_str(), dummy_buffer, &num_buf);
   if (ERROR_MORE_DATA != result) {
     return L"";
   }

@@ -259,8 +259,16 @@ void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
   // See http://msdn.microsoft.com/en-us/library/ms685976.aspx for details.
   {
     SERVICE_REQUIRED_PRIVILEGES_INFO privileges_info = {};
-    privileges_info.pmszRequiredPrivileges = SE_INC_BASE_PRIORITY_NAME
-                                             TEXT("\0");
+    // |SERVICE_REQUIRED_PRIVILEGES_INFO::pmszRequiredPrivileges| needs to be
+    // terminated with two L'\0's.
+    wstring required_privileges(SE_INC_BASE_PRIORITY_NAME);
+    required_privileges.push_back(L'\0');
+    required_privileges.push_back(L'\0');
+    // |SERVICE_REQUIRED_PRIVILEGES_INFO::pmszRequiredPrivileges| needs to be
+    // writtable for some reasons.
+    std::unique_ptr<wchar_t[]> buffer(new wchar_t[required_privileges.size()]);
+    required_privileges.copy(buffer.get(), required_privileges.size());
+    privileges_info.pmszRequiredPrivileges = buffer.get();
     if (!::ChangeServiceConfig2(service_handle.get(),
                                 SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO,
                                 &privileges_info)) {
