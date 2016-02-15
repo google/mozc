@@ -29,7 +29,6 @@
 
 #include "win32/ime/ime_input_context.h"
 
-#define _ATL_NO_HOSTING  // prevents including <dimm.h>
 #include <atlbase.h>
 #include <atlwin.h>
 

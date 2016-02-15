@@ -503,6 +503,7 @@
           '_ATL_ALL_WARNINGS',
           '_ATL_ALLOW_CHAR_UNSIGNED',
           '_ATL_CSTRING_EXPLICIT_CONSTRUCTORS',
+          '_ATL_NO_HOSTING',
           '_CRT_SECURE_NO_DEPRECATE',
           '_MIDL_USE_GUIDDEF_',
           '_STL_MSVC',
