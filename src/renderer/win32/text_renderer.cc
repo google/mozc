@@ -400,8 +400,10 @@ class DirectWriteTextRenderer : public TextRenderer {
     for (size_t i = 0; i < display_list.size(); ++i) {
       const auto &item = display_list[i];
       const D2D1_RECT_F render_rect = {
-        item.rect.Left(), item.rect.Top(), item.rect.Right(),
-        item.rect.Bottom(),
+        static_cast<float>(item.rect.Left()),
+        static_cast<float>(item.rect.Top()),
+        static_cast<float>(item.rect.Right()),
+        static_cast<float>(item.rect.Bottom()),
       };
       dc_render_target_->DrawText(item.text.data(),
                                   item.text.size(),
