@@ -219,56 +219,6 @@
             'text_icon',
           ],
         },
-        {
-          'target_name': 'win32_file_verifier',
-          'type': 'static_library',
-          'sources': [
-            'file_verifier.cc',
-          ],
-          'dependencies': [
-            '../../base/base.gyp:base',
-          ],
-          'link_settings': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'crypt32.lib',
-                  'imagehlp.lib',
-                  'wintrust.lib',
-                ],
-                'DelayLoadDLLs': [
-                  'imagehlp.dll',
-                  'wintrust.dll',
-                ],
-              },
-            },
-          },
-        },
-        {
-          'target_name': 'win32_file_verifier_test',
-          'type': 'executable',
-          'sources': [
-            'file_verifier_test.cc',
-          ],
-          'dependencies': [
-            '../../testing/testing.gyp:gtest_main',
-            '../../testing/testing.gyp:mozctest',
-            'win32_file_verifier',
-          ],
-          'variables': {
-            'test_size': 'small',
-            # Copy the test data for character set test.
-            'test_data_subdir': 'data/test/win32/integrity',
-            'test_data': [
-              '../../<(test_data_subdir)/mozc_test_binary.exe',
-              '../../<(test_data_subdir)/mozc_test_binary_modified.exe',
-              '../../<(test_data_subdir)/mozc_test_binary_modified_signed.exe',
-              '../../<(test_data_subdir)/mozc_test_binary_no_checksum.exe',
-              '../../<(test_data_subdir)/mozc_test_binary_signed.exe',
-            ],
-          },
-          'includes': [ '../../gyp/install_testdata.gypi' ],
-        },
       ],
     }],
   ],
@@ -282,8 +232,6 @@
           'dependencies': [
             'ime_impl_base_test',
             'imframework_util_test',
-            'win32_base_test',
-            'win32_file_verifier_test',
           ],
         }],
       ],
