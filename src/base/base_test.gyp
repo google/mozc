@@ -441,6 +441,18 @@
         'install_embedded_file_h',
       ],
     },
+    {
+      'target_name': 'serialized_string_array_test',
+      'type': 'executable',
+      'sources': [
+        'serialized_string_array_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+        'base.gyp:serialized_string_array',
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',
@@ -460,6 +472,7 @@
         'obfuscator_support_test',
         'scheduler_stub_test',
         'scheduler_test',
+        'serialized_string_array_test',
         'system_util_test',
         'trie_test',
         'update_util_test',

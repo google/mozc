@@ -444,6 +444,14 @@
         'debug.cc',
       ],
     },
+    {
+      'target_name': 'serialized_string_array',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'serialized_string_array.cc',
+      ],
+    },
   ],
   'conditions': [
     ['target_platform=="Android"', {
