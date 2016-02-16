@@ -37,6 +37,7 @@
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
+#include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -106,6 +107,7 @@ class ConfigHandlerImpl {
   // equals to config_.MergeFrom(imposed_config_)
   Config merged_config_;
   Config default_config_;
+  mutable Mutex mutex_;
 };
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
@@ -114,6 +116,7 @@ ConfigHandlerImpl *GetConfigHandlerImpl() {
 
 // return current Config
 bool ConfigHandlerImpl::GetConfig(Config *config) const {
+  scoped_lock lock(&mutex_);
   config->CopyFrom(merged_config_);
   return true;
 }
@@ -124,6 +127,7 @@ const Config &ConfigHandlerImpl::DefaultConfig() const {
 
 // return stored Config
 bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
+  scoped_lock lock(&mutex_);
   config->CopyFrom(stored_config_);
   return true;
 }
@@ -168,6 +172,7 @@ void ConfigHandlerImpl::UpdateMergedConfig() {
 }
 
 bool ConfigHandlerImpl::SetConfig(const Config &config) {
+  scoped_lock lock(&mutex_);
   Config output_config;
   output_config.CopyFrom(config);
 
@@ -188,6 +193,7 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
 }
 
 void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
+  scoped_lock lock(&mutex_);
   VLOG(1) << "Setting new overriding config";
   imposed_config_.CopyFrom(config);
 
@@ -203,6 +209,7 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 
 // Reload from file
 bool ConfigHandlerImpl::Reload() {
+  scoped_lock lock(&mutex_);
   VLOG(1) << "Reloading config file: " << filename_;
   std::unique_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
@@ -224,12 +231,14 @@ bool ConfigHandlerImpl::Reload() {
 }
 
 void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
+  scoped_lock lock(&mutex_);
   VLOG(1) << "set new config file name: " << filename;
   filename_ = filename;
   Reload();
 }
 
 string ConfigHandlerImpl::GetConfigFileName() {
+  scoped_lock lock(&mutex_);
   return filename_;
 }
 }  // namespace

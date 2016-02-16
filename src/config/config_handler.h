@@ -44,7 +44,7 @@ enum {
   CONFIG_VERSION = 1,
 };
 
-// This is pure static class.
+// This is pure static class.  All public static methods are thread-safe.
 class ConfigHandler {
  public:
   // Returns current config.
