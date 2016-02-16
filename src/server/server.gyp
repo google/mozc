@@ -98,7 +98,6 @@
             },
             'VCLinkerTool': {
               'DelayLoadDLLs': [
-                'version.dll',
                 'wininet.dll',
               ],
             },

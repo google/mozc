@@ -61,43 +61,6 @@ TEST_F(SystemUtilTest, SetIsWindowsX64ModeForTest) {
       SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE);
 }
 
-#ifdef OS_WIN
-TEST_F(SystemUtilTest, GetFileVersion) {
-  const wchar_t kDllName[] = L"kernel32.dll";
-
-  wstring path = SystemUtil::GetSystemDir();
-  path += L"\\";
-  path += kDllName;
-
-  int major, minor, build, revision;
-  EXPECT_TRUE(
-      SystemUtil::GetFileVersion(path, &major, &minor, &build, &revision));
-}
-
-TEST_F(SystemUtilTest, GetFileVersionStringTest) {
-  const wchar_t kDllName[] = L"kernel32.dll";
-
-  wstring path = SystemUtil::GetSystemDir();
-  path += L"\\";
-  path += kDllName;
-
-  const string version_string = SystemUtil::GetFileVersionString(path);
-
-  vector<string> numbers;
-  Util::SplitStringUsing(version_string, ".", &numbers);
-
-  // must be 4 digits.
-  ASSERT_EQ(numbers.size(), 4);
-
-  // must be integer.
-  uint32 dummy = 0;
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[0], &dummy));
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[1], &dummy));
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[2], &dummy));
-  ASSERT_TRUE(NumberUtil::SafeStrToUInt32(numbers[3], &dummy));
-}
-#endif  // OS_WIN
-
 #ifndef OS_NACL
 TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
   EXPECT_GT(SystemUtil::GetTotalPhysicalMemory(), 0);

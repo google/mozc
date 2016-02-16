@@ -148,20 +148,6 @@ class SystemUtil {
   // This function is thread safe.
   static const wchar_t *GetSystemDir();
 
-  // Retrieves version of the specified file.
-  // If the function fails, returns false.
-  static bool GetFileVersion(const wstring &file_fullpath,
-                             int *major,
-                             int *minor,
-                             int *build,
-                             int *revision);
-
-  // Retrieves version string of the specified file.
-  // The version string consists of 4 digits separated by comma
-  // like "X.YY.ZZZ.WWWW".
-  // If the function fails, the return value is an empty string.
-  static string GetFileVersionString(const wstring &file_fullpath);
-
   // Returns "MSCTF.AsmCacheReady.<desktop name><session #>" to work around
   // b/5765783.
   // Returns an empty string if fails.

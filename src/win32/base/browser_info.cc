@@ -36,7 +36,6 @@
 
 #include <string>
 
-#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
 #include "win32/base/accessible_object.h"
@@ -70,12 +69,6 @@ wstring GetProcessModuleName() {
 }
 
 }  // namespace
-
-BrowserInfo::Version::Version()
-    : major(0),
-      minor(0),
-      build(0),
-      revision(0) {}
 
 // static
 BrowserInfo::BrowserType BrowserInfo::GetBrowerType() {
@@ -187,34 +180,6 @@ bool BrowserInfo::IsOnChromeOmnibox(
     return true;
   }
   return false;
-}
-
-// static
-BrowserInfo::Version BrowserInfo::GetProcessModuleVersion() {
-  if (!g_exe_module_ver_initialized_) {
-    bool loder_locked = false;
-    if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) ||
-        loder_locked) {
-      return Version();
-    }
-
-    const wstring &exe_path = GetProcessModuleName();
-    if (!exe_path.empty()) {
-      SystemUtil::GetFileVersion(exe_path,
-                                 &g_exe_module_ver_major_,
-                                 &g_exe_module_ver_minor_,
-                                 &g_exe_module_ver_build_,
-                                 &g_exe_module_ver_revision_);
-    }
-    g_exe_module_ver_initialized_ = true;
-  }
-
-  Version version;
-  version.major = g_exe_module_ver_major_;
-  version.minor = g_exe_module_ver_minor_;
-  version.build = g_exe_module_ver_build_;
-  version.revision = g_exe_module_ver_revision_;
-  return version;
 }
 
 // static

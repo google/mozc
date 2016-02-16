@@ -136,8 +136,6 @@
               'VCLinkerTool': {
                 'AdditionalDependencies': [
                   'aux_ulib.lib',  # used in 'win_util.cc'
-                  'propsys.lib',   # used in 'win_util.cc'
-                  'version.lib',  # used in 'util.cc'
                   'KtmW32.lib',  # used in 'file_util.cc'
                 ],
               },
