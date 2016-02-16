@@ -819,6 +819,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     getTabHost().setBackgroundDrawable(
         skin.windowBackgroundDrawable.getConstantState().newDrawable());
     TabWidget tabWidget = getTabWidget();
+    // Explicitly set non-transparent drawable to avoid strange background on
+    // some devices.
+    tabWidget.setBackgroundDrawable(
+        skin.buttonFrameBackgroundDrawable.getConstantState().newDrawable());
     for (int i = 0; i < tabWidget.getTabCount(); ++i) {
       View view = tabWidget.getChildTabViewAt(i);
       view.setBackgroundDrawable(createTabBackgroundDrawable(skin));
