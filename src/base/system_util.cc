@@ -820,11 +820,9 @@ string SystemUtil::GetOSVersionString() {
 
 void SystemUtil::DisableIME() {
 #ifdef OS_WIN
-  // turn off IME:
-  // AFAIK disabling TSF under Vista and later OS is almost impossible
-  // so that all we have to do is to prevent from calling
-  // ITfThreadMgr::Activate and ITfThreadMgrEx::ActivateEx in this thread.
-  ::ImmDisableTextFrameService(-1);
+  // Note that ImmDisableTextFrameService API is no longer supported on
+  // Windows Vista and later.
+  // https://msdn.microsoft.com/en-us/library/windows/desktop/dd318537.aspx
   ::ImmDisableIME(-1);
 #endif  // OS_WIN
 }
