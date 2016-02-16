@@ -226,15 +226,6 @@ bool ImeUtil::SetDefault() {
   return true;
 }
 
-bool ImeUtil::ActivateForCurrentProcess() {
-  const KeyboardLayoutID &mozc_hkld = ImmRegistrar::GetKLIDForIME();
-  if (!mozc_hkld.has_id()) {
-    return false;
-  }
-  return (0 != ::LoadKeyboardLayout(mozc_hkld.ToString().c_str(),
-                                    KLF_ACTIVATE | KLF_SETFORPROCESS));
-}
-
 bool ImeUtil::ActivateForCurrentSession() {
   const KeyboardLayoutID &mozc_hkld = ImmRegistrar::GetKLIDForIME();
   if (!mozc_hkld.has_id()) {
