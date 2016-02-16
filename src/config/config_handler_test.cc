@@ -47,22 +47,24 @@
 #include "testing/base/public/mozctest.h"
 
 namespace mozc {
+namespace config {
+namespace {
 
 class ConfigHandlerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    default_config_filename_ = config::ConfigHandler::GetConfigFileName();
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
+    default_config_filename_ = ConfigHandler::GetConfigFileName();
+    Config default_config;
+    ConfigHandler::GetDefaultConfig(&default_config);
+    ConfigHandler::SetConfig(default_config);
   }
 
   virtual void TearDown() {
-    config::ConfigHandler::SetConfigFileName(default_config_filename_);
-    config::Config default_config;
-    config::ConfigHandler::GetDefaultConfig(&default_config);
-    config::ConfigHandler::SetConfig(default_config);
+    ConfigHandler::SetConfigFileName(default_config_filename_);
+    Config default_config;
+    ConfigHandler::GetDefaultConfig(&default_config);
+    ConfigHandler::SetConfig(default_config);
   }
  private:
   string default_config_filename_;
@@ -71,12 +73,12 @@ class ConfigHandlerTest : public ::testing::Test {
 class ScopedSetConfigFileName {
  public:
   explicit ScopedSetConfigFileName(const string &new_name)
-      : default_config_filename_(config::ConfigHandler::GetConfigFileName()) {
-    config::ConfigHandler::SetConfigFileName(new_name);
+      : default_config_filename_(ConfigHandler::GetConfigFileName()) {
+    ConfigHandler::SetConfigFileName(new_name);
   }
 
   ~ScopedSetConfigFileName() {
-    config::ConfigHandler::SetConfigFileName(default_config_filename_);
+    ConfigHandler::SetConfigFileName(default_config_filename_);
   }
 
  private:
@@ -86,39 +88,39 @@ class ScopedSetConfigFileName {
 };
 
 TEST_F(ConfigHandlerTest, SetConfig) {
-  config::Config input;
-  config::Config output;
+  Config input;
+  Config output;
 
   const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
                                                 "mozc_config_test_tmp");
   FileUtil::Unlink(config_file);
   ScopedSetConfigFileName scoped_config_file_name(config_file);
-  EXPECT_EQ(config_file, config::ConfigHandler::GetConfigFileName());
-  ASSERT_TRUE(config::ConfigHandler::Reload())
-      << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
+  EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
+  ASSERT_TRUE(ConfigHandler::Reload())
+      << "failed to reload: " << ConfigHandler::GetConfigFileName();
 
-  config::ConfigHandler::GetDefaultConfig(&input);
+  ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(true);
 #ifndef NO_LOGGING
   input.set_verbose_level(2);
 #endif  // NO_LOGGING
-  config::ConfigHandler::SetMetaData(&input);
-  EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
+  ConfigHandler::SetMetaData(&input);
+  EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(input.DebugString(), output.DebugString());
 
-  config::ConfigHandler::GetDefaultConfig(&input);
+  ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(false);
 #ifndef NO_LOGGING
   input.set_verbose_level(0);
 #endif  // NO_LOGGING
-  config::ConfigHandler::SetMetaData(&input);
-  EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
+  ConfigHandler::SetMetaData(&input);
+  EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
 
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
@@ -127,9 +129,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 #if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   input.Clear();
   EXPECT_FALSE(input.general_config().has_upload_usage_stats());
-  EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
+  EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 
@@ -137,24 +139,24 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.mutable_general_config()->set_upload_usage_stats(false);
   EXPECT_TRUE(input.general_config().has_upload_usage_stats());
   EXPECT_FALSE(input.general_config().upload_usage_stats());
-  EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
+  EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 #endif  // OS_ANDROID && CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, SetImposedConfig) {
-  config::Config input;
-  config::Config output;
+  Config input;
+  Config output;
 
   const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
                                                 "mozc_config_test_tmp");
   FileUtil::Unlink(config_file);
   ScopedSetConfigFileName scoped_config_file_name(config_file);
-  ASSERT_TRUE(config::ConfigHandler::Reload())
-      << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
+  ASSERT_TRUE(ConfigHandler::Reload())
+      << "failed to reload: " << ConfigHandler::GetConfigFileName();
 
   struct Testcase {
     bool stored_config_value;
@@ -175,47 +177,47 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     const bool expected = kTestcases[i].expected_value;
 
     // Set current config.
-    config::ConfigHandler::GetDefaultConfig(&input);
+    ConfigHandler::GetDefaultConfig(&input);
     input.set_incognito_mode(stored_config_value);
-    config::ConfigHandler::SetMetaData(&input);
-    EXPECT_TRUE(config::ConfigHandler::SetConfig(input));
+    ConfigHandler::SetMetaData(&input);
+    EXPECT_TRUE(ConfigHandler::SetConfig(input));
     // Set imposed config.
     input.Clear();
     if (kTestcases[i].imposed_config_value != Testcase::DO_NOT_IMPOSE) {
       input.set_incognito_mode(
           kTestcases[i].imposed_config_value == Testcase::IMPOSE_TRUE);
     }
-    config::ConfigHandler::SetImposedConfig(input);
+    ConfigHandler::SetImposedConfig(input);
     // Check post-condition.
     output.Clear();
-    EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
     EXPECT_EQ(expected, output.incognito_mode());
-    config::ConfigHandler::GetConfig(&output);
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(expected, output.incognito_mode());
-    config::ConfigHandler::GetStoredConfig(&output);
+    ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
 
     // Reload and check.
-    ASSERT_TRUE(config::ConfigHandler::Reload())
-        << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
+    ASSERT_TRUE(ConfigHandler::Reload())
+        << "failed to reload: " << ConfigHandler::GetConfigFileName();
     output.Clear();
-    EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
     EXPECT_EQ(expected, output.incognito_mode());
-    config::ConfigHandler::GetConfig(&output);
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(expected, output.incognito_mode());
-    config::ConfigHandler::GetStoredConfig(&output);
+    ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
 
     // Unset imposed config.
     input.Clear();
-    config::ConfigHandler::SetImposedConfig(input);
+    ConfigHandler::SetImposedConfig(input);
     // Check post-condition.
     output.Clear();
-    EXPECT_TRUE(config::ConfigHandler::GetConfig(&output));
+    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
     EXPECT_EQ(stored_config_value, output.incognito_mode());
-    config::ConfigHandler::GetConfig(&output);
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
-    config::ConfigHandler::GetStoredConfig(&output);
+    ConfigHandler::GetStoredConfig(&output);
     EXPECT_EQ(stored_config_value, output.incognito_mode());
   }
 }
@@ -226,22 +228,22 @@ TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
 
   const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, config_file);
   FileUtil::Unlink(filename);
-  config::Config input;
-  config::ConfigHandler::SetConfig(input);
+  Config input;
+  ConfigHandler::SetConfig(input);
   FileUtil::FileExists(filename);
 }
 
 TEST_F(ConfigHandlerTest, SetConfigFileName) {
-  config::Config mozc_config;
+  Config mozc_config;
   const bool default_incognito_mode = mozc_config.incognito_mode();
   mozc_config.set_incognito_mode(!default_incognito_mode);
-  config::ConfigHandler::SetConfig(mozc_config);
+  ConfigHandler::SetConfig(mozc_config);
   // ScopedSetConfigFileName internally calls SetConfigFileName.
   ScopedSetConfigFileName scoped_config_file_name(
       "memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
-  config::Config updated_config;
-  config::ConfigHandler::GetConfig(&updated_config);
+  Config updated_config;
+  ConfigHandler::GetConfig(&updated_config);
   EXPECT_EQ(default_incognito_mode, updated_config.incognito_mode());
 }
 
@@ -271,11 +273,11 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
     ScopedSetConfigFileName scoped_config_file_name(
         "user://" + string(file_name));
-    ASSERT_TRUE(config::ConfigHandler::Reload())
-        << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
+    ASSERT_TRUE(ConfigHandler::Reload())
+        << "failed to reload: " << ConfigHandler::GetConfigFileName();
 
-    config::Config default_config;
-    EXPECT_TRUE(config::ConfigHandler::GetConfig(&default_config))
+    Config default_config;
+    EXPECT_TRUE(ConfigHandler::GetConfig(&default_config))
         << "failed to GetConfig from: " << file_name;
 
 #ifdef OS_WIN
@@ -293,43 +295,43 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 #endif  // !OS_ANDROID && !OS_NACL
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
-  config::Config output;
+  Config output;
 
   output.Clear();
-  config::ConfigHandler::GetDefaultConfig(&output);
+  ConfigHandler::GetDefaultConfig(&output);
 #ifdef OS_MACOSX
-  EXPECT_EQ(output.session_keymap(), config::Config::KOTOERI);
+  EXPECT_EQ(output.session_keymap(), Config::KOTOERI);
 #elif defined(OS_NACL)  // OS_MACOSX
-  EXPECT_EQ(output.session_keymap(), config::Config::CHROMEOS);
+  EXPECT_EQ(output.session_keymap(), Config::CHROMEOS);
 #else  // OS_MACOSX || OS_NACL
-  EXPECT_EQ(output.session_keymap(), config::Config::MSIME);
+  EXPECT_EQ(output.session_keymap(), Config::MSIME);
 #endif  // OS_MACOSX || OS_NACL
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {
     const char *group;
-    config::Config::CharacterForm preedit_character_form;
-    config::Config::CharacterForm conversion_character_form;
+    Config::CharacterForm preedit_character_form;
+    Config::CharacterForm conversion_character_form;
   };
   const TestCase testcases[] = {
-     // "ア"
-    {"\xE3\x82\xA2", config::Config::FULL_WIDTH, config::Config::FULL_WIDTH},
-    {"A", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {"0", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {"(){}[]", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {".,", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
+    // "ア"
+    {"\xE3\x82\xA2", Config::FULL_WIDTH, Config::FULL_WIDTH},
+    {"A", Config::FULL_WIDTH, Config::LAST_FORM},
+    {"0", Config::FULL_WIDTH, Config::LAST_FORM},
+    {"(){}[]", Config::FULL_WIDTH, Config::LAST_FORM},
+    {".,", Config::FULL_WIDTH, Config::LAST_FORM},
     // "。、",
     {"\xE3\x80\x82\xE3\x80\x81",
-      config::Config::FULL_WIDTH, config::Config::FULL_WIDTH},
+      Config::FULL_WIDTH, Config::FULL_WIDTH},
     // "・「」"
     {"\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D",
-      config::Config::FULL_WIDTH, config::Config::FULL_WIDTH},
-    {"\"'", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {":;", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {"#%&@$^_|`\\", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {"~", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {"<>=+-/*", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
-    {"?!", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
+      Config::FULL_WIDTH, Config::FULL_WIDTH},
+    {"\"'", Config::FULL_WIDTH, Config::LAST_FORM},
+    {":;", Config::FULL_WIDTH, Config::LAST_FORM},
+    {"#%&@$^_|`\\", Config::FULL_WIDTH, Config::LAST_FORM},
+    {"~", Config::FULL_WIDTH, Config::LAST_FORM},
+    {"<>=+-/*", Config::FULL_WIDTH, Config::LAST_FORM},
+    {"?!", Config::FULL_WIDTH, Config::LAST_FORM},
   };
   EXPECT_EQ(output.character_form_rules_size(), arraysize(testcases));
   for (size_t i = 0; i < arraysize(testcases); ++i) {
@@ -348,9 +350,12 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
 }
 
 TEST_F(ConfigHandlerTest, DefaultConfig) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
+  Config config;
+  ConfigHandler::GetDefaultConfig(&config);
   EXPECT_EQ(config.DebugString(),
-            config::ConfigHandler::DefaultConfig().DebugString());
+            ConfigHandler::DefaultConfig().DebugString());
 }
+
+}  // namespace
+}  // namespace config
 }  // namespace mozc
