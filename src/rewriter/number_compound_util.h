@@ -35,13 +35,13 @@
 #define MOZC_REWRITER_NUMBER_COMPOUND_UTIL_H_
 
 #include "base/port.h"
+#include "base/serialized_string_array.h"
 #include "base/string_piece.h"
 #include "converter/segments.h"
 
 namespace mozc {
 
-struct CounterSuffixEntry;
-namespace dictionary {class POSMatcher; }
+namespace dictionary { class POSMatcher; }
 
 namespace number_compound_util {
 
@@ -60,7 +60,7 @@ enum NumberScriptType {
 // data_manager/data_manager_interface.h.  Returns false if the input cannot be
 // splitted.
 bool SplitStringIntoNumberAndCounterSuffix(
-    const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
+    const SerializedStringArray &suffix_array,
     StringPiece input, StringPiece *number, StringPiece *counter_suffix,
     uint32 *script_type);
 
@@ -70,7 +70,7 @@ bool SplitStringIntoNumberAndCounterSuffix(
 //   2) lid is Kanji number
 //   3) lid is general nound and content value consists of number and counter
 //      suffix, where counter suffix needs to be provided as a sorted array.
-bool IsNumber(const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
+bool IsNumber(const SerializedStringArray &suffix_array,
               const dictionary::POSMatcher &pos_matcher,
               const Segment::Candidate &cand);
 

@@ -42,6 +42,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:serialized_string_array',
         '../protocol/protocol.gyp:segmenter_data_proto',
         'dataset_reader',
       ],

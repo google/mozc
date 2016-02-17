@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_FOCUS_CANDIDATE_REWRITER_H_
 
 #include "base/port.h"
+#include "base/serialized_string_array.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -44,7 +45,7 @@ namespace dictionary { class POSMatcher; }
 class FocusCandidateRewriter : public RewriterInterface  {
  public:
   explicit FocusCandidateRewriter(const DataManagerInterface *data_manager);
-  virtual ~FocusCandidateRewriter();
+  ~FocusCandidateRewriter() override;
 
   // Changed the focus of "segment_index"-th segment to be "candidate_index".
   // The segments will be written according to pre-defined "actions".
@@ -55,8 +56,8 @@ class FocusCandidateRewriter : public RewriterInterface  {
              size_t segment_index,
              int candidate_index) const;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const {
+  bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const override {
     return false;
   }
 
@@ -82,8 +83,7 @@ class FocusCandidateRewriter : public RewriterInterface  {
                             StringPiece* number, StringPiece* suffix,
                             uint32 *script_type) const;
 
-  const CounterSuffixEntry *suffix_array_;
-  size_t suffix_array_size_;
+  SerializedStringArray suffix_array_;
   const dictionary::POSMatcher *pos_matcher_;
 
   DISALLOW_COPY_AND_ASSIGN(FocusCandidateRewriter);

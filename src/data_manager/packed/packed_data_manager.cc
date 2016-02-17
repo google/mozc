@@ -44,7 +44,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
-#include "rewriter/counter_suffix.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
@@ -116,8 +115,7 @@ class PackedDataManager::Impl {
 #endif  // NO_USAGE_REWRITER
   const uint16 *GetRuleIdTableForTest() const;
   const void *GetRangeTablesForTest() const;
-  void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
-                                   size_t *size) const;
+  void GetCounterSuffixSortedArray(const char **array, size_t *size) const;
   StringPiece GetMozcData() const;
 
  private:
@@ -146,7 +144,6 @@ class PackedDataManager::Impl {
   unique_ptr<int[]> conjugation_suffix_data_index_;
   unique_ptr<UsageDictItem[]> usage_data_value_;
 #endif  // NO_USAGE_REWRITER
-  unique_ptr<CounterSuffixEntry[]> counter_suffix_data_;
   DataManager manager_;
 };
 
@@ -443,21 +440,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
   last_item->meaning = NULL;
 #endif  // NO_USAGE_REWRITER
 
-  // Makes counter suffix sorted array.
-  {
-    const size_t size =
-        system_dictionary_data_->counter_suffix_data_size();
-    if (size > 0) {
-      counter_suffix_data_.reset(new CounterSuffixEntry[size]);
-      for (size_t i = 0; i < size; ++i) {
-        counter_suffix_data_[i].suffix =
-            system_dictionary_data_->counter_suffix_data(i).data();
-        counter_suffix_data_[i].size =
-            system_dictionary_data_->counter_suffix_data(i).size();
-      }
-    }
-  }
-
   // Initialize |manager_| (PackedDataManager for light doesn't have mozc data).
   if (system_dictionary_data_->has_mozc_data() &&
       !manager_.InitFromArray(system_dictionary_data_->mozc_data(),
@@ -563,9 +545,8 @@ const void *PackedDataManager::Impl::GetRangeTablesForTest() const {
 }
 
 void PackedDataManager::Impl::GetCounterSuffixSortedArray(
-    const CounterSuffixEntry **array, size_t *size) const {
-  *array = counter_suffix_data_.get();
-  *size = system_dictionary_data_->counter_suffix_data_size();
+    const char **array, size_t *size) const {
+  manager_.GetCounterSuffixSortedArray(array, size);
 }
 
 StringPiece PackedDataManager::Impl::GetMozcData() const {
@@ -714,7 +695,7 @@ void PackedDataManager::GetUsageRewriterData(
 #endif  // NO_USAGE_REWRITER
 
 void PackedDataManager::GetCounterSuffixSortedArray(
-    const CounterSuffixEntry **array, size_t *size) const {
+    const char **array, size_t *size) const {
   manager_impl_->GetCounterSuffixSortedArray(array, size);
 }
 

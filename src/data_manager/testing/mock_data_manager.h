@@ -66,7 +66,7 @@ class MockDataManager : public MockUserPosManager {
       const int **conjugation_suffix_data_index,
       const UsageDictItem **usage_data_value) const override;
 #endif  // NO_USAGE_REWRITER
-  void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+  void GetCounterSuffixSortedArray(const char **array,
                                    size_t *size) const override;
 
  private:

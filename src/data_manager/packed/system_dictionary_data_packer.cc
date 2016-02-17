@@ -45,7 +45,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/correction_rewriter.h"
-#include "rewriter/counter_suffix.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
@@ -235,14 +234,6 @@ void SystemDictionaryDataPacker::SetUsageRewriterData(
   }
 }
 #endif  // NO_USAGE_REWRITER
-
-void SystemDictionaryDataPacker::SetCounterSuffixSortedArray(
-    const CounterSuffixEntry *suffix_array, size_t size) {
-  for (size_t i = 0; i < size; ++i) {
-    const string suffix_str(suffix_array[i].suffix, suffix_array[i].size);
-    system_dictionary_->add_counter_suffix_data(suffix_str);
-  }
-}
 
 void SystemDictionaryDataPacker::SetMozcData(const string &data,
                                              const string &magic) {

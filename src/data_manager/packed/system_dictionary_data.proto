@@ -127,7 +127,7 @@ message SystemDictionaryData {
   reserved 15;  // DEPRECATED: optional bytes collocation_data = 15;
   reserved 16;  // DEPRECATED: optional bytes collocation_suppression_data = 16;
 
-  repeated string counter_suffix_data = 17;
+  reserved 17;  // DEPRECATED: repeated string counter_suffix_data = 17;
 
   // TODO(noriyukit): This field contains a binary image of a new data set file.
   // All the data in this proto should be migrated to this field, and finally

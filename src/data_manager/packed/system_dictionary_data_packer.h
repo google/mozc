@@ -45,7 +45,6 @@ namespace mozc {
 struct ConjugationSuffix;
 struct UsageDictItem;
 #endif  // NO_USAGE_REWRITER
-struct CounterSuffixEntry;
 
 namespace packed {
 
@@ -96,8 +95,6 @@ class SystemDictionaryDataPacker {
       size_t usage_data_size,
       const UsageDictItem *usage_data_value);
 #endif  // NO_USAGE_REWRITER
-  void SetCounterSuffixSortedArray(
-      const CounterSuffixEntry *suffix_array, size_t size);
   void SetMozcData(const string &data, const string &magic);
 
   bool Output(const string &file_path, bool use_gzip);

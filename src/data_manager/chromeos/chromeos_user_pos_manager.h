@@ -75,7 +75,7 @@ class ChromeOsUserPosManager : public DataManagerInterface {
       const UsageDictItem **usage_data_value) const override {}
 #endif  // NO_USAGE_REWRITER
 
-  void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+  void GetCounterSuffixSortedArray(const char **array,
                                    size_t *size) const override {}
 
  private:

@@ -55,6 +55,8 @@ class DataManager : public DataManagerInterface {
                                      size_t *size) const override;
   void GetSuggestionFilterData(const char **data, size_t *size) const override;
   const uint8 *GetPosGroupData() const override;
+  void GetCounterSuffixSortedArray(const char **array,
+                                   size_t *size) const override;
 
   // The following interfaces are not yet implemented.
   // TODO(noriyukit): Implements all the interfaces by migrating embedded C++
@@ -79,8 +81,7 @@ class DataManager : public DataManagerInterface {
       const int **conjugation_suffix_data_index,
       const UsageDictItem **usage_data_value) const override;
 #endif  // NO_USAGE_REWRITER
-  void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
-                                   size_t *size) const override;
+
 
  private:
   StringPiece connection_data_;
@@ -95,6 +96,7 @@ class DataManager : public DataManagerInterface {
   StringPiece segmenter_ltable_;
   StringPiece segmenter_rtable_;
   StringPiece segmenter_bitarray_;
+  StringPiece counter_suffix_data_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

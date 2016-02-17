@@ -41,7 +41,6 @@
 #include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/correction_rewriter.h"
-#include "rewriter/counter_suffix.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
@@ -65,7 +64,6 @@ namespace {
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data.h"
 #endif  // NO_USAGE_REWRITER
-#include "data_manager/@DIR@/counter_suffix_data.h"
 
 }  // namespace
 
@@ -93,8 +91,6 @@ bool OutputData(const string &file_path) {
                               kUsageDataSize,
                               kUsageData_value);
 #endif  // NO_USAGE_REWRITER
-  packer.SetCounterSuffixSortedArray(kCounterSuffixes,
-                                     arraysize(kCounterSuffixes));
 
   string magic;
   CHECK(Util::Unescape(FLAGS_mozc_data_magic, &magic))

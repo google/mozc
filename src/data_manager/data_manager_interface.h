@@ -36,7 +36,6 @@
 
 namespace mozc {
 
-struct CounterSuffixEntry;
 struct ReadingCorrectionItem;
 #ifndef NO_USAGE_REWRITER
 struct ConjugationSuffix;
@@ -110,7 +109,7 @@ class DataManagerInterface {
 #endif  // NO_USAGE_REWRITER
 
   // Gets the address and size of a sorted array of counter suffix values.
-  virtual void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+  virtual void GetCounterSuffixSortedArray(const char **array,
                                            size_t *size) const = 0;
 
  protected:

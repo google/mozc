@@ -30,6 +30,7 @@
 #include "data_manager/data_manager.h"
 
 #include "base/logging.h"
+#include "base/serialized_string_array.h"
 #include "data_manager/dataset_reader.h"
 #include "protocol/segmenter_data.pb.h"
 
@@ -96,6 +97,14 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
   }
   if (!reader.Get("segmenter_bitarray", &segmenter_bitarray_)) {
     LOG(ERROR) << "Cannot find a segmenter bit-array";
+    return false;
+  }
+  if (!reader.Get("counter_suffix", &counter_suffix_data_)) {
+    LOG(ERROR) << "Cannot find a counter suffix data";
+    return false;
+  }
+  if (!SerializedStringArray::VerifyData(counter_suffix_data_)) {
+    LOG(ERROR) << "Counter suffix string array is broken";
     return false;
   }
   return true;
@@ -170,9 +179,10 @@ void DataManager::GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
   LOG(FATAL) << "Not implemented";
 }
 
-void DataManager::GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+void DataManager::GetCounterSuffixSortedArray(const char **array,
                                               size_t *size) const {
-  LOG(FATAL) << "Not implemented";
+  *array = counter_suffix_data_.data();
+  *size = counter_suffix_data_.size();
 }
 
 #ifndef NO_USAGE_REWRITER

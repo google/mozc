@@ -31,32 +31,16 @@
 
 #include <algorithm>
 
-#include "base/iterator_adapter.h"
 #include "base/util.h"
 #include "dictionary/pos_matcher.h"
-#include "rewriter/counter_suffix.h"
 
 using mozc::dictionary::POSMatcher;
 
 namespace mozc {
 namespace number_compound_util {
-namespace {
-
-// Transforms CounterSuffixEntry to StringPiece for binary_search.
-struct StringPieceAdapter {
-  typedef StringPiece value_type;
-  typedef StringPiece *pointer;
-  typedef StringPiece &reference;
-
-  value_type operator()(const CounterSuffixEntry *iter) const {
-    return StringPiece(iter->suffix, iter->size);
-  }
-};
-
-}  // namespace
 
 bool SplitStringIntoNumberAndCounterSuffix(
-    const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
+    const SerializedStringArray &suffix_array,
     StringPiece input, StringPiece *number, StringPiece *counter_suffix,
     uint32 *script_type) {
   *script_type = NONE;
@@ -97,14 +81,11 @@ bool SplitStringIntoNumberAndCounterSuffix(
   *number = input.substr(0, input.size() - s.size());
   *counter_suffix = s;
   return counter_suffix->empty() ||
-         std::binary_search(
-             MakeIteratorAdapter(suffix_array, StringPieceAdapter()),
-             MakeIteratorAdapter(suffix_array + suffix_array_size,
-                                 StringPieceAdapter()),
-             *counter_suffix);
+         std::binary_search(suffix_array.begin(), suffix_array.end(),
+                            *counter_suffix);
 }
 
-bool IsNumber(const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
+bool IsNumber(const SerializedStringArray &suffix_array,
               const POSMatcher &pos_matcher, const Segment::Candidate &cand) {
   // Compound number entries have the left POS ID of number.
   if (pos_matcher.IsNumber(cand.lid) || pos_matcher.IsKanjiNumber(cand.lid)) {
@@ -125,8 +106,7 @@ bool IsNumber(const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
   StringPiece number, suffix;
   uint32 script_type = 0;
   if (!number_compound_util::SplitStringIntoNumberAndCounterSuffix(
-          suffix_array, suffix_array_size, cand.content_value,
-          &number, &suffix, &script_type)) {
+          suffix_array, cand.content_value, &number, &suffix, &script_type)) {
     return false;
   }
   return !number.empty();

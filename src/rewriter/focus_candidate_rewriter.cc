@@ -34,6 +34,7 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -130,8 +131,15 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
 
 FocusCandidateRewriter::FocusCandidateRewriter(
     const DataManagerInterface *data_manager) {
-  data_manager->GetCounterSuffixSortedArray(&suffix_array_,
-                                            &suffix_array_size_);
+  const char *array = nullptr;
+  size_t size = 0;
+  data_manager->GetCounterSuffixSortedArray(&array, &size);
+  const StringPiece data(array, size);
+  // Data manager is responsible for providing a valid data.  Just verify data
+  // in debug build.
+  DCHECK(SerializedStringArray::VerifyData(data));
+  suffix_array_.Set(data);
+
   pos_matcher_ = data_manager->GetPOSMatcher();
 }
 
@@ -396,8 +404,7 @@ bool FocusCandidateRewriter::ParseNumberCandidate(
     }
   }
   return number_compound_util::SplitStringIntoNumberAndCounterSuffix(
-      suffix_array_, suffix_array_size_,
-      cand.content_value, number, suffix, script_type);
+      suffix_array_, cand.content_value, number, suffix, script_type);
 }
 
 }  // namespace mozc

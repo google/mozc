@@ -128,6 +128,7 @@
         'gen_separate_suggestion_filter_data_for_<(dataset_tag)#host',
         'gen_separate_pos_group_data_for_<(dataset_tag)#host',
         'gen_separate_boundary_data_for_<(dataset_tag)#host',
+        'gen_separate_counter_suffix_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -145,6 +146,7 @@
             'segmenter_ltable': '<(gen_out_dir)/segmenter_ltable.data',
             'segmenter_rtable': '<(gen_out_dir)/segmenter_rtable.data',
             'segmenter_bitarray': '<(gen_out_dir)/segmenter_bitarray.data',
+            'counter_suffix': '<(gen_out_dir)/counter_suffix.data',
           },
           'inputs': [
             '<(dictionary)',
@@ -158,6 +160,7 @@
             '<(segmenter_ltable)',
             '<(segmenter_rtable)',
             '<(segmenter_bitarray)',
+            '<(counter_suffix)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -176,7 +179,8 @@
             'segmenter_sizeinfo:32:<(gen_out_dir)/segmenter_sizeinfo.data',
             'segmenter_ltable:32:<(gen_out_dir)/segmenter_ltable.data',
             'segmenter_rtable:32:<(gen_out_dir)/segmenter_rtable.data',
-            'segmenter_bitarray:32:<(gen_out_dir)/segmenter_bitarray.data'
+            'segmenter_bitarray:32:<(gen_out_dir)/segmenter_bitarray.data',
+            'counter_suffix:32:<(gen_out_dir)/counter_suffix.data',
           ],
         },
       ],
@@ -190,7 +194,6 @@
         'gen_embedded_collocation_data_for_<(dataset_tag)#host',
         'gen_embedded_collocation_suppression_data_for_<(dataset_tag)#host',
         'gen_embedded_connection_data_for_<(dataset_tag)#host',
-        'gen_embedded_counter_suffix_data_for_<(dataset_tag)#host',
         'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
         'gen_embedded_reading_correction_data_for_<(dataset_tag)#host',
         'gen_embedded_suffix_data_for_<(dataset_tag)#host',
@@ -913,12 +916,12 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_counter_suffix_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_counter_suffix_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'actions': [
         {
-          'action_name': 'gen_embedded_counter_suffix_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_counter_suffix_data_for_<(dataset_tag)',
           'variables': {
             'id_file': '<(platform_data_dir)/id.def',
             'input_files%': '<(dictionary_files)',
@@ -928,16 +931,16 @@
             '<@(input_files)',
           ],
           'outputs': [
-            '<(gen_out_dir)/counter_suffix_data.h',
+            '<(gen_out_dir)/counter_suffix.data',
           ],
           'action': [
             'python', '<(mozc_dir)/rewriter/gen_counter_suffix_array.py',
             '--id_file=<(id_file)',
-            '--output=<(gen_out_dir)/counter_suffix_data.h',
+            '--output=<(gen_out_dir)/counter_suffix.data',
             '<@(input_files)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/counter_suffix_data.h'),
+                      '<(gen_out_dir)/counter_suffix.data'),
         },
       ],
     },

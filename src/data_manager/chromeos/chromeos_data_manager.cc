@@ -38,7 +38,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
-#include "rewriter/counter_suffix.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
@@ -168,14 +167,9 @@ void ChromeOsDataManager::GetUsageRewriterData(
 }
 #endif  // NO_USAGE_REWRITER
 
-namespace {
-#include "data_manager/chromeos/counter_suffix_data.h"
-}  // namespace
-
 void ChromeOsDataManager::GetCounterSuffixSortedArray(
-    const CounterSuffixEntry **array, size_t *size) const {
-  *array = kCounterSuffixes;
-  *size = arraysize(kCounterSuffixes);
+    const char **array, size_t *size) const {
+  manager_.GetCounterSuffixSortedArray(array, size);
 }
 
 }  // namespace chromeos

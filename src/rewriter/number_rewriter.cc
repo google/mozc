@@ -37,6 +37,7 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -70,8 +71,7 @@ struct RewriteCandidateInfo {
 // *arabic_candidate: arabic candidate using numeric style conversion.
 // POS information, cost, etc will be copied from base candidate.
 RewriteType GetRewriteTypeAndBase(
-    const CounterSuffixEntry *suffix_array,
-    size_t suffix_array_size,
+    const SerializedStringArray &suffix_array,
     const Segment &seg,
     int base_candidate_pos,
     const POSMatcher &pos_matcher,
@@ -79,8 +79,7 @@ RewriteType GetRewriteTypeAndBase(
   DCHECK(arabic_candidate);
 
   const Segment::Candidate &c = seg.candidate(base_candidate_pos);
-  if (!number_compound_util::IsNumber(suffix_array, suffix_array_size,
-                                      pos_matcher, c)) {
+  if (!number_compound_util::IsNumber(suffix_array, pos_matcher, c)) {
     return NO_REWRITE;
   }
 
@@ -124,7 +123,7 @@ RewriteType GetRewriteTypeAndBase(
 }
 
 void GetRewriteCandidateInfos(
-    const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
+    const SerializedStringArray &suffix_array,
     const Segment &seg,
     const POSMatcher &pos_matcher,
     vector<RewriteCandidateInfo> *rewrite_candidate_info) {
@@ -133,8 +132,7 @@ void GetRewriteCandidateInfos(
 
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const RewriteType type = GetRewriteTypeAndBase(
-        suffix_array, suffix_array_size,
-        seg, i, pos_matcher, &info.candidate);
+        suffix_array, seg, i, pos_matcher, &info.candidate);
     if (type == NO_REWRITE) {
       continue;
     }
@@ -368,13 +366,13 @@ void GetNumbers(RewriteType type, bool exec_radix_conversion,
 }
 
 bool RewriteOneSegment(
-    const CounterSuffixEntry *suffix_array, size_t suffix_array_size,
+    const SerializedStringArray &suffix_array,
     const POSMatcher &pos_matcher, bool exec_radix_conversion, Segment *seg) {
   DCHECK(seg);
   bool modified = false;
   vector<RewriteCandidateInfo> rewrite_candidate_infos;
-  GetRewriteCandidateInfos(suffix_array, suffix_array_size,
-                           *seg, pos_matcher, &rewrite_candidate_infos);
+  GetRewriteCandidateInfos(suffix_array, *seg, pos_matcher,
+                           &rewrite_candidate_infos);
 
   for (int i = rewrite_candidate_infos.size() - 1; i >= 0; --i) {
     const RewriteCandidateInfo &info = rewrite_candidate_infos[i];
@@ -425,8 +423,14 @@ bool RewriteOneSegment(
 
 NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
     : pos_matcher_(data_manager->GetPOSMatcher()) {
-  data_manager->GetCounterSuffixSortedArray(&suffix_array_,
-                                            &suffix_array_size_);
+  const char *array = nullptr;
+  size_t size = 0;
+  data_manager->GetCounterSuffixSortedArray(&array, &size);
+  const StringPiece data(array, size);
+  // Data manager is responsible for providing a valid data.  Just verify data
+  // in debug build.
+  DCHECK(SerializedStringArray::VerifyData(data));
+  suffix_array_.Set(data);
 }
 
 NumberRewriter::~NumberRewriter() {}
@@ -455,8 +459,8 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
 
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *seg = segments->mutable_conversion_segment(i);
-    modified |= RewriteOneSegment(suffix_array_, suffix_array_size_,
-                                  *pos_matcher_, exec_radix_conversion, seg);
+    modified |= RewriteOneSegment(suffix_array_, *pos_matcher_,
+                                  exec_radix_conversion, seg);
   }
 
   return modified;

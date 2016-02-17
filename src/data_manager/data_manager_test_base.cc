@@ -38,6 +38,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/connector.h"
 #include "converter/node.h"
@@ -46,7 +47,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
-#include "rewriter/counter_suffix.h"
 #include "testing/base/public/gunit.h"
 
 using mozc::dictionary::POSMatcher;
@@ -258,20 +258,19 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
 }
 
 void DataManagerTestBase::CounterSuffixTest_ValidateTest() {
-  const CounterSuffixEntry *suffix_array = nullptr;
-  size_t size = 0;
-  data_manager_->GetCounterSuffixSortedArray(&suffix_array, &size);
+  const char *data = nullptr;
+  size_t data_size = 0;
+  data_manager_->GetCounterSuffixSortedArray(&data, &data_size);
 
-  const char *prev_suffix = "";  // The smallest string.
-  for (size_t i = 0; i < size; ++i) {
-    const CounterSuffixEntry &entry = suffix_array[i];
+  SerializedStringArray suffix_array;
+  ASSERT_TRUE(suffix_array.Init(StringPiece(data, data_size)));
 
-    // |entry.size| must be the length of |entry.suffix|.
-    EXPECT_EQ(entry.size, strlen(entry.suffix));
-
-    // Check if the array is sorted in ascending order of suffix string.
-    EXPECT_GE(0, strcmp(prev_suffix, entry.suffix));
-    prev_suffix = entry.suffix;
+  // Check if the array is sorted in ascending order.
+  StringPiece prev_suffix;  // The smallest string.
+  for (size_t i = 0; i < suffix_array.size(); ++i) {
+    const StringPiece suffix = suffix_array[i];
+    EXPECT_LE(prev_suffix, suffix);
+    prev_suffix = suffix;
   }
 }
 
