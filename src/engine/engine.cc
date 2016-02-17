@@ -43,7 +43,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
@@ -61,7 +60,6 @@
 using mozc::dictionary::DictionaryImpl;
 using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
-using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::UserDictionary;
@@ -71,20 +69,21 @@ using mozc::dictionary::ValueDictionary;
 namespace mozc {
 namespace {
 
-class UserDataManagerImpl : public UserDataManagerInterface {
+class UserDataManagerImpl final : public UserDataManagerInterface {
  public:
   explicit UserDataManagerImpl(PredictorInterface *predictor,
                                RewriterInterface *rewriter)
       : predictor_(predictor), rewriter_(rewriter) {}
-  ~UserDataManagerImpl();
+  ~UserDataManagerImpl() override;
 
-  virtual bool Sync();
-  virtual bool Reload();
-  virtual bool ClearUserHistory();
-  virtual bool ClearUserPrediction();
-  virtual bool ClearUnusedUserPrediction();
-  virtual bool ClearUserPredictionEntry(const string &key, const string &value);
-  virtual bool WaitForSyncerForTest();
+  bool Sync() override;
+  bool Reload() override;
+  bool ClearUserHistory() override;
+  bool ClearUserPrediction() override;
+  bool ClearUnusedUserPrediction() override;
+  bool ClearUserPredictionEntry(
+      const string &key, const string &value) override;
+  bool WaitForSyncerForTest() override;
 
  private:
   PredictorInterface *predictor_;
@@ -170,11 +169,14 @@ void Engine::Init(
       data_manager->GetPOSMatcher()));
   CHECK(dictionary_.get());
 
-  const SuffixToken *suffix_tokens = NULL;
-  size_t suffix_tokens_size = 0;
-  data_manager->GetSuffixDictionaryData(&suffix_tokens, &suffix_tokens_size);
-  suffix_dictionary_.reset(new SuffixDictionary(suffix_tokens,
-                                                suffix_tokens_size));
+  StringPiece suffix_key_array_data, suffix_value_array_data;
+  const uint32 *token_array;
+  data_manager->GetSuffixDictionaryData(&suffix_key_array_data,
+                                        &suffix_value_array_data,
+                                        &token_array);
+  suffix_dictionary_.reset(new SuffixDictionary(suffix_key_array_data,
+                                                suffix_value_array_data,
+                                                token_array));
   CHECK(suffix_dictionary_.get());
 
   connector_.reset(Connector::CreateFromDataManager(*data_manager));

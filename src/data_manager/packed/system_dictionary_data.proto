@@ -65,14 +65,7 @@ message SystemDictionaryData {
 
   reserved 6;  // DEPRECATED: repeated BoundaryData boundary_data = 6;
 
-  message SuffixToken {
-    optional string key = 1;
-    optional string value = 2;
-    optional uint32 lid = 3;
-    optional uint32 rid = 4;
-    optional int32 wcost = 5;
-  };
-  repeated SuffixToken suffix_tokens = 7;
+  reserved 7;  // DEPRECATED: repeated SuffixToken suffix_tokens = 7;
 
   message ReadingCorrectionItem {
     optional string value = 1;

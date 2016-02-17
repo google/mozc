@@ -33,13 +33,10 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
-
-using mozc::dictionary::SuffixToken;
 
 namespace mozc {
 namespace testing {
@@ -88,15 +85,10 @@ void MockDataManager::GetSegmenterData(
                             bitarray_data, boundary_data);
 }
 
-namespace {
-// The generated header defines kSuffixTokens[].
-#include "data_manager/testing/suffix_data.h"
-}  // namespace
-
-void MockDataManager::GetSuffixDictionaryData(const SuffixToken **tokens,
-                                              size_t *size) const {
-  *tokens = kSuffixTokens;
-  *size = arraysize(kSuffixTokens);
+void MockDataManager::GetSuffixDictionaryData(
+    StringPiece *key_array, StringPiece *value_array,
+    const uint32 **token_array) const {
+  manager_.GetSuffixDictionaryData(key_array, value_array, token_array);
 }
 
 namespace {

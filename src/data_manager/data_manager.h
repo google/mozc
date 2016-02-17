@@ -55,21 +55,22 @@ class DataManager : public DataManagerInterface {
                                      size_t *size) const override;
   void GetSuggestionFilterData(const char **data, size_t *size) const override;
   const uint8 *GetPosGroupData() const override;
+  void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
+                        const uint16 **l_table, const uint16 **r_table,
+                        size_t *bitarray_num_bytes, const char **bitarray_data,
+                        const uint16 **boundary_data) const override;
   void GetCounterSuffixSortedArray(const char **array,
                                    size_t *size) const override;
+  void GetSuffixDictionaryData(StringPiece *key_array_data,
+                               StringPiece *value_array_data,
+                               const uint32 **token_array) const override;
 
   // The following interfaces are not yet implemented.
   // TODO(noriyukit): Implements all the interfaces by migrating embedded C++
   // structures to a data set file.
   const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
   const dictionary::POSMatcher *GetPOSMatcher() const override;
-  void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
-                        const uint16 **l_table, const uint16 **r_table,
-                        size_t *bitarray_num_bytes, const char **bitarray_data,
-                        const uint16 **boundary_data) const override;
 
-  void GetSuffixDictionaryData(const dictionary::SuffixToken **data,
-                               size_t *size) const override;
   void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                 size_t *size) const override;
   void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
@@ -81,7 +82,6 @@ class DataManager : public DataManagerInterface {
       const int **conjugation_suffix_data_index,
       const UsageDictItem **usage_data_value) const override;
 #endif  // NO_USAGE_REWRITER
-
 
  private:
   StringPiece connection_data_;
@@ -97,6 +97,9 @@ class DataManager : public DataManagerInterface {
   StringPiece segmenter_rtable_;
   StringPiece segmenter_bitarray_;
   StringPiece counter_suffix_data_;
+  StringPiece suffix_key_array_data_;
+  StringPiece suffix_value_array_data_;
+  StringPiece suffix_token_array_data_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

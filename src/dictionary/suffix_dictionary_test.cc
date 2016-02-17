@@ -35,7 +35,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_test_util.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
@@ -48,10 +47,12 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   ConversionRequest convreq;
   {
     const testing::MockDataManager manager;
-    const SuffixToken *tokens = NULL;
-    size_t tokens_size = 0;
-    manager.GetSuffixDictionaryData(&tokens, &tokens_size);
-    dic.reset(new SuffixDictionary(tokens, tokens_size));
+    StringPiece key_array_data, value_arra_data;
+    const uint32 *token_array = nullptr;
+    manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
+                                    &token_array);
+    dic.reset(new SuffixDictionary(key_array_data, value_arra_data,
+                                   token_array));
     ASSERT_NE(nullptr, dic.get());
   }
 

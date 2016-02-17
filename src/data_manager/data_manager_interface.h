@@ -31,6 +31,7 @@
 #define MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 
 #include "base/port.h"
+#include "base/string_piece.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/embedded_dictionary.h"
 
@@ -44,7 +45,6 @@ struct UsageDictItem;
 
 namespace dictionary {
 class POSMatcher;
-struct SuffixToken;
 }  // namespace dictionary
 
 // Builds those objects that depend on a set of embedded data generated from
@@ -76,9 +76,10 @@ class DataManagerInterface {
   // Returns the address of system dictionary data and its size.
   virtual void GetSystemDictionaryData(const char **data, int *size) const = 0;
 
-  // Returns the address of suffix dictionary and its size.
-  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **tokens,
-                                       size_t *size) const = 0;
+  // Returns the array containing keys, values, and token (lid, rid, cost).
+  virtual void GetSuffixDictionaryData(StringPiece *key_array,
+                                       StringPiece *value_array,
+                                       const uint32 **token_array) const = 0;
 
   // Gets a reference to reading correction data array and its size.
   virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,

@@ -40,7 +40,6 @@
 #include "base/version.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
@@ -51,7 +50,6 @@
 #endif  // NO_USAGE_REWRITER
 
 using mozc::dictionary::POSMatcher;
-using mozc::dictionary::SuffixToken;
 using mozc::dictionary::UserPOS;
 
 namespace mozc {
@@ -113,24 +111,6 @@ void SystemDictionaryDataPacker::SetPosMatcherData(
       range->set_lower(range_tables[i][j].lower);
       range->set_upper(range_tables[i][j].upper);
     }
-  }
-}
-
-void SystemDictionaryDataPacker::SetSuffixTokens(
-    const SuffixToken *suffix_tokens,
-    size_t suffix_tokens_count) {
-  for (size_t i = 0; i < suffix_tokens_count; ++i) {
-    SystemDictionaryData::SuffixToken *suffix_token =
-        system_dictionary_->add_suffix_tokens();
-    if (suffix_tokens[i].key) {
-      suffix_token->set_key(suffix_tokens[i].key);
-    }
-    if (suffix_tokens[i].value) {
-      suffix_token->set_value(suffix_tokens[i].value);
-    }
-    suffix_token->set_lid(suffix_tokens[i].lid);
-    suffix_token->set_rid(suffix_tokens[i].rid);
-    suffix_token->set_wcost(suffix_tokens[i].wcost);
   }
 }
 

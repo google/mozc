@@ -31,13 +31,12 @@
 #define MOZC_DICTIONARY_SUFFIX_DICTIONARY_H_
 
 #include "base/port.h"
+#include "base/serialized_string_array.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
 namespace dictionary {
-
-struct SuffixToken;
 
 // SuffixDictionary is a special dictionary which handles
 // Japanese bunsetsu suffixes.
@@ -52,34 +51,34 @@ struct SuffixToken;
 // functional word with this dictionary.
 class SuffixDictionary : public DictionaryInterface {
  public:
-  SuffixDictionary(const SuffixToken *suffix_tokens,
-                   size_t suffix_tokens_size);
-  virtual ~SuffixDictionary();
+  SuffixDictionary(StringPiece key_array_data, StringPiece value_array_data,
+                   const uint32 *token_array);
+  ~SuffixDictionary() override;
 
-  virtual bool HasKey(StringPiece key) const;
-  virtual bool HasValue(StringPiece value) const;
+  bool HasKey(StringPiece key) const override;
+  bool HasValue(StringPiece value) const override;
 
   // Kana modifier insensitive lookup is not supported.
-  virtual void LookupPredictive(StringPiece key,
-                                const ConversionRequest &conversion_request,
-                                Callback *callback) const;
+  void LookupPredictive(StringPiece key,
+                        const ConversionRequest &conversion_request,
+                        Callback *callback) const override;
 
   // SuffixDictionary doesn't support Prefix/Revese/Exact Lookup.
-  virtual void LookupPrefix(StringPiece key,
-                            const ConversionRequest &conversion_request,
-                            Callback *callback) const;
+  void LookupPrefix(StringPiece key,
+                    const ConversionRequest &conversion_request,
+                    Callback *callback) const override;
 
-  virtual void LookupExact(StringPiece key,
-                           const ConversionRequest &conversion_request,
-                           Callback *callback) const;
+  void LookupExact(StringPiece key, const ConversionRequest &conversion_request,
+                   Callback *callback) const override;
 
-  virtual void LookupReverse(StringPiece str,
-                             const ConversionRequest &conversion_request,
-                             Callback *callback) const;
+  void LookupReverse(StringPiece str,
+                     const ConversionRequest &conversion_request,
+                     Callback *callback) const override;
 
  private:
-  const SuffixToken *const suffix_tokens_;
-  const size_t suffix_tokens_size_;
+  SerializedStringArray key_array_;
+  SerializedStringArray value_array_;
+  const uint32 *token_array_;
 
   DISALLOW_COPY_AND_ASSIGN(SuffixDictionary);
 };

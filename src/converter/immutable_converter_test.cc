@@ -50,7 +50,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/suffix_dictionary.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
@@ -66,7 +65,6 @@ using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
-using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::UserDictionaryStub;
@@ -121,10 +119,14 @@ class MockDataAndImmutableConverter {
     CHECK(dictionary_.get());
 
     if (!suffix_dictionary) {
-      const SuffixToken *tokens = NULL;
-      size_t tokens_size = 0;
-      data_manager_->GetSuffixDictionaryData(&tokens, &tokens_size);
-      suffix_dictionary_.reset(new SuffixDictionary(tokens, tokens_size));
+      StringPiece suffix_key_array_data, suffix_value_array_data;
+      const uint32 *token_array;
+      data_manager_->GetSuffixDictionaryData(&suffix_key_array_data,
+                                             &suffix_value_array_data,
+                                             &token_array);
+      suffix_dictionary_.reset(new SuffixDictionary(suffix_key_array_data,
+                                                    suffix_value_array_data,
+                                                    token_array));
       suffix_dictionary = suffix_dictionary_.get();
     }
     CHECK(suffix_dictionary);

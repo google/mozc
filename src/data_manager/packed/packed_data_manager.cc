@@ -42,7 +42,6 @@
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
@@ -56,7 +55,6 @@ DEFINE_string(dataset,
 using std::unique_ptr;
 
 using mozc::dictionary::POSMatcher;
-using mozc::dictionary::SuffixToken;
 using mozc::dictionary::UserPOS;
 
 namespace mozc {
@@ -96,8 +94,8 @@ class PackedDataManager::Impl {
       size_t *bitarray_num_bytes, const char **bitarray_data,
       const uint16 **boundary_data) const;
   void GetSystemDictionaryData(const char **data, int *size) const;
-  void GetSuffixDictionaryData(const SuffixToken **data,
-                               size_t *size) const;
+  void GetSuffixDictionaryData(StringPiece *key_array, StringPiece *value_array,
+                               const uint32 **token_array) const;
   void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                 size_t *size) const;
   void GetCollocationData(const char **array, size_t *size) const;
@@ -131,7 +129,6 @@ class PackedDataManager::Impl {
   unique_ptr<uint16[]> rule_id_table_;
   unique_ptr<POSMatcher::Range *[]> range_tables_;
   unique_ptr<Range[]> range_table_items_;
-  unique_ptr<SuffixToken[]> suffix_tokens_;
   unique_ptr<ReadingCorrectionItem[]> reading_corrections_;
   unique_ptr<EmbeddedDictionary::Value[]> symbol_data_values_;
   size_t symbol_data_token_size_;
@@ -274,29 +271,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
     range_table_items_[range_index].lower = static_cast<uint16>(0xFFFF);
     range_table_items_[range_index].upper = static_cast<uint16>(0xFFFF);
     ++range_index;
-  }
-
-  // Makes suffix data.
-  suffix_tokens_.reset(
-      new SuffixToken[system_dictionary_data_->suffix_tokens_size()]);
-  for (size_t i = 0;
-       i < system_dictionary_data_->suffix_tokens_size();
-       ++i) {
-    const SystemDictionaryData::SuffixToken &suffix_token =
-        system_dictionary_data_->suffix_tokens(i);
-    if (suffix_token.has_key()) {
-      suffix_tokens_[i].key = suffix_token.key().data();
-    } else {
-      suffix_tokens_[i].key = NULL;
-    }
-    if (suffix_token.has_value()) {
-      suffix_tokens_[i].value = suffix_token.value().data();
-    } else {
-      suffix_tokens_[i].value = NULL;
-    }
-    suffix_tokens_[i].lid = suffix_token.lid();
-    suffix_tokens_[i].rid = suffix_token.rid();
-    suffix_tokens_[i].wcost = suffix_token.wcost();
   }
 
   // Makes reading correction data.
@@ -485,10 +459,9 @@ void PackedDataManager::Impl::GetSystemDictionaryData(
 }
 
 void PackedDataManager::Impl::GetSuffixDictionaryData(
-    const SuffixToken **data,
-    size_t *size) const {
-  *data = suffix_tokens_.get();
-  *size = system_dictionary_data_->suffix_tokens().size();
+    StringPiece *key_array, StringPiece *value_array,
+    const uint32 **token_array) const {
+  manager_.GetSuffixDictionaryData(key_array, value_array, token_array);
 }
 
 void PackedDataManager::Impl::GetReadingCorrectionData(
@@ -646,9 +619,9 @@ void PackedDataManager::GetSystemDictionaryData(
 }
 
 void PackedDataManager::GetSuffixDictionaryData(
-    const SuffixToken **data,
-    size_t *size) const {
-  manager_impl_->GetSuffixDictionaryData(data, size);
+    StringPiece *key_array, StringPiece *value_array,
+    const uint32 **token_array) const {
+  manager_impl_->GetSuffixDictionaryData(key_array, value_array, token_array);
 }
 
 void PackedDataManager::GetReadingCorrectionData(

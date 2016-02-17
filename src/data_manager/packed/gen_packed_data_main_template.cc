@@ -38,7 +38,6 @@
 #include "data_manager/packed/system_dictionary_data_packer.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/correction_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
@@ -58,7 +57,6 @@ namespace {
 
 #include "data_manager/@DIR@/pos_matcher_data.h"
 #include "data_manager/@DIR@/reading_correction_data.h"
-#include "data_manager/@DIR@/suffix_data.h"
 #include "data_manager/@DIR@/symbol_rewriter_data.h"
 #include "data_manager/@DIR@/user_pos_data.h"
 #ifndef NO_USAGE_REWRITER
@@ -79,7 +77,6 @@ bool OutputData(const string &file_path) {
   // elements are not required at runtime.
   packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
                            kRangeTables, arraysize(kRangeTables) - 1);
-  packer.SetSuffixTokens(kSuffixTokens, arraysize(kSuffixTokens));
   packer.SetReadingCorretions(kReadingCorrections,
                               arraysize(kReadingCorrections));
   packer.SetSymbolRewriterData(kSymbolData_token_data, kSymbolData_token_size);

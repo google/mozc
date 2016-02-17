@@ -61,7 +61,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "prediction/suggestion_filter.h"
@@ -84,7 +83,6 @@ using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
-using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::Token;
 using testing::_;
@@ -108,10 +106,14 @@ DictionaryInterface *CreateSystemDictionaryFromDataManager(
 
 DictionaryInterface *CreateSuffixDictionaryFromDataManager(
     const DataManagerInterface &data_manager) {
-  const SuffixToken *tokens = NULL;
-  size_t size = 0;
-  data_manager.GetSuffixDictionaryData(&tokens, &size);
-  return new SuffixDictionary(tokens, size);
+  StringPiece suffix_key_array_data, suffix_value_array_data;
+  const uint32 *token_array;
+  data_manager.GetSuffixDictionaryData(&suffix_key_array_data,
+                                       &suffix_value_array_data,
+                                       &token_array);
+  return new SuffixDictionary(suffix_key_array_data,
+                              suffix_value_array_data,
+                              token_array);
 }
 
 SuggestionFilter *CreateSuggestionFilter(

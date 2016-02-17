@@ -54,6 +54,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:serialized_string_array',
       ],
     },
     {

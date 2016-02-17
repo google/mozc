@@ -56,8 +56,8 @@ class MockUserPosManager : public DataManagerInterface {
                         size_t *bitarray_num_bytes, const char **bitarray_data,
                         const uint16 **boundary_data) const override {}
   void GetSystemDictionaryData(const char **data, int *size) const override {}
-  void GetSuffixDictionaryData(const dictionary::SuffixToken **tokens,
-                               size_t *size) const override {}
+  void GetSuffixDictionaryData(StringPiece *key_array, StringPiece *value_array,
+                               const uint32 **token_array) const override {}
   void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                 size_t *size) const override {}
   void GetCollocationData(const char **array, size_t *size) const override {}

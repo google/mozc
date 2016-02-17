@@ -107,6 +107,31 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     LOG(ERROR) << "Counter suffix string array is broken";
     return false;
   }
+  if (!reader.Get("suffix_key", &suffix_key_array_data_)) {
+    LOG(ERROR) << "Cannot find a suffix key array";
+    return false;
+  }
+  if (!reader.Get("suffix_value", &suffix_value_array_data_)) {
+    LOG(ERROR) << "Cannot find a suffix value array";
+    return false;
+  }
+  if (!reader.Get("suffix_token", &suffix_token_array_data_)) {
+    LOG(ERROR) << "Cannot find a suffix token array";
+    return false;
+  }
+  {
+    SerializedStringArray suffix_keys, suffix_values;
+    if (!suffix_keys.Init(suffix_key_array_data_) ||
+        !suffix_values.Init(suffix_value_array_data_) ||
+        suffix_keys.size() != suffix_values.size() ||
+        // Suffix token array is an array of triple (lid, rid, cost) of uint32,
+        // so it contains N = 3 * |suffix_keys.size()| uint32 elements.
+        // Therefore, its byte length must be 4 * N bytes.
+        suffix_token_array_data_.size() != 4 * 3 * suffix_keys.size()) {
+      LOG(ERROR) << "Suffix dictionary data is broken";
+      return false;
+    }
+  }
   return true;
 }
 
@@ -164,9 +189,13 @@ void DataManager::GetSegmenterData(
   *boundary_data = reinterpret_cast<const uint16 *>(boundary_data_.data());
 }
 
-void DataManager::GetSuffixDictionaryData(const dictionary::SuffixToken **data,
-                                          size_t *size) const {
-  LOG(FATAL) << "Not implemented";
+void DataManager::GetSuffixDictionaryData(StringPiece *key_array_data,
+                                          StringPiece *value_array_data,
+                                          const uint32 **token_array) const {
+  *key_array_data = suffix_key_array_data_;
+  *value_array_data = suffix_value_array_data_;
+  *token_array =
+      reinterpret_cast<const uint32 *>(suffix_token_array_data_.data());
 }
 
 void DataManager::GetReadingCorrectionData(const ReadingCorrectionItem **array,

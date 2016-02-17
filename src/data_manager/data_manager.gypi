@@ -60,7 +60,6 @@
       'target_name': '<(dataset_tag)_data_manager',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/suffix_data.h',
         '<(gen_out_dir)/symbol_rewriter_data.h',
         '<(mozc_dir)/dictionary/pos_group.h',
         '<(dataset_tag)_data_manager.cc',
@@ -129,6 +128,7 @@
         'gen_separate_pos_group_data_for_<(dataset_tag)#host',
         'gen_separate_boundary_data_for_<(dataset_tag)#host',
         'gen_separate_counter_suffix_data_for_<(dataset_tag)#host',
+        'gen_separate_suffix_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -147,6 +147,9 @@
             'segmenter_rtable': '<(gen_out_dir)/segmenter_rtable.data',
             'segmenter_bitarray': '<(gen_out_dir)/segmenter_bitarray.data',
             'counter_suffix': '<(gen_out_dir)/counter_suffix.data',
+            'suffix_key': '<(gen_out_dir)/suffix_key.data',
+            'suffix_value': '<(gen_out_dir)/suffix_value.data',
+            'suffix_token': '<(gen_out_dir)/suffix_token.data',
           },
           'inputs': [
             '<(dictionary)',
@@ -161,6 +164,9 @@
             '<(segmenter_rtable)',
             '<(segmenter_bitarray)',
             '<(counter_suffix)',
+            '<(suffix_key)',
+            '<(suffix_value)',
+            '<(suffix_token)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -181,6 +187,9 @@
             'segmenter_rtable:32:<(gen_out_dir)/segmenter_rtable.data',
             'segmenter_bitarray:32:<(gen_out_dir)/segmenter_bitarray.data',
             'counter_suffix:32:<(gen_out_dir)/counter_suffix.data',
+            'suffix_key:32:<(gen_out_dir)/suffix_key.data',
+            'suffix_value:32:<(gen_out_dir)/suffix_value.data',
+            'suffix_token:32:<(gen_out_dir)/suffix_token.data',
           ],
         },
       ],
@@ -196,7 +205,6 @@
         'gen_embedded_connection_data_for_<(dataset_tag)#host',
         'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
         'gen_embedded_reading_correction_data_for_<(dataset_tag)#host',
-        'gen_embedded_suffix_data_for_<(dataset_tag)#host',
         'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host',
         'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)#host',
       ],
@@ -609,12 +617,12 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_suffix_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_suffix_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'actions': [
         {
-          'action_name': 'gen_embedded_suffix_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_suffix_data_for_<(dataset_tag)',
           'variables': {
             'input_files': [
               '<(platform_data_dir)/suffix.txt',
@@ -625,16 +633,21 @@
             '<@(input_files)',
           ],
           'outputs': [
-            '<(gen_out_dir)/suffix_data.h',
+            '<(gen_out_dir)/suffix_key.data',
+            '<(gen_out_dir)/suffix_value.data',
+            '<(gen_out_dir)/suffix_token.data',
           ],
           'action': [
-            'python', '<(mozc_dir)/build_tools/redirect.py',
-            '<(gen_out_dir)/suffix_data.h',
+            'python',
             '<(mozc_dir)/dictionary/gen_suffix_data.py',
+            '--input=<(platform_data_dir)/suffix.txt',
+            '--output_key_array=<(gen_out_dir)/suffix_key.data',
+            '--output_value_array=<(gen_out_dir)/suffix_value.data',
+            '--output_token_array=<(gen_out_dir)/suffix_token.data',
             '<@(input_files)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/suffix_data.h'),
+                      '<(gen_out_dir)/suffix_{key,value,token}.data'),
         },
       ],
     },

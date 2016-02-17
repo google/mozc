@@ -34,7 +34,6 @@
 
 #include "base/port.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/correction_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
@@ -62,27 +61,12 @@ class SystemDictionaryDataPacker {
       size_t rule_id_table_count,
       const dictionary::POSMatcher::Range *const *range_tables,
       size_t range_tables_count);
-  void SetSuffixTokens(
-      const dictionary::SuffixToken *suffix_tokens,
-      size_t suffix_tokens_count);
   void SetReadingCorretions(
       const ReadingCorrectionItem *reading_corrections,
       size_t reading_corrections_count);
   void SetSuggestionFilterData(
       const void *suggestion_filter_data,
       size_t suggestion_filter_data_size);
-  void SetConnectionData(
-      const void *connection_data,
-      size_t connection_data_size);
-  void SetDictionaryData(
-      const void *dictionary_data,
-      size_t dictionary_data_size);
-  void SetCollocationData(
-      const void *collocation_data,
-      size_t collocation_data_size);
-  void SetCollocationSuppressionData(
-      const void *collocation_suppression_data,
-      size_t collocation_suppression_data_size);
   void SetSymbolRewriterData(
       const mozc::EmbeddedDictionary::Token *token_data,
       size_t token_size);
