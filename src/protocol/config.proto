@@ -282,6 +282,15 @@ message Config {
   optional bool use_t13n_conversion = 86 [ default = true ];
   optional bool use_zip_code_conversion = 87  [ default = true ];
   optional bool use_spelling_correction = 88  [ default = true ];
+
+  // If use_emoji_conversion is true, the user can input emoji characters
+  // by converting from a query string (e.g. "いぬ → 🐶" [U+1F436]).
+  // Even if it is false, users might be able to input emoji characters
+  // with other ways.
+  // Note: Some characters can be either of text and emoji.  It would be ideal
+  // to use the variation sequence to specify emoji presentation [U+FE0E],
+  // although it is not implemented yet.
+  // See: http://unicode.org/reports/tr51/#Presentation_Style
   optional bool use_emoji_conversion = 89 [ default = false ];
 
   message InformationListConfig {
