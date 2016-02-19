@@ -64,6 +64,9 @@ class DataManager : public DataManagerInterface {
   void GetSuffixDictionaryData(StringPiece *key_array_data,
                                StringPiece *value_array_data,
                                const uint32 **token_array) const override;
+  void GetReadingCorrectionData(
+      StringPiece *value_array_data, StringPiece *error_array_data,
+      StringPiece *correction_array_data) const override;
 
   // The following interfaces are not yet implemented.
   // TODO(noriyukit): Implements all the interfaces by migrating embedded C++
@@ -71,8 +74,6 @@ class DataManager : public DataManagerInterface {
   const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
   const dictionary::POSMatcher *GetPOSMatcher() const override;
 
-  void GetReadingCorrectionData(const ReadingCorrectionItem **array,
-                                size_t *size) const override;
   void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
                              size_t *size) const override;
 #ifndef NO_USAGE_REWRITER
@@ -100,6 +101,9 @@ class DataManager : public DataManagerInterface {
   StringPiece suffix_key_array_data_;
   StringPiece suffix_value_array_data_;
   StringPiece suffix_token_array_data_;
+  StringPiece reading_correction_value_array_data_;
+  StringPiece reading_correction_error_array_data_;
+  StringPiece reading_correction_correction_array_data_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

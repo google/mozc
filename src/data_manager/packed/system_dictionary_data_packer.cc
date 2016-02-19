@@ -43,7 +43,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
-#include "rewriter/correction_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
@@ -110,24 +109,6 @@ void SystemDictionaryDataPacker::SetPosMatcherData(
           = range_table->add_ranges();
       range->set_lower(range_tables[i][j].lower);
       range->set_upper(range_tables[i][j].upper);
-    }
-  }
-}
-
-void SystemDictionaryDataPacker::SetReadingCorretions(
-    const ReadingCorrectionItem *reading_corrections,
-    size_t reading_corrections_count) {
-  for (size_t i = 0; i < reading_corrections_count; ++i) {
-    SystemDictionaryData::ReadingCorrectionItem *item =
-        system_dictionary_->add_reading_corrections();
-    if (reading_corrections[i].value) {
-      item->set_value(reading_corrections[i].value);
-    }
-    if (reading_corrections[i].error) {
-      item->set_error(reading_corrections[i].error);
-    }
-    if (reading_corrections[i].correction) {
-      item->set_correction(reading_corrections[i].correction);
     }
   }
 }

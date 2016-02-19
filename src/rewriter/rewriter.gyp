@@ -48,7 +48,6 @@
         '<(gen_out_dir)/embedded_collocation_suppression_data.h',
         '<(gen_out_dir)/emoji_rewriter_data.h',
         '<(gen_out_dir)/emoticon_rewriter_data.h',
-        '<(gen_out_dir)/reading_correction_data.h',
         '<(gen_out_dir)/single_kanji_rewriter_data.h',
         '<(gen_out_dir)/symbol_rewriter_data.h',
         '<(gen_out_dir)/usage_rewriter_data.h',

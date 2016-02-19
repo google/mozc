@@ -37,7 +37,6 @@
 
 namespace mozc {
 
-struct ReadingCorrectionItem;
 #ifndef NO_USAGE_REWRITER
 struct ConjugationSuffix;
 struct UsageDictItem;
@@ -82,8 +81,9 @@ class DataManagerInterface {
                                        const uint32 **token_array) const = 0;
 
   // Gets a reference to reading correction data array and its size.
-  virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
-                                        size_t *size) const = 0;
+  virtual void GetReadingCorrectionData(
+      StringPiece *value_array_data, StringPiece *error_array_data,
+      StringPiece *correction_array_data) const = 0;
 
   // Gets the address of collocation data array and its size.
   virtual void GetCollocationData(const char **array, size_t *size) const = 0;

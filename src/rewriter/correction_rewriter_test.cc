@@ -32,6 +32,8 @@
 #include <memory>
 #include <string>
 
+#include "base/port.h"
+#include "base/serialized_string_array.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -41,9 +43,6 @@
 
 namespace mozc {
 namespace {
-static const ReadingCorrectionItem kReadingCorrectionTestItems[] = {
-  { "TSUKIGIME", "gekkyoku", "tsukigime" },
-};
 
 Segment *AddSegment(const string &key, Segments *segments) {
   Segment *segment = segments->push_back_segment();
@@ -72,10 +71,16 @@ class CorrectionRewriterTest : public testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
+    // Create a rewriter with one entry: (TSUKIGIME, gekkyoku, tsukigime)
+    const vector<StringPiece> values = {"TSUKIGIME"};
+    const vector<StringPiece> errors = {"gekkyoku"};
+    const vector<StringPiece> corrections = {"tsukigime"};
     rewriter_.reset(new CorrectionRewriter(
-                        kReadingCorrectionTestItems,
-                        arraysize(kReadingCorrectionTestItems)));
+        SerializedStringArray::SerializeToBuffer(values, &values_buf_),
+        SerializedStringArray::SerializeToBuffer(errors, &errors_buf_),
+        SerializedStringArray::SerializeToBuffer(corrections,
+                                                 &corrections_buf_)));
     config::ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_spelling_correction(true);
   }
@@ -84,6 +89,11 @@ class CorrectionRewriterTest : public testing::Test {
   ConversionRequest convreq_;
   commands::Request request_;
   config::Config config_;
+
+ private:
+  std::unique_ptr<uint32[]> values_buf_;
+  std::unique_ptr<uint32[]> errors_buf_;
+  std::unique_ptr<uint32[]> corrections_buf_;
 };
 
 TEST_F(CorrectionRewriterTest, CapabilityTest) {

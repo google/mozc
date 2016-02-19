@@ -35,7 +35,6 @@
 #include "base/port.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
-#include "rewriter/correction_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
 
 namespace mozc {
@@ -61,9 +60,6 @@ class SystemDictionaryDataPacker {
       size_t rule_id_table_count,
       const dictionary::POSMatcher::Range *const *range_tables,
       size_t range_tables_count);
-  void SetReadingCorretions(
-      const ReadingCorrectionItem *reading_corrections,
-      size_t reading_corrections_count);
   void SetSuggestionFilterData(
       const void *suggestion_filter_data,
       size_t suggestion_filter_data_size);

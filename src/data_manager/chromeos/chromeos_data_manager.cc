@@ -36,7 +36,6 @@
 #include "base/singleton.h"
 #include "converter/boundary_struct.h"
 #include "dictionary/pos_matcher.h"
-#include "rewriter/correction_rewriter.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
@@ -103,16 +102,11 @@ void ChromeOsDataManager::GetSuffixDictionaryData(
   manager_.GetSuffixDictionaryData(key_array, value_array, token_array);
 }
 
-namespace {
-// Include kReadingCorrections.
-#include "data_manager/chromeos/reading_correction_data.h"
-}  // namespace
-
 void ChromeOsDataManager::GetReadingCorrectionData(
-    const ReadingCorrectionItem **array,
-    size_t *size) const {
-  *array = kReadingCorrections;
-  *size = arraysize(kReadingCorrections);
+    StringPiece *value_array_data, StringPiece *error_array_data,
+    StringPiece *correction_array_data) const {
+  manager_.GetReadingCorrectionData(value_array_data, error_array_data,
+                                    correction_array_data);
 }
 
 void ChromeOsDataManager::GetCollocationData(const char **array,

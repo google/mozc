@@ -67,12 +67,8 @@ message SystemDictionaryData {
 
   reserved 7;  // DEPRECATED: repeated SuffixToken suffix_tokens = 7;
 
-  message ReadingCorrectionItem {
-    optional string value = 1;
-    optional string error = 2;
-    optional string correction = 3;
-  };
-  repeated ReadingCorrectionItem reading_corrections = 8;
+  // DEPRECATED: repeated ReadingCorrectionItem reading_corrections = 8;
+  reserved 8;
 
   reserved 9;  // DEPRECATED: optional SegmenterData segmenter_data = 9;
 

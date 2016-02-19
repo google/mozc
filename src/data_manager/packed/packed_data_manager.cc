@@ -42,7 +42,6 @@
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
 #include "dictionary/pos_matcher.h"
-#include "rewriter/correction_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
@@ -96,8 +95,9 @@ class PackedDataManager::Impl {
   void GetSystemDictionaryData(const char **data, int *size) const;
   void GetSuffixDictionaryData(StringPiece *key_array, StringPiece *value_array,
                                const uint32 **token_array) const;
-  void GetReadingCorrectionData(const ReadingCorrectionItem **array,
-                                size_t *size) const;
+  void GetReadingCorrectionData(
+      StringPiece *value_array_data, StringPiece *error_array_data,
+      StringPiece *correction_array_data) const;
   void GetCollocationData(const char **array, size_t *size) const;
   void GetCollocationSuppressionData(const char **array,
                                      size_t *size) const;
@@ -129,7 +129,6 @@ class PackedDataManager::Impl {
   unique_ptr<uint16[]> rule_id_table_;
   unique_ptr<POSMatcher::Range *[]> range_tables_;
   unique_ptr<Range[]> range_table_items_;
-  unique_ptr<ReadingCorrectionItem[]> reading_corrections_;
   unique_ptr<EmbeddedDictionary::Value[]> symbol_data_values_;
   size_t symbol_data_token_size_;
   unique_ptr<EmbeddedDictionary::Token[]> symbol_data_tokens_;
@@ -271,32 +270,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
     range_table_items_[range_index].lower = static_cast<uint16>(0xFFFF);
     range_table_items_[range_index].upper = static_cast<uint16>(0xFFFF);
     ++range_index;
-  }
-
-  // Makes reading correction data.
-  reading_corrections_.reset(
-      new ReadingCorrectionItem[
-          system_dictionary_data_->reading_corrections_size()]);
-  for (size_t i = 0;
-       i < system_dictionary_data_->reading_corrections_size();
-       ++i) {
-    const SystemDictionaryData::ReadingCorrectionItem &item =
-        system_dictionary_data_->reading_corrections(i);
-    if (item.has_value()) {
-      reading_corrections_[i].value = item.value().data();
-    } else {
-      reading_corrections_[i].value = NULL;
-    }
-    if (item.has_error()) {
-      reading_corrections_[i].error = item.error().data();
-    } else {
-      reading_corrections_[i].error = NULL;
-    }
-    if (item.has_correction()) {
-      reading_corrections_[i].correction = item.correction().data();
-    } else {
-      reading_corrections_[i].correction = NULL;
-    }
   }
 
   // Makes symbol dictionary data.
@@ -465,10 +438,10 @@ void PackedDataManager::Impl::GetSuffixDictionaryData(
 }
 
 void PackedDataManager::Impl::GetReadingCorrectionData(
-    const ReadingCorrectionItem **array,
-    size_t *size) const {
-  *array = reading_corrections_.get();
-  *size = system_dictionary_data_->reading_corrections().size();
+    StringPiece *value_array_data, StringPiece *error_array_data,
+    StringPiece *correction_array_data) const {
+  manager_.GetReadingCorrectionData(value_array_data, error_array_data,
+                                    correction_array_data);
 }
 
 void PackedDataManager::Impl::GetCollocationData(
@@ -625,9 +598,10 @@ void PackedDataManager::GetSuffixDictionaryData(
 }
 
 void PackedDataManager::GetReadingCorrectionData(
-    const ReadingCorrectionItem **array,
-    size_t *size) const {
-  manager_impl_->GetReadingCorrectionData(array, size);
+    StringPiece *value_array_data, StringPiece *error_array_data,
+    StringPiece *correction_array_data) const {
+  manager_impl_->GetReadingCorrectionData(value_array_data, error_array_data,
+                                          correction_array_data);
 }
 
 void PackedDataManager::GetCollocationData(

@@ -51,8 +51,9 @@ class ChromeOsDataManager : public ChromeOsUserPosManager {
   void GetSystemDictionaryData(const char **data, int *size) const override;
   void GetSuffixDictionaryData(StringPiece *key_array, StringPiece *value_array,
                                const uint32 **token_array) const override;
-  void GetReadingCorrectionData(const ReadingCorrectionItem **array,
-                                size_t *size) const override;
+  void GetReadingCorrectionData(
+      StringPiece *value_array_data, StringPiece *error_array_data,
+      StringPiece *correction_array_data) const override;
   void GetCollocationData(const char **array, size_t *size) const override;
   void GetCollocationSuppressionData(const char **array,
                                      size_t *size) const override;

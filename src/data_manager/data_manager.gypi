@@ -129,6 +129,7 @@
         'gen_separate_boundary_data_for_<(dataset_tag)#host',
         'gen_separate_counter_suffix_data_for_<(dataset_tag)#host',
         'gen_separate_suffix_data_for_<(dataset_tag)#host',
+        'gen_separate_reading_correction_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -150,6 +151,9 @@
             'suffix_key': '<(gen_out_dir)/suffix_key.data',
             'suffix_value': '<(gen_out_dir)/suffix_value.data',
             'suffix_token': '<(gen_out_dir)/suffix_token.data',
+            'reading_correction_value': '<(gen_out_dir)/reading_correction_value.data',
+            'reading_correction_error': '<(gen_out_dir)/reading_correction_error.data',
+            'reading_correction_correction': '<(gen_out_dir)/reading_correction_correction.data',
           },
           'inputs': [
             '<(dictionary)',
@@ -167,6 +171,9 @@
             '<(suffix_key)',
             '<(suffix_value)',
             '<(suffix_token)',
+            '<(reading_correction_value)',
+            '<(reading_correction_error)',
+            '<(reading_correction_correction)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -190,6 +197,9 @@
             'suffix_key:32:<(gen_out_dir)/suffix_key.data',
             'suffix_value:32:<(gen_out_dir)/suffix_value.data',
             'suffix_token:32:<(gen_out_dir)/suffix_token.data',
+            'reading_correction_value:32:<(gen_out_dir)/reading_correction_value.data',
+            'reading_correction_error:32:<(gen_out_dir)/reading_correction_error.data',
+            'reading_correction_correction:32:<(gen_out_dir)/reading_correction_correction.data',
           ],
         },
       ],
@@ -204,7 +214,6 @@
         'gen_embedded_collocation_suppression_data_for_<(dataset_tag)#host',
         'gen_embedded_connection_data_for_<(dataset_tag)#host',
         'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
-        'gen_embedded_reading_correction_data_for_<(dataset_tag)#host',
         'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host',
         'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)#host',
       ],
@@ -652,7 +661,7 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_reading_correction_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_reading_correction_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'actions': [
@@ -667,15 +676,19 @@
             '<(platform_data_dir)/reading_correction.tsv',
           ],
           'outputs': [
-            '<(gen_out_dir)/reading_correction_data.h',
+            '<(gen_out_dir)/reading_correction_value.data',
+            '<(gen_out_dir)/reading_correction_error.data',
+            '<(gen_out_dir)/reading_correction_correction.data',
           ],
           'action': [
             'python', '<(mozc_dir)/rewriter/gen_reading_correction_data.py',
-            '--output=<(gen_out_dir)/reading_correction_data.h',
             '--input=<@(input_files)',
+            '--output_value_array=<(gen_out_dir)/reading_correction_value.data',
+            '--output_error_array=<(gen_out_dir)/reading_correction_error.data',
+            '--output_correction_array=<(gen_out_dir)/reading_correction_correction.data',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/reading_correction_data.h'),
+                      '<(gen_out_dir)/reading_correction*'),
         },
       ],
     },

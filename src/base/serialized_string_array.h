@@ -116,6 +116,7 @@ class SerializedStringArray {
         : array_(array), index_(index) {}
     iterator(const iterator &x) = default;
 
+    size_t index() const { return index_; }
     StringPiece operator*() { return (*array_)[index_]; }
     StringPiece operator*() const { return (*array_)[index_]; }
     StringPiece operator[](difference_type n) const {

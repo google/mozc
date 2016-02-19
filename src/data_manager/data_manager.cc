@@ -132,6 +132,32 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
       return false;
     }
   }
+  if (!reader.Get("reading_correction_value",
+                  &reading_correction_value_array_data_)) {
+    LOG(ERROR) << "Cannot find reading correction value array";
+    return false;
+  }
+  if (!reader.Get("reading_correction_error",
+                  &reading_correction_error_array_data_)) {
+    LOG(ERROR) << "Cannot find reading correction error array";
+    return false;
+  }
+  if (!reader.Get("reading_correction_correction",
+                  &reading_correction_correction_array_data_)) {
+    LOG(ERROR) << "Cannot find reading correction correction array";
+    return false;
+  }
+  {
+    SerializedStringArray value_array, error_array, correction_array;
+    if (!value_array.Init(reading_correction_value_array_data_) ||
+        !error_array.Init(reading_correction_error_array_data_) ||
+        !correction_array.Init(reading_correction_correction_array_data_) ||
+        value_array.size() != error_array.size() ||
+        value_array.size() != correction_array.size()) {
+      LOG(ERROR) << "Reading correction data is broken";
+      return false;
+    }
+  }
   return true;
 }
 
@@ -198,9 +224,12 @@ void DataManager::GetSuffixDictionaryData(StringPiece *key_array_data,
       reinterpret_cast<const uint32 *>(suffix_token_array_data_.data());
 }
 
-void DataManager::GetReadingCorrectionData(const ReadingCorrectionItem **array,
-                                           size_t *size) const {
-  LOG(FATAL) << "Not implemented";
+void DataManager::GetReadingCorrectionData(
+    StringPiece *value_array_data, StringPiece *error_array_data,
+    StringPiece *correction_array_data) const {
+  *value_array_data = reading_correction_value_array_data_;
+  *error_array_data = reading_correction_error_array_data_;
+  *correction_array_data = reading_correction_correction_array_data_;
 }
 
 void DataManager::GetSymbolRewriterData(const EmbeddedDictionary::Token **data,

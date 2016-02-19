@@ -67,6 +67,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:serialized_string_array',
         '../base/base_test.gyp:clock_mock',
         '../converter/converter.gyp:converter',
         '../converter/converter_base.gyp:converter_mock',
