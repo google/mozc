@@ -623,9 +623,10 @@ def GypMain(options, unused_args):
   if target_platform == 'Linux':
     gyp_options.extend(['-D', 'enable_gtk_renderer=1'])
 
-  android_home = GetAndroidHome(options)
-  android_ndk_home = GetAndroidNdkHome(options)
+  # Android
   if target_platform == 'Android':
+    android_home = GetAndroidHome(options)
+    android_ndk_home = GetAndroidNdkHome(options)
     if not android_home or not os.path.isdir(android_home):
       raise ValueError(
           'Android Home was not found. '
@@ -637,20 +638,21 @@ def GypMain(options, unused_args):
           'Use --android_ndk_home option or make the home direcotry '
           'be included in PATH environment variable.')
 
-  gyp_options.extend(['-D', 'android_home=%s' % android_home])
-  gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
-  gyp_options.extend(['-D', 'android_compiler=%s' % options.android_compiler])
-  gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
-  gyp_options.extend(['-D', 'android_application_id=%s' %
-                      options.android_application_id])
-  if options.android_hide_icon:
-    gyp_options.extend(['-D', 'android_hide_icon=1'])
-  else:
-    gyp_options.extend(['-D', 'android_hide_icon=0'])
-  if options.android_release_icon:
-    gyp_options.extend(['-D', 'android_release_icon=1'])
-  else:
-    gyp_options.extend(['-D', 'android_release_icon=0'])
+    gyp_options.extend(['-D', 'android_home=%s' % android_home])
+    gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
+    gyp_options.extend(['-D', 'android_compiler=%s' % options.android_compiler])
+    gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
+    gyp_options.extend(['-D', 'android_application_id=%s' %
+                        options.android_application_id])
+    if options.android_hide_icon:
+      gyp_options.extend(['-D', 'android_hide_icon=1'])
+    else:
+      gyp_options.extend(['-D', 'android_hide_icon=0'])
+    if options.android_release_icon:
+      gyp_options.extend(['-D', 'android_release_icon=1'])
+    else:
+      gyp_options.extend(['-D', 'android_release_icon=0'])
+
   gyp_options.extend(['-D', 'build_base=%s' %
                       GetBuildBaseName(target_platform)])
   gyp_options.extend(['-D', 'build_short_base=%s' %
