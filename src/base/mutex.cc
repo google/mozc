@@ -75,8 +75,7 @@ inline int InterlockedCompareExchange(volatile int *target,
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 // Use OSAtomicCompareAndSwapInt on Mac OSX
-// http://developer.apple.com/iphone/library/documentation/
-// system/conceptual/manpages_iphoneos/man3/OSAtomicCompareAndSwapInt.3.html
+// https://developer.apple.com/library/prerelease/mac/documentation/Darwin/Reference/ManPages/man3/OSAtomicCompareAndSwapInt.3.html
 // TODO(taku): should we use OSAtomicCompareAndSwapIntBarrier?
 #ifdef OS_MACOSX
 inline int InterlockedCompareExchange(volatile int *target,

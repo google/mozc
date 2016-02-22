@@ -700,7 +700,7 @@ def GypMain(options, unused_args):
                        'Mac': mac,
                        'Linux': linux,
                        'Android': android,
-                       'NaCl': nacl}[target_platform]
+                       'NaCl': nacl}.get(target_platform, False)
     enable_option_name = 'enable_%s' % option_name
     enabled = options.ensure_value(enable_option_name, default_enabled)
     gyp_options.extend(['-D',
@@ -714,7 +714,8 @@ def GypMain(options, unused_args):
                            windows=is_official_dev,
                            mac=is_official_dev)
 
-  gyp_options.extend(['-D', 'target_platform=%s' % target_platform])
+  target_platform_value = target_platform
+  gyp_options.extend(['-D', 'target_platform=%s' % target_platform_value])
 
   if IsWindows():
     gyp_options.extend(['-G', 'msvs_version=2015'])

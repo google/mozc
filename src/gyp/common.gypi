@@ -49,6 +49,7 @@
     'mac_sdk%': '10.9',
     'mac_deployment_target%': '10.7',
 
+
     # 'conditions' is put inside of 'variables' so that we can use
     # another 'conditions' in this gyp element level later. Note that
     # you can have only one 'conditions' in a gyp element.
@@ -707,17 +708,21 @@
               '<(mac_breakpad_dir)',
             ],
           }],
+          ['target_platform=="Mac"', {
+            'xcode_settings': {
+              'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
+            },
+          }],
         ],
         'xcode_settings': {
           'ARCHS': ['i386'],
+          'SDKROOT': 'macosx<(mac_sdk)',
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
           'GCC_SYMBOLS_PRIVATE_EXTERN': 'NO',  # No -fvisibility=hidden
           'OTHER_CFLAGS': [
             '<@(mac_cflags)',
           ],
           'WARNING_CFLAGS': ['<@(warning_cflags)'],
-          'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
-          'SDKROOT': 'macosx<(mac_sdk)',
           'PYTHONPATH': '<(abs_depth)/',
           'CLANG_WARN_CXX0X_EXTENSIONS': 'NO',
           'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',

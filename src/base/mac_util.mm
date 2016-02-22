@@ -29,7 +29,6 @@
 
 #import "base/mac_util.h"
 
-#import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 
 #include <launch.h>
