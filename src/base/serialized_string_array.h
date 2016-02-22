@@ -259,6 +259,9 @@ class SerializedStringArray {
   static StringPiece SerializeToBuffer(const vector<StringPiece> &strs,
                                        std::unique_ptr<uint32[]> *buffer);
 
+  static void SerializeToFile(const vector<StringPiece> &strs,
+                              const string &filepath);
+
  private:
   StringPiece data_;
 

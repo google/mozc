@@ -27,89 +27,27 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# TODO(noriyukit): This file defines 'serialized_dictionary' target in an
+# isolated GYP file in order to avoid circular dependency caused by
+# data_manager/packed/*.gyp.  Fix this bad dependency.  Currently, we are in the
+# process of removing packed data manager, so this build dependency will be
+# cleaned up.
 {
   'variables': {
-    'relative_dir': 'data_manager',
+    'relative_dir': 'rewriter',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
   'targets': [
     {
-      'target_name': 'data_manager',
+      'target_name': 'serialized_dictionary',
       'type': 'static_library',
-      'toolsets': [ 'target', 'host' ],
+      'toolsets': ['target', 'host'],
       'sources': [
-        'data_manager.cc',
+        'serialized_dictionary.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
-        '../protocol/protocol.gyp:segmenter_data_proto',
-        '../rewriter/rewriter_serialized_dictionary.gyp:serialized_dictionary',
-        'dataset_reader',
-      ],
-    },
-    {
-      'target_name': 'genproto_dataset_proto',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        'dataset.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-    },
-    {
-      'target_name': 'dataset_proto',
-      'type': 'static_library',
-      'toolsets': [ 'target', 'host' ],
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/dataset.pb.cc',
-      ],
-      'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
-        'genproto_dataset_proto#host',
-      ],
-      'export_dependent_settings': [
-        'genproto_dataset_proto#host',
-      ],
-    },
-    {
-      'target_name': 'dataset_writer',
-      'type': 'static_library',
-      'toolsets': [ 'target', 'host' ],
-      'sources': [
-        'dataset_writer.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'dataset_proto',
-      ],
-    },
-    {
-      'target_name': 'dataset_reader',
-      'type': 'static_library',
-      'toolsets': [ 'target', 'host' ],
-      'sources': [
-        'dataset_reader.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'dataset_proto',
-      ],
-    },
-    {
-      'target_name': 'dataset_writer_main',
-      'type': 'executable',
-      'toolsets': [ 'host' ],
-      'sources': [
-        'dataset_writer_main.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'dataset_writer',
-        'dataset_proto',
       ],
     },
   ],

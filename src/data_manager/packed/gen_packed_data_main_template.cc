@@ -55,7 +55,6 @@ namespace mozc {
 namespace {
 
 #include "data_manager/@DIR@/pos_matcher_data.h"
-#include "data_manager/@DIR@/symbol_rewriter_data.h"
 #include "data_manager/@DIR@/user_pos_data.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data.h"
@@ -75,7 +74,6 @@ bool OutputData(const string &file_path) {
   // elements are not required at runtime.
   packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
                            kRangeTables, arraysize(kRangeTables) - 1);
-  packer.SetSymbolRewriterData(kSymbolData_token_data, kSymbolData_token_size);
 #ifndef NO_USAGE_REWRITER
   packer.SetUsageRewriterData(kConjugationNum,
                               kBaseConjugationSuffix,

@@ -33,8 +33,8 @@
 #include <memory>
 #include <string>
 
-#include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/serialized_dictionary.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
@@ -43,7 +43,6 @@ namespace mozc {
 class ConversionRequest;
 class ConverterInterface;
 class DataManagerInterface;
-class EmbeddedDictionary;
 class Segment;
 class Segments;
 
@@ -67,8 +66,8 @@ class SymbolRewriter : public RewriterInterface  {
   // Some characters may have different description for full/half width forms.
   // Here we just change the description in this function.
   static const string GetDescription(const string &value,
-                                     const char *description,
-                                     const char *additional_description);
+                                     StringPiece description,
+                                     StringPiece additional_description);
 
   // return true key has no-hiragana
   static bool IsSymbol(const string &key);
@@ -77,22 +76,20 @@ class SymbolRewriter : public RewriterInterface  {
   static void ExpandSpace(Segment *segment);
 
   // Returns true if the symbol is platform dependent
-  static bool IsPlatformDependent(const EmbeddedDictionary::Value &value);
+  static bool IsPlatformDependent(SerializedDictionary::const_iterator iter);
 
   // Return true if two symbols are in same group.
-  static bool InSameSymbolGroup(const EmbeddedDictionary::Value &lhs,
-                                const EmbeddedDictionary::Value &rhs);
+  static bool InSameSymbolGroup(SerializedDictionary::const_iterator lhs,
+                                SerializedDictionary::const_iterator rhs);
 
   // Insert Symbol into segment.
-  static void InsertCandidates(const EmbeddedDictionary::Value *value,
-                               size_t size,
+  static void InsertCandidates(const SerializedDictionary::IterRange &range,
                                bool context_sensitive,
                                Segment *segment);
 
   // Add symbol desc to exsisting candidates
   static void AddDescForCurrentCandidates(
-      const EmbeddedDictionary::Value *value,
-      size_t size, Segment *segment);
+      const SerializedDictionary::IterRange &range, Segment *segment);
 
   // Insert symbols using connected all segments.
   bool RewriteEntireCandidate(const ConversionRequest &request,
@@ -102,7 +99,7 @@ class SymbolRewriter : public RewriterInterface  {
   bool RewriteEachCandidate(Segments *segments) const;
 
   const ConverterInterface *parent_converter_;
-  std::unique_ptr<EmbeddedDictionary> dictionary_;
+  std::unique_ptr<SerializedDictionary> dictionary_;
 };
 
 }  // namespace mozc

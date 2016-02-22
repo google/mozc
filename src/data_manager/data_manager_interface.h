@@ -33,7 +33,6 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "dictionary/user_pos.h"
-#include "rewriter/embedded_dictionary.h"
 
 namespace mozc {
 
@@ -97,8 +96,8 @@ class DataManagerInterface {
                                        size_t *size) const = 0;
 
   // Gets an address of symbol rewriter data array and its size.
-  virtual void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
-                                     size_t *size) const = 0;
+  virtual void GetSymbolRewriterData(StringPiece *token_array_data,
+                                     StringPiece *string_array_data) const = 0;
 
 #ifndef NO_USAGE_REWRITER
   // Gets the usage rewriter data.

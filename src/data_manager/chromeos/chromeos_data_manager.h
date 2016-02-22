@@ -58,8 +58,8 @@ class ChromeOsDataManager : public ChromeOsUserPosManager {
   void GetCollocationSuppressionData(const char **array,
                                      size_t *size) const override;
   void GetSuggestionFilterData(const char **data, size_t *size) const override;
-  void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
-                             size_t *size) const override;
+  void GetSymbolRewriterData(StringPiece *token_array_data,
+                             StringPiece *string_array_data) const override;
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(
       const ConjugationSuffix **base_conjugation_suffix,

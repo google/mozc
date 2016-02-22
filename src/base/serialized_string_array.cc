@@ -31,6 +31,7 @@
 
 #include <memory>
 
+#include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -139,6 +140,14 @@ StringPiece SerializedStringArray::SerializeToBuffer(
 
   return StringPiece(reinterpret_cast<const char *>(buffer->get()),
                      current_offset);
+}
+
+void SerializedStringArray::SerializeToFile(const vector<StringPiece> &strs,
+                                            const string &filepath) {
+  std::unique_ptr<uint32[]> buffer;
+  const StringPiece data = SerializeToBuffer(strs, &buffer);
+  OutputFileStream ofs(filepath.c_str(), ios_base::out | ios_base::binary);
+  CHECK(ofs.write(data.data(), data.size()));
 }
 
 }  // namespace mozc

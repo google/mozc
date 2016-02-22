@@ -43,7 +43,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
-#include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
@@ -109,36 +108,6 @@ void SystemDictionaryDataPacker::SetPosMatcherData(
           = range_table->add_ranges();
       range->set_lower(range_tables[i][j].lower);
       range->set_upper(range_tables[i][j].upper);
-    }
-  }
-}
-
-void SystemDictionaryDataPacker::SetSymbolRewriterData(
-    const mozc::EmbeddedDictionary::Token *token_data,
-    size_t token_size) {
-  SystemDictionaryData::EmbeddedDictionary *symbol_dictionary =
-      system_dictionary_->mutable_symbol_dictionary();
-  for (size_t i = 0; i < token_size; ++i) {
-    SystemDictionaryData::EmbeddedDictionary::Token *token =
-        symbol_dictionary->add_tokens();
-    token->set_key(token_data[i].key);
-    for (size_t j = 0; j < token_data[i].value_size; ++j) {
-      const mozc::EmbeddedDictionary::Value &value_data =
-        token_data[i].value[j];
-      SystemDictionaryData::EmbeddedDictionary::Value *value =
-        token->add_values();
-      if (value_data.value) {
-        value->set_value(value_data.value);
-      }
-      if (value_data.description) {
-        value->set_description(value_data.description);
-      }
-      if (value_data.additional_description) {
-        value->set_additional_description(value_data.additional_description);
-      }
-      value->set_lid(value_data.lid);
-      value->set_rid(value_data.rid);
-      value->set_cost(value_data.cost);
     }
   }
 }

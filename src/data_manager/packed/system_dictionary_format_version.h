@@ -33,7 +33,7 @@
 namespace mozc {
 namespace packed {
 
-const int kSystemDictionaryFormatVersion = 16;
+const int kSystemDictionaryFormatVersion = 17;
 
 }  // namespace packed
 }  // namespace mozc

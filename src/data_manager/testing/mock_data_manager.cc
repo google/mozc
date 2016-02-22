@@ -112,16 +112,9 @@ void MockDataManager::GetSuggestionFilterData(const char **data,
   manager_.GetSuggestionFilterData(data, size);
 }
 
-namespace {
-// Include kSymbolData_token_data and kSymbolData_token_size.
-#include "data_manager/testing/symbol_rewriter_data.h"
-}  // namespace
-
 void MockDataManager::GetSymbolRewriterData(
-    const EmbeddedDictionary::Token **data,
-    size_t *size) const {
-  *data = kSymbolData_token_data;
-  *size = kSymbolData_token_size;
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_.GetSymbolRewriterData(token_array_data, string_array_data);
 }
 
 #ifndef NO_USAGE_REWRITER

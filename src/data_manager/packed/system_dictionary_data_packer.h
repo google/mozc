@@ -35,7 +35,6 @@
 #include "base/port.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
-#include "rewriter/embedded_dictionary.h"
 
 namespace mozc {
 
@@ -60,12 +59,6 @@ class SystemDictionaryDataPacker {
       size_t rule_id_table_count,
       const dictionary::POSMatcher::Range *const *range_tables,
       size_t range_tables_count);
-  void SetSuggestionFilterData(
-      const void *suggestion_filter_data,
-      size_t suggestion_filter_data_size);
-  void SetSymbolRewriterData(
-      const mozc::EmbeddedDictionary::Token *token_data,
-      size_t token_size);
 #ifndef NO_USAGE_REWRITER
   void SetUsageRewriterData(
       int conjugation_num,

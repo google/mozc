@@ -1731,7 +1731,7 @@ Util::FormType Util::GetFormType(const string &str) {
 // Util::CharcterSet Util::GetCharacterSet(char32 ucs4);
 #include "base/character_set.h"
 
-Util::CharacterSet Util::GetCharacterSet(const string &str) {
+Util::CharacterSet Util::GetCharacterSet(StringPiece str) {
   CharacterSet result = ASCII;
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     result = max(result, GetCharacterSet(iter.Get()));

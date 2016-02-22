@@ -447,7 +447,7 @@ class Util {
   // Returns CharacterSet of string.
   // if the given string contains multiple charasets, return
   // the maximum character set.
-  static CharacterSet GetCharacterSet(const string &str);
+  static CharacterSet GetCharacterSet(StringPiece str);
 
   // Serializes uint64 into a string of eight byte.
   static string SerializeUint64(uint64 x);

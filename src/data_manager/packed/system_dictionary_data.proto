@@ -72,22 +72,8 @@ message SystemDictionaryData {
 
   reserved 9;  // DEPRECATED: optional SegmenterData segmenter_data = 9;
 
-  message EmbeddedDictionary {
-    message Value {
-      optional string value = 1;
-      optional string description = 2;
-      optional string additional_description = 3;
-      optional uint32 lid = 4;
-      optional uint32 rid = 5;
-      optional int32 cost = 6;
-    }
-    message Token {
-      optional string key = 1;
-      repeated Value values = 2;
-    }
-    repeated Token tokens = 1;
-  }
-  optional EmbeddedDictionary symbol_dictionary = 10;
+  // DEPRECATED: optional EmbeddedDictionary symbol_dictionary = 10;
+  reserved 10;
 
   message UsageRewriterData {
     message ConjugationSuffix {

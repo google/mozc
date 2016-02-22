@@ -33,6 +33,7 @@
 #include "base/serialized_string_array.h"
 #include "data_manager/dataset_reader.h"
 #include "protocol/segmenter_data.pb.h"
+#include "rewriter/serialized_dictionary.h"
 
 namespace mozc {
 
@@ -158,6 +159,19 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
       return false;
     }
   }
+  if (!reader.Get("symbol_token", &symbol_token_array_data_)) {
+    LOG(ERROR) << "Cannot find a symbol token array";
+    return false;
+  }
+  if (!reader.Get("symbol_string", &symbol_string_array_data_)) {
+    LOG(ERROR) << "Cannot find a symbol string array or data is broken";
+    return false;
+  }
+  if (!SerializedDictionary::VerifyData(symbol_token_array_data_,
+                                        symbol_string_array_data_)) {
+    LOG(ERROR) << "Symbol dictionary data is broken";
+    return false;
+  }
   return true;
 }
 
@@ -232,9 +246,10 @@ void DataManager::GetReadingCorrectionData(
   *correction_array_data = reading_correction_correction_array_data_;
 }
 
-void DataManager::GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
-                                        size_t *size) const {
-  LOG(FATAL) << "Not implemented";
+void DataManager::GetSymbolRewriterData(StringPiece *token_array_data,
+                                        StringPiece *string_array_data) const {
+  *token_array_data = symbol_token_array_data_;
+  *string_array_data = symbol_string_array_data_;
 }
 
 void DataManager::GetCounterSuffixSortedArray(const char **array,

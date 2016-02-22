@@ -60,7 +60,6 @@
       'target_name': '<(dataset_tag)_data_manager',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/symbol_rewriter_data.h',
         '<(mozc_dir)/dictionary/pos_group.h',
         '<(dataset_tag)_data_manager.cc',
       ],
@@ -130,6 +129,7 @@
         'gen_separate_counter_suffix_data_for_<(dataset_tag)#host',
         'gen_separate_suffix_data_for_<(dataset_tag)#host',
         'gen_separate_reading_correction_data_for_<(dataset_tag)#host',
+        'gen_separate_symbol_rewriter_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -154,6 +154,8 @@
             'reading_correction_value': '<(gen_out_dir)/reading_correction_value.data',
             'reading_correction_error': '<(gen_out_dir)/reading_correction_error.data',
             'reading_correction_correction': '<(gen_out_dir)/reading_correction_correction.data',
+            'symbol_token': '<(gen_out_dir)/symbol_token.data',
+            'symbol_string': '<(gen_out_dir)/symbol_string.data',
           },
           'inputs': [
             '<(dictionary)',
@@ -174,6 +176,8 @@
             '<(reading_correction_value)',
             '<(reading_correction_error)',
             '<(reading_correction_correction)',
+            '<(symbol_token)',
+            '<(symbol_string)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -200,6 +204,8 @@
             'reading_correction_value:32:<(gen_out_dir)/reading_correction_value.data',
             'reading_correction_error:32:<(gen_out_dir)/reading_correction_error.data',
             'reading_correction_correction:32:<(gen_out_dir)/reading_correction_correction.data',
+            'symbol_token:32:<(gen_out_dir)/symbol_token.data',
+            'symbol_string:32:<(gen_out_dir)/symbol_string.data',
           ],
         },
       ],
@@ -215,7 +221,6 @@
         'gen_embedded_connection_data_for_<(dataset_tag)#host',
         'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
         'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host',
-        'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)#host',
       ],
       'conditions': [
         ['target_platform!="Android"', {
@@ -897,7 +902,7 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_symbol_rewriter_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
@@ -905,7 +910,7 @@
       ],
       'actions': [
         {
-          'action_name': 'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_symbol_rewriter_data_for_<(dataset_tag)',
           'variables': {
             'generator' : '<(PRODUCT_DIR)/gen_symbol_rewriter_dictionary_main<(EXECUTABLE_SUFFIX)',
             'input_files': [
@@ -919,15 +924,19 @@
             '<@(input_files)',
           ],
           'outputs': [
-            '<(gen_out_dir)/symbol_rewriter_data.h',
+            '<(gen_out_dir)/symbol_token.data',
+            '<(gen_out_dir)/symbol_string.data',
           ],
           'action': [
             '<(generator)',
-            '<@(input_files)',
-            '--output=<(gen_out_dir)/symbol_rewriter_data.h',
+            '--input=<(mozc_dir)/data/symbol/symbol.tsv',
+            '--sorting_table=<(mozc_dir)/data/rules/sorting_map.tsv',
+            '--ordering_rule=<(mozc_dir)/data/symbol/ordering_rule.txt',
+            '--output_token_array=<(gen_out_dir)/symbol_token.data',
+            '--output_string_array=<(gen_out_dir)/symbol_string.data',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/symbol_rewriter_data.h'),
+                      '<(gen_out_dir)/symbol*'),
           'conditions': [
             ['use_packed_dictionary==1', {
               'inputs': [

@@ -101,6 +101,7 @@
         ':embedded_dictionary',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
+        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
       ],
       'conditions':[
         ['target_platform=="Android"', {

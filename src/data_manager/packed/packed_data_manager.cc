@@ -42,7 +42,6 @@
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
 #include "dictionary/pos_matcher.h"
-#include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
@@ -102,8 +101,8 @@ class PackedDataManager::Impl {
   void GetCollocationSuppressionData(const char **array,
                                      size_t *size) const;
   void GetSuggestionFilterData(const char **data, size_t *size) const;
-  void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
-                             size_t *size) const;
+  void GetSymbolRewriterData(StringPiece *token_array_data,
+                             StringPiece *string_array_data) const;
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(
       const ConjugationSuffix **base_conjugation_suffix,
@@ -129,9 +128,6 @@ class PackedDataManager::Impl {
   unique_ptr<uint16[]> rule_id_table_;
   unique_ptr<POSMatcher::Range *[]> range_tables_;
   unique_ptr<Range[]> range_table_items_;
-  unique_ptr<EmbeddedDictionary::Value[]> symbol_data_values_;
-  size_t symbol_data_token_size_;
-  unique_ptr<EmbeddedDictionary::Token[]> symbol_data_tokens_;
   unique_ptr<POSMatcher> pos_matcher_;
   unique_ptr<SystemDictionaryData> system_dictionary_data_;
 #ifndef NO_USAGE_REWRITER
@@ -143,12 +139,8 @@ class PackedDataManager::Impl {
   DataManager manager_;
 };
 
-PackedDataManager::Impl::Impl()
-    : symbol_data_token_size_(0) {
-}
-
-PackedDataManager::Impl::~Impl() {
-}
+PackedDataManager::Impl::Impl() = default;
+PackedDataManager::Impl::~Impl() = default;
 
 bool PackedDataManager::Impl::Init(const string &system_dictionary_data) {
   system_dictionary_data_.reset(new SystemDictionaryData);
@@ -271,62 +263,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
     range_table_items_[range_index].upper = static_cast<uint16>(0xFFFF);
     ++range_index;
   }
-
-  // Makes symbol dictionary data.
-  const SystemDictionaryData::EmbeddedDictionary &symbol_dictionary =
-      system_dictionary_data_->symbol_dictionary();
-  size_t symbol_value_count = 0;
-  for (size_t i = 0; i < symbol_dictionary.tokens_size(); ++i) {
-    symbol_value_count += symbol_dictionary.tokens(i).values_size();
-  }
-  symbol_data_values_.reset(
-      new EmbeddedDictionary::Value[symbol_value_count + 1]);
-  symbol_data_token_size_ = symbol_dictionary.tokens_size();
-  symbol_data_tokens_.reset(
-    new EmbeddedDictionary::Token[symbol_data_token_size_ + 1]);
-  EmbeddedDictionary::Value *value_ptr = symbol_data_values_.get();
-  EmbeddedDictionary::Token *token_ptr = symbol_data_tokens_.get();
-  for (size_t i = 0; i < symbol_dictionary.tokens_size(); ++i) {
-    const SystemDictionaryData::EmbeddedDictionary::Token &token =
-        symbol_dictionary.tokens(i);
-    token_ptr->key = token.key().data();
-    token_ptr->value = value_ptr;
-    token_ptr->value_size = token.values_size();
-    ++token_ptr;
-    for (size_t j = 0; j < token.values_size(); ++j) {
-      const SystemDictionaryData::EmbeddedDictionary::Value &value =
-          token.values(j);
-      if (value.has_value()) {
-        value_ptr->value = value.value().data();
-      } else {
-        value_ptr->value = NULL;
-      }
-      if (value.has_description()) {
-        value_ptr->description = value.description().data();
-      } else {
-        value_ptr->description = NULL;
-      }
-      if (value.has_additional_description()) {
-        value_ptr->additional_description =
-            value.additional_description().data();
-      } else {
-        value_ptr->additional_description = NULL;
-      }
-      value_ptr->lid = value.lid();
-      value_ptr->rid = value.rid();
-      value_ptr->cost = value.cost();
-      ++value_ptr;
-    }
-  }
-  value_ptr->value = NULL;
-  value_ptr->description = NULL;
-  value_ptr->additional_description = NULL;
-  value_ptr->lid = 0;
-  value_ptr->rid = 0;
-  value_ptr->cost = 0;
-  token_ptr->key = NULL;
-  token_ptr->value = symbol_data_values_.get();
-  token_ptr->value_size = symbol_value_count;
 
   // Makes POSMatcher.
   pos_matcher_.reset(
@@ -463,10 +399,8 @@ void PackedDataManager::Impl::GetSuggestionFilterData(
 }
 
 void PackedDataManager::Impl::GetSymbolRewriterData(
-    const EmbeddedDictionary::Token **data,
-    size_t *size) const {
-  *data = symbol_data_tokens_.get();
-  *size = symbol_data_token_size_;
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_.GetSymbolRewriterData(token_array_data, string_array_data);
 }
 
 #ifndef NO_USAGE_REWRITER
@@ -623,9 +557,8 @@ void PackedDataManager::GetSuggestionFilterData(
 }
 
 void PackedDataManager::GetSymbolRewriterData(
-    const EmbeddedDictionary::Token **data,
-    size_t *size) const {
-  manager_impl_->GetSymbolRewriterData(data, size);
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_impl_->GetSymbolRewriterData(token_array_data, string_array_data);
 }
 
 #ifndef NO_USAGE_REWRITER
