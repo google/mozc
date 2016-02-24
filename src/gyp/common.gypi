@@ -108,9 +108,6 @@
       '-pthread',
     ],
 
-    # Extra defines
-    'additional_defines%': [],
-
     # Extra headers and libraries for Visual C++.
     'msvs_includes%': [],
     'msvs_libs_x86%': [],
@@ -433,9 +430,6 @@
       ],
     },
     'default_configuration': 'Debug',
-    'defines': [
-      '<@(additional_defines)',
-    ],
     'include_dirs': [
       '<(abs_depth)',
       '<(SHARED_INTERMEDIATE_DIR)',

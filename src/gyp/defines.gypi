@@ -82,6 +82,8 @@
     'use_libibus%': '0',
   },
   'target_defaults': {
+    'defines': [
+    ],
     'conditions': [
       ['branding=="GoogleJapaneseInput"', {
         'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
