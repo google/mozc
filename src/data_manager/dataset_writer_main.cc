@@ -46,6 +46,7 @@
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
@@ -85,16 +86,26 @@ int main(int argc, char **argv) {
                         params[2]);
   }
 
-  mozc::OutputFileStream output(FLAGS_output.c_str(),
-                                ios_base::out | ios_base::binary);
-  mozc::DataSetWriter writer(magic, &output);
-  for (const auto &input : inputs) {
-    VLOG(1) << "Writing " << input.name << ", alignment = " << input.alignment
-            << ", file = " << input.filename;
-    writer.AddFile(input.name, input.alignment, input.filename);
+  CHECK(!FLAGS_output.empty()) << "--output is required";
+
+  // DataSetWriter directly writes to the specified stream, so if it fails for
+  // an input, the output contains a partial result.  To avoid such partial file
+  // creation, write to a temporary file then rename it.
+  const string tmpfile = FLAGS_output + ".tmp";
+  {
+    mozc::OutputFileStream output(tmpfile.c_str(),
+                                  ios_base::out | ios_base::binary);
+    mozc::DataSetWriter writer(magic, &output);
+    for (const auto &input : inputs) {
+      VLOG(1) << "Writing " << input.name << ", alignment = " << input.alignment
+              << ", file = " << input.filename;
+      writer.AddFile(input.name, input.alignment, input.filename);
+    }
+    writer.Finish();
+    output.close();
   }
-  writer.Finish();
-  output.close();
+  CHECK(mozc::FileUtil::AtomicRename(tmpfile, FLAGS_output))
+      << "Failed to rename " << tmpfile << " to " << FLAGS_output;
 
   return 0;
 }

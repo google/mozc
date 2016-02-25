@@ -108,6 +108,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:base_core',
         'dataset_writer',
         'dataset_proto',
       ],
