@@ -68,6 +68,26 @@
         'ndk_bin_dir%':
         '<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)/bin',
       }],
+
+      # zinnia_model_file.
+      ['branding=="GoogleJapaneseInput"', {
+        # Test:
+        #     this file is copied to a directory for testing.
+        # Win / Mac:
+        #     this file content is copied the release packages and
+        #     other file path is used internally.
+        # Linux:
+        #     this file path is ignored, and used a preinstalled data.
+        'zinnia_model_file%':
+        '<(third_party_dir)/zinnia/tomoe/handwriting-light-ja.model',
+      }, {
+        # Test:
+        #     this file is copied to a directory for testing.
+        # Win / Mac / Linux:
+        #     this file path is directory used by binaries without copying.
+        'zinnia_model_file%':
+        '/usr/share/tegaki/models/zinnia/handwriting-ja.model',
+      }],
     ],
   },
 }
