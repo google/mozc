@@ -308,6 +308,11 @@ public class UserDictionaryToolActivity extends Activity {
       toastManager.showMessageShortly(
           R.string.user_dictionary_tool_error_import_cannot_read_import_source);
       model.resetImportState();
+    } catch (OutOfMemoryError e) {
+      // The zip file being imported is too large. Recovering (if possible).
+      toastManager.showMessageShortly(
+              R.string.user_dictionary_tool_error_import_too_large_zip_entry);
+      model.resetImportState();
     } finally {
       if (zipFile != null) {
         MozcUtil.closeIgnoringIOException(zipFile);
@@ -576,6 +581,11 @@ public class UserDictionaryToolActivity extends Activity {
                 } catch (IOException e) {
                   toastManager.showMessageShortly(
                       R.string.user_dictionary_tool_error_import_cannot_read_import_source);
+                  model.resetImportState();
+                  return;
+                } catch (OutOfMemoryError e) {
+                  toastManager.showMessageShortly(
+                      R.string.user_dictionary_tool_error_import_too_large_zip_entry);
                   model.resetImportState();
                   return;
                 } finally {

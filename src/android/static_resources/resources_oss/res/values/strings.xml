@@ -240,6 +240,7 @@
       <string name="user_dictionary_tool_error_import_source_invalid_scheme">Data import only works on files.</string>
       <string name="user_dictionary_tool_error_import_cannot_read_import_source">Could not read the file.</string>
       <string name="user_dictionary_tool_error_import_no_zip_entry">The ZIP file is empty.</string>
+      <string name="user_dictionary_tool_error_import_too_large_zip_entry" description="Shown when the user is importing too large ZIP file.">The ZIP file is too large.</string>
       <string name="user_dictionary_tool_error_export_no_exportable_applications">There are no applications (e.g. Google Docs) to export the user dictionary.</string>
       <string name="user_dictionary_tool_error_export_failed_to_export">Failed to export the user dictionary.</string>
       <string name="user_dictionary_tool_status_error_general">The operation has failed.</string>
