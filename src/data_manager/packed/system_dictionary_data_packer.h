@@ -37,12 +37,6 @@
 #include "dictionary/user_pos.h"
 
 namespace mozc {
-
-#ifndef NO_USAGE_REWRITER
-struct ConjugationSuffix;
-struct UsageDictItem;
-#endif  // NO_USAGE_REWRITER
-
 namespace packed {
 
 class SystemDictionaryData;
@@ -59,15 +53,6 @@ class SystemDictionaryDataPacker {
       size_t rule_id_table_count,
       const dictionary::POSMatcher::Range *const *range_tables,
       size_t range_tables_count);
-#ifndef NO_USAGE_REWRITER
-  void SetUsageRewriterData(
-      int conjugation_num,
-      const ConjugationSuffix *base_conjugation_suffix,
-      const ConjugationSuffix *conjugation_suffix_data,
-      const int *conjugation_suffix_data_index,
-      size_t usage_data_size,
-      const UsageDictItem *usage_data_value);
-#endif  // NO_USAGE_REWRITER
   void SetMozcData(const string &data, const string &magic);
 
   bool Output(const string &file_path, bool use_gzip);

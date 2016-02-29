@@ -74,10 +74,11 @@ class PackedDataManager : public DataManagerInterface {
                              StringPiece *string_array_data) const override;
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(
-      const ConjugationSuffix **base_conjugation_suffix,
-      const ConjugationSuffix **conjugation_suffix_data,
-      const int **conjugation_suffix_data_index,
-      const UsageDictItem **usage_data_value) const override;
+      StringPiece *base_conjugation_suffix_data,
+      StringPiece *conjugation_suffix_data,
+      StringPiece *conjugation_suffix_index_data,
+      StringPiece *usage_items_data,
+      StringPiece *string_array_data) const override;
 #endif  // NO_USAGE_REWRITER
   void GetCounterSuffixSortedArray(const char **array,
                                    size_t *size) const override;

@@ -119,6 +119,7 @@
       'toolsets': ['host'],
       'dependencies': [
         '../data_manager_base.gyp:dataset_writer_main',
+        '../../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         'gen_separate_connection_data_for_<(dataset_tag)#host',
         'gen_separate_dictionary_data_for_<(dataset_tag)#host',
         'gen_separate_collocation_data_for_<(dataset_tag)#host',
@@ -206,6 +207,31 @@
             'reading_correction_correction:32:<(gen_out_dir)/reading_correction_correction.data',
             'symbol_token:32:<(gen_out_dir)/symbol_token.data',
             'symbol_string:32:<(gen_out_dir)/symbol_string.data',
+          ],
+          'conditions': [
+            ['target_platform!="Android"', {
+              'variables': {
+                'usage_base_conj_suffix': '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_base_conj_suffix.data',
+                'usage_conj_index': '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_conj_index.data',
+                'usage_conj_suffix': '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_conj_suffix.data',
+                'usage_item_array': '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_item_array.data',
+                'usage_string_array': '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_string_array.data',
+              },
+              'inputs': [
+                '<(usage_base_conj_suffix)',
+                '<(usage_conj_index)',
+                '<(usage_conj_suffix)',
+                '<(usage_item_array)',
+                '<(usage_string_array)',
+              ],
+              'action': [
+                'usage_base_conjugation_suffix:32:<(usage_base_conj_suffix)',
+                'usage_conjugation_suffix:32:<(usage_conj_suffix)',
+                'usage_conjugation_index:32:<(usage_conj_index)',
+                'usage_item_array:32:<(usage_item_array)',
+                'usage_string_array:32:<(usage_string_array)',
+              ],
+            }],
           ],
         },
       ],

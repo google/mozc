@@ -42,9 +42,6 @@
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
 #include "dictionary/pos_matcher.h"
-#ifndef NO_USAGE_REWRITER
-#include "rewriter/usage_rewriter_data_structs.h"
-#endif  // NO_USAGE_REWRITER
 
 DEFINE_string(dataset,
               "",
@@ -104,11 +101,11 @@ class PackedDataManager::Impl {
   void GetSymbolRewriterData(StringPiece *token_array_data,
                              StringPiece *string_array_data) const;
 #ifndef NO_USAGE_REWRITER
-  void GetUsageRewriterData(
-      const ConjugationSuffix **base_conjugation_suffix,
-      const ConjugationSuffix **conjugation_suffix_data,
-      const int **conjugation_suffix_data_index,
-      const UsageDictItem **usage_data_value) const;
+  void GetUsageRewriterData(StringPiece *base_conjugation_suffix_data,
+                            StringPiece *conjugation_suffix_data,
+                            StringPiece *conjugation_suffix_index_data,
+                            StringPiece *usage_items_data,
+                            StringPiece *string_array_data) const;
 #endif  // NO_USAGE_REWRITER
   const uint16 *GetRuleIdTableForTest() const;
   const void *GetRangeTablesForTest() const;
@@ -130,12 +127,6 @@ class PackedDataManager::Impl {
   unique_ptr<Range[]> range_table_items_;
   unique_ptr<POSMatcher> pos_matcher_;
   unique_ptr<SystemDictionaryData> system_dictionary_data_;
-#ifndef NO_USAGE_REWRITER
-  unique_ptr<ConjugationSuffix[]> base_conjugation_suffix_;
-  unique_ptr<ConjugationSuffix[]> conjugation_suffix_data_;
-  unique_ptr<int[]> conjugation_suffix_data_index_;
-  unique_ptr<UsageDictItem[]> usage_data_value_;
-#endif  // NO_USAGE_REWRITER
   DataManager manager_;
 };
 
@@ -268,61 +259,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
   pos_matcher_.reset(
       new PackedPOSMatcher(rule_id_table_.get(), range_tables_.get()));
 
-#ifndef NO_USAGE_REWRITER
-  // Makes Usge rewriter data.
-  const SystemDictionaryData::UsageRewriterData &usage_rewriter_data =
-      system_dictionary_data_->usage_rewriter_data();
-  const size_t conjugation_num = usage_rewriter_data.conjugations_size();
-  base_conjugation_suffix_.reset(new ConjugationSuffix[conjugation_num]);
-  conjugation_suffix_data_index_.reset(new int[conjugation_num + 1]);
-
-  size_t suffix_data_num = 0;
-  conjugation_suffix_data_index_[0] = 0;
-  for (size_t i = 0; i < conjugation_num; ++i) {
-    const SystemDictionaryData::UsageRewriterData::Conjugation &conjugation =
-      usage_rewriter_data.conjugations(i);
-    base_conjugation_suffix_[i].value_suffix =
-        conjugation.base_suffix().value_suffix().data();
-    base_conjugation_suffix_[i].key_suffix =
-        conjugation.base_suffix().key_suffix().data();
-    suffix_data_num +=
-        usage_rewriter_data.conjugations(i).conjugation_suffixes_size();
-    conjugation_suffix_data_index_[i + 1] = suffix_data_num;
-  }
-  conjugation_suffix_data_.reset(new ConjugationSuffix[suffix_data_num]);
-  size_t conjugation_suffix_id = 0;
-  for (size_t i = 0; i < conjugation_num; ++i) {
-    const SystemDictionaryData::UsageRewriterData::Conjugation &conjugation =
-      usage_rewriter_data.conjugations(i);
-    for (size_t j = 0; j < conjugation.conjugation_suffixes_size(); ++j) {
-      conjugation_suffix_data_[conjugation_suffix_id].value_suffix =
-        conjugation.conjugation_suffixes(j).value_suffix().data();
-      conjugation_suffix_data_[conjugation_suffix_id].key_suffix =
-        conjugation.conjugation_suffixes(j).key_suffix().data();
-      ++conjugation_suffix_id;
-    }
-  }
-
-  usage_data_value_.reset(
-      new UsageDictItem[usage_rewriter_data.usage_data_values_size() + 1]);
-  for (size_t i = 0; i < usage_rewriter_data.usage_data_values_size(); ++i) {
-    const SystemDictionaryData::UsageRewriterData::UsageDictItem &item =
-        usage_rewriter_data.usage_data_values(i);
-    usage_data_value_[i].id = item.id();
-    usage_data_value_[i].key = item.key().data();
-    usage_data_value_[i].value = item.value().data();
-    usage_data_value_[i].conjugation_id = item.conjugation_id();
-    usage_data_value_[i].meaning = item.meaning().data();
-  }
-  UsageDictItem *last_item =
-      &usage_data_value_[usage_rewriter_data.usage_data_values_size()];
-  last_item->id = 0;
-  last_item->key = NULL;
-  last_item->value = NULL;
-  last_item->conjugation_id = 0;
-  last_item->meaning = NULL;
-#endif  // NO_USAGE_REWRITER
-
   // Initialize |manager_| (PackedDataManager for light doesn't have mozc data).
   if (system_dictionary_data_->has_mozc_data() &&
       !manager_.InitFromArray(system_dictionary_data_->mozc_data(),
@@ -405,14 +341,16 @@ void PackedDataManager::Impl::GetSymbolRewriterData(
 
 #ifndef NO_USAGE_REWRITER
 void PackedDataManager::Impl::GetUsageRewriterData(
-    const ConjugationSuffix **base_conjugation_suffix,
-    const ConjugationSuffix **conjugation_suffix_data,
-    const int **conjugation_suffix_data_index,
-    const UsageDictItem **usage_data_value) const {
-  *base_conjugation_suffix = base_conjugation_suffix_.get();
-  *conjugation_suffix_data = conjugation_suffix_data_.get();
-  *conjugation_suffix_data_index = conjugation_suffix_data_index_.get();
-  *usage_data_value = usage_data_value_.get();
+    StringPiece *base_conjugation_suffix_data,
+    StringPiece *conjugation_suffix_data,
+    StringPiece *conjugation_suffix_index_data,
+    StringPiece *usage_items_data,
+    StringPiece *string_array_data) const {
+  manager_.GetUsageRewriterData(base_conjugation_suffix_data,
+                                conjugation_suffix_data,
+                                conjugation_suffix_index_data,
+                                usage_items_data,
+                                string_array_data);
 }
 #endif  // NO_USAGE_REWRITER
 
@@ -563,14 +501,16 @@ void PackedDataManager::GetSymbolRewriterData(
 
 #ifndef NO_USAGE_REWRITER
 void PackedDataManager::GetUsageRewriterData(
-    const ConjugationSuffix **base_conjugation_suffix,
-    const ConjugationSuffix **conjugation_suffix_data,
-    const int **conjugation_suffix_data_index,
-    const UsageDictItem **usage_data_value) const {
-  manager_impl_->GetUsageRewriterData(base_conjugation_suffix,
+    StringPiece *base_conjugation_suffix_data,
+    StringPiece *conjugation_suffix_data,
+    StringPiece *conjugation_suffix_index_data,
+    StringPiece *usage_items_data,
+    StringPiece *string_array_data) const {
+  manager_impl_->GetUsageRewriterData(base_conjugation_suffix_data,
                                       conjugation_suffix_data,
-                                      conjugation_suffix_data_index,
-                                      usage_data_value);
+                                      conjugation_suffix_index_data,
+                                      usage_items_data,
+                                      string_array_data);
 }
 #endif  // NO_USAGE_REWRITER
 

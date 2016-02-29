@@ -36,9 +36,6 @@
 #include "base/singleton.h"
 #include "converter/boundary_struct.h"
 #include "dictionary/pos_matcher.h"
-#ifndef NO_USAGE_REWRITER
-#include "rewriter/usage_rewriter_data_structs.h"
-#endif  // NO_USAGE_REWRITER
 
 namespace mozc {
 namespace chromeos {
@@ -130,19 +127,17 @@ void ChromeOsDataManager::GetSymbolRewriterData(
 }
 
 #ifndef NO_USAGE_REWRITER
-namespace {
-#include "rewriter/usage_rewriter_data.h"
-}  // namespace
-
 void ChromeOsDataManager::GetUsageRewriterData(
-    const ConjugationSuffix **base_conjugation_suffix,
-    const ConjugationSuffix **conjugation_suffix_data,
-    const int **conjugation_suffix_data_index,
-    const UsageDictItem **usage_data_value) const {
-  *base_conjugation_suffix = kBaseConjugationSuffix;
-  *conjugation_suffix_data = kConjugationSuffixData;
-  *conjugation_suffix_data_index = kConjugationSuffixDataIndex;
-  *usage_data_value = kUsageData_value;
+    StringPiece *base_conjugation_suffix_data,
+    StringPiece *conjugation_suffix_data,
+    StringPiece *conjugation_suffix_index_data,
+    StringPiece *usage_items_data,
+    StringPiece *string_array_data) const {
+  manager_.GetUsageRewriterData(base_conjugation_suffix_data,
+                                conjugation_suffix_data,
+                                conjugation_suffix_index_data,
+                                usage_items_data,
+                                string_array_data);
 }
 #endif  // NO_USAGE_REWRITER
 

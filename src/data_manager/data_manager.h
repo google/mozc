@@ -70,19 +70,20 @@ class DataManager : public DataManagerInterface {
   void GetSymbolRewriterData(StringPiece *token_array_data,
                              StringPiece *string_array_data) const override;
 
+#ifndef NO_USAGE_REWRITER
+  void GetUsageRewriterData(
+      StringPiece *base_conjugation_suffix_data,
+      StringPiece *conjugation_suffix_data,
+      StringPiece *conjugation_index_data,
+      StringPiece *usage_items_data,
+      StringPiece *string_array_data) const override;
+#endif  // NO_USAGE_REWRITER
+
   // The following interfaces are not yet implemented.
   // TODO(noriyukit): Implements all the interfaces by migrating embedded C++
   // structures to a data set file.
   const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
   const dictionary::POSMatcher *GetPOSMatcher() const override;
-
-#ifndef NO_USAGE_REWRITER
-  void GetUsageRewriterData(
-      const ConjugationSuffix **base_conjugation_suffix,
-      const ConjugationSuffix **conjugation_suffix_data,
-      const int **conjugation_suffix_data_index,
-      const UsageDictItem **usage_data_value) const override;
-#endif  // NO_USAGE_REWRITER
 
  private:
   StringPiece connection_data_;
@@ -106,6 +107,11 @@ class DataManager : public DataManagerInterface {
   StringPiece reading_correction_correction_array_data_;
   StringPiece symbol_token_array_data_;
   StringPiece symbol_string_array_data_;
+  StringPiece usage_base_conjugation_suffix_data_;
+  StringPiece usage_conjugation_suffix_data_;
+  StringPiece usage_conjugation_index_data_;
+  StringPiece usage_items_data_;
+  StringPiece usage_string_array_data_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

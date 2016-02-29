@@ -172,6 +172,27 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     LOG(ERROR) << "Symbol dictionary data is broken";
     return false;
   }
+
+  if (!reader.Get("usage_item_array", &usage_items_data_)) {
+    VLOG(2) << "Usage dictionary is not provided";
+    // Usage dictionary is optional, so don't return false here.
+  } else {
+    if (!reader.Get("usage_base_conjugation_suffix",
+                    &usage_base_conjugation_suffix_data_) ||
+        !reader.Get("usage_conjugation_suffix",
+                    &usage_conjugation_suffix_data_) ||
+        !reader.Get("usage_conjugation_index",
+                    &usage_conjugation_index_data_) ||
+        !reader.Get("usage_string_array",
+                    &usage_string_array_data_)) {
+      LOG(ERROR) << "Cannot find some usage dictionary data components";
+      return false;
+    }
+    if (!SerializedStringArray::VerifyData(usage_string_array_data_)) {
+      LOG(ERROR) << "Usage dictionary's string array is broken";
+      return false;
+    }
+  }
   return true;
 }
 
@@ -260,11 +281,16 @@ void DataManager::GetCounterSuffixSortedArray(const char **array,
 
 #ifndef NO_USAGE_REWRITER
 void DataManager::GetUsageRewriterData(
-    const ConjugationSuffix **base_conjugation_suffix,
-    const ConjugationSuffix **conjugation_suffix_data,
-    const int **conjugation_suffix_data_index,
-    const UsageDictItem **usage_data_value) const {
-  LOG(FATAL) << "Not implemented";
+    StringPiece *base_conjugation_suffix_data,
+    StringPiece *conjugation_suffix_data,
+    StringPiece *conjugation_index_data,
+    StringPiece *usage_items_data,
+    StringPiece *string_array_data) const {
+  *base_conjugation_suffix_data = usage_base_conjugation_suffix_data_;
+  *conjugation_suffix_data = usage_conjugation_suffix_data_;
+  *conjugation_index_data = usage_conjugation_index_data_;
+  *usage_items_data = usage_items_data_;
+  *string_array_data = usage_string_array_data_;
 }
 #endif  // NO_USAGE_REWRITER
 

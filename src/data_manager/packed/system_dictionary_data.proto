@@ -75,26 +75,8 @@ message SystemDictionaryData {
   // DEPRECATED: optional EmbeddedDictionary symbol_dictionary = 10;
   reserved 10;
 
-  message UsageRewriterData {
-    message ConjugationSuffix {
-      optional string value_suffix = 1;
-      optional string key_suffix = 2;
-    }
-    message Conjugation {
-      optional ConjugationSuffix base_suffix = 1;
-      repeated ConjugationSuffix conjugation_suffixes = 2;
-    }
-    message UsageDictItem {
-      optional int32 id = 1;
-      optional string key = 2;
-      optional string value = 3;
-      optional int32 conjugation_id = 4;
-      optional string meaning = 5;
-    }
-    repeated Conjugation conjugations = 1;
-    repeated UsageDictItem usage_data_values = 2;
-  }
-  optional UsageRewriterData usage_rewriter_data = 11;
+  // DEPRECATED: optional UsageRewriterData usage_rewriter_data = 11;
+  reserved 11;
 
   reserved 12;  // DEPRECATED: optional bytes suggestion_filter_data = 12;
   reserved 13;  // DEPRECATED: optional bytes connection_data = 13;

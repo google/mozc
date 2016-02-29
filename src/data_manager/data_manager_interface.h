@@ -102,10 +102,11 @@ class DataManagerInterface {
 #ifndef NO_USAGE_REWRITER
   // Gets the usage rewriter data.
   virtual void GetUsageRewriterData(
-      const ConjugationSuffix **base_conjugation_suffix,
-      const ConjugationSuffix **conjugation_suffix_data,
-      const int **conjugation_suffix_data_index,
-      const UsageDictItem **usage_data_value) const = 0;
+      StringPiece *base_conjugation_suffix_data,
+      StringPiece *conjugation_suffix_data,
+      StringPiece *conjugation_suffix_index_data,
+      StringPiece *usage_items_data,
+      StringPiece *string_array_data) const = 0;
 #endif  // NO_USAGE_REWRITER
 
   // Gets the address and size of a sorted array of counter suffix values.

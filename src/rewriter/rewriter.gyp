@@ -50,7 +50,6 @@
         '<(gen_out_dir)/emoticon_rewriter_data.h',
         '<(gen_out_dir)/single_kanji_rewriter_data.h',
         '<(gen_out_dir)/symbol_rewriter_data.h',
-        '<(gen_out_dir)/usage_rewriter_data.h',
         'calculator_rewriter.cc',
         'collocation_rewriter.cc',
         'collocation_util.cc',
@@ -106,7 +105,6 @@
       'conditions':[
         ['target_platform=="Android"', {
           'sources!': [
-            '<(gen_out_dir)/usage_rewriter_data.h',
             'usage_rewriter.cc',
           ],
         }],

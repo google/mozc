@@ -40,9 +40,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/embedded_dictionary.h"
-#ifndef NO_USAGE_REWRITER
-#include "rewriter/usage_rewriter_data_structs.h"
-#endif  // NO_USAGE_REWRITER
 
 DEFINE_string(mozc_data, "", "Data set file to be packed");
 DEFINE_string(mozc_data_magic, "", "Magic number for data set file");
@@ -56,9 +53,6 @@ namespace {
 
 #include "data_manager/@DIR@/pos_matcher_data.h"
 #include "data_manager/@DIR@/user_pos_data.h"
-#ifndef NO_USAGE_REWRITER
-#include "rewriter/usage_rewriter_data.h"
-#endif  // NO_USAGE_REWRITER
 
 }  // namespace
 
@@ -74,14 +68,6 @@ bool OutputData(const string &file_path) {
   // elements are not required at runtime.
   packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
                            kRangeTables, arraysize(kRangeTables) - 1);
-#ifndef NO_USAGE_REWRITER
-  packer.SetUsageRewriterData(kConjugationNum,
-                              kBaseConjugationSuffix,
-                              kConjugationSuffixData,
-                              kConjugationSuffixDataIndex,
-                              kUsageDataSize,
-                              kUsageData_value);
-#endif  // NO_USAGE_REWRITER
 
   string magic;
   CHECK(Util::Unescape(FLAGS_mozc_data_magic, &magic))

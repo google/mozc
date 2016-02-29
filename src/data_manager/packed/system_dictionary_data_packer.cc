@@ -43,9 +43,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
-#ifndef NO_USAGE_REWRITER
-#include "rewriter/usage_rewriter_data_structs.h"
-#endif  // NO_USAGE_REWRITER
 
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::UserPOS;
@@ -111,59 +108,6 @@ void SystemDictionaryDataPacker::SetPosMatcherData(
     }
   }
 }
-
-#ifndef NO_USAGE_REWRITER
-void SystemDictionaryDataPacker::SetUsageRewriterData(
-    int conjugation_num,
-    const ConjugationSuffix *base_conjugation_suffix,
-    const ConjugationSuffix *conjugation_suffix_data,
-    const int *conjugation_suffix_data_index,
-    size_t usage_data_size,
-    const UsageDictItem *usage_data_value) {
-  SystemDictionaryData::UsageRewriterData *usage_rewriter_data =
-      system_dictionary_->mutable_usage_rewriter_data();
-  for (size_t i = 0; i < conjugation_num; ++i) {
-    SystemDictionaryData::UsageRewriterData::Conjugation *conjugation =
-      usage_rewriter_data->add_conjugations();
-    if (base_conjugation_suffix[i].value_suffix) {
-      conjugation->mutable_base_suffix()->set_value_suffix(
-          base_conjugation_suffix[i].value_suffix);
-    }
-
-    if (base_conjugation_suffix[i].key_suffix) {
-      conjugation->mutable_base_suffix()->set_key_suffix(
-          base_conjugation_suffix[i].key_suffix);
-    }
-    for (size_t j = conjugation_suffix_data_index[i];
-         j < conjugation_suffix_data_index[i + 1];
-         ++j) {
-      SystemDictionaryData::UsageRewriterData::ConjugationSuffix *suffix =
-        conjugation->add_conjugation_suffixes();
-      if (conjugation_suffix_data[j].value_suffix) {
-        suffix->set_value_suffix(conjugation_suffix_data[j].value_suffix);
-      }
-      if (conjugation_suffix_data[j].key_suffix) {
-        suffix->set_key_suffix(conjugation_suffix_data[j].key_suffix);
-      }
-    }
-  }
-  for (size_t i = 0; i < usage_data_size; ++i) {
-    SystemDictionaryData::UsageRewriterData::UsageDictItem *item =
-      usage_rewriter_data->add_usage_data_values();
-    item->set_id(usage_data_value[i].id);
-    if (usage_data_value[i].key) {
-      item->set_key(usage_data_value[i].key);
-    }
-    if (usage_data_value[i].value) {
-      item->set_value(usage_data_value[i].value);
-    }
-    item->set_conjugation_id(usage_data_value[i].conjugation_id);
-    if (usage_data_value[i].meaning) {
-      item->set_meaning(usage_data_value[i].meaning);
-    }
-  }
-}
-#endif  // NO_USAGE_REWRITER
 
 void SystemDictionaryDataPacker::SetMozcData(const string &data,
                                              const string &magic) {
