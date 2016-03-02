@@ -576,10 +576,14 @@ def GypMain(options, unused_args):
 
   # Build GYP command line.
   logging.info('Building GYP command line...')
-  gyp_options = ['--depth=.', '--include=%s/gyp/common.gypi' % SRC_DIR]
+  gyp_options = ['--depth=.']
+  if target_platform == 'Windows':
+    gyp_options.extend(['--include=%s/gyp/common_win.gypi' % SRC_DIR])
+  else:
+    gyp_options.extend(['--include=%s/gyp/common.gypi' % SRC_DIR])
 
   gyp_options.extend(['-D', 'abs_depth=%s' % MOZC_ROOT])
-  gyp_options.extend(['-D', ('ext_third_party_dir=%s' % EXT_THIRD_PARTY_DIR)])
+  gyp_options.extend(['-D', 'ext_third_party_dir=%s' % EXT_THIRD_PARTY_DIR])
 
   gyp_options.extend(['-D', 'python_executable=%s' % sys.executable])
 
