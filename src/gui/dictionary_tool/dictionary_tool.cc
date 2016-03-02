@@ -61,12 +61,11 @@
 #include "base/run_level.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#include "dictionary/user_pos.h"
 #include "gui/base/encoding_util.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
@@ -320,8 +319,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      user_pos_(new dictionary::UserPOS(
-          UserPosManager::GetUserPosManager()->GetUserPOSData())) {
+      pos_list_provider_(new POSListProvider()) {
   setupUi(this);
 
   // Create and set up ImportDialog object.
@@ -404,7 +402,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // Get a list of POS and set a custom delagate that holds the list.
   vector<string> tmp_pos_vec;
-  user_pos_->GetPOSList(&tmp_pos_vec);
+  pos_list_provider_->GetPOSList(&tmp_pos_vec);
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
     pos_list.append(tmp_pos_vec[i].c_str());
@@ -1333,7 +1331,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   menu->addSeparator();
   QMenu *change_category_to = menu->addMenu(tr("Change category to"));
   vector<string> pos_list;
-  user_pos_->GetPOSList(&pos_list);
+  pos_list_provider_->GetPOSList(&pos_list);
   vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] = change_category_to->addAction(

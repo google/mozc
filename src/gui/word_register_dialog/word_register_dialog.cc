@@ -53,11 +53,10 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -111,8 +110,7 @@ WordRegisterDialog::WordRegisterDialog()
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(tr("Mozc")),
-      user_pos_(new dictionary::UserPOS(
-          UserPosManager::GetUserPosManager()->GetUserPOSData())) {
+      pos_list_provider_(new POSListProvider()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
@@ -152,7 +150,7 @@ WordRegisterDialog::WordRegisterDialog()
 
   // Initialize ComboBox
   vector<string> pos_set;
-  user_pos_->GetPOSList(&pos_set);
+  pos_list_provider_->GetPOSList(&pos_set);
   CHECK(!pos_set.empty());
 
   for (size_t i = 0; i < pos_set.size(); ++i) {

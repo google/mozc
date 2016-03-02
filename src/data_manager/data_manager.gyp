@@ -34,6 +34,25 @@
   },
   'targets': [
     {
+      'target_name': 'pos_list_provider',
+      'type': 'static_library',
+      'toolsets': [ 'target' ],
+      'sources': [
+        'pos_list_provider.cc',
+      ],
+      'hard_dependency': 1,
+      'variables': {
+        'pos_list_dep%': 'oss/oss_data_manager_base.gyp:gen_oss_embedded_pos_list#host',
+      },
+      'dependencies': [
+        '../base/base.gyp:serialized_string_array',
+        '<(pos_list_dep)',
+      ],
+      'export_dependent_settings': [
+        '<(pos_list_dep)',
+      ],
+    },
+    {
       'target_name': 'user_pos_manager',
       'type': 'none',
       'toolsets': [ 'target', 'host' ],

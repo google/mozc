@@ -54,6 +54,34 @@
       ],
     },
     {
+      'target_name': 'gen_<(dataset_tag)_embedded_pos_list',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        'gen_embedded_user_pos_data_for_<(dataset_tag)#host',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_<(dataset_tag)_embedded_pos_list',
+          'variables': {
+            'pos_list': '<(gen_out_dir)/pos_list.data',
+          },
+          'inputs': [
+            '<(pos_list)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/pos_list.h',
+          ],
+          'action': [
+            'python', '<(mozc_dir)/build_tools/embed_file.py',
+            '--input=<(pos_list)',
+            '--name=kPosArray',
+            '--output=<(gen_out_dir)/pos_list.h',
+          ],
+        },
+      ],
+    },
+    {
       'target_name': 'gen_embedded_user_pos_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
@@ -69,6 +97,7 @@
             'user_pos': '<(common_data_dir)/rules/user_pos.def',
             'cforms': '<(common_data_dir)/rules/cforms.def',
             'user_pos_data': '<(gen_out_dir)/user_pos_data.h',
+            'pos_list': '<(gen_out_dir)/pos_list.data',
           },
           'inputs': [
             '<(mozc_dir)/dictionary/gen_user_pos_data.py',
@@ -79,6 +108,7 @@
           ],
           'outputs': [
             '<(user_pos_data)',
+            '<(pos_list)',
           ],
           'action': [
             'python', '<(mozc_dir)/dictionary/gen_user_pos_data.py',
@@ -87,6 +117,7 @@
             '--user_pos_file=<(user_pos)',
             '--cforms_file=<(cforms)',
             '--output=<(user_pos_data)',
+            '--output_pos_list=<(pos_list)',
           ],
           'message': '[<(dataset_tag)] Generating <(user_pos_data).',
         },

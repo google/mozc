@@ -51,7 +51,7 @@
 
 namespace mozc {
 
-class UserPOSInterface;
+class POSListProviderInterface;
 
 namespace client {
 class ClientInterface;
@@ -256,7 +256,7 @@ class DictionaryTool : public QMainWindow,
   // The maximum number of entries for a dictionary currently selected.
   int max_entry_size_;
 
-  std::unique_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const POSListProviderInterface> pos_list_provider_;
 };
 
 }  // namespace gui

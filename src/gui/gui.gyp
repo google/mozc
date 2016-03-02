@@ -588,7 +588,7 @@
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
-        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager.gyp:pos_list_provider',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
@@ -645,7 +645,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager.gyp:pos_list_provider',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../protocol/protocol.gyp:commands_proto',

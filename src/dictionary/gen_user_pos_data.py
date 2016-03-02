@@ -37,6 +37,7 @@ import logging
 import optparse
 
 from build_tools import code_generator_util
+from build_tools import serialized_string_array_builder
 from dictionary import pos_util
 
 
@@ -79,6 +80,8 @@ def ParseOptions():
                     help='Path to user_pos,def')
   parser.add_option('--output', dest='output',
                     help='Path to output user_pos_data.h')
+  parser.add_option('--output_pos_list', dest='output_pos_list',
+                    help='Path to output POS list binary file')
   return parser.parse_args()[0]
 
 
@@ -93,6 +96,10 @@ def main():
 
   with open(options.output, 'w') as stream:
     OutputUserPosDataHeader(user_pos.data, stream)
+
+  if options.output_pos_list:
+    serialized_string_array_builder.SerializeToFile(
+        [pos for (pos, _) in user_pos.data], options.output_pos_list)
 
 
 if __name__ == '__main__':
