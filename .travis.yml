@@ -27,7 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-sudo: false
+sudo: required
+dist: trusty
 
 os:
   - linux
@@ -37,34 +38,18 @@ language: cpp
 
 compiler: clang
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - ant
-    - clang-3.4
-    - libc6:i386
-    - libglib2.0-dev
-    - libgtk2.0-dev
-    - libibus-1.0-dev
-    - libjsr305-java
-    - libncurses5:i386
-    - libqt4-dev
-    - libstdc++-4.8-dev
-    - libstdc++6:i386
-    - libxcb-xfixes0-dev
-    - openjdk-7-jdk
-    - openjdk-7-jre-headless
-    - pkg-config
-    - zip
-    - zlib1g:i386
-
 env:
   - TARGET_PLATFORM=Android
   - TARGET_PLATFORM=Linux
   - TARGET_PLATFORM=NaCl
   - TARGET_PLATFORM=Mac
+
+before_install:
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y clang python pkg-config curl bzip2 unzip make; fi
+  - if [ $TARGET_PLATFORM == Linux ]; then sudo apt-get install -y libibus-1.0-dev libglib2.0-dev libqt4-dev libgtk2.0-dev libxcb-xfixes0-dev; fi
+  - if [ $TARGET_PLATFORM == NaCl ]; then sudo apt-get install -y libc6-i386 lib32stdc++6; fi
+  - if [ $TARGET_PLATFORM == Android ]; then sudo apt-get install --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless libjsr305-java ant zip libc6-i386 lib32stdc++6 lib32ncurses5 lib32z1; fi
 
 install:
   - if [ $TRAVIS_OS_NAME == linux ]; then git -C src/third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git; fi
@@ -74,6 +59,7 @@ install:
   - if [ $TARGET_PLATFORM == Mac ]; then git -C src/third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git; fi
   - if [ $TARGET_PLATFORM == Mac ]; then export PATH="$PATH":`pwd`/src/third_party/depot_tools; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then cd src/third_party && curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip && cd nacl_sdk && ./naclsdk install pepper_45 && cd ../../../; fi
+  - if [ $TARGET_PLATFORM == Android ]; then jdk_switcher use openjdk7; fi
   - if [ $TARGET_PLATFORM == Android ]; then cd src/third_party && curl -L http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin -O && chmod u+x android-ndk-r10e-linux-x86_64.bin && ./android-ndk-r10e-linux-x86_64.bin > /dev/null && rm android-ndk-r10e-linux-x86_64.bin && curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx && cd ../../; fi
   - if [ $TARGET_PLATFORM == Android ]; then export ANDROID_NDK_HOME=`pwd`/src/third_party/android-ndk-r10e ; fi
   - if [ $TARGET_PLATFORM == Android ]; then export ANDROID_HOME=`pwd`/src/third_party/android-sdk-linux ; fi
