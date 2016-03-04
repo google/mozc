@@ -60,6 +60,7 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
+#include "dictionary/user_pos.h"
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
@@ -346,7 +347,7 @@ class ConverterTest : public ::testing::Test {
     SuppressionDictionary *suppression_dictionary = new SuppressionDictionary;
     dictionary::UserDictionary *user_dictionary =
         new dictionary::UserDictionary(
-            new dictionary::UserPOS(user_pos_manager.GetUserPOSData()),
+            dictionary::UserPOS::CreateFromDataManager(user_pos_manager),
             user_pos_manager.GetPOSMatcher(),
             suppression_dictionary);
     InitConverterAndData(

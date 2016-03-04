@@ -52,7 +52,6 @@ namespace mozc {
 namespace {
 
 #include "data_manager/@DIR@/pos_matcher_data.h"
-#include "data_manager/@DIR@/user_pos_data.h"
 
 }  // namespace
 
@@ -62,7 +61,6 @@ bool OutputData(const string &file_path) {
     dictionary_version = FLAGS_dictionary_version;
   }
   packed::SystemDictionaryDataPacker packer(dictionary_version);
-  packer.SetPosTokens(kPOSToken, arraysize(kPOSToken));
   // The following two arrays contain sentinel elements but the packer doesn't
   // expect them.  So pass the shinked ranges of the arrays.  Note that sentinel
   // elements are not required at runtime.

@@ -29,6 +29,7 @@
 
 #include <string>
 
+#include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
@@ -38,19 +39,22 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 
+DEFINE_string(user_pos_manager_data, "", "Input user pos manager data");
 DEFINE_string(output, "", "Output data file name");
 
 namespace mozc {
 namespace {
 
 #include "data_manager/@DIR@/pos_matcher_data.h"
-#include "data_manager/@DIR@/user_pos_data.h"
 
 }  // namespace
 
 bool OutputData(const string &file_path) {
+  const char* kMagicNumber = "";  // No magic number.
   packed::SystemDictionaryDataPacker packer(Version::GetMozcVersion());
-  packer.SetPosTokens(kPOSToken, arraysize(kPOSToken));
+  packer.SetMozcData(InputFileStream(FLAGS_user_pos_manager_data.c_str(),
+                                     ios_base::in | ios_base::binary).Read(),
+                     kMagicNumber);
   // The following two arrays contain sentinel elements but the packer doesn't
   // expect them.  So, pass the shinked ranges of the arrays.  Note that
   // sentinel elements are not necessary at runtime.
@@ -64,8 +68,8 @@ bool OutputData(const string &file_path) {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
 
-  if (FLAGS_output.empty()) {
-    LOG(FATAL) << "output flag is needed";
+  if (FLAGS_user_pos_manager_data.empty() || FLAGS_output.empty()) {
+    LOG(FATAL) << "input and output flags are needed";
     return 1;
   }
   if (!mozc::OutputData(FLAGS_output)) {

@@ -59,32 +59,6 @@ SystemDictionaryDataPacker::SystemDictionaryDataPacker(const string &version) {
 SystemDictionaryDataPacker::~SystemDictionaryDataPacker() {
 }
 
-void SystemDictionaryDataPacker::SetPosTokens(
-    const UserPOS::POSToken *pos_token_data,
-    size_t token_count) {
-  for (size_t i = 0; i < token_count; ++i) {
-    SystemDictionaryData::PosToken *pos_token =
-        system_dictionary_->add_pos_tokens();
-    if (pos_token_data[i].pos) {
-      pos_token->set_pos(pos_token_data[i].pos);
-    }
-    for (size_t j = 0; j < pos_token_data[i].conjugation_size; ++j) {
-      SystemDictionaryData::PosToken::ConjugationType *conjugation_form
-          = pos_token->add_conjugation_forms();
-      if (pos_token_data[i].conjugation_form[j].key_suffix) {
-        conjugation_form->set_key_suffix(
-            pos_token_data[i].conjugation_form[j].key_suffix);
-      }
-      if (pos_token_data[i].conjugation_form[j].value_suffix) {
-        conjugation_form->set_value_suffix(
-            pos_token_data[i].conjugation_form[j].value_suffix);
-      }
-      conjugation_form->set_id(
-          pos_token_data[i].conjugation_form[j].id);
-    }
-  }
-}
-
 void SystemDictionaryDataPacker::SetPosMatcherData(
     const uint16 *rule_id_table,
     size_t rule_id_table_count,

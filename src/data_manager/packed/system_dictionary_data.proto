@@ -37,16 +37,7 @@ message SystemDictionaryData {
   optional string product_version = 1 [ default = "0.0.0.0" ];
   optional uint32 format_version = 2;
 
-  message PosToken {
-    optional string pos = 1;
-    message ConjugationType {
-      optional string key_suffix = 1;
-      optional string value_suffix = 2;
-      optional uint32 id = 3;
-    };
-    repeated ConjugationType conjugation_forms = 2;
-  };
-  repeated PosToken pos_tokens = 3;
+  reserved 3;  // DEPRECATED: repeated PosToken pos_tokens = 3;
 
   message PosMatcherData {
     repeated uint32 rule_id_table = 1;

@@ -82,12 +82,14 @@
           ],
           'action': [
             '<(PRODUCT_DIR)/gen_packed_data_light_main_<(dataset_tag)<(EXECUTABLE_SUFFIX)',
+            '--user_pos_manager_data=<(gen_out_dir)/../<(dataset_dir)/user_pos_manager.data',
             '--output=<(gen_out_dir)/packed_data_light_<(dataset_tag)',
           ],
         },
       ],
       'dependencies': [
         'gen_packed_data_light_main_<(dataset_tag)',
+        '../<(dataset_dir)/<(dataset_tag)_data_manager_base.gyp:gen_user_pos_manager_data_for_<(dataset_tag)',
       ],
     },
   ],

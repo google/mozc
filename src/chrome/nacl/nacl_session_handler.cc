@@ -199,8 +199,8 @@ class MozcSessionHandlerThread : public Thread {
     PepperFileUtil::Initialize(instance_, kFileIoFileSystemExpectedSize);
     LoadDictionary();
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-    user_pos_.reset(new dictionary::UserPOS(
-        packed::PackedDataManager::GetUserPosManager()->GetUserPOSData()));
+    user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(
+        *packed::PackedDataManager::GetUserPosManager()));
 
     engine_.reset(mozc::EngineFactory::Create());
     handler_.reset(new SessionHandler(engine_.get()));

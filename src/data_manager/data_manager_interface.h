@@ -32,7 +32,6 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
-#include "dictionary/user_pos.h"
 
 namespace mozc {
 
@@ -51,8 +50,9 @@ class DataManagerInterface {
  public:
   virtual ~DataManagerInterface() {}
 
-  // Returns the address of an array of UserPOS::POSToken.
-  virtual const dictionary::UserPOS::POSToken *GetUserPOSData() const = 0;
+  // Returns data set for UserPOS.
+  virtual void GetUserPOSData(StringPiece *token_array_data,
+                              StringPiece *string_array_data) const = 0;
 
   // Returns a reference to POSMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.

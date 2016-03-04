@@ -34,7 +34,6 @@
 
 #include "base/port.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/user_pos.h"
 
 namespace mozc {
 namespace packed {
@@ -45,9 +44,6 @@ class SystemDictionaryDataPacker {
  public:
   explicit SystemDictionaryDataPacker(const string &product_version);
   ~SystemDictionaryDataPacker();
-  void SetPosTokens(
-      const dictionary::UserPOS::POSToken *pos_token_data,
-      size_t token_count);
   void SetPosMatcherData(
       const uint16 *rule_id_table,
       size_t rule_id_table_count,

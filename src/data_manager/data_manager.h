@@ -45,9 +45,19 @@ class DataManager : public DataManagerInterface {
   DataManager();
   ~DataManager() override;
 
+  // Parses |array| and extracts byte blocks of data set.
   bool InitFromArray(StringPiece array, StringPiece magic);
 
+  // The same as above InitFromArray() but only parses data set for user pos
+  // manager.  For mozc runtime modules, use InitFromArray() because this method
+  // is only for build tools, e.g., rewriter/dictionary_generator.cc (some build
+  // tools depend on user pos data to create outputs, so we need to handle
+  // partial data set).
+  bool InitUserPosManagerDataFromArray(StringPiece array, StringPiece magic);
+
   // The following interfaces are implemented.
+  void GetUserPOSData(StringPiece *token_array_data,
+                      StringPiece *string_array_data) const override;
   void GetConnectorData(const char **data, size_t *size) const override;
   void GetSystemDictionaryData(const char **data, int *size) const override;
   void GetCollocationData(const char **array, size_t *size) const override;
@@ -82,10 +92,11 @@ class DataManager : public DataManagerInterface {
   // The following interfaces are not yet implemented.
   // TODO(noriyukit): Implements all the interfaces by migrating embedded C++
   // structures to a data set file.
-  const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
   const dictionary::POSMatcher *GetPOSMatcher() const override;
 
  private:
+  StringPiece user_pos_token_array_data_;
+  StringPiece user_pos_string_array_data_;
   StringPiece connection_data_;
   StringPiece dictionary_data_;
   StringPiece suggestion_filter_data_;

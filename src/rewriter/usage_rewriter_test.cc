@@ -43,6 +43,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_pos.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -77,7 +78,7 @@ class UsageRewriterTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&config_);
 
@@ -85,12 +86,12 @@ class UsageRewriterTest : public ::testing::Test {
 
     suppression_dictionary_.reset(new SuppressionDictionary);
     user_dictionary_.reset(
-        new UserDictionary(new UserPOS(data_manager_->GetUserPOSData()),
+        new UserDictionary(UserPOS::CreateFromDataManager(*data_manager_),
                            data_manager_->GetPOSMatcher(),
                            suppression_dictionary_.get()));
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     // just in case, reset the config
     config::ConfigHandler::GetDefaultConfig(&config_);
   }

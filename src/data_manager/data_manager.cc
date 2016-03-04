@@ -36,6 +36,30 @@
 #include "rewriter/serialized_dictionary.h"
 
 namespace mozc {
+namespace {
+
+bool InitUserPosManagerDataFromReader(const DataSetReader &reader,
+                                      StringPiece *user_pos_token_array_data,
+                                      StringPiece *user_pos_string_array_data) {
+  if (!reader.Get("user_pos_token", user_pos_token_array_data)) {
+    LOG(ERROR) << "Cannot find a user POS token array";
+    return false;
+  }
+  if (!reader.Get("user_pos_string", user_pos_string_array_data)) {
+    LOG(ERROR) << "Cannot find a user POS string array";
+    return false;
+  }
+  if (user_pos_token_array_data->size() % 8 != 0 ||
+      !SerializedStringArray::VerifyData(*user_pos_string_array_data)) {
+    LOG(ERROR) << "User POS data is broken: token array data size = "
+               << user_pos_token_array_data->size() << ", string array size = "
+               << user_pos_string_array_data->size();
+    return false;
+  }
+  return true;
+}
+
+}  // namespace
 
 DataManager::DataManager() = default;
 DataManager::~DataManager() = default;
@@ -44,6 +68,12 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
   DataSetReader reader;
   if (!reader.Init(array, magic)) {
     LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
+    return false;
+  }
+  if (!InitUserPosManagerDataFromReader(reader,
+                                        &user_pos_token_array_data_,
+                                        &user_pos_string_array_data_)) {
+    LOG(ERROR) << "User POS manager data is broken";
     return false;
   }
   if (!reader.Get("conn", &connection_data_)) {
@@ -196,6 +226,22 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
   return true;
 }
 
+bool DataManager::InitUserPosManagerDataFromArray(StringPiece array,
+                                                  StringPiece magic) {
+  DataSetReader reader;
+  if (!reader.Init(array, magic)) {
+    LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
+    return false;
+  }
+  if (!InitUserPosManagerDataFromReader(reader,
+                                        &user_pos_token_array_data_,
+                                        &user_pos_string_array_data_)) {
+    LOG(ERROR) << "User POS manager data is broken";
+    return false;
+  }
+  return true;
+}
+
 void DataManager::GetConnectorData(const char **data, size_t *size) const {
   *data = connection_data_.data();
   *size = connection_data_.size();
@@ -223,9 +269,10 @@ void DataManager::GetSuggestionFilterData(const char **data,
   *size = suggestion_filter_data_.size();
 }
 
-const dictionary::UserPOS::POSToken *DataManager::GetUserPOSData() const {
-  LOG(FATAL) << "Not implemented";
-  return nullptr;
+void DataManager::GetUserPOSData(StringPiece *token_array_data,
+                                 StringPiece *string_array_data) const {
+  *token_array_data = user_pos_token_array_data_;
+  *string_array_data = user_pos_string_array_data_;
 }
 
 const dictionary::POSMatcher *DataManager::GetPOSMatcher() const {

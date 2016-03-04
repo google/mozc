@@ -50,7 +50,6 @@ DEFINE_string(dataset,
 using std::unique_ptr;
 
 using mozc::dictionary::POSMatcher;
-using mozc::dictionary::UserPOS;
 
 namespace mozc {
 namespace packed {
@@ -79,7 +78,8 @@ class PackedDataManager::Impl {
   bool InitWithZippedData(const string &zipped_system_dictionary_data);
   string GetDictionaryVersion();
 
-  const UserPOS::POSToken *GetUserPOSData() const;
+  void GetUserPOSData(StringPiece *token_array_data,
+                      StringPiece *string_array_data) const;
   const POSMatcher *GetPOSMatcher() const;
   const uint8 *GetPosGroupData() const;
   void GetConnectorData(const char **data, size_t *size) const;
@@ -120,8 +120,6 @@ class PackedDataManager::Impl {
   };
   bool InitializeWithSystemDictionaryData();
 
-  unique_ptr<UserPOS::POSToken[]> pos_token_;
-  unique_ptr<UserPOS::ConjugationType[]> conjugation_array_;
   unique_ptr<uint16[]> rule_id_table_;
   unique_ptr<POSMatcher::Range *[]> range_tables_;
   unique_ptr<Range[]> range_table_items_;
@@ -173,49 +171,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
                << " actual:" << system_dictionary_data_->format_version();
     return false;
   }
-  // Makes UserPOS data.
-  pos_token_.reset(
-      new UserPOS::POSToken[system_dictionary_data_->pos_tokens_size()]);
-  size_t conjugation_count = 0;
-  for (size_t i = 0; i < system_dictionary_data_->pos_tokens_size(); ++i) {
-    conjugation_count +=
-        system_dictionary_data_->pos_tokens(i).conjugation_forms_size();
-  }
-  conjugation_array_.reset(new UserPOS::ConjugationType[conjugation_count]);
-  size_t conjugation_index = 0;
-  for (size_t i = 0; i < system_dictionary_data_->pos_tokens_size(); ++i) {
-    const SystemDictionaryData::PosToken &pos_token =
-        system_dictionary_data_->pos_tokens(i);
-    if (pos_token.has_pos()) {
-      pos_token_[i].pos = pos_token.pos().data();
-    } else {
-      pos_token_[i].pos = NULL;
-    }
-    pos_token_[i].conjugation_size =
-        pos_token.conjugation_forms_size();
-    pos_token_[i].conjugation_form = &conjugation_array_[conjugation_index];
-    if (pos_token.conjugation_forms_size() == 0) {
-      pos_token_[i].conjugation_form = NULL;
-    }
-    for (size_t j = 0; j < pos_token.conjugation_forms_size(); ++j) {
-      const SystemDictionaryData::PosToken::ConjugationType &conjugation_form =
-          pos_token.conjugation_forms(j);
-      if (conjugation_form.has_key_suffix()) {
-        conjugation_array_[conjugation_index].key_suffix =
-            conjugation_form.key_suffix().data();
-      } else {
-        conjugation_array_[conjugation_index].key_suffix = NULL;
-      }
-      if (conjugation_form.has_value_suffix()) {
-        conjugation_array_[conjugation_index].value_suffix =
-            conjugation_form.value_suffix().data();
-      } else {
-        conjugation_array_[conjugation_index].value_suffix = NULL;
-      }
-      conjugation_array_[conjugation_index].id = conjugation_form.id();
-      ++conjugation_index;
-    }
-  }
 
   // Makes POSMatcher data.
   rule_id_table_.reset(
@@ -263,15 +218,24 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
   if (system_dictionary_data_->has_mozc_data() &&
       !manager_.InitFromArray(system_dictionary_data_->mozc_data(),
                               system_dictionary_data_->mozc_data_magic())) {
-    LOG(ERROR) << "Failed to initialize mozc data";
-    return false;
+    VLOG(1) << "Data set is incomplete.  Assume this is user pos manager data.";
+    // The data set containing only user pos manager data is used in build
+    // tools.
+    // TODO(noriyukit): Fix this hard-to-understand behavior by removing
+    // PackedDataManager.
+    if (!manager_.InitUserPosManagerDataFromArray(
+            system_dictionary_data_->mozc_data(),
+            system_dictionary_data_->mozc_data_magic())) {
+      LOG(ERROR) << "Failed to initialize mozc data";
+      return false;
+    }
   }
-
   return true;
 }
 
-const UserPOS::POSToken *PackedDataManager::Impl::GetUserPOSData() const {
-  return pos_token_.get();
+void PackedDataManager::Impl::GetUserPOSData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_.GetUserPOSData(token_array_data, string_array_data);
 }
 
 const POSMatcher *PackedDataManager::Impl::GetPOSMatcher() const {
@@ -402,8 +366,9 @@ string PackedDataManager::GetDictionaryVersion() {
   return manager_impl_->GetDictionaryVersion();
 }
 
-const UserPOS::POSToken *PackedDataManager::GetUserPOSData() const {
-  return manager_impl_->GetUserPOSData();
+void PackedDataManager::GetUserPOSData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_impl_->GetUserPOSData(token_array_data, string_array_data);
 }
 
 PackedDataManager *PackedDataManager::GetUserPosManager() {

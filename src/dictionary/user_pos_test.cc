@@ -45,9 +45,11 @@ namespace {
 
 class UserPOSTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
+    StringPiece token_array_data, string_array_data;
     const testing::MockUserPosManager user_pos_manager;
-    user_pos_.reset(new UserPOS(user_pos_manager.GetUserPOSData()));
+    user_pos_manager.GetUserPOSData(&token_array_data, &string_array_data);
+    user_pos_.reset(new UserPOS(token_array_data, string_array_data));
     CHECK(user_pos_.get());
   }
 

@@ -116,8 +116,12 @@ inline vector<Token *>::const_iterator CEnd(const vector<Token *> &tokens) {
 }  // namespace
 
 TextDictionaryLoader::TextDictionaryLoader(const POSMatcher &pos_matcher)
-    : pos_matcher_(&pos_matcher) {
-}
+    : zipcode_id_(pos_matcher.GetZipcodeId()),
+      isolated_word_id_(pos_matcher.GetIsolatedWordId()) {}
+
+TextDictionaryLoader::TextDictionaryLoader(uint16 zipcode_id,
+                                           uint16 isolated_word_id)
+    : zipcode_id_(zipcode_id), isolated_word_id_(isolated_word_id) {}
 
 TextDictionaryLoader::~TextDictionaryLoader() {
   Clear();
@@ -134,14 +138,14 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
     return true;
   }
   if (Util::StartsWith(label, "ZIP_CODE")) {
-    token->lid = pos_matcher_->GetZipcodeId();
-    token->rid = pos_matcher_->GetZipcodeId();
+    token->lid = zipcode_id_;
+    token->rid = zipcode_id_;
     return true;
   }
   if (Util::StartsWith(label, "ENGLISH")) {
     // TODO(noriyukit): Might be better to use special POS for english words.
-    token->lid = pos_matcher_->GetIsolatedWordId();
-    token->rid = pos_matcher_->GetIsolatedWordId();
+    token->lid = isolated_word_id_;
+    token->rid = isolated_word_id_;
     return true;
   }
   LOG(ERROR) << "Unknown special label: " << label;

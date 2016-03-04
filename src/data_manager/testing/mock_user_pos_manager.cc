@@ -29,11 +29,10 @@
 
 #include "data_manager/testing/mock_user_pos_manager.h"
 
+#include "base/embedded_file.h"
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/user_pos.h"
 
 namespace mozc {
 namespace testing {
@@ -44,16 +43,23 @@ MockUserPosManager *MockUserPosManager::GetUserPosManager() {
 
 namespace {
 
-// The following header file is automatically generated and contains the
-// definition of variable, kPOSToken, of type UserPOSImpl::POSToken.
-#include "data_manager/testing/user_pos_data.h"
+// Embedded file kUserPosManagerData is defined in this header file.
+#include "data_manager/testing/user_pos_manager_data.h"
 
 }  // namespace
 
-const dictionary::UserPOS::POSToken *
-MockUserPosManager::GetUserPOSData() const {
-  DCHECK(kPOSToken != NULL);
-  return kPOSToken;
+MockUserPosManager::MockUserPosManager() {
+  const StringPiece data = LoadEmbeddedFile(kUserPosManagerData);
+  const char *kMagicNumber = "";  // Magic number is not present.
+  CHECK(manager_.InitUserPosManagerDataFromArray(data, kMagicNumber))
+      << "Embedded user_pos_manager_data.h is broken";
+}
+
+MockUserPosManager::~MockUserPosManager() = default;
+
+void MockUserPosManager::GetUserPOSData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_.GetUserPOSData(token_array_data, string_array_data);
 }
 
 namespace {

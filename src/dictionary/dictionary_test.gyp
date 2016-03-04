@@ -64,6 +64,7 @@
         'dictionary_base.gyp:pos_matcher',
         'dictionary_base.gyp:suppression_dictionary',
         'dictionary_base.gyp:user_dictionary',
+        'dictionary_base.gyp:user_pos',
       ],
       'variables': {
         'test_size': 'small',

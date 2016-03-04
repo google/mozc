@@ -73,6 +73,7 @@
         '../converter/converter_base.gyp:converter_mock',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../dictionary/dictionary_base.gyp:user_pos',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
         '../session/session_base.gyp:request_test_util',

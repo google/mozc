@@ -47,6 +47,7 @@
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
+#include "dictionary/user_pos.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/dictionary_predictor.h"
@@ -149,7 +150,7 @@ void Engine::Init(
   CHECK(suppression_dictionary_.get());
 
   user_dictionary_.reset(
-      new UserDictionary(new UserPOS(data_manager->GetUserPOSData()),
+      new UserDictionary(UserPOS::CreateFromDataManager(*data_manager),
                          data_manager->GetPOSMatcher(),
                          suppression_dictionary_.get()));
   CHECK(user_dictionary_.get());

@@ -52,7 +52,8 @@ class PackedDataManager : public DataManagerInterface {
 
   static PackedDataManager *GetUserPosManager();
 
-  const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
+  void GetUserPOSData(StringPiece *token_array_data,
+                      StringPiece *string_array_data) const override;
   const dictionary::POSMatcher *GetPOSMatcher() const override;
   const uint8 *GetPosGroupData() const override;
   void GetConnectorData(const char **data, size_t *size) const override;

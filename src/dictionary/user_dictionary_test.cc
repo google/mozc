@@ -227,7 +227,7 @@ class UserDictionaryTest : public ::testing::Test {
   // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
     const testing::MockUserPosManager user_pos_manager;
-    return new UserDictionary(new UserPOS(user_pos_manager.GetUserPOSData()),
+    return new UserDictionary(UserPOS::CreateFromDataManager(user_pos_manager),
                               user_pos_manager.GetPOSMatcher(),
                               Singleton<SuppressionDictionary>::get());
   }

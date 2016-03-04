@@ -39,9 +39,9 @@
       'dependencies': [
         '<(mozc_dir)/base/base.gyp:base',
         '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_dir)/dictionary/dictionary_base.gyp:user_pos',
         'gen_embedded_pos_matcher_data_for_<(dataset_tag)#host',
-        'gen_embedded_user_pos_data_for_<(dataset_tag)#host',
+        'gen_user_pos_manager_data_header_for_<(dataset_tag)#host',
+        '../data_manager_base.gyp:data_manager',
       ],
     },
     {
@@ -50,7 +50,6 @@
       'toolsets': ['host'],
       'dependencies': [
         'gen_embedded_pos_matcher_data_for_<(dataset_tag)#host',
-        'gen_embedded_user_pos_data_for_<(dataset_tag)#host',
       ],
     },
     {
@@ -58,7 +57,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        'gen_embedded_user_pos_data_for_<(dataset_tag)#host',
+        'gen_separate_user_pos_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -82,7 +81,67 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_user_pos_data_for_<(dataset_tag)',
+      'target_name': 'gen_user_pos_manager_data_header_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        'gen_user_pos_manager_data_for_<(dataset_tag)#host',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_user_pos_manager_data_header_for_<(dataset_tag)',
+          'variables': {
+            'user_pos_manager_data': '<(gen_out_dir)/user_pos_manager.data',
+          },
+          'inputs': [
+            '<(user_pos_manager_data)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/user_pos_manager_data.h',
+          ],
+          'action': [
+            'python', '<(mozc_dir)/build_tools/embed_file.py',
+            '--input=<(user_pos_manager_data)',
+            '--name=kUserPosManagerData',
+            '--output=<(gen_out_dir)/user_pos_manager_data.h',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_user_pos_manager_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        '../data_manager_base.gyp:dataset_writer_main',
+        'gen_separate_user_pos_data_for_<(dataset_tag)#host',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_user_pos_manager_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(PRODUCT_DIR)/dataset_writer_main<(EXECUTABLE_SUFFIX)',
+            'user_pos_token': '<(gen_out_dir)/user_pos_token_array.data',
+            'user_pos_string': '<(gen_out_dir)/user_pos_string_array.data',
+          },
+          'inputs': [
+            '<(user_pos_token)',
+            '<(user_pos_string)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/user_pos_manager.data',
+          ],
+          'action': [
+            '<(generator)',
+            '--output=<(gen_out_dir)/user_pos_manager.data',
+            'user_pos_token:32:<(user_pos_token)',
+            'user_pos_string:32:<(user_pos_string)',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_user_pos_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
@@ -90,13 +149,14 @@
       ],
       'actions': [
         {
-          'action_name': 'gen_embedded_user_pos_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_user_pos_data_for_<(dataset_tag)',
           'variables': {
             'id_def': '<(platform_data_dir)/id.def',
             'special_pos': '<(common_data_dir)/rules/special_pos.def',
             'user_pos': '<(common_data_dir)/rules/user_pos.def',
             'cforms': '<(common_data_dir)/rules/cforms.def',
-            'user_pos_data': '<(gen_out_dir)/user_pos_data.h',
+            'token_array_data': '<(gen_out_dir)/user_pos_token_array.data',
+            'string_array_data': '<(gen_out_dir)/user_pos_string_array.data',
             'pos_list': '<(gen_out_dir)/pos_list.data',
           },
           'inputs': [
@@ -107,7 +167,8 @@
             '<(cforms)',
           ],
           'outputs': [
-            '<(user_pos_data)',
+            '<(token_array_data)',
+            '<(string_array_data)',
             '<(pos_list)',
           ],
           'action': [
@@ -116,10 +177,11 @@
             '--special_pos_file=<(special_pos)',
             '--user_pos_file=<(user_pos)',
             '--cforms_file=<(cforms)',
-            '--output=<(user_pos_data)',
+            '--output_token_array=<(token_array_data)',
+            '--output_string_array=<(string_array_data)',
             '--output_pos_list=<(pos_list)',
           ],
-          'message': '[<(dataset_tag)] Generating <(user_pos_data).',
+          'message': '[<(dataset_tag)] Generating user pos data.',
         },
       ],
     },

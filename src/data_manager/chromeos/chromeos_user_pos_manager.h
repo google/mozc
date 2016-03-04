@@ -31,6 +31,7 @@
 #define MOZC_DATA_MANAGER_CHROMEOS_CHROMEOS_USER_POS_MANAGER_H_
 
 #include "base/port.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/data_manager_interface.h"
 
 namespace mozc {
@@ -38,14 +39,15 @@ namespace chromeos {
 
 class ChromeOsUserPosManager : public DataManagerInterface {
  public:
-  ChromeOsUserPosManager() {}
-  ~ChromeOsUserPosManager() override {}
+  ChromeOsUserPosManager();
+  ~ChromeOsUserPosManager() override;
 
   static ChromeOsUserPosManager *GetUserPosManager();
 
   // Partially implement the interface because some binary only reqiures the
   // folloiwng embedded data.
-  const dictionary::UserPOS::POSToken *GetUserPOSData() const override;
+  void GetUserPOSData(StringPiece *token_array_data,
+                      StringPiece *string_array_data) const override;
   const dictionary::POSMatcher *GetPOSMatcher() const override;
 
   // The following are implemented in ChromeOsDataManager.
@@ -81,6 +83,7 @@ class ChromeOsUserPosManager : public DataManagerInterface {
                                    size_t *size) const override {}
 
  private:
+  DataManager manager_;
   DISALLOW_COPY_AND_ASSIGN(ChromeOsUserPosManager);
 };
 
