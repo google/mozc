@@ -151,9 +151,6 @@ class StringPiece {
     return const_reverse_iterator(ptr_);
   }
 
-  size_type max_size() const { return length_; }
-  size_type capacity() const { return length_; }
-
   size_type copy(char *buf, size_type n, size_type pos = 0) const;
 
   size_type find(const StringPiece &s, size_type pos = 0) const;

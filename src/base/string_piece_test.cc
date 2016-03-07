@@ -170,9 +170,6 @@ TEST(StringPieceTest, CheckSTL) {
   ASSERT_TRUE(d.data() == NULL);
   ASSERT_TRUE(d.begin() == d.end());
 
-  ASSERT_GE(a.max_size(), a.capacity());
-  ASSERT_GE(a.capacity(), a.size());
-
   char buf[4] = { '%', '%', '%', '%' };
   ASSERT_SIZE_EQ(a.copy(buf, 4), 4);
   ASSERT_EQ(buf[0], a[0]);
