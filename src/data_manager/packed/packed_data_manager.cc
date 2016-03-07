@@ -41,7 +41,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
-#include "dictionary/pos_matcher.h"
 
 DEFINE_string(dataset,
               "",
@@ -49,22 +48,12 @@ DEFINE_string(dataset,
 
 using std::unique_ptr;
 
-using mozc::dictionary::POSMatcher;
-
 namespace mozc {
 namespace packed {
 namespace {
 // Default value of the total bytes limit defined in protobuf library is 64MB.
 // Our big dictionary size is about 50MB. So we don't need to change it.
 const size_t kDefaultTotalBytesLimit = 64 << 20;
-
-class PackedPOSMatcher : public POSMatcher {
- public:
-  PackedPOSMatcher(const uint16 *const rule_id_table,
-                   const Range *const *const range_table)
-      : POSMatcher(rule_id_table, range_table) {
-  }
-};
 
 unique_ptr<PackedDataManager> g_data_manager;
 
@@ -80,7 +69,7 @@ class PackedDataManager::Impl {
 
   void GetUserPOSData(StringPiece *token_array_data,
                       StringPiece *string_array_data) const;
-  const POSMatcher *GetPOSMatcher() const;
+  const uint16 *GetPOSMatcherData() const;
   const uint8 *GetPosGroupData() const;
   void GetConnectorData(const char **data, size_t *size) const;
   void GetSegmenterData(
@@ -107,23 +96,12 @@ class PackedDataManager::Impl {
                             StringPiece *usage_items_data,
                             StringPiece *string_array_data) const;
 #endif  // NO_USAGE_REWRITER
-  const uint16 *GetRuleIdTableForTest() const;
-  const void *GetRangeTablesForTest() const;
   void GetCounterSuffixSortedArray(const char **array, size_t *size) const;
   StringPiece GetMozcData() const;
 
  private:
-  // Non-const struct of POSMatcher::Range
-  struct Range {
-    uint16 lower;
-    uint16 upper;
-  };
   bool InitializeWithSystemDictionaryData();
 
-  unique_ptr<uint16[]> rule_id_table_;
-  unique_ptr<POSMatcher::Range *[]> range_tables_;
-  unique_ptr<Range[]> range_table_items_;
-  unique_ptr<POSMatcher> pos_matcher_;
   unique_ptr<SystemDictionaryData> system_dictionary_data_;
   DataManager manager_;
 };
@@ -172,48 +150,6 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
     return false;
   }
 
-  // Makes POSMatcher data.
-  rule_id_table_.reset(
-      new uint16[
-          system_dictionary_data_->pos_matcher_data().rule_id_table_size()]);
-  for (size_t i = 0;
-       i < system_dictionary_data_->pos_matcher_data().rule_id_table_size();
-       ++i) {
-    rule_id_table_[i] =
-        system_dictionary_data_->pos_matcher_data().rule_id_table(i);
-  }
-  const SystemDictionaryData::PosMatcherData &pos_matcher_data =
-      system_dictionary_data_->pos_matcher_data();
-  range_tables_.reset(
-      new POSMatcher::Range*[pos_matcher_data.range_tables_size()]);
-  size_t range_count = 0;
-  for (size_t i = 0; i < pos_matcher_data.range_tables_size(); ++i) {
-    range_count += pos_matcher_data.range_tables(i).ranges_size();
-  }
-  range_table_items_.reset(
-      new Range[range_count + pos_matcher_data.range_tables_size()]);
-  size_t range_index = 0;
-  for (size_t i = 0; i < pos_matcher_data.range_tables_size(); ++i) {
-    const SystemDictionaryData::PosMatcherData::RangeTable &table =
-        pos_matcher_data.range_tables(i);
-    range_tables_[i] =
-        reinterpret_cast<POSMatcher::Range *>(&range_table_items_[range_index]);
-    for (size_t j = 0; j < table.ranges_size(); ++j) {
-      const SystemDictionaryData::PosMatcherData::RangeTable::Range &range =
-          table.ranges(j);
-      range_table_items_[range_index].lower = range.lower();
-      range_table_items_[range_index].upper = range.upper();
-      ++range_index;
-    }
-    range_table_items_[range_index].lower = static_cast<uint16>(0xFFFF);
-    range_table_items_[range_index].upper = static_cast<uint16>(0xFFFF);
-    ++range_index;
-  }
-
-  // Makes POSMatcher.
-  pos_matcher_.reset(
-      new PackedPOSMatcher(rule_id_table_.get(), range_tables_.get()));
-
   // Initialize |manager_| (PackedDataManager for light doesn't have mozc data).
   if (system_dictionary_data_->has_mozc_data() &&
       !manager_.InitFromArray(system_dictionary_data_->mozc_data(),
@@ -238,8 +174,8 @@ void PackedDataManager::Impl::GetUserPOSData(
   manager_.GetUserPOSData(token_array_data, string_array_data);
 }
 
-const POSMatcher *PackedDataManager::Impl::GetPOSMatcher() const {
-  return pos_matcher_.get();
+const uint16 *PackedDataManager::Impl::GetPOSMatcherData() const {
+  return manager_.GetPOSMatcherData();
 }
 
 const uint8 *PackedDataManager::Impl::GetPosGroupData() const {
@@ -318,14 +254,6 @@ void PackedDataManager::Impl::GetUsageRewriterData(
 }
 #endif  // NO_USAGE_REWRITER
 
-const uint16 *PackedDataManager::Impl::GetRuleIdTableForTest() const {
-  return rule_id_table_.get();
-}
-
-const void *PackedDataManager::Impl::GetRangeTablesForTest() const {
-  return range_tables_.get();
-}
-
 void PackedDataManager::Impl::GetCounterSuffixSortedArray(
     const char **array, size_t *size) const {
   manager_.GetCounterSuffixSortedArray(array, size);
@@ -394,8 +322,8 @@ PackedDataManager *PackedDataManager::GetUserPosManager() {
   return g_data_manager.get();
 }
 
-const POSMatcher *PackedDataManager::GetPOSMatcher() const {
-  return manager_impl_->GetPOSMatcher();
+const uint16 *PackedDataManager::GetPOSMatcherData() const {
+  return manager_impl_->GetPOSMatcherData();
 }
 
 const uint8 *PackedDataManager::GetPosGroupData() const {
@@ -482,14 +410,6 @@ void PackedDataManager::GetUsageRewriterData(
 void PackedDataManager::GetCounterSuffixSortedArray(
     const char **array, size_t *size) const {
   manager_impl_->GetCounterSuffixSortedArray(array, size);
-}
-
-const uint16 *PackedDataManager::GetRuleIdTableForTest() const {
-  return manager_impl_->GetRuleIdTableForTest();
-}
-
-const void *PackedDataManager::GetRangeTablesForTest() const {
-  return manager_impl_->GetRangeTablesForTest();
 }
 
 StringPiece PackedDataManager::GetMozcData() const {

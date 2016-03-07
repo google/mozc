@@ -83,11 +83,11 @@ class UsageRewriterTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config_);
 
     data_manager_.reset(new testing::MockDataManager);
-
+    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
     suppression_dictionary_.reset(new SuppressionDictionary);
     user_dictionary_.reset(
         new UserDictionary(UserPOS::CreateFromDataManager(*data_manager_),
-                           data_manager_->GetPOSMatcher(),
+                           pos_matcher_,
                            suppression_dictionary_.get()));
   }
 
@@ -109,6 +109,7 @@ class UsageRewriterTest : public ::testing::Test {
   std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDictionary> user_dictionary_;
   std::unique_ptr<testing::MockDataManager> data_manager_;
+  dictionary::POSMatcher pos_matcher_;
 };
 
 TEST_F(UsageRewriterTest, CapabilityTest) {

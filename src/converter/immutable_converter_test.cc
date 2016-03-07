@@ -94,8 +94,7 @@ class MockDataAndImmutableConverter {
       const DictionaryInterface *suffix_dictionary = NULL) {
     data_manager_.reset(new testing::MockDataManager);
 
-    const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
-    CHECK(pos_matcher);
+    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
 
     suppression_dictionary_.reset(new SuppressionDictionary);
     CHECK(suppression_dictionary_.get());
@@ -111,10 +110,10 @@ class MockDataAndImmutableConverter {
           SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
       dictionary_.reset(new DictionaryImpl(
           sysdic,  // DictionaryImpl takes the ownership
-          new ValueDictionary(*pos_matcher, &sysdic->value_trie()),
+          new ValueDictionary(pos_matcher_, &sysdic->value_trie()),
           &user_dictionary_stub_,
           suppression_dictionary_.get(),
-          pos_matcher));
+          &pos_matcher_));
     }
     CHECK(dictionary_.get());
 
@@ -153,7 +152,7 @@ class MockDataAndImmutableConverter {
         suppression_dictionary_.get(),
         connector_.get(),
         segmenter_.get(),
-        pos_matcher,
+        &pos_matcher_,
         pos_group_.get(),
         suggestion_filter_.get()));
     CHECK(immutable_converter_.get());
@@ -174,6 +173,7 @@ class MockDataAndImmutableConverter {
   std::unique_ptr<const SuggestionFilter> suggestion_filter_;
   std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
   UserDictionaryStub user_dictionary_stub_;
+  dictionary::POSMatcher pos_matcher_;
 };
 
 }  // namespace

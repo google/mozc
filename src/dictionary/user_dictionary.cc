@@ -290,7 +290,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
 };
 
 UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
-                               const POSMatcher *pos_matcher,
+                               POSMatcher pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
     : ALLOW_THIS_IN_INITIALIZER_LIST(
           reloader_(new UserDictionaryReloader(this))),
@@ -300,7 +300,6 @@ UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
       tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)),
       mutex_(new ReaderWriterMutex) {
   DCHECK(user_pos_.get());
-  DCHECK(pos_matcher_);
   DCHECK(suppression_dictionary_);
   Reload();
 }
@@ -364,8 +363,8 @@ void UserDictionary::LookupPredictive(
     }
     FillTokenFromUserPOSToken(**it, &token);
     // Override POS IDs for suggest only words.
-    if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
-      token.lid = token.rid = pos_matcher_->GetUnknownId();
+    if (pos_matcher_.IsSuggestOnlyWord((*it)->id)) {
+      token.lid = token.rid = pos_matcher_.GetUnknownId();
     }
     if (callback->OnToken((*it)->key, (*it)->key, token) ==
         Callback::TRAVERSE_DONE) {
@@ -403,7 +402,7 @@ void UserDictionary::LookupPrefix(
     if ((*it)->key > key) {
       break;
     }
-    if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
+    if (pos_matcher_.IsSuggestOnlyWord((*it)->id)) {
       continue;
     }
     if (!Util::StartsWith(key, (*it)->key)) {
@@ -457,7 +456,7 @@ void UserDictionary::LookupExact(
   Token token;
   for (; range.first != range.second; ++range.first) {
     const UserPOS::Token &user_pos_token = **range.first;
-    if (pos_matcher_->IsSuggestOnlyWord(user_pos_token.id)) {
+    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
     FillTokenFromUserPOSToken(user_pos_token, &token);

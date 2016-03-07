@@ -72,10 +72,10 @@ class CandidateFilterTest : public ::testing::Test {
   // considering this class as POD.
   CandidateFilterTest() {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     candidate_freelist_.reset(new FreeList<Segment::Candidate>(1024));
     node_freelist_.reset(new FreeList<Node>(1024));
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
 
     {
       mozc::testing::MockDataManager data_manager;
@@ -86,7 +86,7 @@ class CandidateFilterTest : public ::testing::Test {
     }
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     candidate_freelist_->Free();
     node_freelist_->Free();
   }
@@ -123,20 +123,20 @@ class CandidateFilterTest : public ::testing::Test {
   }
 
   const POSMatcher &pos_matcher() const {
-    return *pos_matcher_;
+    return pos_matcher_;
   }
 
   CandidateFilter *CreateCandidateFilter(
       bool apply_suggestion_filter_for_exact_match) const {
     return new CandidateFilter(&suppression_dictionary_,
-                               pos_matcher_,
+                               &pos_matcher_,
                                suggestion_filter_.get(),
                                apply_suggestion_filter_for_exact_match);
   }
 
   std::unique_ptr<FreeList<Segment::Candidate> > candidate_freelist_;
   std::unique_ptr<FreeList<Node> > node_freelist_;
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
   SuppressionDictionary suppression_dictionary_;
   std::unique_ptr<SuggestionFilter> suggestion_filter_;
   scoped_data_manager_initializer_for_testing
@@ -424,10 +424,10 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
 
 TEST_F(CandidateFilterTest, Regression3437022) {
   std::unique_ptr<SuppressionDictionary> dic(new SuppressionDictionary);
-  const POSMatcher *pos_matcher =
-      UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  const POSMatcher pos_matcher(
+      UserPosManager::GetUserPosManager()->GetPOSMatcherData());
   std::unique_ptr<CandidateFilter> filter(
-      new CandidateFilter(dic.get(), pos_matcher,
+      new CandidateFilter(dic.get(), &pos_matcher,
                           suggestion_filter_.get(), true));
 
   vector<const Node *> n;

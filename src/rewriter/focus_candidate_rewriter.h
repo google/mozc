@@ -33,14 +33,13 @@
 #include "base/port.h"
 #include "base/serialized_string_array.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
 class DataManagerInterface;
 struct CounterSuffixEntry;
-
-namespace dictionary { class POSMatcher; }
 
 class FocusCandidateRewriter : public RewriterInterface  {
  public:
@@ -84,7 +83,7 @@ class FocusCandidateRewriter : public RewriterInterface  {
                             uint32 *script_type) const;
 
   SerializedStringArray suffix_array_;
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher pos_matcher_;
 
   DISALLOW_COPY_AND_ASSIGN(FocusCandidateRewriter);
 };

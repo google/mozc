@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "base/port.h"
+#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 
@@ -109,9 +110,10 @@ class DictionaryGenerator {
   bool Output(const string &filename) const;
 
  private:
-  std::unique_ptr<ObjectPool<Token> > token_pool_;
-  std::unique_ptr<map<uint64, Token *> > token_map_;
+  std::unique_ptr<ObjectPool<Token>> token_pool_;
+  std::unique_ptr<map<uint64, Token *>> token_map_;
   std::unique_ptr<const UserPOSInterface> user_pos_;
+  const dictionary::POSMatcher pos_matcher_;
   const uint16 open_bracket_id_;
   const uint16 close_bracket_id_;
 

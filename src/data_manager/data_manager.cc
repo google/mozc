@@ -38,9 +38,15 @@
 namespace mozc {
 namespace {
 
-bool InitUserPosManagerDataFromReader(const DataSetReader &reader,
-                                      StringPiece *user_pos_token_array_data,
-                                      StringPiece *user_pos_string_array_data) {
+bool InitUserPosManagerDataFromReader(
+    const DataSetReader &reader,
+    StringPiece *pos_matcher_data,
+    StringPiece *user_pos_token_array_data,
+    StringPiece *user_pos_string_array_data) {
+  if (!reader.Get("pos_matcher", pos_matcher_data)) {
+    LOG(ERROR) << "Cannot find POS matcher rule ID table";
+    return false;
+  }
   if (!reader.Get("user_pos_token", user_pos_token_array_data)) {
     LOG(ERROR) << "Cannot find a user POS token array";
     return false;
@@ -71,6 +77,7 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     return false;
   }
   if (!InitUserPosManagerDataFromReader(reader,
+                                        &pos_matcher_data_,
                                         &user_pos_token_array_data_,
                                         &user_pos_string_array_data_)) {
     LOG(ERROR) << "User POS manager data is broken";
@@ -234,6 +241,7 @@ bool DataManager::InitUserPosManagerDataFromArray(StringPiece array,
     return false;
   }
   if (!InitUserPosManagerDataFromReader(reader,
+                                        &pos_matcher_data_,
                                         &user_pos_token_array_data_,
                                         &user_pos_string_array_data_)) {
     LOG(ERROR) << "User POS manager data is broken";
@@ -275,9 +283,8 @@ void DataManager::GetUserPOSData(StringPiece *token_array_data,
   *string_array_data = user_pos_string_array_data_;
 }
 
-const dictionary::POSMatcher *DataManager::GetPOSMatcher() const {
-  LOG(FATAL) << "Not implemented";
-  return nullptr;
+const uint16 *DataManager::GetPOSMatcherData() const {
+  return reinterpret_cast<const uint16 *>(pos_matcher_data_.data());
 }
 
 const uint8 *DataManager::GetPosGroupData() const {

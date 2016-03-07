@@ -65,15 +65,15 @@ class TextDictionaryLoaderTest : public ::testing::Test {
   // considering this class as POD.
   TextDictionaryLoaderTest() {}
 
-  virtual void SetUp() {
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  void SetUp() override {
+    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
   }
 
   TextDictionaryLoader *CreateTextDictionaryLoader() {
-    return new TextDictionaryLoader(*pos_matcher_);
+    return new TextDictionaryLoader(pos_matcher_);
   }
 
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
   scoped_data_manager_initializer_for_testing
       scoped_data_manager_initializer_for_testing_;
 };
@@ -183,8 +183,8 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ZIP_CODE"));
-    EXPECT_EQ(pos_matcher_->GetZipcodeId(), token.lid);
-    EXPECT_EQ(pos_matcher_->GetZipcodeId(), token.rid);
+    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.lid);
+    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
   }
 
@@ -193,8 +193,8 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ENGLISH:RATED"));
-    EXPECT_EQ(pos_matcher_->GetIsolatedWordId(), token.lid);
-    EXPECT_EQ(pos_matcher_->GetIsolatedWordId(), token.rid);
+    EXPECT_EQ(pos_matcher_.GetIsolatedWordId(), token.lid);
+    EXPECT_EQ(pos_matcher_.GetIsolatedWordId(), token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
   }
 

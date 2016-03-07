@@ -103,7 +103,8 @@ class LanguageAwareRewriterTest : public testing::Test {
 
   LanguageAwareRewriter *CreateLanguageAwareRewriter() const {
     return new LanguageAwareRewriter(
-        *UserPosManager::GetUserPosManager()->GetPOSMatcher(),
+        dictionary::POSMatcher(
+            UserPosManager::GetUserPosManager()->GetPOSMatcherData()),
         dictionary_mock_.get());
   }
 

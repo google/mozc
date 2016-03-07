@@ -33,6 +33,7 @@
 #include "base/port.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/merger_rewriter.h"
 
 namespace mozc {
@@ -48,6 +49,7 @@ class RewriterImpl : public MergerRewriter {
                const dictionary::DictionaryInterface *dictionary);
 
  private:
+  const dictionary::POSMatcher pos_matcher_;
   DISALLOW_COPY_AND_ASSIGN(RewriterImpl);
 };
 

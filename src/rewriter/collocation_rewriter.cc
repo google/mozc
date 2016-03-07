@@ -506,9 +506,9 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
         // Segment is adverb if;
         //  1) lid and rid is adverb.
         //  2) or rid is adverb suffix.
-        ((pos_matcher_->IsAdverb(segments->segment(i - 1).candidate(0).lid) &&
-          pos_matcher_->IsAdverb(segments->segment(i - 1).candidate(0).rid)) ||
-         pos_matcher_->IsAdverbSegmentSuffix(
+        ((pos_matcher_.IsAdverb(segments->segment(i - 1).candidate(0).lid) &&
+          pos_matcher_.IsAdverb(segments->segment(i - 1).candidate(0).rid)) ||
+         pos_matcher_.IsAdverbSegmentSuffix(
              segments->segment(i - 1).candidate(0).rid)) &&
         (cand.content_value != cand.value ||
          cand.value != "\xe3\x83\xbb")) {  // "・" workaround
@@ -584,9 +584,9 @@ class CollocationRewriter::SuppressionFilter {
 
 CollocationRewriter::CollocationRewriter(
     const DataManagerInterface *data_manager)
-    : pos_matcher_(data_manager->GetPOSMatcher()),
-      first_name_id_(pos_matcher_->GetFirstNameId()),
-      last_name_id_(pos_matcher_->GetLastNameId()) {
+    : pos_matcher_(data_manager->GetPOSMatcherData()),
+      first_name_id_(pos_matcher_.GetFirstNameId()),
+      last_name_id_(pos_matcher_.GetLastNameId()) {
   const char *data = NULL;
   size_t size = 0;
 

@@ -239,7 +239,7 @@ void InsertNounPrefix(const POSMatcher &pos_matcher,
 }  // namespace
 
 SingleKanjiRewriter::SingleKanjiRewriter(const POSMatcher &pos_matcher)
-    : pos_matcher_(&pos_matcher) {}
+    : pos_matcher_(pos_matcher) {}
 
 SingleKanjiRewriter::~SingleKanjiRewriter() {}
 
@@ -270,7 +270,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
     InsertCandidate(is_single_segment,
-                    pos_matcher_->GetGeneralSymbolId(),
+                    pos_matcher_.GetGeneralSymbolId(),
                     kanji_list,
                     segments->mutable_conversion_segment(i));
 
@@ -289,7 +289,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
       const Segment::Candidate &right_candidate =
           segments->conversion_segment(i + 1).candidate(0);
       // right segment must be a noun.
-      if (!pos_matcher_->IsContentNoun(right_candidate.lid)) {
+      if (!pos_matcher_.IsContentNoun(right_candidate.lid)) {
         continue;
       }
     } else if (segments_size != 1) {  // also apply if segments_size == 1.
@@ -302,7 +302,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     if (token == NULL) {
       continue;
     }
-    InsertNounPrefix(*pos_matcher_,
+    InsertNounPrefix(pos_matcher_,
                      segments->mutable_conversion_segment(i),
                      token->value, token->value_size);
     // Ignore the next noun content word.

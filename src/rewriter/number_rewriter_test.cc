@@ -90,14 +90,14 @@ bool FindValue(const Segment &segment, const string &value) {
   return false;
 }
 
-Segment *SetupSegments(const POSMatcher* pos_matcher,
+Segment *SetupSegments(const POSMatcher& pos_matcher,
                        const string &candidate_value, Segments *segments) {
   segments->Clear();
   Segment *segment = segments->push_back_segment();
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher->GetNumberId();
-  candidate->rid = pos_matcher->GetNumberId();
+  candidate->lid = pos_matcher.GetNumberId();
+  candidate->rid = pos_matcher.GetNumberId();
   candidate->value = candidate_value;
   candidate->content_value = candidate_value;
   return segment;
@@ -130,7 +130,7 @@ class NumberRewriterTest : public ::testing::Test {
   // considering this class as POD.
   NumberRewriterTest() {}
 
-  virtual void SetUp() {
+  void SetUp() override {
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // TODO(noriyukit): Currently this test uses mock data manager.  Check if we
     // can remove this registration of packed data manager.
@@ -143,10 +143,10 @@ class NumberRewriterTest : public ::testing::Test {
 #endif  // MOZC_USE_PACKED_DICTIONARY
 
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    pos_matcher_ = mock_data_manager_.GetPOSMatcher();
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
@@ -158,7 +158,7 @@ class NumberRewriterTest : public ::testing::Test {
   }
 
   const testing::MockDataManager mock_data_manager_;
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
   const ConversionRequest default_request_;
 };
 
@@ -177,8 +177,8 @@ TEST_F(NumberRewriterTest, BasicTest) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "012";
   candidate->content_value = "012";
 
@@ -252,8 +252,8 @@ TEST_F(NumberRewriterTest, RequestType) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "012";
     candidate->content_value = "012";
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -268,8 +268,8 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "012""\xE3\x81\x8C";   // "012が"
   candidate->content_value = "012";
 
@@ -326,8 +326,8 @@ TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetCounterSuffixWordId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetCounterSuffixWordId();
   candidate->value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x80\x8B";  // "十五個"
   candidate->content_value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x80\x8B";  // ditto
 
@@ -355,14 +355,14 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetCounterSuffixWordId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetCounterSuffixWordId();
   candidate->value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x9B\x9E";  // "十五回"
   candidate->content_value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x9B\x9E";  // ditto
   candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetCounterSuffixWordId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetCounterSuffixWordId();
   candidate->value = "\xE5\x8D\x81\xE4\xBA\x94\xE9\x9A\x8E";  // "十五階"
   candidate->content_value = "\xE5\x8D\x81\xE4\xBA\x94\xE9\x9A\x8E";  // ditto
 
@@ -458,8 +458,8 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   second_candidate->Init();
 
   second_candidate->value = "0";
-  second_candidate->lid = pos_matcher_->GetNumberId();
-  second_candidate->rid = pos_matcher_->GetNumberId();
+  second_candidate->lid = pos_matcher_.GetNumberId();
+  second_candidate->rid = pos_matcher_.GetNumberId();
   second_candidate->content_value = second_candidate->value;
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -522,8 +522,8 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "0";
   candidate->content_value = "0";
 
@@ -564,8 +564,8 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "00";
   candidate->content_value = "00";
 
@@ -604,8 +604,8 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "1000000000000000000";
   candidate->content_value = "1000000000000000000";
 
@@ -688,8 +688,8 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "18446744073709551616";  // 2^64
   candidate->content_value = "18446744073709551616";
 
@@ -793,8 +793,8 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = pos_matcher_->GetNumberId();
-  candidate->rid = pos_matcher_->GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
 
   // 10^100 as "100000 ... 0"
   string input = "1";
@@ -873,8 +873,8 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     // "さんびゃく"
     candidate->key =
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f";
@@ -908,8 +908,8 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f");
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     // "さんびゃく"
     candidate->key =
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f";
@@ -920,8 +920,8 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
 
     candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     // "さんびゃく"
     candidate->key =
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f";
@@ -954,8 +954,8 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
     segment->set_key("\xe3\x81\x84\xe3\x81\xa1");
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetUnknownId();  // Not number POS
-    candidate->rid = pos_matcher_->GetUnknownId();
+    candidate->lid = pos_matcher_.GetUnknownId();  // Not number POS
+    candidate->rid = pos_matcher_.GetUnknownId();
     // "いち"
     candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
     // "いち"
@@ -967,8 +967,8 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
 
     candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();  // Number POS
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();  // Number POS
+    candidate->rid = pos_matcher_.GetNumberId();
     // "いち"
     candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
     // "いち"
@@ -992,9 +992,9 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
   // "壱"
   EXPECT_TRUE(FindCandidateId(segments.segment(0), "\xe5\xa3\xb1", &daiji_pos));
   EXPECT_GT(daiji_pos, 0);
-  EXPECT_EQ(pos_matcher_->GetNumberId(),
+  EXPECT_EQ(pos_matcher_.GetNumberId(),
             segments.segment(0).candidate(daiji_pos).lid);
-  EXPECT_EQ(pos_matcher_->GetNumberId(),
+  EXPECT_EQ(pos_matcher_.GetNumberId(),
             segments.segment(0).candidate(daiji_pos).rid);
 }
 
@@ -1020,8 +1020,8 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = kSuccess[i][0];
     candidate->content_value = kSuccess[i][0];
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -1047,8 +1047,8 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = kFail[i][0];
     candidate->content_value = kFail[i][0];
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -1073,8 +1073,8 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
       Segment *seg = segments.push_back_segment();
       Segment::Candidate *candidate = seg->add_candidate();
       candidate->Init();
-      candidate->lid = pos_matcher_->GetGeneralNounId();
-      candidate->rid = pos_matcher_->GetGeneralNounId();
+      candidate->lid = pos_matcher_.GetGeneralNounId();
+      candidate->rid = pos_matcher_.GetGeneralNounId();
       // "はやぶさ"
       candidate->key = "\xE3\x81\xAF\xE3\x82\x84\xE3\x81\xB6\xE3\x81\x95";
       candidate->content_key = candidate->key;
@@ -1135,8 +1135,8 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
   cand->content_key = cand->key;
   cand->value = "\xE7\x99\xBE\xE8\x88\x8C\xE9\xB3\xA5";  // "百舌鳥"
   cand->content_value = cand->value;
-  cand->lid = pos_matcher_->GetGeneralNounId();
-  cand->rid = pos_matcher_->GetGeneralNounId();
+  cand->lid = pos_matcher_.GetGeneralNounId();
+  cand->rid = pos_matcher_.GetGeneralNounId();
   EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
 }
 
@@ -1149,8 +1149,8 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->key = "090";
     candidate->value = "090";
     candidate->content_key = "090";
@@ -1193,8 +1193,8 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
                  "\xe3\x81\xa8\xe3\x81\xb1\xe3\x81\xa3\xe3\x81\x8f");
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = pos_matcher_->GetNumberId();
-    candidate->rid = pos_matcher_->GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     // "ひとり"
     candidate->key = "\xe3\x81\xb2\xe3\x81\xa8\xe3\x82\x8a";
     // "一人"

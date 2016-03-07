@@ -36,10 +36,6 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "data_manager/packed/system_dictionary_data_packer.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/user_pos.h"
-#include "rewriter/embedded_dictionary.h"
 
 DEFINE_string(mozc_data, "", "Data set file to be packed");
 DEFINE_string(mozc_data_magic, "", "Magic number for data set file");
@@ -49,11 +45,6 @@ DEFINE_bool(make_header, false, "make header mode");
 DEFINE_bool(use_gzip, false, "use gzip");
 
 namespace mozc {
-namespace {
-
-#include "data_manager/@DIR@/pos_matcher_data.h"
-
-}  // namespace
 
 bool OutputData(const string &file_path) {
   string dictionary_version = Version::GetMozcVersion();
@@ -61,11 +52,6 @@ bool OutputData(const string &file_path) {
     dictionary_version = FLAGS_dictionary_version;
   }
   packed::SystemDictionaryDataPacker packer(dictionary_version);
-  // The following two arrays contain sentinel elements but the packer doesn't
-  // expect them.  So pass the shinked ranges of the arrays.  Note that sentinel
-  // elements are not required at runtime.
-  packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
-                           kRangeTables, arraysize(kRangeTables) - 1);
 
   string magic;
   CHECK(Util::Unescape(FLAGS_mozc_data_magic, &magic))

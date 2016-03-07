@@ -35,6 +35,7 @@
 #include "base/port.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
 
@@ -54,7 +55,7 @@ class UserDataManagerInterface;
 class Engine : public EngineInterface {
  public:
   Engine();
-  virtual ~Engine();
+  ~Engine() override;
 
   // Initializes the object by given a data manager (providing embedded data
   // set) and predictor factory function.
@@ -64,19 +65,20 @@ class Engine : public EngineInterface {
                                                      PredictorInterface *),
             bool enable_content_word_learning);
 
-  virtual ConverterInterface *GetConverter() const { return converter_.get(); }
-  virtual PredictorInterface *GetPredictor() const { return predictor_; }
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
+  ConverterInterface *GetConverter() const override { return converter_.get(); }
+  PredictorInterface *GetPredictor() const override { return predictor_; }
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return suppression_dictionary_.get();
   }
 
-  virtual bool Reload();
+  bool Reload() override;
 
-  virtual UserDataManagerInterface *GetUserDataManager() {
+  UserDataManagerInterface *GetUserDataManager() override {
     return user_data_manager_.get();
   }
 
  private:
+  dictionary::POSMatcher pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<const Connector> connector_;
   std::unique_ptr<const Segmenter> segmenter_;

@@ -323,6 +323,7 @@ class UserHistoryPredictorTest : public ::testing::Test {
     unique_ptr<DictionaryMock> dictionary;
     unique_ptr<SuppressionDictionary> suppression_dictionary;
     unique_ptr<UserHistoryPredictor> predictor;
+    dictionary::POSMatcher pos_matcher;
   };
 
   DataAndPredictor *CreateDataAndPredictor() const {
@@ -330,9 +331,10 @@ class UserHistoryPredictorTest : public ::testing::Test {
     testing::MockDataManager data_manager;
     ret->dictionary.reset(new DictionaryMock);
     ret->suppression_dictionary.reset(new SuppressionDictionary);
+    ret->pos_matcher.Set(data_manager.GetPOSMatcherData());
     ret->predictor.reset(
         new UserHistoryPredictor(ret->dictionary.get(),
-                                 data_manager.GetPOSMatcher(),
+                                 &ret->pos_matcher,
                                  ret->suppression_dictionary.get(),
                                  false));
     return ret;

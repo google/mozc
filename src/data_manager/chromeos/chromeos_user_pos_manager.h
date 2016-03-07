@@ -48,7 +48,7 @@ class ChromeOsUserPosManager : public DataManagerInterface {
   // folloiwng embedded data.
   void GetUserPOSData(StringPiece *token_array_data,
                       StringPiece *string_array_data) const override;
-  const dictionary::POSMatcher *GetPOSMatcher() const override;
+  const uint16 *GetPOSMatcherData() const override;
 
   // The following are implemented in ChromeOsDataManager.
   const uint8 *GetPosGroupData() const override { return nullptr; }

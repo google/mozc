@@ -120,6 +120,7 @@
       'dependencies': [
         '../data_manager_base.gyp:dataset_writer_main',
         '../../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
+        '<(dataset_tag)_data_manager_base.gyp:gen_separate_pos_matcher_data_for_<(dataset_tag)#host',
         '<(dataset_tag)_data_manager_base.gyp:gen_separate_user_pos_data_for_<(dataset_tag)#host',
         'gen_separate_connection_data_for_<(dataset_tag)#host',
         'gen_separate_dictionary_data_for_<(dataset_tag)#host',
@@ -138,6 +139,7 @@
           'action_name': 'gen_mozc_dataset_for_<(dataset_tag)',
           'variables': {
             'generator': '<(PRODUCT_DIR)/dataset_writer_main<(EXECUTABLE_SUFFIX)',
+            'pos_matcher': '<(gen_out_dir)/pos_matcher.data',
             'user_pos_token': '<(gen_out_dir)/user_pos_token_array.data',
             'user_pos_string': '<(gen_out_dir)/user_pos_string_array.data',
             'dictionary': '<(gen_out_dir)/system.dictionary',
@@ -162,6 +164,7 @@
             'symbol_string': '<(gen_out_dir)/symbol_string.data',
           },
           'inputs': [
+            '<(pos_matcher)',
             '<(user_pos_token)',
             '<(user_pos_string)',
             '<(dictionary)',
@@ -192,6 +195,7 @@
             '<(generator)',
             '--magic=<(magic_number)',
             '--output=<(gen_out_dir)/<(out_mozc_data)',
+            'pos_matcher:32:<(pos_matcher)',
             'user_pos_token:32:<(user_pos_token)',
             'user_pos_string:32:<(user_pos_string)',
             'coll:32:<(gen_out_dir)/collocation_data.data',
@@ -248,7 +252,6 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '<(dataset_tag)_data_manager_base.gyp:gen_<(dataset_tag)_embedded_data_light',
         'gen_embedded_collocation_data_for_<(dataset_tag)#host',
         'gen_embedded_collocation_suppression_data_for_<(dataset_tag)#host',
         'gen_embedded_connection_data_for_<(dataset_tag)#host',

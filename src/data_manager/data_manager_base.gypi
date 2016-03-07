@@ -38,18 +38,8 @@
       ],
       'dependencies': [
         '<(mozc_dir)/base/base.gyp:base',
-        '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        'gen_embedded_pos_matcher_data_for_<(dataset_tag)#host',
         'gen_user_pos_manager_data_header_for_<(dataset_tag)#host',
         '../data_manager_base.gyp:data_manager',
-      ],
-    },
-    {
-      'target_name': 'gen_<(dataset_tag)_embedded_data_light',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        'gen_embedded_pos_matcher_data_for_<(dataset_tag)#host',
       ],
     },
     {
@@ -115,16 +105,19 @@
       'dependencies': [
         '../data_manager_base.gyp:dataset_writer_main',
         'gen_separate_user_pos_data_for_<(dataset_tag)#host',
+        'gen_separate_pos_matcher_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
           'action_name': 'gen_user_pos_manager_data_for_<(dataset_tag)',
           'variables': {
             'generator': '<(PRODUCT_DIR)/dataset_writer_main<(EXECUTABLE_SUFFIX)',
+            'pos_matcher': '<(gen_out_dir)/pos_matcher.data',
             'user_pos_token': '<(gen_out_dir)/user_pos_token_array.data',
             'user_pos_string': '<(gen_out_dir)/user_pos_string_array.data',
           },
           'inputs': [
+            '<(pos_matcher)',
             '<(user_pos_token)',
             '<(user_pos_string)',
           ],
@@ -134,6 +127,7 @@
           'action': [
             '<(generator)',
             '--output=<(gen_out_dir)/user_pos_manager.data',
+            'pos_matcher:32:<(pos_matcher)',
             'user_pos_token:32:<(user_pos_token)',
             'user_pos_string:32:<(user_pos_string)',
           ],
@@ -186,7 +180,7 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_pos_matcher_data_for_<(dataset_tag)',
+      'target_name': 'gen_separate_pos_matcher_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
@@ -194,12 +188,12 @@
       ],
       'actions': [
         {
-          'action_name': 'gen_embedded_pos_matcher_data_for_<(dataset_tag)',
+          'action_name': 'gen_separate_pos_matcher_data_for_<(dataset_tag)',
           'variables': {
             'id_def': '<(platform_data_dir)/id.def',
             'special_pos': '<(common_data_dir)/rules/special_pos.def',
             'pos_matcher_rule': '<(common_data_dir)/rules/pos_matcher_rule.def',
-            'pos_matcher_data': '<(gen_out_dir)/pos_matcher_data.h',
+            'pos_matcher_data': '<(gen_out_dir)/pos_matcher.data',
           },
           'inputs': [
             '<(mozc_dir)/dictionary/gen_pos_matcher_code.py',

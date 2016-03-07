@@ -39,18 +39,7 @@ message SystemDictionaryData {
 
   reserved 3;  // DEPRECATED: repeated PosToken pos_tokens = 3;
 
-  message PosMatcherData {
-    repeated uint32 rule_id_table = 1;
-    message RangeTable {
-      message Range {
-        optional uint32 lower = 1;
-        optional uint32 upper = 2;
-      };
-      repeated Range ranges = 2;
-    };
-    repeated RangeTable range_tables = 2;
-  };
-  optional PosMatcherData pos_matcher_data = 4;
+  reserved 4;  // DEPRECATED: optional PosMatcherData pos_matcher_data = 4;
 
   reserved 5;  // DEPRECATED: optional bytes lid_group_data = 5;
 

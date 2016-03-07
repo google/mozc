@@ -38,15 +38,15 @@ namespace mozc {
 class SingleKanjiRewriter : public RewriterInterface  {
  public:
   explicit SingleKanjiRewriter(const dictionary::POSMatcher &pos_matcher);
-  virtual ~SingleKanjiRewriter();
+  ~SingleKanjiRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher pos_matcher_;
 };
 
 }  // namespace mozc

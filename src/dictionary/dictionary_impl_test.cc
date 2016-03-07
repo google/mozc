@@ -58,28 +58,28 @@ namespace {
 struct DictionaryData {
   std::unique_ptr<DictionaryInterface> user_dictionary;
   std::unique_ptr<SuppressionDictionary> suppression_dictionary;
-  const POSMatcher *pos_matcher;
+  POSMatcher pos_matcher;
   std::unique_ptr<DictionaryInterface> dictionary;
 };
 
 DictionaryData *CreateDictionaryData() {
   DictionaryData *ret = new DictionaryData;
   testing::MockDataManager data_manager;
-  ret->pos_matcher = data_manager.GetPOSMatcher();
+  ret->pos_matcher.Set(data_manager.GetPOSMatcherData());
   const char *dictionary_data = NULL;
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
   SystemDictionary *sys_dict =
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   ValueDictionary *val_dict =
-      new ValueDictionary(*ret->pos_matcher, &sys_dict->value_trie());
+      new ValueDictionary(ret->pos_matcher, &sys_dict->value_trie());
   ret->user_dictionary.reset(new UserDictionaryStub);
   ret->suppression_dictionary.reset(new SuppressionDictionary);
   ret->dictionary.reset(new DictionaryImpl(sys_dict,
                                            val_dict,
                                            ret->user_dictionary.get(),
                                            ret->suppression_dictionary.get(),
-                                           ret->pos_matcher));
+                                           &ret->pos_matcher));
   return ret;
 }
 
@@ -290,7 +290,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   // config.
   config_.set_use_zip_code_conversion(true);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
-    CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
+    CheckZipCodeExistenceCallback callback(kKey, kValue, &data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
   }
@@ -298,7 +298,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   // Without the flag, it should be suppressed.
   config_.set_use_zip_code_conversion(false);
   for (size_t i = 0; i < arraysize(kTestPair); ++i) {
-    CheckZipCodeExistenceCallback callback(kKey, kValue, data->pos_matcher);
+    CheckZipCodeExistenceCallback callback(kKey, kValue, &data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
   }

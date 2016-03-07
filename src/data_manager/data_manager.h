@@ -55,7 +55,8 @@ class DataManager : public DataManagerInterface {
   // partial data set).
   bool InitUserPosManagerDataFromArray(StringPiece array, StringPiece magic);
 
-  // The following interfaces are implemented.
+  // Implementation of DataManagerInterface.
+  const uint16 *GetPOSMatcherData() const override;
   void GetUserPOSData(StringPiece *token_array_data,
                       StringPiece *string_array_data) const override;
   void GetConnectorData(const char **data, size_t *size) const override;
@@ -89,12 +90,8 @@ class DataManager : public DataManagerInterface {
       StringPiece *string_array_data) const override;
 #endif  // NO_USAGE_REWRITER
 
-  // The following interfaces are not yet implemented.
-  // TODO(noriyukit): Implements all the interfaces by migrating embedded C++
-  // structures to a data set file.
-  const dictionary::POSMatcher *GetPOSMatcher() const override;
-
  private:
+  StringPiece pos_matcher_data_;
   StringPiece user_pos_token_array_data_;
   StringPiece user_pos_string_array_data_;
   StringPiece connection_data_;

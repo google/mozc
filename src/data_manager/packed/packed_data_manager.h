@@ -54,7 +54,7 @@ class PackedDataManager : public DataManagerInterface {
 
   void GetUserPOSData(StringPiece *token_array_data,
                       StringPiece *string_array_data) const override;
-  const dictionary::POSMatcher *GetPOSMatcher() const override;
+  const uint16 *GetPOSMatcherData() const override;
   const uint8 *GetPosGroupData() const override;
   void GetConnectorData(const char **data, size_t *size) const override;
   void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
@@ -87,8 +87,6 @@ class PackedDataManager : public DataManagerInterface {
 
  private:
   friend class PackedDataTestBase;
-  const uint16 *GetRuleIdTableForTest() const;
-  const void *GetRangeTablesForTest() const;
 
   class Impl;
   std::unique_ptr<Impl> manager_impl_;

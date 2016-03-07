@@ -44,11 +44,6 @@ class SystemDictionaryDataPacker {
  public:
   explicit SystemDictionaryDataPacker(const string &product_version);
   ~SystemDictionaryDataPacker();
-  void SetPosMatcherData(
-      const uint16 *rule_id_table,
-      size_t rule_id_table_count,
-      const dictionary::POSMatcher::Range *const *range_tables,
-      size_t range_tables_count);
   void SetMozcData(const string &data, const string &magic);
 
   bool Output(const string &file_path, bool use_gzip);

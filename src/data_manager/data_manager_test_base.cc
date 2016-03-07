@@ -143,7 +143,7 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
   std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
-  const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
+  const POSMatcher pos_matcher(data_manager_->GetPOSMatcherData());
 
   Node lnode, rnode;
   lnode.Init();
@@ -151,9 +151,9 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
   lnode.node_type = Node::NOR_NODE;
   rnode.node_type = Node::NOR_NODE;
   // "助詞"
-  lnode.rid = pos_matcher->GetAcceptableParticleAtBeginOfSegmentId();
+  lnode.rid = pos_matcher.GetAcceptableParticleAtBeginOfSegmentId();
   // "名詞,サ変".
-  rnode.lid = pos_matcher->GetUnknownId();
+  rnode.lid = pos_matcher.GetUnknownId();
   EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
 
   lnode.attributes |= Node::STARTS_WITH_PARTICLE;

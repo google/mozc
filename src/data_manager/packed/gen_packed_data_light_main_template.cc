@@ -35,19 +35,11 @@
 #include "base/logging.h"
 #include "base/version.h"
 #include "data_manager/packed/system_dictionary_data_packer.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/user_pos.h"
 
 DEFINE_string(user_pos_manager_data, "", "Input user pos manager data");
 DEFINE_string(output, "", "Output data file name");
 
 namespace mozc {
-namespace {
-
-#include "data_manager/@DIR@/pos_matcher_data.h"
-
-}  // namespace
 
 bool OutputData(const string &file_path) {
   const char* kMagicNumber = "";  // No magic number.
@@ -55,11 +47,6 @@ bool OutputData(const string &file_path) {
   packer.SetMozcData(InputFileStream(FLAGS_user_pos_manager_data.c_str(),
                                      ios_base::in | ios_base::binary).Read(),
                      kMagicNumber);
-  // The following two arrays contain sentinel elements but the packer doesn't
-  // expect them.  So, pass the shinked ranges of the arrays.  Note that
-  // sentinel elements are not necessary at runtime.
-  packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable) - 1,
-                           kRangeTables, arraysize(kRangeTables) - 1);
   return packer.Output(file_path, false);
 }
 

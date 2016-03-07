@@ -32,13 +32,12 @@
 
 #include "base/port.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
 class DataManagerInterface;
-
-namespace dictionary { class POSMatcher; }
 
 class CollocationRewriter : public RewriterInterface {
  public:
@@ -58,7 +57,7 @@ class CollocationRewriter : public RewriterInterface {
                                Segment *seg) const;
   bool RewriteCollocation(Segments *segments) const;
 
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher pos_matcher_;
   const uint16 first_name_id_;
   const uint16 last_name_id_;
 

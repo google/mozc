@@ -534,7 +534,8 @@ class SessionTest : public testing::Test {
 
     t13n_rewriter_.reset(
         new TransliterationRewriter(
-            *UserPosManager::GetUserPosManager()->GetPOSMatcher()));
+            dictionary::POSMatcher(
+                UserPosManager::GetUserPosManager()->GetPOSMatcherData())));
   }
 
   virtual void TearDown() {

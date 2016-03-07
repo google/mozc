@@ -220,16 +220,17 @@ class UserDictionaryTest : public ::testing::Test {
     const testing::MockUserPosManager user_pos_manager;
     return new UserDictionary(
         new UserPOSMock(),
-        user_pos_manager.GetPOSMatcher(),
+        dictionary::POSMatcher(user_pos_manager.GetPOSMatcherData()),
         suppression_dictionary_.get());
   }
 
   // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
     const testing::MockUserPosManager user_pos_manager;
-    return new UserDictionary(UserPOS::CreateFromDataManager(user_pos_manager),
-                              user_pos_manager.GetPOSMatcher(),
-                              Singleton<SuppressionDictionary>::get());
+    return new UserDictionary(
+        UserPOS::CreateFromDataManager(user_pos_manager),
+        dictionary::POSMatcher(user_pos_manager.GetPOSMatcherData()),
+        Singleton<SuppressionDictionary>::get());
   }
 
   struct Entry {
@@ -567,7 +568,9 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
 
   // "suggestion_only" should not be looked up.
   const testing::MockUserPosManager user_pos_manager;
-  const uint16 kNounId = user_pos_manager.GetPOSMatcher()->GetGeneralNounId();
+  const dictionary::POSMatcher pos_matcher(
+      user_pos_manager.GetPOSMatcherData());
+  const uint16 kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
   TestLookupExactHelper(kExpected1, arraysize(kExpected1),
                         "key", 3, *user_dic.get());

@@ -422,7 +422,8 @@ TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {
 TEST_F(EmojiRewriterTest, CheckDescription) {
   Segments segments;
   VariantsRewriter variants_rewriter(
-      UserPosManager::GetUserPosManager()->GetPOSMatcher());
+      dictionary::POSMatcher(
+          UserPosManager::GetUserPosManager()->GetPOSMatcherData()));
 
   SetSegment("Emoji", "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));

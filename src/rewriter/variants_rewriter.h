@@ -54,7 +54,7 @@ class VariantsRewriter : public RewriterInterface {
   static const char *kDidYouMean;
   static const char *kYenKigou;
 
-  explicit VariantsRewriter(const dictionary::POSMatcher *pos_matcher);
+  explicit VariantsRewriter(dictionary::POSMatcher pos_matcher);
   virtual ~VariantsRewriter();
   virtual int capability(const ConversionRequest &request) const;
   virtual bool Rewrite(const ConversionRequest &request,
@@ -112,7 +112,7 @@ class VariantsRewriter : public RewriterInterface {
       vector<uint32> *default_inner_segment_boundary,
       vector<uint32> *alternative_inner_segment_boundary) const;
 
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher pos_matcher_;
 };
 
 }  // namespace mozc

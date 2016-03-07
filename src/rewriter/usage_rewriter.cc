@@ -51,7 +51,7 @@ namespace mozc {
 
 UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
                              const DictionaryInterface *dictionary)
-    : pos_matcher_(data_manager->GetPOSMatcher()),
+    : pos_matcher_(data_manager->GetPOSMatcherData()),
       dictionary_(dictionary),
       base_conjugation_suffix_(nullptr) {
   StringPiece base_conjugation_suffix_data;
@@ -143,8 +143,8 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
     const Segment::Candidate &candidate) const {
   // We check Unknwon POS ("名詞,サ変接続") as well, since
   // target verbs/adjectives may be in web dictionary.
-  if (!pos_matcher_->IsContentWordWithConjugation(candidate.lid) &&
-      !pos_matcher_->IsUnknown(candidate.lid)) {
+  if (!pos_matcher_.IsContentWordWithConjugation(candidate.lid) &&
+      !pos_matcher_.IsUnknown(candidate.lid)) {
     return UsageDictItemIterator();
   }
 

@@ -149,41 +149,41 @@ TEST(NumberCompoundUtilTest, IsNumber) {
   ASSERT_TRUE(suffix_array.Init(data));
 
   const testing::MockDataManager data_manager;
-  const POSMatcher* pos_matcher = data_manager.GetPOSMatcher();
+  const POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
 
   Segment::Candidate c;
 
   c.Init();
-  c.lid = pos_matcher->GetNumberId();
-  c.rid = pos_matcher->GetNumberId();
-  EXPECT_TRUE(IsNumber(suffix_array, *pos_matcher, c));
+  c.lid = pos_matcher.GetNumberId();
+  c.rid = pos_matcher.GetNumberId();
+  EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
   c.Init();
-  c.lid = pos_matcher->GetKanjiNumberId();
-  c.rid = pos_matcher->GetKanjiNumberId();
-  EXPECT_TRUE(IsNumber(suffix_array, *pos_matcher, c));
+  c.lid = pos_matcher.GetKanjiNumberId();
+  c.rid = pos_matcher.GetKanjiNumberId();
+  EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
   c.Init();
-  c.lid = pos_matcher->GetNumberId();
-  c.rid = pos_matcher->GetCounterSuffixWordId();
-  EXPECT_TRUE(IsNumber(suffix_array, *pos_matcher, c));
+  c.lid = pos_matcher.GetNumberId();
+  c.rid = pos_matcher.GetCounterSuffixWordId();
+  EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
   c.Init();
-  c.lid = pos_matcher->GetNumberId();
-  c.rid = pos_matcher->GetParallelMarkerId();
-  EXPECT_TRUE(IsNumber(suffix_array, *pos_matcher, c));
+  c.lid = pos_matcher.GetNumberId();
+  c.rid = pos_matcher.GetParallelMarkerId();
+  EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
   c.Init();
   c.value = "\xE4\xB8\x80\xE9\x9A\x8E";          //"一階"
   c.content_value = "\xE4\xB8\x80\xE9\x9A\x8E";  //"一階"
-  c.lid = pos_matcher->GetNumberId();
-  c.rid = pos_matcher->GetNumberId();
-  EXPECT_TRUE(IsNumber(suffix_array, *pos_matcher, c));
+  c.lid = pos_matcher.GetNumberId();
+  c.rid = pos_matcher.GetNumberId();
+  EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
   c.Init();
-  c.lid = pos_matcher->GetAdverbId();
-  c.rid = pos_matcher->GetAdverbId();
-  EXPECT_FALSE(IsNumber(suffix_array, *pos_matcher, c));
+  c.lid = pos_matcher.GetAdverbId();
+  c.rid = pos_matcher.GetAdverbId();
+  EXPECT_FALSE(IsNumber(suffix_array, pos_matcher, c));
 }
 
 }  // namespace number_compound_util

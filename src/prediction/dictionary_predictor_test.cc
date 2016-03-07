@@ -216,7 +216,7 @@ class MockDataAndPredictor {
             const DictionaryInterface *suffix_dictionary = NULL) {
     testing::MockDataManager data_manager;
 
-    pos_matcher_ = data_manager.GetPOSMatcher();
+    pos_matcher_.Set(data_manager.GetPOSMatcherData());
     suppression_dictionary_.reset(new SuppressionDictionary);
     if (!dictionary) {
       dictionary_mock_ = new DictionaryMock;
@@ -247,7 +247,7 @@ class MockDataAndPredictor {
                                    suppression_dictionary_.get(),
                                    connector_.get(),
                                    segmenter_.get(),
-                                   pos_matcher_,
+                                   &pos_matcher_,
                                    pos_group_.get(),
                                    suggestion_filter_.get()));
     converter_.reset(new ConverterMock());
@@ -258,12 +258,12 @@ class MockDataAndPredictor {
                                         suffix_dictionary_.get(),
                                         connector_.get(),
                                         segmenter_.get(),
-                                        data_manager.GetPOSMatcher(),
+                                        &pos_matcher_,
                                         suggestion_filter_.get()));
   }
 
   const POSMatcher &pos_matcher() const {
-    return *pos_matcher_;
+    return pos_matcher_;
   }
 
   DictionaryMock *mutable_dictionary() {
@@ -283,7 +283,7 @@ class MockDataAndPredictor {
   }
 
  private:
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
   unique_ptr<SuppressionDictionary> suppression_dictionary_;
   unique_ptr<const Connector> connector_;
   unique_ptr<const Segmenter> segmenter_;
@@ -1567,6 +1567,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
       Segmenter::CreateFromDataManager(data_manager));
   unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
+  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(converter.get(),
                                       immutable_converter.get(),
@@ -1574,7 +1575,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
                                       suffix_dictionary.get(),
                                       connector.get(),
                                       segmenter.get(),
-                                      data_manager.GetPOSMatcher(),
+                                      &pos_matcher,
                                       suggestion_filter.get()));
 
   // "わたしのなまえはなかのです"
@@ -3160,6 +3161,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
       Segmenter::CreateFromDataManager(data_manager));
   unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
+  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(converter.get(),
                                       immutable_converter.get(),
@@ -3167,7 +3169,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
                                       suffix_dictionary.get(),
                                       connector.get(),
                                       segmenter.get(),
-                                      data_manager.GetPOSMatcher(),
+                                      &pos_matcher,
                                       suggestion_filter.get()));
   Segments segments;
   // "わたしのなまえはなかのです"

@@ -38,7 +38,6 @@
 #include "base/util.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/pos_matcher.h"
 #include "rewriter/number_compound_util.h"
 
 namespace mozc {
@@ -130,7 +129,8 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
 }  // namespace
 
 FocusCandidateRewriter::FocusCandidateRewriter(
-    const DataManagerInterface *data_manager) {
+    const DataManagerInterface *data_manager)
+    : pos_matcher_(data_manager->GetPOSMatcherData()) {
   const char *array = nullptr;
   size_t size = 0;
   data_manager->GetCounterSuffixSortedArray(&array, &size);
@@ -139,8 +139,6 @@ FocusCandidateRewriter::FocusCandidateRewriter(
   // in debug build.
   DCHECK(SerializedStringArray::VerifyData(data));
   suffix_array_.Set(data);
-
-  pos_matcher_ = data_manager->GetPOSMatcher();
 }
 
 FocusCandidateRewriter::~FocusCandidateRewriter() {}
@@ -399,7 +397,7 @@ bool FocusCandidateRewriter::ParseNumberCandidate(
   // Otherwise, the following wrong rewrite will occur.
   // Example: "一階へは | 二回 | 行った -> 一階へは | 二階 | 行った"
   if (cand.content_value.size() != cand.value.size()) {
-    if (!pos_matcher_->IsParallelMarker(cand.rid)) {
+    if (!pos_matcher_.IsParallelMarker(cand.rid)) {
       return false;
     }
   }

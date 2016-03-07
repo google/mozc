@@ -41,7 +41,6 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "data_manager/user_pos_manager.h"
-#include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 
 namespace mozc {
@@ -82,10 +81,9 @@ static const size_t kTokenSize = 1000;
 DictionaryGenerator::DictionaryGenerator()
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
       token_map_(new map<uint64, Token *>),
-      open_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
-                       ->GetOpenBracketId()),
-      close_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
-                        ->GetCloseBracketId()) {
+      pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcherData()),
+      open_bracket_id_(pos_matcher_.GetOpenBracketId()),
+      close_bracket_id_(pos_matcher_.GetCloseBracketId()) {
   user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(
       *UserPosManager::GetUserPosManager()));
 }

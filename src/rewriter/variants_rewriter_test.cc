@@ -71,7 +71,7 @@ class VariantsRewriterTest : public testing::Test {
   // considering this class as POD.
   VariantsRewriterTest() {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     Reset();
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers mocked PackedDataManager.
@@ -81,7 +81,7 @@ class VariantsRewriterTest : public testing::Test {
                                     kPackedSystemDictionary_size)));
     packed::RegisterPackedDataManager(data_manager.release());
 #endif  // MOZC_USE_PACKED_DICTIONARY
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
   }
 
   virtual void TearDown() {
@@ -115,7 +115,7 @@ class VariantsRewriterTest : public testing::Test {
     return new VariantsRewriter(pos_matcher_);
   }
 
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
 };
 
 TEST_F(VariantsRewriterTest, RewriteTest) {
@@ -350,7 +350,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.value = "HalfASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半] アルファベット"
     EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
                            VariantsRewriter::kAlphabet),
@@ -363,7 +363,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.value = "Half ASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "half ascii";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半] アルファベット"
     EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
                            VariantsRewriter::kAlphabet),
@@ -375,7 +375,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.value = "Half!ASCII!";
     candidate.content_value = candidate.value;
     candidate.content_key = "half!ascii!";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半] アルファベット"
     EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
                            VariantsRewriter::kAlphabet),
@@ -390,7 +390,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key =
         "\xe3\x81\x97\xe3\x83\xbc\xe3\x81\xa7\xe3\x81\x83\xe3"
         "\x83\xbc\xe3\x82\x8d\xe3\x82\x80";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半] アルファベット"
     EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
                            VariantsRewriter::kAlphabet),
@@ -407,7 +407,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key =
         "\xe3\x81\x93\xe3\x81\x8e\xe3\x81\xa8\xe3\x81\x88\xe3\x82\x8b\xe3\x81"
         "\x94\xe3\x81\x99\xe3\x82\x80";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[全] カタカナ"
     EXPECT_EQ(AppendString(VariantsRewriter::kFullWidth,
                            VariantsRewriter::kKatakana),
@@ -419,7 +419,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.value = "!@#";
     candidate.content_value = candidate.value;
     candidate.content_key = "!@#";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半]"
     EXPECT_EQ(VariantsRewriter::kHalfWidth, candidate.description);
   }
@@ -431,7 +431,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
                       "\x80\x8d";
     candidate.content_value = candidate.value;
     candidate.content_key = "[ABC]";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[全] アルファベット"
     EXPECT_EQ(AppendString(VariantsRewriter::kFullWidth,
                            VariantsRewriter::kAlphabet),
@@ -446,7 +446,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     // "くさなぎつよし"
     candidate.content_key = "\xE3\x81\x8F\xE3\x81\x95\xE3\x81\xAA"
         "\xE3\x81\x8E\xE3\x81\xA4\xE3\x82\x88\xE3\x81\x97";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "<機種依存文字>"
     EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }
@@ -457,7 +457,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     // "えん"
     candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半] バックスラッシュ"
     const char *expected =
         "\x5B\xE5\x8D\x8A\x5D\x20\xE3\x83\x90\xE3\x83\x83"
@@ -472,7 +472,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     // "えん"
     candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[全] バックスラッシュ"
     const char *expected =
         "\x5B\xE5\x85\xA8\x5D\x20\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF"
@@ -486,7 +486,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     // "えん"
     candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半] 円記号 <機種依存文字>" for Desktop,
     // "[半] 円記号 <機種依存>" for Android
     string expected =("[" "\xE5\x8D\x8A" "] "
@@ -501,7 +501,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     // "えん"
     candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[全] 円記号"
     const char *expected =
         "[" "\xE5\x85\xA8" "] " "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7";
@@ -517,7 +517,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "\xE3\x81\xAD\xE3\x81\x9A\xE3\x81\xBF";
     // "絵文字"
     candidate.description = "\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97";
-    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "絵文字 <機種依存文字>" for Desktop, "絵文字 <機種依存>" for Andorid
     string expected("\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97" " ");
     expected.append(VariantsRewriter::kPlatformDependent);
@@ -532,7 +532,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     candidate.value = "HalfASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
-    VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
+    VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
                                                        &candidate);
     // "[半] アルファベット"
     EXPECT_EQ(AppendString(VariantsRewriter::kHalfWidth,
@@ -545,7 +545,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     candidate.value = "!@#";
     candidate.content_value = candidate.value;
     candidate.content_key = "!@#";
-    VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
+    VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
                                                        &candidate);
     // "[半]"
     EXPECT_EQ(VariantsRewriter::kHalfWidth, candidate.description);
@@ -558,7 +558,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
                       "\x80\x8d";
     candidate.content_value = candidate.value;
     candidate.content_key = "[ABC]";
-    VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
+    VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
                                                        &candidate);
     // "[全] アルファベット"
     EXPECT_EQ(AppendString(VariantsRewriter::kFullWidth,
@@ -574,7 +574,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     // "くさなぎつよし"
     candidate.content_key = "\xE3\x81\x8F\xE3\x81\x95\xE3\x81\xAA"
         "\xE3\x81\x8E\xE3\x81\xA4\xE3\x82\x88\xE3\x81\x97";
-    VariantsRewriter::SetDescriptionForTransliteration(*pos_matcher_,
+    VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
                                                        &candidate);
     // "<機種依存文字>"
     EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
@@ -588,7 +588,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.value = "HalfASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
-    VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
   }
   // containing symbols
@@ -598,7 +598,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.value = "Half ASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "half ascii";
-    VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
   }
   {
@@ -607,7 +607,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.value = "Half!ASCII!";
     candidate.content_value = candidate.value;
     candidate.content_key = "half!ascii!";
-    VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
   }
   {
@@ -619,7 +619,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.content_key =
         "\xe3\x81\x97\xe3\x83\xbc\xe3\x81\xa7\xe3\x81\x83\xe3"
         "\x83\xbc\xe3\x82\x8d\xe3\x82\x80";
-    VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
   }
   {
@@ -628,7 +628,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.value = "!@#";
     candidate.content_value = candidate.value;
     candidate.content_key = "!@#";
-    VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
   }
   {
@@ -639,7 +639,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
                       "\x80\x8d";
     candidate.content_value = candidate.value;
     candidate.content_key = "[ABC]";
-    VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
   }
   {
@@ -651,7 +651,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     // "くさなぎつよし"
     candidate.content_key = "\xE3\x81\x8F\xE3\x81\x95\xE3\x81\xAA"
         "\xE3\x81\x8E\xE3\x81\xA4\xE3\x82\x88\xE3\x81\x97";
-    VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, &candidate);
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     // "<機種依存文字>"
     EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }

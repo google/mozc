@@ -35,15 +35,6 @@
 
 namespace mozc {
 
-#ifndef NO_USAGE_REWRITER
-struct ConjugationSuffix;
-struct UsageDictItem;
-#endif  // NO_USAGE_REWRITER
-
-namespace dictionary {
-class POSMatcher;
-}  // namespace dictionary
-
 // Builds those objects that depend on a set of embedded data generated from
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
 class DataManagerInterface {
@@ -56,7 +47,7 @@ class DataManagerInterface {
 
   // Returns a reference to POSMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const dictionary::POSMatcher *GetPOSMatcher() const = 0;
+  virtual const uint16 *GetPOSMatcherData() const = 0;
 
   // Returns the address of an array of lid group.
   virtual const uint8 *GetPosGroupData() const = 0;

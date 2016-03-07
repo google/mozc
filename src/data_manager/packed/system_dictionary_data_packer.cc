@@ -40,12 +40,6 @@
 #include "base/version.h"
 #include "data_manager/packed/system_dictionary_data.pb.h"
 #include "data_manager/packed/system_dictionary_format_version.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/user_pos.h"
-
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::UserPOS;
 
 namespace mozc {
 namespace packed {
@@ -57,30 +51,6 @@ SystemDictionaryDataPacker::SystemDictionaryDataPacker(const string &version) {
 }
 
 SystemDictionaryDataPacker::~SystemDictionaryDataPacker() {
-}
-
-void SystemDictionaryDataPacker::SetPosMatcherData(
-    const uint16 *rule_id_table,
-    size_t rule_id_table_count,
-    const POSMatcher::Range *const *range_tables,
-    size_t range_tables_count) {
-  SystemDictionaryData::PosMatcherData *pos_matcher_data =
-      system_dictionary_->mutable_pos_matcher_data();
-  for (size_t i = 0; i < rule_id_table_count; ++i) {
-    pos_matcher_data->add_rule_id_table(rule_id_table[i]);
-  }
-  for (size_t i = 0; i < range_tables_count; ++i) {
-    SystemDictionaryData::PosMatcherData::RangeTable *range_table =
-        pos_matcher_data->add_range_tables();
-    for (size_t j = 0;
-         range_tables[i][j].lower != static_cast<uint16>(0xFFFF);
-         ++j) {
-      SystemDictionaryData::PosMatcherData::RangeTable::Range *range
-          = range_table->add_ranges();
-      range->set_lower(range_tables[i][j].lower);
-      range->set_upper(range_tables[i][j].upper);
-    }
-  }
 }
 
 void SystemDictionaryDataPacker::SetMozcData(const string &data,

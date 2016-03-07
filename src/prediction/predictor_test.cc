@@ -40,8 +40,9 @@
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/scoped_data_manager_initializer_for_testing.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
@@ -127,7 +128,7 @@ class MockPredictor : public PredictorInterface {
 
 }  // namespace
 
-class MobilePredictorTest : public testing::Test {
+class MobilePredictorTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     config_.reset(new config::Config);
@@ -193,12 +194,14 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   DictionaryMock dictionary_mock;
+  testing::MockDataManager data_manager;
+  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   unique_ptr<MobilePredictor> predictor(
       new MobilePredictor(
           new CheckCandSizePredictor(200),
           new UserHistoryPredictor(
               &dictionary_mock,
-              UserPosManager::GetUserPosManager()->GetPOSMatcher(),
+              &pos_matcher,
               Singleton<SuppressionDictionary>::get(),
               true)));
   Segments segments;
@@ -232,7 +235,7 @@ TEST_F(MobilePredictorTest, CallPredictForRequetMobile) {
 }
 
 
-class PredictorTest : public testing::Test {
+class PredictorTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     config_.reset(new config::Config);

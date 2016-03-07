@@ -199,6 +199,7 @@ class ConverterTest : public ::testing::Test {
     std::unique_ptr<const SuggestionFilter> suggestion_filter;
     std::unique_ptr<ImmutableConverterInterface> immutable_converter;
     std::unique_ptr<ConverterImpl> converter;
+    dictionary::POSMatcher pos_matcher;
   };
 
   // Returns initialized predictor for the given type.
@@ -279,17 +280,19 @@ class ConverterTest : public ::testing::Test {
     int dictionary_size = 0;
     data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
+    converter_and_data->pos_matcher.Set(data_manager.GetPOSMatcherData());
+
     SystemDictionary *sysdic =
         SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
     converter_and_data->user_dictionary.reset(user_dictionary);
     converter_and_data->suppression_dictionary.reset(suppression_dictionary);
     converter_and_data->dictionary.reset(new DictionaryImpl(
         sysdic,  // DictionaryImpl takes the ownership
-        new ValueDictionary(*data_manager.GetPOSMatcher(),
+        new ValueDictionary(converter_and_data->pos_matcher,
                             &sysdic->value_trie()),
         converter_and_data->user_dictionary.get(),
         converter_and_data->suppression_dictionary.get(),
-        data_manager.GetPOSMatcher()));
+        &converter_and_data->pos_matcher));
     converter_and_data->pos_group.reset(
         new PosGroup(data_manager.GetPosGroupData()));
     converter_and_data->suggestion_filter.reset(
@@ -307,15 +310,15 @@ class ConverterTest : public ::testing::Test {
             converter_and_data->suppression_dictionary.get(),
             converter_and_data->connector.get(),
             converter_and_data->segmenter.get(),
-            data_manager.GetPOSMatcher(),
+            &converter_and_data->pos_matcher,
             converter_and_data->pos_group.get(),
             converter_and_data->suggestion_filter.get()));
     converter_and_data->converter.reset(new ConverterImpl);
 
     PredictorInterface *predictor = CreatePredictor(
-        predictor_type, data_manager.GetPOSMatcher(), *converter_and_data);
+        predictor_type, &converter_and_data->pos_matcher, *converter_and_data);
     converter_and_data->converter->Init(
-        data_manager.GetPOSMatcher(),
+        &converter_and_data->pos_matcher,
         converter_and_data->suppression_dictionary.get(),
         predictor,
         rewriter,
@@ -344,11 +347,13 @@ class ConverterTest : public ::testing::Test {
     ConverterAndData *ret = new ConverterAndData;
 
     testing::MockUserPosManager user_pos_manager;
+    ret->pos_matcher.Set(user_pos_manager.GetPOSMatcherData());
+
     SuppressionDictionary *suppression_dictionary = new SuppressionDictionary;
     dictionary::UserDictionary *user_dictionary =
         new dictionary::UserDictionary(
             dictionary::UserPOS::CreateFromDataManager(user_pos_manager),
-            user_pos_manager.GetPOSMatcher(),
+            ret->pos_matcher,
             suppression_dictionary);
     InitConverterAndData(
         user_dictionary, suppression_dictionary, rewriter, predictor_type, ret);
@@ -1366,15 +1371,17 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
+  const dictionary::POSMatcher pos_matcher(
+      data_manager.GetPOSMatcherData());
+
   SystemDictionary *sysdic =
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   std::unique_ptr<DictionaryInterface> dictionary(new DictionaryImpl(
       sysdic,  // DictionaryImpl takes the ownership
-      new ValueDictionary(*data_manager.GetPOSMatcher(),
-                          &sysdic->value_trie()),
+      new ValueDictionary(pos_matcher, &sysdic->value_trie()),
       mock_user_dictionary.get(),
       suppression_dictionary.get(),
-      data_manager.GetPOSMatcher()));
+      &pos_matcher));
   std::unique_ptr<const PosGroup> pos_group(
       new PosGroup(data_manager.GetPosGroupData()));
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
@@ -1391,14 +1398,14 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                                  suppression_dictionary.get(),
                                  connector.get(),
                                  segmenter.get(),
-                                 data_manager.GetPOSMatcher(),
+                                 &pos_matcher,
                                  pos_group.get(),
                                  suggestion_filter.get()));
   std::unique_ptr<const SuggestionFilter> suggegstion_filter(
       CreateSuggestionFilter(data_manager));
   std::unique_ptr<ConverterImpl> converter(new ConverterImpl);
   const DictionaryInterface *kNullDictionary = nullptr;
-  converter->Init(data_manager.GetPOSMatcher(),
+  converter->Init(&pos_matcher,
                   suppression_dictionary.get(),
                   DefaultPredictor::CreateDefaultPredictor(
                       new DictionaryPredictor(
@@ -1408,10 +1415,10 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                           suffix_dictionary.get(),
                           connector.get(),
                           segmenter.get(),
-                          data_manager.GetPOSMatcher(),
+                          &pos_matcher,
                           suggegstion_filter.get()),
                       new UserHistoryPredictor(dictionary.get(),
-                                               data_manager.GetPOSMatcher(),
+                                               &pos_matcher,
                                                suppression_dictionary.get(),
                                                false)),
                   new RewriterImpl(converter.get(),

@@ -48,13 +48,13 @@ namespace dictionary {
 
 class ValueDictionaryTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  void SetUp() override {
+    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
     louds_trie_builder_.reset(new LoudsTrieBuilder);
     louds_trie_.reset(new LoudsTrie);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     louds_trie_.reset();
     louds_trie_builder_.reset();
   }
@@ -69,17 +69,17 @@ class ValueDictionaryTest : public ::testing::Test {
     louds_trie_builder_->Build();
     louds_trie_->Open(
         reinterpret_cast<const uint8 *>(louds_trie_builder_->image().data()));
-    return new ValueDictionary(*pos_matcher_, louds_trie_.get());
+    return new ValueDictionary(pos_matcher_, louds_trie_.get());
   }
 
   void InitToken(const string &value, Token *token) const {
     token->key = token->value = value;
     token->cost = 10000;
-    token->lid = token->rid = pos_matcher_->GetSuggestOnlyWordId();
+    token->lid = token->rid = pos_matcher_.GetSuggestOnlyWordId();
     token->attributes = Token::NONE;
   }
 
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
   ConversionRequest convreq_;
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
   std::unique_ptr<LoudsTrie> louds_trie_;

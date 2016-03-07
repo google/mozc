@@ -51,7 +51,7 @@ namespace dictionary {
 class UserDictionary : public DictionaryInterface {
  public:
   UserDictionary(const UserPOSInterface *user_pos,
-                 const POSMatcher *pos_matcher,
+                 POSMatcher pos_matcher,
                  SuppressionDictionary *suppression_dictionary);
   virtual ~UserDictionary();
 
@@ -115,7 +115,7 @@ class UserDictionary : public DictionaryInterface {
 
   std::unique_ptr<UserDictionaryReloader> reloader_;
   std::unique_ptr<const UserPOSInterface> user_pos_;
-  const POSMatcher *pos_matcher_;
+  const POSMatcher pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
   TokensIndex *tokens_;
   mutable std::unique_ptr<ReaderWriterMutex> mutex_;

@@ -70,10 +70,10 @@ void AddSegment(const string &key, const string &value,
   candidate->content_value = value;
 
   if (type == ZIPCODE) {
-    const POSMatcher *pos_matcher =
-        UserPosManager::GetUserPosManager()->GetPOSMatcher();
-    candidate->lid = pos_matcher->GetZipcodeId();
-    candidate->rid = pos_matcher->GetZipcodeId();
+    const POSMatcher pos_matcher(
+        UserPosManager::GetUserPosManager()->GetPOSMatcherData());
+    candidate->lid = pos_matcher.GetZipcodeId();
+    candidate->rid = pos_matcher.GetZipcodeId();
   }
 }
 
@@ -98,7 +98,7 @@ bool HasZipcodeAndAddress(const Segments &segments,
 
 class ZipcodeRewriterTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Registers mocked PackedDataManager.
     std::unique_ptr<packed::PackedDataManager>
@@ -107,11 +107,11 @@ class ZipcodeRewriterTest : public ::testing::Test {
                                     kPackedSystemDictionary_size)));
     packed::RegisterPackedDataManager(data_manager.release());
 #endif  // MOZC_USE_PACKED_DICTIONARY
-
+    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
     packed::RegisterPackedDataManager(NULL);
@@ -119,9 +119,10 @@ class ZipcodeRewriterTest : public ::testing::Test {
   }
 
   ZipcodeRewriter *CreateZipcodeRewriter() const {
-    return new ZipcodeRewriter(
-        UserPosManager::GetUserPosManager()->GetPOSMatcher());
+    return new ZipcodeRewriter(&pos_matcher_);
   }
+
+  dictionary::POSMatcher pos_matcher_;
 };
 
 TEST_F(ZipcodeRewriterTest, BasicTest) {

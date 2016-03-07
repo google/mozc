@@ -102,13 +102,14 @@ int main(int argc, char **argv) {
                          &system_dictionary_input,
                          &reading_correction_input);
 
-  const mozc::dictionary::POSMatcher *pos_matcher =
-      FLAGS_gen_test_dictionary ?
-      mozc::testing::MockUserPosManager::GetUserPosManager()->GetPOSMatcher() :
-      mozc::UserPosManager::GetUserPosManager()->GetPOSMatcher();
-  CHECK(pos_matcher);
+  using mozc::testing::MockUserPosManager;
+  using mozc::UserPosManager;
+  const mozc::dictionary::POSMatcher pos_matcher(
+      FLAGS_gen_test_dictionary
+          ? MockUserPosManager::GetUserPosManager()->GetPOSMatcherData()
+          : UserPosManager::GetUserPosManager()->GetPOSMatcherData());
 
-  mozc::dictionary::TextDictionaryLoader loader(*pos_matcher);
+  mozc::dictionary::TextDictionaryLoader loader(pos_matcher);
   loader.Load(system_dictionary_input, reading_correction_input);
 
   mozc::dictionary::SystemDictionaryBuilder builder;

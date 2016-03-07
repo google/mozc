@@ -89,22 +89,21 @@ namespace mozc {
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
                            const DataManagerInterface *data_manager,
                            const PosGroup *pos_group,
-                           const DictionaryInterface *dictionary) {
+                           const DictionaryInterface *dictionary)
+    : pos_matcher_(data_manager->GetPOSMatcherData()) {
   DCHECK(parent_converter);
   DCHECK(data_manager);
   DCHECK(pos_group);
-  const POSMatcher *pos_matcher = data_manager->GetPOSMatcher();
-  DCHECK(pos_matcher);
   // |dictionary| can be NULL
 
   AddRewriter(new UserDictionaryRewriter);
   AddRewriter(new FocusCandidateRewriter(data_manager));
-  AddRewriter(new LanguageAwareRewriter(*pos_matcher, dictionary));
-  AddRewriter(new TransliterationRewriter(*pos_matcher));
+  AddRewriter(new LanguageAwareRewriter(pos_matcher_, dictionary));
+  AddRewriter(new TransliterationRewriter(pos_matcher_));
   AddRewriter(new EnglishVariantsRewriter);
   AddRewriter(new NumberRewriter(data_manager));
   AddRewriter(new CollocationRewriter(data_manager));
-  AddRewriter(new SingleKanjiRewriter(*pos_matcher));
+  AddRewriter(new SingleKanjiRewriter(pos_matcher_));
   AddRewriter(new EmojiRewriter(
       kEmojiDataList, arraysize(kEmojiDataList),
       kEmojiTokenList, arraysize(kEmojiTokenList),
@@ -113,13 +112,13 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(new CalculatorRewriter(parent_converter));
   AddRewriter(new SymbolRewriter(parent_converter, data_manager));
   AddRewriter(new UnicodeRewriter(parent_converter));
-  AddRewriter(new VariantsRewriter(pos_matcher));
-  AddRewriter(new ZipcodeRewriter(pos_matcher));
+  AddRewriter(new VariantsRewriter(pos_matcher_));
+  AddRewriter(new ZipcodeRewriter(&pos_matcher_));
   AddRewriter(new DiceRewriter);
 
   if (FLAGS_use_history_rewriter) {
     AddRewriter(new UserBoundaryHistoryRewriter(parent_converter));
-    AddRewriter(new UserSegmentHistoryRewriter(pos_matcher, pos_group));
+    AddRewriter(new UserSegmentHistoryRewriter(&pos_matcher_, pos_group));
   }
 
   AddRewriter(new DateRewriter);

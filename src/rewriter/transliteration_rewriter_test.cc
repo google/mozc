@@ -106,7 +106,8 @@ class TransliterationRewriterTest : public testing::Test {
 
   TransliterationRewriter *CreateTransliterationRewriter() const {
     return new TransliterationRewriter(
-        *UserPosManager::GetUserPosManager()->GetPOSMatcher());
+        dictionary::POSMatcher(
+            UserPosManager::GetUserPosManager()->GetPOSMatcherData()));
   }
 
   const commands::Request &default_request() const {

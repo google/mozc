@@ -422,7 +422,7 @@ bool RewriteOneSegment(
 }  // namespace
 
 NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
-    : pos_matcher_(data_manager->GetPOSMatcher()) {
+    : pos_matcher_(data_manager->GetPOSMatcherData()) {
   const char *array = nullptr;
   size_t size = 0;
   data_manager->GetCounterSuffixSortedArray(&array, &size);
@@ -459,7 +459,7 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
 
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *seg = segments->mutable_conversion_segment(i);
-    modified |= RewriteOneSegment(suffix_array_, *pos_matcher_,
+    modified |= RewriteOneSegment(suffix_array_, pos_matcher_,
                                   exec_radix_conversion, seg);
   }
 

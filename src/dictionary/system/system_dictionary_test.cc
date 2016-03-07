@@ -82,8 +82,8 @@ namespace dictionary {
 class SystemDictionaryTest : public ::testing::Test {
  protected:
   SystemDictionaryTest()
-      : text_dict_(new TextDictionaryLoader(
-          *UserPosManager::GetUserPosManager()->GetPOSMatcher())),
+      : pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcherData()),
+        text_dict_(new TextDictionaryLoader(pos_matcher_)),
         dic_fn_(FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc.dic")) {
     const string dic_path = mozc::testing::GetSourceFileOrDie({
         "data", "dictionary_oss", "dictionary00.txt"});
@@ -93,7 +93,7 @@ class SystemDictionaryTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     // Don't use small cost encoding by default.
@@ -105,7 +105,7 @@ class SystemDictionaryTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     FLAGS_min_key_length_to_use_small_cost_encoding =
         original_flags_min_key_length_to_use_small_cost_encoding_;
 
@@ -122,6 +122,7 @@ class SystemDictionaryTest : public ::testing::Test {
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
+  dictionary::POSMatcher pos_matcher_;
   unique_ptr<TextDictionaryLoader> text_dict_;
 
   ConversionRequest convreq_;

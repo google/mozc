@@ -52,28 +52,28 @@ class SingleKanjiRewriterTest : public ::testing::Test {
  protected:
   SingleKanjiRewriterTest() {
     data_manager_.reset(new testing::MockDataManager);
-    pos_matcher_ = data_manager_->GetPOSMatcher();
+    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
   }
 
-  virtual ~SingleKanjiRewriterTest() {}
+  ~SingleKanjiRewriterTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
   SingleKanjiRewriter *CreateSingleKanjiRewriter() const {
-    return new SingleKanjiRewriter(*pos_matcher_);
+    return new SingleKanjiRewriter(pos_matcher_);
   }
 
   const POSMatcher &pos_matcher() {
-    return *pos_matcher_;
+    return pos_matcher_;
   }
 
   const ConversionRequest default_request_;
 
  private:
   std::unique_ptr<testing::MockDataManager> data_manager_;
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
 };
 
 TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
