@@ -64,7 +64,6 @@
         'packed_data_manager_base.gyp:system_dictionary_data_protocol',
         '../../base/base.gyp:base',
         '../../dictionary/dictionary_base.gyp:pos_matcher',
-        '../<(dataset_dir)/<(dataset_tag)_data_manager.gyp:gen_<(dataset_tag)_embedded_data',
       ],
     },
     {

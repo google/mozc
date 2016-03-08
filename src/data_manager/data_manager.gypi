@@ -71,7 +71,6 @@
         '<(mozc_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_dir)/rewriter/rewriter.gyp:embedded_dictionary',
-        'gen_<(dataset_tag)_embedded_data#host',
         'gen_embedded_mozc_dataset_for_<(dataset_tag)#host',
       ],
       'conditions': [
@@ -248,61 +247,6 @@
       ],
     },
     {
-      'target_name': 'gen_<(dataset_tag)_embedded_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        'gen_embedded_collocation_data_for_<(dataset_tag)#host',
-        'gen_embedded_collocation_suppression_data_for_<(dataset_tag)#host',
-        'gen_embedded_connection_data_for_<(dataset_tag)#host',
-        'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
-        'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host',
-      ],
-      'conditions': [
-        ['target_platform!="Android"', {
-          'dependencies': [
-            '../../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
-          ]
-        }],
-      ],
-    },
-    {
-      'target_name': 'gen_dictionary_data_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'conditions': [
-        ['use_separate_dataset==1',{
-            'dependencies': [
-              'gen_separate_dictionary_data_for_<(dataset_tag)#host',
-            ],
-          },
-          {
-            'dependencies': [
-              'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
-            ],
-          },
-        ]
-      ],
-    },
-    {
-      'target_name': 'gen_connection_data_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'conditions': [
-        ['use_separate_dataset==1',{
-            'dependencies': [
-              'gen_separate_connection_data_for_<(dataset_tag)#host',
-            ],
-          },
-          {
-            'dependencies': [
-              'gen_embedded_connection_data_for_<(dataset_tag)#host',
-            ],
-          },
-        ]
-      ],
-    },
-    {
       'target_name': 'gen_separate_pos_group_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
@@ -360,97 +304,6 @@
           ],
           'message': ('[<(dataset_tag)] Decompressing ' +
                       '<(connection_deflate)'),
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_embedded_connection_data_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        '<(mozc_dir)/build_tools/code_generator_util.py',
-        '<(mozc_dir)/data_manager/gen_connection_data.py',
-      ],
-      'dependencies': [
-        'gen_connection_single_column_txt_for_<(dataset_tag)#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_embedded_connection_data_for_<(dataset_tag)',
-          'variables': {
-            'text_connection_file': '<(gen_out_dir)/connection_single_column.txt',
-            'id_file': '<(platform_data_dir)/id.def',
-            'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
-            'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',
-          },
-          'inputs': [
-            '<(text_connection_file)',
-            '<(id_file)',
-            '<(special_pos_file)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_connection_data.h',
-          ],
-          'action': [
-            'python', '<(mozc_dir)/data_manager/gen_connection_data.py',
-            '--text_connection_file=<(text_connection_file)',
-            '--id_file=<(id_file)',
-            '--special_pos_file=<(special_pos_file)',
-            '--header_output_file=<(gen_out_dir)/embedded_connection_data.h',
-            '--target_compiler=<(compiler_target)',
-            '--use_1byte_cost=<(use_1byte_cost_flag)',
-          ],
-          'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/embedded_connection_data.h'),
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_embedded_dictionary_data_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_embedded_dictionary_data_for_<(dataset_tag)',
-          'variables': {
-            'input_files%': '<(dictionary_files)',
-            'gen_test_dictionary_flag': '<(gen_test_dictionary)',
-            'additional_inputs': [],
-            'additional_actions': [],
-            'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
-            'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
-            'conditions': [
-              ['use_packed_dictionary==1', {
-                'additional_inputs': [
-                  '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
-                ],
-                'additional_actions': [
-                  '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
-                ],
-              }],
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-            '<@(additional_inputs)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_dictionary_data.h',
-          ],
-          'action': [
-            # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(generator)',
-            '--input=<(input_files)',
-            '--make_header',
-            '--gen_test_dictionary=<(gen_test_dictionary_flag)',
-            '--output=<(gen_out_dir)/embedded_dictionary_data.h',
-            '<@(additional_actions)',
-          ],
-          'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/embedded_dictionary_data.h.'),
         },
       ],
     },
@@ -768,74 +621,6 @@
       ],
     },
     {
-      'target_name': 'gen_embedded_collocation_data_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        '../../rewriter/rewriter_base.gyp:gen_collocation_data_main#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_embedded_collocation_data',
-          'variables': {
-            'generator' : '<(PRODUCT_DIR)/gen_collocation_data_main<(EXECUTABLE_SUFFIX)',
-            'input_files%': [
-              '<(platform_data_dir)/collocation.txt',
-            ],
-          },
-          'inputs': [
-            '<(generator)',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_collocation_data.h',
-          ],
-          'action': [
-            'python', '<(mozc_dir)/build_tools/redirect.py',
-            '<(gen_out_dir)/embedded_collocation_data.h',
-            '<(generator)',
-            '--collocation_data=<@(input_files)',
-          ],
-          'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/embedded_collocation_data.h'),
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_embedded_collocation_suppression_data_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        '../../rewriter/rewriter_base.gyp:gen_collocation_suppression_data_main#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_collocation_suppression_data',
-          'variables': {
-            'generator' : '<(PRODUCT_DIR)/gen_collocation_suppression_data_main<(EXECUTABLE_SUFFIX)',
-            'input_files%': [
-              '<(platform_data_dir)/collocation_suppression.txt',
-            ],
-          },
-          'inputs': [
-            '<(generator)',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_collocation_suppression_data.h',
-          ],
-          'action': [
-            'python', '<(mozc_dir)/build_tools/redirect.py',
-            '<(gen_out_dir)/embedded_collocation_suppression_data.h',
-            '<(generator)',
-            '--suppression_data=<@(input_files)',
-          ],
-          'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/embedded_collocation_suppression_data.h'),
-        },
-      ],
-    },
-    {
       'target_name': 'gen_separate_collocation_suppression_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
@@ -866,40 +651,6 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/collocation_suppression_data.data'),
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_embedded_suggestion_filter_data_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        '../../prediction/prediction_base.gyp:gen_suggestion_filter_main#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_suggestion_filter_data',
-          'variables': {
-            'generator' : '<(PRODUCT_DIR)/gen_suggestion_filter_main<(EXECUTABLE_SUFFIX)',
-            'input_files%': [
-              '<(platform_data_dir)/suggestion_filter.txt',
-            ],
-          },
-          'inputs': [
-            '<(generator)',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/suggestion_filter_data.h',
-          ],
-          'action': [
-            '<(generator)',
-            '<@(input_files)',
-            '<(gen_out_dir)/suggestion_filter_data.h',
-            '--header',
-          ],
-          'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/suggestion_filter_data.h'),
         },
       ],
     },
