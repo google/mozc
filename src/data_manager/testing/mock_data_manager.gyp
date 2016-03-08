@@ -45,7 +45,6 @@
     'dictionary_files': [
       '<(platform_data_dir)/dictionary.txt',
     ],
-    'gen_test_dictionary': 'true',
     'magic_number': '\\x4D\\x4F\\x43\\x4B',  # MOCK
     'mozc_data_varname': 'kMockMozcDataSet',
     'out_mozc_data': 'mock_mozc.data',

@@ -30,6 +30,9 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_H_
 
+#include <string>
+
+#include "base/mmap.h"
 #include "base/port.h"
 #include "base/string_piece.h"
 #include "data_manager/data_manager_interface.h"
@@ -54,6 +57,7 @@ class DataManager : public DataManagerInterface {
   // tools depend on user pos data to create outputs, so we need to handle
   // partial data set).
   bool InitUserPosManagerDataFromArray(StringPiece array, StringPiece magic);
+  bool InitUserPosManagerDataFromFile(const string &path, StringPiece magic);
 
   // Implementation of DataManagerInterface.
   const uint16 *GetPOSMatcherData() const override;
@@ -91,6 +95,7 @@ class DataManager : public DataManagerInterface {
 #endif  // NO_USAGE_REWRITER
 
  private:
+  Mmap mmap_;
   StringPiece pos_matcher_data_;
   StringPiece user_pos_token_array_data_;
   StringPiece user_pos_string_array_data_;

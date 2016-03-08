@@ -250,6 +250,16 @@ bool DataManager::InitUserPosManagerDataFromArray(StringPiece array,
   return true;
 }
 
+bool DataManager::InitUserPosManagerDataFromFile(const string &path,
+                                                 StringPiece magic) {
+  if (!mmap_.Open(path.c_str(), "r")) {
+    LOG(ERROR) << "Failed to mmap " << path;
+    return false;
+  }
+  const StringPiece data(mmap_.begin(), mmap_.size());
+  return InitUserPosManagerDataFromArray(data, magic);
+}
+
 void DataManager::GetConnectorData(const char **data, size_t *size) const {
   *data = connection_data_.data();
   *size = connection_data_.size();

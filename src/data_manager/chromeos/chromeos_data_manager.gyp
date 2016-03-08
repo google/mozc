@@ -53,7 +53,6 @@
       '<(platform_data_dir)/dictionary09.txt',
       '<(platform_data_dir)/reading_correction.tsv',
     ],
-    'gen_test_dictionary': 'false',
     # Hex-escaped string of "\xEFMOZC\r\n"
     'magic_number': "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A",
     'mozc_data_varname': 'kCrosMozcDataSet',

@@ -46,8 +46,6 @@
 #       Set to '1' or 'true' to compress connection data.
 #       Typically this variable is set by build_mozc.py as gyp's parameter.
 # - dictionary_files: A list of dictionary source files.
-# - gen_test_dictionary: 'true' or 'false'. When 'true', generate test
-#       dictionary with test POS data.
 # - magic_number: Magic number to be embedded in a data set file.
 # - out_mozc_data: Output file name for mozc data set.
 # - out_mozc_data_header: Output C++ header file of the embedded version of
@@ -361,34 +359,18 @@
       'toolsets': ['host'],
       'dependencies': [
         '<(DEPTH)/dictionary/dictionary.gyp:gen_system_dictionary_data_main#host',
+        '<(dataset_tag)_data_manager_base.gyp:gen_user_pos_manager_data_for_<(dataset_tag)#host',
       ],
-      'variables': {
-        'additional_inputs%': [],
-        'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
-        'additional_inputs': ['<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)'],
-        'gen_test_dictionary_flag': '<(gen_test_dictionary)',
-      },
       'actions': [
         {
           'action_name': 'gen_separate_dictionary_data',
           'variables': {
-            'input_files%': '<(dictionary_files)',
-            'additional_inputs': [],
-            'additional_actions': [],
-            'conditions': [
-              ['use_packed_dictionary==1', {
-                'additional_inputs': [
-                  '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
-                ],
-                'additional_actions': [
-                  '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
-                ],
-              }],
-            ],
+            'generator': '<(PRODUCT_DIR)/gen_system_dictionary_data_main<(EXECUTABLE_SUFFIX)',
+            'input_files': '<(dictionary_files)',
+            'user_pos_manager_data': '<(gen_out_dir)/user_pos_manager.data',
           },
           'inputs': [
             '<@(input_files)',
-            '<@(additional_inputs)',
           ],
           'outputs': [
             '<(gen_out_dir)/system.dictionary',
@@ -396,9 +378,8 @@
           'action': [
             '<(generator)',
             '--input=<(input_files)',
+            '--user_pos_manager_data=<(user_pos_manager_data)',
             '--output=<(gen_out_dir)/system.dictionary',
-            '--gen_test_dictionary=<(gen_test_dictionary_flag)',
-            '<@(additional_actions)',
           ],
           'message': 'Generating <(gen_out_dir)/system.dictionary.',
         },

@@ -38,24 +38,20 @@
 #include <string>
 #include <vector>
 
-#include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "data_manager/testing/mock_user_pos_manager.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 
 DEFINE_string(input, "", "space separated input text files");
+DEFINE_string(user_pos_manager_data, "", "user pos manager data");
 DEFINE_string(output, "", "output binary file");
-DEFINE_bool(make_header, false, "make header mode");
-DEFINE_bool(gen_test_dictionary, false,
-            "generate test dictionary (use mock POSManager)");
 
 namespace mozc {
 namespace {
@@ -98,16 +94,19 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
 
   string system_dictionary_input, reading_correction_input;
-  mozc::GetInputFileName(FLAGS_input,
-                         &system_dictionary_input,
+  mozc::GetInputFileName(FLAGS_input, &system_dictionary_input,
                          &reading_correction_input);
 
-  using mozc::testing::MockUserPosManager;
-  using mozc::UserPosManager;
+  // User POS manager data for build tools has no magic number.
+  const char *kMagicNumber = "";
+  mozc::DataManager data_manager;
+  CHECK(data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
+                                                    kMagicNumber))
+      << "Failed to initialize data manager from "
+      << FLAGS_user_pos_manager_data;
+
   const mozc::dictionary::POSMatcher pos_matcher(
-      FLAGS_gen_test_dictionary
-          ? MockUserPosManager::GetUserPosManager()->GetPOSMatcherData()
-          : UserPosManager::GetUserPosManager()->GetPOSMatcherData());
+      data_manager.GetPOSMatcherData());
 
   mozc::dictionary::TextDictionaryLoader loader(pos_matcher);
   loader.Load(system_dictionary_input, reading_correction_input);
@@ -116,19 +115,7 @@ int main(int argc, char **argv) {
   builder.BuildFromTokens(loader.tokens());
 
   std::unique_ptr<ostream> output_stream(
-      new mozc::OutputFileStream(FLAGS_output.c_str(),
-                                 FLAGS_make_header
-                                 ? ios::out
-                                 : ios::out | ios::binary));
-  if (FLAGS_make_header) {
-    mozc::CodeGenByteArrayOutputStream *codegen_stream;
-    output_stream.reset(
-        codegen_stream = new mozc::CodeGenByteArrayOutputStream(
-            output_stream.release(),
-            mozc::codegenstream::OWN_STREAM));
-    codegen_stream->OpenVarDef("DictionaryData");
-  }
-
+      new mozc::OutputFileStream(FLAGS_output.c_str(), ios::out | ios::binary));
   builder.WriteToStream(FLAGS_output, output_stream.get());
 
   return 0;
