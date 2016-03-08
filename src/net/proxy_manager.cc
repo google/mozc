@@ -32,7 +32,7 @@
 #include <string>
 
 #ifdef OS_MACOSX
-#include <CoreServices/CoreServices.h>
+#include <CFNetwork/CFNetwork.h>
 #include <SystemConfiguration/SystemConfiguration.h>
 #include "base/scoped_cftyperef.h"
 #include "base/mac_util.h"
