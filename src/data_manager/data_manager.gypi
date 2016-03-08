@@ -685,6 +685,7 @@
               '<(mozc_dir)/data/symbol/symbol.tsv',
               '<(mozc_dir)/data/rules/sorting_map.tsv',
               '<(mozc_dir)/data/symbol/ordering_rule.txt',
+              '<(gen_out_dir)/user_pos_manager.data',
             ],
           },
           'inputs': [
@@ -698,6 +699,7 @@
           'action': [
             '<(generator)',
             '--input=<(mozc_dir)/data/symbol/symbol.tsv',
+            '--user_pos_manager_data=<(gen_out_dir)/user_pos_manager.data',
             '--sorting_table=<(mozc_dir)/data/rules/sorting_map.tsv',
             '--ordering_rule=<(mozc_dir)/data/symbol/ordering_rule.txt',
             '--output_token_array=<(gen_out_dir)/symbol_token.data',
@@ -705,16 +707,6 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/symbol*'),
-          'conditions': [
-            ['use_packed_dictionary==1', {
-              'inputs': [
-                '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)'
-              ],
-              'action': [
-                '--dataset=<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/packed_data_light_<(dataset_tag)',
-              ],
-            }],
-          ],
         },
       ],
     },

@@ -32,6 +32,7 @@
 //    --sorting_table=sorting_table_file
 //    --ordering_rule=ordering_rule_file
 //    --input=input.tsv
+//    --user_pos_manager_data=user_pos_manager.data
 //    --output_token_array=output_token_file
 //    --output_string_array=output_array_file
 
@@ -48,12 +49,14 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "data_manager/data_manager.h"
 #include "rewriter/dictionary_generator.h"
 #include "rewriter/serialized_dictionary.h"
 
 DEFINE_string(sorting_table, "", "sorting table file");
 DEFINE_string(ordering_rule, "", "sorting order file");
 DEFINE_string(input, "", "symbol dictionary file");
+DEFINE_string(user_pos_manager_data, "", "user pos manager data file");
 DEFINE_string(output_token_array, "", "output token array binary file");
 DEFINE_string(output_string_array, "", "output string array binary file");
 
@@ -213,7 +216,13 @@ int main(int argc, char **argv) {
 
   const string tmp_text_file = FLAGS_output_token_array + ".txt";
 
-  mozc::rewriter::DictionaryGenerator dictionary;
+  // User pos manager data for build tools has no magic number.
+  const char *kMagciNumber = "";
+  mozc::DataManager data_manager;
+  CHECK(data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
+                                                    kMagciNumber));
+
+  mozc::rewriter::DictionaryGenerator dictionary(data_manager);
   mozc::MakeDictionary(FLAGS_input,
                        FLAGS_sorting_table,
                        FLAGS_ordering_rule,
