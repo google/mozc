@@ -34,20 +34,15 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
-#include "data_manager/user_pos_manager.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 using mozc::config::CharacterFormManager;
 using mozc::config::Config;
@@ -65,7 +60,7 @@ string AppendString(const string &lhs, const string &rhs) {
 
 }  // namespace
 
-class VariantsRewriterTest : public testing::Test {
+class VariantsRewriterTest : public ::testing::Test {
  protected:
   // Explicitly define constructor to prevent Visual C++ from
   // considering this class as POD.
@@ -73,28 +68,16 @@ class VariantsRewriterTest : public testing::Test {
 
   void SetUp() override {
     Reset();
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers mocked PackedDataManager.
-    std::unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     Reset();
   }
 
   void Reset() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     CharacterFormManager::GetCharacterFormManager()->ClearHistory();
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    packed::RegisterPackedDataManager(nullptr);
-#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   void InitSegmentsForAlphabetRewrite(const string &value,
@@ -116,6 +99,10 @@ class VariantsRewriterTest : public testing::Test {
   }
 
   POSMatcher pos_matcher_;
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(VariantsRewriterTest, RewriteTest) {

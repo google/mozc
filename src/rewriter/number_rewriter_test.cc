@@ -35,20 +35,15 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 
 using mozc::dictionary::POSMatcher;
 
@@ -131,26 +126,7 @@ class NumberRewriterTest : public ::testing::Test {
   NumberRewriterTest() {}
 
   void SetUp() override {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // TODO(noriyukit): Currently this test uses mock data manager.  Check if we
-    // can remove this registration of packed data manager.
-    // Registers mocked PackedDataManager.
-    std::unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
-  }
-
-  void TearDown() override {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    packed::RegisterPackedDataManager(NULL);
-#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   NumberRewriter *CreateNumberRewriter() {
@@ -160,6 +136,9 @@ class NumberRewriterTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
   POSMatcher pos_matcher_;
   const ConversionRequest default_request_;
+
+ private:
+  testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
 };
 
 namespace {

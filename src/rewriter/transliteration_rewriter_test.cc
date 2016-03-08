@@ -35,23 +35,18 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
@@ -76,38 +71,24 @@ void SetAkann(composer::Composer *composer) {
 }
 }  // namespace
 
-class TransliterationRewriterTest : public testing::Test {
+class TransliterationRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   TransliterationRewriterTest() {}
-  virtual ~TransliterationRewriterTest() {}
+  ~TransliterationRewriterTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers mocked PackedDataManager.
-    std::unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
   }
 
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    packed::RegisterPackedDataManager(NULL);
-#endif  // MOZC_USE_PACKED_DICTIONARY
+  void TearDown() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   TransliterationRewriter *CreateTransliterationRewriter() const {
     return new TransliterationRewriter(
-        dictionary::POSMatcher(
-            UserPosManager::GetUserPosManager()->GetPOSMatcherData()));
+        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()));
   }
 
   const commands::Request &default_request() const {
@@ -121,6 +102,8 @@ class TransliterationRewriterTest : public testing::Test {
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
  private:
+  const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
   const commands::Request default_request_;
   config::Config default_config_;
 };

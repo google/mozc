@@ -70,6 +70,17 @@ vector<string> GetSourceFilesInDirOrDie(
     const vector<StringPiece> &dir_components,
     const vector<StringPiece> &filenames);
 
+// Temporarily sets the user profile directory to FLAGS_test_tmpdir during the
+// scope.  The original directory is restored at the end of the scope.
+class ScopedTmpUserProfileDirectory {
+ public:
+  ScopedTmpUserProfileDirectory();
+  ~ScopedTmpUserProfileDirectory();
+
+ private:
+  const string original_dir_;
+};
+
 }  // namespace testing
 }  // namespace mozc
 

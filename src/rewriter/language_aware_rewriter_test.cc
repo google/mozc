@@ -33,24 +33,19 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
@@ -72,44 +67,34 @@ void InsertASCIISequence(const string &text, composer::Composer *composer) {
 
 }  // namespace
 
-class LanguageAwareRewriterTest : public testing::Test {
+class LanguageAwareRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   LanguageAwareRewriterTest() {}
-  virtual ~LanguageAwareRewriterTest() {}
+  ~LanguageAwareRewriterTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers mocked PackedDataManager.
-    unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     dictionary_mock_.reset(new DictionaryMock);
   }
 
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    packed::RegisterPackedDataManager(NULL);
-#endif  // MOZC_USE_PACKED_DICTIONARY
+  void TearDown() override {
     dictionary_mock_.reset();
     usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   LanguageAwareRewriter *CreateLanguageAwareRewriter() const {
     return new LanguageAwareRewriter(
-        dictionary::POSMatcher(
-            UserPosManager::GetUserPosManager()->GetPOSMatcherData()),
+        dictionary::POSMatcher(data_manager_.GetPOSMatcherData()),
         dictionary_mock_.get());
   }
 
   unique_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
+  const testing::MockDataManager data_manager_;
 };
 
 namespace {
