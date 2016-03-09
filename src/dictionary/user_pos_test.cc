@@ -35,7 +35,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "data_manager/testing/mock_user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/user_pos_interface.h"
 #include "testing/base/public/gunit.h"
 
@@ -47,13 +47,15 @@ class UserPOSTest : public ::testing::Test {
  protected:
   void SetUp() override {
     StringPiece token_array_data, string_array_data;
-    const testing::MockUserPosManager user_pos_manager;
-    user_pos_manager.GetUserPOSData(&token_array_data, &string_array_data);
+    mock_data_manager_.GetUserPOSData(&token_array_data, &string_array_data);
     user_pos_.reset(new UserPOS(token_array_data, string_array_data));
     CHECK(user_pos_.get());
   }
 
   std::unique_ptr<const UserPOSInterface> user_pos_;
+
+ private:
+  const testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(UserPOSTest, UserPOSBasicTest) {

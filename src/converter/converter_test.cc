@@ -76,6 +76,7 @@
 #include "rewriter/rewriter_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
@@ -177,9 +178,6 @@ class ConverterTest : public ::testing::Test {
   ~ConverterTest() override {}
 
   void SetUp() override {
-    // set default user profile directory
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
     UsageStats::ClearAllStatsForTest();
   }
 
@@ -346,13 +344,12 @@ class ConverterTest : public ::testing::Test {
       RewriterInterface *rewriter, PredictorType predictor_type) {
     ConverterAndData *ret = new ConverterAndData;
 
-    testing::MockUserPosManager user_pos_manager;
-    ret->pos_matcher.Set(user_pos_manager.GetPOSMatcherData());
+    ret->pos_matcher.Set(mock_data_manager_.GetPOSMatcherData());
 
     SuppressionDictionary *suppression_dictionary = new SuppressionDictionary;
     dictionary::UserDictionary *user_dictionary =
         new dictionary::UserDictionary(
-            dictionary::UserPOS::CreateFromDataManager(user_pos_manager),
+            dictionary::UserPOS::CreateFromDataManager(mock_data_manager_),
             ret->pos_matcher,
             suppression_dictionary);
     InitConverterAndData(
@@ -376,8 +373,8 @@ class ConverterTest : public ::testing::Test {
 
   EngineInterface *CreateEngineWithMobilePredictor() {
     Engine *engine = new Engine;
-    testing::MockDataManager data_manager;
-    engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor, true);
+    engine->Init(&mock_data_manager_,
+                 MobilePredictor::CreateMobilePredictor, true);
     return engine;
   }
 
@@ -403,6 +400,8 @@ class ConverterTest : public ::testing::Test {
   }
 
  private:
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
   const commands::Request default_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
