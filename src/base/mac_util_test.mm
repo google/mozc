@@ -33,6 +33,14 @@
 
 namespace mozc {
 
+TEST(MacUtil, GetSerialNumber) {
+  const string serial1 = MacUtil::GetSerialNumber();
+  const string serial2 = MacUtil::GetSerialNumber();
+  // In this scenario, serial numbers should not be empty.
+  EXPECT_FALSE(serial1.empty());
+  EXPECT_EQ(serial1, serial2);
+}
+
 TEST(MacUtil, IsSuppressSuggestionWindow) {
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
       "", ""));
