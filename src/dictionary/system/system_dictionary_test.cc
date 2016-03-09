@@ -43,7 +43,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -82,7 +82,7 @@ namespace dictionary {
 class SystemDictionaryTest : public ::testing::Test {
  protected:
   SystemDictionaryTest()
-      : pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcherData()),
+      : pos_matcher_(mock_data_manager_.GetPOSMatcherData()),
         text_dict_(new TextDictionaryLoader(pos_matcher_)),
         dic_fn_(FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc.dic")) {
     const string dic_path = mozc::testing::GetSourceFileOrDie({
@@ -94,8 +94,6 @@ class SystemDictionaryTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
     // Don't use small cost encoding by default.
     original_flags_min_key_length_to_use_small_cost_encoding_ =
         FLAGS_min_key_length_to_use_small_cost_encoding;
@@ -122,6 +120,8 @@ class SystemDictionaryTest : public ::testing::Test {
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
   dictionary::POSMatcher pos_matcher_;
   unique_ptr<TextDictionaryLoader> text_dict_;
 

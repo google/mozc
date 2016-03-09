@@ -31,7 +31,7 @@
 
 #include <memory>
 
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -49,7 +49,7 @@ namespace dictionary {
 class ValueDictionaryTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     louds_trie_builder_.reset(new LoudsTrieBuilder);
     louds_trie_.reset(new LoudsTrie);
   }
@@ -79,6 +79,7 @@ class ValueDictionaryTest : public ::testing::Test {
     token->attributes = Token::NONE;
   }
 
+  const testing::MockDataManager mock_data_manager_;
   POSMatcher pos_matcher_;
   ConversionRequest convreq_;
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;

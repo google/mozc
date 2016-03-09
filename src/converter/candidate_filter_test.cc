@@ -40,9 +40,7 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
@@ -75,13 +73,11 @@ class CandidateFilterTest : public ::testing::Test {
   void SetUp() override {
     candidate_freelist_.reset(new FreeList<Segment::Candidate>(1024));
     node_freelist_.reset(new FreeList<Node>(1024));
-    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
-
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     {
-      mozc::testing::MockDataManager data_manager;
       const char *data = NULL;
       size_t size = 0;
-      data_manager.GetSuggestionFilterData(&data, &size);
+      mock_data_manager_.GetSuggestionFilterData(&data, &size);
       suggestion_filter_.reset(new SuggestionFilter(data, size));
     }
   }
@@ -139,8 +135,9 @@ class CandidateFilterTest : public ::testing::Test {
   POSMatcher pos_matcher_;
   SuppressionDictionary suppression_dictionary_;
   std::unique_ptr<SuggestionFilter> suggestion_filter_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
+
+ private:
+  testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(CandidateFilterTest, FilterTest) {
@@ -424,10 +421,8 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
 
 TEST_F(CandidateFilterTest, Regression3437022) {
   std::unique_ptr<SuppressionDictionary> dic(new SuppressionDictionary);
-  const POSMatcher pos_matcher(
-      UserPosManager::GetUserPosManager()->GetPOSMatcherData());
   std::unique_ptr<CandidateFilter> filter(
-      new CandidateFilter(dic.get(), &pos_matcher,
+      new CandidateFilter(dic.get(), &pos_matcher_,
                           suggestion_filter_.get(), true));
 
   vector<const Node *> n;

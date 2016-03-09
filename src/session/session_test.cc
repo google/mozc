@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/key_parser.h"
@@ -42,8 +41,7 @@
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "data_manager/user_pos_manager.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -56,8 +54,8 @@
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
 #include "session/session_converter_interface.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
@@ -519,11 +517,9 @@ class MockConverterEngineForRevert : public EngineInterface {
 
 }  // namespace
 
-class SessionTest : public testing::Test {
+class SessionTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+  void SetUp() override {
     UsageStats::ClearAllStatsForTest();
 
     mobile_request_.reset(new Request);
@@ -534,11 +530,10 @@ class SessionTest : public testing::Test {
 
     t13n_rewriter_.reset(
         new TransliterationRewriter(
-            dictionary::POSMatcher(
-                UserPosManager::GetUserPosManager()->GetPOSMatcherData())));
+            dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData())));
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     UsageStats::ClearAllStatsForTest();
   }
 
@@ -836,8 +831,10 @@ class SessionTest : public testing::Test {
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> mobile_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
 };
 
 // This test is intentionally defined at this location so that this

@@ -34,8 +34,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/util.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -66,7 +65,7 @@ class TextDictionaryLoaderTest : public ::testing::Test {
   TextDictionaryLoaderTest() {}
 
   void SetUp() override {
-    pos_matcher_.Set(UserPosManager::GetUserPosManager()->GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
   }
 
   TextDictionaryLoader *CreateTextDictionaryLoader() {
@@ -74,8 +73,9 @@ class TextDictionaryLoaderTest : public ::testing::Test {
   }
 
   POSMatcher pos_matcher_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
+
+ private:
+  const testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
