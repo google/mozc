@@ -32,10 +32,8 @@
 
 #include "base/embedded_file.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "converter/boundary_struct.h"
-#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 namespace chromeos {
@@ -63,88 +61,11 @@ const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
 ChromeOsDataManager::ChromeOsDataManager() {
   const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
-  CHECK(manager_.InitFromArray(LoadEmbeddedFile(kCrosMozcDataSet), magic))
+  CHECK(InitFromArray(LoadEmbeddedFile(kCrosMozcDataSet), magic))
       << "Embedded cros_mozc_data.h is broken";
 }
 
 ChromeOsDataManager::~ChromeOsDataManager() = default;
-
-const uint8 *ChromeOsDataManager::GetPosGroupData() const {
-  return manager_.GetPosGroupData();
-}
-
-void ChromeOsDataManager::GetConnectorData(const char **data,
-                                           size_t *size) const {
-  manager_.GetConnectorData(data, size);
-}
-
-void ChromeOsDataManager::GetSystemDictionaryData(
-    const char **data, int *size) const {
-  manager_.GetSystemDictionaryData(data, size);
-}
-
-void ChromeOsDataManager::GetSegmenterData(
-    size_t *l_num_elements, size_t *r_num_elements,
-    const uint16 **l_table, const uint16 **r_table,
-    size_t *bitarray_num_bytes, const char **bitarray_data,
-    const uint16 **boundary_data) const {
-  manager_.GetSegmenterData(l_num_elements, r_num_elements,
-                            l_table, r_table, bitarray_num_bytes,
-                            bitarray_data, boundary_data);
-}
-
-void ChromeOsDataManager::GetSuffixDictionaryData(
-    StringPiece *key_array, StringPiece *value_array,
-    const uint32 **token_array) const {
-  manager_.GetSuffixDictionaryData(key_array, value_array, token_array);
-}
-
-void ChromeOsDataManager::GetReadingCorrectionData(
-    StringPiece *value_array_data, StringPiece *error_array_data,
-    StringPiece *correction_array_data) const {
-  manager_.GetReadingCorrectionData(value_array_data, error_array_data,
-                                    correction_array_data);
-}
-
-void ChromeOsDataManager::GetCollocationData(const char **array,
-                                             size_t *size) const {
-  manager_.GetCollocationData(array, size);
-}
-
-void ChromeOsDataManager::GetCollocationSuppressionData(const char **array,
-                                                        size_t *size) const {
-  manager_.GetCollocationSuppressionData(array, size);
-}
-
-void ChromeOsDataManager::GetSuggestionFilterData(const char **data,
-                                                  size_t *size) const {
-  manager_.GetSuggestionFilterData(data, size);
-}
-
-void ChromeOsDataManager::GetSymbolRewriterData(
-    StringPiece *token_array_data, StringPiece *string_array_data) const {
-  manager_.GetSymbolRewriterData(token_array_data, string_array_data);
-}
-
-#ifndef NO_USAGE_REWRITER
-void ChromeOsDataManager::GetUsageRewriterData(
-    StringPiece *base_conjugation_suffix_data,
-    StringPiece *conjugation_suffix_data,
-    StringPiece *conjugation_suffix_index_data,
-    StringPiece *usage_items_data,
-    StringPiece *string_array_data) const {
-  manager_.GetUsageRewriterData(base_conjugation_suffix_data,
-                                conjugation_suffix_data,
-                                conjugation_suffix_index_data,
-                                usage_items_data,
-                                string_array_data);
-}
-#endif  // NO_USAGE_REWRITER
-
-void ChromeOsDataManager::GetCounterSuffixSortedArray(
-    const char **array, size_t *size) const {
-  manager_.GetCounterSuffixSortedArray(array, size);
-}
 
 }  // namespace chromeos
 }  // namespace mozc

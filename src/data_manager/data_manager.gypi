@@ -58,25 +58,12 @@
       'target_name': '<(dataset_tag)_data_manager',
       'type': 'static_library',
       'sources': [
-        '<(mozc_dir)/dictionary/pos_group.h',
         '<(dataset_tag)_data_manager.cc',
       ],
       'dependencies': [
-        '<(dataset_tag)_data_manager_base.gyp:<(dataset_tag)_user_pos_manager',
         '<(mozc_dir)/base/base.gyp:base',
         '<(mozc_dir)/data_manager/data_manager_base.gyp:data_manager',
-        '<(mozc_dir)/data_manager/data_manager_base.gyp:dataset_reader',
-        '<(mozc_dir)/dictionary/dictionary.gyp:suffix_dictionary',
-        '<(mozc_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_dir)/rewriter/rewriter.gyp:embedded_dictionary',
         'gen_embedded_mozc_dataset_for_<(dataset_tag)#host',
-      ],
-      'conditions': [
-        ['target_platform!="Android"', {
-          'sources': [
-            '<(SHARED_INTERMEDIATE_DIR)/rewriter/usage_rewriter_data.h',
-          ]
-        }],
       ],
       'defines': [
         'MOZC_DATASET_MAGIC_NUMBER="<(magic_number)"',

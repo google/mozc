@@ -31,8 +31,6 @@
 
 #include "base/embedded_file.h"
 #include "base/logging.h"
-#include "base/port.h"
-#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 namespace oss {
@@ -60,7 +58,7 @@ OssDataManager::OssDataManager() {
   const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
   if (g_mozc_data_address != nullptr) {
     const StringPiece data(g_mozc_data_address, g_mozc_data_size);
-    CHECK(manager_.InitFromArray(data, magic))
+    CHECK(InitFromArray(data, magic))
         << "Image set by SetMozcDataSet() is broken";
     return;
   }
@@ -70,92 +68,16 @@ OssDataManager::OssDataManager() {
       << "OssDataManager::SetMozcDataSet() must be called before "
       << "instantiation of OssDataManager instances.";
 #endif  // MOZC_USE_SEPARATE_DATASET
-  CHECK(manager_.InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
+  CHECK(InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
       << "Embedded mozc_imy.h for OSS is broken";
 }
 
 OssDataManager::~OssDataManager() = default;
 
-const uint8 *OssDataManager::GetPosGroupData() const {
-  return manager_.GetPosGroupData();
-}
-
 // Both pointers can be nullptr when the DataManager is reset on testing.
 void OssDataManager::SetMozcDataSet(void *address, size_t size) {
   g_mozc_data_address = reinterpret_cast<char *>(address);
   g_mozc_data_size = size;
-}
-
-void OssDataManager::GetConnectorData(const char **data, size_t *size) const {
-  manager_.GetConnectorData(data, size);
-}
-
-void OssDataManager::GetSystemDictionaryData(
-    const char **data, int *size) const {
-  manager_.GetSystemDictionaryData(data, size);
-}
-
-void OssDataManager::GetSegmenterData(
-    size_t *l_num_elements, size_t *r_num_elements,
-    const uint16 **l_table, const uint16 **r_table,
-    size_t *bitarray_num_bytes, const char **bitarray_data,
-    const uint16 **boundary_data) const {
-  manager_.GetSegmenterData(l_num_elements, r_num_elements,
-                            l_table, r_table, bitarray_num_bytes,
-                            bitarray_data, boundary_data);
-}
-
-void OssDataManager::GetSuffixDictionaryData(StringPiece *key_array,
-                                             StringPiece *value_array,
-                                             const uint32 **token_array) const {
-  manager_.GetSuffixDictionaryData(key_array, value_array, token_array);
-}
-
-void OssDataManager::GetReadingCorrectionData(
-    StringPiece *value_array_data, StringPiece *error_array_data,
-    StringPiece *correction_array_data) const {
-  manager_.GetReadingCorrectionData(value_array_data, error_array_data,
-                                    correction_array_data);
-}
-
-void OssDataManager::GetCollocationData(const char **array,
-                                        size_t *size) const {
-  manager_.GetCollocationData(array, size);
-}
-
-void OssDataManager::GetCollocationSuppressionData(const char **array,
-                                                   size_t *size) const {
-  manager_.GetCollocationSuppressionData(array, size);
-}
-
-void OssDataManager::GetSuggestionFilterData(const char **data,
-                                             size_t *size) const {
-  manager_.GetSuggestionFilterData(data, size);
-}
-
-void OssDataManager::GetSymbolRewriterData(
-    StringPiece *token_array_data, StringPiece *string_array_data) const {
-  manager_.GetSymbolRewriterData(token_array_data, string_array_data);
-}
-
-#ifndef NO_USAGE_REWRITER
-void OssDataManager::GetUsageRewriterData(
-    StringPiece *base_conjugation_suffix_data,
-    StringPiece *conjugation_suffix_data,
-    StringPiece *conjugation_suffix_index_data,
-    StringPiece *usage_items_data,
-    StringPiece *string_array_data) const {
-  manager_.GetUsageRewriterData(base_conjugation_suffix_data,
-                                conjugation_suffix_data,
-                                conjugation_suffix_index_data,
-                                usage_items_data,
-                                string_array_data);
-}
-#endif  // NO_USAGE_REWRITER
-
-void OssDataManager::GetCounterSuffixSortedArray(
-    const char **array, size_t *size) const {
-  manager_.GetCounterSuffixSortedArray(array, size);
 }
 
 }  // namespace oss

@@ -31,8 +31,6 @@
 
 #include "base/embedded_file.h"
 #include "base/logging.h"
-#include "base/port.h"
-#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 namespace testing {
@@ -51,88 +49,11 @@ const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
 MockDataManager::MockDataManager() {
   const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
-  CHECK(manager_.InitFromArray(LoadEmbeddedFile(kMockMozcDataSet), magic))
+  CHECK(InitFromArray(LoadEmbeddedFile(kMockMozcDataSet), magic))
       << "Embedded mock_mozc_data.h is broken";
 }
 
 MockDataManager::~MockDataManager() = default;
-
-const uint8 *MockDataManager::GetPosGroupData() const {
-  return manager_.GetPosGroupData();
-}
-
-void MockDataManager::GetConnectorData(const char **data,
-                                       size_t *size) const {
-  manager_.GetConnectorData(data, size);
-}
-
-void MockDataManager::GetSystemDictionaryData(const char **data,
-                                              int *size) const {
-  manager_.GetSystemDictionaryData(data, size);
-}
-
-void MockDataManager::GetSegmenterData(
-    size_t *l_num_elements, size_t *r_num_elements,
-    const uint16 **l_table, const uint16 **r_table,
-    size_t *bitarray_num_bytes, const char **bitarray_data,
-    const uint16 **boundary_data) const {
-  manager_.GetSegmenterData(l_num_elements, r_num_elements,
-                            l_table, r_table, bitarray_num_bytes,
-                            bitarray_data, boundary_data);
-}
-
-void MockDataManager::GetSuffixDictionaryData(
-    StringPiece *key_array, StringPiece *value_array,
-    const uint32 **token_array) const {
-  manager_.GetSuffixDictionaryData(key_array, value_array, token_array);
-}
-
-void MockDataManager::GetReadingCorrectionData(
-    StringPiece *value_array_data, StringPiece *error_array_data,
-    StringPiece *correction_array_data) const {
-  manager_.GetReadingCorrectionData(value_array_data, error_array_data,
-                                    correction_array_data);
-}
-
-void MockDataManager::GetCollocationData(const char **array,
-                                         size_t *size) const {
-  manager_.GetCollocationData(array, size);
-}
-
-void MockDataManager::GetCollocationSuppressionData(const char **array,
-                                                    size_t *size) const {
-  manager_.GetCollocationSuppressionData(array, size);
-}
-
-void MockDataManager::GetSuggestionFilterData(const char **data,
-                                              size_t *size) const {
-  manager_.GetSuggestionFilterData(data, size);
-}
-
-void MockDataManager::GetSymbolRewriterData(
-    StringPiece *token_array_data, StringPiece *string_array_data) const {
-  manager_.GetSymbolRewriterData(token_array_data, string_array_data);
-}
-
-#ifndef NO_USAGE_REWRITER
-void MockDataManager::GetUsageRewriterData(
-    StringPiece *base_conjugation_suffix_data,
-    StringPiece *conjugation_suffix_data,
-    StringPiece *conjugation_suffix_index_data,
-    StringPiece *usage_items_data,
-    StringPiece *string_array_data) const {
-  manager_.GetUsageRewriterData(base_conjugation_suffix_data,
-                                conjugation_suffix_data,
-                                conjugation_suffix_index_data,
-                                usage_items_data,
-                                string_array_data);
-}
-#endif  // NO_USAGE_REWRITER
-
-void MockDataManager::GetCounterSuffixSortedArray(
-    const char **array, size_t *size) const {
-  manager_.GetCounterSuffixSortedArray(array, size);
-}
 
 }  // namespace testing
 }  // namespace mozc

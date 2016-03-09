@@ -31,48 +31,17 @@
 #define MOZC_DATA_MANAGER_CHROMEOS_CHROMEOS_DATA_MANAGER_H_
 
 #include "base/port.h"
-#include "data_manager/chromeos/chromeos_user_pos_manager.h"
 #include "data_manager/data_manager.h"
 
 namespace mozc {
 namespace chromeos {
 
-class ChromeOsDataManager : public ChromeOsUserPosManager {
+class ChromeOsDataManager : public DataManager {
  public:
   ChromeOsDataManager();
   ~ChromeOsDataManager() override;
 
-  const uint8 *GetPosGroupData() const override;
-  void GetConnectorData(const char **data, size_t *size) const override;
-  void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
-                        const uint16 **l_table, const uint16 **r_table,
-                        size_t *bitarray_num_bytes, const char **bitarray_data,
-                        const uint16 **boundary_data) const override;
-  void GetSystemDictionaryData(const char **data, int *size) const override;
-  void GetSuffixDictionaryData(StringPiece *key_array, StringPiece *value_array,
-                               const uint32 **token_array) const override;
-  void GetReadingCorrectionData(
-      StringPiece *value_array_data, StringPiece *error_array_data,
-      StringPiece *correction_array_data) const override;
-  void GetCollocationData(const char **array, size_t *size) const override;
-  void GetCollocationSuppressionData(const char **array,
-                                     size_t *size) const override;
-  void GetSuggestionFilterData(const char **data, size_t *size) const override;
-  void GetSymbolRewriterData(StringPiece *token_array_data,
-                             StringPiece *string_array_data) const override;
-#ifndef NO_USAGE_REWRITER
-  void GetUsageRewriterData(
-      StringPiece *base_conjugation_suffix_data,
-      StringPiece *conjugation_suffix_data,
-      StringPiece *conjugation_suffix_index_data,
-      StringPiece *usage_items_data,
-      StringPiece *string_array_data) const override;
-#endif  // NO_USAGE_REWRITER
-  void GetCounterSuffixSortedArray(const char **array,
-                                   size_t *size) const override;
-
  private:
-  DataManager manager_;
   DISALLOW_COPY_AND_ASSIGN(ChromeOsDataManager);
 };
 
