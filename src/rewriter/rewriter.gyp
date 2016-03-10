@@ -89,7 +89,6 @@
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:immutable_converter',
-        '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../protocol/protocol.gyp:commands_proto',

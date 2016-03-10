@@ -53,27 +53,6 @@
       ],
     },
     {
-      'target_name': 'user_pos_manager',
-      'type': 'none',
-      'toolsets': [ 'target', 'host' ],
-      'sources': [
-        'user_pos_manager.h',
-      ],
-      'dependencies': [
-        'oss/oss_data_manager_base.gyp:oss_user_pos_manager',
-      ],
-      'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            'packed/packed_data_manager_base.gyp:packed_data_manager'
-          ],
-          'dependencies!': [
-            'oss/oss_data_manager_base.gyp:oss_user_pos_manager'
-          ]
-        }],
-      ],
-    },
-    {
       'target_name': 'connection_file_reader',
       'type': 'static_library',
       'toolsets': [ 'target', 'host' ],

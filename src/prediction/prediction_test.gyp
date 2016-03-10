@@ -49,7 +49,6 @@
         '../converter/converter_base.gyp:immutable_converter',
         '../converter/converter_base.gyp:segmenter',
         '../converter/converter_base.gyp:segments',
-        '../data_manager/data_manager.gyp:user_pos_manager',
         '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary',

@@ -196,7 +196,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
-        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:user_pos',
         'rewriter_serialized_dictionary.gyp:serialized_dictionary',

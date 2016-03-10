@@ -30,19 +30,6 @@
 {
   'targets': [
     {
-      'target_name': '<(dataset_tag)_user_pos_manager',
-      'type': 'static_library',
-      'toolsets': [ 'target', 'host' ],
-      'sources': [
-        '<(current_dir)/<(dataset_tag)_user_pos_manager.cc',
-      ],
-      'dependencies': [
-        '<(mozc_dir)/base/base.gyp:base',
-        'gen_user_pos_manager_data_header_for_<(dataset_tag)#host',
-        '../data_manager_base.gyp:data_manager',
-      ],
-    },
-    {
       'target_name': 'gen_<(dataset_tag)_embedded_pos_list',
       'type': 'none',
       'toolsets': ['host'],
@@ -66,34 +53,6 @@
             '--input=<(pos_list)',
             '--name=kPosArray',
             '--output=<(gen_out_dir)/pos_list.h',
-          ],
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_user_pos_manager_data_header_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        'gen_user_pos_manager_data_for_<(dataset_tag)#host',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_user_pos_manager_data_header_for_<(dataset_tag)',
-          'variables': {
-            'user_pos_manager_data': '<(gen_out_dir)/user_pos_manager.data',
-          },
-          'inputs': [
-            '<(user_pos_manager_data)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/user_pos_manager_data.h',
-          ],
-          'action': [
-            'python', '<(mozc_dir)/build_tools/embed_file.py',
-            '--input=<(user_pos_manager_data)',
-            '--name=kUserPosManagerData',
-            '--output=<(gen_out_dir)/user_pos_manager_data.h',
           ],
         },
       ],

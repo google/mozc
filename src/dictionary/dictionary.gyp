@@ -82,8 +82,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../data_manager/data_manager.gyp:user_pos_manager',
-        '../data_manager/testing/mock_data_manager_base.gyp:mock_user_pos_manager',
+        '../data_manager/data_manager_base.gyp:data_manager',
         'dictionary_base.gyp:pos_matcher',
         'system/system_dictionary.gyp:system_dictionary_builder',
       ],
