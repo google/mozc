@@ -874,11 +874,33 @@ def BuildMain(options, targets):
   os.environ['PYTHONPATH'] = original_python_path
 
 
-def RunTests(build_base, configuration, parallel_num):
+def RunTest(binary_path, output_dir, options):
+  """Run test with options.
+
+  Args:
+    binary_path: The path of unittest.
+    output_dir: The directory of output resutls.
+    options: options to be passed to the unittest.
+  """
+  binary_filename = os.path.basename(binary_path)
+  tmp_xml_path = os.path.join(output_dir, '%s.xml.running' % binary_filename)
+  test_options = options[:]
+  test_options.extend(['--gunit_output=xml:%s' % tmp_xml_path,
+                       '--gtest_output=xml:%s' % tmp_xml_path])
+  RunOrDie([binary_path] + test_options)
+
+  xml_path = os.path.join(output_dir, '%s.xml' % binary_filename)
+  CopyFile(tmp_xml_path, xml_path)
+  RemoveFile(tmp_xml_path)
+
+
+
+
+def RunTests(target_platform, configuration, parallel_num):
   """Run built tests actually.
 
   Args:
-    build_base: the base directory ('out_linux', 'out_mac', etc.)
+    target_platform: The build target ('Android', 'Windows', etc.)
     configuration: build configuration ('Release' or 'Debug')
     parallel_num: allows specified jobs at once.
 
@@ -886,7 +908,7 @@ def RunTests(build_base, configuration, parallel_num):
     RunOrDieError: One or more tests have failed.
   """
   # TODO(nona): move this function to build_tools/test_tools
-  base_path = os.path.join(build_base, configuration)
+  base_path = os.path.join(GetBuildBaseName(target_platform), configuration)
 
   options = []
 
@@ -900,8 +922,10 @@ def RunTests(build_base, configuration, parallel_num):
   # cleaning, the second runtests runs every test.
   # TODO(mukai): parses gyp files and get the target binaries, if possible.
   executable_suffix = ''
-  if IsWindows():
+  test_function = RunTest
+  if target_platform == 'Windows':
     executable_suffix = '.exe'
+
   test_binaries = glob.glob(
       os.path.join(base_path, '*_test' + executable_suffix))
 
@@ -935,16 +959,7 @@ def RunTests(build_base, configuration, parallel_num):
     for binary in test_binaries:
       logging.info('running %s...', binary)
       try:
-        binary_filename = os.path.basename(binary)
-        tmp_xml_path = os.path.join(gtest_report_dir,
-                                    '%s.xml.running' % binary_filename)
-        test_options = options[:]
-        test_options.extend(['--gunit_output=xml:%s' % tmp_xml_path,
-                             '--gtest_output=xml:%s' % tmp_xml_path])
-        RunOrDie([binary] + test_options)
-        xml_path = os.path.join(gtest_report_dir, '%s.xml' % binary_filename)
-        CopyFile(tmp_xml_path, xml_path)
-        RemoveFile(tmp_xml_path)
+        test_function(binary, gtest_report_dir, options)
       except RunOrDieError, e:
         logging.error(e)
         failed_tests.append(binary)
@@ -953,6 +968,7 @@ def RunTests(build_base, configuration, parallel_num):
     for binary in test_binaries:
       launcher.AddTestCommand([binary] + options)
     failed_tests = launcher.Execute(parallel_num)
+
   if failed_tests:
     error_text = ColoredText('following tests failed', logging.ERROR)
     raise RunOrDieError('\n'.join([error_text] + failed_tests))
@@ -1119,7 +1135,6 @@ def RunTestsMain(options, args):
     if target_platform == 'Android' and options.configuration != 'Release':
       targets.append('%s/android/android.gyp:build_java_test' % SRC_DIR)
 
-
   # Build the test targets
   (build_opts, build_args) = ParseBuildOptions(build_options + targets)
   BuildMain(build_opts, build_args)
@@ -1128,8 +1143,7 @@ def RunTestsMain(options, args):
   if target_platform == 'Android':
     RunTestsOnAndroid(options, build_options)
   else:
-    RunTests(GetBuildBaseName(target_platform), options.configuration,
-             options.test_jobs)
+    RunTests(target_platform, options.configuration, options.test_jobs)
 
 
 def CleanMain(options, unused_args):

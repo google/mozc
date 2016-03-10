@@ -157,7 +157,6 @@
         'session_observer_handler_test.cc',
         'session_usage_observer_test.cc',
         'session_usage_stats_util_test.cc',
-        'session_watch_dog_test.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -177,12 +176,22 @@
         'session_base.gyp:output_util',
         'session_base.gyp:session_usage_stats_util',
       ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          'sources!': [
-            'session_watch_dog_test.cc',
-          ],
-        }],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      # Android is not supported.
+      'target_name': 'session_watch_dog_test',
+      'type': 'executable',
+      'sources': [
+        'session_watch_dog_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../client/client.gyp:client_mock',
+        '../testing/testing.gyp:gtest_main',
+        'session.gyp:session_watch_dog',
       ],
       'variables': {
         'test_size': 'small',
@@ -352,11 +361,13 @@
         'session_regression_test',
         'session_server_test',
         'session_test',
+        'session_watch_dog_test',
       ],
       'conditions': [
         ['target_platform=="Android"', {
           'dependencies!': [
             'session_server_test',
+            'session_watch_dog_test',
             # These tests have been disabled as it takes long execution time.
             # In addition currently they fail.
             # Here we also disable the tests temporarirly.

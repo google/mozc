@@ -49,6 +49,7 @@
 #define MOZC_DISABLE_SESSION_WATCHDOG
 #endif  // OS_ANDROID || OS_NACL
 
+
 namespace mozc {
 class EngineInterface;
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
