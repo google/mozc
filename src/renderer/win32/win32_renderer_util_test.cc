@@ -4916,7 +4916,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Suggest) {
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-      242, 727, 242, 707, 243, 727, layout);
+      242, 727, 242, 707, 242, 727, layout);
 }
 
 // Firefox 3.6.10 on Vista SP1 / textarea
@@ -5396,7 +5396,7 @@ TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Suggest) {
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
       app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-      86, 142, 86, 122, 87, 142, layout);
+      86, 142, 86, 122, 101, 182, layout);
 }
 
 // Firefox 47.0a1 (2016-02-28)

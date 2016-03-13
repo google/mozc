@@ -2558,6 +2558,7 @@ int LayoutManager::GetCompatibilityMode(
       const wchar_t *kUseCandidateFormForSuggest[] = {
           L"Chrome_RenderWidgetHostHWND",
           L"JsTaroCtrl",
+          L"MozillaWindowClass",
           L"OperaWindowClass",
           L"QWidget",
       };
