@@ -171,6 +171,15 @@ CPoint GetBasePositionFromExcludeRect(const CRect &exclude_rect,
   return CPoint(exclude_rect.left, exclude_rect.bottom);
 }
 
+CPoint GetBasePositionFromIMECHARPOSITION(const IMECHARPOSITION &char_pos,
+                                          bool is_vertical) {
+  if (is_vertical) {
+    return CPoint(char_pos.pt.x - char_pos.cLineHeight, char_pos.pt.y);
+  }
+  // Horizontal
+  return CPoint(char_pos.pt.x, char_pos.pt.y + char_pos.cLineHeight);
+}
+
 // Returns false if given |form| should be ignored for some compatibility
 // reason.  Otherwise, returns true.
 bool IsCompatibleCompositionForm(const CompositionForm &form,
@@ -405,6 +414,26 @@ bool ExtractParams(
     } else if (direction == LayoutManager::HORIZONTAL_WRITING) {
       *params->vertical_writing.mutable_value() = false;
     }
+  }
+  return true;
+}
+
+bool CanUseExcludeRegionInCandidateFrom(
+    const CandidateWindowLayoutParams &params,
+    int compatibility_mode,
+    bool for_suggestion) {
+  if (for_suggestion &&
+      ((compatibility_mode & CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) !=
+       CAN_USE_CANDIDATE_FORM_FOR_SUGGEST)) {
+    // This is suggestion and |CAN_USE_CANDIDATE_FORM_FOR_SUGGEST| is not
+    // specified.  We cannot assume that |CANDIDATEFORM| is valid in this case.
+    return false;
+  }
+  if (!params.candidate_form.has_value()) {
+    return false;
+  }
+  if (!params.candidate_form.value().has_exclude_region()) {
+    return false;
   }
   return true;
 }
@@ -1099,6 +1128,7 @@ bool LayoutCandidateWindowByCandidateForm(
 bool LayoutCandidateWindowByCompositionTarget(
     const CandidateWindowLayoutParams &params,
     int compatibility_mode,
+    bool for_suggestion,
     LayoutManager *layout_manager,
     CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
@@ -1140,9 +1170,15 @@ bool LayoutCandidateWindowByCompositionTarget(
   //    v
   //   (Base Line)
 
+  const bool can_use_candidate_form_exclude_region =
+      CanUseExcludeRegionInCandidateFrom(
+          params, compatibility_mode, for_suggestion);
   const bool is_vertical = IsVerticalWriting(params);
   CRect exclude_region_in_logical_coord;
-  if (is_vertical) {
+  if (can_use_candidate_form_exclude_region) {
+    exclude_region_in_logical_coord =
+        params.candidate_form.value().exclude_region();
+  } else if (is_vertical) {
     // Vertical
     exclude_region_in_logical_coord.left =
         char_pos.pt.x - char_pos.cLineHeight;
@@ -1159,8 +1195,7 @@ bool LayoutCandidateWindowByCompositionTarget(
   }
 
   const CPoint base_pos_in_logical_coord =
-      GetBasePositionFromExcludeRect(exclude_region_in_logical_coord,
-                                     is_vertical);
+      GetBasePositionFromIMECHARPOSITION(char_pos, is_vertical);
 
   CPoint base_pos_in_physical_coord;
   layout_manager->GetPointInPhysicalCoords(
@@ -2419,8 +2454,9 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
     return false;
   }
 
+  const bool is_suggestion = true;
   if (LayoutCandidateWindowByCompositionTarget(
-          params, compatibility_mode, this, candidate_layout)) {
+          params, compatibility_mode, is_suggestion, this, candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
@@ -2465,8 +2501,9 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
     return false;
   }
 
+  const bool is_suggestion = false;
   if (LayoutCandidateWindowByCompositionTarget(
-          params, compatibility_mode, this, candidate_layout)) {
+          params, compatibility_mode, is_suggestion, this, candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
