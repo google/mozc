@@ -4710,7 +4710,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Convert) {
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
       app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-      693, 613, 693, 596, 694, 613, layout);
+      693, 613, 681, 616, 683, 637, layout);
 }
 
 // MS Word 2010 x64, True Inline, Horizontal
@@ -4796,7 +4796,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Convert) {
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
       app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-      640, 482, 640, 466, 641, 482, layout);
+      640, 482, 570, 466, 1137, 482, layout);
 }
 
 // MS Word 2010 x64, True Inline, Vertical
@@ -4882,7 +4882,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Convert) {
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
       app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-      1077, 488, 1077, 488, 1095, 489, layout);
+      1077, 488, 1077, 418, 1095, 985, layout);
 }
 
 // Firefox 3.6.10 on Vista SP1 / textarea
@@ -4916,7 +4916,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Suggest) {
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-      242, 727, 242, 707, 243, 727, layout);
+      242, 727, 242, 707, 242, 727, layout);
 }
 
 // Firefox 3.6.10 on Vista SP1 / textarea
@@ -4952,7 +4952,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Convert) {
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
       app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
-      257, 727, 257, 707, 258, 727, layout);
+      257, 727, 257, 707, 257, 727, layout);
 }
 
 // Chrome 6.0.472.63 on Vista SP1 / textarea
@@ -5354,6 +5354,93 @@ TEST_F(Win32RendererUtilTest, Meadow3) {
   // typing. So we need to show InfoList without delay.  b/5824433.
   const int mode = layout_mgr.GetCompatibilityMode(app_info);
   EXPECT_EQ(SHOW_INFOLIST_IMMEDIATELY, mode & SHOW_INFOLIST_IMMEDIATELY);
+}
+
+// Firefox 47.0a1 (2016-02-28)
+TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Suggest) {
+  const wchar_t kClassName[] = L"MozillaWindowClass";
+  const UINT kClassStyle = CS_DBLCLKS;
+  const DWORD kWindowStyle =
+    WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+  static_assert(kWindowStyle == 0x96000000, "Check actual value");
+  const DWORD kWindowExStyle =
+    WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+  static_assert(kWindowExStyle == 0x00000000, "Check actual value");
+
+  const CRect kWindowRect(58, 22, 1210, 622);
+  const CPoint kClientOffset(6, 0);
+  const CSize kClientSize(1140, 594);
+  const double kScaleFactor = 1.0;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(
+      CreateDefaultGUIFontEmulator(),
+      CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
+                           kScaleFactor, &hwnd));
+
+  ApplicationInfo app_info;
+
+  AppInfoUtil::SetBasicApplicationInfo(
+      &app_info, hwnd,
+      ApplicationInfo::ShowSuggestWindow);
+
+  AppInfoUtil::SetCandidateForm(
+      &app_info, CandidateForm::EXCLUDE, 22, 100, 22, 100, 37, 160);
+
+  AppInfoUtil::SetCompositionTarget(
+      &app_info, 0, 86, 122, 20, 83, 119, 109, 525);
+
+  AppInfoUtil::SetCaretInfo(&app_info, false, 35, 140, 36, 160, hwnd);
+
+  CandidateWindowLayout layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
+      app_info, &layout));
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
+      86, 142, 86, 122, 101, 182, layout);
+}
+
+// Firefox 47.0a1 (2016-02-28)
+TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Convert) {
+  const wchar_t kClassName[] = L"MozillaWindowClass";
+  const UINT kClassStyle = CS_DBLCLKS;
+  const DWORD kWindowStyle =
+      WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+  static_assert(kWindowStyle == 0x96000000, "Check actual value");
+  const DWORD kWindowExStyle =
+      WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+  static_assert(kWindowExStyle == 0x00000000, "Check actual value");
+
+  const CRect kWindowRect(58, 22, 1210, 622);
+  const CPoint kClientOffset(6, 0);
+  const CSize kClientSize(1140, 594);
+  const double kScaleFactor = 1.0;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(
+      CreateDefaultGUIFontEmulator(),
+      CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
+                           kScaleFactor, &hwnd));
+
+  ApplicationInfo app_info;
+
+  AppInfoUtil::SetBasicApplicationInfo(
+      &app_info, hwnd,
+      ApplicationInfo::ShowCandidateWindow |
+      ApplicationInfo::ShowSuggestWindow);
+
+  AppInfoUtil::SetCandidateForm(
+      &app_info, CandidateForm::EXCLUDE, 22, 100, 22, 100, 37, 160);
+
+  AppInfoUtil::SetCompositionTarget(
+      &app_info, 0, 86, 122, 20, 83, 119, 109, 525);
+
+  AppInfoUtil::SetCaretInfo(&app_info, false, 35, 140, 36, 160, hwnd);
+
+  CandidateWindowLayout layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
+      app_info, &layout));
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
+      86, 142, 86, 122, 101, 182, layout);
 }
 
 }  // namespace win32
