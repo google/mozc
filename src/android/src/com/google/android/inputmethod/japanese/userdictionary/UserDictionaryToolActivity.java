@@ -247,7 +247,7 @@ public class UserDictionaryToolActivity extends Activity {
       return;
     }
 
-    if (!importUri.getScheme().equals("file")) {
+    if (!"file".equals(importUri.getScheme())) {
       // Not a file.
       toastManager.showMessageShortly(
           R.string.user_dictionary_tool_error_import_source_invalid_scheme);
@@ -255,7 +255,7 @@ public class UserDictionaryToolActivity extends Activity {
     }
 
     // Need to read data from the file.
-    if (getIntent().getType().equals("application/zip")) {
+    if ("application/zip".equals(getIntent().getType())) {
       handleZipImportData(importUri.getPath());
     } else {
       handleTextImportData(importUri.getPath());
