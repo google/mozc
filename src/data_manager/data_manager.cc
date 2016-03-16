@@ -209,6 +209,19 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     LOG(ERROR) << "Symbol dictionary data is broken";
     return false;
   }
+  if (!reader.Get("emoticon_token", &emoticon_token_array_data_)) {
+    LOG(ERROR) << "Cannot find an emoticon token array";
+    return false;
+  }
+  if (!reader.Get("emoticon_string", &emoticon_string_array_data_)) {
+    LOG(ERROR) << "Cannot find an emoticon string array or data is broken";
+    return false;
+  }
+  if (!SerializedDictionary::VerifyData(emoticon_token_array_data_,
+                                        emoticon_string_array_data_)) {
+    LOG(ERROR) << "Emoticon dictionary data is broken";
+    return false;
+  }
 
   if (!reader.Get("usage_item_array", &usage_items_data_)) {
     VLOG(2) << "Usage dictionary is not provided";
@@ -335,6 +348,12 @@ void DataManager::GetSymbolRewriterData(StringPiece *token_array_data,
                                         StringPiece *string_array_data) const {
   *token_array_data = symbol_token_array_data_;
   *string_array_data = symbol_string_array_data_;
+}
+
+void DataManager::GetEmoticonRewriterData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  *token_array_data = emoticon_token_array_data_;
+  *string_array_data = emoticon_string_array_data_;
 }
 
 void DataManager::GetCounterSuffixSortedArray(const char **array,

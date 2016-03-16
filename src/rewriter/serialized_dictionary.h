@@ -32,6 +32,7 @@
 
 #include <istream>
 #include <iterator>
+#include <map>
 #include <string>
 #include <utility>
 
@@ -106,6 +107,17 @@ namespace mozc {
 // array by index.
 class SerializedDictionary {
  public:
+  struct CompilerToken {
+    string value;
+    string description;
+    string additional_description;
+    uint16 lid;
+    uint16 rid;
+    int16 cost;
+  };
+
+  using TokenList = vector<std::unique_ptr<CompilerToken>>;
+
   static const size_t kTokenByteLength = 24;
 
   class iterator : public std::iterator<std::random_access_iterator_tag,
@@ -281,9 +293,16 @@ class SerializedDictionary {
       std::istream *input,
       std::unique_ptr<uint32[]> *output_token_array_buf,
       std::unique_ptr<uint32[]> *output_string_array_buf);
+  static pair<StringPiece, StringPiece> Compile(
+      const map<string, TokenList> &dic,
+      std::unique_ptr<uint32[]> *output_token_array_buf,
+      std::unique_ptr<uint32[]> *output_string_array_buf);
 
   // Creates serialized data and writes them to files.
   static void CompileToFiles(const string &input,
+                             const string &output_token_array,
+                             const string &output_string_array);
+  static void CompileToFiles(const map<string, TokenList> &dic,
                              const string &output_token_array,
                              const string &output_string_array);
 
@@ -295,6 +314,10 @@ class SerializedDictionary {
   // boundary.
   SerializedDictionary(StringPiece token_array, StringPiece string_array_data);
   ~SerializedDictionary();
+
+  std::size_t size() const {
+    return token_array_.size() / kTokenByteLength;
+  }
 
   iterator begin() { return iterator(token_array_.data(), &string_array_); }
   const_iterator begin() const {

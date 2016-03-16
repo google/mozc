@@ -117,6 +117,7 @@
         'gen_separate_suffix_data_for_<(dataset_tag)#host',
         'gen_separate_reading_correction_data_for_<(dataset_tag)#host',
         'gen_separate_symbol_rewriter_data_for_<(dataset_tag)#host',
+        'gen_separate_emoticon_rewriter_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -146,6 +147,8 @@
             'reading_correction_correction': '<(gen_out_dir)/reading_correction_correction.data',
             'symbol_token': '<(gen_out_dir)/symbol_token.data',
             'symbol_string': '<(gen_out_dir)/symbol_string.data',
+            'emoticon_token': '<(gen_out_dir)/emoticon_token.data',
+            'emoticon_string': '<(gen_out_dir)/emoticon_string.data',
           },
           'inputs': [
             '<(pos_matcher)',
@@ -171,6 +174,8 @@
             '<(reading_correction_correction)',
             '<(symbol_token)',
             '<(symbol_string)',
+            '<(emoticon_token)',
+            '<(emoticon_string)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -202,6 +207,8 @@
             'reading_correction_correction:32:<(gen_out_dir)/reading_correction_correction.data',
             'symbol_token:32:<(gen_out_dir)/symbol_token.data',
             'symbol_string:32:<(gen_out_dir)/symbol_string.data',
+            'emoticon_token:32:<(gen_out_dir)/emoticon_token.data',
+            'emoticon_string:32:<(gen_out_dir)/emoticon_string.data',
           ],
           'conditions': [
             ['target_platform!="Android"', {
@@ -694,6 +701,40 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/symbol*'),
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_emoticon_rewriter_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        '../../rewriter/rewriter_base.gyp:gen_emoticon_rewriter_data_main',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_separate_emoticon_rewriter_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(PRODUCT_DIR)/gen_emoticon_rewriter_data_main<(EXECUTABLE_SUFFIX)',
+            'input_files': [
+              '<(mozc_dir)/data/emoticon/emoticon.tsv',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/emoticon_token.data',
+            '<(gen_out_dir)/emoticon_string.data',
+          ],
+          'action': [
+            '<(generator)',
+            '--input=<(mozc_dir)/data/emoticon/emoticon.tsv',
+            '--output_token_array=<(gen_out_dir)/emoticon_token.data',
+            '--output_string_array=<(gen_out_dir)/emoticon_string.data',
+          ],
+          'message': '[<(dataset_tag)] Generating emoticon data',
         },
       ],
     },

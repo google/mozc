@@ -43,51 +43,33 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/serialized_dictionary.h"
 
 namespace mozc {
 namespace {
 
-#include "rewriter/emoticon_rewriter_data.h"
-
-class EmoticonDictionary {
- public:
-  EmoticonDictionary()
-      : dic_(new EmbeddedDictionary(kEmoticonData_token_data,
-                                    kEmoticonData_token_size)) {}
-
-  ~EmoticonDictionary() {}
-
-  EmbeddedDictionary *GetDictionary() const {
-    return dic_.get();
-  }
-
- private:
-  std::unique_ptr<EmbeddedDictionary> dic_;
-};
-
 class ValueCostCompare {
  public:
-  bool operator() (const EmbeddedDictionary::Value *a,
-                   const EmbeddedDictionary::Value *b) const {
-    return a->cost < b->cost;
+  bool operator() (SerializedDictionary::const_iterator a,
+                   SerializedDictionary::const_iterator b) const {
+    return a.cost() < b.cost();
   }
 };
 
 class IsEqualValue {
  public:
-  bool operator() (const EmbeddedDictionary::Value *a,
-                   const EmbeddedDictionary::Value *b) const {
-    return strcmp(a->value, b->value) == 0;
+  bool operator() (const SerializedDictionary::const_iterator a,
+                   const SerializedDictionary::const_iterator b) const {
+    return a.value() == b.value();
   }
 };
 
 // Insert Emoticon into the |segment|
 // Top |initial_insert_size| candidates are inserted from |initial_insert_pos|.
 // Remained candidates are added to the buttom.
-void InsertCandidates(const EmbeddedDictionary::Value *value,
-                      size_t value_size,
+void InsertCandidates(SerializedDictionary::const_iterator begin,
+                      SerializedDictionary::const_iterator end,
                       size_t initial_insert_pos,
                       size_t initial_insert_size,
                       bool is_no_learning,
@@ -101,9 +83,9 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
   size_t offset = min(initial_insert_pos, segment->candidates_size());
 
   // Sort values by cost just in case
-  vector<const EmbeddedDictionary::Value *> sorted_value;
-  for (size_t i = 0; i < value_size; ++i) {
-    sorted_value.push_back(&value[i]);
+  vector<SerializedDictionary::const_iterator> sorted_value;
+  for (auto iter = begin; iter != end; ++iter) {
+    sorted_value.push_back(iter);
   }
 
   std::sort(sorted_value.begin(), sorted_value.end(), ValueCostCompare());
@@ -116,7 +98,7 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
       sorted_value.end());
 
   for (size_t i = 0; i < sorted_value.size(); ++i) {
-    Segment::Candidate *c = NULL;
+    Segment::Candidate *c = nullptr;
 
     if (i < initial_insert_size) {
       c = segment->insert_candidate(offset);
@@ -125,18 +107,18 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
       c = segment->push_back_candidate();
     }
 
-    if (c == NULL) {
+    if (c == nullptr) {
       LOG(ERROR) << "cannot insert candidate at " << offset;
       continue;
     }
 
     c->Init();
     // TODO(taku): set an appropriate POS here.
-    c->lid = sorted_value[i]->lid;
-    c->rid = sorted_value[i]->rid;
+    c->lid = sorted_value[i].lid();
+    c->rid = sorted_value[i].rid();
     c->cost = base_candidate.cost;
-    c->value = sorted_value[i]->value;
-    c->content_value = sorted_value[i]->value;
+    sorted_value[i].value().CopyToString(&c->value);
+    c->content_value = c->value;
     c->key = base_candidate.key;
     c->content_key = base_candidate.content_key;
     // no full/half width normalizations
@@ -151,18 +133,20 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
     const char kBaseEmoticonDescription[]
         = "\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97";
 
-    if (sorted_value[i]->description == NULL) {
+    if (sorted_value[i].description().empty()) {
       c->description = kBaseEmoticonDescription;
     } else {
       string description = kBaseEmoticonDescription;
       description.append(" ");
-      description.append(sorted_value[i]->description);
+      sorted_value[i].description().AppendToString(&description);
       c->description = description;
     }
   }
 }
 
-bool RewriteCandidate(Segments *segments) {
+}  // namespace
+
+bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     const string &key = segments->conversion_segment(i).key();
@@ -171,8 +155,8 @@ bool RewriteCandidate(Segments *segments) {
       continue;
     }
     bool is_no_learning = false;
-    const EmbeddedDictionary::Value *value = NULL;
-    size_t value_size = 0;
+    SerializedDictionary::const_iterator begin;
+    SerializedDictionary::const_iterator end = dic_.end();
     size_t initial_insert_size = 0;
     size_t initial_insert_pos = 0;
 
@@ -184,58 +168,50 @@ bool RewriteCandidate(Segments *segments) {
     if (key == "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98") {
       // When key is "かおもじ", default candidate size should be small enough.
       // It is safe to expand all candidates at this time.
-      const EmbeddedDictionary::Token *token
-          = Singleton<EmoticonDictionary>::get()->GetDictionary()->AllToken();
-      CHECK(token);
+      begin = dic_.begin();
+      CHECK(begin != dic_.end());
+      end = dic_.end();
       // set large value(100) so that all candidates are pushed to the bottom
-      value = token->value;
-      value_size = token->value_size;
       initial_insert_pos = 100;
-      initial_insert_size = token->value_size;
+      initial_insert_size = dic_.size();
       // "かお"
     } else if (key == "\xE3\x81\x8B\xE3\x81\x8A") {
       // When key is "かお", expand all candidates in conservative way.
-      const EmbeddedDictionary::Token *token
-          = Singleton<EmoticonDictionary>::get()->GetDictionary()->AllToken();
-      CHECK(token);
+      begin = dic_.begin();
+      CHECK(begin != dic_.end());
       // first 6 candidates are inserted at 4 th position.
       // Other candidates are pushed to the buttom.
-      value = token->value;
-      value_size = token->value_size;
       initial_insert_pos = 4;
       initial_insert_size = 6;
     } else if (key == "\xE3\x81\xB5\xE3\x81\x8F\xE3\x82\x8F"
                "\xE3\x82\x89\xE3\x81\x84") {   // "ふくわらい"
       // Choose one emoticon randomly from the dictionary.
       // TODO(taku): want to make it "generate" more funny emoticon.
-      const EmbeddedDictionary::Token *token
-          = Singleton<EmoticonDictionary>::get()->GetDictionary()->AllToken();
-      CHECK(token);
+      begin = dic_.begin();
+      CHECK(begin != dic_.end());
       uint32 n = 0;
       // use secure random not to predict the next emoticon.
       Util::GetRandomSequence(reinterpret_cast<char *>(&n), sizeof(n));
-      value = token->value + n % token->value_size;
-      value_size = 1;
+      begin += n % dic_.size();
+      end = begin + 1;
       initial_insert_pos = 4;
       initial_insert_size = 1;
       is_no_learning = true;   // do not learn this candidate.
     } else {
-      const EmbeddedDictionary::Token *token
-          = Singleton<EmoticonDictionary>::get()->GetDictionary()->Lookup(key);
-      // by default, insert canidate at 7 th position.
-      if (token != NULL) {
-        value = token->value;
-        value_size = token->value_size;
+      const auto range = dic_.equal_range(key);
+      begin = range.first;
+      end = range.second;
+      if (begin != end) {
         initial_insert_pos = 6;
-        initial_insert_size = token == NULL ? 0 : token->value_size;
+        initial_insert_size = std::distance(begin, end);
       }
     }
 
-    if (value == NULL || value_size == 0) {
+    if (begin == end) {
       continue;
     }
 
-    InsertCandidates(value, value_size,
+    InsertCandidates(begin, end,
                      initial_insert_pos,
                      initial_insert_size,
                      is_no_learning,
@@ -245,11 +221,20 @@ bool RewriteCandidate(Segments *segments) {
 
   return modified;
 }
-}  // namespace
 
-EmoticonRewriter::EmoticonRewriter() {}
+std::unique_ptr<EmoticonRewriter> EmoticonRewriter::CreateFromDataManager(
+    const DataManagerInterface &data_manager) {
+  StringPiece token_array_data, string_array_data;
+  data_manager.GetEmoticonRewriterData(&token_array_data, &string_array_data);
+  return std::unique_ptr<EmoticonRewriter>(
+      new EmoticonRewriter(token_array_data, string_array_data));
+}
 
-EmoticonRewriter::~EmoticonRewriter() {}
+EmoticonRewriter::EmoticonRewriter(StringPiece token_array_data,
+                                   StringPiece string_array_data)
+    : dic_(token_array_data, string_array_data) {}
+
+EmoticonRewriter::~EmoticonRewriter() = default;
 
 int EmoticonRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {

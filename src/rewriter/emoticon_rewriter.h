@@ -30,7 +30,11 @@
 #ifndef MOZC_REWRITER_EMOTICON_REWRITER_H_
 #define MOZC_REWRITER_EMOTICON_REWRITER_H_
 
+#include <memory>
+
+#include "data_manager/data_manager_interface.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/serialized_dictionary.h"
 
 namespace mozc {
 
@@ -39,13 +43,21 @@ class Segments;
 
 class EmoticonRewriter : public RewriterInterface  {
  public:
-  EmoticonRewriter();
-  virtual ~EmoticonRewriter();
+  static std::unique_ptr<EmoticonRewriter> CreateFromDataManager(
+      const DataManagerInterface &data_manager);
 
-  virtual int capability(const ConversionRequest &request) const;
+  EmoticonRewriter(StringPiece token_array_data, StringPiece string_array_data);
+  ~EmoticonRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  int capability(const ConversionRequest &request) const override;
+
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
+
+ private:
+  bool RewriteCandidate(Segments *segments) const;
+
+  SerializedDictionary dic_;
 };
 
 }  // namespace mozc

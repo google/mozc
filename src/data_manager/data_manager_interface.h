@@ -90,6 +90,10 @@ class DataManagerInterface {
   virtual void GetSymbolRewriterData(StringPiece *token_array_data,
                                      StringPiece *string_array_data) const = 0;
 
+  // Gets an address of symbol rewriter data array and its size.
+  virtual void GetEmoticonRewriterData(
+      StringPiece *token_array_data, StringPiece *string_array_data) const = 0;
+
 #ifndef NO_USAGE_REWRITER
   // Gets the usage rewriter data.
   virtual void GetUsageRewriterData(

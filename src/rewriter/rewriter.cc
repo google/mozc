@@ -108,7 +108,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
       kEmojiDataList, arraysize(kEmojiDataList),
       kEmojiTokenList, arraysize(kEmojiTokenList),
       kEmojiValueList));
-  AddRewriter(new EmoticonRewriter);
+  AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager).release());
   AddRewriter(new CalculatorRewriter(parent_converter));
   AddRewriter(new SymbolRewriter(parent_converter, data_manager));
   AddRewriter(new UnicodeRewriter(parent_converter));

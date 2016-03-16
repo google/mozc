@@ -49,16 +49,8 @@
 namespace mozc {
 namespace {
 
-struct CompilerToken {
-  string value;
-  string description;
-  string additional_description;
-  uint16 lid;
-  uint16 rid;
-  int16 cost;
-};
-
-using TokenList = vector<std::unique_ptr<CompilerToken>>;
+using CompilerToken = SerializedDictionary::CompilerToken;
+using TokenList = SerializedDictionary::TokenList;
 
 struct CompareByCost {
   bool operator()(const std::unique_ptr<CompilerToken> &t1,
@@ -113,10 +105,16 @@ pair<StringPiece, StringPiece> SerializedDictionary::Compile(
     std::istream *input,
     std::unique_ptr<uint32[]> *output_token_array_buf,
     std::unique_ptr<uint32[]> *output_string_array_buf) {
-  CHECK(SystemUtil::IsLittleEndian());
-
   map<string, TokenList> dic;
   LoadTokens(input, &dic);
+  return Compile(dic, output_token_array_buf, output_string_array_buf);
+}
+
+pair<StringPiece, StringPiece> SerializedDictionary::Compile(
+    const map<string, TokenList> &dic,
+    std::unique_ptr<uint32[]> *output_token_array_buf,
+    std::unique_ptr<uint32[]> *output_string_array_buf) {
+  CHECK(SystemUtil::IsLittleEndian());
 
   // Build a mapping from string to its index in a serialized string array.
   // Note that duplicate keys share the same index, so data is slightly
@@ -189,9 +187,16 @@ void SerializedDictionary::CompileToFiles(const string &input,
                                           const string &output_string_array) {
   InputFileStream ifs(input.c_str());
   CHECK(ifs.good());
+  map<string, TokenList> dic;
+  LoadTokens(&ifs, &dic);
+  CompileToFiles(dic, output_token_array, output_string_array);
+}
 
+void SerializedDictionary::CompileToFiles(const map<string, TokenList> &dic,
+                                          const string &output_token_array,
+                                          const string &output_string_array) {
   std::unique_ptr<uint32[]> buf1, buf2;
-  const pair<StringPiece, StringPiece> data = Compile(&ifs, &buf1, &buf2);
+  const pair<StringPiece, StringPiece> data = Compile(dic, &buf1, &buf2);
   CHECK(VerifyData(data.first, data.second));
 
   OutputFileStream token_ofs(output_token_array.c_str(),

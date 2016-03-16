@@ -89,6 +89,8 @@ class PackedDataManager::Impl {
   void GetSuggestionFilterData(const char **data, size_t *size) const;
   void GetSymbolRewriterData(StringPiece *token_array_data,
                              StringPiece *string_array_data) const;
+  void GetEmoticonRewriterData(StringPiece *token_array_data,
+                               StringPiece *string_array_data) const;
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(StringPiece *base_conjugation_suffix_data,
                             StringPiece *conjugation_suffix_data,
@@ -237,6 +239,11 @@ void PackedDataManager::Impl::GetSuggestionFilterData(
 void PackedDataManager::Impl::GetSymbolRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   manager_.GetSymbolRewriterData(token_array_data, string_array_data);
+}
+
+void PackedDataManager::Impl::GetEmoticonRewriterData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_.GetEmoticonRewriterData(token_array_data, string_array_data);
 }
 
 #ifndef NO_USAGE_REWRITER
@@ -390,6 +397,11 @@ void PackedDataManager::GetSuggestionFilterData(
 void PackedDataManager::GetSymbolRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   manager_impl_->GetSymbolRewriterData(token_array_data, string_array_data);
+}
+
+void PackedDataManager::GetEmoticonRewriterData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_impl_->GetEmoticonRewriterData(token_array_data, string_array_data);
 }
 
 #ifndef NO_USAGE_REWRITER

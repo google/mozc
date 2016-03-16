@@ -84,6 +84,8 @@ class DataManager : public DataManagerInterface {
       StringPiece *correction_array_data) const override;
   void GetSymbolRewriterData(StringPiece *token_array_data,
                              StringPiece *string_array_data) const override;
+  void GetEmoticonRewriterData(StringPiece *token_array_data,
+                               StringPiece *string_array_data) const override;
 
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(
@@ -120,6 +122,8 @@ class DataManager : public DataManagerInterface {
   StringPiece reading_correction_correction_array_data_;
   StringPiece symbol_token_array_data_;
   StringPiece symbol_string_array_data_;
+  StringPiece emoticon_token_array_data_;
+  StringPiece emoticon_string_array_data_;
   StringPiece usage_base_conjugation_suffix_data_;
   StringPiece usage_conjugation_suffix_data_;
   StringPiece usage_conjugation_index_data_;

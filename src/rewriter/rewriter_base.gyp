@@ -68,26 +68,6 @@
           ],
         },
         {
-          'action_name': 'gen_emoticon_rewriter_data',
-          'variables': {
-            'input_file': '../data/emoticon/emoticon.tsv',
-            'output_file': '<(gen_out_dir)/emoticon_rewriter_data.h',
-          },
-          'inputs': [
-            'embedded_dictionary_compiler.py',
-            'gen_emoticon_rewriter_data.py',
-            '<(input_file)',
-          ],
-          'outputs': [
-            '<(output_file)'
-          ],
-          'action': [
-            'python', 'gen_emoticon_rewriter_data.py',
-            '--input=<(input_file)',
-            '--output=<(output_file)',
-          ],
-        },
-        {
           'action_name': 'gen_emoji_rewriter_data',
           'variables': {
             'input_file': '../data/emoji/emoji_data.tsv',
@@ -212,6 +192,18 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
+      ],
+    },
+    {
+      'target_name': 'gen_emoticon_rewriter_data_main',
+      'type': 'executable',
+      'toolsets': ['host'],
+      'sources': [
+        'gen_emoticon_rewriter_data.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
       ],
     },
   ],
