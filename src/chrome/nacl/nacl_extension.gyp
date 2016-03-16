@@ -174,6 +174,7 @@
         '../../config/config.gyp:config_handler',
         '../../dictionary/dictionary_base.gyp:user_dictionary',
         '../../dictionary/dictionary_base.gyp:user_pos',
+        '../../engine/engine.gyp:packed_engine_factory',
         '../../net/net.gyp:http_client',
         '../../net/net.gyp:json_util',
         '../../protocol/protocol.gyp:commands_proto',

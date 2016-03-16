@@ -135,14 +135,6 @@
         'oss_engine_factory',
       ],
       'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            'packed_engine_factory'
-          ],
-          'dependencies!': [
-            'oss_engine_factory',
-          ]
-        }],
       ],
     },
   ],

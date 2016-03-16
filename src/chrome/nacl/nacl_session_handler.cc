@@ -55,7 +55,7 @@
 #include "data_manager/packed/packed_data_manager.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
-#include "engine/engine_factory.h"
+#include "engine/packed_engine_factory.h"
 #include "net/http_client.h"
 #include "net/http_client_pepper.h"
 #include "net/json_util.h"
@@ -202,7 +202,7 @@ class MozcSessionHandlerThread : public Thread {
     user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(
         *packed::PackedDataManager::GetUserPosManager()));
 
-    engine_.reset(mozc::EngineFactory::Create());
+    engine_.reset(mozc::PackedEngineFactory::Create());
     handler_.reset(new SessionHandler(engine_.get()));
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
