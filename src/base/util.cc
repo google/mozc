@@ -279,13 +279,12 @@ void Util::SplitStringAllowEmpty(StringPiece str,
   }
 }
 
-void Util::SplitStringToUtf8Chars(const string &str, vector<string> *output) {
-  size_t begin = 0;
-  const size_t end = str.size();
-
+void Util::SplitStringToUtf8Chars(StringPiece str, vector<string> *output) {
+  const char *begin = str.data();
+  const char *const end = str.data() + str.size();
   while (begin < end) {
-    const size_t mblen = OneCharLen(str.c_str() + begin);
-    output->push_back(str.substr(begin, mblen));
+    const size_t mblen = OneCharLen(begin);
+    output->emplace_back(begin, mblen);
     begin += mblen;
   }
   DCHECK_EQ(begin, end);

@@ -222,6 +222,33 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     LOG(ERROR) << "Emoticon dictionary data is broken";
     return false;
   }
+  if (!reader.Get("single_kanji_token",
+                  &single_kanji_token_array_data_) ||
+      !reader.Get("single_kanji_string",
+                  &single_kanji_string_array_data_) ||
+      !reader.Get("single_kanji_variant_type",
+                  &single_kanji_variant_type_data_) ||
+      !reader.Get("single_kanji_variant_token",
+                  &single_kanji_variant_token_array_data_) ||
+      !reader.Get("single_kanji_variant_string",
+                  &single_kanji_variant_string_array_data_) ||
+      !reader.Get("single_kanji_noun_prefix_token",
+                  &single_kanji_noun_prefix_token_array_data_) ||
+      !reader.Get("single_kanji_noun_prefix_string",
+                  &single_kanji_noun_prefix_string_array_data_)) {
+    LOG(ERROR) << "Cannot find single Kanji rewriter data";
+    return false;
+  }
+  if (!SerializedStringArray::VerifyData(single_kanji_string_array_data_) ||
+      !SerializedStringArray::VerifyData(single_kanji_variant_type_data_) ||
+      !SerializedStringArray::VerifyData(
+          single_kanji_variant_string_array_data_) ||
+      !SerializedDictionary::VerifyData(
+          single_kanji_noun_prefix_token_array_data_,
+          single_kanji_noun_prefix_string_array_data_)) {
+    LOG(ERROR) << "Single Kanji data is broken";
+    return false;
+  }
 
   if (!reader.Get("usage_item_array", &usage_items_data_)) {
     VLOG(2) << "Usage dictionary is not provided";
@@ -354,6 +381,23 @@ void DataManager::GetEmoticonRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   *token_array_data = emoticon_token_array_data_;
   *string_array_data = emoticon_string_array_data_;
+}
+
+void DataManager::GetSingleKanjiRewriterData(
+    StringPiece *token_array_data,
+    StringPiece *string_array_data,
+    StringPiece *variant_type_array_data,
+    StringPiece *variant_token_array_data,
+    StringPiece *variant_string_array_data,
+    StringPiece *noun_prefix_token_array_data,
+    StringPiece *noun_prefix_string_array_data) const {
+  *token_array_data = single_kanji_token_array_data_;
+  *string_array_data = single_kanji_string_array_data_;
+  *variant_type_array_data = single_kanji_variant_type_data_;
+  *variant_token_array_data = single_kanji_variant_token_array_data_;
+  *variant_string_array_data = single_kanji_variant_string_array_data_;
+  *noun_prefix_token_array_data = single_kanji_noun_prefix_token_array_data_;
+  *noun_prefix_string_array_data = single_kanji_noun_prefix_string_array_data_;
 }
 
 void DataManager::GetCounterSuffixSortedArray(const char **array,

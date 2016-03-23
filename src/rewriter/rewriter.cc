@@ -103,7 +103,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(new EnglishVariantsRewriter);
   AddRewriter(new NumberRewriter(data_manager));
   AddRewriter(new CollocationRewriter(data_manager));
-  AddRewriter(new SingleKanjiRewriter(pos_matcher_));
+  AddRewriter(new SingleKanjiRewriter(*data_manager));
   AddRewriter(new EmojiRewriter(
       kEmojiDataList, arraysize(kEmojiDataList),
       kEmojiTokenList, arraysize(kEmojiTokenList),

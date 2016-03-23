@@ -118,6 +118,7 @@
         'gen_separate_reading_correction_data_for_<(dataset_tag)#host',
         'gen_separate_symbol_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_emoticon_rewriter_data_for_<(dataset_tag)#host',
+        'gen_separate_single_kanji_rewriter_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -149,6 +150,13 @@
             'symbol_string': '<(gen_out_dir)/symbol_string.data',
             'emoticon_token': '<(gen_out_dir)/emoticon_token.data',
             'emoticon_string': '<(gen_out_dir)/emoticon_string.data',
+            'single_kanji_token': '<(gen_out_dir)/single_kanji_token.data',
+            'single_kanji_string': '<(gen_out_dir)/single_kanji_string.data',
+            'single_kanji_variant_type': '<(gen_out_dir)/single_kanji_variant_type.data',
+            'single_kanji_variant_token': '<(gen_out_dir)/single_kanji_variant_token.data',
+            'single_kanji_variant_string': '<(gen_out_dir)/single_kanji_variant_string.data',
+            'single_kanji_noun_prefix_token': '<(gen_out_dir)/single_kanji_noun_prefix_token.data',
+            'single_kanji_noun_prefix_string': '<(gen_out_dir)/single_kanji_noun_prefix_string.data',
           },
           'inputs': [
             '<(pos_matcher)',
@@ -176,6 +184,13 @@
             '<(symbol_string)',
             '<(emoticon_token)',
             '<(emoticon_string)',
+            '<(single_kanji_token)',
+            '<(single_kanji_string)',
+            '<(single_kanji_variant_type)',
+            '<(single_kanji_variant_token)',
+            '<(single_kanji_variant_string)',
+            '<(single_kanji_noun_prefix_token)',
+            '<(single_kanji_noun_prefix_string)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -209,6 +224,13 @@
             'symbol_string:32:<(gen_out_dir)/symbol_string.data',
             'emoticon_token:32:<(gen_out_dir)/emoticon_token.data',
             'emoticon_string:32:<(gen_out_dir)/emoticon_string.data',
+            'single_kanji_token:32:<(gen_out_dir)/single_kanji_token.data',
+            'single_kanji_string:32:<(gen_out_dir)/single_kanji_string.data',
+            'single_kanji_variant_type:32:<(gen_out_dir)/single_kanji_variant_type.data',
+            'single_kanji_variant_token:32:<(gen_out_dir)/single_kanji_variant_token.data',
+            'single_kanji_variant_string:32:<(gen_out_dir)/single_kanji_variant_string.data',
+            'single_kanji_noun_prefix_token:32:<(gen_out_dir)/single_kanji_noun_prefix_token.data',
+            'single_kanji_noun_prefix_string:32:<(gen_out_dir)/single_kanji_noun_prefix_string.data',
           ],
           'conditions': [
             ['target_platform!="Android"', {
@@ -735,6 +757,66 @@
             '--output_string_array=<(gen_out_dir)/emoticon_string.data',
           ],
           'message': '[<(dataset_tag)] Generating emoticon data',
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_single_kanji_rewriter_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'dependencies': [
+        '../../rewriter/rewriter_base.gyp:gen_single_kanji_noun_prefix_data_main',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_single_kanji_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(mozc_dir)/rewriter/gen_single_kanji_rewriter_data.py',
+            'single_kanji_file': '<(mozc_dir)/data/single_kanji/single_kanji.tsv',
+            'variant_file': '<(mozc_dir)/data/single_kanji/variant_rule.txt',
+          },
+          'inputs': [
+            '<(generator)',
+            '<(single_kanji_file)',
+            '<(variant_file)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/single_kanji_string.data',
+            '<(gen_out_dir)/single_kanji_token.data',
+            '<(gen_out_dir)/single_kanji_variant_type.data',
+            '<(gen_out_dir)/single_kanji_variant_token.data',
+            '<(gen_out_dir)/single_kanji_variant_string.data',
+          ],
+          'action': [
+            'python', '<(generator)',
+            '--single_kanji_file=<(single_kanji_file)',
+            '--variant_file=<(variant_file)',
+            '--output_single_kanji_token=<(gen_out_dir)/single_kanji_token.data',
+            '--output_single_kanji_string=<(gen_out_dir)/single_kanji_string.data',
+            '--output_variant_types=<(gen_out_dir)/single_kanji_variant_type.data',
+            '--output_variant_tokens=<(gen_out_dir)/single_kanji_variant_token.data',
+            '--output_variant_strings=<(gen_out_dir)/single_kanji_variant_string.data',
+          ],
+          'message': '[<(dataset_tag)] Generating single kanji data',
+        },
+        {
+          'action_name': 'gen_noun_prefix_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(PRODUCT_DIR)/gen_single_kanji_noun_prefix_data_main<(EXECUTABLE_SUFFIX)',
+          },
+          'inputs': [
+            '<(generator)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/single_kanji_noun_prefix_token.data',
+            '<(gen_out_dir)/single_kanji_noun_prefix_string.data',
+          ],
+          'action': [
+            '<(generator)',
+            '--output_token_array=<(gen_out_dir)/single_kanji_noun_prefix_token.data',
+            '--output_string_array=<(gen_out_dir)/single_kanji_noun_prefix_string.data',
+          ],
+          'message': '[<(dataset_tag)] Generating noun prefix data',
         },
       ],
     },

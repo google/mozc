@@ -121,7 +121,7 @@ class Util {
                                     const char *delm,
                                     vector<string> *output);
 
-  static void SplitStringToUtf8Chars(const string &str,
+  static void SplitStringToUtf8Chars(StringPiece str,
                                      vector<string> *output);
 
   static void SplitCSV(const string &str, vector<string> *output);

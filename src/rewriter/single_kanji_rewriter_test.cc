@@ -62,7 +62,7 @@ class SingleKanjiRewriterTest : public ::testing::Test {
   }
 
   SingleKanjiRewriter *CreateSingleKanjiRewriter() const {
-    return new SingleKanjiRewriter(pos_matcher_);
+    return new SingleKanjiRewriter(*data_manager_);
   }
 
   const POSMatcher &pos_matcher() {
@@ -71,7 +71,7 @@ class SingleKanjiRewriterTest : public ::testing::Test {
 
   const ConversionRequest default_request_;
 
- private:
+ protected:
   std::unique_ptr<testing::MockDataManager> data_manager_;
   POSMatcher pos_matcher_;
 };
@@ -129,7 +129,7 @@ TEST_F(SingleKanjiRewriterTest, MobileEnvironmentTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
-  SingleKanjiRewriter rewriter(pos_matcher());
+  SingleKanjiRewriter rewriter(*data_manager_);
   Segments segments;
   Segment *segment1 = segments.add_segment();
 
@@ -198,7 +198,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
-  SingleKanjiRewriter rewriter(pos_matcher());
+  SingleKanjiRewriter rewriter(*data_manager_);
   Segments segments;
   Segment *segment = segments.add_segment();
 
@@ -225,7 +225,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
-  SingleKanjiRewriter rewriter(pos_matcher());
+  SingleKanjiRewriter rewriter(*data_manager_);
   Segments segments;
   Segment *segment = segments.add_segment();
 

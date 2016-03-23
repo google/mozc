@@ -91,6 +91,15 @@ class PackedDataManager::Impl {
                              StringPiece *string_array_data) const;
   void GetEmoticonRewriterData(StringPiece *token_array_data,
                                StringPiece *string_array_data) const;
+  void GetSingleKanjiRewriterData(
+      StringPiece *token_array_data,
+      StringPiece *string_array_data,
+      StringPiece *variant_type_array_data,
+      StringPiece *variant_token_array_data,
+      StringPiece *variant_string_array_data,
+      StringPiece *noun_prefix_token_array_data,
+      StringPiece *noun_prefix_string_array_data) const;
+
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(StringPiece *base_conjugation_suffix_data,
                             StringPiece *conjugation_suffix_data,
@@ -244,6 +253,23 @@ void PackedDataManager::Impl::GetSymbolRewriterData(
 void PackedDataManager::Impl::GetEmoticonRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   manager_.GetEmoticonRewriterData(token_array_data, string_array_data);
+}
+
+void PackedDataManager::Impl::GetSingleKanjiRewriterData(
+    StringPiece *token_array_data,
+    StringPiece *string_array_data,
+    StringPiece *variant_type_array_data,
+    StringPiece *variant_token_array_data,
+    StringPiece *variant_string_array_data,
+    StringPiece *noun_prefix_token_array_data,
+    StringPiece *noun_prefix_string_array_data) const {
+  manager_.GetSingleKanjiRewriterData(token_array_data,
+                                      string_array_data,
+                                      variant_type_array_data,
+                                      variant_token_array_data,
+                                      variant_string_array_data,
+                                      noun_prefix_token_array_data,
+                                      noun_prefix_string_array_data);
 }
 
 #ifndef NO_USAGE_REWRITER
@@ -402,6 +428,23 @@ void PackedDataManager::GetSymbolRewriterData(
 void PackedDataManager::GetEmoticonRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   manager_impl_->GetEmoticonRewriterData(token_array_data, string_array_data);
+}
+
+void PackedDataManager::GetSingleKanjiRewriterData(
+    StringPiece *token_array_data,
+    StringPiece *string_array_data,
+    StringPiece *variant_type_array_data,
+    StringPiece *variant_token_array_data,
+    StringPiece *variant_string_array_data,
+    StringPiece *noun_prefix_token_array_data,
+    StringPiece *noun_prefix_string_array_data) const {
+  manager_impl_->GetSingleKanjiRewriterData(token_array_data,
+                                            string_array_data,
+                                            variant_type_array_data,
+                                            variant_token_array_data,
+                                            variant_string_array_data,
+                                            noun_prefix_token_array_data,
+                                            noun_prefix_string_array_data);
 }
 
 #ifndef NO_USAGE_REWRITER

@@ -45,29 +45,6 @@
       'toolsets': ['host'],
       'actions': [
         {
-          'action_name': 'gen_single_kanji_rewriter_data',
-          'variables': {
-            'single_kanji_file': '../data/single_kanji/single_kanji.tsv',
-            'variant_file': '../data/single_kanji/variant_rule.txt',
-            'output_file': '<(gen_out_dir)/single_kanji_rewriter_data.h',
-          },
-          'inputs': [
-            'embedded_dictionary_compiler.py',
-            'gen_single_kanji_rewriter_data.py',
-            '<(single_kanji_file)',
-            '<(variant_file)',
-          ],
-          'outputs': [
-            '<(output_file)'
-          ],
-          'action': [
-            'python', 'gen_single_kanji_rewriter_data.py',
-            '--single_kanji_file=<(single_kanji_file)',
-            '--variant_file=<(variant_file)',
-            '--output=<(output_file)',
-          ],
-        },
-        {
           'action_name': 'gen_emoji_rewriter_data',
           'variables': {
             'input_file': '../data/emoji/emoji_data.tsv',
@@ -200,6 +177,18 @@
       'toolsets': ['host'],
       'sources': [
         'gen_emoticon_rewriter_data.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
+      ],
+    },
+    {
+      'target_name': 'gen_single_kanji_noun_prefix_data_main',
+      'type': 'executable',
+      'toolsets': ['host'],
+      'sources': [
+        'gen_single_kanji_noun_prefix_data.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',

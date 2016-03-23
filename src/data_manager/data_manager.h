@@ -86,6 +86,14 @@ class DataManager : public DataManagerInterface {
                              StringPiece *string_array_data) const override;
   void GetEmoticonRewriterData(StringPiece *token_array_data,
                                StringPiece *string_array_data) const override;
+  void GetSingleKanjiRewriterData(
+      StringPiece *token_array_data,
+      StringPiece *string_array_data,
+      StringPiece *variant_type_array_data,
+      StringPiece *variant_token_array_data,
+      StringPiece *variant_string_array_data,
+      StringPiece *noun_prefix_token_array_data,
+      StringPiece *noun_prefix_string_array_data) const override;
 
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(
@@ -124,6 +132,13 @@ class DataManager : public DataManagerInterface {
   StringPiece symbol_string_array_data_;
   StringPiece emoticon_token_array_data_;
   StringPiece emoticon_string_array_data_;
+  StringPiece single_kanji_token_array_data_;
+  StringPiece single_kanji_string_array_data_;
+  StringPiece single_kanji_variant_type_data_;
+  StringPiece single_kanji_variant_token_array_data_;
+  StringPiece single_kanji_variant_string_array_data_;
+  StringPiece single_kanji_noun_prefix_token_array_data_;
+  StringPiece single_kanji_noun_prefix_string_array_data_;
   StringPiece usage_base_conjugation_suffix_data_;
   StringPiece usage_conjugation_suffix_data_;
   StringPiece usage_conjugation_index_data_;
