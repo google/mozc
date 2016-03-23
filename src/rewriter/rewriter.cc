@@ -41,7 +41,6 @@
 #include "rewriter/correction_rewriter.h"
 #include "rewriter/date_rewriter.h"
 #include "rewriter/dice_rewriter.h"
-#include "rewriter/embedded_dictionary.h"
 #include "rewriter/emoji_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"

@@ -34,13 +34,6 @@
   },
   'targets': [
     {
-      'target_name': 'embedded_dictionary',
-      'type': 'static_library',
-      'sources': [
-        'embedded_dictionary.cc',
-      ],
-    },
-    {
       'target_name': 'rewriter',
       'type': 'static_library',
       'sources': [
@@ -96,7 +89,6 @@
         '../request/request.gyp:conversion_request',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
-        ':embedded_dictionary',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
         'rewriter_serialized_dictionary.gyp:serialized_dictionary',

@@ -33,7 +33,6 @@
 #include <cstddef>
 
 #include "converter/segments.h"
-#include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
