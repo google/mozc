@@ -75,6 +75,8 @@ class PackedDataManager : public DataManagerInterface {
                              StringPiece *string_array_data) const override;
   void GetEmoticonRewriterData(StringPiece *token_array_data,
                                StringPiece *string_array_data) const override;
+  void GetEmojiRewriterData(StringPiece *token_array_data,
+                            StringPiece *string_array_data) const override;
   void GetSingleKanjiRewriterData(
       StringPiece *token_array_data,
       StringPiece *string_array_data,

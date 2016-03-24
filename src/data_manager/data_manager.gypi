@@ -118,6 +118,7 @@
         'gen_separate_reading_correction_data_for_<(dataset_tag)#host',
         'gen_separate_symbol_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_emoticon_rewriter_data_for_<(dataset_tag)#host',
+        'gen_separate_emoji_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_single_kanji_rewriter_data_for_<(dataset_tag)#host',
       ],
       'actions': [
@@ -150,6 +151,8 @@
             'symbol_string': '<(gen_out_dir)/symbol_string.data',
             'emoticon_token': '<(gen_out_dir)/emoticon_token.data',
             'emoticon_string': '<(gen_out_dir)/emoticon_string.data',
+            'emoji_token': '<(gen_out_dir)/emoji_token.data',
+            'emoji_string': '<(gen_out_dir)/emoji_string.data',
             'single_kanji_token': '<(gen_out_dir)/single_kanji_token.data',
             'single_kanji_string': '<(gen_out_dir)/single_kanji_string.data',
             'single_kanji_variant_type': '<(gen_out_dir)/single_kanji_variant_type.data',
@@ -184,6 +187,8 @@
             '<(symbol_string)',
             '<(emoticon_token)',
             '<(emoticon_string)',
+            '<(emoji_token)',
+            '<(emoji_string)',
             '<(single_kanji_token)',
             '<(single_kanji_string)',
             '<(single_kanji_variant_type)',
@@ -224,6 +229,8 @@
             'symbol_string:32:<(gen_out_dir)/symbol_string.data',
             'emoticon_token:32:<(gen_out_dir)/emoticon_token.data',
             'emoticon_string:32:<(gen_out_dir)/emoticon_string.data',
+            'emoji_token:32:<(gen_out_dir)/emoji_token.data',
+            'emoji_string:32:<(gen_out_dir)/emoji_string.data',
             'single_kanji_token:32:<(gen_out_dir)/single_kanji_token.data',
             'single_kanji_string:32:<(gen_out_dir)/single_kanji_string.data',
             'single_kanji_variant_type:32:<(gen_out_dir)/single_kanji_variant_type.data',
@@ -757,6 +764,37 @@
             '--output_string_array=<(gen_out_dir)/emoticon_string.data',
           ],
           'message': '[<(dataset_tag)] Generating emoticon data',
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_emoji_rewriter_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_separate_emoji_rewriter_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(mozc_dir)/rewriter/gen_emoji_rewriter_data.py',
+            'input_files': [
+              '<(mozc_dir)/data/emoji/emoji_data.tsv',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/emoji_token.data',
+            '<(gen_out_dir)/emoji_string.data',
+          ],
+          'action': [
+            'python', '<(generator)',
+            '--input=<(mozc_dir)/data/emoji/emoji_data.tsv',
+            '--output_token_array=<(gen_out_dir)/emoji_token.data',
+            '--output_string_array=<(gen_out_dir)/emoji_string.data',
+          ],
+          'message': '[<(dataset_tag)] Generating emoji data',
         },
       ],
     },

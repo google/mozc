@@ -94,6 +94,10 @@ class DataManagerInterface {
   virtual void GetEmoticonRewriterData(
       StringPiece *token_array_data, StringPiece *string_array_data) const = 0;
 
+  // Gets EmojiRewriter data.
+  virtual void GetEmojiRewriterData(
+      StringPiece *token_array_data, StringPiece *string_array_data) const = 0;
+
   // Gets SingleKanjiRewriter data.
   virtual void GetSingleKanjiRewriterData(
       StringPiece *token_array_data,

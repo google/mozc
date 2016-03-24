@@ -222,6 +222,18 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
     LOG(ERROR) << "Emoticon dictionary data is broken";
     return false;
   }
+  if (!reader.Get("emoji_token", &emoji_token_array_data_)) {
+    LOG(ERROR) << "Cannot find an emoji token array";
+    return false;
+  }
+  if (!reader.Get("emoji_string", &emoji_string_array_data_)) {
+    LOG(ERROR) << "Cannot find an emoji string array or data is broken";
+    return false;
+  }
+  if (!SerializedStringArray::VerifyData(emoji_string_array_data_)) {
+    LOG(ERROR) << "Emoji rewriter string array data is broken";
+    return false;
+  }
   if (!reader.Get("single_kanji_token",
                   &single_kanji_token_array_data_) ||
       !reader.Get("single_kanji_string",
@@ -381,6 +393,12 @@ void DataManager::GetEmoticonRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   *token_array_data = emoticon_token_array_data_;
   *string_array_data = emoticon_string_array_data_;
+}
+
+void DataManager::GetEmojiRewriterData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  *token_array_data = emoji_token_array_data_;
+  *string_array_data = emoji_string_array_data_;
 }
 
 void DataManager::GetSingleKanjiRewriterData(

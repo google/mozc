@@ -31,8 +31,13 @@
 #define MOZC_REWRITER_EMOJI_REWRITER_H_
 
 #include <cstddef>
+#include <iterator>
+#include <utility>
 
+#include "base/serialized_string_array.h"
+#include "base/string_piece.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -52,10 +57,8 @@ class ConversionRequest;
 //   mozc::Segment::Candidate *candidate = segment->add_candidate();
 //   candidate->set_key("えもじ");
 //
-//   // Use |kEmojiDataTokenData| and |kEmojiDataTokenSize| defined in
-//   // mozc/rewriter/emoji_rewriter_data.h
-//   mozc::EmojiRewriter rewriter(kEmojiDataTokenData,
-//                                kEmojiDataTokenSize));
+//   // Use one of data manager from data_manager/.
+//   mozc::EmojiRewriter rewriter(data_manager);
 //   rewriter.Rewrite(mozc::ConvresionRequest(), &segments);
 //
 // Here, the first segment of segments is expected to have all emoji
@@ -64,57 +67,172 @@ class ConversionRequest;
 //   for (size_t i = 0; i < segment->candidate_size(); ++i) {
 //     LOG(INFO) << segment->candidate(i).value;
 //   }
-
 class EmojiRewriter : public RewriterInterface {
  public:
-  struct EmojiData {
-    // Utf-8 representation of the unicode data.
-    const char *unicode;
+  static const size_t kEmojiDataByteLength = 28;
 
-    // The carrier dependent emoji code point on Android.
-    uint32 android_pua;
+  // Emoji data token is 28 bytes data of the following format:
+  //
+  // +-------------------------------------+
+  // | Key index (4 byte)                  |
+  // +-------------------------------------+
+  // | UTF8 emoji index (4 byte)           |
+  // +-------------------------------------+
+  // | Android PUA code (4 byte)           |
+  // +-------------------------------------+
+  // | UTF8 description index (4 byte)     |
+  // +-------------------------------------+
+  // | Docomo description index (4 byte)   |
+  // +-------------------------------------+
+  // | Softbank description index (4 byte) |
+  // +-------------------------------------+
+  // | KDDI description index (4 byte)     |
+  // +-------------------------------------+
+  //
+  // Here, index is the position in the string array at which the corresponding
+  // string value is stored.  Tokens are sorted in order of key so that it can
+  // be search by binary search.
+  //
+  // The following iterator class can be used to iterate over token array.
+  class EmojiDataIterator
+      : public std::iterator<std::random_access_iterator_tag, uint32> {
+   public:
+    EmojiDataIterator() : ptr_(nullptr) {}
+    explicit EmojiDataIterator(const char *ptr) : ptr_(ptr) {}
 
-    // Descriptions depend on platforms.
-    const char *description_unicode;
-    const char *description_docomo;
-    const char *description_softbank;
-    const char *description_kddi;
+    uint32 key_index() const {
+      return *reinterpret_cast<const uint32 *>(ptr_);
+    }
+    uint32 emoji_index() const {
+      return *reinterpret_cast<const uint32 *>(ptr_ + 4);
+    }
+    uint32 android_pua() const {
+      return *reinterpret_cast<const uint32 *>(ptr_ + 8);
+    }
+    uint32 description_utf8_index() const {
+      return *reinterpret_cast<const uint32 *>(ptr_ + 12);
+    }
+    uint32 description_docomo_index() const {
+      return *reinterpret_cast<const uint32 *>(ptr_ + 16);
+    }
+    uint32 description_softbank_index() const {
+      return *reinterpret_cast<const uint32 *>(ptr_ + 20);
+    }
+    uint32 description_kddi_index() const {
+      return *reinterpret_cast<const uint32 *>(ptr_ + 24);
+    }
+
+    // Returns key index as token array is searched by key.
+    uint32 operator*() const { return key_index(); }
+
+    void swap(EmojiDataIterator &x) {
+      using std::swap;
+      swap(ptr_, x.ptr_);
+    }
+    friend void swap(EmojiDataIterator &x, EmojiDataIterator &y) {
+      return x.swap(y);
+    }
+
+    EmojiDataIterator &operator++() {
+      ptr_ += kEmojiDataByteLength;
+      return *this;
+    }
+
+    EmojiDataIterator operator++(int) {
+      const char *tmp = ptr_;
+      ptr_ += kEmojiDataByteLength;
+      return EmojiDataIterator(tmp);
+    }
+
+    EmojiDataIterator &operator--() {
+      ptr_ -= kEmojiDataByteLength;
+      return *this;
+    }
+
+    EmojiDataIterator operator--(int) {
+      const char *tmp = ptr_;
+      ptr_ -= kEmojiDataByteLength;
+      return EmojiDataIterator(tmp);
+    }
+
+    EmojiDataIterator &operator+=(ptrdiff_t n) {
+      ptr_ += n * kEmojiDataByteLength;
+      return *this;
+    }
+
+    EmojiDataIterator &operator-=(ptrdiff_t n) {
+      ptr_ -= n * kEmojiDataByteLength;
+      return *this;
+    }
+
+    friend EmojiDataIterator operator+(EmojiDataIterator x, ptrdiff_t n) {
+      return x += n;
+    }
+
+    friend EmojiDataIterator operator+(ptrdiff_t n, EmojiDataIterator x) {
+      return x += n;
+    }
+
+    friend EmojiDataIterator operator-(EmojiDataIterator x, ptrdiff_t n) {
+      return x -= n;
+    }
+
+    friend ptrdiff_t operator-(EmojiDataIterator x, EmojiDataIterator y) {
+      return (x.ptr_ - y.ptr_) / kEmojiDataByteLength;
+    }
+
+    friend bool operator==(EmojiDataIterator x, EmojiDataIterator y) {
+      return x.ptr_ == y.ptr_;
+    }
+
+    friend bool operator!=(EmojiDataIterator x, EmojiDataIterator y) {
+      return x.ptr_ != y.ptr_;
+    }
+
+    friend bool operator<(EmojiDataIterator x, EmojiDataIterator y) {
+      return x.ptr_ < y.ptr_;
+    }
+
+    friend bool operator<=(EmojiDataIterator x, EmojiDataIterator y) {
+      return x.ptr_ <= y.ptr_;
+    }
+
+    friend bool operator>(EmojiDataIterator x, EmojiDataIterator y) {
+      return x.ptr_ > y.ptr_;
+    }
+
+    friend bool operator>=(EmojiDataIterator x, EmojiDataIterator y) {
+      return x.ptr_ >= y.ptr_;
+    }
+
+   private:
+    const char *ptr_ = nullptr;
   };
 
-  struct Token {
-    // The emoji reading key.
-    const char *key;
-
-    // The list of index for the emoji data.
-    const uint16 *value;
-    size_t value_size;
-  };
+  using IteratorRange = pair<EmojiDataIterator, EmojiDataIterator>;
 
   // This class does not take an ownership of |emoji_data_list|, |token_list|
   // and |value_list|.  If NULL pointer is passed to it, Mozc process
   // terminates with an error.
-  EmojiRewriter(
-      const EmojiData *emoji_data_list, size_t emoji_data_size,
-      const Token *token_list, size_t token_size,
-      const uint16 *value_list);
-  virtual ~EmojiRewriter();
+  explicit EmojiRewriter(const DataManagerInterface &data_manager);
+  ~EmojiRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
   // Returns true if emoji candidates are added.  When user settings are set
   // not to use EmojiRewriter, does nothing other than returning false.
   // Otherwise, main process are done in ReriteCandidates().
   // A reference to a ConversionRequest instance is not used, but it is required
   // because of the interface.
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
   // Counts the number of segments in which emoji candidates are selected,
   // and stores the result as usage stats.
   // NOTE: This method is expected to be called after the segments are processed
   // with COMMIT command in a SessionConverter instance.  May record wrong
   // stats if you call this method in other situation.
-  virtual void Finish(const ConversionRequest &request, Segments *segments);
+  void Finish(const ConversionRequest &request, Segments *segments) override;
 
   // Returns true if the given candidate includes emoji characters.
   // TODO(peria, hidehiko): Unify this checker and IsEmojiEntry defined in
@@ -124,6 +242,14 @@ class EmojiRewriter : public RewriterInterface {
   static bool IsEmojiCandidate(const Segment::Candidate &candidate);
 
  private:
+  EmojiDataIterator begin() const {
+    return EmojiDataIterator(token_array_data_.data());
+  }
+  EmojiDataIterator end() const {
+    return EmojiDataIterator(
+        token_array_data_.data() + token_array_data_.size());
+  }
+
   // Adds emoji candidates on each segment of given segments, if it has a
   // specific string as a key based on a dictionary.  If a segment's value is
   // "えもじ", adds all emoji candidates.
@@ -131,14 +257,10 @@ class EmojiRewriter : public RewriterInterface {
   bool RewriteCandidates(
       int32 available_emoji_carrier, Segments *segments) const;
 
-  const Token *LookUpToken(const string &key) const;
+  IteratorRange LookUpToken(StringPiece key) const;
 
-  // Embedded dictionary data.
-  const EmojiData *emoji_data_list_;
-  size_t emoji_data_size_;
-  const Token *token_list_;
-  size_t token_size_;
-  const uint16 *value_list_;
+  StringPiece token_array_data_;
+  SerializedStringArray string_array_;
 
   DISALLOW_COPY_AND_ASSIGN(EmojiRewriter);
 };

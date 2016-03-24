@@ -43,27 +43,7 @@
         '../dictionary/dictionary_base.gyp:pos_util',
       ],
       'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_emoji_rewriter_data',
-          'variables': {
-            'input_file': '../data/emoji/emoji_data.tsv',
-            'output_file': '<(gen_out_dir)/emoji_rewriter_data.h',
-          },
-          'inputs': [
-            'gen_emoji_rewriter_data.py',
-            '<(input_file)',
-          ],
-          'outputs': [
-            '<(output_file)'
-          ],
-          'action': [
-            'python', 'gen_emoji_rewriter_data.py',
-            '--input=<(input_file)',
-            '--output=<(output_file)',
-          ],
-        },
-      ],
+      'actions': [],
       'conditions': [
         ['target_platform!="Android"', {
           'dependencies': [

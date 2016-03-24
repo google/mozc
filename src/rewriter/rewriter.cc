@@ -72,17 +72,6 @@ using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::PosGroup;
 
-namespace {
-// When updating the emoji dictionary,
-// 1. Edit mozc/data/emoji/emoji_data.tsv,
-// 2. Run gen_emoji_rewriter_data.py and make emoji_rewriter_data.h,
-// 3. Make sure generated emoji_rewriter_data.h is correct.
-
-// This generated header file defines |kEmojiDataList|, |kEmojiValueList|
-// and |kEmojiTokenList|.
-#include "rewriter/emoji_rewriter_data.h"
-}  // namespace
-
 namespace mozc {
 
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
@@ -103,10 +92,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(new NumberRewriter(data_manager));
   AddRewriter(new CollocationRewriter(data_manager));
   AddRewriter(new SingleKanjiRewriter(*data_manager));
-  AddRewriter(new EmojiRewriter(
-      kEmojiDataList, arraysize(kEmojiDataList),
-      kEmojiTokenList, arraysize(kEmojiTokenList),
-      kEmojiValueList));
+  AddRewriter(new EmojiRewriter(*data_manager));
   AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager).release());
   AddRewriter(new CalculatorRewriter(parent_converter));
   AddRewriter(new SymbolRewriter(parent_converter, data_manager));

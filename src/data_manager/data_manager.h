@@ -86,6 +86,8 @@ class DataManager : public DataManagerInterface {
                              StringPiece *string_array_data) const override;
   void GetEmoticonRewriterData(StringPiece *token_array_data,
                                StringPiece *string_array_data) const override;
+  void GetEmojiRewriterData(StringPiece *token_array_data,
+                            StringPiece *string_array_data) const override;
   void GetSingleKanjiRewriterData(
       StringPiece *token_array_data,
       StringPiece *string_array_data,
@@ -132,6 +134,8 @@ class DataManager : public DataManagerInterface {
   StringPiece symbol_string_array_data_;
   StringPiece emoticon_token_array_data_;
   StringPiece emoticon_string_array_data_;
+  StringPiece emoji_token_array_data_;
+  StringPiece emoji_string_array_data_;
   StringPiece single_kanji_token_array_data_;
   StringPiece single_kanji_string_array_data_;
   StringPiece single_kanji_variant_type_data_;

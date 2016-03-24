@@ -91,6 +91,8 @@ class PackedDataManager::Impl {
                              StringPiece *string_array_data) const;
   void GetEmoticonRewriterData(StringPiece *token_array_data,
                                StringPiece *string_array_data) const;
+  void GetEmojiRewriterData(StringPiece *token_array_data,
+                            StringPiece *string_array_data) const;
   void GetSingleKanjiRewriterData(
       StringPiece *token_array_data,
       StringPiece *string_array_data,
@@ -253,6 +255,11 @@ void PackedDataManager::Impl::GetSymbolRewriterData(
 void PackedDataManager::Impl::GetEmoticonRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   manager_.GetEmoticonRewriterData(token_array_data, string_array_data);
+}
+
+void PackedDataManager::Impl::GetEmojiRewriterData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_.GetEmojiRewriterData(token_array_data, string_array_data);
 }
 
 void PackedDataManager::Impl::GetSingleKanjiRewriterData(
@@ -428,6 +435,11 @@ void PackedDataManager::GetSymbolRewriterData(
 void PackedDataManager::GetEmoticonRewriterData(
     StringPiece *token_array_data, StringPiece *string_array_data) const {
   manager_impl_->GetEmoticonRewriterData(token_array_data, string_array_data);
+}
+
+void PackedDataManager::GetEmojiRewriterData(
+    StringPiece *token_array_data, StringPiece *string_array_data) const {
+  manager_impl_->GetEmojiRewriterData(token_array_data, string_array_data);
 }
 
 void PackedDataManager::GetSingleKanjiRewriterData(
