@@ -48,13 +48,18 @@ package mozc;
 // |                          |
 // |         ...              |
 // |                          |
-// +--------------------------+ <- FILESIZE - 8 - size(Metadata)
+// +--------------------------+ <- FILESIZE - 36 - size(Metadata)
 // | Metadata                 |
-// +--------------------------+ <- FILESIZE - 8
+// +--------------------------+ <- FILESIZE - 36
 // | Metadata size (8 bytes)  |
+// +--------------------------+ <- FILESIZE - 28
+// | SHA1 checksum (20 bytes) |
+// +--------------------------+ <- FILESIZE - 8
+// | File size (8 bytes)      |
 // +--------------------------+ <- FILESIZE
 //
-// Here, padding N is inserted to align File data N at a desired boundary.
+// Here, padding N is inserted to align File data N at a desired boundary.  The
+// SHA1 checksum is computed from the beginning to Metadata size section.
 // Metadata section is the serialized data of the following protocol message:
 message DataSetMetadata {
   // Entry stores the information necessary to find file contents in the data
@@ -69,8 +74,6 @@ message DataSetMetadata {
 
     // The byte length of this file data.
     optional uint64 size = 3;
-
-    // TODO(noriyukit): Add checksum so that data can be verified at runtime.
   }
 
   // The entries must be ordered in the same order of data chunks.

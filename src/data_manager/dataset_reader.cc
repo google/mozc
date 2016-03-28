@@ -31,10 +31,17 @@
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
 
 namespace mozc {
+namespace {
+
+// The size of the file footer, which contains some metadata; see dataset.proto.
+const size_t kFooterSize = 36;
+
+}  // namespace
 
 DataSetReader::DataSetReader() = default;
 DataSetReader::~DataSetReader() = default;
@@ -54,14 +61,31 @@ bool DataSetReader::Init(StringPiece memblock, StringPiece magic) {
     return false;
   }
 
-  // The size of the file footer, which contains the size of metadata chunk.
-  const size_t kFooterSize = 8;
+  // Check minimum required data size.
+  if (memblock.size() < magic.size() + kFooterSize) {
+    LOG(ERROR) << "Broken: data is too small";
+    return false;
+  }
+
+  // Check the file size.
+  uint64 filesize = 0;
+  if (!Util::DeserializeUint64(memblock.substr(memblock.size() - 8, 8),
+                               &filesize)) {
+    LOG(ERROR) << "Broken: failed to read filesize";
+    return false;
+  }
+  if (filesize != memblock.size()) {
+    LOG(ERROR) << "Broken: filesize mismatch.  " << filesize << " vs "
+               << memblock.size();
+    return false;
+  }
+
+  // Checksum is not checked.
 
   // Read the metadata size.
   uint64 metadata_size = 0;
-  if (memblock.size() < magic.size() + kFooterSize ||
-      !Util::DeserializeUint64(memblock.substr(memblock.size() - kFooterSize),
-                               &metadata_size)) {
+  if (!Util::DeserializeUint64(
+          memblock.substr(memblock.size() - kFooterSize, 8), &metadata_size)) {
     LOG(ERROR) << "Broken: failed to read metadata size";
     return false;
   }
@@ -116,6 +140,22 @@ bool DataSetReader::Get(const string& name, StringPiece* data) const {
   }
   *data = iter->second;
   return true;
+}
+
+bool DataSetReader::VerifyChecksum(StringPiece memblock) {
+  if (memblock.size() < kFooterSize) {
+    return false;
+  }
+  // Checksum is computed for all but last 28 bytes.
+  const string &actual_checksum = internal::UnverifiedSHA1::MakeDigest(
+      memblock.substr(0, memblock.size() - 28));
+
+  // Extract the stored SHA1; see dataset.proto for file format.
+  const std::size_t kSHA1Length = 20;
+  StringPiece expected_checksum =
+      memblock.substr(memblock.size() - 28, kSHA1Length);
+
+  return actual_checksum == expected_checksum;
 }
 
 }  // namespace mozc

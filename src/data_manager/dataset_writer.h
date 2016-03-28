@@ -43,9 +43,8 @@ namespace mozc {
 // see dataset.proto.
 class DataSetWriter {
  public:
-  // Creates a writer with specified magic number and output.  For ostream
-  // version, |output| should be binary mode.
-  DataSetWriter(StringPiece magic, ostream *output);
+  // Creates a writer with specified magic number.
+  explicit DataSetWriter(StringPiece magic);
   ~DataSetWriter();
 
   // Adds a binary image to the packed file so that data is aligned at the
@@ -55,19 +54,18 @@ class DataSetWriter {
   // Similar to Add() for StringPiece but data is read from file.
   void AddFile(const string &name, int alignment, const string &filepath);
 
-  // Writes metadata and closes a file.
-  void Finish();
+  // Writes the image to output.  If |output| is a file, it should be opened in
+  // binary mode.
+  void Finish(ostream *output);
 
   const DataSetMetadata &metadata() const { return metadata_; }
 
  private:
-  void Write(StringPiece data);
-  void WritePadding(int alignment);
+  void AppendPadding(int alignment);
 
-  ostream *ofs_;
+  string image_;
   DataSetMetadata metadata_;
   set<string> seen_names_;
-  size_t bytes_written_;
 };
 
 }  // namespace mozc

@@ -32,12 +32,22 @@
 #include <sstream>
 #include <string>
 
+#include "base/port.h"
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace {
+
+string GenerateRandomBytes(size_t len) {
+  string s;
+  s.resize(len);
+  for (size_t i = 0; i < len; ++i) {
+    s[i] = static_cast<char>(Util::Random(256));
+  }
+  return s;
+}
 
 string GetTestMagicNumber() {
   return string("ma\0gic", 6);
@@ -47,15 +57,16 @@ TEST(DataSetReaderTest, ValidData) {
   const StringPiece kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
   string image;
   {
-    stringstream out;
-    DataSetWriter w(GetTestMagicNumber(), &out);
+    DataSetWriter w(GetTestMagicNumber());
     w.Add("google", 16, kGoogle);
     w.Add("mozc", 64, kMozc);
-    w.Finish();
+    stringstream out;
+    w.Finish(&out);
     image = out.str();
   }
 
   DataSetReader r;
+  ASSERT_TRUE(DataSetReader::VerifyChecksum(image));
   ASSERT_TRUE(r.Init(image, GetTestMagicNumber()));
 
   StringPiece data;
@@ -81,30 +92,35 @@ TEST(DataSetReaderTest, BrokenMetadata) {
   DataSetReader r;
 
   // Only magic number, no metadata.
+  EXPECT_FALSE(DataSetReader::VerifyChecksum(magic));
   EXPECT_FALSE(r.Init(magic, magic));
 
   // Metadata size is too small.
   string data = magic;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(0));
+  EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, magic));
 
   // Metadata size is too small.
   data = magic;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(4));
+  EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, magic));
 
   // Metadata size is too large.
   data = magic;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(kuint64max));
+  EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, magic));
 
   // Metadata chunk is not a serialied protobuf.
   data = magic;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(strlen("content and metadata")));
+  EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, magic));
 }
 
@@ -113,11 +129,11 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
   const StringPiece kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
   string content;
   {
-    stringstream out;
-    DataSetWriter w(magic, &out);
+    DataSetWriter w(magic);
     w.Add("google", 16, kGoogle);
     w.Add("mozc", 64, kMozc);
-    w.Finish();
+    stringstream out;
+    w.Finish(&out);
 
     // Remove the metadata chunk at the bottom, which will be appended in each
     // test below.
@@ -138,6 +154,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     image.append(Util::SerializeUint64(md_str.size()));
 
     DataSetReader r;
+    EXPECT_FALSE(DataSetReader::VerifyChecksum(image));
     EXPECT_FALSE(r.Init(image, magic));
   }
   {
@@ -153,7 +170,47 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     image.append(Util::SerializeUint64(md_str.size()));
 
     DataSetReader r;
+    EXPECT_FALSE(DataSetReader::VerifyChecksum(image));
     EXPECT_FALSE(r.Init(image, magic));
+  }
+}
+
+TEST(DataSetReaderTest, OneBitError) {
+  const char* kTestMagicNumber = "Dummy magic number\r\n";
+
+  // Create data at random.
+  string image;
+  {
+    const int kAlignments[] = {8, 16, 32, 64};
+    DataSetWriter w(kTestMagicNumber);
+    for (int i = 0; i < 10; ++i) {
+      w.Add(Util::StringPrintf("key%d", i),
+            kAlignments[Util::Random(4)],
+            GenerateRandomBytes(1 + Util::Random(1024)));
+    }
+    stringstream out;
+    w.Finish(&out);
+    image = out.str();
+  }
+
+  DataSetReader r;
+  ASSERT_TRUE(DataSetReader::VerifyChecksum(image));
+  ASSERT_TRUE(r.Init(image, kTestMagicNumber));
+
+  // Flip each bit and test if VerifyChecksum fails.
+  for (size_t i = 0; i < image.size(); ++i) {
+    const char orig = image[i];
+    for (size_t j = 0; j < 8; ++j) {
+      image[i] = orig ^ (1 << j);  // Flip (j + 1)-th bit
+
+      // Since checksum is computed from the bytes up to metadata size, errors
+      // in the last 8 bytes (where file size is stored) cannot be tested using
+      // the checksum.  However, in such case, Init() should fail due to file
+      // size mismatch.  Thus, either VerifyChecksum() or Init() fails.
+      EXPECT_FALSE(DataSetReader::VerifyChecksum(image) &&
+                   r.Init(image, kTestMagicNumber));
+    }
+    image[i] = orig;  // Recover the original data.
   }
 }
 

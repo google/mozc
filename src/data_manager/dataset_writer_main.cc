@@ -93,15 +93,15 @@ int main(int argc, char **argv) {
   // creation, write to a temporary file then rename it.
   const string tmpfile = FLAGS_output + ".tmp";
   {
-    mozc::OutputFileStream output(tmpfile.c_str(),
-                                  ios_base::out | ios_base::binary);
-    mozc::DataSetWriter writer(magic, &output);
+    mozc::DataSetWriter writer(magic);
     for (const auto &input : inputs) {
       VLOG(1) << "Writing " << input.name << ", alignment = " << input.alignment
               << ", file = " << input.filename;
       writer.AddFile(input.name, input.alignment, input.filename);
     }
-    writer.Finish();
+    mozc::OutputFileStream output(tmpfile.c_str(),
+                                  ios_base::out | ios_base::binary);
+    writer.Finish(&output);
     output.close();
   }
   CHECK(mozc::FileUtil::AtomicRename(tmpfile, FLAGS_output))

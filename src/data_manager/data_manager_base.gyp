@@ -84,6 +84,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:obfuscator_support',
         'dataset_proto',
       ],
     },
@@ -96,6 +97,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:obfuscator_support',
         'dataset_proto',
       ],
     },

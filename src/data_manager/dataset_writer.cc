@@ -34,6 +34,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/unverified_sha1.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -45,21 +46,19 @@ bool IsValidAlignment(int a) {
 
 }  // namespace
 
-DataSetWriter::DataSetWriter(StringPiece magic, ostream *output)
-    : ofs_(output), bytes_written_(0) {
-  Write(magic);
-}
+DataSetWriter::DataSetWriter(StringPiece magic)
+    : image_(magic.data(), magic.size()) {}
 
 DataSetWriter::~DataSetWriter() = default;
 
 void DataSetWriter::Add(const string &name, int alignment, StringPiece data) {
   CHECK(seen_names_.insert(name).second) << name << " was already added";
-  WritePadding(alignment);
+  AppendPadding(alignment);
   DataSetMetadata::Entry *entry = metadata_.add_entries();
   entry->set_name(name);
-  entry->set_offset(bytes_written_);
+  entry->set_offset(image_.size());
   entry->set_size(data.size());
-  Write(data);
+  data.AppendToString(&image_);
 }
 
 void DataSetWriter::AddFile(const string &name, int alignment,
@@ -69,25 +68,28 @@ void DataSetWriter::AddFile(const string &name, int alignment,
   Add(name, alignment, ifs.Read());
 }
 
-void DataSetWriter::Finish() {
+void DataSetWriter::Finish(ostream *output) {
   const string s = metadata_.SerializeAsString();
-  Write(s);
-  Write(Util::SerializeUint64(s.size()));
-  VLOG(1) << "Wrote data set of " << bytes_written_ << " bytes:\n"
+  image_.append(s);  // Metadata
+  image_.append(Util::SerializeUint64(s.size()));  // Metadata size
+
+  // SHA1 checksum
+  image_.append(mozc::internal::UnverifiedSHA1::MakeDigest(image_));
+
+  // File size.  Note that the final file size becomes image_.size() + 8 after
+  // writing this file size.
+  image_.append(Util::SerializeUint64(image_.size() + 8));
+
+  CHECK(output->write(image_.data(), image_.size()));
+  VLOG(1) << "Wrote data set of " << image_.size() << " bytes:\n"
           << metadata_.Utf8DebugString();
 }
 
-void DataSetWriter::Write(StringPiece data) {
-  CHECK(ofs_->write(data.data(), data.size()).good())
-      << "Failed to write data of length " << data.size();
-  bytes_written_ += data.size();
-}
-
-void DataSetWriter::WritePadding(int alignment) {
+void DataSetWriter::AppendPadding(int alignment) {
   CHECK(IsValidAlignment(alignment)) << "Invalid alignment: " << alignment;
   alignment /= 8;  // To byte
-  if (bytes_written_ % alignment > 0) {
-    Write(string(alignment - bytes_written_ % alignment, '\0'));
+  if (image_.size() % alignment > 0) {
+    image_.append(alignment - image_.size() % alignment, '\0');
   }
 }
 

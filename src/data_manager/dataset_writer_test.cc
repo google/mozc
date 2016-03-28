@@ -34,6 +34,7 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
 #include "testing/base/public/googletest.h"
@@ -61,8 +62,7 @@ TEST(DatasetWriterTest, Write) {
   // Generate a packed file into |actual|.
   string actual;
   {
-    stringstream out;
-    DataSetWriter w("magic", &out);
+    DataSetWriter w("magic");
 
     w.Add("data8", 8, string("data8 \x00\x01", 8));
     w.Add("data16", 16, "data16 \xAB\xCD\xEF");
@@ -74,7 +74,8 @@ TEST(DatasetWriterTest, Write) {
     w.AddFile("file32", 32, in);
     w.AddFile("file64", 64, in);
 
-    w.Finish();
+    stringstream out;
+    w.Finish(&out);
     actual = out.str();
   }
 
@@ -108,6 +109,8 @@ TEST(DatasetWriterTest, Write) {
   string expected(data_chunk, sizeof(data_chunk) - 1);
   expected.append(metadata_chunk.data(), metadata_chunk.size());
   expected.append(metadata_size.data(), metadata_size.size());
+  expected.append(internal::UnverifiedSHA1::MakeDigest(expected));
+  expected.append(Util::SerializeUint64(expected.size() + 8));
 
   // Compare the results.
   EXPECT_EQ(expected, actual);

@@ -44,12 +44,17 @@ class DataSetReader {
 
   // Initializes the reader from the binary image of dataset file and expected
   // magic number.  The caller is responsible to load the content of a dataset
-  // file into memory, and |memblock| must outlive this instance.
+  // file into memory, and |memblock| must outlive this instance.  Note: this
+  // method doesn't verify checksum for performance.  One can separately call
+  // VerifyChecksum().
   bool Init(StringPiece memblock, StringPiece magic);
 
   // Gets the byte data corresponding to |name|.  If the data for |name| doesn't
   // exist, returns false.
   bool Get(const string &name, StringPiece *data) const;
+
+  // Verifies the checksum of binary image.
+  static bool VerifyChecksum(StringPiece memblock);
 
  private:
   // The value points to a block of the specified |memblock|.
