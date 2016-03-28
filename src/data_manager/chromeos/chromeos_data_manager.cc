@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "data_manager/chromeos/chromeos_data_manager.h"
-#include "data_manager/chromeos/chromeos_data_manager_factory.h"
 
 #include "base/embedded_file.h"
 #include "base/logging.h"
@@ -37,15 +36,6 @@
 
 namespace mozc {
 namespace chromeos {
-
-const DataManagerInterface *CreateDataManager() {
-  return new ChromeOsDataManager();
-}
-
-void DeleteDataManager(const DataManagerInterface *data_manager) {
-  delete data_manager;
-}
-
 namespace {
 
 // kCrosMozcDataSet is defined.

@@ -31,40 +31,17 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "data_manager/chromeos/chromeos_data_manager_factory.h"
+#include "data_manager/chromeos/chromeos_data_manager.h"
 #include "engine/engine.h"
 #include "prediction/predictor.h"
 
 namespace mozc {
 
-namespace {
-
-class ScopedDataManager {
- public:
-  explicit ScopedDataManager(const DataManagerInterface *data_manager)
-      : data_manager_(data_manager) {}
-
-  ~ScopedDataManager() {
-    chromeos::DeleteDataManager(data_manager_);
-  }
-
-  const DataManagerInterface *Get() const {
-    return data_manager_;
-  }
-
- private:
-  const DataManagerInterface *data_manager_;
-  DISALLOW_COPY_AND_ASSIGN(ScopedDataManager);
-};
-
-}  // namespace
-
 EngineInterface *ChromeOsEngineFactory::Create() {
   Engine *engine = new Engine;
   DCHECK(engine);
-  ScopedDataManager data_manager(chromeos::CreateDataManager());
-  engine->Init(data_manager.Get(), DefaultPredictor::CreateDefaultPredictor,
-               false);
+  const chromeos::ChromeOsDataManager data_manager;
+  engine->Init(&data_manager, DefaultPredictor::CreateDefaultPredictor, false);
   return engine;
 }
 
