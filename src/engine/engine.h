@@ -33,6 +33,7 @@
 #include <memory>
 
 #include "base/port.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -43,7 +44,6 @@ namespace mozc {
 
 class Connector;
 class ConverterInterface;
-class DataManagerInterface;
 class ImmutableConverterInterface;
 class PredictorInterface;
 class RewriterInterface;
@@ -54,16 +54,39 @@ class UserDataManagerInterface;
 // Builds and manages a set of modules that are necessary for conversion engine.
 class Engine : public EngineInterface {
  public:
+  // There are two types of engine: desktop and mobile.  The differences are the
+  // underlying prediction engine (DesktopPredictor or MobilePredictor) and
+  // learning preference (to learn content word or not).  See Init() for the
+  // details of implementation.
+
+  // Creates an instance with desktop configuration from a data manager.  The
+  // ownership of data manager is passed to the engine instance.
+  static std::unique_ptr<Engine> CreateDesktopEngine(
+      std::unique_ptr<const DataManagerInterface> data_manager);
+
+  // Helper function for the above factory, where data manager is instantiated
+  // by a default constructor.  Intended to be used for OssDataManager etc.
+  template <typename DataManagerType>
+  static std::unique_ptr<Engine> CreateDesktopEngineHelper() {
+    return CreateDesktopEngine(
+        std::unique_ptr<const DataManagerType>(new DataManagerType()));
+  }
+
+  // Creates an instance with mobile configuration from a data manager.  The
+  // ownership of data manager is passed to the engine instance.
+  static std::unique_ptr<Engine> CreateMobileEngine(
+      std::unique_ptr<const DataManagerInterface> data_manager);
+
+  // Helper function for the above factory, where data manager is instantiated
+  // by a default constructor.  Intended to be used for OssDataManager etc.
+  template <typename DataManagerType>
+  static std::unique_ptr<Engine> CreateMobileEngineHelper() {
+    return CreateMobileEngine(
+        std::unique_ptr<const DataManagerType>(new DataManagerType()));
+  }
+
   Engine();
   ~Engine() override;
-
-  // Initializes the object by given a data manager (providing embedded data
-  // set) and predictor factory function.
-  // Predictor factory is used to select DefaultPredictor and MobilePredictor.
-  void Init(const DataManagerInterface *data_manager,
-            PredictorInterface *(*predictor_factory)(PredictorInterface *,
-                                                     PredictorInterface *),
-            bool enable_content_word_learning);
 
   ConverterInterface *GetConverter() const override { return converter_.get(); }
   PredictorInterface *GetPredictor() const override { return predictor_; }
@@ -78,6 +101,15 @@ class Engine : public EngineInterface {
   }
 
  private:
+  // Initializes the object by the given data manager and predictor factory
+  // function.  Predictor factory is used to select DefaultPredictor and
+  // MobilePredictor.
+  void Init(const DataManagerInterface *data_manager,
+            PredictorInterface *(*predictor_factory)(PredictorInterface *,
+                                                     PredictorInterface *),
+            bool enable_content_word_learning);
+
+  std::unique_ptr<const DataManagerInterface> data_manager_;
   dictionary::POSMatcher pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<const Connector> connector_;

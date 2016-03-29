@@ -55,7 +55,7 @@
 #include "data_manager/packed/packed_data_manager.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
-#include "engine/packed_engine_factory.h"
+#include "engine/engine.h"
 #include "net/http_client.h"
 #include "net/http_client_pepper.h"
 #include "net/json_util.h"
@@ -171,23 +171,24 @@ class MozcSessionHandlerThread : public Thread {
     : instance_(instance), message_queue_(queue), factory_(this) {
   }
 
-  virtual ~MozcSessionHandlerThread() {
-  }
+  ~MozcSessionHandlerThread() override = default;
 
-  virtual void Run() {
+  void Run() override {
     Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
     RegisterPepperInstanceForHTTPClient(instance_);
+
+    std::unique_ptr<mozc::packed::PackedDataManager> data_manager;
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
     const bool filesystem_available =
         PepperFileUtil::Initialize(instance_, kFileIoFileSystemExpectedSize);
     if (!filesystem_available) {
       // Pepper file system is not available, so ignore the big dictionary and
       // use the small dictionary.
-      LoadDictionary();
-    } else if (!LoadBigDictionary(&big_dictionary_version_)) {
+      LoadDictionary(&data_manager);
+    } else if (!LoadBigDictionary(&big_dictionary_version_, &data_manager)) {
       LOG(ERROR) << "LoadBigDictionary error";
       StartDownloadDictionary();
-      LoadDictionary();
+      LoadDictionary(&data_manager);
     } else if (big_dictionary_version_ !=
                    Version::GetMozcNaclDictionaryVersion()) {
       LOG(ERROR) << "LoadBigDictionary version miss match "
@@ -197,12 +198,13 @@ class MozcSessionHandlerThread : public Thread {
     }
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
     PepperFileUtil::Initialize(instance_, kFileIoFileSystemExpectedSize);
-    LoadDictionary();
+    LoadDictionary(&data_manager);
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-    user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(
-        *packed::PackedDataManager::GetUserPosManager()));
+    CHECK(data_manager)
+        << "Unexpected failure: Data manager shoulnd't be nullptr";
 
-    engine_.reset(mozc::PackedEngineFactory::Create());
+    user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(*data_manager));
+    engine_ = mozc::Engine::CreateDesktopEngine(std::move(data_manager));
     handler_.reset(new SessionHandler(engine_.get()));
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
@@ -299,21 +301,21 @@ class MozcSessionHandlerThread : public Thread {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   // Loads the big dictionary
   // Returns true and sets the dictionary version if successful.
-  bool LoadBigDictionary(string *version) {
+  static bool LoadBigDictionary(
+      string *version,
+      std::unique_ptr<mozc::packed::PackedDataManager> *data_manager) {
     string buffer;
     // The big dictionary data is in the user's HTML5 file system.
     if (!PepperFileUtil::ReadBinaryFile("/zipped_data_google", &buffer)) {
       LOG(ERROR) << "PepperFileUtil::ReadBinaryFile error";
       return false;
     }
-    std::unique_ptr<mozc::packed::PackedDataManager>
-        data_manager(new mozc::packed::PackedDataManager());
-    if (!data_manager->InitWithZippedData(buffer)) {
+    data_manager->reset(new mozc::packed::PackedDataManager());
+    if (!(*data_manager)->InitWithZippedData(buffer)) {
       LOG(ERROR) << "InitWithZippedData error";
       return false;
     }
-    *version = data_manager->GetDictionaryVersion();
-    mozc::packed::RegisterPackedDataManager(data_manager.release());
+    *version = (*data_manager)->GetDictionaryVersion();
     return true;
   }
 
@@ -332,7 +334,8 @@ class MozcSessionHandlerThread : public Thread {
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
   // Loads the dictionary.
-  void LoadDictionary() {
+  static void LoadDictionary(
+      std::unique_ptr<mozc::packed::PackedDataManager> *data_manager) {
     string output;
     HTTPClient::Option option;
     option.timeout = 200000;
@@ -344,10 +347,8 @@ class MozcSessionHandlerThread : public Thread {
     const string data_file_name = "./zipped_data_oss";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
     CHECK(HTTPClient::Get(data_file_name, option, &output));
-    std::unique_ptr<mozc::packed::PackedDataManager>
-        data_manager(new mozc::packed::PackedDataManager());
-    CHECK(data_manager->InitWithZippedData(output));
-    mozc::packed::RegisterPackedDataManager(data_manager.release());
+    data_manager->reset(new mozc::packed::PackedDataManager());
+    CHECK((*data_manager)->InitWithZippedData(output));
   }
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD

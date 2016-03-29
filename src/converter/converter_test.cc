@@ -372,10 +372,8 @@ class ConverterTest : public ::testing::Test {
   }
 
   EngineInterface *CreateEngineWithMobilePredictor() {
-    Engine *engine = new Engine;
-    engine->Init(&mock_data_manager_,
-                 MobilePredictor::CreateMobilePredictor, true);
-    return engine;
+    return Engine::CreateMobileEngineHelper<testing::MockDataManager>()
+        .release();
   }
 
   bool FindCandidateByValue(const string &value, const Segment &segment) const {

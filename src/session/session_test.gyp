@@ -78,6 +78,7 @@
       'dependencies': [
         '../converter/converter_base.gyp:converter_mock',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../engine/engine.gyp:engine',
         '../engine/engine.gyp:mock_converter_engine',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../rewriter/rewriter.gyp:rewriter',
@@ -329,6 +330,7 @@
         '../base/base.gyp:base',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
+        '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',

@@ -42,7 +42,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/engine_interface.h"
+#include "engine/engine.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/candidates.pb.h"
@@ -826,7 +826,7 @@ class SessionTest : public ::testing::Test {
   //    If you directly define a variable here without std::unique_ptr, its
   //    constructor will be called *BEFORE* SetUp() is called.
   std::unique_ptr<MockConverterEngine> engine_;
-  std::unique_ptr<EngineInterface> mock_data_engine_;
+  std::unique_ptr<Engine> mock_data_engine_;
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> mobile_request_;

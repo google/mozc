@@ -29,6 +29,8 @@
 
 #include "engine/engine.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "base/port.h"
 #include "converter/connector.h"
@@ -133,8 +135,26 @@ bool UserDataManagerImpl::WaitForSyncerForTest() {
 
 }  // namespace
 
-Engine::Engine() {}
-Engine::~Engine() {}
+std::unique_ptr<Engine> Engine::CreateDesktopEngine(
+    std::unique_ptr<const DataManagerInterface> data_manager) {
+  std::unique_ptr<Engine> engine(new Engine());
+  engine->Init(data_manager.release(),
+               &DefaultPredictor::CreateDefaultPredictor,
+               false);
+  return engine;
+}
+
+std::unique_ptr<Engine> Engine::CreateMobileEngine(
+    std::unique_ptr<const DataManagerInterface> data_manager) {
+  std::unique_ptr<Engine> engine(new Engine());
+  engine->Init(data_manager.release(),
+               &MobilePredictor::CreateMobilePredictor,
+               true);
+  return engine;
+}
+
+Engine::Engine() = default;
+Engine::~Engine() = default;
 
 // Since the composite predictor class differs on desktop and mobile, Init()
 // takes a function pointer to create an instance of predictor class.
@@ -258,6 +278,8 @@ void Engine::Init(
                        immutable_converter_.get());
 
   user_data_manager_.reset(new UserDataManagerImpl(predictor_, rewriter_));
+
+  data_manager_.reset(data_manager);
 }
 
 bool Engine::Reload() {

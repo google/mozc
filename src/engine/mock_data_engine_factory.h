@@ -30,7 +30,9 @@
 #ifndef MOZC_ENGINE_MOCK_DATA_ENGINE_FACTORY_H_
 #define MOZC_ENGINE_MOCK_DATA_ENGINE_FACTORY_H_
 
-#include "engine/engine_interface.h"
+#include <memory>
+
+#include "engine/engine.h"
 
 namespace mozc {
 
@@ -40,7 +42,7 @@ class MockDataEngineFactory {
  public:
   // Creates an instance of Engine class. The caller is responsible for deleting
   // the returned object.
-  static EngineInterface *Create();
+  static Engine *Create();
 };
 
 }  // namespace mozc
