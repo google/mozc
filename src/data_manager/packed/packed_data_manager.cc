@@ -110,6 +110,7 @@ class PackedDataManager::Impl {
                             StringPiece *string_array_data) const;
 #endif  // NO_USAGE_REWRITER
   void GetCounterSuffixSortedArray(const char **array, size_t *size) const;
+  StringPiece GetDataVersion() const;
   StringPiece GetMozcData() const;
 
  private:
@@ -299,6 +300,10 @@ void PackedDataManager::Impl::GetCounterSuffixSortedArray(
   manager_.GetCounterSuffixSortedArray(array, size);
 }
 
+StringPiece PackedDataManager::Impl::GetDataVersion() const {
+  return manager_.GetDataVersion();
+}
+
 StringPiece PackedDataManager::Impl::GetMozcData() const {
   return StringPiece(system_dictionary_data_->mozc_data());
 }
@@ -477,6 +482,10 @@ void PackedDataManager::GetUsageRewriterData(
 void PackedDataManager::GetCounterSuffixSortedArray(
     const char **array, size_t *size) const {
   manager_impl_->GetCounterSuffixSortedArray(array, size);
+}
+
+StringPiece PackedDataManager::GetDataVersion() const {
+  return manager_impl_->GetDataVersion();
 }
 
 StringPiece PackedDataManager::GetMozcData() const {

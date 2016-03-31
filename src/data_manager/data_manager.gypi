@@ -120,6 +120,7 @@
         'gen_separate_emoticon_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_emoji_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_single_kanji_rewriter_data_for_<(dataset_tag)#host',
+        'gen_separate_version_data_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -160,6 +161,7 @@
             'single_kanji_variant_string': '<(gen_out_dir)/single_kanji_variant_string.data',
             'single_kanji_noun_prefix_token': '<(gen_out_dir)/single_kanji_noun_prefix_token.data',
             'single_kanji_noun_prefix_string': '<(gen_out_dir)/single_kanji_noun_prefix_string.data',
+            'version': '<(gen_out_dir)/version.data',
           },
           'inputs': [
             '<(pos_matcher)',
@@ -196,6 +198,7 @@
             '<(single_kanji_variant_string)',
             '<(single_kanji_noun_prefix_token)',
             '<(single_kanji_noun_prefix_string)',
+            '<(version)',
           ],
           'outputs': [
             '<(gen_out_dir)/<(out_mozc_data)',
@@ -238,6 +241,7 @@
             'single_kanji_variant_string:32:<(gen_out_dir)/single_kanji_variant_string.data',
             'single_kanji_noun_prefix_token:32:<(gen_out_dir)/single_kanji_noun_prefix_token.data',
             'single_kanji_noun_prefix_string:32:<(gen_out_dir)/single_kanji_noun_prefix_string.data',
+            'version:32:<(gen_out_dir)/version.data',
           ],
           'conditions': [
             ['target_platform!="Android"', {
@@ -884,6 +888,34 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/counter_suffix.data'),
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_version_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_separate_version_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(mozc_dir)/data_manager/gen_data_version.py',
+            'version_file': '<(mozc_dir)/mozc_version_template.txt',
+          },
+          'inputs': [
+            '<(generator)',
+            '<(version_file)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/version.data',
+          ],
+          'action': [
+            'python', '<(generator)',
+            '--tag=<(dataset_tag)',
+            '--mozc_version_template=<(version_file)',
+            '--output=<(gen_out_dir)/version.data',
+          ],
+          'message': '[<(dataset_tag)] Generating version.data',
         },
       ],
     },

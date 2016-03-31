@@ -122,6 +122,9 @@ class DataManagerInterface {
   virtual void GetCounterSuffixSortedArray(const char **array,
                                            size_t *size) const = 0;
 
+  // Gets the data version string.
+  virtual StringPiece GetDataVersion() const = 0;
+
  protected:
   DataManagerInterface() {}
 

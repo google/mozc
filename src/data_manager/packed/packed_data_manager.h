@@ -95,6 +95,7 @@ class PackedDataManager : public DataManagerInterface {
 #endif  // NO_USAGE_REWRITER
   void GetCounterSuffixSortedArray(const char **array,
                                    size_t *size) const override;
+  StringPiece GetDataVersion() const override;
   StringPiece GetMozcData() const;
 
  private:

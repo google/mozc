@@ -43,10 +43,15 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace {
+
+const char *kDummyDataVersion = "dataversion";
+
+}  // namespace
 
 class VersionRewriterTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
@@ -82,7 +87,7 @@ class VersionRewriterTest : public testing::Test {
 TEST_F(VersionRewriterTest, CapabilityTest) {
   // Default request.
   const ConversionRequest request;
-  VersionRewriter rewriter;
+  VersionRewriter rewriter(kDummyDataVersion);
   EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
 }
 
@@ -90,7 +95,7 @@ TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
   ConversionRequest convreq;
   commands::Request request;
   convreq.set_request(&request);
-  VersionRewriter rewriter;
+  VersionRewriter rewriter(kDummyDataVersion);
 
   {
     request.set_mixed_conversion(true);
@@ -113,7 +118,7 @@ TEST_F(VersionRewriterTest, RewriteTest_Version) {
   static const char kVersionPrefixUnexpected[] = "GoogleJapaneseInput-";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-  VersionRewriter version_rewriter;
+  VersionRewriter version_rewriter(kDummyDataVersion);
 
   const ConversionRequest request;
   Segments segments;

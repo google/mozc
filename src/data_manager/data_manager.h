@@ -106,6 +106,8 @@ class DataManager : public DataManagerInterface {
       StringPiece *string_array_data) const override;
 #endif  // NO_USAGE_REWRITER
 
+  StringPiece GetDataVersion() const override;
+
  private:
   Mmap mmap_;
   StringPiece pos_matcher_data_;
@@ -148,6 +150,7 @@ class DataManager : public DataManagerInterface {
   StringPiece usage_conjugation_index_data_;
   StringPiece usage_items_data_;
   StringPiece usage_string_array_data_;
+  StringPiece data_version_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

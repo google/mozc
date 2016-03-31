@@ -41,6 +41,8 @@ const int kMozcVersionMinor = @MINOR@;
 const int kMozcVersionBuildNumber = @BUILD@;
 const int kMozcVersionRevision = @REVISION@;
 
+const char * const kMozcEngineVersion = "@ENGINE_VERSION@";
+
 
 }  // namespace version
 }  // namespace mozc

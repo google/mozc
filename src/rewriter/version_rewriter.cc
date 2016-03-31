@@ -45,82 +45,84 @@
 namespace mozc {
 namespace {
 
-class VersionDataImpl {
- public:
-  struct VersionEntry {
-    string base_candidate_;
-    string output_;
-    size_t rank_;
-    VersionEntry(const string& base_candidate,
-                 const string& output,
-                 size_t rank)
-        : base_candidate_(base_candidate),
-          output_(output), rank_(rank) {}
-  };
-
-  const VersionEntry *Lookup(const string &key) const {
-    map<string, VersionEntry *>::const_iterator it = entries_.find(key);
-    if (it == entries_.end()) {
-      return NULL;
-    }
-    return it->second;
-  }
-
-  VersionDataImpl() {
-    static const struct {
-      const char *key;
-      const char *base_candidate;
-    } kKeyCandList[] = {
-      {
+const struct {
+  const char *key;
+  const char *base_candidate;
+} kKeyCandList[] = {
+    {
         // "う゛ぁーじょん"
         "\xe3\x81\x86\xe3\x82\x9b\xe3\x81\x81\xe3\x83\xbc"
         "\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93",
         // "ヴァージョン"
         "\xe3\x83\xb4\xe3\x82\xa1\xe3\x83\xbc"
         "\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
-      }, {
+    }, {
         // "ゔぁーじょん"
         "\xe3\x82\x94\xe3\x81\x81\xe3\x83\xbc"
         "\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93",
         // "ヴァージョン"
         "\xe3\x83\xb4\xe3\x82\xa1\xe3\x83\xbc"
         "\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
-      }, {
+    }, {
         // "ばーじょん"
         "\xe3\x81\xb0\xe3\x83\xbc\xe3\x81\x98"
         "\xe3\x82\x87\xe3\x82\x93",
         // "バージョン"
         "\xe3\x83\x90\xe3\x83\xbc\xe3\x82\xb8"
         "\xe3\x83\xa7\xe3\x83\xb3",
-      },
-    };
+    },
+};
 
-    const string &version_string =
-        kVersionRewriterVersionPrefix + Version::GetMozcVersion();
-    for (int i = 0; i < arraysize(kKeyCandList); ++i) {
-      entries_[kKeyCandList[i].key] =
-          new VersionEntry(kKeyCandList[i].base_candidate,
-                           version_string, 9);
+}  // namespace
+
+class VersionRewriter::VersionDataImpl {
+ public:
+  class VersionEntry {
+   public:
+    VersionEntry(const string& base_candidate,
+                 const string& output,
+                 size_t rank)
+        : base_candidate_(base_candidate),
+          output_(output), rank_(rank) {}
+
+    const string &base_candidate() const { return base_candidate_; }
+    const string &output() const { return output_; }
+    size_t rank() const { return rank_; }
+
+   private:
+    string base_candidate_;
+    string output_;
+    size_t rank_;
+  };
+
+  const VersionEntry *Lookup(const string &key) const {
+    const auto it = entries_.find(key);
+    if (it == entries_.end()) {
+      return nullptr;
     }
+    return it->second.get();
   }
 
-  ~VersionDataImpl() {
-    for (map<string, VersionEntry *>::iterator it = entries_.begin();
-         it != entries_.end();
-         ++it) {
-      delete it->second;
+  explicit VersionDataImpl(StringPiece data_version) {
+    string version_string = kVersionRewriterVersionPrefix;
+    version_string.append(Version::GetMozcVersion());
+    version_string.append(1, '+');
+    data_version.AppendToString(&version_string);
+    for (int i = 0; i < arraysize(kKeyCandList); ++i) {
+      entries_[kKeyCandList[i].key].reset(
+          new VersionEntry(kKeyCandList[i].base_candidate,
+                           version_string, 9));
     }
-    entries_.clear();
   }
 
  private:
-  map<string, VersionEntry *> entries_;
+  map<string, std::unique_ptr<VersionEntry>> entries_;
 };
-}  // namespace
 
-VersionRewriter::VersionRewriter() {}
+VersionRewriter::VersionRewriter(StringPiece data_version)
+    : impl_(new VersionDataImpl(data_version)) {}
 
-VersionRewriter::~VersionRewriter() {}
+VersionRewriter::~VersionRewriter() = default;
 
 int VersionRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
@@ -136,22 +138,20 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
        i < segments->segments_size(); ++i) {
     Segment* seg = segments->mutable_segment(i);
     DCHECK(seg);
-    const VersionDataImpl::VersionEntry *ent
-        = Singleton<VersionDataImpl>::get()->Lookup(seg->key());
-    if (ent != NULL) {
+    const VersionDataImpl::VersionEntry *ent = impl_->Lookup(seg->key());
+    if (ent != nullptr) {
       for (size_t j = 0; j < seg->candidates_size(); ++j) {
         const Segment::Candidate& c = seg->candidate(static_cast<int>(j));
-        if (c.value == ent->base_candidate_) {
+        if (c.value == ent->base_candidate()) {
           Segment::Candidate* new_cand =
               seg->insert_candidate(static_cast<int>(
-                  min(seg->candidates_size(),
-                      ent->rank_)));
-          if (new_cand != NULL) {
+                  min(seg->candidates_size(), ent->rank())));
+          if (new_cand != nullptr) {
             new_cand->lid = c.lid;
             new_cand->rid = c.rid;
             new_cand->cost = c.cost;
-            new_cand->value = ent->output_;
-            new_cand->content_value = ent->output_;
+            new_cand->value = ent->output();
+            new_cand->content_value = ent->output();
             new_cand->key = seg->key();
             new_cand->content_key = seg->key();
             // we don't learn version
@@ -165,4 +165,5 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
   }
   return result;
 }
+
 }  // namespace mozc

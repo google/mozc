@@ -49,6 +49,7 @@ class Version {
   static int GetMozcVersionMinor();
   static int GetMozcVersionBuildNumber();
   static int GetMozcVersionRevision();
+  static const char *GetMozcEngineVersion();
 
   // Returns true if lhs is less than rhs in the lexical order.
   // CompareVersion("1.2.3.4", "1.2.3.4") => false

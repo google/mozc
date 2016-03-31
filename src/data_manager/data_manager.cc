@@ -31,6 +31,8 @@
 
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
+#include "base/util.h"
+#include "base/version.h"
 #include "data_manager/dataset_reader.h"
 #include "protocol/segmenter_data.pb.h"
 #include "rewriter/serialized_dictionary.h"
@@ -282,6 +284,26 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
       return false;
     }
   }
+
+  if (!reader.Get("version", &data_version_)) {
+    LOG(ERROR) << "Cannot find data version";
+    return false;
+  }
+  {
+    vector<StringPiece> components;
+    Util::SplitStringUsing(data_version_, ".", &components);
+    if (components.size() != 3) {
+      LOG(ERROR) << "Invalid version format: " << data_version_;
+      return false;
+    }
+    if (components[0] != Version::GetMozcEngineVersion()) {
+      LOG(ERROR) << "Incompatible data. The required engine version is "
+                 << Version::GetMozcEngineVersion()
+                 << " but tried to load " << components[0]
+                 << " (" << data_version_ << ")";
+      return false;
+    }
+  }
   return true;
 }
 
@@ -438,5 +460,9 @@ void DataManager::GetUsageRewriterData(
   *string_array_data = usage_string_array_data_;
 }
 #endif  // NO_USAGE_REWRITER
+
+StringPiece DataManager::GetDataVersion() const {
+  return data_version_;
+}
 
 }  // namespace mozc

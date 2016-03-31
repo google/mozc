@@ -77,6 +77,9 @@ VERSION_PROPERTIES = [
     'ANDROID_SERVICE_NAME',
     'NACL_DICTIONARY_VERSION',
     'ANDROID_ARCH',
+    'ENGINE_VERSION',
+    # 'DATA_VERSION' is not included as it's the property of data file to be
+    # independent of executables.
     ]
 
 MOZC_EPOCH = datetime.date(2009, 5, 24)
@@ -270,7 +273,8 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@',
       'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@',
       'NACL_DICTIONARY_VERSION=@NACL_DICTIONARY_VERSION@',
-      'ANDROID_ARCH=@ANDROID_ARCH@'
+      'ANDROID_ARCH=@ANDROID_ARCH@',
+      'ENGINE_VERSION=@ENGINE_VERSION@',
   ]) + '\n'
   GenerateVersionFileFromTemplate(
       version_template_path,
