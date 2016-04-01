@@ -275,7 +275,7 @@ def ParseGypOptions(args):
   parser.add_option('--qtver', dest='qtver', choices=('4', '5'), default='4')
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
-                    default='mozc_version_template.txt')
+                    default='data/version/mozc_version_template.txt')
   AddTargetPlatformOption(parser)
 
   # Mac and Linux

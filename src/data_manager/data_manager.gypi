@@ -900,7 +900,7 @@
           'action_name': 'gen_separate_version_data_for_<(dataset_tag)',
           'variables': {
             'generator': '<(mozc_dir)/data_manager/gen_data_version.py',
-            'version_file': '<(mozc_dir)/mozc_version_template.txt',
+            'version_file': '<(mozc_dir)/data/version/mozc_version_template.txt',
           },
           'inputs': [
             '<(generator)',
