@@ -42,9 +42,6 @@
     # a flag whether the dataset is embedded or separated (for Android).
     'use_separate_dataset%': '0',
 
-    # a flag whether the dataset is packed to be replacable (for NaCl).
-    'use_packed_dictionary%': '0',
-
     # enable_cloud_handwriting represents if cloud handwriting feature is
     # enabled or not.
     'enable_cloud_handwriting%': '0',
@@ -95,9 +92,6 @@
       }],
       ['use_separate_dataset==1', {
         'defines': ['MOZC_USE_SEPARATE_DATASET'],
-      }],
-      ['use_packed_dictionary==1', {
-        'defines': ['MOZC_USE_PACKED_DICTIONARY'],
       }],
       ['enable_cloud_handwriting==1', {
         'defines': ['ENABLE_CLOUD_HANDWRITING'],

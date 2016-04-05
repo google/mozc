@@ -733,17 +733,14 @@ def GypMain(options, unused_args):
     gyp_options.extend(['-D', 'dictionary=small'])
     gyp_options.extend(['-D', 'use_separate_dataset=1'])
     gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=1'])
-    gyp_options.extend(['-D', 'use_packed_dictionary=0'])
   elif target_platform == 'NaCl':
     gyp_options.extend(['-D', 'dictionary=desktop'])
     gyp_options.extend(['-D', 'use_separate_dataset=0'])
     gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
-    gyp_options.extend(['-D', 'use_packed_dictionary=1'])
   else:
     gyp_options.extend(['-D', 'dictionary=desktop'])
     gyp_options.extend(['-D', 'use_separate_dataset=0'])
     gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
-    gyp_options.extend(['-D', 'use_packed_dictionary=0'])
 
   if target_platform == 'NaCl':
     if options.nacl_sdk_root:

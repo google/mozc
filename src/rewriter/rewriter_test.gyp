@@ -104,15 +104,6 @@
             'variants_rewriter_test.cc',
           ],
         }],
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-          ],
-          'hard_dependency': 1,
-          'export_dependent_settings': [
-            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-          ],
-        }],
       ],
     },
     {
@@ -154,17 +145,6 @@
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'rewriter.gyp:rewriter',
       ],
-      'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-          ],
-          'hard_dependency': 1,
-          'export_dependent_settings': [
-            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-          ],
-        }],
-      ],
       'variables': {
         'test_size': 'small',
       },
@@ -185,17 +165,6 @@
         '../testing/testing.gyp:mozctest',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'rewriter.gyp:rewriter',
-      ],
-      'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-          ],
-          'hard_dependency': 1,
-          'export_dependent_settings': [
-            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-          ],
-        }],
       ],
       'variables': {
         'test_size': 'small',

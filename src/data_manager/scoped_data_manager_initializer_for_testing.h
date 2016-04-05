@@ -36,10 +36,6 @@
 #include "data_manager/android/scoped_android_data_manager_initializer_for_testing.h"
 #endif  // OS_ANDROID
 
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/scoped_packed_data_manager_initializer_for_testing.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-
 namespace mozc {
 
 class scoped_data_manager_initializer_for_testing {
@@ -52,10 +48,6 @@ class scoped_data_manager_initializer_for_testing {
   mozc::android::scoped_android_data_manager_initializer_for_testing
       scoped_android_data_manager_initializer_for_testing_;
 #endif  // OS_ANDROID
-#ifdef MOZC_USE_PACKED_DICTIONARY
-  mozc::packed::scoped_packed_data_manager_initializer_for_testing
-      scoped_packed_data_manager_initializer_for_testing_;
-#endif  // MOZC_USE_PACKED_DICTIONARY
 
   DISALLOW_COPY_AND_ASSIGN(scoped_data_manager_initializer_for_testing);
 };

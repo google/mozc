@@ -57,11 +57,6 @@
         'scoped_data_manager_initializer_for_testing.cc',
       ],
       'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            ':scoped_packed_data_manager_initializer_for_testing'
-          ],
-        }],
         ['target_platform=="Android"', {
           'dependencies': [
             ':scoped_android_data_manager_initializer_for_testing'
@@ -103,23 +98,6 @@
     },
   ],
   'conditions': [
-    ['use_packed_dictionary==1', {
-      'targets': [
-        {
-          'target_name': 'scoped_packed_data_manager_initializer_for_testing',
-          'type': 'static_library',
-          'toolsets': [ 'target' ],
-          'sources': [
-            '<(gen_out_dir)/packed/packed_data_mock.h',
-            'packed/scoped_packed_data_manager_initializer_for_testing.cc',
-          ],
-          'dependencies': [
-            'packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-            'packed/packed_data_manager_base.gyp:packed_data_manager',
-          ],
-        },
-      ],
-    }],
     ['target_platform=="Android"', {
       'targets': [
         {

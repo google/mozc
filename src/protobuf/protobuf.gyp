@@ -265,14 +265,6 @@
             'GOOGLE_PROTOBUF_NO_RTTI',
           ],
         }],
-        ['use_packed_dictionary==1', {
-          'defines': [
-            'HAVE_ZLIB',
-          ],
-          'dependencies': [
-            'zlib',
-          ],
-        }],
       ],
     },
     {
@@ -401,77 +393,5 @@
         }],
       ],
     },
-  ],
-  'conditions': [
-    ['use_packed_dictionary==1', {
-      'targets': [
-        {
-          'target_name': 'zlib',
-          'type': 'static_library',
-          'toolsets': ['host', 'target'],
-          'variables': {
-            'zlib_root': '<(third_party_dir)/zlib/v1_2_8',
-          },
-          'sources': [
-            '<(zlib_root)/adler32.c',
-            '<(zlib_root)/compress.c',
-            '<(zlib_root)/crc32.c',
-            '<(zlib_root)/crc32.h',
-            '<(zlib_root)/deflate.c',
-            '<(zlib_root)/deflate.h',
-            '<(zlib_root)/gzclose.c',
-            '<(zlib_root)/gzguts.h',
-            '<(zlib_root)/gzlib.c',
-            '<(zlib_root)/gzread.c',
-            '<(zlib_root)/gzwrite.c',
-            '<(zlib_root)/infback.c',
-            '<(zlib_root)/inffast.c',
-            '<(zlib_root)/inffast.h',
-            '<(zlib_root)/inffixed.h',
-            '<(zlib_root)/inflate.c',
-            '<(zlib_root)/inflate.h',
-            '<(zlib_root)/inftrees.c',
-            '<(zlib_root)/inftrees.h',
-            '<(zlib_root)/trees.c',
-            '<(zlib_root)/trees.h',
-            '<(zlib_root)/uncompr.c',
-            '<(zlib_root)/zconf.h',
-            '<(zlib_root)/zlib.h',
-            '<(zlib_root)/zutil.c',
-            '<(zlib_root)/zutil.h',
-          ],
-          'all_dependent_settings': {
-            'include_dirs': [
-              '<(zlib_root)',
-            ],
-          },
-          'cflags': [
-            '-Wno-implicit-function-declaration',
-            '-Wno-incompatible-pointer-types-discards-qualifiers',
-          ],
-          'configurations': {
-            'Debug_Base': {
-              'cflags!': [
-                # zlib 1.2.8 with DEBUG isn't compatible with -Wwrite-strings
-                '-Wwrite-strings',
-              ],
-              'defines': [
-                # Teach zlib not to emit noisy logging message while running
-                'verbose=-1',
-              ],
-            },
-          },
-          'conditions': [
-            # TODO(yukawa): Do we still need this?
-            ['(_toolset=="target" and compiler_target=="clang") or '
-             '(_toolset=="host" and compiler_host=="clang")', {
-              'defines!': [
-                'DEBUG',
-              ],
-            }],
-          ],
-        },
-      ],
-    }],
   ],
 }
