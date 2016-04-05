@@ -166,16 +166,18 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
 
   // Initialize |manager_| (PackedDataManager for light doesn't have mozc data).
   if (system_dictionary_data_->has_mozc_data() &&
-      !manager_.InitFromArray(system_dictionary_data_->mozc_data(),
-                              system_dictionary_data_->mozc_data_magic())) {
+      manager_.InitFromArray(system_dictionary_data_->mozc_data(),
+                             system_dictionary_data_->mozc_data_magic()) !=
+          DataManager::Status::OK) {
     VLOG(1) << "Data set is incomplete.  Assume this is user pos manager data.";
     // The data set containing only user pos manager data is used in build
     // tools.
     // TODO(noriyukit): Fix this hard-to-understand behavior by removing
     // PackedDataManager.
-    if (!manager_.InitUserPosManagerDataFromArray(
+    if (manager_.InitUserPosManagerDataFromArray(
             system_dictionary_data_->mozc_data(),
-            system_dictionary_data_->mozc_data_magic())) {
+            system_dictionary_data_->mozc_data_magic()) !=
+        DataManager::Status::OK) {
       LOG(ERROR) << "Failed to initialize mozc data";
       return false;
     }

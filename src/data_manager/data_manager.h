@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_H_
 
+#include <iosfwd>
 #include <string>
 
 #include "base/mmap.h"
@@ -39,25 +40,47 @@
 
 namespace mozc {
 
+class DataSetReader;  // Forward-declare this as it is used privately.
+
 // This data manager parses a data set file image and extracts each data
 // (dictionary, LM, etc.).
 // TODO(noriyukit): Migrate all the embedded data managers, such as
 // oss/oss_data_manager.h, to this one.
 class DataManager : public DataManagerInterface {
  public:
+  // Return status for initialization.
+  enum class Status {
+    OK = 0,
+    ENGINE_VERSION_MISMATCH = 1,
+    DATA_MISSING = 2,
+    DATA_BROKEN = 3,
+    MMAP_FAILURE = 4,
+    UNKNOWN = 5,
+  };
+
+  static string StatusCodeToString(Status code);
+
   DataManager();
   ~DataManager() override;
 
-  // Parses |array| and extracts byte blocks of data set.
-  bool InitFromArray(StringPiece array, StringPiece magic);
+  // Parses |array| and extracts byte blocks of data set.  The |array| must
+  // outlive this instance.  The second version specifies a custom magic number
+  // to expect (e.g., mock data set has a different magic number).
+  Status InitFromArray(StringPiece array);
+  Status InitFromArray(StringPiece array, StringPiece magic);
+
+  // The same as above InitFromArray() but the data is loaded using mmap, which
+  // is owned in this instance.
+  Status InitFromFile(const string &path);
+  Status InitFromFile(const string &path, StringPiece magic);
 
   // The same as above InitFromArray() but only parses data set for user pos
   // manager.  For mozc runtime modules, use InitFromArray() because this method
   // is only for build tools, e.g., rewriter/dictionary_generator.cc (some build
   // tools depend on user pos data to create outputs, so we need to handle
   // partial data set).
-  bool InitUserPosManagerDataFromArray(StringPiece array, StringPiece magic);
-  bool InitUserPosManagerDataFromFile(const string &path, StringPiece magic);
+  Status InitUserPosManagerDataFromArray(StringPiece array, StringPiece magic);
+  Status InitUserPosManagerDataFromFile(const string &path, StringPiece magic);
 
   // Implementation of DataManagerInterface.
   const uint16 *GetPOSMatcherData() const override;
@@ -109,6 +132,8 @@ class DataManager : public DataManagerInterface {
   StringPiece GetDataVersion() const override;
 
  private:
+  Status InitFromReader(const DataSetReader &reader);
+
   Mmap mmap_;
   StringPiece pos_matcher_data_;
   StringPiece user_pos_token_array_data_;
@@ -154,6 +179,10 @@ class DataManager : public DataManagerInterface {
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };
+
+// Print helper for DataManager::Status.  Logging, e.g., CHECK_EQ(), requires
+// arguments to be printable.
+std::ostream &operator<<(std::ostream &os, DataManager::Status status);
 
 }  // namespace mozc
 

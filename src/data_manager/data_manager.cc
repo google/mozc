@@ -29,6 +29,8 @@
 
 #include "data_manager/data_manager.h"
 
+#include <ostream>
+
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
@@ -40,124 +42,161 @@
 namespace mozc {
 namespace {
 
-bool InitUserPosManagerDataFromReader(
+const char * const kDataSetMagicNumber = "\xEFMOZC\r\n";
+
+DataManager::Status InitUserPosManagerDataFromReader(
     const DataSetReader &reader,
     StringPiece *pos_matcher_data,
     StringPiece *user_pos_token_array_data,
     StringPiece *user_pos_string_array_data) {
   if (!reader.Get("pos_matcher", pos_matcher_data)) {
     LOG(ERROR) << "Cannot find POS matcher rule ID table";
-    return false;
+    return DataManager::Status::DATA_MISSING;
   }
   if (!reader.Get("user_pos_token", user_pos_token_array_data)) {
     LOG(ERROR) << "Cannot find a user POS token array";
-    return false;
+    return DataManager::Status::DATA_MISSING;
   }
   if (!reader.Get("user_pos_string", user_pos_string_array_data)) {
     LOG(ERROR) << "Cannot find a user POS string array";
-    return false;
+    return DataManager::Status::DATA_MISSING;
   }
   if (user_pos_token_array_data->size() % 8 != 0 ||
       !SerializedStringArray::VerifyData(*user_pos_string_array_data)) {
     LOG(ERROR) << "User POS data is broken: token array data size = "
                << user_pos_token_array_data->size() << ", string array size = "
                << user_pos_string_array_data->size();
-    return false;
+    return DataManager::Status::DATA_BROKEN;
   }
-  return true;
+  return DataManager::Status::OK;
 }
 
 }  // namespace
 
+string DataManager::StatusCodeToString(Status code) {
+  string s;
+  switch (code) {
+    case Status::OK:
+      s.assign("Status::OK");
+      break;
+    case Status::ENGINE_VERSION_MISMATCH:
+      s.assign("Status::ENGINE_VERSION_MISMATCH");
+      break;
+    case Status::DATA_MISSING:
+      s.assign("Status::DATA_MISSING");
+      break;
+    case Status::DATA_BROKEN:
+      s.assign("Status::DATA_BROKEN");
+      break;
+    case Status::MMAP_FAILURE:
+      s.assign("Status::MMAP_FAILURE");
+      break;
+    default:
+      s.assign("Status::UNKNOWN");
+      break;
+  }
+  s.append(Util::StringPrintf("(%d)", static_cast<int>(code)));
+  return s;
+}
+
 DataManager::DataManager() = default;
 DataManager::~DataManager() = default;
 
-bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
+DataManager::Status DataManager::InitFromArray(StringPiece array) {
+  return InitFromArray(array, kDataSetMagicNumber);
+}
+
+DataManager::Status DataManager::InitFromArray(StringPiece array,
+                                               StringPiece magic) {
   DataSetReader reader;
   if (!reader.Init(array, magic)) {
     LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
-    return false;
+    return DataManager::Status::DATA_BROKEN;
   }
-  if (!InitUserPosManagerDataFromReader(reader,
-                                        &pos_matcher_data_,
-                                        &user_pos_token_array_data_,
-                                        &user_pos_string_array_data_)) {
+  return InitFromReader(reader);
+}
+
+DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
+  const Status status = InitUserPosManagerDataFromReader(
+      reader, &pos_matcher_data_, &user_pos_token_array_data_,
+      &user_pos_string_array_data_);
+  if (status != Status::OK) {
     LOG(ERROR) << "User POS manager data is broken";
-    return false;
+    return status;
   }
   if (!reader.Get("conn", &connection_data_)) {
     LOG(ERROR) << "Cannot find a connection data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("dict", &dictionary_data_)) {
     LOG(ERROR) << "Cannot find a dictionary data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("sugg", &suggestion_filter_data_)) {
     LOG(ERROR) << "Cannot find a suggestion filter data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("coll", &collocation_data_)) {
     LOG(ERROR) << "Cannot find a collocation data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("cols", &collocation_suppression_data_)) {
     LOG(ERROR) << "Cannot find a collocation suprression data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("posg", &pos_group_data_)) {
     LOG(ERROR) << "Cannot find a POS group data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("bdry", &boundary_data_)) {
     LOG(ERROR) << "Cannot find a boundary data";
-    return false;
+    return Status::DATA_MISSING;
   }
   {
     StringPiece memblock;
     if (!reader.Get("segmenter_sizeinfo", &memblock)) {
       LOG(ERROR) << "Cannot find a segmenter size info";
-      return false;
+      return Status::DATA_MISSING;
     }
     converter::SegmenterDataSizeInfo sizeinfo;
     if (!sizeinfo.ParseFromArray(memblock.data(), memblock.size())) {
       LOG(ERROR) << "Failed to parse SegmenterDataSizeInfo";
-      return false;
+      return Status::DATA_BROKEN;
     }
     segmenter_compressed_lsize_ = sizeinfo.compressed_lsize();
     segmenter_compressed_rsize_ = sizeinfo.compressed_rsize();
   }
   if (!reader.Get("segmenter_ltable", &segmenter_ltable_)) {
     LOG(ERROR) << "Cannot find a segmenter ltable";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("segmenter_rtable", &segmenter_rtable_)) {
     LOG(ERROR) << "Cannot find a segmenter rtable";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("segmenter_bitarray", &segmenter_bitarray_)) {
     LOG(ERROR) << "Cannot find a segmenter bit-array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("counter_suffix", &counter_suffix_data_)) {
     LOG(ERROR) << "Cannot find a counter suffix data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!SerializedStringArray::VerifyData(counter_suffix_data_)) {
     LOG(ERROR) << "Counter suffix string array is broken";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("suffix_key", &suffix_key_array_data_)) {
     LOG(ERROR) << "Cannot find a suffix key array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("suffix_value", &suffix_value_array_data_)) {
     LOG(ERROR) << "Cannot find a suffix value array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("suffix_token", &suffix_token_array_data_)) {
     LOG(ERROR) << "Cannot find a suffix token array";
-    return false;
+    return Status::DATA_MISSING;
   }
   {
     SerializedStringArray suffix_keys, suffix_values;
@@ -169,23 +208,23 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
         // Therefore, its byte length must be 4 * N bytes.
         suffix_token_array_data_.size() != 4 * 3 * suffix_keys.size()) {
       LOG(ERROR) << "Suffix dictionary data is broken";
-      return false;
+      return Status::DATA_BROKEN;
     }
   }
   if (!reader.Get("reading_correction_value",
                   &reading_correction_value_array_data_)) {
     LOG(ERROR) << "Cannot find reading correction value array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("reading_correction_error",
                   &reading_correction_error_array_data_)) {
     LOG(ERROR) << "Cannot find reading correction error array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("reading_correction_correction",
                   &reading_correction_correction_array_data_)) {
     LOG(ERROR) << "Cannot find reading correction correction array";
-    return false;
+    return Status::DATA_MISSING;
   }
   {
     SerializedStringArray value_array, error_array, correction_array;
@@ -195,46 +234,46 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
         value_array.size() != error_array.size() ||
         value_array.size() != correction_array.size()) {
       LOG(ERROR) << "Reading correction data is broken";
-      return false;
+      return Status::DATA_BROKEN;
     }
   }
   if (!reader.Get("symbol_token", &symbol_token_array_data_)) {
     LOG(ERROR) << "Cannot find a symbol token array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("symbol_string", &symbol_string_array_data_)) {
     LOG(ERROR) << "Cannot find a symbol string array or data is broken";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!SerializedDictionary::VerifyData(symbol_token_array_data_,
                                         symbol_string_array_data_)) {
     LOG(ERROR) << "Symbol dictionary data is broken";
-    return false;
+    return Status::DATA_BROKEN;
   }
   if (!reader.Get("emoticon_token", &emoticon_token_array_data_)) {
     LOG(ERROR) << "Cannot find an emoticon token array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("emoticon_string", &emoticon_string_array_data_)) {
     LOG(ERROR) << "Cannot find an emoticon string array or data is broken";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!SerializedDictionary::VerifyData(emoticon_token_array_data_,
                                         emoticon_string_array_data_)) {
     LOG(ERROR) << "Emoticon dictionary data is broken";
-    return false;
+    return Status::DATA_BROKEN;
   }
   if (!reader.Get("emoji_token", &emoji_token_array_data_)) {
     LOG(ERROR) << "Cannot find an emoji token array";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!reader.Get("emoji_string", &emoji_string_array_data_)) {
     LOG(ERROR) << "Cannot find an emoji string array or data is broken";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!SerializedStringArray::VerifyData(emoji_string_array_data_)) {
     LOG(ERROR) << "Emoji rewriter string array data is broken";
-    return false;
+    return Status::DATA_BROKEN;
   }
   if (!reader.Get("single_kanji_token",
                   &single_kanji_token_array_data_) ||
@@ -251,7 +290,7 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
       !reader.Get("single_kanji_noun_prefix_string",
                   &single_kanji_noun_prefix_string_array_data_)) {
     LOG(ERROR) << "Cannot find single Kanji rewriter data";
-    return false;
+    return Status::DATA_MISSING;
   }
   if (!SerializedStringArray::VerifyData(single_kanji_string_array_data_) ||
       !SerializedStringArray::VerifyData(single_kanji_variant_type_data_) ||
@@ -261,7 +300,7 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
           single_kanji_noun_prefix_token_array_data_,
           single_kanji_noun_prefix_string_array_data_)) {
     LOG(ERROR) << "Single Kanji data is broken";
-    return false;
+    return Status::DATA_BROKEN;
   }
 
   if (!reader.Get("usage_item_array", &usage_items_data_)) {
@@ -277,58 +316,69 @@ bool DataManager::InitFromArray(StringPiece array, StringPiece magic) {
         !reader.Get("usage_string_array",
                     &usage_string_array_data_)) {
       LOG(ERROR) << "Cannot find some usage dictionary data components";
-      return false;
+      return Status::DATA_MISSING;
     }
     if (!SerializedStringArray::VerifyData(usage_string_array_data_)) {
       LOG(ERROR) << "Usage dictionary's string array is broken";
-      return false;
+      return Status::DATA_BROKEN;
     }
   }
 
   if (!reader.Get("version", &data_version_)) {
     LOG(ERROR) << "Cannot find data version";
-    return false;
+    return Status::DATA_MISSING;
   }
   {
     vector<StringPiece> components;
     Util::SplitStringUsing(data_version_, ".", &components);
     if (components.size() != 3) {
       LOG(ERROR) << "Invalid version format: " << data_version_;
-      return false;
+      return Status::DATA_BROKEN;
     }
     if (components[0] != Version::GetMozcEngineVersion()) {
       LOG(ERROR) << "Incompatible data. The required engine version is "
                  << Version::GetMozcEngineVersion()
                  << " but tried to load " << components[0]
                  << " (" << data_version_ << ")";
-      return false;
+      return Status::ENGINE_VERSION_MISMATCH;
     }
   }
-  return true;
+  return Status::OK;
 }
 
-bool DataManager::InitUserPosManagerDataFromArray(StringPiece array,
-                                                  StringPiece magic) {
+DataManager::Status DataManager::InitFromFile(const string &path) {
+  return InitFromFile(path, kDataSetMagicNumber);
+}
+
+DataManager::Status DataManager::InitFromFile(const string &path,
+                                              StringPiece magic) {
+  if (!mmap_.Open(path.c_str(), "r")) {
+    LOG(ERROR) << "Failed to mmap " << path;
+    return Status::MMAP_FAILURE;
+  }
+  const StringPiece data(mmap_.begin(), mmap_.size());
+  return InitFromArray(data, magic);
+}
+
+DataManager::Status DataManager::InitUserPosManagerDataFromArray(
+    StringPiece array, StringPiece magic) {
   DataSetReader reader;
   if (!reader.Init(array, magic)) {
     LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
-    return false;
+    return Status::DATA_BROKEN;
   }
-  if (!InitUserPosManagerDataFromReader(reader,
-                                        &pos_matcher_data_,
-                                        &user_pos_token_array_data_,
-                                        &user_pos_string_array_data_)) {
-    LOG(ERROR) << "User POS manager data is broken";
-    return false;
-  }
-  return true;
+  const Status status = InitUserPosManagerDataFromReader(
+      reader, &pos_matcher_data_, &user_pos_token_array_data_,
+      &user_pos_string_array_data_);
+  LOG_IF(ERROR, status != Status::OK) << "User POS manager data is broken";
+  return status;
 }
 
-bool DataManager::InitUserPosManagerDataFromFile(const string &path,
-                                                 StringPiece magic) {
+DataManager::Status DataManager::InitUserPosManagerDataFromFile(
+    const string &path, StringPiece magic) {
   if (!mmap_.Open(path.c_str(), "r")) {
     LOG(ERROR) << "Failed to mmap " << path;
-    return false;
+    return Status::MMAP_FAILURE;
   }
   const StringPiece data(mmap_.begin(), mmap_.size());
   return InitUserPosManagerDataFromArray(data, magic);
@@ -463,6 +513,10 @@ void DataManager::GetUsageRewriterData(
 
 StringPiece DataManager::GetDataVersion() const {
   return data_version_;
+}
+
+std::ostream &operator<<(std::ostream &os, DataManager::Status status) {
+  return os << DataManager::StatusCodeToString(status);
 }
 
 }  // namespace mozc

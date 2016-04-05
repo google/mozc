@@ -51,7 +51,7 @@ const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
 ChromeOsDataManager::ChromeOsDataManager() {
   const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
-  CHECK(InitFromArray(LoadEmbeddedFile(kCrosMozcDataSet), magic))
+  CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kCrosMozcDataSet), magic))
       << "Embedded cros_mozc_data.h is broken";
 }
 

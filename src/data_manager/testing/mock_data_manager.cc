@@ -49,7 +49,7 @@ const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
 MockDataManager::MockDataManager() {
   const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
-  CHECK(InitFromArray(LoadEmbeddedFile(kMockMozcDataSet), magic))
+  CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kMockMozcDataSet), magic))
       << "Embedded mock_mozc_data.h is broken";
 }
 

@@ -100,8 +100,10 @@ int main(int argc, char **argv) {
   // User POS manager data for build tools has no magic number.
   const char *kMagicNumber = "";
   mozc::DataManager data_manager;
-  CHECK(data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
-                                                    kMagicNumber))
+  const mozc::DataManager::Status status =
+      data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
+                                                  kMagicNumber);
+  CHECK_EQ(status, mozc::DataManager::Status::OK)
       << "Failed to initialize data manager from "
       << FLAGS_user_pos_manager_data;
 

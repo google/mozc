@@ -219,8 +219,10 @@ int main(int argc, char **argv) {
   // User pos manager data for build tools has no magic number.
   const char *kMagciNumber = "";
   mozc::DataManager data_manager;
-  CHECK(data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
-                                                    kMagciNumber));
+  const mozc::DataManager::Status status =
+      data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
+                                                  kMagciNumber);
+  CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::rewriter::DictionaryGenerator dictionary(data_manager);
   mozc::MakeDictionary(FLAGS_input,

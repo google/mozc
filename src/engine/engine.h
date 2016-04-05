@@ -100,6 +100,10 @@ class Engine : public EngineInterface {
     return user_data_manager_.get();
   }
 
+  StringPiece GetDataVersion() const {
+    return data_manager_->GetDataVersion();
+  }
+
  private:
   // Initializes the object by the given data manager and predictor factory
   // function.  Predictor factory is used to select DefaultPredictor and

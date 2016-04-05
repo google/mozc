@@ -58,7 +58,7 @@ OssDataManager::OssDataManager() {
   const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
   if (g_mozc_data_address != nullptr) {
     const StringPiece data(g_mozc_data_address, g_mozc_data_size);
-    CHECK(InitFromArray(data, magic))
+    CHECK_EQ(Status::OK, InitFromArray(data, magic))
         << "Image set by SetMozcDataSet() is broken";
     return;
   }
@@ -68,7 +68,7 @@ OssDataManager::OssDataManager() {
       << "OssDataManager::SetMozcDataSet() must be called before "
       << "instantiation of OssDataManager instances.";
 #endif  // MOZC_USE_SEPARATE_DATASET
-  CHECK(InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
+  CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
       << "Embedded mozc_imy.h for OSS is broken";
 }
 
