@@ -61,18 +61,9 @@ using std::unique_ptr;
 
 using mozc::dictionary::CollectTokenCallback;
 
-namespace {
-// We cannot use #ifdef in DEFINE_int32.
-#ifdef DEBUG
-const uint32 kDefaultReverseLookupTestSize = 1000;
-#else
-const uint32 kDefaultReverseLookupTestSize = 10000;
-#endif
-}  // namespace
-
 DEFINE_int32(dictionary_test_size, 100000,
              "Dictionary size for this test.");
-DEFINE_int32(dictionary_reverse_lookup_test_size, kDefaultReverseLookupTestSize,
+DEFINE_int32(dictionary_reverse_lookup_test_size, 1000,
              "Number of tokens to run reverse lookup test.");
 DECLARE_int32(min_key_length_to_use_small_cost_encoding);
 
