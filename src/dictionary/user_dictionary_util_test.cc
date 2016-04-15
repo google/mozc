@@ -143,7 +143,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
 }
 
 TEST(UserDictionaryUtilTest, TestSanitize) {
-  string str('\t', 10);
+  string str(10, '\t');
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 5));
   EXPECT_EQ("", str);
 
