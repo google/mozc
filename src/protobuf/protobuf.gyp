@@ -142,6 +142,7 @@
       '<(protobuf_cpp_root)/compiler/java/java_enum_field_lite.cc',
       '<(protobuf_cpp_root)/compiler/java/java_enum_lite.cc',
       '<(protobuf_cpp_root)/compiler/java/java_extension.cc',
+      '<(protobuf_cpp_root)/compiler/java/java_extension_lite.cc',
       '<(protobuf_cpp_root)/compiler/java/java_field.cc',
       '<(protobuf_cpp_root)/compiler/java/java_file.cc',
       '<(protobuf_cpp_root)/compiler/java/java_generator.cc',
@@ -330,7 +331,7 @@
             'protoc_wrapper_additional_options': ['--protoc_dir=<(PRODUCT_DIR)'],
             'additional_inputs': ['<(PRODUCT_DIR)/<(protoc_command)'],
             'protobuf_java_sources': [
-              '>!@(find <(protobuf_root)/java/src/main/java -type f -name "*.java" -and -path "*/src/main/java/*")',
+              '>!@(find <(protobuf_root)/java/core/src/main/java -type f -name "*.java" -and -path "*/src/main/java/*")',
             ],
           },
           'actions': [
