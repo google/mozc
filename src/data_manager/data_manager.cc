@@ -36,8 +36,8 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "data_manager/dataset_reader.h"
+#include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
-#include "rewriter/serialized_dictionary.h"
 
 namespace mozc {
 namespace {

@@ -33,7 +33,7 @@
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/port.h"
-#include "rewriter/serialized_dictionary.h"
+#include "data_manager/serialized_dictionary.h"
 
 DEFINE_string(output_token_array, "",
               "Output token array of noun prefix dictionary");

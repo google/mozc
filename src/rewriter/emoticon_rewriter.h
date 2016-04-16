@@ -33,8 +33,8 @@
 #include <memory>
 
 #include "data_manager/data_manager_interface.h"
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/serialized_dictionary.h"
 
 namespace mozc {
 

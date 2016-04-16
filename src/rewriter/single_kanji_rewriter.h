@@ -35,9 +35,9 @@
 #include "base/port.h"
 #include "base/serialized_string_array.h"
 #include "data_manager/data_manager_interface.h"
+#include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/serialized_dictionary.h"
 
 namespace mozc {
 

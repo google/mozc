@@ -33,8 +33,8 @@
 #include <memory>
 #include <string>
 
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/serialized_dictionary.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 

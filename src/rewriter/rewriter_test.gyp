@@ -170,16 +170,6 @@
         'test_size': 'small',
       },
     },
-    {
-      'target_name': 'serialized_dictionary_test',
-      'type': 'executable',
-      'sources': ['serialized_dictionary_test.cc'],
-      'dependencies': [
-        '../base/base.gyp:serialized_string_array',
-        '../testing/testing.gyp:gtest_main',
-        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
-      ],
-    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'rewriter_all_test',
@@ -188,7 +178,6 @@
         'calculator/calculator.gyp:calculator_all_test',
         'language_aware_rewriter_test',
         'rewriter_test',
-        'serialized_dictionary_test',
         'single_kanji_rewriter_test',
         'transliteration_rewriter_test',
       ],

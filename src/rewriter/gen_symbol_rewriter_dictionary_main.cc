@@ -50,8 +50,8 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "data_manager/data_manager.h"
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/dictionary_generator.h"
-#include "rewriter/serialized_dictionary.h"
 
 DEFINE_string(sorting_table, "", "sorting table file");
 DEFINE_string(ordering_rule, "", "sorting order file");

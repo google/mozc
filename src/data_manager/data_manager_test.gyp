@@ -96,6 +96,16 @@
         'data_manager_base.gyp:dataset_writer',
       ],
     },
+    {
+      'target_name': 'serialized_dictionary_test',
+      'type': 'executable',
+      'sources': ['serialized_dictionary_test.cc'],
+      'dependencies': [
+        '../base/base.gyp:serialized_string_array',
+        '../testing/testing.gyp:gtest_main',
+        'data_manager_base.gyp:serialized_dictionary',
+      ],
+    },
   ],
   'conditions': [
     ['target_platform=="Android"', {

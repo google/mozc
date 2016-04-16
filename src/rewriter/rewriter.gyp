@@ -82,6 +82,7 @@
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:immutable_converter',
+        '../data_manager/data_manager_base.gyp:serialized_dictionary',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../protocol/protocol.gyp:commands_proto',
@@ -91,7 +92,6 @@
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
-        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
       ],
       'conditions':[
         ['target_platform=="Android"', {

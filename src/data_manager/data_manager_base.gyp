@@ -44,8 +44,8 @@
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
         '../protocol/protocol.gyp:segmenter_data_proto',
-        '../rewriter/rewriter_serialized_dictionary.gyp:serialized_dictionary',
         'dataset_reader',
+        'serialized_dictionary',
       ],
     },
     {
@@ -113,6 +113,18 @@
         '../base/base.gyp:base_core',
         'dataset_writer',
         'dataset_proto',
+      ],
+    },
+    {
+      'target_name': 'serialized_dictionary',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'sources': [
+        'serialized_dictionary.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base.gyp:serialized_string_array',
       ],
     },
   ],

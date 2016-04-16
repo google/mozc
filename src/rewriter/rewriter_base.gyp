@@ -134,9 +134,9 @@
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
         '../data_manager/data_manager_base.gyp:data_manager',
+        '../data_manager/data_manager_base.gyp:serialized_dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:user_pos',
-        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
       ],
     },
     {
@@ -160,7 +160,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
+        '../data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
     {
@@ -172,7 +172,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'rewriter_serialized_dictionary.gyp:serialized_dictionary',
+        '../data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
   ],

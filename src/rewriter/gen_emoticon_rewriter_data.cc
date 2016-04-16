@@ -39,7 +39,7 @@
 #include "base/logging.h"
 #include "base/string_piece.h"
 #include "base/util.h"
-#include "rewriter/serialized_dictionary.h"
+#include "data_manager/serialized_dictionary.h"
 
 DEFINE_string(input, "", "Emoticon dictionary file");
 DEFINE_string(output_token_array, "", "Output token array");
