@@ -43,19 +43,16 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
-#include "engine/engine_factory.h"
+#include "data_manager/data_manager.h"
+#include "engine/engine.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"
 
-#include "data_manager/oss/oss_data_manager.h"
-typedef mozc::oss::OssDataManager DataManagerType;
-
 namespace mozc {
 namespace jni {
 namespace {
-jobject g_mozc_data_buffer;
 
 // Returns a job setting for usage stats job.
 const Scheduler::JobSetting GetJobSetting() {
@@ -69,44 +66,88 @@ const Scheduler::JobSetting GetJobSetting() {
       NULL);
 }
 
-// Adapter class to make a SessionHandlerInterface (held by this class)
-// singleton.
-// Must be accessed via mozc::Singleton<SessionHandlerSingletonAdapter>.
-class SessionHandlerSingletonAdapter {
+// Gets the Java VM from JNIEnv.
+JavaVM *GetJavaVm(JNIEnv *env) {
+  DCHECK(env);
+  JavaVM *vm = nullptr;
+  env->GetJavaVM(&vm);
+  return vm;
+}
+
+// Gets the Mozc data memory range from jobject.
+StringPiece GetMozcData(JNIEnv *env, jobject mozc_data_buffer) {
+  DCHECK(env);
+  const void *addr = env->GetDirectBufferAddress(mozc_data_buffer);
+  const size_t size = env->GetDirectBufferCapacity(mozc_data_buffer);
+  return StringPiece(static_cast<const char *>(addr), size);
+}
+
+// Manages the global reference to Mozc data in Java and the instance of
+// SessionHandlerInterface.
+class SessionHandlerManager {
  public:
-  SessionHandlerSingletonAdapter()
-      : engine_(mozc::EngineFactory::Create()),
-        session_handler_(new mozc::SessionHandler(engine_.get())) {}
-  ~SessionHandlerSingletonAdapter() {}
+  static SessionHandlerManager *Create(JNIEnv *env, jobject mozc_data_buffer) {
+    if (env == nullptr) {
+      LOG(DFATAL) << "JNIEnv is null";
+      return nullptr;
+    }
+    std::unique_ptr<DataManager> data_manager(new DataManager());
+    const DataManager::Status status =
+        data_manager->InitFromArray(GetMozcData(env, mozc_data_buffer));
+    if (status != DataManager::Status::OK) {
+      LOG(ERROR) << "Error in the data passed through JNI: " << status;
+      return nullptr;
+    }
+    auto manager = new SessionHandlerManager(std::move(data_manager));
+    if (!manager) {
+      return nullptr;
+    }
+    manager->mozc_data_buffer_ = env->NewGlobalRef(mozc_data_buffer);
+    manager->getHandler()->AddObserver(
+        Singleton<session::SessionUsageObserver>::get());
+    return manager;
+  }
+
+  static void Delete(JNIEnv *env, SessionHandlerManager *manager) {
+    if (manager == nullptr) {
+      return;
+    }
+    // The case where env == nullptr is unexpected and usually never happen.
+    if (env == nullptr) {
+      LOG(DFATAL) << "JNIEnv is null";
+      return;
+    }
+    env->DeleteGlobalRef(manager->mozc_data_buffer_);
+    delete manager;
+  }
 
   SessionHandlerInterface *getHandler() {
     return session_handler_.get();
   }
 
  private:
+  explicit SessionHandlerManager(std::unique_ptr<DataManager> data_manager)
+      : engine_(Engine::CreateMobileEngine(std::move(data_manager))),
+        session_handler_(new SessionHandler(engine_.get())) {}
+
+  ~SessionHandlerManager() = default;
+
   // Must be defined earlier than session_handler_, which depends on this.
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<SessionHandlerInterface> session_handler_;
+  jobject mozc_data_buffer_;
 
-  DISALLOW_COPY_AND_ASSIGN(SessionHandlerSingletonAdapter);
+  DISALLOW_COPY_AND_ASSIGN(SessionHandlerManager);
 };
 
-void Initialize(JavaVM *vm, const char *user_profile_directory,
-                void *mozc_data_address, int mozc_data_size) {
-  // First of all, set the user profile directory.
-  SystemUtil::SetUserProfileDirectory(user_profile_directory);
+// The global instance of Mozc system to be initialized in onPostLoad().
+SessionHandlerManager *g_manager = nullptr;
 
-  // Initializes Java native callback proxy.
-  JavaHttpClientProxy::SetJavaVM(vm);
-
-  // Initializes mozc data.
-  DataManagerType::SetMozcDataSet(mozc_data_address, mozc_data_size);
-
-  mozc::Singleton<SessionHandlerSingletonAdapter>::get()->getHandler()
-      ->AddObserver(Singleton<session::SessionUsageObserver>::get());
-
-  // Starts usage stats timer.
-  mozc::Scheduler::AddJob(GetJobSetting());
+void InitializeUserProfileDirectory(JNIEnv *env, jstring dir_path) {
+  DCHECK(env);
+  const char *path = env->GetStringUTFChars(dir_path, nullptr);
+  SystemUtil::SetUserProfileDirectory(path);
+  env->ReleaseStringUTFChars(dir_path, path);
 }
 
 // Concrete implementation for MozcJni.evalCommand
@@ -117,8 +158,11 @@ jbyteArray JNICALL evalCommand(JNIEnv *env,
   const jsize in_size = env->GetArrayLength(in_bytes_array);
   mozc::commands::Command command;
   command.ParseFromArray(in_bytes, in_size);
-  mozc::Singleton<SessionHandlerSingletonAdapter>::get()->getHandler()
-      ->EvalCommand(&command);
+  if (g_manager != nullptr) {
+    g_manager->getHandler()->EvalCommand(&command);
+  } else {
+    LOG(DFATAL) << "Mozc session handler is not yet initialized";
+  }
 
   // Use JNI_ABORT because in_bytes is read only.
   env->ReleaseByteArrayElements(in_bytes_array, in_bytes, JNI_ABORT);
@@ -138,20 +182,28 @@ void JNICALL onPostLoad(JNIEnv *env,
                         jclass clazz,
                         jstring user_profile_directory_path,
                         jobject mozc_data_buffer) {
-  // Keep the global references of the buffer.
-  g_mozc_data_buffer = env->NewGlobalRef(mozc_data_buffer);
+  if (g_manager) {
+    return;
+  }
 
-  const char *utf8_user_profile_directory_path =
-      env->GetStringUTFChars(user_profile_directory_path, nullptr);
+  // First of all, set the user profile directory.
+  const string &original_dir = SystemUtil::GetUserProfileDirectory();
+  InitializeUserProfileDirectory(env, user_profile_directory_path);
 
-  JavaVM *vm = NULL;
-  env->GetJavaVM(&vm);
+  // Initializes Java native callback proxy.
+  JavaHttpClientProxy::SetJavaVM(GetJavaVm(env));
 
-  Initialize(vm, utf8_user_profile_directory_path,
-             env->GetDirectBufferAddress(mozc_data_buffer),
-             env->GetDirectBufferCapacity(mozc_data_buffer));
-  env->ReleaseStringUTFChars(user_profile_directory_path,
-                             utf8_user_profile_directory_path);
+  // Initializes the global Mozc system.
+  g_manager = SessionHandlerManager::Create(env, mozc_data_buffer);
+  if (g_manager == nullptr) {
+    JavaHttpClientProxy::SetJavaVM(nullptr);
+    SystemUtil::SetUserProfileDirectory(original_dir);
+    LOG(DFATAL) << "Failed to create Mozc session handler";
+    return;
+  }
+
+  // Starts usage stats timer.
+  Scheduler::AddJob(GetJobSetting());
 }
 
 jstring JNICALL getVersion(JNIEnv *env) {
@@ -176,6 +228,7 @@ void JNICALL suppressSendingStats(JNIEnv *env,
 }  // namespace mozc
 
 extern "C" {
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
   JNIEnv *env = mozc::AndroidUtil::GetEnv(vm);
   if (!env) {
@@ -200,7 +253,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
       "org/mozc/android/inputmethod/japanese/session/MozcJNI");
   if (env->RegisterNatives(clazz, methods, arraysize(methods))) {
     // Fatal error. No way to recover.
-     return JNI_EVERSION;
+    return JNI_EVERSION;
   }
 
   mozc::Logging::InitLogStream("");  // Andorid doesn't stream log to a file.
@@ -208,14 +261,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
-  mozc::jni::JavaHttpClientProxy::SetJavaVM(NULL);
-
-  // Delete global references.
-  JNIEnv *env = mozc::AndroidUtil::GetEnv(vm);
-  if (env) {
-    env->DeleteGlobalRef(mozc::jni::g_mozc_data_buffer);
-  }
+  mozc::jni::SessionHandlerManager::Delete(mozc::AndroidUtil::GetEnv(vm),
+                                           mozc::jni::g_manager);
+  mozc::jni::g_manager = nullptr;
+  mozc::jni::JavaHttpClientProxy::SetJavaVM(nullptr);
 }
+
 }  // extern "C"
 
 #endif  // OS_ANDROID

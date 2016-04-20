@@ -549,8 +549,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:jni_proxy',
+        '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary.gyp:dictionary',
-        '../engine/engine.gyp:engine_factory',
+        '../engine/engine.gyp:engine',
         '../session/session.gyp:session',
         '../session/session.gyp:session_handler',
         '../session/session.gyp:session_usage_observer',
