@@ -42,7 +42,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
@@ -98,7 +97,6 @@
         'session_regression_test.cc',
       ],
       'dependencies': [
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
@@ -248,7 +246,6 @@
         'session_handler_stress_test.cc'
       ],
       'dependencies': [
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:random_keyevents_generator',

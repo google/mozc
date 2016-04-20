@@ -39,7 +39,6 @@
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
@@ -67,24 +66,23 @@ namespace {
 
 class CheckCandSizePredictor : public PredictorInterface {
  public:
-  explicit CheckCandSizePredictor(int expected_cand_size) :
-      expected_cand_size_(expected_cand_size),
-      predictor_name_("CheckCandSizePredictor") {
-  }
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const {
+  explicit CheckCandSizePredictor(int expected_cand_size)
+      : expected_cand_size_(expected_cand_size),
+        predictor_name_("CheckCandSizePredictor") {}
+
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const override {
     EXPECT_EQ(expected_cand_size_, segments->max_prediction_candidates_size());
     return true;
   }
-  virtual const string &GetPredictorName() const {
+
+  const string &GetPredictorName() const override {
     return predictor_name_;
   }
 
  private:
-  int expected_cand_size_;
+  const int expected_cand_size_;
   const string predictor_name_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
 };
 
 class NullPredictor : public PredictorInterface {
@@ -92,8 +90,9 @@ class NullPredictor : public PredictorInterface {
   explicit NullPredictor(bool ret)
       : return_value_(ret), predict_called_(false),
         predictor_name_("NullPredictor") {}
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const {
+
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const override {
     predict_called_ = true;
     return return_value_;
   }
@@ -102,11 +101,11 @@ class NullPredictor : public PredictorInterface {
     return predict_called_;
   }
 
-  virtual void Clear() {
+  void Clear() {
     predict_called_ = false;
   }
 
-  virtual const string &GetPredictorName() const {
+  const string &GetPredictorName() const override {
     return predictor_name_;
   }
 
@@ -118,8 +117,8 @@ class NullPredictor : public PredictorInterface {
 
 class MockPredictor : public PredictorInterface {
  public:
-  MockPredictor() {}
-  virtual ~MockPredictor() {}
+  MockPredictor() = default;
+  ~MockPredictor() override = default;
   MOCK_CONST_METHOD2(
       PredictForRequest,
       bool(const ConversionRequest &request, Segments *segments));
@@ -130,7 +129,7 @@ class MockPredictor : public PredictorInterface {
 
 class MobilePredictorTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     config_.reset(new config::Config);
     config::ConfigHandler::GetDefaultConfig(config_.get());
 

@@ -36,15 +36,8 @@ namespace mozc {
 namespace oss {
 namespace {
 
-const char *g_mozc_data_address = nullptr;
-size_t g_mozc_data_size = 0;
-
-#ifdef MOZC_USE_SEPARATE_DATASET
-const EmbeddedFile kOssMozcDataSet = {nullptr, 0};
-#else
 // kOssMozcDataSet is embedded.
 #include "data_manager/oss/mozc_imy.h"
-#endif  // MOZC_USE_SEPARATE_DATASET
 
 #ifndef MOZC_DATASET_MAGIC_NUMBER
 #error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"
@@ -56,29 +49,11 @@ const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
 OssDataManager::OssDataManager() {
   const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
-  if (g_mozc_data_address != nullptr) {
-    const StringPiece data(g_mozc_data_address, g_mozc_data_size);
-    CHECK_EQ(Status::OK, InitFromArray(data, magic))
-        << "Image set by SetMozcDataSet() is broken";
-    return;
-  }
-#ifdef MOZC_USE_SEPARATE_DATASET
-  LOG(FATAL)
-      << "When MOZC_USE_SEPARATE_DATASET build flag is defined, "
-      << "OssDataManager::SetMozcDataSet() must be called before "
-      << "instantiation of OssDataManager instances.";
-#endif  // MOZC_USE_SEPARATE_DATASET
   CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
       << "Embedded mozc_imy.h for OSS is broken";
 }
 
 OssDataManager::~OssDataManager() = default;
-
-// Both pointers can be nullptr when the DataManager is reset on testing.
-void OssDataManager::SetMozcDataSet(void *address, size_t size) {
-  g_mozc_data_address = reinterpret_cast<char *>(address);
-  g_mozc_data_size = size;
-}
 
 }  // namespace oss
 }  // namespace mozc

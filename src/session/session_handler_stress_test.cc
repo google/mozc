@@ -36,7 +36,6 @@
 
 #include "base/file_util.h"
 #include "base/port.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
@@ -64,18 +63,7 @@ namespace mozc {
 using session::testing::SessionHandlerTestBase;
 using session::testing::TestSessionClient;
 
-class SessionHandlerStressTest : public SessionHandlerTestBase {
- protected:
-  virtual EngineInterface *CreateEngine() {
-    return EngineFactory::Create();
-  }
-
- private:
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
-};
-
-TEST_F(SessionHandlerStressTest, BasicStressTest) {
+TEST(SessionHandlerStressTest, BasicStressTest) {
   vector<commands::KeyEvent> keys;
   commands::Output output;
   std::unique_ptr<EngineInterface> engine(EngineFactory::Create());

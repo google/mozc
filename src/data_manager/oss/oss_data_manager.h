@@ -36,12 +36,12 @@
 namespace mozc {
 namespace oss {
 
+// This is a simple wrapper of DataManager that uses the embedded OSS data set.
+// Note that linking against this module embeds OSS data set into executable.
 class OssDataManager : public DataManager {
  public:
   OssDataManager();
   ~OssDataManager() override;
-
-  static void SetMozcDataSet(void *address, size_t size);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(OssDataManager);

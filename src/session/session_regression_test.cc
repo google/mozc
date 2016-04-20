@@ -41,7 +41,6 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_factory.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -56,8 +55,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
 DECLARE_bool(use_history_rewriter);
 
 namespace mozc {
@@ -86,9 +83,9 @@ void InitSessionToPrecomposition(session::Session* session) {
 
 }  // namespace
 
-class SessionRegressionTest : public testing::Test {
+class SessionRegressionTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
@@ -103,7 +100,7 @@ class SessionRegressionTest : public testing::Test {
     CHECK(session_.get());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     // just in case, reset the config in test_tmpdir
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -160,8 +157,6 @@ class SessionRegressionTest : public testing::Test {
   std::unique_ptr<session::Session> session_;
   std::unique_ptr<composer::Table> table_;
   config::Config config_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
 };
 
 

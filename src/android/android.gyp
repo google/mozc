@@ -225,28 +225,20 @@
     {
       'target_name': 'assets_mozc_dataset',
       'type': 'none',
-      'conditions': [
-        ['use_separate_dataset==1',
-          {
-            'actions': [
-              {
-                'action_name': 'assets_copy_dataset',
-                'inputs': [
-                    '<(mozc_dataset)',
-                ],
-                'outputs': [
-                  '<(sdk_asset_dir)/mozc.imy',
-                ],
-                'action': [
-                  # Note that multiple output files cannot be handled
-                  # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
-                ],
-              },
-            ],
-          },
+      'actions': [{
+        'action_name': 'assets_copy_dataset',
+        'inputs': [
+          '<(mozc_dataset)',
         ],
-      ],
+        'outputs': [
+          '<(sdk_asset_dir)/mozc.imy',
+        ],
+        'action': [
+          # Note that multiple output files cannot be handled
+          # by copy_file script.
+          '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
+        ],
+      }],
     },
     {
       # CAVEAT:

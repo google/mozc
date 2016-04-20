@@ -50,21 +50,6 @@
       ],
     },
     {
-      'target_name': 'scoped_data_manager_initializer_for_testing',
-      'type': 'static_library',
-      'toolsets': [ 'target' ],
-      'sources': [
-        'scoped_data_manager_initializer_for_testing.cc',
-      ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          'dependencies': [
-            ':scoped_android_data_manager_initializer_for_testing'
-          ],
-        }],
-      ],
-    },
-    {
       'target_name': 'dataset_writer_test',
       'type': 'executable',
       'toolsets': [ 'target' ],
@@ -106,19 +91,5 @@
         'data_manager_base.gyp:serialized_dictionary',
       ],
     },
-  ],
-  'conditions': [
-    ['target_platform=="Android"', {
-      'targets': [
-        {
-          'target_name': 'scoped_android_data_manager_initializer_for_testing',
-          'type': 'static_library',
-          'toolsets': [ 'target' ],
-          'sources': [
-            'android/scoped_android_data_manager_initializer_for_testing.cc',
-          ],
-        },
-      ],
-    }],
   ],
 }

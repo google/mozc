@@ -36,7 +36,6 @@
 #include <string>
 
 #include "base/port.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
@@ -94,9 +93,6 @@ class SessionHandlerTestBase : public ::testing::Test {
   int32 flags_last_command_timeout_backup_;
   int32 flags_last_create_session_timeout_backup_;
   bool flags_restricted_backup_;
-
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerTestBase);

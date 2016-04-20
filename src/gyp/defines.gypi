@@ -39,9 +39,6 @@
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
 
-    # a flag whether the dataset is embedded or separated (for Android).
-    'use_separate_dataset%': '0',
-
     # enable_cloud_handwriting represents if cloud handwriting feature is
     # enabled or not.
     'enable_cloud_handwriting%': '0',
@@ -89,9 +86,6 @@
       }],
       ['channel_dev==1', {
         'defines': ['CHANNEL_DEV'],
-      }],
-      ['use_separate_dataset==1', {
-        'defines': ['MOZC_USE_SEPARATE_DATASET'],
       }],
       ['enable_cloud_handwriting==1', {
         'defines': ['ENABLE_CLOUD_HANDWRITING'],
