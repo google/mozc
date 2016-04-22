@@ -216,6 +216,7 @@
       '<(abs_depth)',
       '<(SHARED_INTERMEDIATE_DIR)',
     ],
+    'mac_framework_headers': [],
     'target_conditions': [
       ['_toolset=="target"', {
         'conditions': [
