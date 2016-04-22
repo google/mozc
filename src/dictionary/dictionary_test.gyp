@@ -40,7 +40,6 @@
         'dictionary_impl_test.cc',
         'dictionary_mock_test.cc',
         'suffix_dictionary_test.cc',
-        'suppression_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
         'user_dictionary_session_handler_test.cc',
         'user_dictionary_session_test.cc',
@@ -62,9 +61,23 @@
         'dictionary.gyp:dictionary_mock',
         'dictionary.gyp:dictionary_test_util',
         'dictionary_base.gyp:pos_matcher',
-        'dictionary_base.gyp:suppression_dictionary',
         'dictionary_base.gyp:user_dictionary',
         'dictionary_base.gyp:user_pos',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'suppression_dictionary_test',
+      'type': 'executable',
+      'sources': [
+        'suppression_dictionary_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        'dictionary_base.gyp:suppression_dictionary',
       ],
       'variables': {
         'test_size': 'small',
@@ -92,6 +105,7 @@
       'type': 'none',
       'dependencies': [
         'dictionary_test',
+        'suppression_dictionary_test',
         'text_dictionary_loader_test',
       ],
     },
