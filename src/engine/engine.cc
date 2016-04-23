@@ -169,11 +169,12 @@ void Engine::Init(
   suppression_dictionary_.reset(new SuppressionDictionary);
   CHECK(suppression_dictionary_.get());
 
-  pos_matcher_.Set(data_manager->GetPOSMatcherData());
+  pos_matcher_.reset(
+      new dictionary::POSMatcher(data_manager->GetPOSMatcherData()));
 
   user_dictionary_.reset(
       new UserDictionary(UserPOS::CreateFromDataManager(*data_manager),
-                         pos_matcher_,
+                         *pos_matcher_,
                          suppression_dictionary_.get()));
   CHECK(user_dictionary_.get());
 
@@ -185,10 +186,10 @@ void Engine::Init(
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   dictionary_.reset(new DictionaryImpl(
       sysdic,  // DictionaryImpl takes the ownership
-      new ValueDictionary(pos_matcher_, &sysdic->value_trie()),
+      new ValueDictionary(*pos_matcher_, &sysdic->value_trie()),
       user_dictionary_.get(),
       suppression_dictionary_.get(),
-      &pos_matcher_));
+      pos_matcher_.get()));
   CHECK(dictionary_.get());
 
   StringPiece suffix_key_array_data, suffix_value_array_data;
@@ -224,7 +225,7 @@ void Engine::Init(
       suppression_dictionary_.get(),
       connector_.get(),
       segmenter_.get(),
-      &pos_matcher_,
+      pos_matcher_.get(),
       pos_group_.get(),
       suggestion_filter_.get()));
   CHECK(immutable_converter_.get());
@@ -249,13 +250,13 @@ void Engine::Init(
                                 suffix_dictionary_.get(),
                                 connector_.get(),
                                 segmenter_.get(),
-                                &pos_matcher_,
+                                pos_matcher_.get(),
                                 suggestion_filter_.get());
     CHECK(dictionary_predictor);
 
     PredictorInterface *user_history_predictor =
         new UserHistoryPredictor(dictionary_.get(),
-                                 &pos_matcher_,
+                                 pos_matcher_.get(),
                                  suppression_dictionary_.get(),
                                  enable_content_word_learning);
     CHECK(user_history_predictor);
@@ -271,7 +272,7 @@ void Engine::Init(
                                dictionary_.get());
   CHECK(rewriter_);
 
-  converter_impl->Init(&pos_matcher_,
+  converter_impl->Init(pos_matcher_.get(),
                        suppression_dictionary_.get(),
                        predictor_,
                        rewriter_,

@@ -36,8 +36,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
 
 namespace mozc {
@@ -50,6 +48,11 @@ class RewriterInterface;
 class Segmenter;
 class SuggestionFilter;
 class UserDataManagerInterface;
+
+namespace dictionary {
+class POSMatcher;
+class UserDictionary;
+}  // namespace dictionary
 
 // Builds and manages a set of modules that are necessary for conversion engine.
 class Engine : public EngineInterface {
@@ -114,7 +117,7 @@ class Engine : public EngineInterface {
             bool enable_content_word_learning);
 
   std::unique_ptr<const DataManagerInterface> data_manager_;
-  dictionary::POSMatcher pos_matcher_;
+  std::unique_ptr<const dictionary::POSMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<const Connector> connector_;
   std::unique_ptr<const Segmenter> segmenter_;
