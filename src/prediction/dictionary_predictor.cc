@@ -152,8 +152,8 @@ struct ZeroQueryListCompare {
 };
 }  // namespace
 
-class DictionaryPredictor::PredictiveLookupCallback :
-      public DictionaryInterface::Callback {
+class DictionaryPredictor::PredictiveLookupCallback
+    : public DictionaryInterface::Callback {
  public:
   PredictiveLookupCallback(DictionaryPredictor::PredictionTypes types,
                            size_t limit, size_t original_key_len,
@@ -166,8 +166,8 @@ class DictionaryPredictor::PredictiveLookupCallback :
         is_zero_query_(is_zero_query),
         results_(results) {}
 
-  virtual ResultType OnKey(StringPiece key) {
-    if (subsequent_chars_ == NULL) {
+  ResultType OnKey(StringPiece key) override {
+    if (subsequent_chars_ == nullptr) {
       return TRAVERSE_CONTINUE;
     }
     // If |subsequent_chars_| was provided, check if the substring of |key|
@@ -183,35 +183,30 @@ class DictionaryPredictor::PredictiveLookupCallback :
     // TODO(noriyukit): vector<string> would be better than set<string>.  To
     // this end, we need to fix Comopser as well.
     const StringPiece rest(key, original_key_len_);
-    for (set<string>::const_iterator iter = subsequent_chars_->begin();
-         iter != subsequent_chars_->end(); ++iter) {
-      if (Util::StartsWith(rest, *iter)) {
+    for (const string &chr : *subsequent_chars_) {
+      if (Util::StartsWith(rest, chr)) {
         return TRAVERSE_CONTINUE;
       }
     }
     return TRAVERSE_NEXT_KEY;
   }
 
-  virtual ResultType OnActualKey(StringPiece key, StringPiece actual_key,
-                                 bool is_expanded) {
+  ResultType OnActualKey(StringPiece key, StringPiece actual_key,
+                         bool is_expanded) override {
     penalty_ = is_expanded ? kKanaModifierInsensitivePenalty : 0;
     return TRAVERSE_CONTINUE;
   }
 
-  virtual ResultType OnToken(StringPiece,  // key
-                             StringPiece,  // actual_key
-                             const Token &token) {
+  ResultType OnToken(StringPiece,  // key
+                     StringPiece,  // actual_key
+                     const Token &token) override {
     results_->push_back(Result());
     results_->back().InitializeByTokenAndTypes(token, types_);
     results_->back().wcost += penalty_;
     if (is_zero_query_ && (types_ & SUFFIX)) {
       results_->back().SetSourceInfoForZeroQuery(ZERO_QUERY_SUFFIX);
     }
-    if (results_->size() < limit_) {
-      return TRAVERSE_CONTINUE;
-    } else {
-      return TRAVERSE_DONE;
-    }
+    return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
 
  protected:
@@ -1570,7 +1565,7 @@ void DictionaryPredictor::GetPredictiveResults(
     input_key.append(query_key);
     const bool is_zero_query = query_key.empty();
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      NULL, is_zero_query, results);
+                                      nullptr, is_zero_query, results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1583,13 +1578,24 @@ void DictionaryPredictor::GetPredictiveResults(
   string base;
   set<string> expanded;
   request.composer().GetQueriesForPrediction(&base, &expanded);
-  string input_key = history_key;
-  input_key.append(base);
-  const bool is_zero_query = base.empty();
-  PredictiveLookupCallback callback(
-      types, lookup_limit, input_key.size(),
-      expanded.empty() ? NULL : &expanded, is_zero_query, results);
-  dictionary.LookupPredictive(input_key, request, &callback);
+  const bool is_zero_query = base.empty() && expanded.empty();
+  string input_key;
+  if (expanded.empty()) {
+    input_key.assign(history_key).append(base);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      nullptr, is_zero_query, results);
+    dictionary.LookupPredictive(input_key, request, &callback);
+    return;
+  }
+  // |expanded| is a very small set, so calling LookupPredictive multiple times
+  // is not so expensive.  Also, the number of lookup results is limited by
+  // |lookup_limit|.
+  for (const string &expanded_char : expanded) {
+    input_key.assign(history_key).append(base).append(expanded_char);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      nullptr, is_zero_query, results);
+    dictionary.LookupPredictive(input_key, request, &callback);
+  }
 }
 
 void DictionaryPredictor::GetPredictiveResultsForBigram(

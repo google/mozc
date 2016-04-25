@@ -633,7 +633,9 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment->set_key(query);
 
       EXPECT_CALL(*check_dictionary,
-                  LookupPredictive(_, ::testing::Ref(*convreq_), _));
+                  LookupPredictive(::testing::Ne(""),
+                                   ::testing::Ref(*convreq_), _))
+          .Times(::testing::AtLeast(1));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateUnigramPrediction(
@@ -732,7 +734,9 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment->set_key(query);
 
       EXPECT_CALL(*check_dictionary,
-                  LookupPredictive(_, ::testing::Ref(*convreq_), _));
+                  LookupPredictive(::testing::Ne(""),
+                                   ::testing::Ref(*convreq_), _))
+          .Times(::testing::AtLeast(1));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateSuffixPrediction(
