@@ -42,6 +42,7 @@
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/stl_util.h"
+#include "base/string_piece.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -58,15 +59,27 @@ namespace dictionary {
 namespace {
 
 struct OrderByKey {
-  bool operator()(const UserPOS::Token *lhs,
-                  const UserPOS::Token *rhs) const {
-    return lhs->key < rhs->key;
+  bool operator()(const UserPOS::Token *token, StringPiece key) const {
+    return token->key < key;
+  }
+
+  bool operator()(StringPiece key, const UserPOS::Token *token) const {
+    return key < token->key;
+  }
+};
+
+struct OrderByKeyPrefix {
+  bool operator()(const UserPOS::Token *token, StringPiece prefix) const {
+    return StringPiece(token->key, 0, prefix.size()) < prefix;
+  }
+
+  bool operator()(StringPiece prefix, const UserPOS::Token *token) const {
+    return prefix < StringPiece(token->key, 0, prefix.size());
   }
 };
 
 struct OrderByKeyThenById {
-  bool operator()(const UserPOS::Token *lhs,
-                  const UserPOS::Token *rhs) const {
+  bool operator()(const UserPOS::Token *lhs, const UserPOS::Token *rhs) const {
     const int comp = lhs->key.compare(rhs->key);
     return comp == 0 ? (lhs->id < rhs->id) : (comp < 0);
   }
@@ -110,10 +123,11 @@ void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
 
 class UserDictionary::TokensIndex : public vector<UserPOS::Token *> {
  public:
-  explicit TokensIndex(const UserPOSInterface *user_pos,
-                       SuppressionDictionary *suppression_dictionary)
+  TokensIndex(const UserPOSInterface *user_pos,
+              SuppressionDictionary *suppression_dictionary)
       : user_pos_(user_pos),
         suppression_dictionary_(suppression_dictionary) {}
+
   ~TokensIndex() {
     Clear();
   }
@@ -212,7 +226,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
     DCHECK(dic_);
   }
 
-  virtual ~UserDictionaryReloader() {
+  ~UserDictionaryReloader() override {
     Join();
   }
 
@@ -249,7 +263,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
     Start("UserDictionaryReloader");
   }
 
-  virtual void Run() {
+  void Run() override {
     std::unique_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
         Singleton<UserDictionaryFileManager>::get()->GetFileName()));
 
@@ -342,17 +356,12 @@ void UserDictionary::LookupPredictive(
   }
 
   // Find the starting point of iteration over dictionary contents.
-  UserPOS::Token key_token;
-  key.CopyToString(&key_token.key);
-  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
-
   Token token;
-  for (; it != tokens_->end(); ++it) {
-    if (!Util::StartsWith((*it)->key, key)) {
-      break;
-    }
-    switch (callback->OnKey((*it)->key)) {
+  for (auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
+                                     OrderByKeyPrefix());
+       range.first != range.second; ++range.first) {
+    const UserPOS::Token &user_pos_token = **range.first;
+    switch (callback->OnKey(user_pos_token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -361,12 +370,12 @@ void UserDictionary::LookupPredictive(
       default:
         break;
     }
-    FillTokenFromUserPOSToken(**it, &token);
+    FillTokenFromUserPOSToken(user_pos_token, &token);
     // Override POS IDs for suggest only words.
-    if (pos_matcher_.IsSuggestOnlyWord((*it)->id)) {
+    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       token.lid = token.rid = pos_matcher_.GetUnknownId();
     }
-    if (callback->OnToken((*it)->key, (*it)->key, token) ==
+    if (callback->OnToken(user_pos_token.key, user_pos_token.key, token) ==
         Callback::TRAVERSE_DONE) {
       return;
     }
@@ -392,23 +401,22 @@ void UserDictionary::LookupPrefix(
   }
 
   // Find the starting point for iteration over dictionary contents.
-  UserPOS::Token key_token;
-  key_token.key.assign(key.data(), Util::OneCharLen(key.data()));
-  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
-
+  const StringPiece first_char(key, 0, Util::OneCharLen(key.data()));
   Token token;
-  for (; it != tokens_->end(); ++it) {
-    if ((*it)->key > key) {
+  for (auto it = std::lower_bound(tokens_->begin(), tokens_->end(), first_char,
+                                  OrderByKey());
+       it != tokens_->end(); ++it) {
+    const UserPOS::Token &user_pos_token = **it;
+    if (user_pos_token.key > key) {
       break;
     }
-    if (pos_matcher_.IsSuggestOnlyWord((*it)->id)) {
+    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
-    if (!Util::StartsWith(key, (*it)->key)) {
+    if (!Util::StartsWith(key, user_pos_token.key)) {
       continue;
     }
-    switch (callback->OnKey((*it)->key)) {
+    switch (callback->OnKey(user_pos_token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -419,8 +427,8 @@ void UserDictionary::LookupPrefix(
       default:
         break;
     }
-    FillTokenFromUserPOSToken(**it, &token);
-    switch (callback->OnToken((*it)->key, (*it)->key, token)) {
+    FillTokenFromUserPOSToken(user_pos_token, &token);
+    switch (callback->OnToken(user_pos_token.key, user_pos_token.key, token)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_CULL:
@@ -441,11 +449,8 @@ void UserDictionary::LookupExact(
       conversion_request.config().incognito_mode()) {
     return;
   }
-  UserPOS::Token key_token;
-  key.CopyToString(&key_token.key);
-  typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range = std::equal_range(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
+                                OrderByKey());
   if (range.first == range.second) {
     return;
   }
@@ -484,17 +489,13 @@ bool UserDictionary::LookupComment(StringPiece key, StringPiece value,
     return false;
   }
 
-  UserPOS::Token key_token;
-  key.CopyToString(&key_token.key);
-  typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range = std::equal_range(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
-
   // Set the comment that was found first.
-  for (; range.first != range.second; ++range.first) {
-    const UserPOS::Token *token = *range.first;
-    if (token->value == value && !token->comment.empty()) {
-      comment->assign(token->comment);
+  for (auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
+                                     OrderByKey());
+       range.first != range.second; ++range.first) {
+    const UserPOS::Token &token = **range.first;
+    if (token.value == value && !token.comment.empty()) {
+      comment->assign(token.comment);
       return true;
     }
   }
