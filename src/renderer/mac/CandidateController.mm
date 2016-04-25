@@ -47,8 +47,8 @@ namespace renderer {
 namespace mac{
 
 namespace {
-const int kHideWindowDelay = 500;   // msec
-const int kMarginAbovePreedit = 10; // pixel
+const int kHideWindowDelay = 500;  // msec
+const int kWindowMargin = 10;  // pixel
 
 // In Cocoa's coordinate system the origin point is left-bottom and the Y-axis
 // points up. But in Mozc's coordinate system the Y-axis points down. So we use
@@ -221,11 +221,20 @@ void CandidateController::AlignWindows() {
       mozc::Point(command_.preedit_rectangle().left(),
                   command_.preedit_rectangle().top() - GetBaseScreenHeight()),
       preedit_size);
-  // Currently preedit_rect doesn't care about the text height -- it
-  // just means the line under the preedit.  So here we fix the height.
-  // TODO(mukai): replace this hack by calculating actual text height.
-  preedit_rect.origin.y -= kMarginAbovePreedit;
-  preedit_rect.size.height += kMarginAbovePreedit;
+
+  // This is a hacky way to check vertical writing.
+  // TODO(komatsu): We should use the return value of attributesForCharacterIndex
+  // in GoogleJapaneseInputController.mm as a proper way.
+  const bool is_vertical = (preedit_size.height < preedit_size.width);
+
+  // Expand the rect size to make a margin to the candidate window.
+  if (is_vertical) {
+    // Adjust the margin to the candidate window in the right side.
+    preedit_rect.DeflateRect(0, 0, -kWindowMargin, 0);  // (dx, dy, dw, dh)
+  } else {
+    // Adjust the margin to the candidate window in the upper side.
+    preedit_rect.DeflateRect(0, -kWindowMargin, 0, 0);  // (dx, dy, dw, dh)
+  }
 
   // Find out the nearest display.
   const mozc::Rect display_rect = GetNearestDisplayRect(preedit_rect);
@@ -238,10 +247,12 @@ void CandidateController::AlignWindows() {
   const mozc::Point candidate_zero_point(
       candidate_layout->GetColumnRect(COLUMN_CANDIDATE).Left(), 0);
 
+  const mozc::Point target_point(preedit_rect.Left(), preedit_rect.Bottom());
   const mozc::Rect candidate_rect =
-      WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
-          preedit_rect, candidate_window_->GetWindowSize(),
-          candidate_zero_point, display_rect);
+      WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
+          target_point, preedit_rect,
+          candidate_window_->GetWindowSize(), candidate_zero_point,
+          display_rect, is_vertical);
   candidate_window_->MoveWindow(OriginPointInCocoaCoord(candidate_rect));
 
   // Align infolist window
