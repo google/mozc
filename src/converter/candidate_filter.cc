@@ -139,6 +139,16 @@ inline bool IsConnectedWeakCompound(const vector<const Node *> &nodes,
   return false;
 }
 
+bool ContainsIsolatedWord(const dictionary::POSMatcher &pos_matcher,
+                          const vector<const Node *> &nodes) {
+  for (const Node *node : nodes) {
+    if (pos_matcher.IsIsolatedWord(node->lid)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 CandidateFilter::CandidateFilter(
@@ -149,7 +159,7 @@ CandidateFilter::CandidateFilter(
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
-      top_candidate_(NULL),
+      top_candidate_(nullptr),
       apply_suggestion_filter_for_exact_match_(
           apply_suggestion_filter_for_exact_match) {
   CHECK(suppression_dictionary_);
@@ -161,7 +171,7 @@ CandidateFilter::~CandidateFilter() {}
 
 void CandidateFilter::Reset() {
   seen_.clear();
-  top_candidate_ = NULL;
+  top_candidate_ = nullptr;
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
@@ -227,19 +237,22 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   const size_t candidate_size = seen_.size();
-  if (top_candidate_ == NULL || candidate_size == 0) {
+  if (top_candidate_ == nullptr || candidate_size == 0) {
     top_candidate_ = candidate;
   }
 
   CHECK(top_candidate_);
 
-  // "短縮よみ" must only have 1 node.
+  // "短縮よみ" must have only 1 node.
+  if (nodes.size() > 1 && ContainsIsolatedWord(*pos_matcher_, nodes)) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+  // This case tests the case where the isolated word is in content word.
   if (pos_matcher_->IsIsolatedWord(nodes[0]->lid) &&
-      (nodes.size() > 1 ||
-       nodes[0]->prev == NULL ||
+      (nodes[0]->prev == nullptr ||
        nodes[0]->prev->node_type == Node::NOR_NODE ||
        nodes[0]->prev->node_type == Node::CON_NODE ||
-       nodes[0]->next == NULL ||
+       nodes[0]->next == nullptr ||
        nodes[0]->next->node_type == Node::NOR_NODE ||
        nodes[0]->next->node_type == Node::CON_NODE)) {
     return CandidateFilter::BAD_CANDIDATE;

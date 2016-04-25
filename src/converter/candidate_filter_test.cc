@@ -342,6 +342,42 @@ TEST_F(CandidateFilterTest, IsolatedWord) {
   }
 }
 
+TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+
+  Segment::Candidate *c = NewCandidate();
+  c->key = "abcisolatedxyz";
+  c->value = "abcisolatedxyz";
+
+  vector<Node *> nodes = {NewNode(), NewNode(), NewNode()};
+
+  nodes[0]->prev = nullptr;
+  nodes[0]->next = nodes[1];
+  nodes[0]->lid = pos_matcher().GetUnknownId();
+  nodes[0]->rid = pos_matcher().GetUnknownId();
+  nodes[0]->key = "abc";
+  nodes[0]->value = "abc";
+
+  nodes[1]->prev = nodes[0];
+  nodes[1]->next = nodes[2];
+  nodes[1]->lid = pos_matcher().GetIsolatedWordId();
+  nodes[1]->rid = pos_matcher().GetIsolatedWordId();
+  nodes[1]->key = "isolated";
+  nodes[1]->value = "isolated";
+
+  nodes[2]->prev = nodes[1];
+  nodes[2]->next = nullptr;
+  nodes[2]->lid = pos_matcher().GetUnknownId();
+  nodes[2]->rid = pos_matcher().GetUnknownId();
+  nodes[2]->key = "xyz";
+  nodes[2]->value = "xyz";
+
+  const vector<const Node *> const_nodes(nodes.begin(), nodes.end());
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter->FilterCandidate("abcisolatedxyz", c, const_nodes,
+                                    Segments::CONVERSION));
+}
+
 TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> n;
