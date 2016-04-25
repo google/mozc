@@ -38,6 +38,7 @@
 
 #include "base/port.h"
 #include "composer/table.h"
+#include "engine/engine_interface.h"
 #include "session/common.h"
 #include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
@@ -51,7 +52,7 @@
 
 
 namespace mozc {
-class EngineInterface;
+
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 class SessionWatchDog;
 #else  // MOZC_DISABLE_SESSION_WATCHDOG
@@ -78,30 +79,31 @@ class UserDictionarySessionHandler;
 
 class SessionHandler : public SessionHandlerInterface {
  public:
-  // This class doesn't take an ownership of |engine|.
-  explicit SessionHandler(EngineInterface *engine);
-  virtual ~SessionHandler();
+  explicit SessionHandler(std::unique_ptr<EngineInterface> engine);
+  ~SessionHandler() override;
 
   // Returns true if SessionHandle is available.
-  virtual bool IsAvailable() const;
+  bool IsAvailable() const override;
 
-  virtual bool EvalCommand(commands::Command *command);
+  bool EvalCommand(commands::Command *command) override;
 
   // Starts watch dog timer to cleanup sessions.
-  virtual bool StartWatchDog();
+  bool StartWatchDog() override;
 
   // NewSession returns new Sessoin.
   // Client needs to delete it properly
   session::SessionInterface *NewSession();
 
-  virtual void AddObserver(session::SessionObserverInterface *observer);
+  void AddObserver(session::SessionObserverInterface *observer) override;
+
+  const EngineInterface &engine() const { return *engine_; }
 
  private:
   FRIEND_TEST(SessionHandlerTest, StorageTest);
 
-  typedef mozc::storage::LRUCache<SessionID, session::SessionInterface *>
-      SessionMap;
-  typedef SessionMap::Element SessionElement;
+  using SessionMap =
+      mozc::storage::LRUCache<SessionID, session::SessionInterface *>;
+  using SessionElement = SessionMap::Element;
 
   // Sets config to all the modules managed by this handler.  This does not
   // affect the stored config in the local storage.
@@ -149,7 +151,7 @@ class SessionHandler : public SessionHandlerInterface {
   uint64 last_cleanup_time_;
   uint64 last_create_session_time_;
 
-  EngineInterface *engine_;
+  std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<session::SessionObserverHandler> observer_handler_;
   std::unique_ptr<Stopwatch> stopwatch_;
   std::unique_ptr<user_dictionary::UserDictionarySessionHandler>
@@ -162,4 +164,5 @@ class SessionHandler : public SessionHandlerInterface {
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_SESSION_HANDLER_H_

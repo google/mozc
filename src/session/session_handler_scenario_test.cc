@@ -90,8 +90,10 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
     // by SessionHandlerTestBase's SetUp and TearDown methods.
     SessionHandlerTestBase::SetUp();
 
-    engine_.reset(MockDataEngineFactory::Create());
-    client_.reset(new TestSessionClient(engine_.get()));
+    std::unique_ptr<mozc::Engine> engine(MockDataEngineFactory::Create());
+    engine_ = engine.get();
+
+    client_.reset(new TestSessionClient(std::move(engine)));
     config_.reset(new Config);
     last_output_.reset(new Output);
     request_.reset(new Request);
@@ -104,7 +106,6 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
     last_output_.reset();
     config_.reset();
     client_.reset();
-    engine_.reset();
     SessionHandlerTestBase::TearDown();
   }
 
@@ -132,7 +133,7 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  std::unique_ptr<EngineInterface> engine_;
+  EngineInterface *engine_ = nullptr;
   std::unique_ptr<TestSessionClient> client_;
   std::unique_ptr<Config> config_;
   std::unique_ptr<Output> last_output_;

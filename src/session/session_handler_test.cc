@@ -66,16 +66,20 @@ using mozc::session::testing::SessionHandlerTestBase;
 
 class SessionHandlerTest : public SessionHandlerTestBase {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SessionHandlerTestBase::SetUp();
-    Clock::SetClockForUnitTest(NULL);
-    GenericStorageManagerFactory::SetGenericStorageManager(NULL);
+    Clock::SetClockForUnitTest(nullptr);
+    GenericStorageManagerFactory::SetGenericStorageManager(nullptr);
   }
 
-  virtual void TearDown() {
-    GenericStorageManagerFactory::SetGenericStorageManager(NULL);
-    Clock::SetClockForUnitTest(NULL);
+  void TearDown() override {
+    GenericStorageManagerFactory::SetGenericStorageManager(nullptr);
+    Clock::SetClockForUnitTest(nullptr);
     SessionHandlerTestBase::TearDown();
+  }
+
+  static std::unique_ptr<Engine> CreateMockDataEngine() {
+    return std::unique_ptr<Engine>(MockDataEngineFactory::Create());
   }
 };
 
@@ -89,8 +93,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   const size_t session_size = 3;
   FLAGS_max_session_size = static_cast<int32>(session_size);
   {
-    std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-    SessionHandler handler(engine.get());
+    SessionHandler handler(CreateMockDataEngine());
 
     // Create session_size + 1 sessions
     vector<uint64> ids;
@@ -114,8 +117,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 
   FLAGS_max_session_size = static_cast<int32>(session_size);
   {
-    std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-    SessionHandler handler(engine.get());
+    SessionHandler handler(CreateMockDataEngine());
 
     // Create session_size sessions
     vector<uint64> ids;
@@ -150,8 +152,7 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
 
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
@@ -169,8 +170,8 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
+
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
@@ -186,8 +187,8 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
+
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
@@ -200,8 +201,8 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
 }
 
 TEST_F(SessionHandlerTest, ShutdownTest) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
+
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
@@ -229,8 +230,8 @@ TEST_F(SessionHandlerTest, ShutdownTest) {
 }
 
 TEST_F(SessionHandlerTest, ClearHistoryTest) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
+
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
@@ -269,8 +270,8 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
 }
 
 TEST_F(SessionHandlerTest, ElapsedTimeTest) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
+
   uint64 id = 0;
 
   ClockMock clock(1000, 0);
@@ -285,8 +286,8 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   config.set_incognito_mode(false);
   config::ConfigHandler::SetConfig(config);
 
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
+
   uint64 session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
@@ -326,16 +327,16 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
     commands::Input::CLEANUP,
   };
   for (size_t i = 0; i < arraysize(command_types); ++i) {
-    MockConverterEngine engine;
+    std::unique_ptr<MockConverterEngine> engine(new MockConverterEngine());
 
     // Set the mock user data manager to the converter mock created above. This
     // user_data_manager_mock is owned by the converter mock inside the engine
     // instance.
     UserDataManagerMock *user_data_mgr_mock = new UserDataManagerMock();
-    engine.SetUserDataManager(user_data_mgr_mock);
+    engine->SetUserDataManager(user_data_mgr_mock);
 
     // Set up a session handler and a input command.
-    SessionHandler handler(&engine);
+    SessionHandler handler(std::move(engine));
     commands::Command command;
     command.mutable_input()->set_id(0);
     command.mutable_input()->set_type(command_types[i]);
@@ -409,8 +410,7 @@ TEST_F(SessionHandlerTest, StorageTest) {
   // Inject mock objects.
   MockStorageManager storageManager;
   GenericStorageManagerFactory::SetGenericStorageManager(&storageManager);
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
   {
     // InsertToStorage
     MockStorage mock_storage;
@@ -463,8 +463,7 @@ TEST_F(SessionHandlerTest, StorageTest) {
 }
 
 TEST_F(SessionHandlerTest, EmojiUsageStatsTest) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  SessionHandler handler(engine.get());
+  SessionHandler handler(CreateMockDataEngine());
 
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::INSERT_TO_STORAGE);

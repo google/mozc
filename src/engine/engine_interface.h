@@ -31,6 +31,7 @@
 #define MOZC_ENGINE_ENGINE_INTERFACE_H_
 
 #include "base/port.h"
+#include "base/string_piece.h"
 #include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
@@ -64,6 +65,9 @@ class EngineInterface {
 
   // Gets a user data manager.
   virtual UserDataManagerInterface *GetUserDataManager() = 0;
+
+  // Gets the version of underlying data set.
+  virtual StringPiece GetDataVersion() const = 0;
 
  protected:
   EngineInterface() {}

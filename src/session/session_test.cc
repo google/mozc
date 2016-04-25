@@ -423,27 +423,29 @@ class ConverterMockForReset : public ConverterMock {
 class MockConverterEngineForReset : public EngineInterface {
  public:
   MockConverterEngineForReset() : converter_mock_(new ConverterMockForReset) {}
-  virtual ~MockConverterEngineForReset() {}
+  ~MockConverterEngineForReset() override = default;
 
-  virtual ConverterInterface *GetConverter() const {
+  ConverterInterface *GetConverter() const override {
     return converter_mock_.get();
   }
 
-  virtual PredictorInterface *GetPredictor() const {
-    return NULL;
+  PredictorInterface *GetPredictor() const override {
+    return nullptr;
   }
 
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
-    return NULL;
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
+    return nullptr;
   }
 
-  virtual bool Reload() {
+  bool Reload() override {
     return true;
   }
 
-  virtual UserDataManagerInterface *GetUserDataManager() {
-    return NULL;
+  UserDataManagerInterface *GetUserDataManager() override {
+    return nullptr;
   }
+
+  StringPiece GetDataVersion() const override { return StringPiece(); }
 
   const ConverterMockForReset &converter_mock() const {
     return *converter_mock_;
@@ -481,27 +483,29 @@ class MockConverterEngineForRevert : public EngineInterface {
  public:
   MockConverterEngineForRevert()
       : converter_mock_(new ConverterMockForRevert) {}
-  virtual ~MockConverterEngineForRevert() {}
+  ~MockConverterEngineForRevert() override = default;
 
-  virtual ConverterInterface *GetConverter() const {
+  ConverterInterface *GetConverter() const override {
     return converter_mock_.get();
   }
 
-  virtual PredictorInterface *GetPredictor() const {
-    return NULL;
+  PredictorInterface *GetPredictor() const override {
+    return nullptr;
   }
 
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
-    return NULL;
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
+    return nullptr;
   }
 
-  virtual bool Reload() {
+  bool Reload() override {
     return true;
   }
 
-  virtual UserDataManagerInterface *GetUserDataManager() {
-    return NULL;
+  UserDataManagerInterface *GetUserDataManager() override {
+    return nullptr;
   }
+
+  StringPiece GetDataVersion() const override { return StringPiece(); }
 
   const ConverterMockForRevert &converter_mock() const {
     return *converter_mock_;

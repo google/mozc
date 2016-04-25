@@ -36,6 +36,7 @@
 #include <string>
 
 #include "base/port.h"
+#include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
@@ -43,7 +44,6 @@
 
 namespace mozc {
 
-class EngineInterface;
 class SessionHandlerInterface;
 
 namespace session {
@@ -74,12 +74,12 @@ bool IsGoodSession(SessionHandlerInterface *handler, uint64 id);
 // Base implementation of test cases.
 class SessionHandlerTestBase : public ::testing::Test {
  protected:
-  virtual void SetUp();
-  virtual void TearDown();
+  void SetUp() override;
+  void TearDown() override;
 
   // This class should not be instantiated directly.
   SessionHandlerTestBase();
-  virtual ~SessionHandlerTestBase();
+  ~SessionHandlerTestBase() override;
 
   void ClearState();
 
@@ -101,8 +101,7 @@ class SessionHandlerTestBase : public ::testing::Test {
 // Session utility for stress tests.
 class TestSessionClient {
  public:
-  // This class doesn't take an ownership of *engine.
-  explicit TestSessionClient(EngineInterface *engine);
+  explicit TestSessionClient(std::unique_ptr<EngineInterface> engine);
   ~TestSessionClient();
 
   bool CreateSession();

@@ -129,8 +129,8 @@ void CloseSocket(int client_socket) {
 class RPCServer {
  public:
   RPCServer() : server_socket_(kInvalidSocket),
-                engine_(EngineFactory::Create()),
-                handler_(new SessionHandler(engine_.get())) {
+                handler_(new SessionHandler(
+                    std::unique_ptr<Engine>(EngineFactory::Create()))) {
     struct sockaddr_in sin;
 
     server_socket_ = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -235,7 +235,6 @@ class RPCServer {
 
  private:
   int server_socket_;
-  std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<SessionHandler> handler_;
 };
 

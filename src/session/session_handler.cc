@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/clock.h"
@@ -140,13 +141,13 @@ bool IsCarrierEmoji(const string &utf8_str) {
 }
 }  // namespace
 
-SessionHandler::SessionHandler(EngineInterface *engine)
+SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
     : is_available_(false),
       max_session_size_(0),
       last_session_empty_time_(Clock::GetTime()),
       last_cleanup_time_(0),
       last_create_session_time_(0),
-      engine_(engine),
+      engine_(std::move(engine)),
       observer_handler_(new session::SessionObserverHandler()),
       stopwatch_(new Stopwatch),
       user_dictionary_session_handler_(
@@ -182,7 +183,7 @@ SessionHandler::SessionHandler(EngineInterface *engine)
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
   session_map_.reset(new SessionMap(max_session_size_));
 
-  if (engine_ == NULL) {
+  if (!engine_) {
     return;
   }
 
@@ -193,9 +194,9 @@ SessionHandler::SessionHandler(EngineInterface *engine)
 SessionHandler::~SessionHandler() {
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
-       element != NULL; element = element->next) {
+       element != nullptr; element = element->next) {
     delete element->value;
-    element->value = NULL;
+    element->value = nullptr;
   }
   session_map_->Clear();
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
@@ -547,7 +548,8 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
 }
 
 session::SessionInterface *SessionHandler::NewSession() {
-  return new session::Session(engine_);
+  // Session doesn't take the ownership of engine.
+  return new session::Session(engine_.get());
 }
 
 void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {

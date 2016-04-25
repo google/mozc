@@ -31,6 +31,7 @@
 
 #include "session/session_server.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -65,9 +66,9 @@ namespace mozc {
 
 SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
-      engine_(EngineFactory::Create()),
       usage_observer_(new session::SessionUsageObserver()),
-      session_handler_(new SessionHandler(engine_.get())) {
+      session_handler_(new SessionHandler(
+      std::unique_ptr<Engine>(EngineFactory::Create()))) {
   using usage_stats::UsageStatsUploader;
   // start session watch dog timer
   session_handler_->StartWatchDog();
@@ -82,7 +83,7 @@ SessionServer::SessionServer()
       UsageStatsUploader::kDefaultSchedulerDelay,
       UsageStatsUploader::kDefaultSchedulerRandomDelay,
       &UsageStatsUploader::Send,
-      NULL));
+      nullptr));
 
   // Send a notification event to the UI.
   NamedEventNotifier notifier(kEventName);
@@ -91,10 +92,10 @@ SessionServer::SessionServer()
   }
 }
 
-SessionServer::~SessionServer() {}
+SessionServer::~SessionServer() = default;
 
 bool SessionServer::Connected() const {
-  return (session_handler_.get() != NULL &&
+  return (session_handler_ &&
           session_handler_->IsAvailable() &&
           IPCServer::Connected());
 }
@@ -103,7 +104,7 @@ bool SessionServer::Process(const char *request,
                             size_t request_size,
                             char *response,
                             size_t *response_size) {
-  if (session_handler_.get() == NULL) {
+  if (!session_handler_) {
     LOG(WARNING) << "handler is not available";
     return false;   // shutdown the server if handler doesn't exist
   }

@@ -32,6 +32,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -58,8 +59,8 @@
 DECLARE_bool(use_history_rewriter);
 
 namespace mozc {
-
 namespace {
+
 string GetComposition(const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return "";
@@ -93,9 +94,9 @@ class SessionRegressionTest : public ::testing::Test {
 
     // Note: engine must be created after setting all the flags, as it
     // internally depends on global flags, e.g., for creation of rewriters.
-    engine_.reset(EngineFactory::Create());
+    std::unique_ptr<Engine> engine(EngineFactory::Create());
 
-    handler_.reset(new SessionHandler(engine_.get()));
+    handler_.reset(new SessionHandler(std::move(engine)));
     ResetSession();
     CHECK(session_.get());
   }
@@ -152,7 +153,6 @@ class SessionRegressionTest : public ::testing::Test {
   }
 
   bool orig_use_history_rewriter_;
-  std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<SessionHandler> handler_;
   std::unique_ptr<session::Session> session_;
   std::unique_ptr<composer::Table> table_;

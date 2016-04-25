@@ -207,8 +207,8 @@ class MozcSessionHandlerThread : public Thread {
         << "Unexpected failure: Data manager shoulnd't be nullptr";
 
     user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(*data_manager));
-    engine_ = mozc::Engine::CreateDesktopEngine(std::move(data_manager));
-    handler_.reset(new SessionHandler(engine_.get()));
+    handler_.reset(new SessionHandler(
+        mozc::Engine::CreateDesktopEngine(std::move(data_manager))));
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
     usage_observer_.reset(new SessionUsageObserver());
@@ -236,7 +236,8 @@ class MozcSessionHandlerThread : public Thread {
     message["event"]["type"] = "InitializeDone";
     JsonUtil::ProtobufMessageToJsonValue(config, &message["event"]["config"]);
     message["event"]["version"] = Version::GetMozcVersion();
-    message["event"]["data_version"] = engine_->GetDataVersion().as_string();
+    message["event"]["data_version"] =
+        handler_->engine().GetDataVersion().as_string();
 
     pp::Module::Get()->core()->CallOnMainThread(
         0,
@@ -274,7 +275,7 @@ class MozcSessionHandlerThread : public Thread {
         } else if (event_type == "GetVersionInfo") {
           response["event"]["version"] = Version::GetMozcVersion();
           response["event"]["data_version"] =
-              engine_->GetDataVersion().as_string();
+              handler_->engine().GetDataVersion().as_string();
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
           response["event"]["big_dictionary_state"] = GetBigDictionaryState();
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
@@ -428,8 +429,7 @@ class MozcSessionHandlerThread : public Thread {
   pp::Instance *instance_;
   BlockingQueue<Json::Value *> *message_queue_;
   pp::CompletionCallbackFactory<MozcSessionHandlerThread> factory_;
-  std::unique_ptr<Engine> engine_;
-  std::unique_ptr<SessionHandlerInterface> handler_;
+  std::unique_ptr<SessionHandler> handler_;
   std::unique_ptr<const UserPOSInterface> user_pos_;
   std::unique_ptr<uint64> data_manager_model_data_buffer_;
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD

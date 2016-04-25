@@ -103,7 +103,7 @@ class Engine : public EngineInterface {
     return user_data_manager_.get();
   }
 
-  StringPiece GetDataVersion() const {
+  StringPiece GetDataVersion() const override {
     return data_manager_->GetDataVersion();
   }
 

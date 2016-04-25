@@ -58,18 +58,16 @@ class SessionUsageObserver;
 class SessionServer: public IPCServer {
  public:
   SessionServer();
-  virtual ~SessionServer();
+  ~SessionServer() override;
 
-  virtual bool Connected() const;
+  bool Connected() const;
 
-  virtual bool Process(const char *request,
-                       size_t request_size,
-                       char *response,
-                       size_t *response_size);
+  bool Process(const char *request,
+               size_t request_size,
+               char *response,
+               size_t *response_size) override;
 
  private:
-  // Must be defined earlier than session_handler_, which depends on this.
-  std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<session::SessionUsageObserver> usage_observer_;
   std::unique_ptr<SessionHandlerInterface> session_handler_;
 

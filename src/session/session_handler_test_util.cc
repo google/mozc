@@ -29,6 +29,8 @@
 
 #include "session/session_handler_test_util.h"
 
+#include <utility>
+
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -154,10 +156,10 @@ void SessionHandlerTestBase::ClearState() {
   FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
 }
 
-TestSessionClient::TestSessionClient(EngineInterface *engine)
+TestSessionClient::TestSessionClient(std::unique_ptr<EngineInterface> engine)
   : id_(0),
     usage_observer_(new SessionUsageObserver),
-    handler_(new SessionHandler(engine)) {
+    handler_(new SessionHandler(std::move(engine))) {
   handler_->AddObserver(usage_observer_.get());
 }
 

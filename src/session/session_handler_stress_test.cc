@@ -59,6 +59,7 @@ DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace {
 
 using session::testing::SessionHandlerTestBase;
 using session::testing::TestSessionClient;
@@ -66,8 +67,8 @@ using session::testing::TestSessionClient;
 TEST(SessionHandlerStressTest, BasicStressTest) {
   vector<commands::KeyEvent> keys;
   commands::Output output;
-  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
-  TestSessionClient client(engine.get());
+  std::unique_ptr<Engine> engine(EngineFactory::Create());
+  TestSessionClient client(std::move(engine));
   size_t keyevents_size = 0;
   const size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
@@ -87,4 +88,5 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
   EXPECT_TRUE(client.DeleteSession());
 }
 
+}  // namespace
 }  // namespace mozc

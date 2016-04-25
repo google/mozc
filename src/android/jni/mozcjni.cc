@@ -127,13 +127,11 @@ class SessionHandlerManager {
 
  private:
   explicit SessionHandlerManager(std::unique_ptr<DataManager> data_manager)
-      : engine_(Engine::CreateMobileEngine(std::move(data_manager))),
-        session_handler_(new SessionHandler(engine_.get())) {}
+      : session_handler_(new SessionHandler(
+            Engine::CreateMobileEngine(std::move(data_manager)))) {}
 
   ~SessionHandlerManager() = default;
 
-  // Must be defined earlier than session_handler_, which depends on this.
-  std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<SessionHandlerInterface> session_handler_;
   jobject mozc_data_buffer_;
 
