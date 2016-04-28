@@ -70,11 +70,11 @@ struct OrderByKey {
 
 struct OrderByKeyPrefix {
   bool operator()(const UserPOS::Token *token, StringPiece prefix) const {
-    return StringPiece(token->key, 0, prefix.size()) < prefix;
+    return StringPiece(token->key).substr(0, prefix.size()) < prefix;
   }
 
   bool operator()(StringPiece prefix, const UserPOS::Token *token) const {
-    return prefix < StringPiece(token->key, 0, prefix.size());
+    return prefix < StringPiece(token->key).substr(0, prefix.size());
   }
 };
 
@@ -401,7 +401,7 @@ void UserDictionary::LookupPrefix(
   }
 
   // Find the starting point for iteration over dictionary contents.
-  const StringPiece first_char(key, 0, Util::OneCharLen(key.data()));
+  const StringPiece first_char = key.substr(0, Util::OneCharLen(key.data()));
   Token token;
   for (auto it = std::lower_bound(tokens_->begin(), tokens_->end(), first_char,
                                   OrderByKey());

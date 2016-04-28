@@ -425,10 +425,10 @@ bool NumberUtil::ArabicToSeparatedArabic(
   if (point_pos == StringPiece::npos) {
     point_pos = input_num.size();
   }
-  const StringPiece integer(input_num, 0, point_pos);
+  const StringPiece integer = input_num.substr(0, point_pos);
   // |fraction| has the decimal point with digits in fractional part.
-  const StringPiece fraction(input_num, point_pos,
-                             input_num.size() - point_pos);
+  const StringPiece fraction =
+      input_num.substr(point_pos, input_num.size() - point_pos);
 
   // We don't add separator to number whose integral part starts with '0'
   if (integer[0] == kAsciiZero) {
@@ -635,7 +635,7 @@ const StringPiece SkipWhiteSpace(StringPiece str) {
   StringPiece::size_type i;
   for (i = 0; i < str.size() && isspace(str[i]); ++i) {}
   DCHECK(i == str.size() || !isspace(str[i]));
-  return StringPiece(str, i);
+  return str.substr(i);
 }
 
 // There is an informative discussion about the overflow detection in
@@ -826,9 +826,7 @@ bool NumberUtil::SafeStrToInt64(StringPiece str, int64 *value) {
   }
   uint64 tmp;
   if (stripped_str[0] == '-') {
-    StringPiece opposite_str = StringPiece(stripped_str,
-                                           1,
-                                           stripped_str.size() - 1);
+    StringPiece opposite_str = stripped_str.substr(1, stripped_str.size() - 1);
     if (!SafeStrToUInt64WithBase(opposite_str, 10, &tmp)) {
       return false;
     }

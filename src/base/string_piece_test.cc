@@ -567,14 +567,14 @@ TEST(StringPieceTest, Constructors) {
   ASSERT_EQ("12345", StringPiece("12345", 5));
 
   // Tests for StringPiece(const StringPiece, size_type)
-  ASSERT_EQ("45", StringPiece(StringPiece("12345"), 3));
-  ASSERT_EQ("12345", StringPiece(StringPiece("12345"), 0));
-  ASSERT_EQ("", StringPiece(StringPiece("12345"), 5));
+  ASSERT_EQ("45", StringPiece("12345").substr(3));
+  ASSERT_EQ("12345", StringPiece("12345").substr(0));
+  ASSERT_EQ("", StringPiece("12345").substr(5));
 
   // Tests for StringPiece(const StringPiece, size_type, size_type)
-  ASSERT_EQ("234", StringPiece("12345", 1, 3));
-  ASSERT_EQ("2345", StringPiece("12345", 1, 300));
-  ASSERT_EQ("", StringPiece("12345", 1, 0));
+  ASSERT_EQ("234", StringPiece("12345").substr(1, 3));
+  ASSERT_EQ("2345", StringPiece("12345").substr(1, 300));
+  ASSERT_EQ("", StringPiece("12345").substr(1, 0));
 }
 
 }  // namespace mozc

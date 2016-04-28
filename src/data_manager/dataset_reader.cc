@@ -103,7 +103,8 @@ bool DataSetReader::Init(StringPiece memblock, StringPiece magic) {
 
   // Open metadata.
   DataSetMetadata metadata;
-  const StringPiece metadata_chunk(memblock, metadata_offset, metadata_size);
+  const StringPiece metadata_chunk =
+      memblock.substr(metadata_offset, metadata_size);
   if (!metadata.ParseFromArray(metadata_chunk.data(), metadata_chunk.size())) {
     LOG(ERROR) << "Broken: Failed to parse metadata";
     return false;
