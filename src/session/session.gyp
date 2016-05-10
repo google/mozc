@@ -100,6 +100,7 @@
         '../engine/engine.gyp:engine_factory',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
+        '../protocol/protocol.gyp:engine_builder_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:generic_storage_manager',

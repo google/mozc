@@ -27,47 +27,51 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// UserDataManagerInterface is responsible for the management of the
-// user data in the persistent storage, i.e. syncing, reloading, or
-// clear-out.
+#ifndef MOZC_ENGINE_ENGINE_BUILDER_INTERFACE_H_
+#define MOZC_ENGINE_ENGINE_BUILDER_INTERFACE_H_
 
-#ifndef MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
-#define MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
-
+#include <memory>
 #include <string>
+
+#include "base/port.h"
+#include "base/string_piece.h"
+#include "engine/engine_interface.h"
+#include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 
-class UserDataManagerInterface {
+// Defines interface to build Engine instance in asynchronous way.
+class EngineBuilderInterface {
  public:
-  virtual ~UserDataManagerInterface() {}
+  virtual ~EngineBuilderInterface() = default;
 
-  // Syncs mutable user data to local file system.
-  virtual bool Sync() = 0;
+  // Accepts data load request and sets |response->status()| to one of the
+  // following values:
+  //   * ACCEPTED: Request is successfuly accepted.
+  //   * ALREADY_RUNNING: The previous request is still being processed.
+  virtual void PrepareAsync(const EngineReloadRequest &request,
+                            EngineReloadResponse *response) = 0;
 
-  // Reloads mutable user data from local file system.
-  virtual bool Reload() = 0;
+  // Returns true if a response to PrepareAsync() is ready.
+  virtual bool HasResponse() const = 0;
 
-  // Clears user history data.
-  virtual bool ClearUserHistory() = 0;
+  // Gets the response to PrepareAsync() if available.
+  virtual void GetResponse(EngineReloadResponse *response) const = 0;
 
-  // Clears user prediction data.
-  virtual bool ClearUserPrediction() = 0;
+  // Builds an engine using the data requested by PrepareAsync().
+  // May return nullptr if bad data was requested in PrepareAsync().
+  virtual std::unique_ptr<EngineInterface> BuildFromPreparedData() = 0;
 
-  // Clears unused user prediction data.
-  virtual bool ClearUnusedUserPrediction() = 0;
+  // Clears internal states to accept next request.
+  virtual void Clear() = 0;
 
-  // Clears a specific user prediction history.
-  virtual bool ClearUserPredictionEntry(
-      const string &key, const string &value) = 0;
+ protected:
+  EngineBuilderInterface() = default;
 
-  // Waits for syncer thread to complete.
-  virtual bool WaitForSyncerForTest() = 0;
-
-  // TODO(noriyukit): Rename WaitForSyncerForTest() to Wait().
-  bool Wait() { return WaitForSyncerForTest(); }
+ private:
+  DISALLOW_COPY_AND_ASSIGN(EngineBuilderInterface);
 };
 
 }  // namespace mozc
 
-#endif  // MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
+#endif  // MOZC_ENGINE_ENGINE_BUILDER_INTERFACE_H_

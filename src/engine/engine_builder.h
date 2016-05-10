@@ -27,47 +27,40 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// UserDataManagerInterface is responsible for the management of the
-// user data in the persistent storage, i.e. syncing, reloading, or
-// clear-out.
+#ifndef MOZC_ENGINE_ENGINE_BUILDER_H_
+#define MOZC_ENGINE_ENGINE_BUILDER_H_
 
-#ifndef MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
-#define MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
+#include <memory>
 
-#include <string>
+#include "base/port.h"
+#include "engine/engine_builder_interface.h"
 
 namespace mozc {
 
-class UserDataManagerInterface {
+class EngineBuilder : public EngineBuilderInterface {
  public:
-  virtual ~UserDataManagerInterface() {}
+  EngineBuilder();
+  ~EngineBuilder() override;
 
-  // Syncs mutable user data to local file system.
-  virtual bool Sync() = 0;
+  // Implementation of EngineBuilderInterface.  PrepareAsync() is implemented
+  // using Thread.
+  void PrepareAsync(const EngineReloadRequest &request,
+                    EngineReloadResponse *response) override;
+  bool HasResponse() const override;
+  void GetResponse(EngineReloadResponse *response) const override;
+  std::unique_ptr<EngineInterface> BuildFromPreparedData() override;
+  void Clear() override;
 
-  // Reloads mutable user data from local file system.
-  virtual bool Reload() = 0;
+  // Waits for internal thread to complete.
+  void Wait();
 
-  // Clears user history data.
-  virtual bool ClearUserHistory() = 0;
+ private:
+  class Preparator;
+  std::unique_ptr<Preparator> preparator_;
 
-  // Clears user prediction data.
-  virtual bool ClearUserPrediction() = 0;
-
-  // Clears unused user prediction data.
-  virtual bool ClearUnusedUserPrediction() = 0;
-
-  // Clears a specific user prediction history.
-  virtual bool ClearUserPredictionEntry(
-      const string &key, const string &value) = 0;
-
-  // Waits for syncer thread to complete.
-  virtual bool WaitForSyncerForTest() = 0;
-
-  // TODO(noriyukit): Rename WaitForSyncerForTest() to Wait().
-  bool Wait() { return WaitForSyncerForTest(); }
+  DISALLOW_COPY_AND_ASSIGN(EngineBuilder);
 };
 
 }  // namespace mozc
 
-#endif  // MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
+#endif  // MOZC_ENGINE_ENGINE_BUILDER_H_

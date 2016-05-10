@@ -27,47 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// UserDataManagerInterface is responsible for the management of the
-// user data in the persistent storage, i.e. syncing, reloading, or
-// clear-out.
+#ifndef MOZC_ENGINE_ENGINE_STUB_H_
+#define MOZC_ENGINE_ENGINE_STUB_H_
 
-#ifndef MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
-#define MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
-
-#include <string>
+#include "engine/engine_interface.h"
 
 namespace mozc {
 
-class UserDataManagerInterface {
+class EngineStub : public EngineInterface {
  public:
-  virtual ~UserDataManagerInterface() {}
-
-  // Syncs mutable user data to local file system.
-  virtual bool Sync() = 0;
-
-  // Reloads mutable user data from local file system.
-  virtual bool Reload() = 0;
-
-  // Clears user history data.
-  virtual bool ClearUserHistory() = 0;
-
-  // Clears user prediction data.
-  virtual bool ClearUserPrediction() = 0;
-
-  // Clears unused user prediction data.
-  virtual bool ClearUnusedUserPrediction() = 0;
-
-  // Clears a specific user prediction history.
-  virtual bool ClearUserPredictionEntry(
-      const string &key, const string &value) = 0;
-
-  // Waits for syncer thread to complete.
-  virtual bool WaitForSyncerForTest() = 0;
-
-  // TODO(noriyukit): Rename WaitForSyncerForTest() to Wait().
-  bool Wait() { return WaitForSyncerForTest(); }
+  ConverterInterface *GetConverter() const override { return nullptr; }
+  PredictorInterface *GetPredictor() const override { return nullptr; }
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
+    return nullptr;
+  }
+  bool Reload() override { return true; }
+  UserDataManagerInterface *GetUserDataManager() override { return nullptr; }
+  StringPiece GetDataVersion() const override { return StringPiece(); }
 };
 
 }  // namespace mozc
 
-#endif  // MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
+#endif  // MOZC_ENGINE_ENGINE_STUB_H_

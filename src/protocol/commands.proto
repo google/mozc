@@ -37,6 +37,7 @@ syntax = "proto2";
 
 import "protocol/candidates.proto";
 import "protocol/config.proto";
+import "protocol/engine_builder.proto";
 import "protocol/user_dictionary_storage.proto";
 
 package mozc.commands;
@@ -867,6 +868,8 @@ message Input {
     // Send a command for user dictionary session.
     SEND_USER_DICTIONARY_COMMAND = 26;
 
+    SEND_ENGINE_RELOAD_REQUEST = 27;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
@@ -875,7 +878,7 @@ message Input {
     //       Please reuse these value if you can.
     //       15 have never been used before, and 19 was used to clear synced
     //       data on dev channel.
-    NUM_OF_COMMANDS = 27;
+    NUM_OF_COMMANDS = 28;
   };
   required CommandType type = 1;
 
@@ -952,6 +955,8 @@ message Input {
   // latency.  If you want to suppress the suggestions for the UX improment,
   // you may want to use suppress_suggestion in the Context message.
   optional bool request_suggestion = 14 [default = true];
+
+  optional mozc.EngineReloadRequest engine_reload_request = 15;
 };
 
 
@@ -1127,6 +1132,8 @@ message Output {
 
   optional mozc.user_dictionary.UserDictionaryCommandStatus
       user_dictionary_command_status = 21;
+
+  optional mozc.EngineReloadResponse engine_reload_response = 22;
 };
 
 message Command {

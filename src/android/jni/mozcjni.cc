@@ -45,6 +45,7 @@
 #include "base/version.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
+#include "engine/engine_builder.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
@@ -128,7 +129,8 @@ class SessionHandlerManager {
  private:
   explicit SessionHandlerManager(std::unique_ptr<DataManager> data_manager)
       : session_handler_(new SessionHandler(
-            Engine::CreateMobileEngine(std::move(data_manager)))) {}
+            Engine::CreateMobileEngine(std::move(data_manager)),
+            std::unique_ptr<EngineBuilder>(new EngineBuilder()))) {}
 
   ~SessionHandlerManager() = default;
 

@@ -39,6 +39,8 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
+#include "engine/engine_builder_interface.h"
+#include "engine/engine_stub.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
@@ -58,11 +60,88 @@ DECLARE_int32(last_create_session_timeout);
 
 namespace mozc {
 
-using mozc::session::testing::CreateSession;
 using mozc::session::testing::CleanUp;
+using mozc::session::testing::CreateSession;
+using mozc::session::testing::DeleteSession;
 using mozc::session::testing::IsGoodSession;
-
 using mozc::session::testing::SessionHandlerTestBase;
+
+namespace {
+
+// Used to test interaction between SessionHandler and EngineBuilder in engine
+// reload event.
+class MockEngineBuilder : public EngineBuilderInterface {
+ public:
+  enum class State {
+    STOP,
+    RUNNING,
+    RELOAD_READY,
+    INVALID_DATA,
+  };
+
+  void PrepareAsync(const EngineReloadRequest &request,
+                    EngineReloadResponse *response) override {
+    ++num_prepare_async_called_;
+    response->set_status(state_ != State::RUNNING
+                         ? EngineReloadResponse::ACCEPTED
+                         : EngineReloadResponse::ALREADY_RUNNING);
+  }
+
+  bool HasResponse() const override {
+    return state_ == State::RELOAD_READY || state_ == State::INVALID_DATA;
+  }
+
+  void GetResponse(EngineReloadResponse *response) const override {
+    switch (state_) {
+      case State::RELOAD_READY:
+        response->set_status(EngineReloadResponse::RELOAD_READY);
+        break;
+      case State::INVALID_DATA:
+        response->set_status(EngineReloadResponse::DATA_BROKEN);
+        break;
+      default:
+        response->set_status(EngineReloadResponse::UNKNOWN_ERROR);
+        break;
+    }
+  }
+
+  std::unique_ptr<EngineInterface> BuildFromPreparedData() override {
+    ++num_build_from_prepared_data_called_;
+    return std::unique_ptr<EngineInterface>(new EngineStub());
+  }
+
+  void Clear() override {
+    ++num_clear_called_;
+    state_ = State::STOP;
+  }
+
+  State state() const { return state_; }
+  void set_state(State state) { state_ = state; }
+  int num_prepare_async_called() const { return num_prepare_async_called_; }
+  int num_build_from_prepared_data_called() const {
+    return num_build_from_prepared_data_called_;
+  }
+  int num_clear_called() const { return num_clear_called_; }
+
+ private:
+  State state_ = State::STOP;
+  int num_prepare_async_called_ = 0;
+  int num_build_from_prepared_data_called_ = 0;
+  int num_clear_called_ = 0;
+};
+
+EngineReloadResponse::Status SendDummyEngineCommand(SessionHandler *handler) {
+  commands::Command command;
+  command.mutable_input()->set_type(
+      commands::Input::SEND_ENGINE_RELOAD_REQUEST);
+  auto *request = command.mutable_input()->mutable_engine_reload_request();
+  request->set_engine_type(EngineReloadRequest::MOBILE);
+  request->set_file_path("dummy");  // Dummy is OK for MockEngineBuilder.
+  handler->EvalCommand(&command);
+  return command.output().engine_reload_response().status();
+}
+
+}  // namespace
 
 class SessionHandlerTest : public SessionHandlerTestBase {
  protected:
@@ -491,6 +570,111 @@ TEST_F(SessionHandlerTest, EmojiUsageStatsTest) {
   EXPECT_TRUE(handler.EvalCommand(&command));
   EXPECT_COUNT_STATS("CommitCarrierEmoji", 3);
   EXPECT_COUNT_STATS("CommitUnicodeEmoji", 2);
+}
+
+// Tests the interaction with EngineBuilderInterface for successful Engine
+// reload event.
+TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
+  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  SessionHandler handler(
+      std::unique_ptr<EngineStub>(new EngineStub()),
+      std::unique_ptr<MockEngineBuilder>(engine_builder));
+
+  // Session handler receives reload request when engine builder is not running.
+  // EngineBuilderInterface::PrepareAsync() should be called once.
+  engine_builder->set_state(MockEngineBuilder::State::STOP);
+  ASSERT_EQ(EngineReloadResponse::ACCEPTED, SendDummyEngineCommand(&handler));
+  EXPECT_EQ(1, engine_builder->num_prepare_async_called());
+
+  // Emulate the state after successful data load.
+  engine_builder->set_state(MockEngineBuilder::State::RELOAD_READY);
+
+  // A new engine should be built on create session event because the session
+  // handler currently holds no session.
+  uint64 id = 0;
+  ASSERT_TRUE(CreateSession(&handler, &id));
+  EXPECT_EQ(1, engine_builder->num_build_from_prepared_data_called());
+  EXPECT_EQ(1, engine_builder->num_clear_called());
+}
+
+// Tests the interaction with EngineBuilderInterface in the situation where
+// async data load is already running.
+TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
+  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  SessionHandler handler(
+      std::unique_ptr<EngineStub>(new EngineStub()),
+      std::unique_ptr<MockEngineBuilder>(engine_builder));
+
+  // Emulate the state where async data load is running.
+  engine_builder->set_state(MockEngineBuilder::State::RUNNING);
+
+  // Session handler receives reload request when engine builder is running.
+  ASSERT_EQ(EngineReloadResponse::ALREADY_RUNNING,
+            SendDummyEngineCommand(&handler));
+  EXPECT_EQ(1, engine_builder->num_prepare_async_called());
+
+  // BuildFromPreparedData() shouldn't be called on create session event when
+  // async data load is running.
+  uint64 id = 0;
+  ASSERT_TRUE(CreateSession(&handler, &id));
+  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
+  EXPECT_EQ(0, engine_builder->num_clear_called());
+}
+
+// Tests the interaction with EngineBuilderInterface in the situation where
+// requested data is broken.
+TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
+  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  SessionHandler handler(
+      std::unique_ptr<EngineStub>(new EngineStub()),
+      std::unique_ptr<MockEngineBuilder>(engine_builder));
+
+  // Emulate the state where requested data is broken.
+  engine_builder->set_state(MockEngineBuilder::State::INVALID_DATA);
+
+  // A new engine is not built but the builder should be cleared for next reload
+  // request.
+  uint64 id = 0;
+  ASSERT_TRUE(CreateSession(&handler, &id));
+  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
+  EXPECT_EQ(1, engine_builder->num_clear_called());
+}
+
+// Tests the interaction with EngineBuilderInterface in the situation where
+// sessions exist in create session event.
+TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
+  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  SessionHandler handler(
+      std::unique_ptr<EngineStub>(new EngineStub()),
+      std::unique_ptr<MockEngineBuilder>(engine_builder));
+
+  // A session is created before data is loaded.
+  engine_builder->set_state(MockEngineBuilder::State::STOP);
+  uint64 id1 = 0;
+  ASSERT_TRUE(CreateSession(&handler, &id1));
+  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
+  EXPECT_EQ(0, engine_builder->num_clear_called());
+
+  // Emulate the state where async data load is complete.
+  engine_builder->set_state(MockEngineBuilder::State::RELOAD_READY);
+
+  // Another session is created.  Since the handler already holds one session
+  // (id1), engine reload should not happen.
+  uint64 id2 = 0;
+  ASSERT_TRUE(CreateSession(&handler, &id2));
+  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
+  EXPECT_EQ(0, engine_builder->num_clear_called());
+
+  // All the sessions were deleted.
+  ASSERT_TRUE(DeleteSession(&handler, id1));
+  ASSERT_TRUE(DeleteSession(&handler, id2));
+
+  // A new session is created.  Since the handler holds no session, engine is
+  // reloaded at this timing.
+  uint64 id3 = 0;
+  ASSERT_TRUE(CreateSession(&handler, &id3));
+  EXPECT_EQ(1, engine_builder->num_build_from_prepared_data_called());
+  EXPECT_EQ(1, engine_builder->num_clear_called());
 }
 
 }  // namespace mozc

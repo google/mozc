@@ -73,8 +73,9 @@
       'type': 'none',
       'dependencies': [
         'sdk_genproto_java_config',
-        'sdk_genproto_java_user_dictionary_storage',
+        'sdk_genproto_java_engine_builder',
         'sdk_genproto_java_session',
+        'sdk_genproto_java_user_dictionary_storage',
       ],
     },
     {
@@ -82,8 +83,9 @@
       'type': 'none',
       'dependencies': [
         'adt_genproto_java_config',
-        'adt_genproto_java_user_dictionary_storage',
+        'adt_genproto_java_engine_builder',
         'adt_genproto_java_session',
+        'adt_genproto_java_user_dictionary_storage',
       ],
     },
     {
@@ -188,6 +190,42 @@
           'outputs': [
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoCandidates.java',
             '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoCommands.java',
+          ],
+          'action': [
+            '<@(genproto_java_common)',
+            '--proto=<(proto_files)',
+            '--java_out=<(DEPTH)/<(relative_dir)/<(adt_gen_dir)',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'sdk_genproto_java_engine_builder',
+      'type': 'none',
+      'copies': [{
+        'destination': '<(sdk_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/',
+        'files': [
+          '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoEngineBuilder.java',
+        ],
+      }],
+    },
+    {
+      'target_name': 'adt_genproto_java_engine_builder',
+      'type': 'none',
+      'variables': {
+        'proto_files': [
+          '../protocol/engine_builder.proto',
+        ],
+      },
+      'actions': [
+        {
+          'action_name': 'genproto_engine_builder',
+          'inputs': [
+            '<@(proto_files)',
+            '<@(additional_inputs)',
+          ],
+          'outputs': [
+            '<(adt_gen_dir)/org/mozc/android/inputmethod/japanese/protobuf/ProtoEngineBuilder.java',
           ],
           'action': [
             '<@(genproto_java_common)',

@@ -38,6 +38,7 @@
 
 #include "base/port.h"
 #include "composer/table.h"
+#include "engine/engine_builder_interface.h"
 #include "engine/engine_interface.h"
 #include "session/common.h"
 #include "session/session_handler_interface.h"
@@ -80,6 +81,8 @@ class UserDictionarySessionHandler;
 class SessionHandler : public SessionHandlerInterface {
  public:
   explicit SessionHandler(std::unique_ptr<EngineInterface> engine);
+  SessionHandler(std::unique_ptr<EngineInterface> engine,
+                 std::unique_ptr<EngineBuilderInterface> engine_builder);
   ~SessionHandler() override;
 
   // Returns true if SessionHandle is available.
@@ -104,6 +107,9 @@ class SessionHandler : public SessionHandlerInterface {
   using SessionMap =
       mozc::storage::LRUCache<SessionID, session::SessionInterface *>;
   using SessionElement = SessionMap::Element;
+
+  void Init(std::unique_ptr<EngineInterface> engine,
+            std::unique_ptr<EngineBuilderInterface> engine_builder);
 
   // Sets config to all the modules managed by this handler.  This does not
   // affect the stored config in the local storage.
@@ -132,6 +138,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool ClearStorage(commands::Command *command);
   bool Cleanup(commands::Command *command);
   bool SendUserDictionaryCommand(commands::Command *command);
+  bool SendEngineReloadRequest(commands::Command *command);
   bool NoOperation(commands::Command *command);
 
   SessionID CreateNewSessionID();
@@ -145,13 +152,14 @@ class SessionHandler : public SessionHandlerInterface {
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-  bool is_available_;
-  uint32 max_session_size_;
-  uint64 last_session_empty_time_;
-  uint64 last_cleanup_time_;
-  uint64 last_create_session_time_;
+  bool is_available_ = false;
+  uint32 max_session_size_ = 0;
+  uint64 last_session_empty_time_ = 0;
+  uint64 last_cleanup_time_ = 0;
+  uint64 last_create_session_time_ = 0;
 
   std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<EngineBuilderInterface> engine_builder_;
   std::unique_ptr<session::SessionObserverHandler> observer_handler_;
   std::unique_ptr<Stopwatch> stopwatch_;
   std::unique_ptr<user_dictionary::UserDictionarySessionHandler>

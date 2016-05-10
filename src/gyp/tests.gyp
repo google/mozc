@@ -41,6 +41,7 @@
         '../dictionary/dictionary_test.gyp:dictionary_all_test',
         '../dictionary/file/dictionary_file_test.gyp:dictionary_file_all_test',
         '../dictionary/system/system_dictionary_test.gyp:system_dictionary_all_test',
+        '../engine/engine_test.gyp:engine_all_test',
         '../gui/gui.gyp:gui_all_test',
         '../handwriting/handwriting_test.gyp:handwriting_all_test',
         '../ipc/ipc.gyp:ipc_all_test',

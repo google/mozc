@@ -34,6 +34,19 @@
   },
   'targets': [
     {
+      'target_name': 'engine_builder',
+      'type': 'static_library',
+      'sources': [
+        'engine_builder.cc',
+      ],
+      'dependencies': [
+        'engine',
+        '../base/base.gyp:base',
+        '../data_manager/data_manager_base.gyp:data_manager',
+        '../protocol/protocol.gyp:engine_builder_proto',
+      ],
+    },
+    {
       'target_name': 'engine',
       'type': 'static_library',
       'sources': [

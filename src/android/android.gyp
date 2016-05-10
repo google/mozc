@@ -544,6 +544,7 @@
         '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary.gyp:dictionary',
         '../engine/engine.gyp:engine',
+        '../engine/engine.gyp:engine_builder',
         '../session/session.gyp:session',
         '../session/session.gyp:session_handler',
         '../session/session.gyp:session_usage_observer',
