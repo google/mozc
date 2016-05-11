@@ -435,7 +435,7 @@ void UserHistoryPredictor::WaitForSyncer() {
   }
 }
 
-bool UserHistoryPredictor::WaitForSyncerForTest() {
+bool UserHistoryPredictor::Wait() {
   WaitForSyncer();
   return true;
 }

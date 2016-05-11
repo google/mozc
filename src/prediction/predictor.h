@@ -45,37 +45,36 @@ class BasePredictor : public PredictorInterface {
   // instance.
   BasePredictor(PredictorInterface *dictionary_predictor,
                 PredictorInterface *user_history_predictor);
-  virtual ~BasePredictor();
-
-  // Overwrite predictor
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const = 0;
+  ~BasePredictor() override;
 
   // Hook(s) for all mutable operations.
-  virtual void Finish(const ConversionRequest &request, Segments *segments);
+  void Finish(const ConversionRequest &request, Segments *segments) override;
 
   // Reverts the last Finish operation.
-  virtual void Revert(Segments *segments);
+  void Revert(Segments *segments) override;
 
   // Clears all history data of UserHistoryPredictor.
-  virtual bool ClearAllHistory();
+  bool ClearAllHistory() override;
 
   // Clears unused history data of UserHistoryPredictor.
-  virtual bool ClearUnusedHistory();
+  bool ClearUnusedHistory() override;
 
   // Clears a specific user history data of UserHistoryPredictor.
-  virtual bool ClearHistoryEntry(const string &key, const string &value);
+  bool ClearHistoryEntry(const string &key, const string &value) override;
 
   // Syncs user history.
-  virtual bool Sync();
+  bool Sync() override;
 
   // Reloads usre history.
-  virtual bool Reload();
+  bool Reload() override;
 
   // Waits for syncer to complete.
-  virtual bool WaitForSyncerForTest();
+  bool Wait() override;
 
-  virtual const string &GetPredictorName() const = 0;
+  // The following interfaces are implemented in derived classes.
+  // const string &GetPredictorName() const = 0;
+  // bool PredictForRequest(const ConversionRequest &request,
+  //                        Segments *segments) const = 0;
 
  protected:
   std::unique_ptr<PredictorInterface> dictionary_predictor_;
@@ -91,12 +90,12 @@ class DefaultPredictor : public BasePredictor {
 
   DefaultPredictor(PredictorInterface *dictionary_predictor,
                    PredictorInterface *user_history_predictor);
-  virtual ~DefaultPredictor();
+  ~DefaultPredictor() override;
 
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const override;
 
-  virtual const string &GetPredictorName() const { return predictor_name_; }
+  const string &GetPredictorName() const override { return predictor_name_; }
 
  private:
   const ConversionRequest empty_request_;
@@ -111,12 +110,12 @@ class MobilePredictor : public BasePredictor {
 
   MobilePredictor(PredictorInterface *dictionary_predictor,
                   PredictorInterface *user_history_predictor);
-  virtual ~MobilePredictor();
+  ~MobilePredictor() override;
 
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const override;
 
-  virtual const string &GetPredictorName() const { return predictor_name_; }
+  const string &GetPredictorName() const override { return predictor_name_; }
 
  private:
   const ConversionRequest empty_request_;

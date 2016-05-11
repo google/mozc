@@ -86,7 +86,7 @@ class UserDataManagerImpl final : public UserDataManagerInterface {
   bool ClearUnusedUserPrediction() override;
   bool ClearUserPredictionEntry(
       const string &key, const string &value) override;
-  bool WaitForSyncerForTest() override;
+  bool Wait() override;
 
  private:
   PredictorInterface *predictor_;
@@ -129,8 +129,8 @@ bool UserDataManagerImpl::ClearUserPredictionEntry(const string &key,
   return predictor_->ClearHistoryEntry(key, value);
 }
 
-bool UserDataManagerImpl::WaitForSyncerForTest() {
-  return predictor_->WaitForSyncerForTest();
+bool UserDataManagerImpl::Wait() {
+  return predictor_->Wait();
 }
 
 }  // namespace

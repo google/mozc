@@ -68,8 +68,8 @@ bool UserDataManagerMock::ClearUserPredictionEntry(const string &,
   return true;
 }
 
-bool UserDataManagerMock::WaitForSyncerForTest() {
-  function_counters_["WaitForSyncer"]++;
+bool UserDataManagerMock::Wait() {
+  function_counters_["Wait"]++;
   return true;
 }
 

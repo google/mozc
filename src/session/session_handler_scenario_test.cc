@@ -121,7 +121,7 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
   }
 
   void SyncDataToStorage() {
-    EXPECT_TRUE(engine_->GetUserDataManager()->WaitForSyncerForTest());
+    EXPECT_TRUE(engine_->GetUserDataManager()->Wait());
   }
 
   void ClearUserPrediction() {

@@ -88,46 +88,46 @@ class UserHistoryPredictor : public PredictorInterface {
       const dictionary::POSMatcher *pos_matcher,
       const dictionary::SuppressionDictionary *suppression_dictionary,
       bool enable_content_word_learning);
-  virtual ~UserHistoryPredictor();
+  ~UserHistoryPredictor() override;
 
   void set_content_word_learning_enabled(bool value) {
     content_word_learning_enabled_ = value;
   }
 
-  virtual bool Predict(Segments *segments) const;
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
+  bool Predict(Segments *segments) const;
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const override;
 
   // Hook(s) for all mutable operations.
-  virtual void Finish(const ConversionRequest &request, Segments *segments);
+  void Finish(const ConversionRequest &request, Segments *segments) override;
 
   // Revert last Finish operation.
-  virtual void Revert(Segments *segments);
+  void Revert(Segments *segments) override;
 
   // Sync user history data to local file.
   // You can call either Save() or AsyncSave().
-  virtual bool Sync();
+  bool Sync() override;
 
   // Reloads from local disk.
   // Do not call Sync() before Reload().
-  virtual bool Reload();
+  bool Reload() override;
 
   // Clears LRU data.
-  virtual bool ClearAllHistory();
+  bool ClearAllHistory() override;
 
   // Clears unused data.
-  virtual bool ClearUnusedHistory();
+  bool ClearUnusedHistory() override;
 
   // Clears a specific history entry.
-  virtual bool ClearHistoryEntry(const string &key, const string &value);
+  bool ClearHistoryEntry(const string &key, const string &value) override;
 
   // Implements PredictorInterface.
-  virtual bool WaitForSyncerForTest();
+  bool Wait() override;
 
   // Gets user history filename.
   static string GetUserHistoryFileName();
 
-  virtual const string &GetPredictorName() const { return predictor_name_; }
+  const string &GetPredictorName() const override { return predictor_name_; }
 
   // From user_history_predictor.proto
   typedef user_history_predictor::UserHistory::Entry Entry;
