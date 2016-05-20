@@ -28,7 +28,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Generate the Mozc data version string."""
+"""Generate the Mozc data version string.
+
+Data version consists of three components:
+
+<ENGINE_VERSION>.<DATA_VERSION>.<TAG>
+
+Here, <TAG> is any string to distinguish data set.
+"""
 
 import optparse
 
@@ -44,7 +51,6 @@ def _ParseOption():
 
 def main():
   opts = _ParseOption()
-
   data = {}
   with open(opts.mozc_version_template, 'r') as f:
     for line in f:
