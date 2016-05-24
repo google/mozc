@@ -76,7 +76,6 @@ VERSION_PROPERTIES = [
     'TARGET_PLATFORM',
     'ANDROID_APPLICATION_ID',
     'ANDROID_SERVICE_NAME',
-    'NACL_DICTIONARY_VERSION',
     'ANDROID_ARCH',
     'ENGINE_VERSION',
     # 'DATA_VERSION' is not included as it's the property of data file to be
@@ -273,7 +272,6 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       'TARGET_PLATFORM=@TARGET_PLATFORM@',
       'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@',
       'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@',
-      'NACL_DICTIONARY_VERSION=@NACL_DICTIONARY_VERSION@',
       'ANDROID_ARCH=@ANDROID_ARCH@',
       'ENGINE_VERSION=@ENGINE_VERSION@',
   ]) + '\n'
