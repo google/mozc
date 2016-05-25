@@ -39,7 +39,7 @@ namespace mozc {
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
 class DataManagerInterface {
  public:
-  virtual ~DataManagerInterface() {}
+  virtual ~DataManagerInterface() = default;
 
   // Returns data set for UserPOS.
   virtual void GetUserPOSData(StringPiece *token_array_data,
@@ -122,11 +122,18 @@ class DataManagerInterface {
   virtual void GetCounterSuffixSortedArray(const char **array,
                                            size_t *size) const = 0;
 
+  // Gets the zero query prediction data.
+  virtual void GetZeroQueryData(
+      StringPiece *zero_query_token_array_data,
+      StringPiece *zero_query_string_array_data,
+      StringPiece *zero_query_number_token_array_data,
+      StringPiece *zero_query_number_string_array_data) const = 0;
+
   // Gets the data version string.
   virtual StringPiece GetDataVersion() const = 0;
 
  protected:
-  DataManagerInterface() {}
+  DataManagerInterface() = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(DataManagerInterface);

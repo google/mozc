@@ -32,10 +32,8 @@
 
 from collections import defaultdict
 import optparse
-from prediction import codegen_util_for_zero_query as util
 
-
-_VAR_NAME_FOR_HEADER = 'kZeroQueryNum'
+from prediction import gen_zero_query_util as util
 
 
 def ReadZeroQueryNumberData(input_stream):
@@ -64,7 +62,10 @@ def ParseOption():
   """Parses command line options."""
   parser = optparse.OptionParser()
   parser.add_option('--input', dest='input', help='Input file path')
-  parser.add_option('--output', dest='output', help='Output file path')
+  parser.add_option('--output_token_array', dest='output_token_array',
+                    help='Output token array file path')
+  parser.add_option('--output_string_array', dest='output_string_array',
+                    help='Output string array file path')
   return parser.parse_args()[0]
 
 
@@ -72,10 +73,9 @@ def main():
   options = ParseOption()
   with open(options.input, 'r') as input_stream:
     zero_query_dict = ReadZeroQueryNumberData(input_stream)
-
-  with open(options.output, 'w') as output_stream:
-    util.WriteHeaderFileForZeroQuery(
-        zero_query_dict, options.output, _VAR_NAME_FOR_HEADER, output_stream)
+  util.WriteZeroQueryData(zero_query_dict,
+                          options.output_token_array,
+                          options.output_string_array)
 
 
 if __name__ == '__main__':

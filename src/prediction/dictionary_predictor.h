@@ -40,12 +40,13 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
-#include "prediction/zero_query_list.h"
+#include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -57,7 +58,8 @@ class DictionaryPredictor : public PredictorInterface {
  public:
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
-  DictionaryPredictor(const ConverterInterface *converter,
+  DictionaryPredictor(const DataManagerInterface& data_manager,
+                      const ConverterInterface *converter,
                       const ImmutableConverterInterface *immutable_converter,
                       const dictionary::DictionaryInterface *dictionary,
                       const dictionary::DictionaryInterface *suffix_dictionary,
@@ -65,14 +67,14 @@ class DictionaryPredictor : public PredictorInterface {
                       const Segmenter *segmenter,
                       const dictionary::POSMatcher *pos_matcher,
                       const SuggestionFilter *suggestion_filter);
-  virtual ~DictionaryPredictor();
+  ~DictionaryPredictor() override;
 
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const override;
 
-  virtual void Finish(const ConversionRequest &request, Segments *segments);
+  void Finish(const ConversionRequest &request, Segments *segments) override;
 
-  virtual const string &GetPredictorName() const { return predictor_name_; }
+  const string &GetPredictorName() const override { return predictor_name_; }
 
  protected:
   // Protected members for unittesting
@@ -234,8 +236,7 @@ class DictionaryPredictor : public PredictorInterface {
   static bool GetZeroQueryCandidatesForKey(
       const ConversionRequest &request,
       const string &key,
-      const ZeroQueryList *begin,
-      const ZeroQueryList *end,
+      const ZeroQueryDict &dict,
       vector<ZeroQueryResult> *results);
 
   static void AppendZeroQueryToResults(
@@ -464,6 +465,8 @@ class DictionaryPredictor : public PredictorInterface {
   const SuggestionFilter *suggestion_filter_;
   const uint16 counter_suffix_word_id_;
   const string predictor_name_;
+  ZeroQueryDict zero_query_dict_;
+  ZeroQueryDict zero_query_number_dict_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryPredictor);
 };

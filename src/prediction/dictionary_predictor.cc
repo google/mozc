@@ -55,9 +55,7 @@
 #include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
-#include "prediction/zero_query_data.h"
-#include "prediction/zero_query_list.h"
-#include "prediction/zero_query_number_data.h"
+#include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -145,11 +143,6 @@ bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
          FLAGS_enable_typing_correction;
 }
 
-struct ZeroQueryListCompare {
-  bool operator()(const ZeroQueryList &lhs, const ZeroQueryList &rhs) const {
-    return (strcmp(lhs.key, rhs.key) < 0);
-  }
-};
 }  // namespace
 
 class DictionaryPredictor::PredictiveLookupCallback
@@ -280,6 +273,7 @@ class DictionaryPredictor::ResultCostLess :
 };
 
 DictionaryPredictor::DictionaryPredictor(
+    const DataManagerInterface &data_manager,
     const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter,
     const DictionaryInterface *dictionary,
@@ -296,7 +290,20 @@ DictionaryPredictor::DictionaryPredictor(
       segmenter_(segmenter),
       suggestion_filter_(suggestion_filter),
       counter_suffix_word_id_(pos_matcher->GetCounterSuffixWordId()),
-      predictor_name_("DictionaryPredictor") {}
+      predictor_name_("DictionaryPredictor") {
+  StringPiece zero_query_token_array_data;
+  StringPiece zero_query_string_array_data;
+  StringPiece zero_query_number_token_array_data;
+  StringPiece zero_query_number_string_array_data;
+  data_manager.GetZeroQueryData(&zero_query_token_array_data,
+                                &zero_query_string_array_data,
+                                &zero_query_number_token_array_data,
+                                &zero_query_number_string_array_data);
+  zero_query_dict_.Init(zero_query_token_array_data,
+                        zero_query_string_array_data);
+  zero_query_number_dict_.Init(zero_query_number_token_array_data,
+                               zero_query_number_string_array_data);
+}
 
 DictionaryPredictor::~DictionaryPredictor() {}
 
@@ -1732,42 +1739,41 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
 
 // static
 bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
-    const ConversionRequest &request,
-    const string &key, const ZeroQueryList *begin, const ZeroQueryList *end,
-    vector<ZeroQueryResult> *results) {
+    const ConversionRequest &request, const string &key,
+    const ZeroQueryDict &dict, vector<ZeroQueryResult> *results) {
   const int32 available_emoji_carrier =
       request.request().available_emoji_carrier();
 
   DCHECK(results);
   results->clear();
-  const ZeroQueryList key_item = {key.c_str(), NULL, 0};
-  const ZeroQueryList *result_rule =
-      std::lower_bound(begin, end, key_item, ZeroQueryListCompare());
-  if (result_rule == end || key != result_rule->key) {
+
+  auto range = dict.equal_range(key);
+  if (range.first == range.second) {
     return false;
   }
-
-  for (size_t i = 0; i < result_rule->entries_size; ++i) {
-    const ZeroQueryEntry &entry = result_rule->entries[i];
-    if (entry.type != ZERO_QUERY_EMOJI) {
-      results->push_back(std::make_pair(entry.value, entry.type));
+  for (; range.first != range.second; ++range.first) {
+    const auto &entry = range.first;
+    if (entry.type() != ZERO_QUERY_EMOJI) {
+      results->push_back(std::make_pair(entry.value().as_string(),
+                                        entry.type()));
       continue;
     }
     if (available_emoji_carrier & Request::UNICODE_EMOJI &&
-        entry.emoji_type & EMOJI_UNICODE) {
-      results->push_back(std::make_pair(entry.value, entry.type));
+        entry.emoji_type() & EMOJI_UNICODE) {
+      results->push_back(std::make_pair(entry.value().as_string(),
+                                        entry.type()));
       continue;
     }
 
     if ((available_emoji_carrier & Request::DOCOMO_EMOJI &&
-         entry.emoji_type & EMOJI_DOCOMO) ||
+         entry.emoji_type() & EMOJI_DOCOMO) ||
         (available_emoji_carrier & Request::SOFTBANK_EMOJI &&
-         entry.emoji_type & EMOJI_SOFTBANK) ||
+         entry.emoji_type() & EMOJI_SOFTBANK) ||
         (available_emoji_carrier & Request::KDDI_EMOJI &&
-         entry.emoji_type & EMOJI_KDDI)) {
+         entry.emoji_type() & EMOJI_KDDI)) {
       string android_pua;
-      Util::UCS4ToUTF8(entry.emoji_android_pua, &android_pua);
-      results->push_back(std::make_pair(android_pua, entry.type));
+      Util::UCS4ToUTF8(entry.emoji_android_pua(), &android_pua);
+      results->push_back(std::make_pair(android_pua, entry.type()));
     }
   }
   return !results->empty();
@@ -1809,15 +1815,13 @@ bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
   vector<ZeroQueryResult> candidates_for_number_key;
   GetZeroQueryCandidatesForKey(request,
                                number_key,
-                               kZeroQueryNum_data,
-                               kZeroQueryNum_data + kZeroQueryNum_size,
+                               zero_query_number_dict_,
                                &candidates_for_number_key);
 
   vector<ZeroQueryResult> default_candidates_for_number;
   GetZeroQueryCandidatesForKey(request,
                                "default",
-                               kZeroQueryNum_data,
-                               kZeroQueryNum_data + kZeroQueryNum_size,
+                               zero_query_number_dict_,
                                &default_candidates_for_number);
   DCHECK(!default_candidates_for_number.empty());
 
@@ -1848,8 +1852,7 @@ bool DictionaryPredictor::AggregateZeroQueryPrediction(
   vector<ZeroQueryResult> candidates;
   if (!GetZeroQueryCandidatesForKey(request,
                                     history_value,
-                                    kZeroQueryData_data,
-                                    kZeroQueryData_data + kZeroQueryData_size,
+                                    zero_query_dict_,
                                     &candidates)) {
     return false;
   }

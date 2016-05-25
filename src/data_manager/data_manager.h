@@ -119,6 +119,11 @@ class DataManager : public DataManagerInterface {
       StringPiece *variant_string_array_data,
       StringPiece *noun_prefix_token_array_data,
       StringPiece *noun_prefix_string_array_data) const override;
+  void GetZeroQueryData(
+      StringPiece *zero_query_token_array_data,
+      StringPiece *zero_query_string_array_data,
+      StringPiece *zero_query_number_token_array_data,
+      StringPiece *zero_query_number_string_array_data) const override;
 
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(
@@ -170,6 +175,10 @@ class DataManager : public DataManagerInterface {
   StringPiece single_kanji_variant_string_array_data_;
   StringPiece single_kanji_noun_prefix_token_array_data_;
   StringPiece single_kanji_noun_prefix_string_array_data_;
+  StringPiece zero_query_token_array_data_;
+  StringPiece zero_query_string_array_data_;
+  StringPiece zero_query_number_token_array_data_;
+  StringPiece zero_query_number_string_array_data_;
   StringPiece usage_base_conjugation_suffix_data_;
   StringPiece usage_conjugation_suffix_data_;
   StringPiece usage_conjugation_index_data_;

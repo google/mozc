@@ -37,10 +37,7 @@ import re
 import sys
 import unicodedata
 from build_tools import code_generator_util
-from prediction import codegen_util_for_zero_query as util
-
-
-_VAR_NAME_FOR_HEADER = 'kZeroQueryData'
+from prediction import gen_zero_query_util as util
 
 
 def ParseCodePoint(s):
@@ -295,7 +292,10 @@ def ParseOptions():
   parser.add_option('--input_emoji', dest='input_emoji', help='emoji data file')
   parser.add_option(
       '--input_emoticon', dest='input_emoticon', help='emoticon data file')
-  parser.add_option('--output', dest='output', help='output header file')
+  parser.add_option('--output_token_array', dest='output_token_array',
+                    help='output token array file')
+  parser.add_option('--output_string_array', dest='output_string_array',
+                    help='output string array file')
   return parser.parse_args()[0]
 
 
@@ -314,10 +314,9 @@ def main():
       zero_query_rule_dict, zero_query_symbol_dict,
       zero_query_emoji_dict, zero_query_emoticon_dict)
 
-  with open(options.output, 'w') as output_stream:
-    util.WriteHeaderFileForZeroQuery(
-        merged_zero_query_dict, options.output,
-        _VAR_NAME_FOR_HEADER, output_stream)
+  util.WriteZeroQueryData(merged_zero_query_dict,
+                          options.output_token_array,
+                          options.output_string_array)
 
 
 if __name__ == '__main__':

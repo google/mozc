@@ -302,6 +302,23 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     LOG(ERROR) << "Single Kanji data is broken";
     return Status::DATA_BROKEN;
   }
+  if (!reader.Get("zero_query_token_array",
+                  &zero_query_token_array_data_) ||
+      !reader.Get("zero_query_string_array",
+                  &zero_query_string_array_data_) ||
+      !reader.Get("zero_query_number_token_array",
+                  &zero_query_number_token_array_data_) ||
+      !reader.Get("zero_query_number_string_array",
+                  &zero_query_number_string_array_data_)) {
+    LOG(ERROR) << "Cannot find zero query data";
+    return Status::DATA_MISSING;
+  }
+  if (!SerializedStringArray::VerifyData(zero_query_string_array_data_) ||
+      !SerializedStringArray::VerifyData(
+          zero_query_number_string_array_data_)) {
+    LOG(ERROR) << "Zero query data is broken";
+    return Status::DATA_BROKEN;
+  }
 
   if (!reader.Get("usage_item_array", &usage_items_data_)) {
     VLOG(2) << "Usage dictionary is not provided";
@@ -494,6 +511,17 @@ void DataManager::GetCounterSuffixSortedArray(const char **array,
                                               size_t *size) const {
   *array = counter_suffix_data_.data();
   *size = counter_suffix_data_.size();
+}
+
+void DataManager::GetZeroQueryData(
+    StringPiece *zero_query_token_array_data,
+    StringPiece *zero_query_string_array_data,
+    StringPiece *zero_query_number_token_array_data,
+    StringPiece *zero_query_number_string_array_data) const {
+  *zero_query_token_array_data = zero_query_token_array_data_;
+  *zero_query_string_array_data = zero_query_string_array_data_;
+  *zero_query_number_token_array_data = zero_query_number_token_array_data_;
+  *zero_query_number_string_array_data = zero_query_number_string_array_data_;
 }
 
 #ifndef NO_USAGE_REWRITER

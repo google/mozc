@@ -187,6 +187,7 @@ class ConverterTest : public ::testing::Test {
 
   // This struct holds resources used by converter.
   struct ConverterAndData {
+    std::unique_ptr<testing::MockDataManager> data_manager;
     std::unique_ptr<DictionaryInterface> user_dictionary;
     std::unique_ptr<SuppressionDictionary> suppression_dictionary;
     std::unique_ptr<DictionaryInterface> suffix_dictionary;
@@ -239,7 +240,8 @@ class ConverterTest : public ::testing::Test {
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     PredictorInterface *dictionary_predictor =
-        new DictionaryPredictor(converter_and_data.converter.get(),
+        new DictionaryPredictor(*converter_and_data.data_manager,
+                                converter_and_data.converter.get(),
                                 converter_and_data.immutable_converter.get(),
                                 converter_and_data.dictionary.get(),
                                 converter_and_data.suffix_dictionary.get(),
@@ -272,7 +274,8 @@ class ConverterTest : public ::testing::Test {
                             RewriterInterface *rewriter,
                             PredictorType predictor_type,
                             ConverterAndData *converter_and_data) {
-    testing::MockDataManager data_manager;
+    converter_and_data->data_manager.reset(new testing::MockDataManager());
+    const auto &data_manager = *converter_and_data->data_manager;
 
     const char *dictionary_data = nullptr;
     int dictionary_size = 0;
@@ -1406,6 +1409,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                   suppression_dictionary.get(),
                   DefaultPredictor::CreateDefaultPredictor(
                       new DictionaryPredictor(
+                          data_manager,
                           converter.get(),
                           immutable_converter.get(),
                           dictionary.get(),

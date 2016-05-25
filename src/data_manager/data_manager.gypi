@@ -120,6 +120,7 @@
         'gen_separate_emoticon_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_emoji_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_single_kanji_rewriter_data_for_<(dataset_tag)#host',
+        'gen_separate_zero_query_data_for_<(dataset_tag)#host',
         'gen_separate_version_data_for_<(dataset_tag)#host',
       ],
       'actions': [
@@ -161,6 +162,10 @@
             'single_kanji_variant_string': '<(gen_out_dir)/single_kanji_variant_string.data',
             'single_kanji_noun_prefix_token': '<(gen_out_dir)/single_kanji_noun_prefix_token.data',
             'single_kanji_noun_prefix_string': '<(gen_out_dir)/single_kanji_noun_prefix_string.data',
+            'zero_query_token_array': '<(gen_out_dir)/zero_query_token.data',
+            'zero_query_string_array': '<(gen_out_dir)/zero_query_string.data',
+            'zero_query_number_token_array': '<(gen_out_dir)/zero_query_number_token.data',
+            'zero_query_number_string_array': '<(gen_out_dir)/zero_query_number_string.data',
             'version': '<(gen_out_dir)/version.data',
           },
           'inputs': [
@@ -198,6 +203,10 @@
             '<(single_kanji_variant_string)',
             '<(single_kanji_noun_prefix_token)',
             '<(single_kanji_noun_prefix_string)',
+            '<(zero_query_token_array)',
+            '<(zero_query_string_array)',
+            '<(zero_query_number_token_array)',
+            '<(zero_query_number_string_array)',
             '<(version)',
           ],
           'outputs': [
@@ -241,6 +250,10 @@
             'single_kanji_variant_string:32:<(gen_out_dir)/single_kanji_variant_string.data',
             'single_kanji_noun_prefix_token:32:<(gen_out_dir)/single_kanji_noun_prefix_token.data',
             'single_kanji_noun_prefix_string:32:<(gen_out_dir)/single_kanji_noun_prefix_string.data',
+            'zero_query_token_array:32:<(gen_out_dir)/zero_query_token.data',
+            'zero_query_string_array:32:<(gen_out_dir)/zero_query_string.data',
+            'zero_query_number_token_array:32:<(gen_out_dir)/zero_query_number_token.data',
+            'zero_query_number_string_array:32:<(gen_out_dir)/zero_query_number_string.data',
             'version:32:<(gen_out_dir)/version.data',
           ],
           'conditions': [
@@ -888,6 +901,65 @@
           ],
           'message': ('[<(dataset_tag)] Generating ' +
                       '<(gen_out_dir)/counter_suffix.data'),
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_zero_query_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_separate_zero_query_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(mozc_dir)/prediction/gen_zero_query_data.py',
+            'input_files': [
+              '<(mozc_dir)/data/emoji/emoji_data.tsv',
+              '<(mozc_dir)/data/emoticon/categorized.tsv',
+              '<(mozc_dir)/data/symbol/symbol.tsv',
+              '<(mozc_dir)/data/zero_query/zero_query.def',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/zero_query_token.data',
+            '<(gen_out_dir)/zero_query_string.data',
+          ],
+          'action': [
+            'python', '<(generator)',
+            '--input_rule=<(mozc_dir)/data/zero_query/zero_query.def',
+            '--input_symbol=<(mozc_dir)/data/symbol/symbol.tsv',
+            '--input_emoji=<(mozc_dir)/data/emoji/emoji_data.tsv',
+            '--input_emoticon=<(mozc_dir)/data/emoticon/categorized.tsv',
+            '--output_token_array=<(gen_out_dir)/zero_query_token.data',
+            '--output_string_array=<(gen_out_dir)/zero_query_string.data',
+          ],
+        },
+        {
+          'action_name': 'gen_separate_zero_query_number_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(mozc_dir)/prediction/gen_zero_query_number_data.py',
+            'input_files': [
+              '<(mozc_dir)/data/zero_query/zero_query_number.def',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/zero_query_number_token.data',
+            '<(gen_out_dir)/zero_query_number_string.data',
+          ],
+          'action': [
+            'python', '<(generator)',
+            '--input=<(mozc_dir)/data/zero_query/zero_query_number.def',
+            '--output_token_array=<(gen_out_dir)/zero_query_number_token.data',
+            '--output_string_array=<(gen_out_dir)/zero_query_number_string.data',
+          ],
         },
       ],
     },

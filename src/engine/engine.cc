@@ -244,7 +244,8 @@ void Engine::Init(
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     PredictorInterface *dictionary_predictor =
-        new DictionaryPredictor(converter_.get(),
+        new DictionaryPredictor(*data_manager,
+                                converter_.get(),
                                 immutable_converter_.get(),
                                 dictionary_.get(),
                                 suffix_dictionary_.get(),
