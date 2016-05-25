@@ -47,6 +47,7 @@
         '../converter/converter_base.gyp:converter_util',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
+        '../request/request.gyp:conversion_request',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:keymap',
