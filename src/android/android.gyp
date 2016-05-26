@@ -207,7 +207,6 @@
       'type': 'none',
       'dependencies': [
         'assets_credits',
-        'assets_mozc_dataset',
         'assets_touch_stat_data',
       ]
     },
@@ -219,24 +218,6 @@
         'files': [
           # Copies the copyright and credit info.
           '../data/installer/credits_en.html',
-        ],
-      }],
-    },
-    {
-      'target_name': 'assets_mozc_dataset',
-      'type': 'none',
-      'actions': [{
-        'action_name': 'assets_copy_dataset',
-        'inputs': [
-          '<(mozc_dataset)',
-        ],
-        'outputs': [
-          '<(sdk_asset_dir)/mozc.imy',
-        ],
-        'action': [
-          # Note that multiple output files cannot be handled
-          # by copy_file script.
-          '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
         ],
       }],
     },
@@ -537,11 +518,15 @@
       'sources': [
         'jni/mozcjni.cc',
       ],
+      'defines': [
+        'MOZC_USE_CUSTOM_DATA_MANAGER',
+      ],
       'product_dir': '<(abs_android_dir)/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:jni_proxy',
         '../data_manager/data_manager_base.gyp:data_manager',
+        '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
         '../dictionary/dictionary.gyp:dictionary',
         '../engine/engine.gyp:engine',
         '../engine/engine.gyp:engine_builder',
@@ -554,17 +539,6 @@
          # -s: Strip unused symbols
          # --version-script: Remove almost all exportable symbols
          '-Wl,-s,--version-script,<(abs_android_dir)/libmozc.lds',
-      ],
-      'conditions': [
-        ['branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            '../data_manager/android/android_data_manager.gyp:android_data_manager',
-          ]
-        }, {
-          'dependencies': [
-            '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
-          ]
-        }],
       ],
     },
     {
@@ -590,17 +564,6 @@
         '../rewriter/calculator/calculator.gyp:install_calculator_test_data',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
-      ],
-      'conditions': [
-        ['branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            '../data_manager/android/android_data_manager_test.gyp:install_android_data_manager_test_data',
-          ]
-        }, {
-          'dependencies': [
-            '../data_manager/oss/oss_data_manager_test.gyp:install_oss_data_manager_test_data',
-          ]
-        }],
       ],
     },
     {
