@@ -53,7 +53,7 @@ class FocusCandidateRewriter : public RewriterInterface  {
   // is automatically placed at the top.
   bool Focus(Segments *segments,
              size_t segment_index,
-             int candidate_index) const;
+             int candidate_index) const override;
 
   bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const override {

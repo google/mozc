@@ -85,7 +85,7 @@ class UserDictionary : public DictionaryInterface {
   bool Load(const user_dictionary::UserDictionaryStorage &storage);
 
   // Reloads dictionary asynchronously
-  bool Reload();
+  bool Reload() override;
 
   // Waits until reloader finishes
   void WaitForReloader();
