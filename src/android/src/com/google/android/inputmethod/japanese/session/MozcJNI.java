@@ -107,6 +107,12 @@ class MozcJNI {
   private static native String getVersion();
 
   /**
+   * @return Data version string currently loaded in native layer. Empty if initialization has
+   *     not been done yet.
+   */
+  public static native String getDataVersion();
+
+  /**
    * Sets suppression policy against sending usage stats.
    *
    * <p>Never call this method before JNI is loaded.

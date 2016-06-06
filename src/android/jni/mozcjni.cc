@@ -177,6 +177,14 @@ jstring JNICALL getVersion(JNIEnv *env) {
   return env->NewStringUTF(Version::GetMozcVersion().c_str());
 }
 
+jstring JNICALL getDataVersion(JNIEnv *env) {
+  string version = "";
+  if (g_session_handler) {
+    g_session_handler->GetDataVersion().CopyToString(&version);
+  }
+  return env->NewStringUTF(version.c_str());
+}
+
 void JNICALL suppressSendingStats(JNIEnv *env,
                                   jobject clazz,
                                   jboolean suppress) {
@@ -212,6 +220,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
       {"getVersion",
        "()Ljava/lang/String;",
        reinterpret_cast<void*>(&mozc::jni::getVersion)},
+      {"getDataVersion",
+       "()Ljava/lang/String;",
+       reinterpret_cast<void*>(&mozc::jni::getDataVersion)},
       {"suppressSendingStats",
        "(Z)V",
        reinterpret_cast<void*>(&mozc::jni::suppressSendingStats)},

@@ -98,6 +98,9 @@ class SessionHandler : public SessionHandlerInterface {
   session::SessionInterface *NewSession();
 
   void AddObserver(session::SessionObserverInterface *observer) override;
+  StringPiece GetDataVersion() const override {
+    return engine_->GetDataVersion();
+  }
 
   const EngineInterface &engine() const { return *engine_; }
 
