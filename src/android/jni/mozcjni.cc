@@ -144,12 +144,15 @@ std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
   return result;
 }
 
-void JNICALL onPostLoad(JNIEnv *env,
+// Does post-load tasks.
+// Returns true if the task succeeded
+// or SessionHandler has already been initializaed.
+jboolean JNICALL onPostLoad(JNIEnv *env,
                         jclass clazz,
                         jstring user_profile_directory_path,
                         jstring data_file_path) {
   if (g_session_handler) {
-    return;
+    return true;
   }
 
   // First of all, set the user profile directory.
@@ -166,11 +169,12 @@ void JNICALL onPostLoad(JNIEnv *env,
     JavaHttpClientProxy::SetJavaVM(nullptr);
     SystemUtil::SetUserProfileDirectory(original_dir);
     LOG(DFATAL) << "Failed to create Mozc session handler";
-    return;
+    return false;
   }
 
   // Starts usage stats timer.
   Scheduler::AddJob(GetJobSetting());
+  return true;
 }
 
 jstring JNICALL getVersion(JNIEnv *env) {
@@ -215,7 +219,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
        "([B)[B",
        reinterpret_cast<void*>(&mozc::jni::evalCommand)},
       {"onPostLoad",
-       "(Ljava/lang/String;Ljava/lang/String;)V",
+       "(Ljava/lang/String;Ljava/lang/String;)Z",
        reinterpret_cast<void*>(&mozc::jni::onPostLoad)},
       {"getVersion",
        "()Ljava/lang/String;",

@@ -76,7 +76,10 @@ class MozcJNI {
         message.append(" Server:").append(nativeVersion);
         throw new UnsatisfiedLinkError(message.toString());
       }
-      onPostLoad(userProfileDirectoryPath, dataFilePath);
+      if (!onPostLoad(userProfileDirectoryPath, dataFilePath)) {
+          MozcLog.e("onPostLoad fails");
+          return;
+      }
       isLoaded = true;
       MozcLog.d("end MozcJNI#load " + System.nanoTime());
     }
@@ -98,7 +101,7 @@ class MozcJNI {
    * for JNI called when the shared object is loaded, because we need to pass the file path
    * of data file from Java as only Java knows where the data is in our context.
    */
-  private static synchronized native void onPostLoad(
+  private static synchronized native boolean onPostLoad(
       String userProfileDirectoryPath, String dataFilePath);
 
   /**
