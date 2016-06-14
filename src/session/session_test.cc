@@ -7632,6 +7632,20 @@ bool FindCandidateID(const commands::Candidates &candidates,
   return false;
 }
 
+void FindCandidateIDs(const commands::Candidates &candidates,
+                      const string &value, vector<int> *ids) {
+  CHECK(ids);
+  ids->clear();
+  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
+    const commands::Candidates::Candidate &candidate =
+        candidates.candidate(i);
+    LOG(INFO) <<  candidate.value();
+    if (candidate.value() == value) {
+      ids->push_back(candidate.id());
+    }
+  }
+}
+
 TEST_F(SessionTest, CommitCandidate_T13N) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get(), *mobile_request_);
@@ -8558,6 +8572,74 @@ TEST_F(SessionTest, UndoKeyAction) {
     EXPECT_PREEDIT("\xE3\x81\x93", command);
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
+  }
+}
+
+TEST_F(SessionTest, DedupAfterUndo) {
+  commands::Command command;
+  {
+    Session session(mock_data_engine_.get());
+    InitSessionToPrecomposition(&session, *mobile_request_);
+
+    // Undo requires capability DELETE_PRECEDING_TEXT.
+    commands::Capability capability;
+    capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+    session.set_client_capability(capability);
+
+    SwitchInputMode(commands::HIRAGANA, &session);
+
+    commands::Request request(*mobile_request_);
+    request.set_special_romanji_table(
+        commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+    session.SetRequest(&request);
+
+    composer::Table table;
+    table.InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::DefaultConfig());
+    session.SetTable(&table);
+
+    // Type "!" to produce "！".
+    SetSendKeyCommand("!", &command);
+    session.SendKey(&command);
+    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    // "！"
+    EXPECT_EQ("\xef\xbc\x81", GetComposition(command));
+
+    ASSERT_TRUE(command.output().has_candidates());
+
+    vector<int> ids;
+    // "！"
+    FindCandidateIDs(
+        command.output().candidates(), "\xef\xbc\x81", &ids);
+    EXPECT_GE(1, ids.size());
+
+    FindCandidateIDs(command.output().candidates(), "!", &ids);
+    EXPECT_GE(1, ids.size());
+
+    const int candidate_size_before_undo =
+        command.output().candidates().candidate_size();
+
+    command.Clear();
+    session.CommitFirstSuggestion(&command);
+    EXPECT_FALSE(command.output().has_preedit());
+    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+
+    command.Clear();
+    session.Undo(&command);
+    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    ASSERT_TRUE(command.output().has_candidates());
+
+    // "！"
+    FindCandidateIDs(
+        command.output().candidates(), "\xef\xbc\x81", &ids);
+    EXPECT_GE(1, ids.size());
+
+    FindCandidateIDs(command.output().candidates(), "!", &ids);
+    EXPECT_GE(1, ids.size());
+
+    EXPECT_EQ(command.output().candidates().candidate_size(),
+              candidate_size_before_undo);
   }
 }
 

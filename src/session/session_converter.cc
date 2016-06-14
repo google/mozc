@@ -1184,16 +1184,17 @@ SessionConverter* SessionConverter::Clone() const {
   session_converter->previous_suggestions_.CopyFrom(previous_suggestions_);
   session_converter->conversion_preferences_ = conversion_preferences();
   session_converter->result_->CopyFrom(*result_);
+  session_converter->request_ = request_;
+  session_converter->config_ = config_;
+  session_converter->use_cascading_window_ = use_cascading_window_;
+  session_converter->selected_candidate_indices_ = selected_candidate_indices_;
 
   if (session_converter->CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
+    // UpdateCandidateList() is not simple setter and it uses some members.
     session_converter->UpdateCandidateList();
     session_converter->candidate_list_->MoveToId(candidate_list_->focused_id());
     session_converter->SetCandidateListVisible(candidate_list_visible_);
   }
-
-  session_converter->request_ = request_;
-  session_converter->config_ = config_;
-  session_converter->selected_candidate_indices_ = selected_candidate_indices_;
 
   return session_converter;
 }
