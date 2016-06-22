@@ -148,7 +148,7 @@
       }],
       ['branding=="Mozc"', {
         'nacl_mozc_files': [
-          '<(gen_out_dir)/nacl_mozc/mozc.imy',
+          '<(gen_out_dir)/nacl_mozc/mozc.data',
         ],
       }],
     ],
@@ -420,7 +420,7 @@
             }],
             ['branding=="Mozc"', {
               'files': [
-                '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/mozc.imy',
+                '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/mozc.data',
               ],
             }],
           ],

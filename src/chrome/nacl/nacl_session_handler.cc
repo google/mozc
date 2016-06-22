@@ -336,7 +336,7 @@ class MozcSessionHandlerThread : public Thread {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
     const string data_file_name = "./zipped_data_chromeos";
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
-    const string data_file_name = "./mozc.imy";
+    const string data_file_name = "./mozc.data";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
     string file_content;
     CHECK(HTTPClient::Get(data_file_name, option, &file_content))

@@ -75,7 +75,7 @@
         # and Fedora (jsr-305.jar).
         # TODO(yukawa): We should not rely on "find" command here.
         'jsr305_jar_path': '<!(find /usr/share/java -name "jsr305.jar" -o -name "jsr-305.jar")',
-        'mozc_dataset': '<(shared_intermediate_mozc_dir)/data_manager/oss/mozc.imy',
+        'mozc_dataset': '<(shared_intermediate_mozc_dir)/data_manager/oss/mozc.data',
         'connection_text_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/connection_single_column.txt',
         'native_test_small_targets': [
           'oss_data_manager_test',
