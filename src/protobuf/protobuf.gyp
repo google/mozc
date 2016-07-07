@@ -55,6 +55,7 @@
     'protobuf_prebuilt_jar_path': '',
 
     'protobuf_cpp_root': '<(protobuf_root)/src/google/protobuf',
+    # Sources for Proto3.
     'protobuf_sources': [
       '<(protobuf_cpp_root)/any.cc',
       '<(protobuf_cpp_root)/arena.cc',
@@ -99,6 +100,7 @@
       '<(protobuf_cpp_root)/wire_format.cc',
       '<(protobuf_cpp_root)/wire_format_lite.cc',
     ],
+    # Sources for Proto3.
     'protoc_sources': [
       '<(protobuf_cpp_root)/any.cc',
       '<(protobuf_cpp_root)/arena.cc',
@@ -226,7 +228,8 @@
               '-lprotobuf',
             ],
           },
-        }, {  # else
+        },
+        {  # else
           'sources': ['<@(protobuf_sources)'],
           'include_dirs': [
             '<(protobuf_root)/src',
@@ -275,12 +278,13 @@
       'dependencies': [
         'protobuf',
       ],
-      'include_dirs': [
-        '<(protobuf_root)/src',
-      ],
       'conditions': [
-        ['use_libprotobuf==0', {
+        [
+        'use_libprotobuf==0', {
           'sources': ['<@(protoc_sources)'],
+          'include_dirs': [
+            '<(protobuf_root)/src',
+          ],
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
           ],
