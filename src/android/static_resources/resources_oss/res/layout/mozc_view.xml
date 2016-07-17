@@ -222,12 +222,12 @@ MozcView(Frame)
                             <FrameLayout
                                 android:id="@+id/keyboard_frame"
                                 android:layout_width="fill_parent"
-                                android:layout_height="@dimen/input_frame_height" >
+                                android:layout_height="wrap_content" >
 
                                 <org.mozc.android.inputmethod.japanese.keyboard.KeyboardView
                                     android:id="@+id/keyboard_view"
                                     android:layout_width="fill_parent"
-                                    android:layout_height="fill_parent" />
+                                    android:layout_height="@dimen/input_frame_height" />
 
                                 <View
                                     android:id="@+id/keyboard_frame_separator"

@@ -465,7 +465,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     mozcView.reset();
 
     assertEquals(View.VISIBLE, mozcView.getKeyboardFrame().getVisibility());
-    assertTrue(mozcView.getKeyboardFrame().getLayoutParams().height > 0);
+    assertEquals(LayoutParams.WRAP_CONTENT, mozcView.getKeyboardFrame().getLayoutParams().height);
+    assertEquals(View.VISIBLE, mozcView.getKeyboardView().getVisibility());
+    assertTrue(mozcView.getKeyboardView().getLayoutParams().height > 0);
     assertFalse(mozcView.candidateViewManager.isKeyboardCandidateViewVisible());
     assertEquals(View.GONE, mozcView.getSymbolInputView().getVisibility());
     assertNull(mozcView.getSymbolInputView().getAnimation());
@@ -512,9 +514,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
         resources.getDimensionPixelSize(R.dimen.input_frame_height);
     int buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
     int symbolInputFrameHeight = inputFrameHeight + buttonFrameHeight;
-    int narrowImeWindowHeight = resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height);
-    int narrowFrameHeight =
-        resources.getDimensionPixelSize(R.dimen.narrow_frame_height);
+    int narrowFrameHeight = MozcView.getNarrowFrameHeight(resources);
+    int narrowImeWindowHeight =
+        narrowFrameHeight + resources.getDimensionPixelSize(R.dimen.narrow_candidate_window_height);
 
     class TestData extends Parameter {
       final boolean narrowMode;
@@ -595,9 +597,9 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     int imeWindowHeight = resources.getDimensionPixelSize(R.dimen.ime_window_height);
     int inputFrameHeight = resources.getDimensionPixelSize(R.dimen.input_frame_height);
     int buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
-    int narrowImeWindowHeight = resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height);
-    int narrowFrameHeight =  resources.getDimensionPixelSize(R.dimen.narrow_frame_height);
-
+    int narrowFrameHeight =  MozcView.getNarrowFrameHeight(resources);
+    int narrowImeWindowHeight =
+        narrowFrameHeight + resources.getDimensionPixelSize(R.dimen.narrow_candidate_window_height);
 
     class TestData extends Parameter {
       final boolean fullscreenMode;
@@ -741,7 +743,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     assertTrue(mozcView.isNarrowMode());
     assertEquals(View.GONE, keyboardFrame.getVisibility());
     assertEquals(View.GONE, inputFrameButton.getVisibility());
-    assertEquals(View.VISIBLE, narrowFrame.getVisibility());
+    assertEquals(MozcView.IS_NARROW_FRAME_ENABLED ? View.VISIBLE : View.GONE,
+                 narrowFrame.getVisibility());
 
     mozcView.setLayoutAdjustmentAndNarrowMode(LayoutAdjustment.FILL, false);
     assertFalse(mozcView.isNarrowMode());
@@ -884,7 +887,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       assertEquals(testData.toString(),
                    testData.expectForegroundFrameGravity, layoutCapture.getValue().gravity);
       assertEquals(testData.narrowMode ? View.GONE : View.VISIBLE, keyboardFrame.getVisibility());
-      assertEquals(testData.narrowMode ? View.VISIBLE : View.GONE, narrowFrameView.getVisibility());
+      boolean narrowFrameVisible = testData.narrowMode && MozcView.IS_NARROW_FRAME_ENABLED;
+      assertEquals(narrowFrameVisible ? View.VISIBLE : View.GONE, narrowFrameView.getVisibility());
     }
   }
 

@@ -594,6 +594,20 @@ public final class MozcUtil {
     return Bitmap.createBitmap(src);
   }
 
+  public static Bitmap createBitmap(Bitmap bitmap, int x, int y, int width, int height) {
+    Preconditions.checkNotNull(bitmap);
+    for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
+      try {
+        return Bitmap.createBitmap(bitmap, x, y, width, height);
+      } catch (OutOfMemoryError e) {
+        // Retry with GC.
+        System.gc();
+      }
+    }
+
+    return Bitmap.createBitmap(bitmap, x, y, width, height);
+  }
+
   /**
    * Sets the given {@code token} and some layout parameters required to show the dialog from
    * the IME service correctly to the {@code dialog}.
@@ -871,7 +885,6 @@ public final class MozcUtil {
    *
    * public accessibility for easier invocation via reflection.
    */
-  @TargetApi(9)
   public static class StrictModeRelaxer {
     private StrictModeRelaxer() {}
     public static void relaxStrictMode() {

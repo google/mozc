@@ -45,17 +45,8 @@ import android.widget.FrameLayout;
  */
 public abstract class InOutAnimatedFrameLayout extends FrameLayout {
   private class OutAnimationAdapter implements AnimationListener {
-    private final AnimationListener baseListener;
-    OutAnimationAdapter(AnimationListener baseListener) {
-      this.baseListener = baseListener;
-    }
-
     @Override
     public void onAnimationEnd(Animation animation) {
-      if (baseListener != null) {
-        baseListener.onAnimationEnd(animation);
-      }
-
       // We need to set this view's visibility to {@code GONE} *after* the out animation is
       // finished. This listener handles it.
       setVisibility(View.GONE);
@@ -63,16 +54,10 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
 
     @Override
     public void onAnimationRepeat(Animation animation) {
-      if (baseListener != null) {
-        baseListener.onAnimationRepeat(animation);
-      }
     }
 
     @Override
     public void onAnimationStart(Animation animation) {
-      if (baseListener != null) {
-        baseListener.onAnimationStart(animation);
-      }
     }
   }
 
@@ -88,12 +73,6 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
 
   /** Animation used when this view is hidden. */
   @VisibleForTesting Animation outAnimation;
-
-  /** AnimationListener for in-animation. */
-  private AnimationListener inAnimationListener;
-
-  /** AnimationListener for out-animation. */
-  private AnimationListener outAnimationListener;
 
   @VisibleForTesting VisibilityChangeListener onVisibilityChangeListener = null;
 
@@ -111,24 +90,22 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
   }
 
   public void setInAnimation(int resourceId) {
-    // Cancel the current "in animation".
-    inAnimation = loadAnimation(getContext(), resourceId);
-    setAnimationListenerInternal(inAnimation, inAnimationListener);
+    setInAnimation(loadAnimation(getContext(), resourceId));
   }
 
   public void setInAnimation(Animation inAnimation) {
     this.inAnimation = inAnimation;
-    setAnimationListenerInternal(inAnimation, inAnimationListener);
   }
 
   public void setOutAnimation(int resourceId) {
-    outAnimation = loadAnimation(getContext(), resourceId);
-    setAnimationListenerInternal(outAnimation, new OutAnimationAdapter(outAnimationListener));
+    setOutAnimation(loadAnimation(getContext(), resourceId));
   }
 
   public void setOutAnimation(Animation outAnimation) {
     this.outAnimation = outAnimation;
-    setAnimationListenerInternal(outAnimation, new OutAnimationAdapter(outAnimationListener));
+    if (outAnimation != null) {
+      outAnimation.setAnimationListener(new OutAnimationAdapter());
+    }
   }
 
   private static Animation loadAnimation(Context context, int resourceId) {
@@ -137,27 +114,6 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
       return null;
     }
     return AnimationUtils.loadAnimation(context, resourceId);
-  }
-
-  public void setInAnimationListener(AnimationListener inAnimationListener) {
-    this.inAnimationListener = inAnimationListener;
-    setAnimationListenerInternal(inAnimation, inAnimationListener);
-  }
-
-  public void setOutAnimationListener(AnimationListener outAnimationListener) {
-    this.outAnimationListener = outAnimationListener;
-    setAnimationListenerInternal(outAnimation, new OutAnimationAdapter(outAnimationListener));
-  }
-
-  /**
-   * Registers {@code listener} to {@code animation} as its callback, iff both are non-null.
-   * Otherwise just do nothing.
-   */
-  private static void setAnimationListenerInternal(
-      Animation animation, AnimationListener listener) {
-    if (animation != null && listener != null) {
-      animation.setAnimationListener(listener);
-    }
   }
 
   /**

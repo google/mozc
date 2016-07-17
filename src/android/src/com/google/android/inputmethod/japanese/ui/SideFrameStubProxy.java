@@ -86,7 +86,6 @@ public class SideFrameStubProxy {
         currentView.get().setVisibility(View.VISIBLE);
         adjustButton = Optional.of(ImageView.class.cast(view.findViewById(adjustButtonId)));
         adjustButton.get().setOnClickListener(buttonOnClickListener.orNull());
-        adjustButton.get().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         updateAdjustButtonImage();
         resetAdjustButtonBottomMarginInternal(inputFrameHeight);
       }

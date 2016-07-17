@@ -42,8 +42,10 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import android.content.res.Configuration;
+import android.os.Build;
 import android.test.InstrumentationTestCase;
 import android.view.InputDevice;
 import android.view.KeyCharacterMap;
@@ -70,7 +72,14 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
 
   private void verifyNarrowMode(boolean expectation) {
     waitForExecution();
-    assertEquals(expectation, service.viewManager.isNarrowMode());
+    if (Build.VERSION.SDK_INT < 21) {
+      assertEquals(expectation, service.viewManager.isNarrowMode());
+    } else {
+      // MozcService always respects the configuration on Lollipop or later.
+      boolean isHardwareKeyboardAvailable =
+          service.getConfiguration().hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
+      assertEquals(isHardwareKeyboardAvailable, service.viewManager.isNarrowMode());
+    }
   }
 
   private void verifyKeyboardSpecificationInView(KeyboardSpecification specification) {
@@ -164,6 +173,11 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
     service.viewManager.setInputStyle(inputStyle);
   }
 
+  private void setConfiguration(Configuration configuration) {
+    service.stubConfiguration = Preconditions.checkNotNull(configuration);
+    service.onConfigurationChanged(null);
+  }
+
   // Waits for all the execution of the session executor.
   // Expected to be called from verify* methods.
   private void waitForExecution() {
@@ -173,13 +187,16 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
   private static Configuration getDefaultDeviceConfiguration() {
     Configuration configuration = new Configuration();
     configuration.orientation = Configuration.ORIENTATION_PORTRAIT;
+    configuration.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
     // Note: Some other fields might be needed.
-    // But currently only orientation field causes flaky test results.
+    // But currently only some fields which are initialized above cause flaky test results.
     return configuration;
   }
 
   class StubMozcService extends MozcService {
     public Output lastOutput = Output.getDefaultInstance();
+    public Configuration stubConfiguration = getDefaultDeviceConfiguration();
+
     @Override
     public boolean isInputViewShown() {
       // Always shown.
@@ -193,13 +210,13 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
     }
     @Override
     public void onConfigurationChanged(Configuration unused) {
-      // Use static config for stable testing.
-      super.onConfigurationChanged(getDefaultDeviceConfiguration());
+      // Use stub config for stable testing.
+      super.onConfigurationChanged(stubConfiguration);
     }
     @Override
     Configuration getConfiguration() {
-      // Use static config for stable testing.
-      return getDefaultDeviceConfiguration();
+      // Use stub config for stable testing.
+      return stubConfiguration;
     }
   }
 
@@ -208,6 +225,7 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
     service = new StubMozcService();
     service.attachBaseContext(getInstrumentation().getTargetContext());
     service.onCreate();
+    service.onConfigurationChanged(getDefaultDeviceConfiguration());
   }
 
   /**
@@ -287,27 +305,30 @@ public class KeyEventScenarioTest extends InstrumentationTestCase {
     verifyKeyboardSpecificationInView(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA);
     verifyKeyboardSpecificationInService(KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA);
 
+    Configuration configuration = service.getConfiguration();
+
+    setConfiguration(configuration);
     verifyNarrowMode(false);
     hardwareKeyEvent(KeyEvent.KEYCODE_ENTER, 0, 0, InputDevice.SOURCE_KEYBOARD);
     verifyNarrowMode(true);
 
-    service.viewManager.setNarrowMode(false);
+    setConfiguration(configuration);
     verifyNarrowMode(false);
     hardwareKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, 0, 0, InputDevice.SOURCE_KEYBOARD);
     verifyNarrowMode(true);
 
-    service.viewManager.setNarrowMode(false);
+    setConfiguration(configuration);
     verifyNarrowMode(false);
     hardwareKeyEvent(KeyEvent.KEYCODE_DPAD_RIGHT, 0, 0, InputDevice.SOURCE_KEYBOARD);
     verifyNarrowMode(true);
 
-    service.viewManager.setNarrowMode(false);
+    setConfiguration(configuration);
     verifyNarrowMode(false);
     hardwareKeyEvent(
         KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.META_SHIFT_ON, 0, InputDevice.SOURCE_KEYBOARD);
     verifyNarrowMode(true);
 
-    service.viewManager.setNarrowMode(false);
+    setConfiguration(configuration);
     verifyNarrowMode(false);
     hardwareKeyEvent(
         KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.META_SHIFT_ON, 0, InputDevice.SOURCE_KEYBOARD);

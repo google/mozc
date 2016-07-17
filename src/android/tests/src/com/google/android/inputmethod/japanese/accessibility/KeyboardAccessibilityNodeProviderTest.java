@@ -45,7 +45,6 @@ import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.keyboard.PopUp;
 import org.mozc.android.inputmethod.japanese.keyboard.Row;
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import com.google.common.base.Optional;
 
@@ -146,7 +145,6 @@ public class KeyboardAccessibilityNodeProviderTest extends InstrumentationTestCa
     };
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_AbsentKeyboard() {
     KeyboardAccessibilityNodeProvider provider =
@@ -164,7 +162,6 @@ public class KeyboardAccessibilityNodeProviderTest extends InstrumentationTestCa
     assertNull(provider.createAccessibilityNodeInfo(KeyboardAccessibilityNodeProvider.UNDEFINED));
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_NoId() {
     KeyboardAccessibilityNodeProvider provider =
@@ -177,7 +174,6 @@ public class KeyboardAccessibilityNodeProviderTest extends InstrumentationTestCa
     // Note: There is no way to get the id of children. Testing is omitted.
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_WithId() {
     View view = createMockView();
@@ -202,7 +198,6 @@ public class KeyboardAccessibilityNodeProviderTest extends InstrumentationTestCa
     assertTrue((info.getActions() & AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS) != 0);
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_ObscureInput() {
     View view = createMockView();
@@ -229,7 +224,6 @@ public class KeyboardAccessibilityNodeProviderTest extends InstrumentationTestCa
     }
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testPerformAction() {
     KeyboardAccessibilityNodeProvider provider =
@@ -348,7 +342,6 @@ public class KeyboardAccessibilityNodeProviderTest extends InstrumentationTestCa
   // Note AccessibilityEvent doesn't contain information enough to verify
   // the behavior of performActionForKey method (sourceId is required but not accessible).
   // Indirect verification instead.
-  @ApiLevel(14)
   @SmallTest
   public void testPerformActionForKey() {
     KeyboardAccessibilityNodeProvider provider =

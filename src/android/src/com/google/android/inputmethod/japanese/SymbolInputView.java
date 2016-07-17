@@ -83,7 +83,7 @@ import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TabHost;
@@ -479,19 +479,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
   }
 
-  private class OutAnimationAdapter extends AnimationAdapter {
-    @Override
-    public void onAnimationEnd(Animation animation) {
-      // Releases candidate resources. Also, on some devices, this cancels repeating invalidation
-      // to support emoji related stuff.
-      TabHost tabHost = getTabHost();
-      tabHost.setOnTabChangedListener(null);
-      ViewPager candidateViewPager = getCandidateViewPager();
-      candidateViewPager.setAdapter(null);
-      candidateViewPager.setOnPageChangeListener(null);
-    }
-  }
-
   /**
    * Name to represent this view for logging.
    */
@@ -551,7 +538,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   }
 
   {
-    setOutAnimationListener(new OutAnimationAdapter());
     sharedPreferences =
         Preconditions.checkNotNull(PreferenceManager.getDefaultSharedPreferences(getContext()));
   }
@@ -599,6 +585,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       setVerticalDimension(viewHeight.get(), keyboardHeightScale.get());
     }
 
+    initializeNumberKeyboard();
     initializeMinorCategoryTab();
     initializeCloseButton();
     initializeDeleteButton();
@@ -660,11 +647,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     enableEmoji(emojiEnabled);
 
-    // Disable h/w acceleration to use a PictureDrawable.
-    for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
-      getMajorCategoryButton(majorCategory).setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-    }
-
     updateSkinAwareDrawable();
     reset();
   }
@@ -694,7 +676,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     setLayoutHeight(this, symbolInputViewHeight);
     setLayoutHeight(getMajorCategoryFrame(), majorCategoryHeight);
     setLayoutHeight(findViewById(R.id.number_keyboard), numberKeyboardHeight.get());
-    setLayoutHeight(findViewById(R.id.number_keyboard_frame), LayoutParams.WRAP_CONTENT);
+    setLayoutHeight(getNumberKeyboardFrame(), LayoutParams.WRAP_CONTENT);
   }
 
   public int getNumberKeyboardHeight() {
@@ -780,6 +762,30 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
   }
 
+  private void initializeNumberKeyboard() {
+    final KeyboardFactory factory = new KeyboardFactory();
+
+    getNumberKeyboardView().addOnLayoutChangeListener(new OnLayoutChangeListener() {
+      @Override
+      public void onLayoutChange(
+          View view, int left, int top, int right, int bottom,
+          int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        int width = right - left;
+        int height = bottom - top;
+        int oldWidth = oldRight - oldLeft;
+        int oldHeight = oldBottom - oldTop;
+        if (width == 0 || height == 0 || (width == oldWidth && height == oldHeight)) {
+          return;
+        }
+        KeyboardView keyboardView = KeyboardView.class.cast(view);
+        Keyboard keyboard =
+            factory.get(getResources(), KeyboardSpecification.SYMBOL_NUMBER, width, height);
+        keyboardView.setKeyboard(keyboard);
+        keyboardView.invalidate();
+      }
+    });
+  }
+
   private void initializeMinorCategoryTab() {
     TabHost tabhost = getTabHost();
     tabhost.setup();
@@ -827,6 +833,14 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
             Optional.<Drawable>absent()),
         createMinorButtonBackgroundDrawable(skin)
     });
+  }
+
+  private void resetNumberKeyboard() {
+    if (!isInflated()) {
+      return;
+    }
+    // Resets candidate expansion.
+    setLayoutHeight(getNumberKeyboardFrame(), LayoutParams.WRAP_CONTENT);
   }
 
   private void resetTabImageForMinorCategory() {
@@ -995,13 +1009,33 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   @Override
   public void setVisibility(int visibility) {
-    int previousVisibility = getVisibility();
+    boolean isVisible = visibility == View.VISIBLE;
+    boolean previousIsVisible = getVisibility() == View.VISIBLE;
     super.setVisibility(visibility);
+
+    if (previousIsVisible == isVisible) {
+      return;
+    }
+
+    if (!isVisible) {
+      // Releases candidate resources. Also, on some devices, this cancels repeating invalidation
+      // to support emoji related stuff.
+      TabHost tabHost = getTabHost();
+      if (tabHost != null) {
+        tabHost.setOnTabChangedListener(null);
+      }
+      ViewPager candidateViewPager = getCandidateViewPager();
+      if (candidateViewPager != null) {
+        candidateViewPager.setAdapter(null);
+        candidateViewPager.setOnPageChangeListener(null);
+      }
+    }
+
     if (viewEventListener.isPresent()) {
-      if (previousVisibility == View.VISIBLE && visibility != View.VISIBLE) {
-        viewEventListener.get().onCloseSymbolInputView();
-      } else if (previousVisibility != View.VISIBLE && visibility == View.VISIBLE) {
+      if (isVisible) {
         viewEventListener.get().onShowSymbolInputView(Collections.<TouchEvent>emptyList());
+      } else {
+        viewEventListener.get().onCloseSymbolInputView();
       }
     }
   }
@@ -1091,7 +1125,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     if (currentMajorCategory == SymbolMajorCategory.NUMBER) {
       findViewById(android.R.id.tabhost).setVisibility(View.GONE);
       findViewById(R.id.number_frame).setVisibility(View.VISIBLE);
-      setNumberKeyboard();
+      resetNumberKeyboard();
     } else {
       findViewById(android.R.id.tabhost).setVisibility(View.VISIBLE);
       findViewById(R.id.number_frame).setVisibility(View.GONE);
@@ -1128,26 +1162,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           currentMajorCategory == SymbolMajorCategory.EMOJI
           && !emojiEnabled ? View.VISIBLE : View.GONE);
     }
-  }
-
-  private void setNumberKeyboard() {
-    final KeyboardSpecification spec = KeyboardSpecification.SYMBOL_NUMBER;
-    final KeyboardFactory factory = new KeyboardFactory();
-
-    getNumberKeyboardView().addOnLayoutChangeListener(new OnLayoutChangeListener() {
-      @Override
-      public void onLayoutChange(
-          View view, int left, int top, int right, int bottom,
-          int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        if (right - left == 0 || bottom - top == 0) {
-          return;
-        }
-        KeyboardView keyboardView = KeyboardView.class.cast(view);
-        Keyboard keyboard = factory.get(getResources(), spec, right - left, bottom - top);
-        keyboardView.setKeyboard(keyboard);
-        keyboardView.invalidate();
-      }
-    });
   }
 
   private void updateMinorCategory() {
@@ -1254,6 +1268,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   private KeyboardView getNumberKeyboardView() {
     return KeyboardView.class.cast(findViewById(R.id.number_keyboard));
+  }
+
+  private FrameLayout getNumberKeyboardFrame() {
+    return FrameLayout.class.cast(findViewById(R.id.number_keyboard_frame));
   }
 
   private LinearLayout getMajorCategoryFrame() {

@@ -170,6 +170,7 @@ public class JapaneseSoftwareKeyboardModel {
     }
     if ((inputType & InputType.TYPE_MASK_CLASS) == InputType.TYPE_CLASS_TEXT) {
       switch (inputType & InputType.TYPE_MASK_VARIATION) {
+        case InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS:
         case InputType.TYPE_TEXT_VARIATION_PASSWORD:
         case InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD:
         case InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS:

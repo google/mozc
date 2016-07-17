@@ -57,6 +57,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchE
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
@@ -80,7 +81,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 
 import java.util.Collections;
@@ -276,14 +276,15 @@ public class ViewManager implements ViewManagerInterface {
       isEmojiInvoking = false;
       if (mozcView != null) {
         if (isSymbolInputViewVisible) {
-          mozcView.hideSymbolInputView();
-          if (!isNarrowMode()) {
+          hideSubInputView();
+          if (!narrowMode) {
             setNarrowMode(true);
           }
         } else {
           isSymbolInputViewShownByEmojiKey = true;
-          if (isNarrowMode()) {
-            setNarrowMode(false);
+          if (narrowMode) {
+            // Turned narrow mode off on all devices for Emoji palette.
+            setNarrowModeWithoutVersionCheck(false);
           }
           mozcView.showSymbolInputView(Optional.of(SymbolMajorCategory.EMOJI));
         }
@@ -350,6 +351,9 @@ public class ViewManager implements ViewManagerInterface {
 
   /** Current narrow mode */
   private boolean narrowMode = false;
+
+  /** Current narrow mode */
+  private boolean narrowModeByConfiguration = false;
 
   /** Current popup enabled state. */
   private boolean popupEnabled = true;
@@ -656,13 +660,6 @@ public class ViewManager implements ViewManagerInterface {
     if (mozcView == null) {
       return false;
     }
-    MozcView mozcView = this.mozcView;
-
-    if (isSymbolInputViewShownByEmojiKey) {
-      setNarrowMode(true);
-      mozcView.hideSymbolInputView();
-      return true;
-    }
 
     // Try to hide a sub view from front to back.
     if (mozcView.hideSymbolInputView()) {
@@ -839,19 +836,35 @@ public class ViewManager implements ViewManagerInterface {
   }
 
   /**
-   * @param newNarrowMode Whether mozc view shows in narrow mode or normal.
+   * Sets narrow mode.
+   * <p>
+   * The behavior of this method depends on API level.
+   * We decided to respect the configuration on API 21 or later, so this method ignores the argument
+   * in such case. If you really want to bypass the version check, please use
+   * {@link #setNarrowModeWithoutVersionCheck(boolean)} instead.
    */
-  @Override
-  public void setNarrowMode(boolean newNarrowMode) {
-    boolean previousNarrowMode = this.narrowMode;
-    this.narrowMode = newNarrowMode;
+  private void setNarrowMode(boolean isNarrowMode) {
+    if (Build.VERSION.SDK_INT >= 21) {
+      // Always respects configuration on Lollipop or later.
+      setNarrowModeWithoutVersionCheck(narrowModeByConfiguration);
+    } else {
+      setNarrowModeWithoutVersionCheck(isNarrowMode);
+    }
+  }
+
+  private void setNarrowModeWithoutVersionCheck(boolean newNarrowMode) {
+    if (narrowMode == newNarrowMode) {
+      return;
+    }
+    narrowMode = newNarrowMode;
+    if (newNarrowMode) {
+      hideSubInputView();
+    }
     if (mozcView != null) {
       mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, newNarrowMode);
     }
     updateMicrophoneButtonEnabled();
-    if (previousNarrowMode != newNarrowMode) {
-      eventListener.onNarrowModeChanged(newNarrowMode);
-    }
+    eventListener.onNarrowModeChanged(newNarrowMode);
   }
 
   /**
@@ -868,7 +881,7 @@ public class ViewManager implements ViewManagerInterface {
   public void maybeTransitToNarrowMode(Command command, KeyEventInterface keyEventInterface) {
     Preconditions.checkNotNull(command);
     // Surely we don't anything when on narrow mode already.
-    if (isNarrowMode()) {
+    if (narrowMode) {
       return;
     }
     // Do nothing for the input from software keyboard.
@@ -881,7 +894,6 @@ public class ViewManager implements ViewManagerInterface {
     }
 
     // Passed all the check. Transit to narrow mode.
-    hideSubInputView();
     setNarrowMode(true);
   }
 
@@ -1024,6 +1036,11 @@ public class ViewManager implements ViewManagerInterface {
   public void onConfigurationChanged(Configuration newConfig) {
     primaryKeyCodeConverter.setConfiguration(newConfig);
     hardwareKeyboardExist = newConfig.keyboard != Configuration.KEYBOARD_NOKEYS;
+    if (newConfig.hardKeyboardHidden != Configuration.HARDKEYBOARDHIDDEN_UNDEFINED){
+      narrowModeByConfiguration =
+          newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
+      setNarrowMode(narrowModeByConfiguration);
+    }
   }
 
   @Override
@@ -1143,7 +1160,14 @@ public class ViewManager implements ViewManagerInterface {
   }
 
   @Override
-  public void setCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo) {
+  public void onStartInputView(EditorInfo editorInfo) {
+    if (mozcView != null) {
+      mozcView.onStartInputView(editorInfo);
+    }
+  }
+
+  @Override
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper cursorAnchorInfo) {
     if (mozcView != null) {
       mozcView.setCursorAnchorInfo(cursorAnchorInfo);
     }
@@ -1165,6 +1189,9 @@ public class ViewManager implements ViewManagerInterface {
 
   @Override
   public void onCloseSymbolInputView() {
+    if (isSymbolInputViewShownByEmojiKey) {
+      setNarrowMode(true);
+    }
     isSymbolInputViewVisible = false;
     isSymbolInputViewShownByEmojiKey = false;
   }

@@ -37,10 +37,10 @@
         android:color="#1AFFFFFF" />
     <Color
         android:name="twelvekeysLayoutReleasedKeyTopColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="twelvekeysLayoutReleasedKeyBottomColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="twelvekeysLayoutReleasedKeyHighlightColor"
         android:color="#00000000" />
@@ -52,7 +52,7 @@
         android:color="#00000000" />
     <Color
         android:name="twelvekeysLayoutReleasedKeyShadowColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="twelvekeysLayoutPressedKeyTopColor"
         android:color="#1AFFFFFF" />
@@ -73,10 +73,10 @@
         android:color="#00000000" />
     <Color
         android:name="twelvekeysLayoutReleasedFunctionKeyTopColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="twelvekeysLayoutReleasedFunctionKeyBottomColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="twelvekeysLayoutReleasedFunctionKeyHighlightColor"
         android:color="#00000000" />
@@ -109,10 +109,10 @@
         android:color="#00000000" />
     <Color
         android:name="qwertyLayoutReleasedKeyTopColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="qwertyLayoutReleasedKeyBottomColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="qwertyLayoutReleasedKeyHighlightColor"
         android:color="#00000000" />
@@ -133,10 +133,10 @@
         android:color="#00000000" />
     <Color
         android:name="qwertyLayoutReleasedFunctionKeyTopColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="qwertyLayoutReleasedFunctionKeyBottomColor"
-        android:color="#FF263238" />
+        android:color="#00000000" />
     <Color
         android:name="qwertyLayoutReleasedFunctionKeyHighlightColor"
         android:color="#00000000" />
@@ -202,16 +202,16 @@
         android:color="#FF80CBC4" />
     <Color
         android:name="candidateBackgroundTopColor"
-        android:color="#FF21272B" />
+        android:color="#00000000" />
     <Color
         android:name="candidateBackgroundBottomColor"
-        android:color="#FF21272B" />
+        android:color="#00000000" />
     <Color
         android:name="candidateBackgroundHighlightColor"
         android:color="#00000000" />
     <Color
         android:name="candidateBackgroundBorderColor"
-        android:color="#FF21272B" />
+        android:color="#00000000" />
     <Color
         android:name="candidateBackgroundSeparatorColor"
         android:color="#1AFFFFFF" />

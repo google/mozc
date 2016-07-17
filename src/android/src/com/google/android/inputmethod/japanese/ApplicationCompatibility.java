@@ -61,6 +61,15 @@ public class ApplicationCompatibility {
     // The treatment could be applicable always but the solution might be slight hacky so
     // currently it is applied on white-listed applications.
     PRETEND_WEB_EDIT_TEXT,
+
+    // A flag to ignore onUpdateSelection which moves to the tail of the composition.
+    //
+    // -- Background --
+    // When the IME sends composition text to Searchbar app, the app sets
+    // the entire text to the view. As a result onUpdateSelection is unexpectedly
+    // called back with the arguments which indicates cursor move to the tail of composition.
+    // To mitigate this issue the IME ignores cursor move to the tail when with this flag.
+    IGNORE_MOVE_TO_TAIL,
   }
 
   /** The default configuration */
@@ -79,6 +88,10 @@ public class ApplicationCompatibility {
   private static final ApplicationCompatibility EVERNOTE_INSTANCE =
       new ApplicationCompatibility(EnumSet.of(CompatibilityMode.PRETEND_WEB_EDIT_TEXT));
 
+  /** The special configuration for Searchbar, of which onSelectionUpdate is unreliable. */
+  private static final ApplicationCompatibility SEARCHBOX_INSTANCE =
+      new ApplicationCompatibility(EnumSet.of(CompatibilityMode.IGNORE_MOVE_TO_TAIL));
+
   private final EnumSet<CompatibilityMode> compatibilityModeSet;
 
   private ApplicationCompatibility(EnumSet<CompatibilityMode> compatibilityModeSet) {
@@ -95,6 +108,11 @@ public class ApplicationCompatibility {
     return compatibilityModeSet.contains(CompatibilityMode.PRETEND_WEB_EDIT_TEXT);
   }
 
+  /** @return {@code true} if onUpdateSelection with selection change should be ignored. */
+  public boolean isIgnoringMoveToTail() {
+    return compatibilityModeSet.contains(CompatibilityMode.IGNORE_MOVE_TO_TAIL);
+  }
+
   /**
    * @return an instance for the connected application.
    */
@@ -109,6 +127,9 @@ public class ApplicationCompatibility {
       }
       if ("org.mozilla.firefox".equals(packageName)) {
         return FIREFOX_INSTANCE;
+      }
+      if ("com.google.android.googlequicksearchbox".equals(packageName)) {
+        return SEARCHBOX_INSTANCE;
       }
     }
     return DEFAULT_INSTANCE;

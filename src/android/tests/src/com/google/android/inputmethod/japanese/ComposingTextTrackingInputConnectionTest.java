@@ -34,7 +34,6 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.same;
 
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 
 import android.os.Bundle;
@@ -124,7 +123,6 @@ public class ComposingTextTrackingInputConnectionTest extends InstrumentationTes
     verifyAll();
   }
 
-  @ApiLevel(11)
   public void testCommitCorrection() {
     CorrectionInfo info = new CorrectionInfo(0, "", "");
     expect(inputConnectionMock.commitCorrection(same(info))).andReturn(true);
@@ -191,7 +189,6 @@ public class ComposingTextTrackingInputConnectionTest extends InstrumentationTes
     verifyAll();
   }
 
-  @ApiLevel(9)
   public void testGetSelectedText() {
     expect(inputConnectionMock.getSelectedText(0)).andReturn("abc");
     replayAll();
@@ -266,7 +263,6 @@ public class ComposingTextTrackingInputConnectionTest extends InstrumentationTes
     verifyAll();
   }
 
-  @ApiLevel(9)
   public void testSetComposingRegion() {
     expect(inputConnectionMock.setComposingRegion(10, 20)).andReturn(true);
     replayAll();

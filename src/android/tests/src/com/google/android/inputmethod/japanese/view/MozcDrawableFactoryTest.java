@@ -33,12 +33,12 @@ import static org.easymock.EasyMock.expect;
 
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.vectorgraphic.BufferedDrawable;
 
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.PictureDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -60,19 +60,19 @@ public class MozcDrawableFactoryTest extends InstrumentationTestCaseWithMock {
     // Symbol icon contains path and circle.
     assertTrue(
         factory.getDrawable(R.raw.twelvekeys__function__symbol__icon).get()
-            instanceof PictureDrawable);
+            instanceof BufferedDrawable);
     // For polyline.
     assertTrue(
         factory.getDrawable(R.raw.twelvekeys__kana__support__12_left).get()
-            instanceof PictureDrawable);
+            instanceof BufferedDrawable);
     // For polygon.
     assertTrue(
         factory.getDrawable(R.raw.twelvekeys__function__space__icon).get()
-            instanceof PictureDrawable);
+            instanceof BufferedDrawable);
     // For rectangle.
     assertTrue(
         factory.getDrawable(R.raw.symbol__function__close).get()
-            instanceof PictureDrawable);
+            instanceof BufferedDrawable);
 
     // For StateListDrawable.
     assertTrue(

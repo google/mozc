@@ -71,10 +71,6 @@ public class NarrowFrameView extends LinearLayout {
 
   @Override
   public void onFinishInflate() {
-    // Disable h/w acceleration to use a PictureDrawable.
-    getHardwareCompositionButton().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-    getWidenButton().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
     setSkin(skin);
   }
 

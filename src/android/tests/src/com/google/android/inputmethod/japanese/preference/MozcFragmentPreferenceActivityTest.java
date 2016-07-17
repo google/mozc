@@ -32,7 +32,6 @@ package org.mozc.android.inputmethod.japanese.preference;
 import static android.test.MoreAsserts.assertEmpty;
 
 import org.mozc.android.inputmethod.japanese.testing.ActivityInstrumentationTestCase2WithMock;
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 
 import android.preference.PreferenceActivity.Header;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -42,7 +41,6 @@ import java.util.List;
 
 /**
  */
-@ApiLevel(11)
 public class MozcFragmentPreferenceActivityTest
     extends ActivityInstrumentationTestCase2WithMock<MozcFragmentPreferenceActivity> {
   public MozcFragmentPreferenceActivityTest() {

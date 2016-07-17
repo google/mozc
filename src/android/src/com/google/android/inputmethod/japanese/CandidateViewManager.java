@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese;
 import org.mozc.android.inputmethod.japanese.InOutAnimatedFrameLayout.VisibilityChangeListener;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
@@ -46,7 +47,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.TranslateAnimation;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 
 /**
@@ -58,27 +58,6 @@ class CandidateViewManager implements MemoryManageable {
   public interface KeyboardCandidateViewHeightListener {
     public void onExpanded();
     public void onCollapse();
-  }
-
-  private static class ClearCandidateAnimationListener implements Animation.AnimationListener {
-    private final CandidateView candidateView;
-
-    public ClearCandidateAnimationListener(CandidateView candidateView) {
-      this.candidateView = Preconditions.checkNotNull(candidateView);
-    }
-
-    @Override
-    public void onAnimationEnd(Animation animation) {
-      candidateView.update(EMPTY_COMMAND);
-    }
-
-    @Override
-    public void onAnimationRepeat(Animation animation) {
-    }
-
-    @Override
-    public void onAnimationStart(Animation animation) {
-    }
   }
 
   /** {@link CandidateMode#FLOATING} is only available on Lollipop or later. */
@@ -127,12 +106,8 @@ class CandidateViewManager implements MemoryManageable {
   private boolean allowFloatingMode = false;
   private boolean narrowMode = false;
 
-  /**
-   * Cache of {@link CursorAnchorInfo} instance to switch candidate views.
-   * This field is null if and only-if Floating candidate view is NOT available, so we don't mark
-   * this value as {code @Nullable} since this field should NOT be used in that situation.
-   */
-  private CursorAnchorInfo cursorAnchorInfo;
+  /** Cache of {@link CursorAnchorInfoWrapper} instance to switch candidate views. */
+  private CursorAnchorInfoWrapper cursorAnchorInfo = new CursorAnchorInfoWrapper();
 
   private Animation numberCandidateViewInAnimation = NO_ANIMATION;
   private Animation numberCandidateViewOutAnimation = NO_ANIMATION;
@@ -142,12 +117,6 @@ class CandidateViewManager implements MemoryManageable {
       CandidateView keyboardCandidateView, FloatingCandidateView floatingCandidateView) {
     this.keyboardCandidateView = Preconditions.checkNotNull(keyboardCandidateView);
     this.floatingCandidateView = Preconditions.checkNotNull(floatingCandidateView);
-    if (FloatingCandidateView.isAvailable()) {
-      cursorAnchorInfo = new CursorAnchorInfo.Builder().build();
-    }
-
-    keyboardCandidateView.setOutAnimationListener(
-        new ClearCandidateAnimationListener(keyboardCandidateView));
   }
 
   public void setNumberCandidateView(CandidateView numberCandidateView) {
@@ -156,8 +125,6 @@ class CandidateViewManager implements MemoryManageable {
     numberCandidateView.enableFoldButton(true);
     numberCandidateView.setInAnimation(numberCandidateViewInAnimation);
     numberCandidateView.setOutAnimation(numberCandidateViewOutAnimation);
-    numberCandidateView.setOutAnimationListener(
-        new ClearCandidateAnimationListener(numberCandidateView));
     if (candidateTextSize > 0 && descriptionTextSize > 0) {
       numberCandidateView.setCandidateTextDimension(candidateTextSize, descriptionTextSize);
     }
@@ -173,7 +140,9 @@ class CandidateViewManager implements MemoryManageable {
    * On-keyboard candidate view may animate and the animation listener may be invoked.
    */
   public void update(Command outCommand) {
-    updateInternal(Preconditions.checkNotNull(outCommand), true);
+    // Disable the animation in some situation to avoid ugly UI.
+    boolean withAnimation = !(isExtractedMode && candidateMode == CandidateMode.KEYBOARD);
+    updateInternal(Preconditions.checkNotNull(outCommand), withAnimation);
   }
 
   private void updateWithoutAnimation(Command outCommand) {
@@ -299,6 +268,10 @@ class CandidateViewManager implements MemoryManageable {
     }
   }
 
+  public void onStartInputView(EditorInfo editorInfo) {
+    floatingCandidateView.onStartInputView(editorInfo);
+  }
+
   public void setEditorInfo(EditorInfo info) {
     this.editorInfo = Preconditions.checkNotNull(info);
     if (candidateMode == CandidateMode.FLOATING) {
@@ -307,7 +280,7 @@ class CandidateViewManager implements MemoryManageable {
   }
 
   @TargetApi(21)
-  public void setCursorAnchorInfo(CursorAnchorInfo info) {
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {
     this.cursorAnchorInfo = Preconditions.checkNotNull(info);
     if (candidateMode == CandidateMode.FLOATING) {
       floatingCandidateView.setCursorAnchorInfo(info);

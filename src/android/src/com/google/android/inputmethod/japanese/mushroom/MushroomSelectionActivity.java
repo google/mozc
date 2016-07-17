@@ -97,6 +97,7 @@ public class MushroomSelectionActivity extends Activity {
 
     @Override
     public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
+      MushroomUtil.clearProxy();
       ResolveInfo resolveInfo = ResolveInfo.class.cast(adapter.getItemAtPosition(position));
       ActivityInfo activityInfo = resolveInfo.activityInfo;
       activity.startActivityForResult(

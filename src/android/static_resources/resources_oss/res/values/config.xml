@@ -73,6 +73,6 @@
   <integer name="floating_candidate_candidate_num">5</integer>
   <integer name="floating_mode_indicator_in_duration">50</integer>
   <integer name="floating_mode_indicator_out_duration">100</integer>
-  <integer name="floating_mode_indicator_display_time">420</integer>
+  <integer name="floating_mode_indicator_display_time">500</integer>
 
 </resources>

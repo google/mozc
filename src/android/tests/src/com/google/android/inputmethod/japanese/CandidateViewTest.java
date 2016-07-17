@@ -48,7 +48,6 @@ import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.base.Optional;
 
 import android.test.suitebuilder.annotation.SmallTest;
-import android.view.View;
 import android.widget.LinearLayout;
 
 import org.easymock.EasyMock;
@@ -91,7 +90,6 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
 
     mockScrollGuideView.setScroller(mockCandidateWordView.scroller);
     mockInputFrameFoldButtonView.setChecked(false);
-    mockInputFrameFoldButtonView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     replayAll();
 
     candidateView.onFinishInflate();

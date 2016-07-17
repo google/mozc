@@ -35,7 +35,6 @@ import com.google.common.base.Preconditions;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.view.View;
 import android.widget.ImageView;
 
 /**
@@ -67,8 +66,6 @@ public interface MozcImageCapableView {
 
     MozcImageCapableViewDelegate(MozcImageCapableView baseView) {
       this.baseView = Preconditions.checkNotNull(baseView);
-      // Disable h/w acceleration to use a PictureDrawable.
-      baseView.asImageView().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     }
 
     static boolean assertSrcAttribute(Resources resources, AttributeSet attrs) {
@@ -102,7 +99,8 @@ public interface MozcImageCapableView {
       if (rawId != INVALID_RESOURCE_ID) {
         ImageView view = baseView.asImageView();
         view.setImageDrawable(
-            skin.getDrawable(baseView.asImageView().getContext().getResources(), rawId));
+            skin.getDrawable(baseView.asImageView().getContext().getResources(), rawId)
+                .getConstantState().newDrawable());
         view.invalidate();
       }
     }

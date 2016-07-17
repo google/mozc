@@ -29,19 +29,16 @@
 
 package org.mozc.android.inputmethod.japanese.preference;
 
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
-
 import android.os.Bundle;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
 /**
  * TODO(matsuzakit): Test #addPreferences method.
- * Currently it is skpped because partial mock is not available
+ * Currently it is skipped because partial mock is not available
  * <http://b/6241958#ISSUE_HistoryHeader59>
  *
  */
-@ApiLevel(11)
 public class PreferenceBaseFragmentTest extends InstrumentationTestCase {
 
   @SmallTest

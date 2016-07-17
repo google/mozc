@@ -41,6 +41,7 @@ import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.Key
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.Skin;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
@@ -277,11 +278,8 @@ public class KeyboardPreviewDrawable extends Drawable {
       backgroundDrawableFactory.setSkin(skin);
       KeyboardViewBackgroundSurface backgroundSurface =
           new KeyboardViewBackgroundSurface(backgroundDrawableFactory, drawableCache);
-      backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
-      backgroundSurface.requestUpdateSize(virtualWidth, virtualHeight);
-      backgroundSurface.update();
+      backgroundSurface.reset(Optional.of(keyboard), Collections.<MetaState>emptySet());
       backgroundSurface.draw(canvas);
-      backgroundSurface.reset();  // Release the background bitmap and its canvas.
     }
 
     return bitmap;

@@ -239,7 +239,11 @@ public class MozcBasePreferenceActivity extends PreferenceActivity {
       imeEnableDialog.show();
       return;
     }
-    if (!MozcUtil.isMozcDefaultIme(context)) {
+    // If this is a system (=preinstalled) application (including updated one),
+    // Notification dialogs won't be shown to improve usability.
+    // If this is not a system one, imeSwitchDialog is shown because users might misunderstand
+    // that their system IME is Google Japanese Input.
+    if (!MozcUtil.isMozcDefaultIme(context) && !MozcUtil.isSystemApplication(context)) {
       imeSwitchDialog.show();
       return;
     }

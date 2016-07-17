@@ -167,6 +167,8 @@ class KeyboardAccessibilityNodeProvider extends AccessibilityNodeProviderCompat 
       ViewCompat.onInitializeAccessibilityNodeInfo(view, info);
       // Add the virtual children of the root View.
       for (Key key : getKeys()) {
+        // NOTE: sourceID is always non-negative
+        // so it can be added to AccessibilityNodeInfoCompat safely.
         info.addChild(view, getSourceId(key));
       }
       return info;
