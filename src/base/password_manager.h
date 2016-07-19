@@ -36,7 +36,6 @@
 
 namespace mozc {
 
-extern bool kUseMockPasswordManager;
 class PasswordManagerInterface;
 
 // PasswordManager is a class for managing

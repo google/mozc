@@ -794,13 +794,6 @@ bool SafeUnaryNegation(uint64 src, int64 *dest) {
   return true;
 }
 
-template <typename T>
-T StrToRealNumber(const char *ptr, char **end_ptr) {
-  static_assert(GenericFalseTypeArity2<T, T>::value,
-                "Shouldn't be used with implicit type conversion.");
-  return false;
-}
-
 }  // namespace
 
 bool NumberUtil::SafeStrToInt16(StringPiece str, int16 *value) {

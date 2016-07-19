@@ -134,11 +134,6 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
 
   bool CreateDictionary(const string &dic_name, uint64 *new_dic_id);
 
-  // Create a copy of an existing dictionary giving it a specified
-  // name. Returns the id of the new dictionary via new_dic_id.
-  bool CopyDictionary(uint64 dic_id, const string &dic_name,
-                      uint64 *new_dic_id);
-
   // Delete a dictionary.
   bool DeleteDictionary(uint64 dic_id);
 

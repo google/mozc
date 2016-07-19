@@ -91,16 +91,6 @@ template<typename T>
 #define EXPECT_PROTO_EQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::EqualsProto, expect, actual)
 
-// Thin wrapper of PartiallyEqualsProto to if check expect and actual has same
-// type on compile time.
-template<typename T>
-::testing::AssertionResult PartiallyEqualsProtoInternal(
-    const char *expect_string, const char *actual_string,
-    const T &expect, const T &actual) {
-  return ::mozc::testing::internal::EqualsProtoFormat(
-      expect_string, actual_string, expect, actual, true);
-}
-
 // To accept string constant, we also define a function takeing const char *.
 ::testing::AssertionResult PartiallyEqualsProto(
     const char *expect_string, const char *actual_string,

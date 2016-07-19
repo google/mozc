@@ -277,45 +277,6 @@ bool UserDictionaryStorage::CreateDictionary(
       status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
-bool UserDictionaryStorage::CopyDictionary(uint64 dic_id,
-                                           const string &dic_name,
-                                           uint64 *new_dic_id) {
-  last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
-
-  if (!UserDictionaryStorage::IsValidDictionaryName(dic_name)) {
-    LOG(ERROR) << "Invalid dictionary name is passed";
-    return false;
-  }
-
-  if (UserDictionaryUtil::IsStorageFull(*this)) {
-    last_error_type_ = TOO_MANY_DICTIONARIES;
-    LOG(ERROR) << "too many dictionaries";
-    return false;
-  }
-
-  if (new_dic_id == NULL) {
-    last_error_type_ = UNKNOWN_ERROR;
-    LOG(ERROR) << "new_dic_id is NULL";
-    return false;
-  }
-
-  UserDictionary *dic = GetUserDictionary(dic_id);
-  if (dic == NULL) {
-    last_error_type_ = INVALID_DICTIONARY_ID;
-    LOG(ERROR) << "Invalid dictionary id: " << dic_id;
-    return false;
-  }
-
-  UserDictionary *new_dic = add_dictionaries();
-  new_dic->CopyFrom(*dic);
-
-  *new_dic_id = UserDictionaryUtil::CreateNewDictionaryId(*this);
-  dic->set_id(*new_dic_id);
-  dic->set_name(dic_name);
-
-  return true;
-}
-
 bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
   if (!UserDictionaryUtil::DeleteDictionary(this, dic_id, NULL, NULL)) {
     // Failed to delete dictionary.

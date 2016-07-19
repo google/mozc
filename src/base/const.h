@@ -33,13 +33,9 @@
 namespace mozc {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kProductNameInEnglish[] = "Google Japanese Input";
-// "Google 日本語入力"
-const char kProductNameLocalized[]
-    = "Google \xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E\xE5\x85\xA5\xE5\x8A\x9B";
 #define kProductPrefix "GoogleJapaneseInput"
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 const char kProductNameInEnglish[] = "Mozc";
-const char kProductNameLocalized[] = "Mozc";
 #define kProductPrefix "Mozc"
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
