@@ -61,7 +61,8 @@ DataManagerTestBase::DataManagerTestBase(
     const string &connection_txt_file,
     const int expected_resolution,
     const vector<string> &dictionary_files,
-    const vector<string> &suggestion_filter_files)
+    const vector<string> &suggestion_filter_files,
+    const vector<pair<string, string>> &typing_model_files)
     : data_manager_(data_manager),
       lsize_(lsize),
       rsize_(rsize),
@@ -69,9 +70,10 @@ DataManagerTestBase::DataManagerTestBase(
       connection_txt_file_(connection_txt_file),
       expected_resolution_(expected_resolution),
       dictionary_files_(dictionary_files),
-      suggestion_filter_files_(suggestion_filter_files) {}
+      suggestion_filter_files_(suggestion_filter_files),
+      typing_model_files_(typing_model_files) {}
 
-DataManagerTestBase::~DataManagerTestBase() {}
+DataManagerTestBase::~DataManagerTestBase() = default;
 
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
@@ -274,6 +276,15 @@ void DataManagerTestBase::CounterSuffixTest_ValidateTest() {
   }
 }
 
+void DataManagerTestBase::TypingModelTest() {
+  // Check if typing models are included in the data set.
+  for (const auto &key_and_fname : typing_model_files_) {
+    InputFileStream ifs(key_and_fname.second.c_str(),
+                        ios_base::in | ios_base::binary);
+    EXPECT_EQ(ifs.Read(), data_manager_->GetTypingModel(key_and_fname.first));
+  }
+}
+
 void DataManagerTestBase::RunAllTests() {
   ConnectorTest_RandomValueCheck();
   SegmenterTest_LNodeTest();
@@ -283,6 +294,7 @@ void DataManagerTestBase::RunAllTests() {
   SegmenterTest_SameAsInternal();
   SuggestionFilterTest_IsBadSuggestion();
   CounterSuffixTest_ValidateTest();
+  TypingModelTest();
 }
 
 }  // namespace mozc

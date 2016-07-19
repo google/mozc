@@ -29,10 +29,12 @@
 
 #include "data_manager/data_manager.h"
 
+#include <algorithm>
 #include <ostream>
 
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
+#include "base/stl_util.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "data_manager/dataset_reader.h"
@@ -341,6 +343,15 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     }
   }
 
+  for (const auto &kv : reader.name_to_data_map()) {
+    if (!Util::StartsWith(kv.first, "typing_model")) {
+      continue;
+    }
+    typing_model_data_.push_back(kv);
+  }
+  std::sort(typing_model_data_.begin(), typing_model_data_.end(),
+            OrderBy<FirstKey, Less>());
+
   if (!reader.Get("version", &data_version_)) {
     LOG(ERROR) << "Cannot find data version";
     return Status::DATA_MISSING;
@@ -538,6 +549,18 @@ void DataManager::GetUsageRewriterData(
   *string_array_data = usage_string_array_data_;
 }
 #endif  // NO_USAGE_REWRITER
+
+StringPiece DataManager::GetTypingModel(const string &name) const {
+  const auto iter = std::lower_bound(
+      typing_model_data_.begin(), typing_model_data_.end(), name,
+      [](const pair<string, StringPiece> &elem, const string &key) {
+        return elem.first < key;
+      });
+  if (iter == typing_model_data_.end() || iter->first != name) {
+    return StringPiece();
+  }
+  return iter->second;
+}
 
 StringPiece DataManager::GetDataVersion() const {
   return data_version_;

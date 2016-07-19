@@ -36,6 +36,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
@@ -102,8 +103,7 @@ Entry::Entry(const string &input,
 // ========================================
 Table::Table()
     : entries_(new EntryTrie),
-      case_sensitive_(false),
-      typing_model_(NULL) {}
+      case_sensitive_(false) {}
 
 Table::~Table() {
   ResetEntrySet();
@@ -121,11 +121,14 @@ static const char kSquareOpen[]  = "[";
 static const char kSquareClose[] = "]";
 static const char kMiddleDot[]   = "\xE3\x83\xBB";  // "・"
 
-bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
-                                           const config::Config &config) {
+bool Table::InitializeWithRequestAndConfig(
+    const commands::Request &request,
+    const config::Config &config,
+    const DataManagerInterface& data_manager) {
   case_sensitive_ = false;
   bool result = false;
-  typing_model_ = TypingModel::GetTypingModel(request.special_romanji_table());
+  typing_model_ = TypingModel::CreateTypingModel(
+      request.special_romanji_table(), data_manager);
   if (request.special_romanji_table()
       != mozc::commands::Request::DEFAULT_TABLE) {
     const char *table_file_name;
@@ -389,7 +392,7 @@ bool Table::LoadFromFile(const char *filepath) {
 }
 
 const TypingModel* Table::typing_model() const {
-  return typing_model_;
+  return typing_model_.get();
 }
 
 namespace {
@@ -607,16 +610,12 @@ TableManager::TableManager()
     : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {
 }
 
-TableManager::~TableManager() {
-  for (map<uint32, const Table*>::iterator iterator = table_map_.begin();
-      iterator != table_map_.end();
-      ++iterator) {
-    delete iterator->second;
-  }
-}
+TableManager::~TableManager() = default;
 
-const Table *TableManager::GetTable(const mozc::commands::Request &request,
-                                    const mozc::config::Config &config) {
+const Table *TableManager::GetTable(
+    const mozc::commands::Request &request,
+    const mozc::config::Config &config,
+    const mozc::DataManagerInterface &data_manager) {
   // calculate the hash depending on the request and the config
   uint32 hash = request.special_romanji_table();
   hash = hash * (mozc::config::Config_PreeditMethod_PreeditMethod_MAX + 1)
@@ -640,25 +639,28 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
     }
   }
 
-  map<uint32, const Table*>::iterator iterator = table_map_.find(hash);
+  const auto iterator = table_map_.find(hash);
   if (iterator != table_map_.end()) {
     if (update_custom_roman_table) {
       // Delete the previous table to update the table.
-      delete iterator->second;
       table_map_.erase(iterator);
     } else {
-      return iterator->second;
+      return iterator->second.get();
     }
   }
 
   std::unique_ptr<Table> table(new Table());
-  if (!table->InitializeWithRequestAndConfig(request, config)) {
-    return NULL;
+  if (!table->InitializeWithRequestAndConfig(request, config, data_manager)) {
+    return nullptr;
   }
 
-  Table* table_to_cache = table.release();
-  table_map_[hash] = table_to_cache;
-  return table_to_cache;
+  const Table* ret = table.get();
+  table_map_[hash] = std::move(table);
+  return ret;
+}
+
+void TableManager::ClearCaches() {
+  table_map_.clear();
 }
 
 }  // namespace composer

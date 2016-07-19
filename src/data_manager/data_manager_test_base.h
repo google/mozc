@@ -32,6 +32,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/port.h"
@@ -54,10 +55,12 @@ class DataManagerTestBase : public ::testing::Test {
                       // The following two are used in connector test.
                       const string &connection_txt_file,
                       const int expected_resolution,
-                      // The following two are used in suggestion filter test
+                      // The following two are used in suggestion filter test.
                       const vector<string> &dictionary_files,
-                      const vector<string> &suggestion_filter_files);
-  virtual ~DataManagerTestBase();
+                      const vector<string> &suggestion_filter_files,
+                      // The following is used in typing model test.
+                      const vector<pair<string, string>> &typing_model_files);
+  ~DataManagerTestBase() override;
 
   void RunAllTests();
 
@@ -70,6 +73,7 @@ class DataManagerTestBase : public ::testing::Test {
   void SegmenterTest_SameAsInternal();
   void SuggestionFilterTest_IsBadSuggestion();
   void CounterSuffixTest_ValidateTest();
+  void TypingModelTest();
 
   std::unique_ptr<DataManagerInterface> data_manager_;
   const uint16 lsize_;
@@ -79,6 +83,7 @@ class DataManagerTestBase : public ::testing::Test {
   const int expected_resolution_;
   const vector<string> dictionary_files_;
   const vector<string> suggestion_filter_files_;
+  const vector<pair<string, string>> typing_model_files_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManagerTestBase);
 };

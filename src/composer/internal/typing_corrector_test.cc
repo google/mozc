@@ -37,15 +37,12 @@
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "config/config_handler.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace composer {
-
-namespace {
-#include "composer/internal/typing_model_qwerty_mobile-hiragana.h"
-}
 
 using mozc::config::Config;
 using mozc::config::ConfigHandler;
@@ -288,23 +285,19 @@ class CostTableForTest {
 
 class TypingCorrectorTest : public ::testing::Test {
  protected:
-  TypingCorrectorTest() :
-      qwerty_typing_model_(
-          kKeyCharacters_QwertyMobileHiragana,
-          kKeyCharactersSize_QwertyMobileHiragana,
-          kCostTable_QwertyMobileHiragana,
-          kCostTableSize_QwertyMobileHiragana,
-          kCostMappingTable_QwertyMobileHiragana) {
-  }
+  TypingCorrectorTest() = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_typing_correction(true);
     commands::Request request;
     request.set_special_romanji_table(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
-    qwerty_table_.InitializeWithRequestAndConfig(request, config_);
-    qwerty_table_.typing_model_ = &qwerty_typing_model_;
+    qwerty_table_.InitializeWithRequestAndConfig(request, config_,
+                                                 mock_data_manager_);
+    qwerty_table_.typing_model_ = TypingModel::CreateTypingModel(
+        commands::Request::QWERTY_MOBILE_TO_HIRAGANA,
+        mock_data_manager_);
   }
 
   void InsertOneByOne(const char *keys, TypingCorrector *corrector) {
@@ -346,9 +339,9 @@ class TypingCorrectorTest : public ::testing::Test {
     }
   }
 
+  const testing::MockDataManager mock_data_manager_;
   Config config_;
   Table qwerty_table_;
-  TypingModel qwerty_typing_model_;
 };
 
 TEST_F(TypingCorrectorTest, TypingCorrection) {

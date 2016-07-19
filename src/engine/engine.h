@@ -107,6 +107,10 @@ class Engine : public EngineInterface {
     return data_manager_->GetDataVersion();
   }
 
+  const DataManagerInterface *GetDataManager() const override {
+    return data_manager_.get();
+  }
+
  private:
   // Initializes the object by the given data manager and predictor factory
   // function.  Predictor factory is used to select DefaultPredictor and

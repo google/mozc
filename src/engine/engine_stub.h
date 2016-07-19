@@ -44,6 +44,7 @@ class EngineStub : public EngineInterface {
   bool Reload() override { return true; }
   UserDataManagerInterface *GetUserDataManager() override { return nullptr; }
   StringPiece GetDataVersion() const override { return StringPiece(); }
+  const DataManagerInterface *GetDataManager() const { return nullptr; }
 };
 
 }  // namespace mozc

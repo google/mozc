@@ -40,7 +40,6 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/serialized_string_array.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -371,9 +370,9 @@ void PrependHistorySegments(const string &key,
 
 class MockTypingModel : public mozc::composer::TypingModel {
  public:
-  MockTypingModel() : TypingModel(NULL, 0, NULL, 0, NULL) {}
-  ~MockTypingModel() {}
-  int GetCost(StringPiece key) const {
+  MockTypingModel() : TypingModel(nullptr, 0, nullptr, 0, nullptr) {}
+  ~MockTypingModel() override = default;
+  int GetCost(StringPiece key) const override {
     return 10;
   }
 };
@@ -822,7 +821,7 @@ class DictionaryPredictorTest : public ::testing::Test {
         data_and_predictor->dictionary_predictor();
 
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-    table_->typing_model_ = Singleton<MockTypingModel>::get();
+    table_->typing_model_.reset(new MockTypingModel());
     InsertInputSequenceForProbableKeyEvent(
         key, corrected_key_codes, composer_.get());
 

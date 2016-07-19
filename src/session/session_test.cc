@@ -402,7 +402,9 @@ void SwitchInputMode(commands::CompositionMode mode, Session *session) {
 // since History segments are almost hidden from
 class ConverterMockForReset : public ConverterMock {
  public:
-  virtual bool ResetConversion(Segments *segments) const {
+  ConverterMockForReset() : reset_conversion_called_(false) {}
+
+  bool ResetConversion(Segments *segments) const override {
     reset_conversion_called_ = true;
     return true;
   }
@@ -415,7 +417,6 @@ class ConverterMockForReset : public ConverterMock {
     reset_conversion_called_ = false;
   }
 
-  ConverterMockForReset() : reset_conversion_called_(false) {}
  private:
   mutable bool reset_conversion_called_;
 };
@@ -445,6 +446,10 @@ class MockConverterEngineForReset : public EngineInterface {
     return nullptr;
   }
 
+  const DataManagerInterface *GetDataManager() const override {
+    return nullptr;
+  }
+
   StringPiece GetDataVersion() const override { return StringPiece(); }
 
   const ConverterMockForReset &converter_mock() const {
@@ -461,7 +466,9 @@ class MockConverterEngineForReset : public EngineInterface {
 
 class ConverterMockForRevert : public ConverterMock {
  public:
-  virtual bool RevertConversion(Segments *segments) const {
+  ConverterMockForRevert() : revert_conversion_called_(false) {}
+
+  bool RevertConversion(Segments *segments) const override {
     revert_conversion_called_ = true;
     return true;
   }
@@ -474,7 +481,6 @@ class ConverterMockForRevert : public ConverterMock {
     revert_conversion_called_ = false;
   }
 
-  ConverterMockForRevert() : revert_conversion_called_(false) {}
  private:
   mutable bool revert_conversion_called_;
 };
@@ -502,6 +508,10 @@ class MockConverterEngineForRevert : public EngineInterface {
   }
 
   UserDataManagerInterface *GetUserDataManager() override {
+    return nullptr;
+  }
+
+  const DataManagerInterface *GetDataManager() const override {
     return nullptr;
   }
 
@@ -665,7 +675,7 @@ class SessionTest : public ::testing::Test {
     session->SetRequest(&request);
     table_.reset(new composer::Table());
     table_->InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session->SetTable(table_.get());
   }
 
@@ -835,10 +845,10 @@ class SessionTest : public ::testing::Test {
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> mobile_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+  const testing::MockDataManager mock_data_manager_;
 
  private:
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
-  const testing::MockDataManager mock_data_manager_;
 };
 
 // This test is intentionally defined at this location so that this
@@ -8235,7 +8245,7 @@ TEST_F(SessionTest, Issue4437420) {
   session.SetRequest(&request);
   std::unique_ptr<composer::Table> table(new composer::Table());
   table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session.SetTable(table.get());
   // Type "2*" to produce "A".
   SetSendKeyCommand("2", &command);
@@ -8255,7 +8265,7 @@ TEST_F(SessionTest, Issue4437420) {
   session.SetRequest(&request);
   table.reset(new composer::Table());
   table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session.SetTable(table.get());
   // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
@@ -8311,7 +8321,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
 
     // Type "2" to produce "a".
@@ -8356,7 +8366,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
     SetSendKeyCommand("3", &command);
@@ -8402,7 +8412,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
     // Type "3*{<}*{<}", and composition should change
     // "さ"->"ざ"->(No change)->"さ"->(No change).
@@ -8456,7 +8466,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
     // Type "{<}" and do nothing
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
@@ -8539,7 +8549,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
 
     // commit "あ" to push UNDO stack
@@ -8595,7 +8605,7 @@ TEST_F(SessionTest, DedupAfterUndo) {
 
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
 
     // Type "!" to produce "！".
@@ -8959,7 +8969,7 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session->SetTable(&table);
 
   SwitchInputFieldType(commands::Context::PASSWORD, session.get());

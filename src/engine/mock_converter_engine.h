@@ -59,6 +59,10 @@ class MockConverterEngine : public EngineInterface {
     return "mock converter engine";
   }
 
+  const DataManagerInterface *GetDataManager() const override {
+    return nullptr;
+  }
+
   void SetUserDataManager(UserDataManagerMock *manager);
   ConverterMock* mutable_converter_mock();
 

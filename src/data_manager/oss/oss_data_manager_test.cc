@@ -35,9 +35,17 @@
 
 namespace mozc {
 namespace oss {
-
 namespace {
+
 #include "data_manager/oss/segmenter_inl.h"
+
+pair<string, string> GetTypingModelEntry(const string &fname) {
+  return pair<string, string>(
+      fname,
+      mozc::testing::GetSourceFileOrDie(
+          {"data_manager", "oss", fname + ".data"}));
+}
+
 }  // namespace
 
 class OssDataManagerTest : public DataManagerTestBase {
@@ -64,7 +72,14 @@ class OssDataManagerTest : public DataManagerTestBase {
                  "dictionary08.txt",
                  "dictionary09.txt"}),
             mozc::testing::GetSourceFilesInDirOrDie(
-                {"data", "dictionary_oss"}, {"suggestion_filter.txt"})) {}
+                {"data", "dictionary_oss"}, {"suggestion_filter.txt"}),
+            {
+                GetTypingModelEntry("typing_model_12keys-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_flick-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_godan-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_qwerty_mobile-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_toggle_flick-hiragana.tsv"),
+            }) {}
 };
 
 TEST_F(OssDataManagerTest, AllTests) {

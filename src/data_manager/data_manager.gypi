@@ -122,6 +122,7 @@
         'gen_separate_single_kanji_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_zero_query_data_for_<(dataset_tag)#host',
         'gen_separate_version_data_for_<(dataset_tag)#host',
+        'gen_typing_model_for_<(dataset_tag)#host',
       ],
       'actions': [
         {
@@ -162,6 +163,11 @@
             'single_kanji_variant_string': '<(gen_out_dir)/single_kanji_variant_string.data',
             'single_kanji_noun_prefix_token': '<(gen_out_dir)/single_kanji_noun_prefix_token.data',
             'single_kanji_noun_prefix_string': '<(gen_out_dir)/single_kanji_noun_prefix_string.data',
+            'typing_model_qwerty_mobile-hiragana': '<(gen_out_dir)/typing_model_qwerty_mobile-hiragana.data',
+            'typing_model_12keys-hiragana': '<(gen_out_dir)/typing_model_12keys-hiragana.data',
+            'typing_model_flick-hiragana': '<(gen_out_dir)/typing_model_flick-hiragana.data',
+            'typing_model_godan-hiragana': '<(gen_out_dir)/typing_model_godan-hiragana.data',
+            'typing_model_toggle_flick-hiragana': '<(gen_out_dir)/typing_model_toggle_flick-hiragana.data',
             'zero_query_token_array': '<(gen_out_dir)/zero_query_token.data',
             'zero_query_string_array': '<(gen_out_dir)/zero_query_string.data',
             'zero_query_number_token_array': '<(gen_out_dir)/zero_query_number_token.data',
@@ -203,6 +209,11 @@
             '<(single_kanji_variant_string)',
             '<(single_kanji_noun_prefix_token)',
             '<(single_kanji_noun_prefix_string)',
+            '<(typing_model_qwerty_mobile-hiragana)',
+            '<(typing_model_12keys-hiragana)',
+            '<(typing_model_flick-hiragana)',
+            '<(typing_model_godan-hiragana)',
+            '<(typing_model_toggle_flick-hiragana)',
             '<(zero_query_token_array)',
             '<(zero_query_string_array)',
             '<(zero_query_number_token_array)',
@@ -254,6 +265,12 @@
             'zero_query_string_array:32:<(gen_out_dir)/zero_query_string.data',
             'zero_query_number_token_array:32:<(gen_out_dir)/zero_query_number_token.data',
             'zero_query_number_string_array:32:<(gen_out_dir)/zero_query_number_string.data',
+            # TODO(noriyukit): These typing models are not necessary for desktop.
+            'typing_model_qwerty_mobile-hiragana.tsv:32:<(gen_out_dir)/typing_model_qwerty_mobile-hiragana.data',
+            'typing_model_12keys-hiragana.tsv:32:<(gen_out_dir)/typing_model_12keys-hiragana.data',
+            'typing_model_flick-hiragana.tsv:32:<(gen_out_dir)/typing_model_flick-hiragana.data',
+            'typing_model_godan-hiragana.tsv:32:<(gen_out_dir)/typing_model_godan-hiragana.data',
+            'typing_model_toggle_flick-hiragana.tsv:32:<(gen_out_dir)/typing_model_toggle_flick-hiragana.data',
             'version:32:<(gen_out_dir)/version.data',
           ],
           'conditions': [
@@ -959,6 +976,128 @@
             '--input=<(mozc_dir)/data/zero_query/zero_query_number.def',
             '--output_token_array=<(gen_out_dir)/zero_query_number_token.data',
             '--output_string_array=<(gen_out_dir)/zero_query_number_string.data',
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_typing_model_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_qwerty_mobile-hiragana_typing_model_<(dataset_tag)',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_qwerty_mobile-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/typing_model_qwerty_mobile-hiragana.data',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+          ],
+        },
+        {
+          'action_name': 'gen_12keys-hiragana_typing_model_<(dataset_tag)',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_12keys-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/typing_model_12keys-hiragana.data',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+          ],
+        },
+        {
+          'action_name': 'gen_flick-hiragana_typing_model_<(dataset_tag)',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_flick-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/typing_model_flick-hiragana.data',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+          ],
+        },
+        {
+          'action_name': 'gen_godan-hiragana_typing_model_<(dataset_tag)',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_godan-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/typing_model_godan-hiragana.data',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+          ],
+        },
+        {
+          'action_name': 'gen_toggle_flick-hiragana_typing_model_<(dataset_tag)',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_toggle_flick-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/typing_model_toggle_flick-hiragana.data',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
           ],
         },
       ],

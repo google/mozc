@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
@@ -43,6 +42,7 @@
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
@@ -122,11 +122,12 @@ void ExpectSameComposer(const Composer &lhs, const Composer &rhs) {
 
 }  // namespace
 
-class ComposerTest : public testing::Test {
+class ComposerTest : public ::testing::Test {
  protected:
-  ComposerTest() {}
+  ComposerTest() = default;
+  ~ComposerTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     table_.reset(new Table);
     config_.reset(new Config);
     request_.reset(new Request);
@@ -134,7 +135,7 @@ class ComposerTest : public testing::Test {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     composer_.reset();
     request_.reset();
@@ -142,6 +143,7 @@ class ComposerTest : public testing::Test {
     table_.reset();
   }
 
+  const testing::MockDataManager mock_data_manager_;
   std::unique_ptr<Composer> composer_;
   std::unique_ptr<Table> table_;
   std::unique_ptr<Request> request_;
@@ -1437,7 +1439,8 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
 TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
-  table_->InitializeWithRequestAndConfig(*request_, *config_);
+  table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                         mock_data_manager_);
   composer_->Reset();
   composer_->SetInputMode(transliteration::HIRAGANA);
   InsertKey("K", composer_.get());
@@ -1479,7 +1482,8 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   config_->set_preedit_method(Config::ROMAN);
   config_->set_use_auto_ime_turn_off(true);
 
-  table_->InitializeWithRequestAndConfig(*request_, *config_);
+  table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                         mock_data_manager_);
 
   commands::KeyEvent key;
 
@@ -1598,7 +1602,8 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
   config_->set_preedit_method(Config::ROMAN);
   config_->set_use_auto_ime_turn_off(false);
 
-  table_->InitializeWithRequestAndConfig(*request_, *config_);
+  table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                         mock_data_manager_);
 
   commands::KeyEvent key;
 
@@ -1635,7 +1640,8 @@ TEST_F(ComposerTest, AutoIMETurnOffKana) {
   config_->set_preedit_method(Config::KANA);
   config_->set_use_auto_ime_turn_off(true);
 
-  table_->InitializeWithRequestAndConfig(*request_, *config_);
+  table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                         mock_data_manager_);
 
   commands::KeyEvent key;
 
@@ -2611,7 +2617,8 @@ TEST_F(ComposerTest, Issue2797991_4) {
 TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
   {
     config_->set_shift_key_mode_switch(Config::OFF);
-    table_->InitializeWithRequestAndConfig(*request_, *config_);
+    table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                           mock_data_manager_);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2630,7 +2637,8 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
   composer_->Reset();
   {
     config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
-    table_->InitializeWithRequestAndConfig(*request_, *config_);
+    table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                           mock_data_manager_);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2652,7 +2660,8 @@ TEST_F(ComposerTest,
        InputUppercaseInAlphanumericModeWithShiftKeyModeSwitchIsKatakana) {
   {
     config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
-    table_->InitializeWithRequestAndConfig(*request_, *config_);
+    table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                           mock_data_manager_);
 
     // i -> "い"
     table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2717,7 +2726,8 @@ TEST_F(ComposerTest,
   // 2. Type Back-space 6 times ("い")
   // 3. Type "i" (should be "いい")
 
-  table_->InitializeWithRequestAndConfig(*request_, *config_);
+  table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                         mock_data_manager_);
 
   // i -> "い"
   table_->AddRule("i", "\xe3\x81\x84", "");
@@ -2764,7 +2774,8 @@ TEST_F(ComposerTest,
 TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   // The expectation of this test is the same as MS-IME's
 
-  table_->InitializeWithRequestAndConfig(*request_, *config_);
+  table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                         mock_data_manager_);
 
   // i -> "い"
   table_->AddRule("i", "\xe3\x81\x84", "");
@@ -3138,7 +3149,7 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   composer_->SetRequest(&request);
   table_->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   composer_->InsertCharacter("2");
   EXPECT_EQ("a", GetPreedit(composer_.get()));
   string result;
@@ -3209,9 +3220,9 @@ ProbableKeyEvents GetStubProbableKeyEvent(int key_code, double probability) {
 
 class MockTypingModel : public TypingModel {
  public:
-  MockTypingModel() : TypingModel(NULL, 0, NULL, 0, NULL) {}
-  virtual ~MockTypingModel() {}
-  virtual int GetCost(StringPiece key) const {
+  MockTypingModel() : TypingModel(nullptr, 0, nullptr, 0, nullptr) {}
+  ~MockTypingModel() override = default;
+  int GetCost(StringPiece key) const override {
     return 10;
   }
 };
@@ -3220,7 +3231,7 @@ class MockTypingModel : public TypingModel {
 // corrector inside composer.
 class TypingCorrectionTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     config_.reset(new Config);
     ConfigHandler::GetDefaultConfig(config_.get());
     config_->set_use_typing_correction(true);
@@ -3233,7 +3244,7 @@ class TypingCorrectionTest : public ::testing::Test {
 
     composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
 
-    table_->typing_model_ = Singleton<MockTypingModel>::get();
+    table_->typing_model_.reset(new MockTypingModel());
   }
 
   static bool IsTypingCorrectorClearedOrInvalidated(const Composer &composer) {

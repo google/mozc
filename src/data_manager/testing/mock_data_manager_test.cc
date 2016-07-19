@@ -35,9 +35,17 @@
 
 namespace mozc {
 namespace testing {
-
 namespace {
+
 #include "data_manager/testing/segmenter_inl.h"
+
+pair<string, string> GetTypingModelEntry(const string &fname) {
+  return pair<string, string>(
+      fname,
+      mozc::testing::GetSourceFileOrDie(
+          {"data_manager", "testing", fname + ".data"}));
+}
+
 }  // namespace
 
 class MockDataManagerTest : public DataManagerTestBase {
@@ -56,7 +64,14 @@ class MockDataManagerTest : public DataManagerTestBase {
                 {"dictionary.txt"}),
             mozc::testing::GetSourceFilesInDirOrDie(
                 {"data", "test", "dictionary"},
-                {"suggestion_filter.txt"})) {}
+                {"suggestion_filter.txt"}),
+            {
+                GetTypingModelEntry("typing_model_12keys-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_flick-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_godan-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_qwerty_mobile-hiragana.tsv"),
+                GetTypingModelEntry("typing_model_toggle_flick-hiragana.tsv"),
+            }) {}
 };
 
 TEST_F(MockDataManagerTest, AllTests) {

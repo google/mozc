@@ -30,6 +30,8 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 
+#include <string>
+
 #include "base/port.h"
 #include "base/string_piece.h"
 
@@ -128,6 +130,9 @@ class DataManagerInterface {
       StringPiece *zero_query_string_array_data,
       StringPiece *zero_query_number_token_array_data,
       StringPiece *zero_query_number_string_array_data) const = 0;
+
+  // Gets the typing model binary data for the specified name.
+  virtual StringPiece GetTypingModel(const string &name) const = 0;
 
   // Gets the data version string.
   virtual StringPiece GetDataVersion() const = 0;

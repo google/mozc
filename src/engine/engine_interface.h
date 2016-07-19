@@ -32,6 +32,7 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
@@ -46,7 +47,7 @@ class UserDataManagerInterface;
 // well as Kana-Kanji converter/predictor, etc.
 class EngineInterface {
  public:
-  virtual ~EngineInterface() {}
+  virtual ~EngineInterface() = default;
 
   // Returns a reference to a converter. The returned instance is managed by the
   // engine class and should not be deleted by callers.
@@ -68,6 +69,9 @@ class EngineInterface {
 
   // Gets the version of underlying data set.
   virtual StringPiece GetDataVersion() const = 0;
+
+  // Gets the data manager.
+  virtual const DataManagerInterface *GetDataManager() const = 0;
 
  protected:
   EngineInterface() {}

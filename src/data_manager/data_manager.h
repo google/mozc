@@ -32,6 +32,8 @@
 
 #include <iosfwd>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "base/mmap.h"
 #include "base/port.h"
@@ -134,6 +136,7 @@ class DataManager : public DataManagerInterface {
       StringPiece *string_array_data) const override;
 #endif  // NO_USAGE_REWRITER
 
+  StringPiece GetTypingModel(const string &name) const override;
   StringPiece GetDataVersion() const override;
 
  private:
@@ -184,6 +187,7 @@ class DataManager : public DataManagerInterface {
   StringPiece usage_conjugation_index_data_;
   StringPiece usage_items_data_;
   StringPiece usage_string_array_data_;
+  vector<pair<string, StringPiece>> typing_model_data_;
   StringPiece data_version_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);

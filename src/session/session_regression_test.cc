@@ -42,6 +42,7 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine_factory.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -148,10 +149,11 @@ class SessionRegressionTest : public ::testing::Test {
     session_.reset(static_cast<session::Session *>(handler_->NewSession()));
     commands::Request request;
     table_.reset(new composer::Table());
-    table_->InitializeWithRequestAndConfig(request, config_);
+    table_->InitializeWithRequestAndConfig(request, config_, data_manager_);
     session_->SetTable(table_.get());
   }
 
+  const testing::MockDataManager data_manager_;
   bool orig_use_history_rewriter_;
   std::unique_ptr<SessionHandler> handler_;
   std::unique_ptr<session::Session> session_;

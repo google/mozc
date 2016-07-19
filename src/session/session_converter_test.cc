@@ -49,6 +49,7 @@
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -88,9 +89,9 @@ class SessionConverterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   SessionConverterTest() {}
-  virtual ~SessionConverterTest() {}
+  ~SessionConverterTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     convertermock_.reset(new ConverterMock());
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
@@ -100,12 +101,13 @@ class SessionConverterTest : public ::testing::Test {
     request_.reset(new Request);
 
     table_.reset(new composer::Table);
-    table_->InitializeWithRequestAndConfig(*request_, *config_);
+    table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                           mock_data_manager_);
     composer_.reset(
         new composer::Composer(table_.get(), request_.get(), config_.get()));
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     table_.reset();
     composer_.reset();
 
@@ -400,6 +402,9 @@ class SessionConverterTest : public ::testing::Test {
   std::unique_ptr<Request> request_;
   std::unique_ptr<Config> config_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+
+ private:
+  const testing::MockDataManager mock_data_manager_;
 };
 
 #define EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, indices) \

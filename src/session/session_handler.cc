@@ -244,7 +244,8 @@ bool SessionHandler::StartWatchDog() {
 
 void SessionHandler::SetConfig(const config::Config &config) {
   *config_ = config;
-  const composer::Table *table = table_manager_->GetTable(*request_, *config_);
+  const composer::Table *table = table_manager_->GetTable(
+      *request_, *config_, *engine_->GetDataManager());
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
@@ -662,6 +663,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
       engine_.reset();
       engine_ = engine_builder_->BuildFromPreparedData();
       LOG_IF(FATAL, !engine_) << "Critical failure in engine replace";
+      table_manager_->ClearCaches();
       response->set_status(EngineReloadResponse::RELOADED);
     }
     engine_builder_->Clear();
