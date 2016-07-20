@@ -1,6 +1,6 @@
 MAJOR=2
 MINOR=18
-BUILD=2579
+BUILD=2580
 REVISION=102
 # CAUTION: NACL_DICTIONARY_VERSION is going to be migrated to ENGINE_VERSION.
 # NACL_DICTIONARY_VERSION is the target version of the system dictionary to be
