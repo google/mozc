@@ -87,7 +87,6 @@ using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::Token;
 using testing::_;
 
-DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
 
 namespace mozc {
@@ -1322,6 +1321,48 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
   }
 
   EXPECT_EQ(1, segments.conversion_segments_size());
+}
+
+TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
+  const char kHiraganaA[] = "\xE3\x81\x82";
+
+  DictionaryMock mock_dict;
+  // A system dictionary entry "a".
+  mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA, "a", Token::NONE);
+  // System dictionary entries "a0", ..., "a9", which are detected as redundant
+  // by MaybeRedundant(); see dictionary_predictor.cc.
+  for (int i = 0; i < 10; ++i) {
+    mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA,
+                                  Util::StringPrintf("a%d", i), Token::NONE);
+  }
+  // A user dictionary entry "aaa".  MaybeRedundant() detects this entry as
+  // redundant but it should not be filtered in prediction.
+  mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA, "aaa",
+                                Token::USER_DICTIONARY);
+
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(false);
+  table_->LoadFromFile("system://12keys-hiragana.tsv");
+  composer_->SetTable(table_.get());
+  InsertInputSequence(kHiraganaA, composer_.get());
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  Segment *segment = segments.add_segment();
+  segment->set_key(kHiraganaA);
+
+  vector<DictionaryPredictor::Result> results;
+  DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
+      mock_dict, *convreq_, segments, &results);
+
+  // Check if "aaa" is not filtered.
+  auto iter = results.begin();
+  for (; iter != results.end(); ++iter) {
+    if (iter->key == kHiraganaA && iter->value == "aaa" &&
+        iter->IsUserDictionaryResult()) {
+      break;
+    }
+  }
+  EXPECT_NE(results.end(), iter);
 }
 
 TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
@@ -2840,6 +2881,91 @@ TEST_F(DictionaryPredictorTest, SetLMCost) {
             "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88", results[2].value);
   EXPECT_GT(results[2].cost, results[0].cost);
   EXPECT_GT(results[2].cost, results[1].cost);
+}
+
+namespace {
+
+void AddTestableDictionaryPredictorResult(
+    const char *key, const char *value, int wcost,
+    TestableDictionaryPredictor::PredictionTypes prediction_types,
+    Token::AttributesBitfield attributes,
+    vector<TestableDictionaryPredictor::Result> *results) {
+  results->push_back(TestableDictionaryPredictor::MakeEmptyResult());
+  TestableDictionaryPredictor::Result *result = &results->back();
+  result->key = key;
+  result->value = value;
+  result->wcost = wcost;
+  result->SetTypesAndTokenAttributes(prediction_types, attributes);
+}
+
+}  // namespace
+
+TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const TestableDictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+
+  // "あいか"
+  const char *kAikaHiragana = "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x8b";
+  // "愛佳"
+  const char *kAikaKanji = "\xe6\x84\x9b\xe4\xbd\xb3";
+
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  Segment *segment = segments.add_segment();
+  ASSERT_NE(nullptr, segment);
+  segment->set_key(kAikaHiragana);
+
+  {
+    // Cost of words in user dictionary should be decreased.
+    const int kOrigianlWordCost = 10000;
+    vector<TestableDictionaryPredictor::Result> results;
+    AddTestableDictionaryPredictorResult(
+        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY,
+        &results);
+
+    predictor->SetLMCost(segments, &results);
+
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(kAikaKanji, results[0].value);
+    EXPECT_GT(kOrigianlWordCost, results[0].cost);
+    EXPECT_LE(1, results[0].cost);
+  }
+
+  {
+    // Cost of words in user dictionary should not be decreased to below 1.
+    const int kOrigianlWordCost = 10;
+    vector<TestableDictionaryPredictor::Result> results;
+    AddTestableDictionaryPredictorResult(
+        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY,
+        &results);
+
+    predictor->SetLMCost(segments, &results);
+
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(kAikaKanji, results[0].value);
+    EXPECT_GT(kOrigianlWordCost, results[0].cost);
+    EXPECT_LE(1, results[0].cost);
+  }
+
+  {
+    // Cost of words not in user dictionary should not be decreased.
+    const int kOrigianlWordCost = 10000;
+    vector<TestableDictionaryPredictor::Result> results;
+    AddTestableDictionaryPredictorResult(
+        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        TestableDictionaryPredictor::UNIGRAM, Token::NONE,
+        &results);
+
+    predictor->SetLMCost(segments, &results);
+
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(kAikaKanji, results[0].value);
+    EXPECT_EQ(kOrigianlWordCost, results[0].cost);
+  }
 }
 
 TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {

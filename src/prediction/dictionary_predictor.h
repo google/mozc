@@ -117,6 +117,7 @@ class DictionaryPredictor : public PredictorInterface {
         dictionary::Token::AttributesBitfield token_attr);
     void SetSourceInfoForZeroQuery(
         ZeroQueryType zero_query_type);
+    bool IsUserDictionaryResult() const;
 
     string key;
     string value;
@@ -212,6 +213,8 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction);
+  FRIEND_TEST(DictionaryPredictorTest,
+              AggregateUnigramCandidateForMixedConversion);
   FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
   FRIEND_TEST(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, TriggerZeroQuerySuggestion);
@@ -224,6 +227,7 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, RemoveMissSpelledCandidates);
   FRIEND_TEST(DictionaryPredictorTest, ConformCharacterWidthToPreference);
   FRIEND_TEST(DictionaryPredictorTest, SetLMCost);
+  FRIEND_TEST(DictionaryPredictorTest, SetLMCostForUserDictionaryWord);
   FRIEND_TEST(DictionaryPredictorTest, SetDescription);
   FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
   FRIEND_TEST(DictionaryPredictorTest, GetZeroQueryCandidates);
@@ -278,13 +282,14 @@ class DictionaryPredictor : public PredictorInterface {
                          const ConversionRequest &request,
                          Result *result) const;
 
-  void GetPredictiveResults(const dictionary::DictionaryInterface &dictionary,
-                            const string &history_key,
-                            const ConversionRequest &request,
-                            const Segments &segments,
-                            PredictionTypes types,
-                            size_t lookup_limit,
-                            vector<Result> *results) const;
+  static void GetPredictiveResults(
+      const dictionary::DictionaryInterface &dictionary,
+      const string &history_key,
+      const ConversionRequest &request,
+      const Segments &segments,
+      PredictionTypes types,
+      size_t lookup_limit,
+      vector<Result> *results);
 
   void GetPredictiveResultsForBigram(
       const dictionary::DictionaryInterface &dictionary,
@@ -428,6 +433,13 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Aggregates unigram candidate for mixed conversion.
   // This reduces redundant candidates.
+  static void AggregateUnigramCandidateForMixedConversion(
+      const dictionary::DictionaryInterface &dictionary,
+      const ConversionRequest &request,
+      const Segments &segments,
+      vector<Result> *results);
+
+  // The same as the static version of this method above but uses |dictionary_|.
   void AggregateUnigramCandidateForMixedConversion(
       const ConversionRequest &request,
       const Segments &segments,

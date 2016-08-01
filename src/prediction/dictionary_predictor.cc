@@ -506,7 +506,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       continue;
     }
 
-    // don't suggest exactly the same candidate as key.
+    // Don't suggest exactly the same candidate as key.
     // if |mixed_conversion| is true, that's not the case.
     if (!mixed_conversion &&
         !(result.types & REALTIME) &&
@@ -765,6 +765,10 @@ void DictionaryPredictor::Result::SetSourceInfoForZeroQuery(
   }
 }
 
+bool DictionaryPredictor::Result::IsUserDictionaryResult() const {
+  return (candidate_attributes & Segment::Candidate::USER_DICTIONARY) != 0;
+}
+
 bool DictionaryPredictor::GetHistoryKeyAndValue(
     const Segments &segments, string *key, string *value) const {
   DCHECK(key);
@@ -916,9 +920,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
 
   const size_t input_key_len = Util::CharsLen(
       segments.conversion_segment(0).key());
-  for (size_t i = 0; i < results->size(); ++i) {
-    const Result &result = results->at(i);
-
+  for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
     // Demote filtered word here, because they are not filtered for exact match.
     // Even for exact match, we don't want to show aggressive words
@@ -960,7 +962,19 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       const int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
     }
-    results->at(i).cost = cost;
+    if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY) {
+      // Decrease cost for words from user dictionary in order to promote them.
+      // Currently user dictionary words are evaluated 5 times bigger in
+      // frequency, being capped by 1000 (this number is adhoc, so feel free to
+      // adjust).
+      const int kUserDictionaryPromotionFactor = 804;  // 804 = 500 * log(5)
+      const int kUserDictionaryCostUpperLimit = 1000;
+      cost = min(cost - kUserDictionaryPromotionFactor,
+                 kUserDictionaryCostUpperLimit);
+    }
+    // Note that the cost is defined as -500 * log(prob).
+    // Even after the ad hoc manipulations, cost must remain larger than 0.
+    result.cost = max(1, cost);
   }
 }
 
@@ -1345,11 +1359,20 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     const ConversionRequest &request,
     const Segments &segments,
     vector<Result> *results) const {
+  AggregateUnigramCandidateForMixedConversion(*dictionary_, request,
+                                              segments, results);
+}
+
+void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
+    const dictionary::DictionaryInterface &dictionary,
+    const ConversionRequest &request,
+    const Segments &segments,
+    vector<Result> *results) {
   const size_t cutoff_threshold = kPredictionMaxResultsSize;
 
   vector<Result> raw_result;
   // No history key
-  GetPredictiveResults(*dictionary_, "", request, segments, UNIGRAM,
+  GetPredictiveResults(dictionary, "", request, segments, UNIGRAM,
                        cutoff_threshold, &raw_result);
 
   // Hereafter, we split "Needed Results" and "(maybe) Unneeded Results."
@@ -1383,7 +1406,8 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
 
     // Traverse all remaining elements and check if each result is redundant.
     for (Iter iter = min_iter; iter != max_iter; ) {
-      if (MaybeRedundant(reference_result.value, iter->value)) {
+      if (!iter->IsUserDictionaryResult() &&
+          MaybeRedundant(reference_result.value, iter->value)) {
         // Swap out the redundant result.
         --max_iter;
         std::iter_swap(iter, max_iter);
@@ -1564,7 +1588,7 @@ void DictionaryPredictor::GetPredictiveResults(
     const Segments &segments,
     PredictionTypes types,
     size_t lookup_limit,
-    vector<Result> *results) const {
+    vector<Result> *results) {
   if (!request.has_composer() ||
       !FLAGS_enable_expansion_for_dictionary_predictor) {
     const string &query_key = segments.conversion_segment(0).key();
