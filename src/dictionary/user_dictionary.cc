@@ -244,8 +244,8 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   }
 
   // When the user dictionary exists AND the modification time has been updated,
-  // reloads the dictionary.
-  void MaybeStartReload() {
+  // reloads the dictionary.  Returns true when reloader thread is started.
+  bool MaybeStartReload() {
     FileTimeStamp modification_time;
     if (!FileUtil::GetModificationTime(
         Singleton<UserDictionaryFileManager>::get()->GetFileName(),
@@ -254,13 +254,14 @@ class UserDictionary::UserDictionaryReloader : public Thread {
       // Therefore if the file is deleted after first reload,
       // second reload does nothing so the content loaded by first reload
       // is kept as is.
-      return;
+      return false;
     }
     if (modified_at_ == modification_time) {
-      return;
+      return false;
     }
     modified_at_ = modification_time;
     Start("UserDictionaryReloader");
+    return true;
   }
 
   void Run() override {
@@ -506,11 +507,13 @@ bool UserDictionary::Reload() {
   if (reloader_->IsRunning()) {
     return false;
   }
-
   suppression_dictionary_->Lock();
   DCHECK(suppression_dictionary_->IsLocked());
-  reloader_->MaybeStartReload();
-
+  // When the reloader is started, |suppression_dictionary_| is unlocked by the
+  // reloader.  When not started, need to unlock it here.
+  if (!reloader_->MaybeStartReload()) {
+    suppression_dictionary_->UnLock();
+  }
   return true;
 }
 
@@ -598,9 +601,11 @@ bool UserDictionary::Load(
     Swap(dummy_empty_tokens);
   }
 
+  suppression_dictionary_->Lock();
   TokensIndex *tokens = new TokensIndex(user_pos_.get(),
                                         suppression_dictionary_);
-  tokens->Load(storage);
+  tokens->Load(storage);  // |suppression_dictionary_| is unlocked in Load().
+  DCHECK(!suppression_dictionary_->IsLocked());
   Swap(tokens);
   return true;
 }
