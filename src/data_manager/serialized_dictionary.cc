@@ -161,7 +161,9 @@ pair<StringPiece, StringPiece> SerializedDictionary::Compile(
     }
     output_token_array_buf->reset(new uint32[(buf.size() + 3) / 4]);
     memcpy(output_token_array_buf->get(), buf.data(), buf.size());
-    token_array.set(output_token_array_buf->get(), buf.size());
+    token_array = StringPiece(
+        reinterpret_cast<const char*>(output_token_array_buf->get()),
+        buf.size());
   }
 
   // Build a string array.
