@@ -548,9 +548,9 @@ def GypMain(options, unused_args):
     # Make sure |gyp_main_file| exists.
     if not os.path.exists(gyp_main_file):
       message = (
-          'GYP does not exist at %s. Please run "gclient" to download GYP. '
-          'If you want to use system-installed GYP, use --gypdir option to '
-          'specify its location. e.g., '
+          'GYP does not exist at %s. Please run "git submodule update --init" '
+          'to check out GYP. If you want to use system-installed GYP, use '
+          '--gypdir option to specify its location. e.g. '
           '"python build_mozc.py gyp --gypdir=/usr/bin"' % gyp_main_file)
       PrintErrorAndExit(message)
     gyp_command = [sys.executable, gyp_main_file]
