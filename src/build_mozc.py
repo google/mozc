@@ -486,8 +486,6 @@ def ParseCleanOptions(args):
   return parser.parse_args(args)
 
 
-
-
 def AddPythonPathToEnvironmentFilesForWindows(out_dir):
   """Add PYTHONPATH to environment files for Ninja."""
   python_path_root = MOZC_ROOT
@@ -727,14 +725,6 @@ def GypMain(options, unused_args):
   if (target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
     gyp_options.extend(['-D', 'use_libibus=1'])
-
-  # Dictionary configuration
-  if target_platform == 'Android':
-    gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=1'])
-  elif target_platform == 'NaCl':
-    gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
-  else:
-    gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
 
   if target_platform == 'NaCl':
     if options.nacl_sdk_root:

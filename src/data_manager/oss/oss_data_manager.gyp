@@ -40,6 +40,7 @@
     'platform_data_dir': '<(mozc_dir)/data/dictionary_oss',
     'boundary_def': '<(mozc_dir)/data/rules/boundary.def',
     'dataset_tag': 'oss',
+    'use_1byte_cost_for_connection_data': 'false',
     'dictionary_files': [
       '<(platform_data_dir)/dictionary00.txt',
       '<(platform_data_dir)/dictionary01.txt',

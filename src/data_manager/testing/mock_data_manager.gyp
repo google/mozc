@@ -40,7 +40,6 @@
     'platform_data_dir': '<(mozc_dir)/data/test/dictionary',
     'boundary_def': '<(mozc_dir)/data/rules/boundary.def',
     'dataset_tag': 'mock',
-    # Force using 2byte cost data for testing.
     'use_1byte_cost_for_connection_data': 'false',
     'dictionary_files': [
       '<(platform_data_dir)/dictionary.txt',
