@@ -97,18 +97,22 @@ RewriteType GetRewriteTypeAndBase(
   // Retain suffix for later use.
   string number_suffix, kanji_number, arabic_number;
   if (!NumberUtil::NormalizeNumbersWithSuffix(c.content_value,
-                                              true,  // trim_reading_zeros
+                                              false,  // trim_reading_zeros
                                               &kanji_number,
                                               &arabic_number,
                                               &number_suffix) ||
       arabic_number == half_width_new_content_value) {
     return NO_REWRITE;
   }
+  const string new_content_value = arabic_number + number_suffix;
+  if (new_content_value == half_width_new_content_value) {
+    return NO_REWRITE;
+  }
   const string suffix(c.value, c.content_value.size(),
                       c.value.size() - c.content_value.size());
   arabic_candidate->Init();
-  arabic_candidate->value = arabic_number + number_suffix + suffix;
-  arabic_candidate->content_value = arabic_number + number_suffix;
+  arabic_candidate->value = new_content_value + suffix;
+  arabic_candidate->content_value = new_content_value;
   arabic_candidate->key = c.key;
   arabic_candidate->content_key = c.content_key;
   arabic_candidate->consumed_key_size = c.consumed_key_size;

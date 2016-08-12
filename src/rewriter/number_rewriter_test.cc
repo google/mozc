@@ -1207,4 +1207,21 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
   EXPECT_TRUE(found_halfwidth);
 }
 
+TEST_F(NumberRewriterTest, RewritePhonePrefix_b16668386) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  Segments segments;
+  Segment *seg = segments.push_back_segment();
+  Segment::Candidate *candidate = seg->add_candidate();
+  candidate->Init();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetGeneralSymbolId();
+  candidate->key = "090-";
+  candidate->value = "090-";
+  candidate->content_key = "090-";
+  candidate->content_value = "090-";
+
+  EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
+}
+
 }  // namespace mozc
