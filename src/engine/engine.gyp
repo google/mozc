@@ -85,16 +85,6 @@
         '../converter/converter_base.gyp:converter_mock'
       ],
     },
-    {  # An engine just for converter/converter_main.cc.
-      'target_name': 'chromeos_engine_factory',
-      'type': 'none',
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../data_manager/chromeos/chromeos_data_manager.gyp:mozcdata',
-        '../prediction/prediction.gyp:prediction',
-        'engine',
-      ],
-    },
     {
       'target_name': 'oss_engine_factory',
       'type': 'none',
