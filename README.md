@@ -26,21 +26,21 @@ For historical reasons, the project name *Mozc* has two different meanings:
 
 In this repository, *Mozc* means the second definition unless otherwise noted.
 
-Detailed differences between Google Japanese Input and Mozc are described in [About Branding](doc/about_branding.md).
+Detailed differences between Google Japanese Input and Mozc are described in [About Branding](docs/about_branding.md).
 
 Build Instructions
 ------------------
 
-* [How to build Mozc in Docker](doc/build_mozc_in_docker.md): Android, NaCl, and Linux desktop builds.
-* [How to build Mozc in OS X](doc/build_mozc_in_osx.md): OS X build.
-* [How to build Mozc in Windows](doc/build_mozc_in_windows.md): Windows build.
+* [How to build Mozc in Docker](docs/build_mozc_in_docker.md): Android, NaCl, and Linux desktop builds.
+* [How to build Mozc in OS X](docs/build_mozc_in_osx.md): OS X build.
+* [How to build Mozc in Windows](docs/build_mozc_in_windows.md): Windows build.
 
 Release Plan
 ------------
 
 tl;dr. **There is no stable version.**
 
-As described in [About Branding](doc/about_branding.md) page, Google does
+As described in [About Branding](docs/about_branding.md) page, Google does
 not promise any official QA for OSS Mozc project.  Because of this,
 Mozc does not have a concept of *Stable Release*.  Instead we change version
 number every time when we introduce non-trivial change.  If you are
@@ -48,7 +48,7 @@ interested in packaging Mozc source code, or developing your own products
 based on Mozc, feel free to pick up any version.  They should be equally
 stable (or equally unstable) in terms of no official QA process.
 
-[Release History](doc/release_history.md) page may have additional
+[Release History](docs/release_history.md) page may have additional
 information and useful links about recent changes.
 
 License
