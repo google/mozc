@@ -35,7 +35,7 @@ init:
 - git config --global core.autocrlf input
 install:
 - git submodule update --init --recursive
-- choco install ninja -version 1.6.0
+- choco install ninja -version 1.7.1
 build_script:
 - cd src
 - python build_mozc.py gyp --noqt
