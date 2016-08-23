@@ -67,10 +67,6 @@ DEFINE_bool(enable_expansion_for_dictionary_predictor,
             false,
             "enable ambiguity expansion for dictionary_predictor");
 
-DEFINE_bool(enable_mixed_conversion,
-            false,
-            "Enable mixed conversion feature");
-
 DECLARE_bool(enable_typing_correction);
 
 using mozc::dictionary::DictionaryInterface;
@@ -135,7 +131,7 @@ bool GetNumberHistory(const Segments &segments, string *number_key) {
 }
 
 bool IsMixedConversionEnabled(const commands::Request& request) {
-  return request.mixed_conversion() || FLAGS_enable_mixed_conversion;
+  return request.mixed_conversion();
 }
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
