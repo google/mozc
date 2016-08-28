@@ -57,6 +57,9 @@
                     'AdditionalDependencies': [
                       'wininet.lib',
                     ],
+                    'DelayLoadDLLs': [
+                      'wininet.dll',
+                    ],
                   },
                 },
               },

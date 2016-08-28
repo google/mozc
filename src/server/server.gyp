@@ -96,14 +96,9 @@
               'AdditionalManifestFiles': 'mozc_server.exe.manifest',
               'EmbedManifest': 'true',
             },
-            'VCLinkerTool': {
-              'DelayLoadDLLs': [
-                'wininet.dll',
-              ],
-            },
-          }
+          },
         }],
-      ]
+      ],
     },
     {
       'target_name': 'mozc_server_lib',
