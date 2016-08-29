@@ -772,9 +772,18 @@ def GypMain(options, unused_args):
     abs_out_win_dir = GetBuildBaseName(target_platform)
     copy_script = os.path.join(
         ABS_SCRIPT_DIR, 'build_tools', 'copy_dll_and_symbol.py')
-    copy_modes = [
-        {'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4'},
-        {'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4'}]
+    if qt_version == '4':
+      copy_modes = [
+          {'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4'},
+          {'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4'}]
+    elif qt_version == '5':
+      copy_modes = [
+          {'configuration': 'DebugDynamic',
+           'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd'},
+          {'configuration': 'ReleaseDynamic',
+           'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets'}]
+    else:
+      copy_modes = []
     for mode in copy_modes:
       copy_commands = [
           copy_script,
