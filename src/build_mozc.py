@@ -400,7 +400,8 @@ def ExpandMetaTarget(options, meta_target_name):
   if meta_target_name != 'package':
     return [meta_target_name]
 
-  target_platform = GetMozcVersion().GetTargetPlatform()
+  version = GetMozcVersion()
+  target_platform = version.GetTargetPlatform()
 
   if target_platform == 'Android':
     targets = [SRC_DIR + '/android/android.gyp:apk']
@@ -413,16 +414,8 @@ def ExpandMetaTarget(options, meta_target_name):
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:DiskImage']
   elif target_platform == 'Windows':
-    # TODO(yukawa, komatsu): Support Qt5
     targets = ['out_win/%s:mozc_win32_build32' % options.configuration]
-    build_dir = os.path.abspath(os.path.join(
-        GetBuildBaseName(target_platform),
-        '%sDynamic' % options.configuration))
-    qtcore_dll = os.path.join(build_dir, 'QtCore4.dll')
-    qtcored_dll = os.path.join(build_dir, 'QtCored4.dll')
-    if os.path.exists(qtcore_dll) or os.path.exists(qtcored_dll):
-      # This means that Mozc is configured to use DLL versioin of Qt.
-      # Let's build Mozc with DLL version of C++ runtime for the compatibility.
+    if version.GetQtVersion():
       targets += ['out_win/%sDynamic:mozc_win32_build32_dynamic'
                   % options.configuration]
     targets.append('out_win/%s_x64:mozc_win32_build64' % options.configuration)
@@ -509,9 +502,13 @@ def GypMain(options, unused_args):
   logging.info('Generating version definition file...')
   template_path = '%s/%s' % (SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
+  if options.noqt or options.target_platform in ['Android', 'NaCl']:
+    qt_version = ''
+  else:
+    qt_version = options.qtver
   GenerateVersionFile(template_path, version_path, options.target_platform,
                       options.android_application_id,
-                      options.android_arch)
+                      options.android_arch, qt_version)
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
   logging.info('Version string is %s', version.GetVersionString())

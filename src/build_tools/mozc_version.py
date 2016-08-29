@@ -74,6 +74,7 @@ VERSION_PROPERTIES = [
     'REVISION',
     'ANDROID_VERSION_CODE',
     'TARGET_PLATFORM',
+    'QT_VERSION',
     'ANDROID_APPLICATION_ID',
     'ANDROID_SERVICE_NAME',
     'ANDROID_ARCH',
@@ -107,7 +108,8 @@ def _GetRevisionForPlatform(revision, target_platform):
 
 
 def _ParseVersionTemplateFile(template_path, target_platform,
-                              android_application_id, android_arch):
+                              android_application_id, android_arch,
+                              qt_version):
   """Parses a version definition file.
 
   Args:
@@ -115,6 +117,7 @@ def _ParseVersionTemplateFile(template_path, target_platform,
     target_platform: The target platform on which the programs run.
     android_application_id: Android application id.
     android_arch: Android architecture (arm, x86, mips)
+    qt_version: '4' for Qt4, '5' for Qt5, and '' or None for no-Qt.
   Returns:
     A dictionary generated from the template file.
   """
@@ -139,6 +142,7 @@ def _ParseVersionTemplateFile(template_path, target_platform,
       str(_GetAndroidVersionCode(int(template_dict['BUILD']), android_arch)))
 
   template_dict['TARGET_PLATFORM'] = target_platform
+  template_dict['QT_VERSION'] = qt_version
   template_dict['ANDROID_APPLICATION_ID'] = android_application_id
   template_dict['ANDROID_SERVICE_NAME'] = (
       'org.mozc.android.inputmethod.japanese.MozcService')
@@ -216,7 +220,8 @@ def GenerateVersionFileFromTemplate(template_path,
                                     version_format,
                                     target_platform,
                                     android_application_id='',
-                                    android_arch='arm'):
+                                    android_arch='arm',
+                                    qt_version=''):
   """Generates version file from template file and given parameters.
 
   Args:
@@ -228,11 +233,12 @@ def GenerateVersionFileFromTemplate(template_path,
     target_platform: The target platform on which the programs run.
     android_application_id: Android application id.
     android_arch: Android architecture (arm, x86, mips)
+    qt_version: '4' for Qt4, '5' for Qt5, and '' or None for no-Qt.
   """
 
   properties = _ParseVersionTemplateFile(template_path, target_platform,
                                          android_application_id,
-                                         android_arch)
+                                         android_arch, qt_version)
   version_definition = _GetVersionInFormat(properties, version_format)
   old_content = ''
   if os.path.exists(output_path):
@@ -249,7 +255,7 @@ def GenerateVersionFileFromTemplate(template_path,
 
 
 def GenerateVersionFile(version_template_path, version_path, target_platform,
-                        android_application_id, android_arch):
+                        android_application_id, android_arch, qt_version):
   """Reads the version template file and stores it into version_path.
 
   This doesn't update the "version_path" if nothing will be changed to
@@ -262,6 +268,7 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
     android_application_id: [Android Only] application id
       (e.g. org.mozc.android).
     android_arch: Android architecture (arm, x86, mips)
+    qt_version: '4' for Qt4, '5' for Qt5, and '' or None for no-Qt.
   """
   version_format = '\n'.join([
       'MAJOR=@MAJOR@',
@@ -270,6 +277,7 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       'REVISION=@REVISION@',
       'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@',
       'TARGET_PLATFORM=@TARGET_PLATFORM@',
+      'QT_VERSION=@QT_VERSION@',
       'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@',
       'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@',
       'ANDROID_ARCH=@ANDROID_ARCH@',
@@ -281,7 +289,8 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       version_format,
       target_platform=target_platform,
       android_application_id=android_application_id,
-      android_arch=android_arch)
+      android_arch=android_arch,
+      qt_version=qt_version)
 
 
 class MozcVersion(object):
@@ -334,6 +343,15 @@ class MozcVersion(object):
     """
     return self._properties.get('TARGET_PLATFORM', None)
 
+  def GetQtVersion(self):
+    """Returns the target Qt version.
+
+    Returns:
+      A string that indicates the Qt version.
+      '4' for Qt4, '5' for Qt5, and '' for no-Qt.
+    """
+    return self._properties.get('QT_VERSION', None)
+
   def GetVersionString(self):
     """Returns the normal version info string.
 
@@ -370,6 +388,8 @@ def main():
                     default='arm',
                     help='Specifies Android architecture (arm, x86, mips) '
                     '(Android Only)')
+  parser.add_option('--qtver', dest='qtver', choices=('4', '5', ''),
+                    default='', help='Specifies Qt version (desktop only)')
   (options, args) = parser.parse_args()
   assert not args, 'Unexpected arguments.'
   assert options.template_path, 'No --template_path was specified.'
@@ -381,7 +401,8 @@ def main():
       version_path=options.output,
       target_platform=options.target_platform,
       android_application_id=options.android_application_id,
-      android_arch=options.android_arch)
+      android_arch=options.android_arch,
+      qt_version=options.qtver)
 
 if __name__ == '__main__':
   main()
