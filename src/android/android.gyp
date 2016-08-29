@@ -234,12 +234,13 @@
       'type': 'none',
       'variables': {
         'make_standalone_toolchain_commands': [
-          'bash',
-          '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
-          '--toolchain=<(toolchain)',
-          '--stl=libcxx',
+          'python',
+          '<(android_ndk_home)/build/tools/make_standalone_toolchain.py',
+          '--force',
+          '--arch=<(android_arch)',
+          '--stl=libc++',
           '--install-dir=<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)',
-          '--platform=<(platform)',
+          '--api=<(ndk_target_api_level)',
         ],
         'make_standalone_toolchain_result': '<!(<(make_standalone_toolchain_commands))',
       },

@@ -83,88 +83,40 @@
         'font_dir': '<(third_party_dir)/noto_font',
       },
     }],
-    ['android_arch=="arm" and android_compiler=="gcc"', {
+    ['android_arch=="arm"', {
       'variables': {
         'abi': 'armeabi-v7a',
-        'toolchain': 'arm-linux-androideabi-4.9',
-        'platform': 'android-14',
+        'ndk_target_api_level': '14',
       },
     }],
-    ['android_arch=="arm" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'armeabi-v7a',
-        'toolchain': 'arm-linux-androideabi-clang3.5',
-        'platform': 'android-14',
-      },
-    }],
-    ['android_arch=="x86" and android_compiler=="gcc"', {
+    ['android_arch=="x86"', {
       'variables': {
         'abi': 'x86',
-        'toolchain': 'x86-4.9',
-        'platform': 'android-14',
+        'ndk_target_api_level': '14',
       },
     }],
-    ['android_arch=="x86" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'x86',
-        'toolchain': 'x86-clang3.5',
-        'platform': 'android-14',
-      },
-    }],
-    ['android_arch=="mips" and android_compiler=="gcc"', {
+    ['android_arch=="mips"', {
       'variables': {
         'abi': 'mips',
-        'toolchain': 'mipsel-linux-android-4.9',
-        'platform': 'android-14',
+        'ndk_target_api_level': '14',
       },
     }],
-    ['android_arch=="mips" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'mips',
-        'toolchain': 'mipsel-linux-android-clang3.5',
-        'platform': 'android-14',
-      },
-    }],
-    ['android_arch=="arm64" and android_compiler=="gcc"', {
+    ['android_arch=="arm64"', {
       'variables': {
         'abi': 'arm64-v8a',
-        'toolchain': 'aarch64-linux-android-4.9',
-        'platform': 'android-21',
+        'ndk_target_api_level': '21',
       },
     }],
-    ['android_arch=="arm64" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'arm64-v8a',
-        'toolchain': 'aarch64-linux-android-clang3.5',
-        'platform': 'android-21',
-      },
-    }],
-    ['android_arch=="x86_64" and android_compiler=="gcc"', {
+    ['android_arch=="x86_64"', {
       'variables': {
         'abi': 'x86_64',
-        'toolchain': 'x86_64-4.9',
-        'platform': 'android-21',
+        'ndk_target_api_level': '21',
       },
     }],
-    ['android_arch=="x86_64" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'x86_64',
-        'toolchain': 'x86_64-clang3.5',
-        'platform': 'android-21',
-      },
-    }],
-    ['android_arch=="mips64" and android_compiler=="gcc"', {
+    ['android_arch=="mips64"', {
       'variables': {
         'abi': 'mips64',
-        'toolchain': 'mips64el-linux-android-4.9',
-        'platform': 'android-21',
-      },
-    }],
-    ['android_arch=="mips64" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'mips64',
-        'toolchain': 'mips64el-linux-android-4.9',
-        'platform': 'android-21',
+        'ndk_target_api_level': '21',
       },
     }],
   ],
