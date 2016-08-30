@@ -506,14 +506,8 @@ TEST(StringPieceTest, CheckCustom) {
   c.set("foobar");
   ASSERT_EQ(c, a);
 
-  c.set(static_cast<const void *>("foobar"), 6);
-  ASSERT_EQ(c, a);
-  c.set(static_cast<const void *>("foobar"), 0);
-  ASSERT_EQ(c, e);
-  c.set(static_cast<const void *>("foobar"), 7);
-  ASSERT_NE(c, a);
-
   // as_string
+  c = StringPiece("foobar", 7);
   string s3(a.as_string().c_str(), 7);
   ASSERT_EQ(c, s3);
   string s4(e.as_string());
