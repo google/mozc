@@ -31,6 +31,7 @@
 
 #include "base/logging.h"
 #include "base/run_level.h"
+#include "base/system_util.h"
 #include "base/win_util.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
@@ -61,8 +62,8 @@ int RunPrelaunchProcesses(int argc, char *argv[]) {
     return kErrorLevelGeneralError;
   }
 
-  if (!ImeUtil::IsDefault()) {
-    // If Mozc is not default, do nothing.
+  if (!SystemUtil::IsWindows8OrLater() && !ImeUtil::IsDefault()) {
+    // If Mozc is not default on Windows 7 or former, do nothing.
     return kErrorLevelSuccess;
   }
 
