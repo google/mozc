@@ -328,6 +328,7 @@
         'OmitFramePointers': 'false',          # /Oy-
         'AdditionalOptions': [
           '/Zc:strictStrings',
+          '/utf-8',
         ],
       },
       'VCLinkerTool': {
