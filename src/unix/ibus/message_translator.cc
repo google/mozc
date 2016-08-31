@@ -45,47 +45,24 @@ struct TranslationMap {
 };
 
 const TranslationMap kUTF8JapaneseMap[] = {
-  // "直接入力"
-  { "Direct input", "\xE7\x9B\xB4\xE6\x8E\xA5\xE5\x85\xA5\xE5\x8A\x9B" },
-  // "ひらがな"
-  { "Hiragana", "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA" },
-  // "カタカナ"
-  { "Katakana", "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A" },
-  // "半角英数"
-  { "Latin", "\xE5\x8D\x8A\xE8\xA7\x92\xE8\x8B\xB1\xE6\x95\xB0" },
-  // "全角英数"
-  { "Wide Latin", "\xE5\x85\xA8\xE8\xA7\x92\xE8\x8B\xB1\xE6\x95\xB0" },
-  // "半角カタカナ"
-  { "Half width katakana",
-    "\xE5\x8D\x8A\xE8\xA7\x92"
-    "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A" },
-  // "ツール"
-  { "Tools", "\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB" },
-  // "プロパティ"
-  { "Properties",
-    "\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3" },
-  // "辞書ツール"
-  { "Dictionary Tool",
-    "\xE8\xBE\x9E\xE6\x9B\xB8\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB" },
-  // "単語登録"
-  { "Add Word",
-    "\xE5\x8D\x98\xE8\xAA\x9E\xE7\x99\xBB\xE9\x8C\xB2" },
-  // "手書き文字入力"
-  { "Handwriting",
-    "\xE6\x89\x8B\xE6\x9B\xB8\xE3\x81\x8D"
-    "\xE6\x96\x87\xE5\xAD\x97\xE5\x85\xA5\xE5\x8A\x9B" },
-  // "文字パレット"
-  { "Character Palette",
-    "\xE6\x96\x87\xE5\xAD\x97"
-    "\xE3\x83\x91\xE3\x83\xAC\xE3\x83\x83\xE3\x83\x88" },
-  // "入力モード"
-  { "Input Mode",
-    "\xE5\x85\xA5\xE5\x8A\x9B\xE3\x83\xA2\xE3\x83\xBC\xE3\x83\x89" },
-  // "Mozc について"
-  // TODO(team): This should be "Google 日本語入力について"
-  //     for official branding build.
-  { "About Mozc",
-    "\x4D\x6F\x7A\x63\x20\xE3\x81\xAB\xE3\x81\xA4\xE3\x81\x84\xE3\x81\xA6" },
+  { "Direct input", "直接入力" },
+  { "Hiragana", "ひらがな" },
+  { "Katakana", "カタカナ" },
+  { "Latin", "半角英数" },
+  { "Wide Latin", "全角英数" },
+  { "Half width katakana", "半角カタカナ" },
+  { "Tools", "ツール" },
+  { "Properties", "プロパティ" },
+  { "Dictionary Tool", "辞書ツール" },
+  { "Add Word", "単語登録" },
+  { "Handwriting", "手書き文字入力" },
+  { "Character Palette", "文字パレット" },
+  { "Input Mode", "入力モード" },
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  { "About Mozc", "Google 日本語入力について" },
+#else
+  { "About Mozc", "Mozc について" },
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 };
 
 }  // namespace

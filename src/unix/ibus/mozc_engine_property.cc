@@ -49,14 +49,14 @@ const MozcEngineProperty kMozcEnginePropertiesArray[] = {
     commands::HIRAGANA,
     "InputMode.Hiragana",
     "Hiragana",
-    "\xe3\x81\x82",  // Hiragana letter A
+    "あ",
     "hiragana.png",
   },
   {
     commands::FULL_KATAKANA,
     "InputMode.Katakana",
     "Katakana",
-    "\xe3\x82\xa2",  // Katakana letter A
+    "ア",
     "katakana_full.png",
   },
   {
@@ -70,14 +70,14 @@ const MozcEngineProperty kMozcEnginePropertiesArray[] = {
     commands::FULL_ASCII,
     "InputMode.WideLatin",
     "Wide Latin",
-    "\xef\xbc\xa1",  // Full width ASCII letter A
+    "Ａ",
     "alpha_full.png",
   },
   {
     commands::HALF_KATAKANA,
     "InputMode.HalfWidthKatakana",
     "Half width katakana",
-    "_\xef\xbd\xb1",  // Half width Katakana letter A
+    "_ｱ",
     "katakana_half.png",
   },
 };
