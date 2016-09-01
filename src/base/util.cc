@@ -612,7 +612,7 @@ bool Util::SplitFirstChar32(StringPiece s,
   }
 
   *first_char32 = 0;
-  rest->clear();
+  *rest = StringPiece();
 
   while (true) {
     if (s.empty()) {
@@ -705,7 +705,7 @@ bool Util::SplitLastChar32(StringPiece s,
   }
 
   *last_char32 = 0;
-  rest->clear();
+  *rest = StringPiece();
 
   if (s.empty()) {
     return false;

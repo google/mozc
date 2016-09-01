@@ -227,7 +227,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   // Currently, character_form_message is treated as a "default"
   // description.
   if (!candidate->description.empty()) {
-    character_form_message.clear();
+    character_form_message = StringPiece();
   }
 
   string description;

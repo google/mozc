@@ -2195,14 +2195,14 @@ TEST(UtilTest, SplitFirstChar32) {
   StringPiece rest;
   char32 c = 0;
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_FALSE(Util::SplitFirstChar32("", &c, &rest));
   EXPECT_EQ(0, c);
   EXPECT_TRUE(rest.empty());
 
   // Allow NULL to ignore the matched value.
-  rest.clear();
+  rest = StringPiece();
   EXPECT_TRUE(Util::SplitFirstChar32("01", NULL, &rest));
   EXPECT_EQ("1", rest);
 
@@ -2211,73 +2211,73 @@ TEST(UtilTest, SplitFirstChar32) {
   EXPECT_TRUE(Util::SplitFirstChar32("01", &c, NULL));
   EXPECT_EQ('0', c);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\x01 ", &c, &rest));
   EXPECT_EQ(1, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\x7F ", &c, &rest));
   EXPECT_EQ(0x7F, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xC2\x80 ", &c, &rest));
   EXPECT_EQ(0x80, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xDF\xBF ", &c, &rest));
   EXPECT_EQ(0x7FF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xE0\xA0\x80 ", &c, &rest));
   EXPECT_EQ(0x800, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xEF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0xFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xF0\x90\x80\x80 ", &c, &rest));
   EXPECT_EQ(0x10000, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xF7\xBF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0x1FFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xF8\x88\x80\x80\x80 ", &c, &rest));
   EXPECT_EQ(0x200000, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xFB\xBF\xBF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0x3FFFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xFC\x84\x80\x80\x80\x80 ", &c, &rest));
   EXPECT_EQ(0x4000000, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xFD\xBF\xBF\xBF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0x7FFFFFFF, c);
@@ -2342,7 +2342,7 @@ TEST(UtilTest, SplitLastChar32) {
   StringPiece rest;
   char32 c = 0;
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_FALSE(Util::SplitLastChar32("", &rest, &c));
   EXPECT_EQ(0, c);
@@ -2354,77 +2354,77 @@ TEST(UtilTest, SplitLastChar32) {
   EXPECT_EQ('1', c);
 
   // Allow NULL to ignore the matched value.
-  rest.clear();
+  rest = StringPiece();
   EXPECT_TRUE(Util::SplitLastChar32("01", &rest, NULL));
   EXPECT_EQ("0", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \x01", &rest, &c));
   EXPECT_EQ(1, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \x7F", &rest, &c));
   EXPECT_EQ(0x7F, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xC2\x80", &rest, &c));
   EXPECT_EQ(0x80, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xDF\xBF", &rest, &c));
   EXPECT_EQ(0x7FF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xE0\xA0\x80", &rest, &c));
   EXPECT_EQ(0x800, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xEF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0xFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xF0\x90\x80\x80", &rest, &c));
   EXPECT_EQ(0x10000, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xF7\xBF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0x1FFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xF8\x88\x80\x80\x80", &rest, &c));
   EXPECT_EQ(0x200000, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xFB\xBF\xBF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0x3FFFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xFC\x84\x80\x80\x80\x80", &rest, &c));
   EXPECT_EQ(0x4000000, c);
   EXPECT_EQ(" ", rest);
 
-  rest.clear();
+  rest = StringPiece();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xFD\xBF\xBF\xBF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0x7FFFFFFF, c);

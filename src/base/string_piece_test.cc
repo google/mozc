@@ -164,7 +164,7 @@ TEST(StringPieceTest, CheckSTL) {
   ASSERT_TRUE(e.empty());
   ASSERT_TRUE(e.begin() == e.end());
 
-  d.clear();
+  d = StringPiece();
   ASSERT_SIZE_EQ(d.size(), 0);
   ASSERT_TRUE(d.empty());
   ASSERT_TRUE(d.data() == NULL);
