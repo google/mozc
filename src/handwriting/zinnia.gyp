@@ -63,6 +63,13 @@
               # So that dependent file can look up <zinnia.h>
               '<(zinnia_src_dir)',
             ],
+            'conditions': [
+              ['target_platform=="Windows"', {
+                'defines': [
+                  'ZINNIA_STATIC_LIBRARY',
+                ],
+              }],
+            ],
           },
           'cflags': [
             '-Wno-type-limits',
@@ -78,6 +85,7 @@
                 'HAVE_WINDOWS_H=1',
                 'PACKAGE="zinnia"',
                 'VERSION="0.06"',
+                'ZINNIA_STATIC_LIBRARY',
               ],
             }],
             ['target_platform=="Linux" or target_platform=="Mac"', {
