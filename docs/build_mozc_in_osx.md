@@ -42,7 +42,7 @@ python build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gy
 
 # Executables
 
-Executables are written in `~/wok/mozc/src/out_mac/Release` for Release builds, and `~/work/mozc/src/out_mac/Debug` for Debug builds. For instance, you'll have `~/work/mozc/src/out_mac/Release/Mozc.app` once the build finishes successfully in the Release mode.
+Executables are written in `~/work/mozc/src/out_mac/Release` for Release builds, and `~/work/mozc/src/out_mac/Debug` for Debug builds. For instance, you'll have `~/work/mozc/src/out_mac/Release/Mozc.app` once the build finishes successfully in the Release mode.
 
 # GUI tools
 
