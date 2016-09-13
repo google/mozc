@@ -190,10 +190,6 @@ class KeyParserData {
 
 bool KeyParser::ParseKey(const string &key_string,
                          KeyEvent *key_event) {
-  if (Util::GetFormType(key_string) != mozc::Util::HALF_WIDTH) {
-    LOG(ERROR) << "key should be half-width";
-    return false;
-  }
   vector<string> keys;
   Util::SplitStringUsing(key_string, " ", &keys);
   if (keys.empty()) {

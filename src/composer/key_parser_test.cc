@@ -50,8 +50,10 @@ TEST(KeyParserTest, KeyCode) {
   EXPECT_EQ('A', key_event.key_code());
 
   // "あ" (not half width)
+  const char32 kHiraganaA = 0x3042;
   key_event.Clear();
-  EXPECT_FALSE(KeyParser::ParseKey("\xE3\x81\x82", &key_event));
+  EXPECT_TRUE(KeyParser::ParseKey("\xE3\x81\x82", &key_event));
+  EXPECT_EQ(kHiraganaA, key_event.key_code());
 }
 
 TEST(KeyParserTest, ModifierKeys) {

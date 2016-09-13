@@ -1247,6 +1247,52 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 }
 
+TEST_F(ComposerTest, FullWidthCharRules_b31444698) {
+  // Construct the following romaji table:
+  //
+  // 1<tab><tab>{?}あ<tab>NewChunk NoTransliteration
+  // {?}あ1<tab><tab>{?}い<tab>
+  // か<tab><tab>{?}か<tab>NewChunk NoTransliteration
+  // {?}かか<tab><tab>{?}き<tab>
+  const int kAttrs =
+      TableAttribute::NEW_CHUNK | TableAttribute::NO_TRANSLITERATION;
+  table_->AddRuleWithAttributes("1", "",
+                                "\x7B\x3F\x7D\xE3\x81\x82",  // "{?}あ"
+                                kAttrs);
+  table_->AddRule("\x7B\x3F\x7D\xE3\x81\x82\x31",  // "{?}あ1"
+                  "",
+                  "\x7B\x3F\x7D\xE3\x81\x84");  // "{?}い"
+  table_->AddRuleWithAttributes("\xE3\x81\x8B",  // "か"
+                                "",
+                                "\x7B\x3F\x7D\xE3\x81\x8B",  // "{?}か"
+                                kAttrs);
+  table_->AddRule("\x7B\x3F\x7D\xE3\x81\x8B\xE3\x81\x8B",  // "{?}かか"
+                  "",
+                  "\x7B\x3F\x7D\xE3\x81\x8D");  // "{?}き"
+
+  // Test if "11" is transliterated to "い"
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("\xE3\x81\x82",  // "あ"
+            GetPreedit(composer_.get()));
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("\xE3\x81\x84",  // "い"
+            GetPreedit(composer_.get()));
+
+  composer_->Reset();
+
+  // b/31444698.  Test if "かか" is transliterated to "き"
+  ASSERT_TRUE(InsertKeyWithMode("\xE3\x81\x8B",  // "か"
+                                commands::HIRAGANA,
+                                composer_.get()));
+  EXPECT_EQ("\xE3\x81\x8B",  // "か"
+            GetPreedit(composer_.get()));
+  ASSERT_TRUE(InsertKeyWithMode("\xE3\x81\x8B",  // "か"
+                                commands::HIRAGANA,
+                                composer_.get()));
+  EXPECT_EQ("\xE3\x81\x8D",  // "き"
+            GetPreedit(composer_.get()));
+}
+
 TEST_F(ComposerTest, CopyFrom) {
   // "あ"
   table_->AddRule("a", "\xE3\x81\x82", "");

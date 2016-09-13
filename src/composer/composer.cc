@@ -328,9 +328,17 @@ void Composer::ApplyTemporaryInputMode(const string &input, bool caps_locked) {
   const config::Config::ShiftKeyModeSwitch switch_mode =
       config_->shift_key_mode_switch();
 
-  // Input is NOT an ASCII code.
+  // When input is not an ASCII code, reset the input mode to the one before
+  // temporary input mode.
   if (Util::OneCharLen(input.c_str()) != 1) {
-    SetInputMode(comeback_input_mode_);
+    // Call SetInputMode() only when the current input mode is temporary, which
+    // is detected by the if-condition below.  Without this check,
+    // SetInputMode() is called always for multi-byte charactesrs.  This causes
+    // a bug that multi-byte characters is inserted to a new chunk because
+    // |is_new_input_| is set to true in SetInputMode(); see b/31444698.
+    if (comeback_input_mode_ != input_mode_) {
+      SetInputMode(comeback_input_mode_);
+    }
     return;
   }
 

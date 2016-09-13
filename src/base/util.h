@@ -187,6 +187,10 @@ class Util {
   static char32 UTF8ToUCS4(const char *begin,
                            const char *end,
                            size_t *mblen);
+  static char32 UTF8ToUCS4(StringPiece s) {
+    size_t mblen = 0;
+    return UTF8ToUCS4(s.data(), s.data() + s.size(), &mblen);
+  }
 
   // Converts a UCS4 code point to UTF8 string.
   static void UCS4ToUTF8(char32 c, string *output);
