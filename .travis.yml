@@ -52,7 +52,7 @@ env:
 before_install:
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update; fi
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y clang python pkg-config curl bzip2 unzip make; fi
-  - if [ $TARGET_PLATFORM == Linux ]; then sudo apt-get install -y libibus-1.0-dev libglib2.0-dev libqt4-dev libgtk2.0-dev libxcb-xfixes0-dev; fi
+  - if [ $TARGET_PLATFORM == Linux ]; then sudo apt-get install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then sudo apt-get install -y libc6-i386 lib32stdc++6; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then sudo apt-get install --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless libjsr305-java ant zip libc6-i386 lib32stdc++6 lib32ncurses5 lib32z1; fi
 
