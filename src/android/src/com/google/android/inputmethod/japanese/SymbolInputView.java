@@ -293,12 +293,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-      LayoutInflater inflater = LayoutInflater.from(context);
-      inflater = inflater.cloneInContext(context);
-
-      View view = MozcUtil.inflateWithOutOfMemoryRetrial(
-          View.class, inflater, R.layout.symbol_candidate_view, Optional.<ViewGroup>absent(),
-          false);
+      View view = LayoutInflater.from(context).inflate(R.layout.symbol_candidate_view, null);
       SymbolCandidateView symbolCandidateView =
           SymbolCandidateView.class.cast(view.findViewById(R.id.symbol_input_candidate_view));
       symbolCandidateView.setCandidateSelectListener(candidateSelectListener);
@@ -561,14 +556,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   void inflateSelf() {
     Preconditions.checkState(!isInflated(), "The symbol input view is already inflated.");
 
-    // Hack: Because we wrap the real context to inject "retrying" for Drawable loading,
-    // LayoutInflater.from(getContext()).getContext() may be different from getContext().
-    // So, we clone the inflater here, too, with actual context.
-    Context context = getContext();
-    LayoutInflater inflater = LayoutInflater.from(context);
-    inflater = inflater.cloneInContext(context);
-    MozcUtil.inflateWithOutOfMemoryRetrial(
-        SymbolInputView.class, inflater, R.layout.symbol_view, Optional.<ViewGroup>of(this), true);
+    LayoutInflater.from(getContext()).inflate(R.layout.symbol_view, this);
     // Note: onFinishInflate won't be invoked on android ver 3.0 or later, while it is invoked
     // on android 2.3 or earlier. So, we define another (but similar) method and invoke it here
     // manually.

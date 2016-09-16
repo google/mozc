@@ -29,7 +29,6 @@
 
 package org.mozc.android.inputmethod.japanese.vectorgraphic;
 
-import org.mozc.android.inputmethod.japanese.MozcUtil;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -287,7 +286,7 @@ public class BufferedDrawable extends Drawable {
   private Collection<DecomposedBitmap> createDecomposedBitmap(DecomposedBitmapMetadata metadata,
                                                               float[] matrixValues) {
     // Create bitmap with original (on screen) width and size with alignment.
-    Bitmap bitmap = MozcUtil.createBitmap(
+    Bitmap bitmap = Bitmap.createBitmap(
         (int) Math.ceil(metadata.width * metadata.scaleX / COMPOSITION_LENGTH)
             * COMPOSITION_LENGTH,
         (int) Math.ceil(metadata.height * metadata.scaleY / COMPOSITION_LENGTH)
@@ -459,7 +458,7 @@ public class BufferedDrawable extends Drawable {
         int top = topIndex * COMPOSITION_LENGTH;
         int bottom = Math.min(bottomIndex * COMPOSITION_LENGTH, height);
         result.add(new DecomposedBitmap(left, top,
-            MozcUtil.createBitmap(bitmap, left, top, right - left, bottom - top)));
+            Bitmap.createBitmap(bitmap, left, top, right - left, bottom - top)));
       }
     }
     bitmap.recycle();

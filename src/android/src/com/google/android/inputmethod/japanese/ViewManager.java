@@ -483,14 +483,7 @@ public class ViewManager implements ViewManagerInterface {
    */
   @Override
   public MozcView createMozcView(Context context) {
-    // Because an issue about native bitmap memory management on older Android,
-    // there is a potential OutOfMemoryError. To reduce such an error case,
-    // we retry to inflate or to create drawable when OOM is found.
-    // Here is the injecting point of the procedure.
-    LayoutInflater inflater = LayoutInflater.from(context);
-    inflater = inflater.cloneInContext(MozcUtil.getContextWithOutOfMemoryRetrial(context));
-    mozcView = MozcUtil.inflateWithOutOfMemoryRetrial(
-        MozcView.class, inflater, R.layout.mozc_view, Optional.<ViewGroup>absent(), false);
+    mozcView = MozcView.class.cast(LayoutInflater.from(context).inflate(R.layout.mozc_view, null));
     // Suppress update of View's internal state
     // until all the updates done in this method are finished. Just in case.
     mozcView.setVisibility(View.GONE);

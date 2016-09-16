@@ -30,7 +30,6 @@
 package org.mozc.android.inputmethod.japanese.preference;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
-import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
@@ -257,7 +256,7 @@ public class KeyboardPreviewDrawable extends Drawable {
       return null;
     }
 
-    Bitmap bitmap = MozcUtil.createBitmap(width, height, Config.ARGB_8888);
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
     Canvas canvas = new Canvas(bitmap);
     canvas.scale(scale, scale);
     DrawableCache drawableCache = new DrawableCache(resources);
