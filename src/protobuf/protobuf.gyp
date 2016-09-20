@@ -194,6 +194,7 @@
       '<(protobuf_cpp_root)/compiler/objectivec/objectivec_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/objectivec/objectivec_generator.cc',
       '<(protobuf_cpp_root)/compiler/parser.cc',
+      '<(protobuf_cpp_root)/compiler/php/php_generator.cc',
       '<(protobuf_cpp_root)/compiler/plugin.cc',
       '<(protobuf_cpp_root)/compiler/plugin.pb.cc',
       '<(protobuf_cpp_root)/compiler/python/python_generator.cc',
