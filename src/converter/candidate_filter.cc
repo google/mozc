@@ -139,10 +139,17 @@ inline bool IsConnectedWeakCompound(const vector<const Node *> &nodes,
   return false;
 }
 
-bool ContainsIsolatedWord(const dictionary::POSMatcher &pos_matcher,
-                          const vector<const Node *> &nodes) {
+bool IsIsolatedWordOrGeneralSymbol(const dictionary::POSMatcher &pos_matcher,
+                                   uint16 pos_id) {
+  return pos_matcher.IsIsolatedWord(pos_id) ||
+         pos_matcher.IsGeneralSymbol(pos_id);
+}
+
+bool ContainsIsolatedWordOrGeneralSymbol(
+    const dictionary::POSMatcher &pos_matcher,
+    const vector<const Node *> &nodes) {
   for (const Node *node : nodes) {
-    if (pos_matcher.IsIsolatedWord(node->lid)) {
+    if (IsIsolatedWordOrGeneralSymbol(pos_matcher, node->lid)) {
       return true;
     }
   }
@@ -248,12 +255,15 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   CHECK(top_candidate_);
 
-  // "短縮よみ" must have only 1 node.
-  if (nodes.size() > 1 && ContainsIsolatedWord(*pos_matcher_, nodes)) {
+  // "短縮よみ" or "記号,一般" must have only 1 node.  Note that "顔文字" POS
+  // from user dictionary is converted to "記号,一般" in Mozc engine.
+  if (nodes.size() > 1 &&
+      ContainsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes)) {
     return CandidateFilter::BAD_CANDIDATE;
   }
-  // This case tests the case where the isolated word is in content word.
-  if (pos_matcher_->IsIsolatedWord(nodes[0]->lid) &&
+  // This case tests the case where the isolated word or general symbol is in
+  // content word.
+  if (IsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes[0]->lid) &&
       (IsNormalOrConstrainedNode(nodes[0]->prev) ||
        IsNormalOrConstrainedNode(nodes[0]->next))) {
     return CandidateFilter::BAD_CANDIDATE;

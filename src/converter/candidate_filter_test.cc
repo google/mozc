@@ -291,7 +291,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
   }
 }
 
-TEST_F(CandidateFilterTest, IsolatedWord) {
+TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> nodes;
   Segment::Candidate *c = NewCandidate();
@@ -302,64 +302,72 @@ TEST_F(CandidateFilterTest, IsolatedWord) {
   nodes.push_back(node);
   node->prev = NewNode();
   node->next = NewNode();
-  node->lid = pos_matcher().GetIsolatedWordId();
-  node->rid = pos_matcher().GetIsolatedWordId();
   node->key = "abc";
   node->value = "test";
 
-  node->prev->node_type = Node::NOR_NODE;
-  node->next->node_type = Node::EOS_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    // Clear the internal set |seen_| to prevent "abc" from being filtered by
-    // "seen" rule.
-    filter->Reset();
-  }
+  const uint16 pos_ids[] = {
+    pos_matcher().GetIsolatedWordId(),
+    pos_matcher().GetGeneralSymbolId(),
+  };
+  // Perform the same test for the above POS IDs.
+  for (const uint16 id : pos_ids) {
+    node->lid = id;
+    node->rid = id;
 
-  node->prev->node_type = Node::BOS_NODE;
-  node->next->node_type = Node::NOR_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
-  }
+    node->prev->node_type = Node::NOR_NODE;
+    node->next->node_type = Node::EOS_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      // Clear the internal set |seen_| to prevent "abc" from being filtered by
+      // "seen" rule.
+      filter->Reset();
+    }
 
-  node->prev->node_type = Node::NOR_NODE;
-  node->next->node_type = Node::NOR_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
-  }
+    node->prev->node_type = Node::BOS_NODE;
+    node->next->node_type = Node::NOR_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
 
-  node->prev->node_type = Node::BOS_NODE;
-  node->next->node_type = Node::EOS_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
-  }
+    node->prev->node_type = Node::NOR_NODE;
+    node->next->node_type = Node::NOR_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
 
-  Node *backup_node = node->prev;
-  node->prev = nullptr;
-  node->next->node_type = Node::EOS_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
-  }
-  node->prev = backup_node;
+    node->prev->node_type = Node::BOS_NODE;
+    node->next->node_type = Node::EOS_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
 
-  backup_node = node->next;
-  node->prev->node_type = Node::BOS_NODE;
-  node->next = nullptr;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
+    Node *backup_node = node->prev;
+    node->prev = nullptr;
+    node->next->node_type = Node::EOS_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
+    node->prev = backup_node;
+
+    backup_node = node->next;
+    node->prev->node_type = Node::BOS_NODE;
+    node->next = nullptr;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
+    node->next = backup_node;
   }
-  node->next = backup_node;
 }
 
 TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
