@@ -149,6 +149,11 @@ bool ContainsIsolatedWord(const dictionary::POSMatcher &pos_matcher,
   return false;
 }
 
+bool IsNormalOrConstrainedNode(const Node *node) {
+  return node != nullptr &&
+      (node->node_type == Node::NOR_NODE || node->node_type == Node::CON_NODE);
+}
+
 }  // namespace
 
 CandidateFilter::CandidateFilter(
@@ -249,12 +254,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
   // This case tests the case where the isolated word is in content word.
   if (pos_matcher_->IsIsolatedWord(nodes[0]->lid) &&
-      (nodes[0]->prev == nullptr ||
-       nodes[0]->prev->node_type == Node::NOR_NODE ||
-       nodes[0]->prev->node_type == Node::CON_NODE ||
-       nodes[0]->next == nullptr ||
-       nodes[0]->next->node_type == Node::NOR_NODE ||
-       nodes[0]->next->node_type == Node::CON_NODE)) {
+      (IsNormalOrConstrainedNode(nodes[0]->prev) ||
+       IsNormalOrConstrainedNode(nodes[0]->next))) {
     return CandidateFilter::BAD_CANDIDATE;
   }
 

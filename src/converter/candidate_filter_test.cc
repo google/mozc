@@ -340,6 +340,26 @@ TEST_F(CandidateFilterTest, IsolatedWord) {
               filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
     filter->Reset();
   }
+
+  Node *backup_node = node->prev;
+  node->prev = nullptr;
+  node->next->node_type = Node::EOS_NODE;
+  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+    filter->Reset();
+  }
+  node->prev = backup_node;
+
+  backup_node = node->next;
+  node->prev->node_type = Node::BOS_NODE;
+  node->next = nullptr;
+  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+    filter->Reset();
+  }
+  node->next = backup_node;
 }
 
 TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
