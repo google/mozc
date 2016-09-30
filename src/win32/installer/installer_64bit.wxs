@@ -382,6 +382,8 @@
             <?if $(var.VSConfigurationName) = "Debug" ?>
               <?if $(var.QtCored4DllPath) != "" ?>
                 <Component Id='QtCored4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtCored4.dll' Name='QtCored4.dll' On="install" />
                   <File Id='QtCored4.dll'
                       Name='QtCored4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtCored4DllPath)' />
@@ -389,6 +391,8 @@
               <?endif?>
               <?if $(var.QtGuid4DllPath) != "" ?>
                 <Component Id='QtGuid4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtGuid4.dll' Name='QtGuid4.dll' On="install" />
                   <File Id='QtGuid4.dll'
                       Name='QtGuid4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtGuid4DllPath)' />
@@ -397,6 +401,8 @@
             <?else?>
               <?if $(var.QtCore4DllPath) != "" ?>
                 <Component Id='QtCore4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtCore4.dll' Name='QtCore4.dll' On="install" />
                   <File Id='QtCore4.dll'
                       Name='QtCore4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtCore4DllPath)' />
@@ -404,6 +410,8 @@
               <?endif?>
               <?if $(var.QtGui4DllPath) != "" ?>
                 <Component Id='QtGui4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtGui4.dll' Name='QtGui4.dll' On="install" />
                   <File Id='QtGui4.dll'
                       Name='QtGui4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtGui4DllPath)' />
