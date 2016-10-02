@@ -1,7 +1,3 @@
-Contributing Guide
-==================
-
-## Pull Requests
 **Mozc team is not accepting pull requests at the moment.**
 
 Although Google company policy certainly allows Mozc team to accept pull
