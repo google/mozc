@@ -34,7 +34,7 @@ RUN dnf -y update
 ## Common packages for linux build environment
 RUN dnf install -y clang libstdc++-static python git curl bzip2 unzip which
 ## Packages for linux desktop version
-RUN dnf install -y ibus-devel glib2-devel qt-devel gtk2-devel libxcb-devel
+RUN dnf install -y ibus-devel glib2-devel qt5-qtbase-devel gtk2-devel libxcb-devel
 ## Packages for NaCl
 RUN dnf install -y glibc.i686
 ## For emacsian

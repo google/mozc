@@ -36,7 +36,7 @@ RUN apt-get update
 ## Common packages for linux build environment
 RUN apt install -y clang python pkg-config git curl bzip2 unzip make
 ## Packages for linux desktop version
-RUN apt install -y libibus-1.0-dev libglib2.0-dev libqt4-dev libgtk2.0-dev libxcb-xfixes0-dev
+RUN apt install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for Android
 RUN apt install -y --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless libjsr305-java ant zip libc6-i386 lib32stdc++6 lib32ncurses5 lib32z1
 ## Packages for NaCl
