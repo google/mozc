@@ -1,6 +1,34 @@
 Release History
 ===============
 
+2.17.2314.102 - 2.17.2322.102 / *2016-01-10* - *2016-03-12*
+--------------------------------------------------
+You can check out Mozc [2.17.2322.102](https://github.com/google/mozc/commit/9b4c9e0e6764cca0e52b8d076165a4f1278effd4) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout 2628af6995dbbbb9ccdb52d1160db1dbd5ed3bae
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2314.102](https://github.com/google/mozc/commit/d938fbb58c62f7bd86fce28267fbabffd1f55f66) and [2.17.2322.102](https://github.com/google/mozc/commit/9b4c9e0e6764cca0e52b8d076165a4f1278effd4) as follows.
+
+  * Third party libraries:
+    * googletest: [1d53731 -> 82b11b8](https://github.com/google/googletest/compare/1d53731f2c210557caab5660dbe2c578dce6114f...82b11b8cfcca464c2ac74b623d04e74452e74f32)
+    * WTL: 9.0.4140 -> 9.1.5321
+  * Build related changes:
+    * Building macOS binaries now requires [Ninja](https://github.com/ninja-build/ninja) instead of `xcodebuild`.
+  * Major changes:
+    * None.
+  * Fixed issues:
+    * [#247](https://github.com/google/mozc/issues/247): Use ninja to build Mac binaries
+    * [#355](https://github.com/google/mozc/issues/355): Native resource leak due to the `missing pthread_detach` call in `mozc::Thread::Detach`
+    * [#361](https://github.com/google/mozc/issues/361): `ImmSetCandidateWindow()` with `CFS_EXCLUDE` isn't supported on Win Vista and Win7
+  * Total commits:
+    * [15 commits](https://github.com/google/mozc/compare/d938fbb58c62f7bd86fce28267fbabffd1f55f66%5E...9b4c9e0e6764cca0e52b8d076165a4f1278effd4).
+
+
 2.17.2288.102 - 2.17.2313.102 / *2016-01-03* - *2016-01-10*
 --------------------------------------------------
 You can check out Mozc [2.17.2313.102](https://github.com/google/mozc/commit/2628af6995dbbbb9ccdb52d1160db1dbd5ed3bae) as follows.
