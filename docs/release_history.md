@@ -1,6 +1,48 @@
 Release History
 ===============
 
+2.17.2532.102 - 2.18.2612.102 / *2016-03-15* - *2016-09-13*
+--------------------------------------------------
+You can check out Mozc [2.18.2612.102](https://github.com/google/mozc/commit/2315f957d1785130c2ed196e141a330b0857b065) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout 2315f957d1785130c2ed196e141a330b0857b065
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2532.102](https://github.com/google/mozc/commit/09b47c3b5a6418e745a809cc393a267e8a637740) and [2.18.2612.102](https://github.com/google/mozc/commit/2315f957d1785130c2ed196e141a330b0857b065) as follows.
+
+  * Third party libraries:
+    * protobuf: [d5fb408 -> e8ae137](https://github.com/google/protobuf/compare/d5fb408ddc281ffcadeb08699e65bb694656d0bd...e8ae137c96444ea313485ed1118c5e43b2099cf1)
+    * GYP: [e2e928b -> 4ec6c4e](https://chromium.googlesource.com/external/gyp/+log/e2e928bacd07fead99a18cb08d64cb24e131d3e5..4ec6c4e3a94bd04a6da2858163d40b2429b8aad1)
+    * breakpad: [d2904bb -> 85b27e4](https://chromium.googlesource.com/breakpad/breakpad/+log/d2904bb42181bc32c17b26ac4a0604c0e57473cc..85b27e4a692b803dcd493ea0a9ce3828af6b82bd)
+    * Dropped dependency on [zlib](https://github.com/madler/zlib)
+  * Build related changes:
+    * Renamed `src/mozc_version_template.txt` to `src/data/version/mozc_version_template.bzl`
+    * Reference build environment now uses Ubuntu 14.04.5 (a7cbf72341f5dc5d7181fecd10cb48838d64ef4c)
+    * Reference build environment now uses Ninja 1.7.1 (d2bc62b4de0a583355d594f66e312022e3c3deec)
+    * Removed `--android_compiler` GYP option (5ce7fa6214a00c95edb2b4ce0bbd980b219b18c7)
+    * Android build requires Android NDK r12b (5ce7fa6214a00c95edb2b4ce0bbd980b219b18c7)
+  * Major changes:
+    * Improved Store Apps compatibility on Windows (048808221cae6180c7a6ae6623e13c58490f30ed)
+  * Fixed issues:
+    * `NPE` in `UserDictionaryToolActivity.onPostResume` on Android (09b47c3b5a6418e745a809cc393a267e8a637740)
+    * [#273](https://github.com/google/mozc/issues/273): Compilation errors in Android arm64 and mips64 build
+    * [#373](https://github.com/google/mozc/issues/373): Unexpected size bloat of the APK
+    * [#374](https://github.com/google/mozc/issues/374): Duplicate candidates after Undo
+    * [#375](https://github.com/google/mozc/issues/375): `90-` is suggested from `090-`
+    * [#376](https://github.com/google/mozc/issues/376): Suggestion-only user dictionary entry may not work
+    * [#377](https://github.com/google/mozc/issues/377): Abbreviation user dictionary entry may not work
+    * [#378](https://github.com/google/mozc/issues/378): Suppression word may not work
+    * [#379](https://github.com/google/mozc/issues/379): Single character noun user dictionary entry may not work
+    * [#380](https://github.com/google/mozc/issues/380): Dependency on `dictionary/pos_matcher.h` from `session/session_server.cc` is missing in GYP rules
+    * [#382](https://github.com/google/mozc/issues/382): Fix typo
+  * Total commits:
+    * [84 commits](https://github.com/google/mozc/compare/09b47c3b5a6418e745a809cc393a267e8a637740%5E...2315f957d1785130c2ed196e141a330b0857b065).
+
+
 2.17.2405.102 - 2.17.2531.102
 --------------------------------------------------
 You can check out Mozc [2.17.2531.102](https://github.com/google/mozc/commit/120d6a1ba6d9bad10842c6531728fc1dd8bbf731) as follows.
