@@ -60,9 +60,6 @@ class StringPiece {
   // This method's 2nd argument is *length*.
   StringPiece(const char *offset, size_type len)
       : ptr_(offset), length_(len) {}
-  // Caution! This method's 2nd argument is *position*.
-  StringPiece(const StringPiece str, size_type pos);
-  StringPiece(const StringPiece str, size_type pos, size_type len);
 
   // data() may return a pointer to a buffer with embedded NULs, and the
   // returned buffer may or may not be null terminated.  Therefore it is
