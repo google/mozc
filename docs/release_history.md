@@ -1,6 +1,40 @@
 Release History
 ===============
 
+2.17.2405.102 - 2.17.2531.102
+--------------------------------------------------
+You can check out Mozc [2.17.2531.102](https://github.com/google/mozc/commit/120d6a1ba6d9bad10842c6531728fc1dd8bbf731) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout 120d6a1ba6d9bad10842c6531728fc1dd8bbf731
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2405.102](https://github.com/google/mozc/commit/b0259d5b1dd92f5c3bc4cc9e2793649424acda87) and [2.17.2531.102](https://github.com/google/mozc/commit/120d6a1ba6d9bad10842c6531728fc1dd8bbf731) as follows.
+
+  * Third party libraries:
+    * protobuf: [1a59a71 -> d5fb408](https://github.com/google/protobuf/compare/1a59a715dc5fa584340197aac0811ba3de9850b5...d5fb408ddc281ffcadeb08699e65bb694656d0bd)
+  * Build related changes:
+    * Building Mozc for Windows requires Visual Studio 2015 update 3.
+    * `--qtdir` option is no longer supported in Linux desktop build (d00307617d5922769462ba066d891a72f8ff82ea).
+  * Major changes:
+    * Updated system dictionary.
+    * Removed several Shift-JIS-based normalizations on Windows (26241b046c1f8fe55c4994d664ea10e749cff62c).
+    * Mozc for Windows requires SSE2 even on 32-bit environment.
+    * Mozc for Windows supports Windows 7 SP1 and later only.
+    * Mozc for macOS supports macOS 10.9 and later only.
+    * Mozc for desktop platforms (Windows, macOS, desktop Linux) supports Qt5 behind `--qtver=5` GYP option.
+  * Fixed issues:
+    * Fix OOM when importing too large dictionary file on Android (5c859ae8a7b1854e78af2c81330b75bac0e9532a)
+    * [#298](https://github.com/google/mozc/issues/298): Fix NPE on Samsung devices on showing toast
+    * [#315](https://github.com/google/mozc/issues/315): Switch to Visual C++ 2015
+    * [#372](https://github.com/google/mozc/issues/372): Discontinue the support of Windows Vista
+  * Total commits:
+    * [128 commits](https://github.com/google/mozc/compare/b0259d5b1dd92f5c3bc4cc9e2793649424acda87%5E...120d6a1ba6d9bad10842c6531728fc1dd8bbf731).
+
+
 2.17.2355.102 - 2.17.2404.102
 --------------------------------------------------
 You can check out Mozc [2.17.2404.102](https://github.com/google/mozc/commit/73a8154b79b0b8db6cf8e11d6f1e750709c17518) as follows.
