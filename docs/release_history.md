@@ -98,8 +98,6 @@ Summary of changes between [2.17.2355.102](https://github.com/google/mozc/commit
   * Major changes:
     * None.
   * Fixed issues:
-    * [#27](https://github.com/google/mozc/issues/27): build fail of `base/iconv.cc`, FreeBSD
-    * [#252](https://github.com/google/mozc/issues/252): Remove dependency on iconv
     * [#369](https://github.com/google/mozc/issues/369): Unexpected software keyboard layout can be chosen
     * [#370](https://github.com/google/mozc/issues/370): Mozc keeps crashing on Android N Developer Preview 5
     * [#371](https://github.com/google/mozc/issues/371): Shortcut word in personal dictionary should not be used for multi segment conversion
