@@ -21,14 +21,14 @@ Summary of changes between [2.17.2532.102](https://github.com/google/mozc/commit
     * Dropped dependency on [zlib](https://github.com/madler/zlib)
   * Build related changes:
     * Renamed `src/mozc_version_template.txt` to `src/data/version/mozc_version_template.bzl`
-    * Reference build environment now uses Ubuntu 14.04.5 (a7cbf72341f5dc5d7181fecd10cb48838d64ef4c)
-    * Reference build environment now uses Ninja 1.7.1 (d2bc62b4de0a583355d594f66e312022e3c3deec)
-    * Removed `--android_compiler` GYP option (5ce7fa6214a00c95edb2b4ce0bbd980b219b18c7)
-    * Android build requires Android NDK r12b (5ce7fa6214a00c95edb2b4ce0bbd980b219b18c7)
+    * Reference build environment now uses Ubuntu 14.04.5 ([a7cbf72](https://github.com/google/mozc/commit/a7cbf72341f5dc5d7181fecd10cb48838d64ef4c))
+    * Reference build environment now uses Ninja 1.7.1 ([d2bc62b](https://github.com/google/mozc/commit/d2bc62b4de0a583355d594f66e312022e3c3deec))
+    * Removed `--android_compiler` GYP option ([5ce7fa6](https://github.com/google/mozc/commit/5ce7fa6214a00c95edb2b4ce0bbd980b219b18c7))
+    * Android build requires Android NDK r12b ([5ce7fa6](https://github.com/google/mozc/commit/5ce7fa6214a00c95edb2b4ce0bbd980b219b18c7))
   * Major changes:
-    * Improved Store Apps compatibility on Windows (048808221cae6180c7a6ae6623e13c58490f30ed)
+    * Improved Store Apps compatibility on Windows ([0488082](https://github.com/google/mozc/commit/048808221cae6180c7a6ae6623e13c58490f30ed))
   * Fixed issues:
-    * `NPE` in `UserDictionaryToolActivity.onPostResume` on Android (09b47c3b5a6418e745a809cc393a267e8a637740)
+    * `NPE` in `UserDictionaryToolActivity.onPostResume` on Android ([09b47c3](https://github.com/google/mozc/commit/09b47c3b5a6418e745a809cc393a267e8a637740))
     * [#273](https://github.com/google/mozc/issues/273): Compilation errors in Android arm64 and mips64 build
     * [#373](https://github.com/google/mozc/issues/373): Unexpected size bloat of the APK
     * [#374](https://github.com/google/mozc/issues/374): Duplicate candidates after Undo
@@ -60,16 +60,16 @@ Summary of changes between [2.17.2405.102](https://github.com/google/mozc/commit
     * protobuf: [1a59a71 -> d5fb408](https://github.com/google/protobuf/compare/1a59a715dc5fa584340197aac0811ba3de9850b5...d5fb408ddc281ffcadeb08699e65bb694656d0bd)
   * Build related changes:
     * Building Mozc for Windows requires Visual Studio 2015 update 3.
-    * `--qtdir` option is no longer supported in Linux desktop build (d00307617d5922769462ba066d891a72f8ff82ea).
+    * `--qtdir` option is no longer supported in Linux desktop build ([d003076](https://github.com/google/mozc/commit/d00307617d5922769462ba066d891a72f8ff82ea)).
   * Major changes:
     * Updated system dictionary.
-    * Removed several Shift-JIS-based normalizations on Windows (26241b046c1f8fe55c4994d664ea10e749cff62c).
+    * Removed several Shift-JIS-based normalizations on Windows ([26241b0](https://github.com/google/mozc/commit/26241b046c1f8fe55c4994d664ea10e749cff62c)).
     * Mozc for Windows requires SSE2 even on 32-bit environment.
     * Mozc for Windows supports Windows 7 SP1 and later only.
     * Mozc for macOS supports macOS 10.9 and later only.
     * Mozc for desktop platforms (Windows, macOS, desktop Linux) supports Qt5 behind `--qtver=5` GYP option.
   * Fixed issues:
-    * Fix OOM when importing too large dictionary file on Android (5c859ae8a7b1854e78af2c81330b75bac0e9532a)
+    * Fix OOM when importing too large dictionary file on Android ([5c859ae](https://github.com/google/mozc/commit/5c859ae8a7b1854e78af2c81330b75bac0e9532a))
     * [#298](https://github.com/google/mozc/issues/298): Fix NPE on Samsung devices on showing toast
     * [#315](https://github.com/google/mozc/issues/315): Switch to Visual C++ 2015
     * [#372](https://github.com/google/mozc/issues/372): Discontinue the support of Windows Vista
