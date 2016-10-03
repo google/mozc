@@ -65,8 +65,8 @@ RUN echo y | android update sdk --all --force --no-ui --filter platform-tool
 
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip
-RUN cd nacl_sdk && ./naclsdk install pepper_45
-ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_45
+RUN cd nacl_sdk && ./naclsdk install pepper_49
+ENV NACL_SDK_ROOT /home/mozc_builder/work/nacl_sdk/pepper_49
 
 ## depot_tools for Ninja prebuilt
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
