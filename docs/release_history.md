@@ -1,6 +1,33 @@
 Release History
 ===============
 
+2.17.2323.102 - 2.17.2354.102
+--------------------------------------------------
+You can check out Mozc [2.17.2354.102](https://github.com/google/mozc/commit/02d3afb5bdfda3dde75d3c196960ee96c9ba918a) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout 02d3afb5bdfda3dde75d3c196960ee96c9ba918a
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2323.102](https://github.com/google/mozc/commit/bf51ad0a8dbe895f4c2daf9c27b6262ecff46855) and [2.17.2354.102](https://github.com/google/mozc/commit/02d3afb5bdfda3dde75d3c196960ee96c9ba918a) as follows.
+
+  * Third party libraries:
+    * None.
+  * Build related changes:
+    * None.
+  * Major changes:
+    * [2.17.2323.102](https://github.com/google/mozc/commit/bf51ad0a8dbe895f4c2daf9c27b6262ecff46855) and later commits in OSS repository preserve the original CL commit date in Google internal repository.
+      * Consider to specify `--topo-order` option to `git log` to see commits in the actual commit order.
+    * Multiple performance improvements in Android.
+  * Fixed issues:
+    * None.
+  * Total commits:
+    * [32 commits](https://github.com/google/mozc/compare/bf51ad0a8dbe895f4c2daf9c27b6262ecff46855%5E...02d3afb5bdfda3dde75d3c196960ee96c9ba918a).
+
+
 2.17.2314.102 - 2.17.2322.102 / *2016-01-10* - *2016-03-12*
 --------------------------------------------------
 You can check out Mozc [2.17.2322.102](https://github.com/google/mozc/commit/9b4c9e0e6764cca0e52b8d076165a4f1278effd4) as follows.
