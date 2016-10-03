@@ -1,6 +1,36 @@
 Release History
 ===============
 
+2.17.2355.102 - 2.17.2404.102
+--------------------------------------------------
+You can check out Mozc [2.17.2404.102](https://github.com/google/mozc/commit/73a8154b79b0b8db6cf8e11d6f1e750709c17518) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout 73a8154b79b0b8db6cf8e11d6f1e750709c17518
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.17.2355.102](https://github.com/google/mozc/commit/f1d68857831cc05a435184c375d5ab64438ed14a) and [2.17.2404.102](https://github.com/google/mozc/commit/73a8154b79b0b8db6cf8e11d6f1e750709c17518) as follows.
+
+  * Third party libraries:
+    * protobuf: [172019c -> 1a59a71](https://github.com/google/protobuf/compare/172019c40bf548908ab09bfd276074c929d48415...1a59a715dc5fa584340197aac0811ba3de9850b5)
+  * Build related changes:
+    * Building Mozc requires [protobuf](https://github.com/google/protobuf) 3.0 or later.
+    * `--android_stl` GYP option is removed in Android build. You cannot use GNU STL to build Mozc for Android anymore.
+  * Major changes:
+    * None.
+  * Fixed issues:
+    * [#27](https://github.com/google/mozc/issues/27): build fail of `base/iconv.cc`, FreeBSD
+    * [#252](https://github.com/google/mozc/issues/252): Remove dependency on iconv
+    * [#369](https://github.com/google/mozc/issues/369): Unexpected software keyboard layout can be chosen
+    * [#370](https://github.com/google/mozc/issues/370): Mozc keeps crashing on Android N Developer Preview 5
+    * [#371](https://github.com/google/mozc/issues/371): Shortcut word in personal dictionary should not be used for multi segment conversion
+  * Total commits:
+    * [50 commits](https://github.com/google/mozc/compare/f1d68857831cc05a435184c375d5ab64438ed14a%5E...73a8154b79b0b8db6cf8e11d6f1e750709c17518).
+
+
 2.17.2323.102 - 2.17.2354.102
 --------------------------------------------------
 You can check out Mozc [2.17.2354.102](https://github.com/google/mozc/commit/02d3afb5bdfda3dde75d3c196960ee96c9ba918a) as follows.
