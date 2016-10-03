@@ -220,6 +220,12 @@ ConfigDialog::ConfigDialog()
   useModeIndicator->hide();
 #endif  // !OS_WIN
 
+  // Reset texts explicitly for translations.
+  configDialogButtonBox->button(QDialogButtonBox::Ok)->setText(tr("  Ok  "));
+  configDialogButtonBox->button(QDialogButtonBox::Cancel)->setText(
+      tr("Cancel"));
+  configDialogButtonBox->button(QDialogButtonBox::Apply)->setText(tr("Apply"));
+
   // signal/slot
   QObject::connect(configDialogButtonBox,
                    SIGNAL(clicked(QAbstractButton *)),

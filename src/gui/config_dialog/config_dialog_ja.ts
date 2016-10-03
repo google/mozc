@@ -628,7 +628,7 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
     </message>
     <message>
         <location filename="config_dialog.cc" line="173"/>
-        <source>Yen Sign Â¥</source>
+        <source>Yen Sign ¥</source>
         <translation>円記号(¥)</translation>
     </message>
     <message>
@@ -703,6 +703,21 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
         <location filename="config_dialog.cc" line="764"/>
         <source>Do you want to clear unused history data?</source>
         <translation>サジェスト経由で入力されなかった履歴が削除されます。実行しますか？</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="198"/>
+        <source>  Ok  </source>
+        <translation>  OK  </translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="200"/>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="201"/>
+        <source>Apply</source>
+        <translation>適用</translation>
     </message>
 </context>
 <context>

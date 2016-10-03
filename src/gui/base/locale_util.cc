@@ -94,40 +94,17 @@ QString GetUILocaleName() {
   }
   return QString("en");   // by default, use English locale
 #elif defined(OS_MACOSX)
-  // by default, use English locale
-  QString result("en");
+  scoped_cftyperef<CFArrayRef> langs(CFLocaleCopyPreferredLanguages());
+  CFStringRef lang =
+      static_cast<CFStringRef>(CFArrayGetValueAtIndex(langs.get(), 0));
+  const char* lang_chars = CFStringGetCStringPtr(lang, kCFStringEncodingUTF8);
 
-  scoped_cftyperef<CFArrayRef> aref(
-      reinterpret_cast<CFArrayRef>(
-          CFPreferencesCopyAppValue(
-              CFSTR("AppleLanguages"),
-              kCFPreferencesCurrentApplication)));
-
-  if (aref.get() == NULL) {
+  QString result(lang_chars ? lang_chars : "en");
+  if (result.startsWith("ja")) {
+    return QString("ja");
+  } else {
     return result;
   }
-
-  char locale[128];
-  const int locale_size = sizeof(locale);
-  if (aref.Verify(CFArrayGetTypeID()) && CFArrayGetCount(aref.get()) > 0) {
-    CFStringRef sref = reinterpret_cast<CFStringRef>(
-        CFArrayGetValueAtIndex(aref.get(), 0));
-    if (sref != NULL && CFGetTypeID(sref) == CFStringGetTypeID()) {
-      scoped_cftyperef<CFStringRef> locale_name_ref(
-          CFLocaleCreateCanonicalLocaleIdentifierFromString(
-              kCFAllocatorDefault, sref));
-      if (locale_name_ref.get() != NULL &&
-          locale_name_ref.Verify(CFStringGetTypeID()) &&
-          CFStringGetCString(locale_name_ref.get(),
-                             locale,
-                             locale_size,
-                             kCFStringEncodingASCII)) {
-        result = QString::fromUtf8(locale);
-      }
-    }
-  }
-
-  return result;
 #else  // OS_MACOSX
   // return system locale on Linux
   return QLocale::system().name();
