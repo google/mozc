@@ -29,6 +29,7 @@
 
 sudo: required
 dist: trusty
+osx_image: xcode6.4
 
 os:
   - linux
