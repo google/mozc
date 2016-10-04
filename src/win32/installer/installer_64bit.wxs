@@ -68,6 +68,30 @@
 <?ifndef QtGuid4DllPath ?>
   <?define QtGuid4DllPath="" ?>
 <?endif?>
+<?ifndef Qt5CoreDllPath ?>
+  <?define Qt5CoreDllPath="" ?>
+<?endif?>
+<?ifndef Qt5CoredDllPath ?>
+  <?define Qt5CoredDllPath="" ?>
+<?endif?>
+<?ifndef Qt5GuiDllPath ?>
+  <?define Qt5GuiDllPath="" ?>
+<?endif?>
+<?ifndef Qt5GuidDllPath ?>
+  <?define Qt5GuidDllPath="" ?>
+<?endif?>
+<?ifndef Qt5WidgetsDllPath ?>
+  <?define Qt5WidgetsDllPath="" ?>
+<?endif?>
+<?ifndef Qt5WidgetsdDllPath ?>
+  <?define Qt5WidgetsdDllPath="" ?>
+<?endif?>
+<?ifndef QWindowsDllPath ?>
+  <?define QWindowsDllPath="" ?>
+<?endif?>
+<?ifndef QWindowsdDllPath ?>
+  <?define QWindowsdDllPath="" ?>
+<?endif?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
@@ -398,6 +422,33 @@
                       Checksum='yes' Source='$(var.QtGuid4DllPath)' />
                 </Component>
               <?endif?>
+              <?if $(var.Qt5CoredDllPath) != "" ?>
+                <Component Id='Qt5CoredDll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='Qt5Cored.dll' Name='Qt5Cored.dll' On="install" />
+                  <File Id='Qt5Cored.dll'
+                      Name='Qt5Cored.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.Qt5CoredDllPath)' />
+                </Component>
+              <?endif?>
+              <?if $(var.Qt5GuidDllPath) != "" ?>
+                <Component Id='Qt5GuidDll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='Qt5Guid.dll' Name='Qt5Guid.dll' On="install" />
+                  <File Id='Qt5Guid.dll'
+                      Name='Qt5Guid.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.Qt5GuidDllPath)' />
+                </Component>
+              <?endif?>
+              <?if $(var.Qt5WidgetsdDllPath) != "" ?>
+                <Component Id='Qt5WidgetsdDll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='Qt5Widgetsd.dll' Name='Qt5Widgetsd.dll' On="install" />
+                  <File Id='Qt5Widgetsd.dll'
+                      Name='Qt5Widgetsd.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.Qt5WidgetsdDllPath)' />
+                </Component>
+              <?endif?>
             <?else?>
               <?if $(var.QtCore4DllPath) != "" ?>
                 <Component Id='QtCore4Dll' Guid='*'>
@@ -417,6 +468,33 @@
                       Checksum='yes' Source='$(var.QtGui4DllPath)' />
                 </Component>
               <?endif?>
+              <?if $(var.Qt5CoreDllPath) != "" ?>
+                <Component Id='Qt5CoreDll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='Qt5Core.dll' Name='Qt5Core.dll' On="install" />
+                  <File Id='Qt5Core.dll'
+                      Name='Qt5Core.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.Qt5CoreDllPath)' />
+                </Component>
+              <?endif?>
+              <?if $(var.Qt5GuiDllPath) != "" ?>
+                <Component Id='Qt5GuiDll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='Qt5Gui.dll' Name='Qt5Gui.dll' On="install" />
+                  <File Id='Qt5Gui.dll'
+                      Name='Qt5Gui.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.Qt5GuiDllPath)' />
+                </Component>
+              <?endif?>
+              <?if $(var.Qt5WidgetsDllPath) != "" ?>
+                <Component Id='Qt5WidgetsDll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='Qt5Widgets.dll' Name='Qt5Widgets.dll' On="install" />
+                  <File Id='Qt5Widgets.dll'
+                      Name='Qt5Widgets.dll' DiskId='1' Vital='yes'
+                      Checksum='yes' Source='$(var.Qt5WidgetsDllPath)' />
+                </Component>
+              <?endif?>
             <?endif?>
             <Directory Id='DocumentsDir' Name='documents'>
               <Component Id='CreditsJa' Guid='*'>
@@ -430,6 +508,28 @@
                       Source='$(var.DocumentsDir)/credits_en.html' />
               </Component>
             </Directory>
+            <?if ($(var.QWindowsdDllPath) != "") or ($(var.QWindowsDllPath) != "") ?>
+              <Directory Id='QtPlatformsPluginDir' Name='platforms'>
+                <?if ($(var.QWindowsdDllPath) != "") and ($(var.VSConfigurationName) = "Debug") ?>
+                  <Component Id='QWindowsdDll' Guid='*'>
+                    <!-- Always overwrite: b/31845781 -->
+                    <RemoveFile Id='qwindowsd.dll' Name='qwindowsd.dll' On="install" />
+                    <File Id='qwindowsd.dll'
+                        Name='qwindowsd.dll' DiskId='1' Vital='yes'
+                        Checksum='yes' Source='$(var.QWindowsdDllPath)' />
+                  </Component>
+                <?endif?>
+                <?if ($(var.QWindowsDllPath) != "") and ($(var.VSConfigurationName) != "Debug") ?>
+                  <Component Id='QWindowsDll' Guid='*'>
+                    <!-- Always overwrite: b/31845781 -->
+                    <RemoveFile Id='qwindows.dll' Name='qwindows.dll' On="install" />
+                    <File Id='qwindows.dll'
+                        Name='qwindows.dll' DiskId='1' Vital='yes'
+                        Checksum='yes' Source='$(var.QWindowsDllPath)' />
+                  </Component>
+                <?endif?>
+              </Directory>
+            <?endif?>
           </Directory>
         </Directory>
       </Directory>
@@ -678,12 +778,36 @@
         <?if $(var.QtGuid4DllPath) != "" ?>
           <ComponentRef Id='QtGuid4Dll' />
         <?endif?>
+        <?if $(var.Qt5CoredDllPath) != "" ?>
+          <ComponentRef Id='Qt5CoredDll' />
+        <?endif?>
+        <?if $(var.Qt5GuidDllPath) != "" ?>
+          <ComponentRef Id='Qt5GuidDll' />
+        <?endif?>
+        <?if $(var.Qt5WidgetsdDllPath) != "" ?>
+          <ComponentRef Id='Qt5WidgetsdDll' />
+        <?endif?>
+        <?if $(var.QWindowsdDllPath) != "" ?>
+          <ComponentRef Id='QWindowsdDll' />
+        <?endif?>
       <?else?>
         <?if $(var.QtCore4DllPath) != "" ?>
           <ComponentRef Id='QtCore4Dll' />
         <?endif?>
         <?if $(var.QtGui4DllPath) != "" ?>
           <ComponentRef Id='QtGui4Dll' />
+        <?endif?>
+        <?if $(var.Qt5CoreDllPath) != "" ?>
+          <ComponentRef Id='Qt5CoreDll' />
+        <?endif?>
+        <?if $(var.Qt5GuiDllPath) != "" ?>
+          <ComponentRef Id='Qt5GuiDll' />
+        <?endif?>
+        <?if $(var.Qt5WidgetsDllPath) != "" ?>
+          <ComponentRef Id='Qt5WidgetsDll' />
+        <?endif?>
+        <?if $(var.QWindowsDllPath) != "" ?>
+          <ComponentRef Id='QWindowsDll' />
         <?endif?>
       <?endif?>
       <ComponentRef Id='OmahaRegister' />

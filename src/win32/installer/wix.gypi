@@ -94,6 +94,46 @@
               '-dQtGuid4DllPath=<(qtguid4_dll_path)',
             ],
           }],
+          ['qt5core_dll_path!=""', {
+            'additional_args': [
+              '-dQt5CoreDllPath=<(qt5core_dll_path)',
+            ],
+          }],
+          ['qt5cored_dll_path!=""', {
+            'additional_args': [
+              '-dQt5CoredDllPath=<(qt5cored_dll_path)',
+            ],
+          }],
+          ['qt5gui_dll_path!=""', {
+            'additional_args': [
+              '-dQt5GuiDllPath=<(qt5gui_dll_path)',
+            ],
+          }],
+          ['qt5guid_dll_path!=""', {
+            'additional_args': [
+              '-dQt5GuidDllPath=<(qt5guid_dll_path)',
+            ],
+          }],
+          ['qt5widgets_dll_path!=""', {
+            'additional_args': [
+              '-dQt5WidgetsDllPath=<(qt5widgets_dll_path)',
+            ],
+          }],
+          ['qt5widgetsd_dll_path!=""', {
+            'additional_args': [
+              '-dQt5WidgetsdDllPath=<(qt5widgetsd_dll_path)',
+            ],
+          }],
+          ['qwindows_dll_path!=""', {
+            'additional_args': [
+              '-dQWindowsDllPath=<(qwindows_dll_path)',
+            ],
+          }],
+          ['qwindowsd_dll_path!=""', {
+            'additional_args': [
+              '-dQWindowsdDllPath=<(qwindowsd_dll_path)',
+            ],
+          }],
           ['MSVS_VERSION=="2015" and use_qt=="YES"', {
             'additional_args': [
               r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
