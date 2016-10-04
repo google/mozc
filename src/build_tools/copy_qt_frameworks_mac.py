@@ -117,7 +117,7 @@ def main():
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
-  ref_to = '@executable_path/../../../GuiTool.app/Contents/Frameworks'
+  ref_to = '@executable_path/../../../ConfigDialog.app/Contents/Frameworks'
   if qtver == '5':
     CopyQt(qtdir, 'QtCore', '5', target, copy_resources=True)
     CopyQt(qtdir, 'QtGui', '5', target, copy_resources=True)

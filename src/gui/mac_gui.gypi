@@ -41,6 +41,7 @@
         }],
       ],
       'dependencies': [
+        'config_dialog_mac',
         'gen_mozc_tool_info_plist',
         'mozc_tool_lib',
       ],

@@ -62,7 +62,7 @@ def GetFrameworkPath(name, version):
 
 
 def GetReferenceTo(framework):
-  return ('@executable_path/../../../GuiTool.app/Contents/Frameworks/%s' %
+  return ('@executable_path/../../../ConfigDialog.app/Contents/Frameworks/%s' %
           framework)
 
 

@@ -150,11 +150,6 @@ int RunMozcTool(int argc, char *argv[]) {
   qInstallMsgHandler(mozc::gui::DebugUtil::MessageHandler);
 #endif
 
-  Q_INIT_RESOURCE(qrc_mozc_tool);
-
-  // we cannot install the translation of qt_ja_JP here.
-  // as Qpplication is initialized inside Run* function
-
 #ifdef OS_WIN
   // Update JumpList if available.
   mozc::gui::WinUtil::KeepJumpListUpToDate();

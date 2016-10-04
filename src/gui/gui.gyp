@@ -836,20 +836,6 @@
       ],
     },
     {
-      'target_name': 'gen_mozc_tool_files',
-      'type': 'none',
-      'variables': {
-        'subdir': 'tool',
-        'qrc_base_name': 'mozc_tool',
-      },
-      'sources': [
-        '<(subdir)/mozc_tool.qrc',
-      ],
-      'includes': [
-        'qt_rcc.gypi',
-      ],
-    },
-    {
       'target_name': 'prelauncher_lib',
       'type': 'static_library',
       'sources': [
@@ -865,7 +851,6 @@
     {
       'target_name': 'mozc_tool_lib',
       'sources': [
-        '<(gen_out_dir)/tool/qrc_mozc_tool.cc',
         'tool/mozc_tool_libmain.cc',
       ],
       'dependencies': [
@@ -878,7 +863,6 @@
         'confirmation_dialog_lib',
         'dictionary_tool_lib',
         'error_message_dialog_lib',
-        'gen_mozc_tool_files',
         'gui_base',
         'post_install_dialog_lib',
         'set_default_dialog_lib',
@@ -952,65 +936,7 @@
             'tool/mozc_tool_main_noqt.cc',
           ],
         }],
-        ['OS=="mac"', {
-          'product_name': '<(product_name)',
-          'variables': {
-            'product_name': 'GuiTool',
-          },
-          'dependencies': [
-            'gen_mozc_tool_info_plist',
-          ],
-          'conditions': [
-            ['use_qt=="YES"', {
-              'variables': {
-                'copying_frameworks': [
-                  '<(PRODUCT_DIR)/GuiTool_lib.framework',
-                ],
-              },
-              'conditions': [
-                ['qt_ver==5', {
-                  'mac_bundle_resources': ['../data/mac/qt.conf'],
-                }],
-              ],
-              # We include this gypi file here because the variables
-              # in a condition cannot be refferred from the gypi file
-              # included outside from the condition.
-              'includes': [
-                '../gyp/postbuilds_mac.gypi',
-              ],
-              'postbuilds': [
-                {
-                  'postbuild_name': 'Change the reference to frameworks.',
-                  'action': [
-                    'python', '../build_tools/change_reference_mac.py',
-                    '--qtver', '<(qt_ver)',
-                    '--qtdir', '<(qt_dir)',
-                    '--target',
-                    '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
-                  ],
-                },
-                {
-                  'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
-                  'action': [
-                    'python', '../build_tools/copy_qt_frameworks_mac.py',
-                    '--qtver', '<(qt_ver)',
-                    '--qtdir', '<(qt_dir)',
-                    '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
-                  ],
-                },
-              ],
-            }, {
-              # So we include the same file explicitly here.
-              'includes': [
-                '../gyp/postbuilds_mac.gypi',
-              ],
-            }]
-          ],
-          'mac_bundle': 1,
-          'xcode_settings': {
-            'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
-          },
-        }],
+        # For Mac, ConfigDialog is the host app for necessary frameworks.
         ['OS=="win"', {
           'product_name': '<(tool_product_name_win)',
           'sources': [
@@ -1196,13 +1122,21 @@
           ],
         },
         {
+          # ConfigDialog.app is the host app of Frameworks (e.g. GuiTool_lib,
+          # QtCore, Breakpad, etc.). These Frameworks are refferred by other
+          # apps like AboutDialog.app.
           'target_name': 'config_dialog_mac',
+          'product_name': 'ConfigDialog',
           'type': 'executable',
           'mac_bundle': 1,
           'variables': {
             'product_name': 'ConfigDialog',
+            'copying_frameworks': [
+              '<(PRODUCT_DIR)/GuiTool_lib.framework',
+            ],
           },
           'dependencies': [
+            'gen_mozc_tool_info_plist',
             'gen_mozc_tool_info_strings',
           ],
           'xcode_settings': {
@@ -1213,8 +1147,48 @@
             '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
             '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
           ],
-          'includes': [
-            'mac_gui.gypi',
+          'conditions': [
+            ['use_qt=="YES"', {
+              'conditions': [
+                ['qt_ver==5', {
+                  'mac_bundle_resources': ['../data/mac/qt.conf'],
+                }],
+              ],
+              'sources': [
+                'tool/mozc_tool_main.cc',
+              ],
+              'dependencies': [
+                'mozc_tool_lib',
+              ],
+              'includes': [
+                '../gyp/postbuilds_mac.gypi',
+              ],
+              'postbuilds': [
+                {
+                  'postbuild_name': 'Change the reference to frameworks',
+                  'action': [
+                    'python', '../build_tools/change_reference_mac.py',
+                    '--qtver', '<(qt_ver)',
+                    '--qtdir', '<(qt_dir)',
+                    '--target',
+                    '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
+                  ],
+                },
+                {
+                  'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
+                  'action': [
+                    'python', '../build_tools/copy_qt_frameworks_mac.py',
+                    '--qtver', '<(qt_ver)',
+                    '--qtdir', '<(qt_dir)',
+                    '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
+                  ],
+                },
+              ],
+            }, {  # else
+              'sources': [
+                'tool/mozc_tool_main_noqt.cc',
+              ],
+            }],
           ],
         },
         {
