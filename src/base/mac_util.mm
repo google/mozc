@@ -116,6 +116,19 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
 
   return prelauncher_item;
 }
+
+string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory) {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  string dir;
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(
+      directory, NSUserDomainMask, YES);
+  if ([paths count] > 0) {
+    dir.assign([[paths objectAtIndex:0] fileSystemRepresentation]);
+  }
+  [pool drain];
+  return dir;
+}
+
 }  // namespace
 
 string MacUtil::GetLabelForSuffix(const string &suffix) {
@@ -123,15 +136,11 @@ string MacUtil::GetLabelForSuffix(const string &suffix) {
 }
 
 string MacUtil::GetApplicationSupportDirectory() {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  string dir;
-  NSArray *paths = NSSearchPathForDirectoriesInDomains(
-      NSApplicationSupportDirectory, NSUserDomainMask, YES);
-  if ([paths count] > 0) {
-    dir.assign([[paths objectAtIndex:0] fileSystemRepresentation]);
-  }
-  [pool drain];
-  return dir;
+  return GetSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory);
+}
+
+string MacUtil::GetCachesDirectory() {
+  return GetSearchPathForDirectoriesInDomains(NSCachesDirectory);
 }
 
 string MacUtil::GetLoggingDirectory() {
