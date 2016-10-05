@@ -41,6 +41,11 @@
 #include <android/log.h>
 #endif  // OS_ANDROID
 
+#ifdef OS_WIN
+#include <codecvt>
+#include <locale>
+#endif  // OS_WIN
+
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
@@ -52,9 +57,6 @@
 #include "base/const.h"
 #endif  // OS_ANDROID
 #include "base/clock.h"
-#ifndef OS_ANDROID
-#include "base/file_stream.h"
-#endif  // OS_ANDROID
 #include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
@@ -268,15 +270,21 @@ void LogStreamImpl::Init(const string &log_file_path) {
   }
 #if defined(OS_WIN)
   // On Windows, just create a stream.
+  // Since Windows uses UTF-16 for internationalized file names, we should
+  // convert the encoding of the given |log_file_path| from UTF-8 to UTF-16.
+  // NOTE: To avoid circular dependency, |Util::UTF8ToWide| shouldn't be used
+  // here.
   DCHECK_NE(log_file_path.size(), 0);
-  real_log_stream_ = new OutputFileStream(log_file_path.c_str(), ios::app);
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
+  real_log_stream_ = new std::ofstream(
+      utf8_to_wide.from_bytes(log_file_path).c_str(), ios::app);
 #elif !defined(OS_ANDROID)
   // On non-Android platform, change file mode in addition.
   // Android uses logcat instead of log file.
   DCHECK_NE(log_file_path.size(), 0);
-  real_log_stream_ = new OutputFileStream(log_file_path.c_str(), ios::app);
+  real_log_stream_ = new std::ofstream(log_file_path.c_str(), ios::app);
   ::chmod(log_file_path.c_str(), 0600);
-#endif
+#endif  // OS_ANDROID
   DCHECK(!use_cerr_ || !real_log_stream_);
 }
 
