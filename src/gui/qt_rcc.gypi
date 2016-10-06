@@ -49,13 +49,12 @@
       }],
     ],
   },
+  # In order to specify file dependencies correctly (e.g. *.png), we need to use
+  # 'actions' instead of 'rules'.
   'actions': [
     {
-      # Need to use actions for qrc files to workaround a gyp issue.
       'action_name': 'qrc',
-      'inputs': [
-        '<(subdir)/<(qrc_base_name).qrc',
-      ],
+      'inputs': ['<@(qrc_inputs)'],
       'outputs': [
         '<(gen_out_dir)/<(subdir)/qrc_<(qrc_base_name).cc'
       ],

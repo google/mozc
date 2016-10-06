@@ -58,9 +58,8 @@ int RunConfigDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  QStringList resource_names;
-  resource_names << "config_dialog" << "keymap";
-  mozc::gui::LocaleUtil::InstallTranslationMessagesAndFont(resource_names);
+  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("config_dialog");
+  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("keymap");
   mozc::gui::ConfigDialog mozc_config;
 
   mozc_config.show();
