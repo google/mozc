@@ -36,6 +36,7 @@
 #include "fcitx_mozc.h"
 #include "mozc_connection.h"
 #include "mozc_response_parser.h"
+#include "base/init_mozc.h"
 
 typedef struct _FcitxMozcState {
     mozc::fcitx::FcitxMozc* mozc;
@@ -89,6 +90,11 @@ static void* FcitxMozcCreate(FcitxInstance* instance)
     bindtextdomain("fcitx-mozc", LOCALEDIR);
     bind_textdomain_codeset("fcitx-mozc", "UTF-8");
 
+    int argc = 1;
+    char argv0[] = "fcitx_mozc";
+    char *_argv[] = {  argv0 };
+    char **argv = _argv;
+    mozc::InitMozc(argv[0], &argc, &argv, true);
     mozcState->mozc = new mozc::fcitx::FcitxMozc(
         instance,
         mozc::fcitx::MozcConnection::CreateMozcConnection(),
