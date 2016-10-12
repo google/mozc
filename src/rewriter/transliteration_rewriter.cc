@@ -91,6 +91,30 @@ void NormalizeT13ns(vector<string> *t13ns) {
   }
 }
 
+// Function object to check if c >= 0 && c < upper_bound, where T is
+// std::true_type when char is unsigned; otherwise T is std::false_type.  By
+// using template class instead of a function, we can avoid the compiler warning
+// about unused function.
+template <typename T>
+struct IsNonnegativeAndLessThan {
+  bool operator()(char c, size_t upper_bound) const;
+};
+
+template <>
+struct IsNonnegativeAndLessThan<std::true_type> {
+  bool operator()(char c, size_t upper_bound) const {
+    // No check for "0 <= *c" for unsigned case.
+    return c < upper_bound;
+  }
+};
+
+template <>
+struct IsNonnegativeAndLessThan<std::false_type> {
+  bool operator()(char c, size_t upper_bound) const {
+    return c >= 0 && static_cast<size_t>(c) < upper_bound;
+  }
+};
+
 void ModifyT13nsForGodan(const string &key, vector<string> *t13ns) {
   static const char * const kKeycodeToT13nMap[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -106,11 +130,10 @@ void ModifyT13nsForGodan(const string &key, vector<string> *t13ns) {
   const string &src = (*t13ns)[transliteration::HALF_ASCII];
   string dst;
   for (string::const_iterator c = src.begin(); c != src.end(); ++c) {
-    // Won't check "0 <= *c" here as string::value_type must be configured
-    // to be unsigned in Mozc.
-    static_assert(std::is_unsigned<string::value_type>::value,
-                  "string::value must be unsigned.");
-    if (*c < arraysize(kKeycodeToT13nMap) && kKeycodeToT13nMap[*c] != NULL) {
+    using IsNonnegativeAndLessThanType =
+        IsNonnegativeAndLessThan<std::is_unsigned<string::value_type>::type>;
+    if (IsNonnegativeAndLessThanType()(*c, arraysize(kKeycodeToT13nMap)) &&
+        kKeycodeToT13nMap[*c] != NULL) {
       dst.append(kKeycodeToT13nMap[*c]);
     } else {
       dst.append(1, *c);
