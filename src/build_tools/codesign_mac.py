@@ -85,10 +85,10 @@ def UnlockKeychain(keychain, password=None):
   RunOrDie(" ".join(command))
 
 
+def IsReleaseBuild():
+  """Return true if the build is a release build."""
+  return False
 
-def IsGYPBuild():
-  """Return true if this script is called from XCode from GYP."""
-  return bool(os.getenv("BUILD_WITH_GYP"))
 
 def ParseOption():
   """Parse command line options."""
@@ -99,8 +99,6 @@ def ParseOption():
                     default="mac/MacSigning.keychain")
   parser.add_option("--password", dest="password",
                     default="GoogleJapaneseInput")
-  parser.add_option("--noautoconf", dest="autoconf",
-                    action="store_false", default=True)
   parser.add_option("--release", dest="release", action="store_true",
                     default=False)
   parser.add_option("--verify", dest="verify", action="store_true",
@@ -128,6 +126,11 @@ def main():
     Verify(opts.target)
     return
 
+  if IsReleaseBuild():
+    DumpEnviron()
+
+    # Call Codesign with the release keychain.
+    return
 
   sign = opts.sign
   keychain = os.path.abspath(opts.keychain)
