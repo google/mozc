@@ -182,7 +182,7 @@ class StringPiece {
   }
 
   friend bool operator<(const StringPiece &x, const StringPiece &y) {
-    const int min_size = x.size() < y.size() ? x.size() : y.size();
+    const size_type min_size = x.size() < y.size() ? x.size() : y.size();
     const int r = memcmp(x.data(), y.data(), min_size);
     return (r < 0) || (r == 0 && x.size() < y.size());
   }
