@@ -34,6 +34,19 @@
   },
   'targets': [
     {
+      'target_name': 'engine_builder',
+      'type': 'static_library',
+      'sources': [
+        'engine_builder.cc',
+      ],
+      'dependencies': [
+        'engine',
+        '../base/base.gyp:base',
+        '../data_manager/data_manager_base.gyp:data_manager',
+        '../protocol/protocol.gyp:engine_builder_proto',
+      ],
+    },
+    {
       'target_name': 'engine',
       'type': 'static_library',
       'sources': [
@@ -72,41 +85,12 @@
         '../converter/converter_base.gyp:converter_mock'
       ],
     },
-    {  # An engine just for converter/converter_main.cc.
-      'target_name': 'chromeos_engine_factory',
-      'type': 'static_library',
-      'sources': [
-        'chromeos_engine_factory.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../data_manager/chromeos/chromeos_data_manager.gyp:mozcdata',
-        '../prediction/prediction.gyp:prediction',
-        'engine',
-      ],
-    },
     {
       'target_name': 'oss_engine_factory',
-      'type': 'static_library',
-      'sources': [
-        'oss_engine_factory.cc',
-      ],
+      'type': 'none',
       'dependencies': [
         '../base/base.gyp:base',
         '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
-        '../prediction/prediction.gyp:prediction',
-        'engine',
-      ],
-    },
-    {
-      'target_name': 'packed_engine_factory',
-      'type': 'static_library',
-      'sources': [
-        'packed_engine_factory.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../data_manager/packed/packed_data_manager_base.gyp:packed_data_manager',
         '../prediction/prediction.gyp:prediction',
         'engine',
       ],
@@ -118,10 +102,7 @@
         'mock_data_engine_factory.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '../prediction/prediction.gyp:prediction',
-        '../protocol/protocol.gyp:commands_proto',
         'engine',
       ],
     },
@@ -135,14 +116,6 @@
         'oss_engine_factory',
       ],
       'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            'packed_engine_factory'
-          ],
-          'dependencies!': [
-            'oss_engine_factory',
-          ]
-        }],
       ],
     },
   ],

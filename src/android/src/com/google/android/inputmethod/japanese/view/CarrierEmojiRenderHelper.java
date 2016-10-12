@@ -33,6 +33,7 @@ import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiData;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.emoji.EmojiRenderableChecker;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
@@ -202,101 +203,33 @@ public class CarrierEmojiRenderHelper {
     }
   }
 
-  /**
-   * Checker of whether the given code point is renderable on the current device or not.
-   *
-   * When isRenderable is called, this class tries to render the given code point
-   * by using {@link StaticLayout}, instead of Canvas#drawText directly, and compares
-   * the pre-rendered pixel-data of fallback (garbled) character's.
-   * If they are same, the code point cannot rendered on the current device. If not, it can.
-   *
-   * The reason why we use StaticLayout instead of Canvas#drawText is that some devices
-   * support Emoji characters, which is the main target of this check, only on TextView
-   * (and its related widget), but not on Canvas class, for some reason (maybe for animation
-   * support). So, even if we can see the Emoji characters in TextView on the device,
-   * Canvas#drawText will render a fallback glyph.
-   *
-   * Note: this class uses internal buffer, so is not thread-safe.
-   */
-  public static class RenderableChecker {
-
-    private static final int TEST_FONT_SIZE = 10;
-    private static final int FOREGROUND_COLOR = Color.WHITE;
-    private static final int BACKGROUND_COLOR = Color.BLACK;
-    private static final int FALLBACK_CHARACTER = '\uFFFF';
-
-    private final Bitmap bitmap;
-    private final Canvas canvas;
-    private final TextPaint paint;
-
-    private final int[] fallbackGlyphPixels;
-    private final int[] targetGlyphPixels;
-
-    public RenderableChecker() {
-      paint = new TextPaint();
-      paint.setTextSize(TEST_FONT_SIZE);
-      paint.setColor(FOREGROUND_COLOR);
-
-      bitmap = MozcUtil.createBitmap(TEST_FONT_SIZE, TEST_FONT_SIZE, Config.ARGB_8888);
-      canvas = new Canvas(bitmap);
-
-      fallbackGlyphPixels = new int[TEST_FONT_SIZE * TEST_FONT_SIZE];
-      targetGlyphPixels = new int[TEST_FONT_SIZE * TEST_FONT_SIZE];
-
-      renderGlyphInternal(FALLBACK_CHARACTER, fallbackGlyphPixels);
-    }
-
-    public boolean isRenderable(int codePoint) {
-      try {
-        renderGlyphInternal(codePoint, targetGlyphPixels);
-        return !Arrays.equals(targetGlyphPixels, fallbackGlyphPixels);
-      } catch (NullPointerException e) {
-        MozcLog.e("Unknown exception is happen: ", e);
-      }
-      return true;
-    }
-
-    private void renderGlyphInternal(int codePoint, int[] buffer) {
-      canvas.drawColor(BACKGROUND_COLOR);
-
-      StaticLayout layout = new StaticLayout(
-          new String(new int[] {codePoint}, 0, 1),
-          paint, TEST_FONT_SIZE, Alignment.ALIGN_NORMAL, 1, 0, false);
-      layout.draw(canvas);
-
-      bitmap.getPixels(buffer, 0, TEST_FONT_SIZE, 0, 0, TEST_FONT_SIZE, TEST_FONT_SIZE);
-    }
-
-    public void release() {
-      bitmap.recycle();
-    }
-  }
-
   private static final Set<EmojiProviderType> RENDERABLE_EMOJI_PROVIDER_SET;
   static {
-    RenderableChecker renderableChecker = new RenderableChecker();
+    EmojiRenderableChecker renderableChecker = new EmojiRenderableChecker();
     EnumSet<EmojiProviderType> renderableEmojiProviderSet = EnumSet.noneOf(EmojiProviderType.class);
-    try {
-      // Test DOCOMO i-mode mark.
-      boolean isDocomoEmojiRenderable = renderableChecker.isRenderable(0xFEE10);
-      if (isDocomoEmojiRenderable) {
-        renderableEmojiProviderSet.add(EmojiProviderType.DOCOMO);
-      }
 
-      // Test with EZ mark.
-      boolean isKddiEmojiRenderable = renderableChecker.isRenderable(0xFEE40);
-      if (isKddiEmojiRenderable) {
-        renderableEmojiProviderSet.add(EmojiProviderType.KDDI);
-      }
-
-      // Test Shibuya-tower for Softbank.
-      boolean isSoftbankEmojiRenderable = renderableChecker.isRenderable(0xFE4C5);
-      if (isSoftbankEmojiRenderable) {
-        renderableEmojiProviderSet.add(EmojiProviderType.SOFTBANK);
-      }
-    } finally {
-      renderableChecker.release();
+    // Test DOCOMO i-mode mark.
+    boolean isDocomoEmojiRenderable =
+        renderableChecker.isRenderable(new String(Character.toChars(0xFEE10)));
+    if (isDocomoEmojiRenderable) {
+      renderableEmojiProviderSet.add(EmojiProviderType.DOCOMO);
     }
+
+    // Test with EZ mark.
+    boolean isKddiEmojiRenderable =
+        renderableChecker.isRenderable(new String(Character.toChars(0xFEE40)));
+    if (isKddiEmojiRenderable) {
+      renderableEmojiProviderSet.add(EmojiProviderType.KDDI);
+    }
+
+    // Test Shibuya-tower for Softbank.
+    boolean isSoftbankEmojiRenderable =
+        renderableChecker.isRenderable(new String(Character.toChars(0xFE4C5)));
+
+    if (isSoftbankEmojiRenderable) {
+      renderableEmojiProviderSet.add(EmojiProviderType.SOFTBANK);
+    }
+
     RENDERABLE_EMOJI_PROVIDER_SET = Collections.unmodifiableSet(renderableEmojiProviderSet);
   }
 

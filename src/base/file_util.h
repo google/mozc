@@ -30,9 +30,13 @@
 #ifndef MOZC_BASE_FILE_UTIL_H_
 #define MOZC_BASE_FILE_UTIL_H_
 
-#ifdef OS_WIN
+#if defined(OS_WIN)
 #include <windows.h>
-#endif  // OS_WIN
+#elif defined(OS_NACL)
+#include <ppapi/c/pp_file_info.h>
+#else  // OS_WIN or OS_NACL
+#include <sys/types.h>
+#endif
 
 #include <string>
 #include <vector>
@@ -56,6 +60,14 @@
 #endif  // CopyFile
 
 namespace mozc {
+
+#if defined(OS_WIN)
+using FileTimeStamp = uint64;
+#elif defined(OS_NACL)
+using FileTimeStamp = PP_Time;
+#else
+using FileTimeStamp = time_t;
+#endif  // OS_WIN or OS_NACL
 
 class FileUtil {
  public:
@@ -115,6 +127,11 @@ class FileUtil {
   // Returns the normalized path by replacing '/' with '\\' on Windows.
   // Does nothing on other platforms.
   static string NormalizeDirectorySeparator(const string &path);
+
+  // Returns the modification time in `modified_at`.
+  // Returns false if something went wrong.
+  static bool GetModificationTime(const string &filename,
+                                  FileTimeStamp *modified_at);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(FileUtil);

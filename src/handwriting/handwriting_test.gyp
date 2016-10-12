@@ -42,6 +42,20 @@
       ],
     },
     {
+      'target_name': 'zinnia_handwriting_test',
+      'type': 'executable',
+      'sources': [
+        'zinnia_handwriting_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
+        'handwriting.gyp:install_zinnia_handwriting_data',
+        'handwriting.gyp:zinnia_handwriting',
+      ],
+    },
+    {
       'target_name': 'handwriting_all_test',
       'type': 'none',
       'dependencies': [
@@ -51,6 +65,12 @@
         ['enable_cloud_handwriting==1', {
           'dependencies': [
             'cloud_handwriting_test',
+          ],
+        }],
+        # TODO(komatsu): Enable to test zinnia_handwrting_test on OSS build.
+        ['branding=="GoogleJapaneseInput"', {
+          'dependencies': [
+            'zinnia_handwriting_test',
           ],
         }],
       ],

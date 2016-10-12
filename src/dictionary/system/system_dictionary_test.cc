@@ -43,7 +43,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -61,18 +61,9 @@ using std::unique_ptr;
 
 using mozc::dictionary::CollectTokenCallback;
 
-namespace {
-// We cannot use #ifdef in DEFINE_int32.
-#ifdef DEBUG
-const uint32 kDefaultReverseLookupTestSize = 1000;
-#else
-const uint32 kDefaultReverseLookupTestSize = 10000;
-#endif
-}  // namespace
-
 DEFINE_int32(dictionary_test_size, 100000,
              "Dictionary size for this test.");
-DEFINE_int32(dictionary_reverse_lookup_test_size, kDefaultReverseLookupTestSize,
+DEFINE_int32(dictionary_reverse_lookup_test_size, 1000,
              "Number of tokens to run reverse lookup test.");
 DECLARE_int32(min_key_length_to_use_small_cost_encoding);
 
@@ -82,8 +73,8 @@ namespace dictionary {
 class SystemDictionaryTest : public ::testing::Test {
  protected:
   SystemDictionaryTest()
-      : text_dict_(new TextDictionaryLoader(
-          *UserPosManager::GetUserPosManager()->GetPOSMatcher())),
+      : pos_matcher_(mock_data_manager_.GetPOSMatcherData()),
+        text_dict_(new TextDictionaryLoader(pos_matcher_)),
         dic_fn_(FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc.dic")) {
     const string dic_path = mozc::testing::GetSourceFileOrDie({
         "data", "dictionary_oss", "dictionary00.txt"});
@@ -93,9 +84,7 @@ class SystemDictionaryTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+  void SetUp() override {
     // Don't use small cost encoding by default.
     original_flags_min_key_length_to_use_small_cost_encoding_ =
         FLAGS_min_key_length_to_use_small_cost_encoding;
@@ -105,7 +94,7 @@ class SystemDictionaryTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     FLAGS_min_key_length_to_use_small_cost_encoding =
         original_flags_min_key_length_to_use_small_cost_encoding_;
 
@@ -122,6 +111,9 @@ class SystemDictionaryTest : public ::testing::Test {
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
+  dictionary::POSMatcher pos_matcher_;
   unique_ptr<TextDictionaryLoader> text_dict_;
 
   ConversionRequest convreq_;

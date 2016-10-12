@@ -41,7 +41,6 @@
 #include "rewriter/correction_rewriter.h"
 #include "rewriter/date_rewriter.h"
 #include "rewriter/dice_rewriter.h"
-#include "rewriter/embedded_dictionary.h"
 #include "rewriter/emoji_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
@@ -73,53 +72,38 @@ using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::PosGroup;
 
-namespace {
-// When updating the emoji dictionary,
-// 1. Edit mozc/data/emoji/emoji_data.tsv,
-// 2. Run gen_emoji_rewriter_data.py and make emoji_rewriter_data.h,
-// 3. Make sure generated emoji_rewriter_data.h is correct.
-
-// This generated header file defines |kEmojiDataList|, |kEmojiValueList|
-// and |kEmojiTokenList|.
-#include "rewriter/emoji_rewriter_data.h"
-}  // namespace
-
 namespace mozc {
 
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
                            const DataManagerInterface *data_manager,
                            const PosGroup *pos_group,
-                           const DictionaryInterface *dictionary) {
+                           const DictionaryInterface *dictionary)
+    : pos_matcher_(data_manager->GetPOSMatcherData()) {
   DCHECK(parent_converter);
   DCHECK(data_manager);
   DCHECK(pos_group);
-  const POSMatcher *pos_matcher = data_manager->GetPOSMatcher();
-  DCHECK(pos_matcher);
   // |dictionary| can be NULL
 
   AddRewriter(new UserDictionaryRewriter);
   AddRewriter(new FocusCandidateRewriter(data_manager));
-  AddRewriter(new LanguageAwareRewriter(*pos_matcher, dictionary));
-  AddRewriter(new TransliterationRewriter(*pos_matcher));
+  AddRewriter(new LanguageAwareRewriter(pos_matcher_, dictionary));
+  AddRewriter(new TransliterationRewriter(pos_matcher_));
   AddRewriter(new EnglishVariantsRewriter);
   AddRewriter(new NumberRewriter(data_manager));
   AddRewriter(new CollocationRewriter(data_manager));
-  AddRewriter(new SingleKanjiRewriter(*pos_matcher));
-  AddRewriter(new EmojiRewriter(
-      kEmojiDataList, arraysize(kEmojiDataList),
-      kEmojiTokenList, arraysize(kEmojiTokenList),
-      kEmojiValueList));
-  AddRewriter(new EmoticonRewriter);
+  AddRewriter(new SingleKanjiRewriter(*data_manager));
+  AddRewriter(new EmojiRewriter(*data_manager));
+  AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager).release());
   AddRewriter(new CalculatorRewriter(parent_converter));
   AddRewriter(new SymbolRewriter(parent_converter, data_manager));
   AddRewriter(new UnicodeRewriter(parent_converter));
-  AddRewriter(new VariantsRewriter(pos_matcher));
-  AddRewriter(new ZipcodeRewriter(pos_matcher));
+  AddRewriter(new VariantsRewriter(pos_matcher_));
+  AddRewriter(new ZipcodeRewriter(&pos_matcher_));
   AddRewriter(new DiceRewriter);
 
   if (FLAGS_use_history_rewriter) {
     AddRewriter(new UserBoundaryHistoryRewriter(parent_converter));
-    AddRewriter(new UserSegmentHistoryRewriter(pos_matcher, pos_group));
+    AddRewriter(new UserSegmentHistoryRewriter(&pos_matcher_, pos_group));
   }
 
   AddRewriter(new DateRewriter);
@@ -133,8 +117,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
 #ifndef NO_USAGE_REWRITER
   AddRewriter(new UsageRewriter(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER
-
-  AddRewriter(new VersionRewriter);
+  AddRewriter(new VersionRewriter(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(new NormalizationRewriter);
   AddRewriter(new RemoveRedundantCandidateRewriter);

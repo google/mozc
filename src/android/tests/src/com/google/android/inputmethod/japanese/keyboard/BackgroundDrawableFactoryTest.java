@@ -37,6 +37,8 @@ import static org.easymock.EasyMock.isA;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.MozcMatcher.DeepCopyPaintCapture;
+import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
+import org.mozc.android.inputmethod.japanese.vectorgraphic.BufferedDrawable;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 
 import android.content.res.Resources;
@@ -49,9 +51,12 @@ import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import org.easymock.Capture;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  */
@@ -72,6 +77,26 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
     super.tearDown();
   }
 
+  private Drawable getStateDrawable(Drawable drawable) {
+    if (!(drawable instanceof StateListDrawable)) {
+      return drawable;
+    }
+    try {
+      int stateIndex = VisibilityProxy.invokeByName(drawable, "getStateDrawableIndex",
+                                                    drawable.getState());
+      return VisibilityProxy.invokeByName(drawable, "getStateDrawable", stateIndex);
+    } catch (InvocationTargetException e) {
+      fail(e.toString());
+    }
+    throw new IllegalStateException("Never reach here");
+  }
+
+  private Drawable maybeGetBaseDrawable(Drawable drawable) {
+    return drawable instanceof BufferedDrawable
+        ? BufferedDrawable.class.cast(drawable).getBaseDrawable()
+        : drawable;
+  }
+
   @SmallTest
   public void testFlickCenterDrawable() {
     Capture<RectF> ovalCapture = new Capture<RectF>();
@@ -80,7 +105,8 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
     canvas.drawCircle(gt(0f), gt(0f), gt(0f), capture(paintCapture));
     replayAll();
 
-    Drawable drawable = factory.getDrawable(DrawableType.TWELVEKEYS_CENTER_FLICK);
+    Drawable drawable = maybeGetBaseDrawable(
+        factory.getDrawable(DrawableType.TWELVEKEYS_CENTER_FLICK));
     drawable.setBounds(0, 0, 100, 100);
     drawable.draw(canvas);
 
@@ -121,7 +147,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
       canvas.drawPath(capture(pathCapture), capture(paintCapture));
       replayAll();
 
-      Drawable drawable = factory.getDrawable(drawableType);
+      Drawable drawable = maybeGetBaseDrawable(factory.getDrawable(drawableType));
       drawable.setBounds(0, 0, 100, 100);
       drawable.draw(canvas);
 
@@ -172,7 +198,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
       Drawable drawable = factory.getDrawable(drawableType);
       drawable.setBounds(0, 0, 100, 100);
       drawable.setState(new int[] {});
-      drawable.draw(canvas);
+      maybeGetBaseDrawable(getStateDrawable(drawable)).draw(canvas);
 
       verifyAll();
       Shader shader1 = paintCapture.getValue().getShader();
@@ -189,7 +215,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
       canvas.drawRect(geq(0f), geq(0f), geq(0f), geq(0f), isA(Paint.class));  // Bottom shade.
       replayAll();
       drawable.setBounds(0, 0, 200, 200);
-      drawable.draw(canvas);
+      maybeGetBaseDrawable(getStateDrawable(drawable)).draw(canvas);
 
       verifyAll();
       Shader shader2 = paintCapture.getValue().getShader();
@@ -216,7 +242,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
       Drawable drawable = factory.getDrawable(drawableType);
       drawable.setBounds(0, 0, 100, 100);
       drawable.setState(new int[] { android.R.attr.state_pressed });
-      drawable.draw(canvas);
+      maybeGetBaseDrawable(getStateDrawable(drawable)).draw(canvas);
 
       verifyAll();
       Shader shader1 = paintCapture.getValue().getShader();
@@ -228,7 +254,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
       canvas.drawRect(geq(0f), geq(0f), geq(0f), geq(0f), capture(paintCapture));
       replayAll();
       drawable.setBounds(0, 0, 200, 200);
-      drawable.draw(canvas);
+      maybeGetBaseDrawable(getStateDrawable(drawable)).draw(canvas);
 
       verifyAll();
       Shader shader2 = paintCapture.getValue().getShader();
@@ -260,10 +286,10 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
 
         replayAll();
 
-        Drawable drawable = factory.getDrawable(drawableType);
+        Drawable drawable = maybeGetBaseDrawable(factory.getDrawable(drawableType));
         drawable.setBounds(0, 0, 100, 100);
         drawable.setState(state);
-        drawable.draw(canvas);
+        maybeGetBaseDrawable(getStateDrawable(drawable)).draw(canvas);
 
         verifyAll();
         Shader shader1 = paintCapture.getValue().getShader();
@@ -277,7 +303,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
 
         replayAll();
         drawable.setBounds(0, 0, 200, 200);
-        drawable.draw(canvas);
+        maybeGetBaseDrawable(getStateDrawable(drawable)).draw(canvas);
 
         verifyAll();
         Shader shader2 = paintCapture.getValue().getShader();

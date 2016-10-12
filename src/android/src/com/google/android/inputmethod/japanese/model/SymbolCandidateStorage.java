@@ -33,6 +33,7 @@ import org.mozc.android.inputmethod.japanese.EmoticonData;
 import org.mozc.android.inputmethod.japanese.SymbolData;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiData;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import org.mozc.android.inputmethod.japanese.emoji.EmojiRenderableChecker;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Annotation;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
@@ -140,6 +141,8 @@ public class SymbolCandidateStorage {
   }
 
   private final SymbolHistoryStorage symbolHistoryStorage;
+  private final EmojiRenderableChecker emojiRenderableChecker = new EmojiRenderableChecker();
+  private final Map<String, Boolean> isRenderableCache = new HashMap<String, Boolean>();
   private boolean isUnicodeEmojiEnabled = false;
   private boolean isCarrierEmojiEnabled = false;
   private EmojiProviderType emojiProviderType = EmojiProviderType.NONE;
@@ -294,7 +297,7 @@ public class SymbolCandidateStorage {
   }
 
   /** Just short cut of {@code toCandidateList(values, null)}. */
-  private static CandidateList toCandidateList(List<String> values) {
+  private CandidateList toCandidateList(List<String> values) {
     return toCandidateList(values, Optional.<Map<String, String>>absent());
   }
 
@@ -305,7 +308,7 @@ public class SymbolCandidateStorage {
    * allow users to input it on the focused text edit. Otherwise some application
    * (e.g. GoogleQuickSearchBox) crashes when they receives carrier emoji.
    */
-  private static CandidateList toEmojiCandidateListForHistory(
+  private CandidateList toEmojiCandidateListForHistory(
       List<String> values, Map<String, String> emojiDescriptionMap, boolean isCarrierEmojiEnabled) {
     if (isCarrierEmojiEnabled) {
       return toCandidateList(values, Optional.of(emojiDescriptionMap));
@@ -323,7 +326,7 @@ public class SymbolCandidateStorage {
 
   /** Builds the {@link CandidateList} based on the given values and emojiDescriptionMap. */
   @VisibleForTesting
-  static CandidateList toCandidateList(
+  CandidateList toCandidateList(
       List<String> values, Optional<Map<String, String>> emojiDescriptionMap) {
     Preconditions.checkNotNull(emojiDescriptionMap);
     if (Preconditions.checkNotNull(values).isEmpty()) {
@@ -384,7 +387,7 @@ public class SymbolCandidateStorage {
     return Optional.absent();
   }
 
-  private static CandidateList toEmojiCandidateList(
+  private CandidateList toEmojiCandidateList(
       String[] unicodeEmojiValues, String[] unicodeEmojiDescriptions,
       String[] carrierEmojiValues, String[] carrierEmojiDescriptions,
       boolean isUnicodeEmojiEnabled, boolean isCarrierEmojiEnabled) {
@@ -408,10 +411,15 @@ public class SymbolCandidateStorage {
   }
 
   /** @return The number of added candidates. */
-  private static int addEmojiCandidateListToBuilder(
+  private int addEmojiCandidateListToBuilder(
       CandidateList.Builder builder, int startIndex, String[] values, String[] descriptions) {
     int index = startIndex;
     for (int i = 0; i < descriptions.length; ++i) {
+      String value = values[i];
+      if (!isRenderableEmoji(value)) {
+        continue;
+      }
+
       String description = descriptions[i];
       if (description == null) {
         // If no description (name) is available, we skip the value,
@@ -420,7 +428,7 @@ public class SymbolCandidateStorage {
       }
 
       builder.addCandidates(CandidateWord.newBuilder()
-          .setValue(values[i])
+          .setValue(value)
           .setId(index)
           .setIndex(index)
           .setAnnotation(Annotation.newBuilder()
@@ -428,5 +436,14 @@ public class SymbolCandidateStorage {
       ++index;
     }
     return index - startIndex;
+  }
+
+  private boolean isRenderableEmoji(String value) {
+    Boolean result = isRenderableCache.get(value);
+    if (result == null) {
+      result = emojiRenderableChecker.isRenderable(value);
+      isRenderableCache.put(value, result);
+    }
+    return result;
   }
 }

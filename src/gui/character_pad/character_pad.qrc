@@ -15,7 +15,5 @@
 <qresource>
   <file>character_pad_ja.qm</file>
   <file>character_pad_en.qm</file>
-  <file>character_pad_win_aero_style.qss</file>
-  <file>character_pad_win_style.qss</file>
 </qresource>
 </RCC>

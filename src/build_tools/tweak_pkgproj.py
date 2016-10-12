@@ -111,7 +111,7 @@ def ParseOptions():
   parser.add_option("--input", dest="input")
   parser.add_option("--build_dir", dest="build_dir")
   parser.add_option("--gen_out_dir", dest="gen_out_dir")
-  parser.add_option("--keystone_dir", dest="keystone_dir")
+  parser.add_option("--auto_updater_dir", dest="auto_updater_dir")
   parser.add_option("--build_type", dest="build_type")
 
   (options, unused_args) = parser.parse_args()
@@ -122,7 +122,7 @@ def main():
   """The main function."""
   options = ParseOptions()
   required_flags = ["version_file", "output", "input", "build_dir",
-                    "gen_out_dir", "keystone_dir", "build_type"]
+                    "gen_out_dir", "auto_updater_dir", "build_type"]
   for flag in required_flags:
     if getattr(options, flag) is None:
       logging.error("--%s is not specified." % flag)
@@ -143,7 +143,7 @@ def main():
         'Google Japanese Input %s, %s' % (long_version, copyright_message),
       'GEN_OUT_DIR': path.abspath(options.gen_out_dir),
       'BUILD_DIR': path.abspath(options.build_dir),
-      'KEYSTONE_DIR': path.abspath(options.keystone_dir),
+      'AUTO_UPDATER_DIR': path.abspath(options.auto_updater_dir),
       'MOZC_DIR': path.abspath(path.join(os.getcwd(), ".."))
       }
 

@@ -96,9 +96,9 @@ TEST(SingletonTest, ThreadTest) {
   ThreadTest test3;
 
   // Create the ThreadInstance simultaneously.
-  test1.Start();
-  test2.Start();
-  test3.Start();
+  test1.Start("ThreadTest");
+  test2.Start("ThreadTest");
+  test3.Start("ThreadTest");
 
   test1.Join();
   test2.Join();

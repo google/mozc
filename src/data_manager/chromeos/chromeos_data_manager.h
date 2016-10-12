@@ -31,43 +31,15 @@
 #define MOZC_DATA_MANAGER_CHROMEOS_CHROMEOS_DATA_MANAGER_H_
 
 #include "base/port.h"
-#include "data_manager/chromeos/chromeos_user_pos_manager.h"
+#include "data_manager/data_manager.h"
 
 namespace mozc {
 namespace chromeos {
 
-class ChromeOsDataManager : public ChromeOsUserPosManager {
+class ChromeOsDataManager : public DataManager {
  public:
-  ChromeOsDataManager() {}
-  virtual ~ChromeOsDataManager() {}
-
-  virtual const uint8 *GetPosGroupData() const;
-  virtual void GetConnectorData(const char **data, size_t *size) const;
-  virtual void GetSegmenterData(
-      size_t *l_num_elements, size_t *r_num_elements,
-      const uint16 **l_table, const uint16 **r_table,
-      size_t *bitarray_num_bytes, const char **bitarray_data,
-      const BoundaryData **boundary_data) const;
-  virtual void GetSystemDictionaryData(const char **data, int *size) const;
-  virtual void GetSuffixDictionaryData(const dictionary::SuffixToken **tokens,
-                                       size_t *size) const;
-  virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
-                                        size_t *size) const;
-  virtual void GetCollocationData(const char **array, size_t *size) const;
-  virtual void GetCollocationSuppressionData(const char **array,
-                                             size_t *size) const;
-  virtual void GetSuggestionFilterData(const char **data, size_t *size) const;
-  virtual void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
-                                     size_t *size) const;
-#ifndef NO_USAGE_REWRITER
-  virtual void GetUsageRewriterData(
-      const ConjugationSuffix **base_conjugation_suffix,
-      const ConjugationSuffix **conjugation_suffix_data,
-      const int **conjugation_suffix_data_index,
-      const UsageDictItem **usage_data_value) const;
-#endif  // NO_USAGE_REWRITER
-  virtual void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
-                                           size_t *size) const;
+  ChromeOsDataManager();
+  ~ChromeOsDataManager() override;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ChromeOsDataManager);

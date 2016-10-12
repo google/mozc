@@ -33,20 +33,14 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/mozctest.h"
 
 using mozc::dictionary::POSMatcher;
 
@@ -59,7 +53,8 @@ enum SegmentType {
 };
 
 void AddSegment(const string &key, const string &value,
-                SegmentType type, Segments *segments) {
+                SegmentType type, const POSMatcher &pos_matcher,
+                Segments *segments) {
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
@@ -70,10 +65,8 @@ void AddSegment(const string &key, const string &value,
   candidate->content_value = value;
 
   if (type == ZIPCODE) {
-    const POSMatcher *pos_matcher =
-        UserPosManager::GetUserPosManager()->GetPOSMatcher();
-    candidate->lid = pos_matcher->GetZipcodeId();
-    candidate->rid = pos_matcher->GetZipcodeId();
+    candidate->lid = pos_matcher.GetZipcodeId();
+    candidate->rid = pos_matcher.GetZipcodeId();
   }
 }
 
@@ -98,30 +91,19 @@ bool HasZipcodeAndAddress(const Segments &segments,
 
 class ZipcodeRewriterTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers mocked PackedDataManager.
-    std::unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  }
-
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    packed::RegisterPackedDataManager(NULL);
-#endif  // MOZC_USE_PACKED_DICTIONARY
+  void SetUp() override {
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
   }
 
   ZipcodeRewriter *CreateZipcodeRewriter() const {
-    return new ZipcodeRewriter(
-        UserPosManager::GetUserPosManager()->GetPOSMatcher());
+    return new ZipcodeRewriter(&pos_matcher_);
   }
+
+  dictionary::POSMatcher pos_matcher_;
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(ZipcodeRewriterTest, BasicTest) {
@@ -138,7 +120,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
   {
     Segments segments;
-    AddSegment("test", "test", NON_ZIPCODE, &segments);
+    AddSegment("test", "test", NON_ZIPCODE, pos_matcher_, &segments);
     EXPECT_FALSE(zipcode_rewriter->Rewrite(request, &segments));
   }
 
@@ -146,7 +128,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
 
     Segments segments;
-    AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
+    AddSegment(kZipcode, kAddress, ZIPCODE, pos_matcher_, &segments);
     zipcode_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments, kZipcode + " " + kAddress));
   }
@@ -155,7 +137,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
     Segments segments;
-    AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
+    AddSegment(kZipcode, kAddress, ZIPCODE, pos_matcher_, &segments);
     zipcode_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      // "　" (full-width space)

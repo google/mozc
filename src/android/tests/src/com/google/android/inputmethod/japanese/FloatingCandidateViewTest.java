@@ -41,6 +41,7 @@ import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWith
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 import org.mozc.android.inputmethod.japanese.ui.FloatingCandidateLayoutRenderer;
 import org.mozc.android.inputmethod.japanese.ui.FloatingModeIndicator;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
@@ -170,7 +171,7 @@ public class FloatingCandidateViewTest extends InstrumentationTestCaseWithMock {
     builder.setInsertionMarkerLocation(200, 1000, 250, 1020,
                                        CursorAnchorInfo.FLAG_HAS_VISIBLE_REGION);
     builder.setMatrix(new Matrix());
-    view.setCursorAnchorInfo(builder.build());
+    view.setCursorAnchorInfo(new CursorAnchorInfoWrapper(builder.build()));
     Rect rect = view.getVisibleRect().get();
     assertEquals(190, rect.left);
     assertEquals(1020 + windowVerticalMargin, rect.top);
@@ -182,7 +183,7 @@ public class FloatingCandidateViewTest extends InstrumentationTestCaseWithMock {
     builder.addCharacterBounds(0, 0, 1000, 100, 1020,
                                CursorAnchorInfo.FLAG_HAS_VISIBLE_REGION);
     builder.setComposingText(0, "a");
-    view.setCursorAnchorInfo(builder.build());
+    view.setCursorAnchorInfo(new CursorAnchorInfoWrapper(builder.build()));
     rect = view.getVisibleRect().get();
     assertEquals(windowHorizontalMargin, rect.left);
     assertEquals(1020 + windowVerticalMargin, rect.top);
@@ -193,7 +194,7 @@ public class FloatingCandidateViewTest extends InstrumentationTestCaseWithMock {
     // The left corner of a candidate window touches view.
     builder.addCharacterBounds(1, 100, 1000, 150, 1020,
                                CursorAnchorInfo.FLAG_HAS_VISIBLE_REGION);
-    view.setCursorAnchorInfo(builder.build());
+    view.setCursorAnchorInfo(new CursorAnchorInfoWrapper(builder.build()));
     rect = view.getVisibleRect().get();
     assertEquals(windowHorizontalMargin, rect.left);
     assertEquals(1020 + windowVerticalMargin, rect.top);

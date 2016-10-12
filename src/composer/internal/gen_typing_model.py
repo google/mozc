@@ -28,10 +28,27 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Converts a typing model file to C++ code.
+"""Converts a typing model file to binary image.
 
 Usage:
   $ gen_typing_model.py model.tsv > output.h
+
+Output file format:
+  +----------------------------------------------------+
+  | unique characters array size (4 bytes, uint32)     |
+  +----------------------------------------------------+
+  | unique characters array (variable length, char[])  |
+  +----------------------------------------------------+
+  | padding (0 - 3 bytes)                              |
+  +----------------------------------------------------+
+  | cost array size (4 bytes, uint32)                  |
+  +----------------------------------------------------+
+  | cost array (variable length, uint8[])              |
+  +----------------------------------------------------+
+  | padding (0 - 3 bytes)                              |
+  +----------------------------------------------------+
+  | mapping table (variable length, int32[])           |
+  +----------------------------------------------------+
 """
 
 __author__ = "noriyukit"
@@ -53,9 +70,6 @@ def ParseArgs():
   parser.add_option('--input_path', dest='input_path',
                     default='typing_model.tsv',
                     help='Input file path')
-  parser.add_option('--variable_name', dest='variable_name',
-                    default='typingmodel',
-                    help='Suffix of created variable name.')
   parser.add_option('--output_path', dest='output_path',
                     default='/tmp/typing_model.h',
                     help='Output file path.')
@@ -145,31 +159,36 @@ def GetValueTable(unique_characters, mapping_table, dictionary):
   return result
 
 
-def WriteResult(romaji_transition_cost, output_path, variable_name):
+def WriteResult(romaji_transition_cost, output_path):
   unique_characters = GetUniqueCharacters(romaji_transition_cost.keys())
   mapping_table = GetMappingTable(romaji_transition_cost.values(),
                                   MAX_UINT8 + 1)
   value_list = GetValueTable(unique_characters, mapping_table,
                              romaji_transition_cost)
-  quoted_unique_characters = ''.join(
-      [r'\x%X' % ord(c) for c in unique_characters])
-  with open(output_path, 'w') as out_file:
-    out_file.write('const size_t kKeyCharactersSize_%s = %d;\n' %
-                   (variable_name, len(unique_characters)))
-    out_file.write('const char* kKeyCharacters_%s = "%s";\n' %
-                   (variable_name, ''.join(quoted_unique_characters)))
-    out_file.write('const size_t kCostTableSize_%s = %d;\n' %
-                   (variable_name, len(value_list)))
-    out_file.write('const uint8 kCostTable_%s[] = {\n' %
-                   variable_name)
-    for value in value_list:
-      out_file.write('%d,\n' % value)
-    out_file.write('};\n')
-    out_file.write('const int32 kCostMappingTable_%s[] = {\n' %
-                   variable_name)
-    for value in mapping_table:
-      out_file.write('%d,\n' % value)
-    out_file.write('};\n')
+  with open(output_path, 'wb') as f:
+    f.write(struct.pack('<I', len(unique_characters)))
+    f.write(''.join(unique_characters))
+    offset = 4 + len(unique_characters)
+
+    # Add padding to place value list size at 4-byte boundary.
+    if offset % 4:
+      padding_size = 4 - offset % 4
+      f.write('\x00' * padding_size)
+      offset += padding_size
+
+    f.write(struct.pack('<I', len(value_list)))
+    for v in value_list:
+      f.write(struct.pack('<B', v))
+    offset += 4 + len(value_list)
+
+    # Add padding to place mapping_table at 4-byte boundary.
+    if offset % 4:
+      padding_size = 4 - offset % 4
+      f.write('\x00' * padding_size)
+      offset += padding_size
+
+    for v in mapping_table:
+      f.write(struct.pack('<i', v))
 
 
 def main():
@@ -208,8 +227,7 @@ def main():
     # We use unsigned short to store cost value so range check is needed.
     romaji_transition_cost[ngram] = adjusted_cost
 
-  WriteResult(romaji_transition_cost, options.output_path,
-              options.variable_name)
+  WriteResult(romaji_transition_cost, options.output_path)
 
 
 if __name__ == '__main__':

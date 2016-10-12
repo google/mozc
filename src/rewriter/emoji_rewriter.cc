@@ -63,9 +63,9 @@ const size_t kDefaultInsertPos = 6;
 // Inserts a candidate to the segment at insert_position.
 // Returns true if succeeded, otherwise false. Also, if succeeded, increments
 // the insert_position to represent the next insert position.
-bool InsertCandidate(const string &key,
-                     const string &value,
-                     const char *description,
+bool InsertCandidate(StringPiece key,
+                     StringPiece value,
+                     StringPiece description,
                      int cost,
                      Segment *segment,
                      size_t *insert_position) {
@@ -82,24 +82,26 @@ bool InsertCandidate(const string &key,
   candidate->lid = 0;
   candidate->rid = 0;
   candidate->cost = cost;
-  candidate->value = value;
-  candidate->content_value = value;
-  candidate->key = key;
-  candidate->content_key = key;
+  value.CopyToString(&candidate->value);
+  value.CopyToString(&candidate->content_value);
+  key.CopyToString(&candidate->key);
+  key.CopyToString(&candidate->content_key);
   candidate->description.assign(kEmoji);
-  if (description) {
+  if (!description.empty()) {
     Util::AppendStringWithDelimiter(
         " ", description, &(candidate->description));
   }
+  candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
 
   return true;
 }
 
 // Merges two descriptions.  Connects them if one is not a substring of the
 // other.
-void AddDescription(const char *adding, vector<string> *descriptions) {
+void AddDescription(StringPiece adding, vector<string> *descriptions) {
   DCHECK(descriptions);
-  if (adding == NULL) {
+  if (adding.empty()) {
     return;
   }
 
@@ -110,41 +112,45 @@ void AddDescription(const char *adding, vector<string> *descriptions) {
     }
   }
 
-  descriptions->push_back(string(adding));
+  descriptions->emplace_back(adding.data(), adding.size());
 }
 
-bool InsertEmojiData(const string &key,
-                     const EmojiRewriter::EmojiData &emoji_data,
+bool InsertEmojiData(StringPiece key,
+                     EmojiRewriter::EmojiDataIterator iter,
+                     const SerializedStringArray &string_array,
                      int cost,
                      int32 available_carrier,
                      Segment *segment,
                      size_t *insert_position) {
   bool inserted = false;
 
+  StringPiece utf8_emoji = string_array[iter.emoji_index()];
+
   // Fill a candidate of Unicode 6.0 emoji.
-  if ((available_carrier & Request::UNICODE_EMOJI) &&
-      emoji_data.unicode != NULL) {
+  if ((available_carrier & Request::UNICODE_EMOJI) && !utf8_emoji.empty()) {
     inserted |= InsertCandidate(
-        key, emoji_data.unicode, emoji_data.description_unicode, cost, segment,
-        insert_position);
+        key, utf8_emoji, string_array[iter.description_utf8_index()],
+        cost, segment, insert_position);
   }
 
   vector<string> descriptions;
   if (available_carrier & Request::DOCOMO_EMOJI) {
-    AddDescription(emoji_data.description_docomo, &descriptions);
+    AddDescription(string_array[iter.description_docomo_index()],
+                   &descriptions);
   }
   if (available_carrier & Request::SOFTBANK_EMOJI) {
-    AddDescription(emoji_data.description_softbank, &descriptions);
+    AddDescription(string_array[iter.description_softbank_index()],
+                   &descriptions);
   }
   if (available_carrier & Request::KDDI_EMOJI) {
-    AddDescription(emoji_data.description_kddi, &descriptions);
+    AddDescription(string_array[iter.description_kddi_index()], &descriptions);
   }
 
   if (!descriptions.empty()) {
     // Encode the PUA code point to utf8 and fill it to candidate.
     string android_pua;
     string description;
-    Util::UCS4ToUTF8Append(emoji_data.android_pua, &android_pua);
+    Util::UCS4ToUTF8Append(iter.android_pua(), &android_pua);
     Util::JoinStrings(descriptions, " ", &description);
     inserted |= InsertCandidate(
         key, android_pua, description.c_str(), cost, segment, insert_position);
@@ -158,9 +164,10 @@ int GetEmojiCost(const Segment &segment) {
   return segment.candidates_size() == 0 ? 0 : segment.candidate(0).cost;
 }
 
-bool InsertAllEmojiData(const string &key,
-                        const EmojiRewriter::EmojiData *emoji_data,
-                        size_t emoji_data_size,
+bool InsertAllEmojiData(StringPiece key,
+                        EmojiRewriter::EmojiDataIterator begin,
+                        EmojiRewriter::EmojiDataIterator end,
+                        const SerializedStringArray &string_array,
                         int32 available_carrier,
                         Segment *segment) {
   bool inserted = false;
@@ -168,16 +175,17 @@ bool InsertAllEmojiData(const string &key,
   // Insert all candidates at the tail of the segment.
   size_t insert_position = segment->candidates_size();
   int cost = GetEmojiCost(*segment);
-  for (size_t i = 0; i < emoji_data_size; ++i) {
-    inserted |= InsertEmojiData(key, emoji_data[i], cost, available_carrier,
+  for (; begin != end; ++begin) {
+    inserted |= InsertEmojiData(key, begin, string_array, cost,
+                                available_carrier,
                                 segment, &insert_position);
   }
   return inserted;
 }
 
-bool InsertToken(const string &key,
-                 const EmojiRewriter::Token &token,
-                 const EmojiRewriter::EmojiData *emoji_data,
+bool InsertToken(StringPiece key,
+                 EmojiRewriter::IteratorRange range,
+                 const SerializedStringArray &string_array,
                  int32 available_carrier,
                  Segment *segment) {
   bool inserted = false;
@@ -185,9 +193,9 @@ bool InsertToken(const string &key,
   size_t insert_position =
       min(segment->candidates_size(), kDefaultInsertPos);
   int cost = GetEmojiCost(*segment);
-  for (size_t i = 0; i < token.value_size; ++i) {
+  for (; range.first != range.second; ++range.first) {
     inserted |= InsertEmojiData(
-        key, emoji_data[token.value[i]], cost, available_carrier,
+        key, range.first, string_array, cost, available_carrier,
         segment, &insert_position);
   }
   return inserted;
@@ -195,21 +203,14 @@ bool InsertToken(const string &key,
 
 }  // namespace
 
-EmojiRewriter::EmojiRewriter(
-    const EmojiRewriter::EmojiData *emoji_data_list,
-    size_t emoji_data_size,
-    const EmojiRewriter::Token *token_list,
-    size_t token_size,
-    const uint16 *value_list)
-    : emoji_data_list_(emoji_data_list), emoji_data_size_(emoji_data_size),
-      token_list_(token_list), token_size_(token_size),
-      value_list_(value_list) {
-  DCHECK(emoji_data_list_ != NULL);
-  DCHECK(token_list_ != NULL);
-  DCHECK(value_list_ != NULL);
+EmojiRewriter::EmojiRewriter(const DataManagerInterface &data_manager) {
+  StringPiece string_array_data;
+  data_manager.GetEmojiRewriterData(&token_array_data_, &string_array_data);
+  DCHECK(SerializedStringArray::VerifyData(string_array_data));
+  string_array_.Set(string_array_data);
 }
 
-EmojiRewriter::~EmojiRewriter() {}
+EmojiRewriter::~EmojiRewriter() = default;
 
 int EmojiRewriter::capability(const ConversionRequest &request) const {
   // The capability of the EmojiRewriter is up to the client's request.
@@ -263,49 +264,41 @@ bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
   return candidate.description.find(kEmoji) != string::npos;
 }
 
-const EmojiRewriter::Token *EmojiRewriter::LookUpToken(const string &key)
-    const {
-  struct OrderByKey {
-    bool operator()(const Token &x, const char *y) const {
-      return strcmp(x.key, y) < 0;
-    }
-  };
-  const Token *token = std::lower_bound(token_list_,
-                                        token_list_ + token_size_,
-                                        key.c_str(),
-                                        OrderByKey());
-  if (token == token_list_ + token_size_ || token->key != key) {
-    // Not found.
-    return NULL;
+pair<EmojiRewriter::EmojiDataIterator, EmojiRewriter::EmojiDataIterator>
+EmojiRewriter::LookUpToken(StringPiece key) const {
+  // Search string array for key.
+  auto iter = std::lower_bound(string_array_.begin(), string_array_.end(), key);
+  if (iter == string_array_.end() || *iter != key) {
+    return pair<EmojiDataIterator, EmojiDataIterator>(end(), end());
   }
-  return token;
+  // Search token array for the string index.
+  return std::equal_range(begin(), end(), iter.index());
 }
 
 bool EmojiRewriter::RewriteCandidates(
     int32 available_emoji_carrier, Segments *segments) const {
   bool modified = false;
+  string reading;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
-    const string &reading = segment->key();
+    Util::FullWidthAsciiToHalfWidthAscii(segment->key(), &reading);
     if (reading.empty()) {
       continue;
     }
 
     if (reading == kEmojiKey) {
       // When key is "えもじ", we expect to expand all Emoji characters.
-      modified |= InsertAllEmojiData(
-          reading, emoji_data_list_, emoji_data_size_,
-          available_emoji_carrier, segment);
+      modified |= InsertAllEmojiData(reading, begin(), end(), string_array_,
+                                     available_emoji_carrier, segment);
       continue;
     }
-
-    const Token *token = LookUpToken(reading);
-    if (token == NULL) {
+    const auto range = LookUpToken(reading);
+    if (range.first == range.second) {
       VLOG(2) << "Token not found: " << reading;
       continue;
     }
-    modified |= InsertToken(
-        reading, *token, emoji_data_list_, available_emoji_carrier, segment);
+    modified |= InsertToken(reading, range, string_array_,
+                            available_emoji_carrier, segment);
   }
   return modified;
 }

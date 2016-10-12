@@ -1186,13 +1186,17 @@ mozc.NaclMozc.prototype.onModuleMessage_ = function(message) {
     return;
   }
 
-  var callback = this.naclMessageCallbacks_[mozcResponse.id];
-  delete this.naclMessageCallbacks_[mozcResponse.id];
-  if (callback) {
-    if (mozcResponse.cmd) {
-      callback(mozcResponse.cmd);
-    } else if (mozcResponse.event) {
-      callback(mozcResponse.event);
+  if (mozcResponse.id == undefined) {
+    console.error('Response ID does not exist.');
+  } else {
+    var callback = this.naclMessageCallbacks_[mozcResponse.id];
+    delete this.naclMessageCallbacks_[mozcResponse.id];
+    if (callback) {
+      if (mozcResponse.cmd) {
+        callback(mozcResponse.cmd);
+      } else if (mozcResponse.event) {
+        callback(mozcResponse.event);
+      }
     }
   }
   this.executeWatingEventHandlers_();

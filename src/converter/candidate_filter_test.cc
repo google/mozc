@@ -40,9 +40,7 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
@@ -72,21 +70,19 @@ class CandidateFilterTest : public ::testing::Test {
   // considering this class as POD.
   CandidateFilterTest() {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     candidate_freelist_.reset(new FreeList<Segment::Candidate>(1024));
     node_freelist_.reset(new FreeList<Node>(1024));
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
-
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     {
-      mozc::testing::MockDataManager data_manager;
       const char *data = NULL;
       size_t size = 0;
-      data_manager.GetSuggestionFilterData(&data, &size);
+      mock_data_manager_.GetSuggestionFilterData(&data, &size);
       suggestion_filter_.reset(new SuggestionFilter(data, size));
     }
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     candidate_freelist_->Free();
     node_freelist_->Free();
   }
@@ -123,24 +119,25 @@ class CandidateFilterTest : public ::testing::Test {
   }
 
   const POSMatcher &pos_matcher() const {
-    return *pos_matcher_;
+    return pos_matcher_;
   }
 
   CandidateFilter *CreateCandidateFilter(
       bool apply_suggestion_filter_for_exact_match) const {
     return new CandidateFilter(&suppression_dictionary_,
-                               pos_matcher_,
+                               &pos_matcher_,
                                suggestion_filter_.get(),
                                apply_suggestion_filter_for_exact_match);
   }
 
   std::unique_ptr<FreeList<Segment::Candidate> > candidate_freelist_;
   std::unique_ptr<FreeList<Node> > node_freelist_;
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
   SuppressionDictionary suppression_dictionary_;
   std::unique_ptr<SuggestionFilter> suggestion_filter_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
+
+ private:
+  testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(CandidateFilterTest, FilterTest) {
@@ -294,7 +291,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
   }
 }
 
-TEST_F(CandidateFilterTest, IsolatedWord) {
+TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   vector<const Node *> nodes;
   Segment::Candidate *c = NewCandidate();
@@ -305,44 +302,108 @@ TEST_F(CandidateFilterTest, IsolatedWord) {
   nodes.push_back(node);
   node->prev = NewNode();
   node->next = NewNode();
-  node->lid = pos_matcher().GetIsolatedWordId();
-  node->rid = pos_matcher().GetIsolatedWordId();
   node->key = "abc";
   node->value = "test";
 
-  node->prev->node_type = Node::NOR_NODE;
-  node->next->node_type = Node::EOS_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    // Clear the internal set |seen_| to prevent "abc" from being filtered by
-    // "seen" rule.
-    filter->Reset();
-  }
+  const uint16 pos_ids[] = {
+    pos_matcher().GetIsolatedWordId(),
+    pos_matcher().GetGeneralSymbolId(),
+  };
+  // Perform the same test for the above POS IDs.
+  for (const uint16 id : pos_ids) {
+    node->lid = id;
+    node->rid = id;
 
-  node->prev->node_type = Node::BOS_NODE;
-  node->next->node_type = Node::NOR_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
-  }
+    node->prev->node_type = Node::NOR_NODE;
+    node->next->node_type = Node::EOS_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      // Clear the internal set |seen_| to prevent "abc" from being filtered by
+      // "seen" rule.
+      filter->Reset();
+    }
 
-  node->prev->node_type = Node::NOR_NODE;
-  node->next->node_type = Node::NOR_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
-  }
+    node->prev->node_type = Node::BOS_NODE;
+    node->next->node_type = Node::NOR_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
 
-  node->prev->node_type = Node::BOS_NODE;
-  node->next->node_type = Node::EOS_NODE;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
-    filter->Reset();
+    node->prev->node_type = Node::NOR_NODE;
+    node->next->node_type = Node::NOR_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
+
+    node->prev->node_type = Node::BOS_NODE;
+    node->next->node_type = Node::EOS_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
+
+    Node *backup_node = node->prev;
+    node->prev = nullptr;
+    node->next->node_type = Node::EOS_NODE;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
+    node->prev = backup_node;
+
+    backup_node = node->next;
+    node->prev->node_type = Node::BOS_NODE;
+    node->next = nullptr;
+    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+      EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+                filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
+      filter->Reset();
+    }
+    node->next = backup_node;
   }
+}
+
+TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+
+  Segment::Candidate *c = NewCandidate();
+  c->key = "abcisolatedxyz";
+  c->value = "abcisolatedxyz";
+
+  vector<Node *> nodes = {NewNode(), NewNode(), NewNode()};
+
+  nodes[0]->prev = nullptr;
+  nodes[0]->next = nodes[1];
+  nodes[0]->lid = pos_matcher().GetUnknownId();
+  nodes[0]->rid = pos_matcher().GetUnknownId();
+  nodes[0]->key = "abc";
+  nodes[0]->value = "abc";
+
+  nodes[1]->prev = nodes[0];
+  nodes[1]->next = nodes[2];
+  nodes[1]->lid = pos_matcher().GetIsolatedWordId();
+  nodes[1]->rid = pos_matcher().GetIsolatedWordId();
+  nodes[1]->key = "isolated";
+  nodes[1]->value = "isolated";
+
+  nodes[2]->prev = nodes[1];
+  nodes[2]->next = nullptr;
+  nodes[2]->lid = pos_matcher().GetUnknownId();
+  nodes[2]->rid = pos_matcher().GetUnknownId();
+  nodes[2]->key = "xyz";
+  nodes[2]->value = "xyz";
+
+  const vector<const Node *> const_nodes(nodes.begin(), nodes.end());
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter->FilterCandidate("abcisolatedxyz", c, const_nodes,
+                                    Segments::CONVERSION));
 }
 
 TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
@@ -424,10 +485,8 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
 
 TEST_F(CandidateFilterTest, Regression3437022) {
   std::unique_ptr<SuppressionDictionary> dic(new SuppressionDictionary);
-  const POSMatcher *pos_matcher =
-      UserPosManager::GetUserPosManager()->GetPOSMatcher();
   std::unique_ptr<CandidateFilter> filter(
-      new CandidateFilter(dic.get(), pos_matcher,
+      new CandidateFilter(dic.get(), &pos_matcher_,
                           suggestion_filter_.get(), true));
 
   vector<const Node *> n;

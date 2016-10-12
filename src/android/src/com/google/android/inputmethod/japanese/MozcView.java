@@ -45,6 +45,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.CompositionMode;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.ui.SideFrameStubProxy;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import org.mozc.android.inputmethod.japanese.view.MozcImageView;
 import org.mozc.android.inputmethod.japanese.view.Skin;
 import com.google.common.annotations.VisibleForTesting;
@@ -53,11 +54,13 @@ import com.google.common.base.Preconditions;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService.Insets;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -71,7 +74,6 @@ import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.TranslateAnimation;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
@@ -101,8 +103,10 @@ public class MozcView extends FrameLayout implements MemoryManageable {
       imeWindowPartialWidth = resources.getDimensionPixelSize(R.dimen.ime_window_partial_width);
       imeWindowRegionInsetThreshold = resources.getDimensionPixelSize(
           R.dimen.ime_window_region_inset_threshold);
-      narrowFrameHeight = resources.getDimensionPixelSize(R.dimen.narrow_frame_height);
-      narrowImeWindowHeight = resources.getDimensionPixelSize(R.dimen.narrow_ime_window_height);
+      narrowFrameHeight = getNarrowFrameHeight(resources);
+      narrowImeWindowHeight =
+          resources.getDimensionPixelSize(R.dimen.narrow_candidate_window_height)
+          + narrowFrameHeight;
       sideFrameWidth = resources.getDimensionPixelSize(R.dimen.side_frame_width);
       buttonFrameHeight = resources.getDimensionPixelSize(R.dimen.button_frame_height);
     }
@@ -199,6 +203,12 @@ public class MozcView extends FrameLayout implements MemoryManageable {
           updateInputFrameHeight();
         }
       };
+
+  /**
+   * Narrow frame is disabled on API 21 or later to respect
+   * {@link Configuration#hardKeyboardHidden}.
+   */
+  @VisibleForTesting static final boolean IS_NARROW_FRAME_ENABLED = Build.VERSION.SDK_INT < 21;
 
   private final DimensionPixelSize dimensionPixelSize = new DimensionPixelSize(getResources());
   private final SideFrameStubProxy leftFrameStubProxy = new SideFrameStubProxy();
@@ -441,8 +451,12 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     }
   }
 
+  public void onStartInputView(EditorInfo editorInfo) {
+    candidateViewManager.onStartInputView(editorInfo);
+  }
+
   @TargetApi(21)
-  public void setCursorAnchorInfo(CursorAnchorInfo info) {
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {
     candidateViewManager.setCursorAnchorInfo(info);
   }
 
@@ -592,13 +606,15 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     // input_frame's height depends on fullscreen mode, narrow mode and Candidate/Symbol views.
     if (fullscreenMode) {
       setLayoutHeight(getBottomFrame(), getVisibleViewHeight());
-      setLayoutHeight(getKeyboardFrame(), getInputFrameHeight());
+      setLayoutHeight(getKeyboardView(), getInputFrameHeight());
+      setLayoutHeight(getKeyboardFrame(), LayoutParams.WRAP_CONTENT);
     } else {
       if (narrowMode) {
         setLayoutHeight(getBottomFrame(), dimensionPixelSize.narrowImeWindowHeight);
       } else {
         setLayoutHeight(getBottomFrame(), imeWindowHeight);
-        setLayoutHeight(getKeyboardFrame(), getInputFrameHeight());
+        setLayoutHeight(getKeyboardView(), getInputFrameHeight());
+        setLayoutHeight(getKeyboardFrame(), LayoutParams.WRAP_CONTENT);
       }
     }
   }
@@ -698,7 +714,7 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     rightFrameStubProxy.setFrameVisibility(
         temporaryAdjustment == LayoutAdjustment.LEFT ? VISIBLE : GONE);
 
-    // Set candidate and desciption text size.
+    // Set candidate and description text size.
     float candidateTextSize = layoutAdjustment == LayoutAdjustment.FILL
         ? resources.getDimension(R.dimen.candidate_text_size)
         : resources.getDimension(R.dimen.candidate_text_size_aligned_layout);
@@ -713,7 +729,7 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     if (narrowMode) {
       getKeyboardFrame().setVisibility(GONE);
       getButtonFrame().setVisibility(GONE);
-      getNarrowFrame().setVisibility(VISIBLE);
+      getNarrowFrame().setVisibility(IS_NARROW_FRAME_ENABLED ? VISIBLE : GONE);
     } else {
       getKeyboardFrame().setVisibility(VISIBLE);
       getButtonFrame().setVisibility(buttonFrameVisible ? VISIBLE : GONE);
@@ -791,13 +807,23 @@ public class MozcView extends FrameLayout implements MemoryManageable {
 
   @VisibleForTesting
   void startSymbolInputViewInAnimation() {
-    getSymbolInputView().startInAnimation();
+    if (fullscreenMode) {
+      // Disable the animation during fullscreen mode to avoid ugly UI.
+      getSymbolInputView().setVisibility(VISIBLE);
+    } else {
+      getSymbolInputView().startInAnimation();
+    }
     changeBottomBackgroundHeight(symbolInputViewHeight);
   }
 
   @VisibleForTesting
   void startSymbolInputViewOutAnimation() {
-    getSymbolInputView().startOutAnimation();
+    if (fullscreenMode) {
+      // Disable the animation during fullscreen mode to avoid ugly UI.
+      getSymbolInputView().setVisibility(GONE);
+    } else {
+      getSymbolInputView().startOutAnimation();
+    }
     if (!candidateViewManager.isKeyboardCandidateViewVisible()) {
       resetBottomBackgroundHeight();
     }
@@ -935,6 +961,12 @@ public class MozcView extends FrameLayout implements MemoryManageable {
     return MozcImageView.class.cast(findViewById(R.id.microphone_button));
   }
 
+  @VisibleForTesting
+  static int getNarrowFrameHeight(Resources resources) {
+    return IS_NARROW_FRAME_ENABLED
+        ? resources.getDimensionPixelSize(R.dimen.narrow_frame_height) : 0;
+  }
+
   @Override
   public void trimMemory() {
     getKeyboardView().trimMemory();
@@ -947,6 +979,7 @@ public class MozcView extends FrameLayout implements MemoryManageable {
   }
 
   void setMicrophoneButtonEnabled(boolean microphoneButtonEnabled) {
+    boolean lastButtonFrameVisible = buttonFrameVisible;
     if (narrowMode) {
       buttonFrameVisible = false;
     } else {
@@ -956,6 +989,9 @@ public class MozcView extends FrameLayout implements MemoryManageable {
       getMicrophoneButton().setVisibility(visibility);
       getSymbolInputView().setMicrophoneButtonEnabled(microphoneButtonEnabled);
       resetBottomBackgroundHeight();
+    }
+    if (lastButtonFrameVisible != buttonFrameVisible) {
+      updateInputFrameHeight();
     }
   }
 }

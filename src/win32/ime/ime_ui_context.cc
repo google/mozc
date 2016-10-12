@@ -31,7 +31,6 @@
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#define _ATL_NO_HOSTING
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlstr.h>
@@ -40,28 +39,15 @@
 
 #include <strsafe.h>
 
-#ifdef HAS_MSIME_HEADER
-#include <msime.h>
-#endif  // HAS_MSIME_HEADER
-
-#include "base/singleton.h"
+#include "base/win_util.h"
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "win32/base/immdev.h"
 #include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/input_state.h"
-#include "win32/base/win32_window_util.h"
 #include "win32/ime/ime_composition_string.h"
 #include "win32/ime/ime_private_context.h"
-
-#ifndef RWM_QUERYPOSITION
-#define RWM_QUERYPOSITION  TEXT("MSIMEQueryPosition")
-#endif  // RWM_QUERYPOSITION
-
-#ifndef VERSION_QUERYPOSITION
-#define VERSION_QUERYPOSITION  1
-#endif  // VERSION_QUERYPOSITION
 
 namespace mozc {
 namespace win32 {
@@ -77,10 +63,6 @@ const size_t kSizeOfImeCharPositionV1 =
 const size_t kSizeOfGUIThreadInfoV1 =
     CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
 
-const wchar_t *kTroublesomeWindowClassNames[] = {
-  L"EXCEL6",  // b/4285222
-};
-
 HIMCC GetPrivateContextHandle(const INPUTCONTEXT *input_context) {
   if (input_context == nullptr) {
     return nullptr;
@@ -91,17 +73,6 @@ HIMCC GetPrivateContextHandle(const INPUTCONTEXT *input_context) {
   }
   return input_context->hPrivate;
 }
-
-class MSIMEPrivateMessageInitializer {
- public:
-  MSIMEPrivateMessageInitializer()
-      : wm_msime_queryposition_(::RegisterWindowMessageW(RWM_QUERYPOSITION)) {}
-  UINT wm_msime_queryposition() const {
-    return wm_msime_queryposition_;
-  }
- private:
-  UINT wm_msime_queryposition_;
-};
 
 void SetCharPosition(const IMECHARPOSITION &position,
                      commands::RendererCommand::CharacterPosition *target) {
@@ -438,7 +409,7 @@ bool UIContext::FillCandidateForm(ApplicationInfo *info) const {
 
 bool UIContext::FillCharPosition(ApplicationInfo *info) const {
   // Some applications such as Excel sometimes get stuck in the message handler
-  // against WM_MSIME_QUERYPOSITION.  b/4285222.
+  // against IMR_QUERYCHARPOSITION.  b/4285222.
   // To reduce the risk of hung-up, do nothing if the target window is not the
   // focused window.
   const HWND window_handle = input_context()->hWnd;
@@ -449,18 +420,6 @@ bool UIContext::FillCharPosition(ApplicationInfo *info) const {
     return false;
   }
 
-  // Do not request character position to some troublesome windows.
-  // See b/4285222 for details.
-  const wstring &window_class_name =
-      WindowUtil::GetWindowClassName(window_handle);
-  for (size_t i = 0; i < arraysize(kTroublesomeWindowClassNames); ++i) {
-    if (window_class_name == kTroublesomeWindowClassNames[i]) {
-      return false;
-    }
-  }
-
-  IMECHARPOSITION position = {};
-
   // This index must be calculated in unit of wide characters to support
   // surrogate pair. See b/4159275 for details.
   DWORD target_char_index = 0;
@@ -468,37 +427,16 @@ bool UIContext::FillCharPosition(ApplicationInfo *info) const {
     return false;
   }
 
+  IMECHARPOSITION position = {};
   position.dwSize = kSizeOfImeCharPositionV1;
   position.dwCharPos = target_char_index;
-
-  // WM_MSIME_QUERYPOSITION and IMR_QUERYCHARPOSITION might have some side
-  // effects on some applications. For example, RichEdit changes its scroll
-  // position so that the cursor will be shown. b/3223011.
-  // Some old applications can sometimes crash upon receiving
-  // WM_MSIME_QUERYPOSITION. b/3208669, b/3096191, and b/3212271.
-
-  const UINT WM_MSIME_QUERYPOSITION =
-    ::mozc::Singleton<MSIMEPrivateMessageInitializer>::get()->
-        wm_msime_queryposition();
-  LRESULT result = ::SendMessage(
-      window_handle, WM_MSIME_QUERYPOSITION,
-      VERSION_QUERYPOSITION, reinterpret_cast<LPARAM>(&position));
-  if (result != FALSE) {
-    SetCharPosition(position, info->mutable_composition_target());
-    return true;
+  if (::ImmRequestMessageW(context_handle_,
+                           IMR_QUERYCHARPOSITION,
+                           reinterpret_cast<LPARAM>(&position)) == 0) {
+    return false;
   }
-
-  position.dwSize = kSizeOfImeCharPositionV1;
-  position.dwCharPos = target_char_index;
-  result = ::ImmRequestMessageW(context_handle_,
-                                IMR_QUERYCHARPOSITION,
-                                reinterpret_cast<LPARAM>(&position));
-  if (result != FALSE) {
-    SetCharPosition(position, info->mutable_composition_target());
-    return true;
-  }
-
-  return false;
+  SetCharPosition(position, info->mutable_composition_target());
+  return true;
 }
 
 bool UIContext::FillCaretInfo(ApplicationInfo *info) const {
@@ -520,7 +458,7 @@ bool UIContext::FillCaretInfo(ApplicationInfo *info) const {
   rect->set_right(thread_info.rcCaret.right);
   rect->set_bottom(thread_info.rcCaret.bottom);
 
-  caret->set_target_window_handle(reinterpret_cast<uint32>(
+  caret->set_target_window_handle(WinUtil::EncodeWindowHandle(
       thread_info.hwndCaret));
 
   return true;

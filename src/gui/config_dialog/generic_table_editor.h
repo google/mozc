@@ -30,7 +30,11 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_GENERIC_TABLE_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_GENERIC_TABLE_EDITOR_H_
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QWidget>
+#else
 #include <QtGui/QWidget>
+#endif
 #include <string>
 #include "gui/config_dialog/ui_generic_table_editor.h"
 

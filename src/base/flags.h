@@ -32,10 +32,9 @@
 #ifndef MOZC_BASE_FLAGS_H_
 #define MOZC_BASE_FLAGS_H_
 
+#include "base/port.h"
 
 #include <string>
-
-#include "base/port.h"
 
 namespace mozc_flags {
 

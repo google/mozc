@@ -28,28 +28,40 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Converter of reading correction data from TSV to C++ code.
+"""Converter of reading correction data from TSV to binary format.
 
 Usage:
-  python gen_reading_correction_data.py --input=input.tsv --output=output.h
+  python gen_reading_correction_data.py
+    --input=input.tsv
+    --output_value_array=value_array.data
+    --output_error_array=error_array.data
+    --output_correction_array=correction_array.data
 """
 
 __author__ = "komatsu"
 
 import logging
 import optparse
+
 from build_tools import code_generator_util
+from build_tools import serialized_string_array_builder
 
 
 def ParseOptions():
   """Parse command line options."""
   parser = optparse.OptionParser()
-  parser.add_option('--input', dest='input', help='input TSV file path.')
-  parser.add_option('--output', dest='output', help='output .h file path.')
+  parser.add_option('--input', dest='input', help='Input TSV file path.')
+  parser.add_option('--output_value_array', dest='output_value_array',
+                    help='Output serialized string array for values.')
+  parser.add_option('--output_error_array', dest='output_error_array',
+                    help='Output serialized string array for errors.')
+  parser.add_option('--output_correction_array', dest='output_correction_array',
+                    help='Output serialized string array for corrections.')
   return parser.parse_args()[0]
 
 
-def WriteData(input_path, output_path):
+def WriteData(input_path, output_value_array_path, output_error_array_path,
+              output_correction_array_path):
   outputs = []
   with open(input_path) as input_stream:
     input_stream = code_generator_util.SkipLineComment(input_stream)
@@ -60,25 +72,22 @@ def WriteData(input_path, output_path):
       outputs.append([value, error, correction])
 
   # In order to lookup the entries via |error| with binary search,
-  # sort outputs  here.
+  # sort outputs here.
   outputs.sort(lambda x, y: cmp(x[1], y[1]) or cmp(x[0], y[0]))
 
-  with open(output_path, 'w') as output_stream:
-    output_stream.write('static const ReadingCorrectionItem '
-                        'kReadingCorrections[] = {\n')
-    for output in outputs:
-      (value, error, correction) = output
-      output_stream.write('  // %s, %s, %s\n' % (value, error, correction))
-      output_stream.write(
-        code_generator_util.FormatWithCppEscape(
-        '  { %s, %s, %s },\n', value, error, correction))
-
-    output_stream.write('};\n')
+  serialized_string_array_builder.SerializeToFile(
+      [value for (value, _, _) in outputs], output_value_array_path)
+  serialized_string_array_builder.SerializeToFile(
+      [error for (_, error, _) in outputs], output_error_array_path)
+  serialized_string_array_builder.SerializeToFile(
+      [correction for (_, _, correction) in outputs],
+      output_correction_array_path)
 
 
 def main():
   options = ParseOptions()
-  WriteData(options.input, options.output)
+  WriteData(options.input, options.output_value_array,
+            options.output_error_array, options.output_correction_array)
 
 
 if __name__ == "__main__":

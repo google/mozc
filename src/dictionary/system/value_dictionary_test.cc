@@ -31,7 +31,7 @@
 
 #include <memory>
 
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -48,15 +48,15 @@ namespace dictionary {
 
 class ValueDictionaryTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  void SetUp() override {
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     louds_trie_builder_.reset(new LoudsTrieBuilder);
     louds_trie_.reset(new LoudsTrie);
   }
 
-  virtual void TearDown() {
-    louds_trie_.reset(nullptr);
-    louds_trie_builder_.reset(nullptr);
+  void TearDown() override {
+    louds_trie_.reset();
+    louds_trie_builder_.reset();
   }
 
   void AddValue(const string &value) {
@@ -69,17 +69,18 @@ class ValueDictionaryTest : public ::testing::Test {
     louds_trie_builder_->Build();
     louds_trie_->Open(
         reinterpret_cast<const uint8 *>(louds_trie_builder_->image().data()));
-    return new ValueDictionary(*pos_matcher_, louds_trie_.get());
+    return new ValueDictionary(pos_matcher_, louds_trie_.get());
   }
 
   void InitToken(const string &value, Token *token) const {
     token->key = token->value = value;
     token->cost = 10000;
-    token->lid = token->rid = pos_matcher_->GetSuggestOnlyWordId();
+    token->lid = token->rid = pos_matcher_.GetSuggestOnlyWordId();
     token->attributes = Token::NONE;
   }
 
-  const POSMatcher *pos_matcher_;
+  const testing::MockDataManager mock_data_manager_;
+  POSMatcher pos_matcher_;
   ConversionRequest convreq_;
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
   std::unique_ptr<LoudsTrie> louds_trie_;

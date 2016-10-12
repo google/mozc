@@ -57,7 +57,7 @@ class LaunchToolTest : public testing::Test {
   }
 
   virtual void TearDown() {
-    mozc_engine_.reset(NULL);
+    mozc_engine_.reset();
   }
 
   client::ClientMock* mock_;

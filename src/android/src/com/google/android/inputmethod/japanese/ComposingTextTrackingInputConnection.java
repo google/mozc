@@ -79,7 +79,6 @@ public class ComposingTextTrackingInputConnection implements InputConnection {
     return baseConnection.commitCompletion(text);
   }
 
-  @TargetApi(11)
   @Override
   public boolean commitCorrection(CorrectionInfo correctionInfo) {
     return baseConnection.commitCorrection(correctionInfo);
@@ -156,7 +155,6 @@ public class ComposingTextTrackingInputConnection implements InputConnection {
     return baseConnection.sendKeyEvent(event);
   }
 
-  @TargetApi(9)
   @Override
   public boolean setComposingRegion(int start, int end) {
     // Note: This method is introduced since API level 9. Mozc supports API level 7,
@@ -195,6 +193,7 @@ public class ComposingTextTrackingInputConnection implements InputConnection {
     return new ComposingTextTrackingInputConnection(baseConnection);
   }
 
+  @TargetApi(21)
   @Override
   public boolean requestCursorUpdates(int cursorUpdateMode) {
     return baseConnection.requestCursorUpdates(cursorUpdateMode);

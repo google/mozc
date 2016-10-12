@@ -49,11 +49,11 @@
       'dependencies': [
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
-        '../data_manager/data_manager.gyp:user_pos_manager',
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary_mock',
         '../dictionary/dictionary.gyp:suffix_dictionary',
+        '../dictionary/dictionary_base.gyp:user_dictionary',
+        '../dictionary/dictionary_base.gyp:user_pos',
         '../dictionary/system/system_dictionary.gyp:system_dictionary',
         '../dictionary/system/system_dictionary.gyp:value_dictionary',
         '../engine/engine.gyp:engine_factory',
@@ -63,6 +63,7 @@
         '../rewriter/rewriter.gyp:rewriter',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'converter.gyp:converter',
@@ -90,14 +91,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
-      ],
-      'conditions': [
-        ['use_packed_dictionary==1 and branding=="Mozc"', {
-          'dependencies': [
-            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_oss#host',
-            '../data_manager/packed/packed_data_manager_base.gyp:packed_data_manager',
-          ],
-        }],
+        '../testing/testing.gyp:mozctest',
       ],
     },
     {

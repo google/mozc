@@ -109,19 +109,11 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   bool Exists() const;
 
   // Load user dictionary from the file.
+  // NOTE: If the file is not existent, nothing is updated.
+  //       Therefore if the file is deleted after first load(),
+  //       second load() does nothing so the content loaded by first load()
+  //       is kept as is.
   bool Load();
-
-  // Loads user dictionary from the file. Usually, it should be able to
-  // read both files in the older format, whose pos is numbered '3',
-  // and in the newer format, whose pos is numbered '5' in enum format.
-  // Load() declared above handles to fill the gap actually. So in most cases
-  // what clients of this class need is just invoke Load().
-  // However, there are some special cases that a client doesn't want to
-  // fill the gap automatically. For such cases, this class provides the
-  // method to do it.
-  // TODO(hidehiko,peria): Remove this method when we get rid of supporting
-  //   older format in sync.
-  bool LoadWithoutMigration();
 
   // Serialzie user dictionary to local file.
   // Need to call Lock() the dictionary before calling Save().
@@ -141,11 +133,6 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // the new instance via new_dic_id.
 
   bool CreateDictionary(const string &dic_name, uint64 *new_dic_id);
-
-  // Create a copy of an existing dictionary giving it a specified
-  // name. Returns the id of the new dictionary via new_dic_id.
-  bool CopyDictionary(uint64 dic_id, const string &dic_name,
-                      uint64 *new_dic_id);
 
   // Delete a dictionary.
   bool DeleteDictionary(uint64 dic_id);
@@ -195,16 +182,12 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   static string default_sync_dictionary_name();
 
  private:
-  // Load the data from |file_name_|. This method migrates older file format
-  // based on given flags.
-  bool LoadAndMigrateDictionaries(bool run_migration);
-
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.
   bool IsValidDictionaryName(const string &name);
 
   // Load the data from file_name actually.
-  bool LoadInternal(bool run_migration);
+  bool LoadInternal();
 
   string file_name_;
   bool locked_;

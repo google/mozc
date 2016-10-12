@@ -92,7 +92,7 @@ int GetIndexOfCalculatedCandidate(const Segments &segments) {
 }
 }  // namespace
 
-class CalculatorRewriterTest : public testing::Test {
+class CalculatorRewriterTest : public ::testing::Test {
  protected:
   CalculatorRewriterTest() {
     convreq_.set_request(&request_);

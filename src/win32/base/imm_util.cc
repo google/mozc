@@ -199,14 +199,6 @@ bool ImeUtil::IsDefault() {
     LOG(ERROR) << "SystemParameterInfo failed: " << GetLastError();
     return false;
   }
-  const LANGID langage_id = reinterpret_cast<LANGID>(hkl);
-  const LANGID kJapaneseLangID =
-      MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-
-  if (langage_id != kJapaneseLangID) {
-    return false;
-  }
-
   return ImmRegistrar::IsIME(hkl, ImmRegistrar::GetFileNameForIME());
 }
 
@@ -232,15 +224,6 @@ bool ImeUtil::SetDefault() {
     return false;
   }
   return true;
-}
-
-bool ImeUtil::ActivateForCurrentProcess() {
-  const KeyboardLayoutID &mozc_hkld = ImmRegistrar::GetKLIDForIME();
-  if (!mozc_hkld.has_id()) {
-    return false;
-  }
-  return (0 != ::LoadKeyboardLayout(mozc_hkld.ToString().c_str(),
-                                    KLF_ACTIVATE | KLF_SETFORPROCESS));
 }
 
 bool ImeUtil::ActivateForCurrentSession() {

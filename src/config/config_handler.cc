@@ -37,6 +37,7 @@
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
+#include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -70,7 +71,7 @@ bool GetPlatformSpecificDefaultEmojiSetting() {
   }
 #elif defined(OS_ANDROID)
   use_emoji_conversion_default = false;
-#endif
+#endif  // defined(OS_WIN), defined(OS_ANDROID)
   return use_emoji_conversion_default;
 }
 
@@ -85,10 +86,8 @@ class ConfigHandlerImpl {
     ConfigHandler::GetDefaultConfig(&default_config_);
   }
   virtual ~ConfigHandlerImpl() {}
-  const Config &GetConfig() const;
   bool GetConfig(Config *config) const;
   const Config &DefaultConfig() const;
-  const Config &GetStoredConfig() const;
   bool GetStoredConfig(Config *config) const;
   bool SetConfig(const Config &config);
   void SetImposedConfig(const Config &config);
@@ -108,18 +107,16 @@ class ConfigHandlerImpl {
   // equals to config_.MergeFrom(imposed_config_)
   Config merged_config_;
   Config default_config_;
+  mutable Mutex mutex_;
 };
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
   return Singleton<ConfigHandlerImpl>::get();
 }
 
-const Config &ConfigHandlerImpl::GetConfig() const {
-  return merged_config_;
-}
-
 // return current Config
 bool ConfigHandlerImpl::GetConfig(Config *config) const {
+  scoped_lock lock(&mutex_);
   config->CopyFrom(merged_config_);
   return true;
 }
@@ -128,12 +125,9 @@ const Config &ConfigHandlerImpl::DefaultConfig() const {
   return default_config_;
 }
 
-const Config &ConfigHandlerImpl::GetStoredConfig() const {
-  return stored_config_;
-}
-
 // return stored Config
 bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
+  scoped_lock lock(&mutex_);
   config->CopyFrom(stored_config_);
   return true;
 }
@@ -178,6 +172,7 @@ void ConfigHandlerImpl::UpdateMergedConfig() {
 }
 
 bool ConfigHandlerImpl::SetConfig(const Config &config) {
+  scoped_lock lock(&mutex_);
   Config output_config;
   output_config.CopyFrom(config);
 
@@ -198,6 +193,7 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
 }
 
 void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
+  scoped_lock lock(&mutex_);
   VLOG(1) << "Setting new overriding config";
   imposed_config_.CopyFrom(config);
 
@@ -213,6 +209,7 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 
 // Reload from file
 bool ConfigHandlerImpl::Reload() {
+  scoped_lock lock(&mutex_);
   VLOG(1) << "Reloading config file: " << filename_;
   std::unique_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
@@ -227,34 +224,28 @@ bool ConfigHandlerImpl::Reload() {
     ret_code = false;
   }
 
-  // we set default config when file is broekn
+  // we set default config when file is broken
   ret_code |= SetConfigInternal(input_proto);
 
   return ret_code;
 }
 
 void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
+  scoped_lock lock(&mutex_);
   VLOG(1) << "set new config file name: " << filename;
   filename_ = filename;
   Reload();
 }
 
 string ConfigHandlerImpl::GetConfigFileName() {
+  scoped_lock lock(&mutex_);
   return filename_;
 }
 }  // namespace
 
-const Config &ConfigHandler::GetConfig() {
-  return GetConfigHandlerImpl()->GetConfig();
-}
-
 // Returns current Config
 bool ConfigHandler::GetConfig(Config *config) {
   return GetConfigHandlerImpl()->GetConfig(config);
-}
-
-const Config &ConfigHandler::GetStoredConfig() {
-  return GetConfigHandlerImpl()->GetStoredConfig();
 }
 
 // Returns Stored Config

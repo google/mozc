@@ -38,6 +38,9 @@
 <!-- Define variables with default values if not exist. WiX compiler does not
      allow to use any undefined variable even when the variable is referenced
      between ifdef conditional block. -->
+<?ifndef UCRTDir ?>
+  <?define UCRTDir="" ?>
+<?endif?>
 <?ifndef MozcZinniaModelDataPath ?>
   <?define MozcZinniaModelDataPath="" ?>
 <?endif?>
@@ -83,6 +86,11 @@
         Manufacturer='Google Inc.' Languages='1041' SummaryCodepage='932'
         InstallerVersion='405' InstallPrivileges='elevated'
         Compressed='yes'/>
+
+    <Condition
+        Message='Google 日本語入力をインストールするには Windows 7 Service Pack 1、Windows 8、Windows 8.1、または Windows 10 のいずれかにアップグレードする必要があります。'>
+      ((VersionNT = 601) AND (ServicePackLevel &gt;= 1)) OR (VersionNT &gt; 601)
+    </Condition>
 
     <!-- Check if the user have the administrative privileges. -->
     <Condition
@@ -161,6 +169,131 @@
       <Directory Id='ProgramFilesFolder' Name='PFiles'>
         <Directory Id='GoogleDir' Name='Google'>
           <Directory Id='GIMEJaDir' Name='Google Japanese Input'>
+            <?if $(var.UCRTDir) != "" ?>
+              <Component Id='api_ms_win_core_console_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-console-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_datetime_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-datetime-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_debug_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-debug-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_errorhandling_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-errorhandling-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_file_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-file-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_file_l1_2_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-file-l1-2-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_file_l2_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-file-l2-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_handle_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-handle-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_heap_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-heap-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_interlocked_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-interlocked-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_libraryloader_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-libraryloader-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_localization_l1_2_0' Guid='*'>
+                <File  Source='$(var.UCRTDir)\api-ms-win-core-localization-l1-2-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_memory_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-memory-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_namedpipe_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-namedpipe-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_processenvironment_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-processenvironment-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_processthreads_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-processthreads-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_processthreads_l1_1_1' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-processthreads-l1-1-1.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_profile_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-profile-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_rtlsupport_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-rtlsupport-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_string_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-string-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_synch_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-synch-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_synch_l1_2_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-synch-l1-2-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_sysinfo_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-sysinfo-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_timezone_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-timezone-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_core_util_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-core-util-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_conio_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-conio-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_convert_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-convert-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes'  />
+              </Component>
+              <Component Id='api_ms_win_crt_environment_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-environment-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_filesystem_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-filesystem-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_heap_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-heap-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_locale_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-locale-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_math_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-math-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes'  />
+              </Component>
+              <Component Id='api_ms_win_crt_multibyte_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-multibyte-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_private_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-private-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_process_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-process-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_runtime_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-runtime-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_stdio_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-stdio-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_string_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-string-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_time_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-time-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='api_ms_win_crt_utility_l1_1_0' Guid='*'>
+                <File Source='$(var.UCRTDir)\api-ms-win-crt-utility-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+              <Component Id='ucrtbase' Guid='*'>
+                <File Source='$(var.UCRTDir)\ucrtbase.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
+              </Component>
+            <?endif?>
             <Component Id='GIMEJaConverter' Guid='*'>
               <File Id='GoogleIMEJaConverter.exe'
                   Name='GoogleIMEJaConverter.exe' DiskId='1'
@@ -172,22 +305,22 @@
                   Checksum='yes' Source='$(var.MozcCacheService32Path)'
                   Vital='yes' KeyPath='yes' />
               <!--
-                Localized description of a Win32 service is not supported until
-                Windows Vista.
+                To use localized description, set Description as follows:
+                  Description='@[#GoogleIMEJaCacheService.exe],-N'
+                where N is the resource ID for the description.
                 http://msdn.microsoft.com/en-us/library/ms685156.aspx
-                To use localized description in Vista or later,
-                set Description like this:
-                  Description='@[#GoogleIMEJaCacheService.exe],-100'
-                where 100 is the resource ID for the description.
 
-                Parameters 'Name', 'DisplayName', 'Description' have to be
-                synced manually to the ones defined in cache_manager.
+                See server/mozc_cache_service_resource.h for resource IDs
+                used below.
+
+                The servie name specified in 'Name' needs to be the same to
+                |mozc::kMozcCacheServiceName| defined in base/const.h.
                 TODO(yukawa): Share these parameters. http://b/2357270
               -->
               <ServiceInstall Id='GoogleIMEJaCacheService'
                   Name='GoogleIMEJaCacheService'
-                  DisplayName='Google Japanese Input Cache Service'
-                  Description='Google 日本語入力 の辞書を常に物理メモリに配置し、変換を高速化します。停止しても日本語入力はできますが、パフォーマンスが低下する場合があります。'
+                  DisplayName='@[#GoogleIMEJaCacheService.exe],-100'
+                  Description='@[#GoogleIMEJaCacheService.exe],-101'
                   Type='ownProcess' Start='auto' ErrorControl='normal' />
               <!--
                 The following entry which stops our cache service both on
@@ -232,6 +365,8 @@
             <?if $(var.VSConfigurationName) = "Debug" ?>
               <?if $(var.QtCored4DllPath) != "" ?>
                 <Component Id='QtCored4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtCored4.dll' Name='QtCored4.dll' On="install" />
                   <File Id='QtCored4.dll'
                       Name='QtCored4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtCored4DllPath)' />
@@ -239,6 +374,8 @@
               <?endif?>
               <?if $(var.QtGuid4DllPath) != "" ?>
                 <Component Id='QtGuid4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtGuid4.dll' Name='QtGuid4.dll' On="install" />
                   <File Id='QtGuid4.dll'
                       Name='QtGuid4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtGuid4DllPath)' />
@@ -247,6 +384,8 @@
             <?else?>
               <?if $(var.QtCore4DllPath) != "" ?>
                 <Component Id='QtCore4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtCore4.dll' Name='QtCore4.dll' On="install" />
                   <File Id='QtCore4.dll'
                       Name='QtCore4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtCore4DllPath)' />
@@ -254,6 +393,8 @@
               <?endif?>
               <?if $(var.QtGui4DllPath) != "" ?>
                 <Component Id='QtGui4Dll' Guid='*'>
+                  <!-- Always overwrite: b/31845781 -->
+                  <RemoveFile Id='QtGui4.dll' Name='QtGui4.dll' On="install" />
                   <File Id='QtGui4.dll'
                       Name='QtGui4.dll' DiskId='1' Vital='yes'
                       Checksum='yes' Source='$(var.QtGui4DllPath)' />
@@ -406,6 +547,48 @@
     <?endif?>
 
     <Feature Id='GIMEJaInstall' Title='Google 日本語入力' Level='1'>
+      <?if $(var.UCRTDir) != "" ?>
+        <ComponentRef Id='api_ms_win_core_console_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_datetime_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_debug_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_errorhandling_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_file_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_file_l1_2_0' />
+        <ComponentRef Id='api_ms_win_core_file_l2_1_0' />
+        <ComponentRef Id='api_ms_win_core_handle_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_heap_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_interlocked_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_libraryloader_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_localization_l1_2_0' />
+        <ComponentRef Id='api_ms_win_core_memory_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_namedpipe_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_processenvironment_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_processthreads_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_processthreads_l1_1_1' />
+        <ComponentRef Id='api_ms_win_core_profile_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_rtlsupport_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_string_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_synch_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_synch_l1_2_0' />
+        <ComponentRef Id='api_ms_win_core_sysinfo_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_timezone_l1_1_0' />
+        <ComponentRef Id='api_ms_win_core_util_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_conio_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_convert_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_environment_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_filesystem_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_heap_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_locale_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_math_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_multibyte_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_private_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_process_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_runtime_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_stdio_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_string_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_time_l1_1_0' />
+        <ComponentRef Id='api_ms_win_crt_utility_l1_1_0' />
+      <?endif?>
       <ComponentRef Id='GIMEJaIME32' />
       <ComponentRef Id='GIMEJaTIP32' />
       <ComponentRef Id='GIMEJaBroker32' />

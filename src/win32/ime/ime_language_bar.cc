@@ -32,7 +32,6 @@
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#define _ATL_NO_HOSTING
 #include <atlcom.h>
 
 #include "base/logging.h"

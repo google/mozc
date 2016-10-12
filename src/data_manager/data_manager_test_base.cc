@@ -38,6 +38,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/connector.h"
 #include "converter/node.h"
@@ -46,7 +47,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
-#include "rewriter/counter_suffix.h"
 #include "testing/base/public/gunit.h"
 
 using mozc::dictionary::POSMatcher;
@@ -61,7 +61,8 @@ DataManagerTestBase::DataManagerTestBase(
     const string &connection_txt_file,
     const int expected_resolution,
     const vector<string> &dictionary_files,
-    const vector<string> &suggestion_filter_files)
+    const vector<string> &suggestion_filter_files,
+    const vector<pair<string, string>> &typing_model_files)
     : data_manager_(data_manager),
       lsize_(lsize),
       rsize_(rsize),
@@ -69,9 +70,10 @@ DataManagerTestBase::DataManagerTestBase(
       connection_txt_file_(connection_txt_file),
       expected_resolution_(expected_resolution),
       dictionary_files_(dictionary_files),
-      suggestion_filter_files_(suggestion_filter_files) {}
+      suggestion_filter_files_(suggestion_filter_files),
+      typing_model_files_(typing_model_files) {}
 
-DataManagerTestBase::~DataManagerTestBase() {}
+DataManagerTestBase::~DataManagerTestBase() = default;
 
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
@@ -143,7 +145,7 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
   std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
-  const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
+  const POSMatcher pos_matcher(data_manager_->GetPOSMatcherData());
 
   Node lnode, rnode;
   lnode.Init();
@@ -151,9 +153,9 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
   lnode.node_type = Node::NOR_NODE;
   rnode.node_type = Node::NOR_NODE;
   // "助詞"
-  lnode.rid = pos_matcher->GetAcceptableParticleAtBeginOfSegmentId();
+  lnode.rid = pos_matcher.GetAcceptableParticleAtBeginOfSegmentId();
   // "名詞,サ変".
-  rnode.lid = pos_matcher->GetUnknownId();
+  rnode.lid = pos_matcher.GetUnknownId();
   EXPECT_TRUE(segmenter->IsBoundary(lnode, rnode, false));
 
   lnode.attributes |= Node::STARTS_WITH_PARTICLE;
@@ -258,20 +260,28 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
 }
 
 void DataManagerTestBase::CounterSuffixTest_ValidateTest() {
-  const CounterSuffixEntry *suffix_array = nullptr;
-  size_t size = 0;
-  data_manager_->GetCounterSuffixSortedArray(&suffix_array, &size);
+  const char *data = nullptr;
+  size_t data_size = 0;
+  data_manager_->GetCounterSuffixSortedArray(&data, &data_size);
 
-  const char *prev_suffix = "";  // The smallest string.
-  for (size_t i = 0; i < size; ++i) {
-    const CounterSuffixEntry &entry = suffix_array[i];
+  SerializedStringArray suffix_array;
+  ASSERT_TRUE(suffix_array.Init(StringPiece(data, data_size)));
 
-    // |entry.size| must be the length of |entry.suffix|.
-    EXPECT_EQ(entry.size, strlen(entry.suffix));
+  // Check if the array is sorted in ascending order.
+  StringPiece prev_suffix;  // The smallest string.
+  for (size_t i = 0; i < suffix_array.size(); ++i) {
+    const StringPiece suffix = suffix_array[i];
+    EXPECT_LE(prev_suffix, suffix);
+    prev_suffix = suffix;
+  }
+}
 
-    // Check if the array is sorted in ascending order of suffix string.
-    EXPECT_GE(0, strcmp(prev_suffix, entry.suffix));
-    prev_suffix = entry.suffix;
+void DataManagerTestBase::TypingModelTest() {
+  // Check if typing models are included in the data set.
+  for (const auto &key_and_fname : typing_model_files_) {
+    InputFileStream ifs(key_and_fname.second.c_str(),
+                        ios_base::in | ios_base::binary);
+    EXPECT_EQ(ifs.Read(), data_manager_->GetTypingModel(key_and_fname.first));
   }
 }
 
@@ -284,6 +294,7 @@ void DataManagerTestBase::RunAllTests() {
   SegmenterTest_SameAsInternal();
   SuggestionFilterTest_IsBadSuggestion();
   CounterSuffixTest_ValidateTest();
+  TypingModelTest();
 }
 
 }  // namespace mozc

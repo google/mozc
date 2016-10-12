@@ -32,7 +32,11 @@
 #ifndef MOZC_GUI_ABOUT_DIALOG_ABOUT_DIALOG_H_
 #define MOZC_GUI_ABOUT_DIALOG_ABOUT_DIALOG_H_
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QDialog>
+#else
 #include <QtGui/QDialog>
+#endif
 
 #include <memory>
 

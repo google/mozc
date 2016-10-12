@@ -49,12 +49,59 @@ from util import RunOrDie
 def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
+  parser.add_option('--qtver', dest='qtver', choices=('4', '5'), default='4')
   parser.add_option('--qtdir', dest='qtdir')
   parser.add_option('--target', dest='target')
 
   (opts, _) = parser.parse_args()
 
   return opts
+
+
+def GetFrameworkPath(name, version):
+  """Return path to the library in the framework."""
+  return '%s.framework/Versions/%s/%s' % (name, version, name)
+
+
+def CopyQt(qtdir, qtlib, version, target, copy_resources=False):
+  """Copy a Qt framework from qtdir to target."""
+  framework_path = GetFrameworkPath(qtlib, version)
+  CopyFiles(['%s/lib/%s' % (qtdir, framework_path)],
+            '%s/%s' % (target, framework_path))
+
+  if copy_resources:
+    # Copies Resources of QtGui
+    CopyFiles(['%s/lib/%s.framework/Versions/%s/Resources' %
+               (qtdir, qtlib, version)],
+              '%s/%s.framework/Resources' % (target, qtlib),
+              recursive=True)
+
+  if version == '4':
+    # For codesign, Info.plist should be copied to Resources/.
+    CopyFiles(['%s/lib/%s.framework/Contents/Info.plist' % (qtdir, qtlib)],
+              '%s/%s.framework/Resources/Info.plist' % (target, qtlib))
+
+
+def ChangeReferences(qtdir, path, version, target, ref_to, references=None):
+  """Change the references of frameworks, by using install_name_tool."""
+
+  # Change id
+  cmd = ['install_name_tool',
+         '-id', '%s/%s' % (ref_to, path),
+         '%s/%s' % (target, path)]
+  RunOrDie(cmd)
+
+  if not references:
+    return
+
+  # Change references
+  for ref in references:
+    ref_framework_path = GetFrameworkPath(ref, version)
+    change_cmd = ['install_name_tool', '-change',
+                  '%s/lib/%s' % (qtdir, ref_framework_path),
+                  '%s/%s' % (ref_to, ref_framework_path),
+                  '%s/%s' % (target, path)]
+    RunOrDie(change_cmd)
 
 
 def main():
@@ -66,44 +113,43 @@ def main():
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
+  qtver = opt.qtver
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
-  # Copies QtCore.  For codesign, Info.plist should be copied to Resources/.
-  CopyFiles(['%s/lib/QtCore.framework/Versions/4/QtCore' % qtdir],
-            '%s/QtCore.framework/Versions/4/QtCore' % target)
-  CopyFiles(['%s/lib/QtCore.framework/Contents/Info.plist' % qtdir],
-            '%s/QtCore.framework/Resources/Info.plist' % target)
+  ref_to = '@executable_path/../../../GuiTool.app/Contents/Frameworks'
+  if qtver == '5':
+    CopyQt(qtdir, 'QtCore', '5', target, copy_resources=True)
+    CopyQt(qtdir, 'QtGui', '5', target, copy_resources=True)
+    CopyQt(qtdir, 'QtWidgets', '5', target, copy_resources=True)
+    CopyQt(qtdir, 'QtPrintSupport', '5', target, copy_resources=True)
 
-  # Copies QtGui.
-  CopyFiles(['%s/lib/QtGui.framework/Versions/4/QtGui' % qtdir],
-            '%s/QtGui.framework/Versions/4/QtGui' % target)
-  # Copies Resources of QtGui
-  CopyFiles(['%s/lib/QtGui.framework/Versions/4/Resources' % qtdir],
-            '%s/QtGui.framework/Resources' % target,
-            recursive=True)
-  # For codesign, Info.plist should be copied to Resources/.
-  CopyFiles(['%s/lib/QtGui.framework/Contents/Info.plist' % qtdir],
-            '%s/QtGui.framework/Resources/Info.plist' % target)
+    ChangeReferences(qtdir, GetFrameworkPath('QtCore', '5'),
+                     '5', target, ref_to)
+    ChangeReferences(qtdir, GetFrameworkPath('QtGui', '5'),
+                     '5', target, ref_to,
+                     references=['QtCore'])
+    ChangeReferences(qtdir, GetFrameworkPath('QtWidgets', '5'),
+                     '5', target, ref_to,
+                     references=['QtCore', 'QtGui'])
+    ChangeReferences(qtdir, GetFrameworkPath('QtPrintSupport', '5'),
+                     '5', target, ref_to,
+                     references=['QtCore', 'QtGui', 'QtWidgets'])
 
-  # Changes QtGui id
-  cmd = ["install_name_tool", "-id",
-         "@executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui",
-         "%s/QtGui.framework/Versions/4/QtGui" % target]
-  RunOrDie(cmd)
+    libqcocoa = 'QtCore.framework/Resources/plugins/platforms/libqcocoa.dylib'
+    CopyFiles(['%s/plugins/platforms/libqcocoa.dylib' % qtdir],
+              '%s/%s' % (target, libqcocoa))
+    ChangeReferences(qtdir, libqcocoa, '5', target, ref_to,
+                     references=['QtCore', 'QtGui',
+                                 'QtWidgets', 'QtPrintSupport'])
+  else:
+    CopyQt(qtdir, 'QtCore', '4', target)
+    CopyQt(qtdir, 'QtGui', '4', target, copy_resources=True)
 
-  # Changes QtCore id
-  cmd = ["install_name_tool", "-id",
-         "@executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore",
-         '%s/QtCore.framework/Versions/4/QtCore' % target]
-  RunOrDie(cmd)
-
-  # Changes the reference to QtCore framework from QtGui
-  cmd = ["install_name_tool", "-change",
-         "%s/lib/QtCore.framework/Versions/4/QtCore" % qtdir,
-         "@executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore",
-         "%s/QtGui.framework/Versions/4/QtGui" % target]
-  RunOrDie(cmd)
+    ChangeReferences(qtdir, GetFrameworkPath('QtCore', '4'),
+                     '4', target, ref_to)
+    ChangeReferences(qtdir, GetFrameworkPath('QtGui', '4'),
+                     '4', target, ref_to, references=['QtCore'])
 
 
 if __name__ == '__main__':

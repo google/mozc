@@ -41,10 +41,9 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "data_manager/testing/mock_user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -56,6 +55,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
@@ -196,15 +196,14 @@ class UserDictionaryTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  void SetUp() override {
     suppression_dictionary_.reset(new SuppressionDictionary);
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
     // This config initialization will be removed once ConversionRequest can
@@ -217,19 +216,18 @@ class UserDictionaryTest : public ::testing::Test {
   // Workaround for the constructor of UserDictionary being protected.
   // Creates a user dictionary with mock pos data.
   UserDictionary *CreateDictionaryWithMockPos() {
-    const testing::MockUserPosManager user_pos_manager;
     return new UserDictionary(
         new UserPOSMock(),
-        user_pos_manager.GetPOSMatcher(),
+        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()),
         suppression_dictionary_.get());
   }
 
   // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
-    const testing::MockUserPosManager user_pos_manager;
-    return new UserDictionary(new UserPOS(user_pos_manager.GetUserPOSData()),
-                              user_pos_manager.GetPOSMatcher(),
-                              Singleton<SuppressionDictionary>::get());
+    return new UserDictionary(
+        UserPOS::CreateFromDataManager(mock_data_manager_),
+        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()),
+        Singleton<SuppressionDictionary>::get());
   }
 
   struct Entry {
@@ -380,6 +378,8 @@ class UserDictionaryTest : public ::testing::Test {
   config::Config config_;
 
  private:
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
@@ -566,8 +566,10 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   }
 
   // "suggestion_only" should not be looked up.
-  const testing::MockUserPosManager user_pos_manager;
-  const uint16 kNounId = user_pos_manager.GetPOSMatcher()->GetGeneralNounId();
+  const testing::MockDataManager mock_data_manager;
+  const dictionary::POSMatcher pos_matcher(
+      mock_data_manager.GetPOSMatcherData());
+  const uint16 kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
   TestLookupExactHelper(kExpected1, arraysize(kExpected1),
                         "key", 3, *user_dic.get());

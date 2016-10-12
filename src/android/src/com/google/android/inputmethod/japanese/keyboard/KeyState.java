@@ -29,7 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -222,7 +222,7 @@ public class KeyState {
 
   @Override
   public String toString() {
-    Objects.ToStringHelper helper = Objects.toStringHelper(this);
+    MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
     helper.add("metaStates", metaState.toString());
     for (Map.Entry<Flick.Direction, Flick> entry : flickMap.entrySet()) {
       helper.add("flickMap(" + entry.getKey().toString() + ")", entry.getValue().toString());

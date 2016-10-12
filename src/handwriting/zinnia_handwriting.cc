@@ -48,23 +48,20 @@ const uint32 kBoxSize = 200;
 
 // static
 string ZinniaHandwriting::GetModelFileName() {
-#if defined(MOZC_ZINNIA_MODEL_FILE)
-  const char kModelFile[] = MOZC_ZINNIA_MODEL_FILE;
-  return kModelFile;
-#elif defined(OS_MACOSX)
-  // TODO(komatsu): Fix the file name to "handwriting-ja.model" like the
-  // Windows implementation regardless which data file is actually
-  // used.  See also gui.gyp:hand_writing_mac.
-  const char kModelFile[] = "handwriting-light-ja.model";
-  return FileUtil::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
-#elif defined(OS_LINUX)
-  const char kModelFile[] =
-      "/usr/share/tegaki/models/zinnia/handwriting-ja.model";
-  return kModelFile;
+#if defined(MOZC_BUILD)
+  return MOZC_ZINNIA_MODEL_FILE;
 #else
+
+#if defined(OS_WIN)
   const char kModelFile[] = "handwriting-ja.model";
   return FileUtil::JoinPath(SystemUtil::GetServerDirectory(), kModelFile);
+#elif defined(OS_MACOSX)
+  const char kModelFile[] = "handwriting-ja.model";
+  return FileUtil::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
+#else  // OS_LINUX
+  return "/usr/share/tegaki/models/zinnia/handwriting-ja.model";
 #endif
+#endif  // else defined(MOZC_BUILD)
 }
 
 ZinniaHandwriting::ZinniaHandwriting(StringPiece model_file)

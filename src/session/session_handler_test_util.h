@@ -36,7 +36,7 @@
 #include <string>
 
 #include "base/port.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
+#include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
@@ -44,7 +44,6 @@
 
 namespace mozc {
 
-class EngineInterface;
 class SessionHandlerInterface;
 
 namespace session {
@@ -75,12 +74,12 @@ bool IsGoodSession(SessionHandlerInterface *handler, uint64 id);
 // Base implementation of test cases.
 class SessionHandlerTestBase : public ::testing::Test {
  protected:
-  virtual void SetUp();
-  virtual void TearDown();
+  void SetUp() override;
+  void TearDown() override;
 
   // This class should not be instantiated directly.
   SessionHandlerTestBase();
-  virtual ~SessionHandlerTestBase();
+  ~SessionHandlerTestBase() override;
 
   void ClearState();
 
@@ -94,9 +93,6 @@ class SessionHandlerTestBase : public ::testing::Test {
   int32 flags_last_command_timeout_backup_;
   int32 flags_last_create_session_timeout_backup_;
   bool flags_restricted_backup_;
-
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerTestBase);
@@ -105,8 +101,7 @@ class SessionHandlerTestBase : public ::testing::Test {
 // Session utility for stress tests.
 class TestSessionClient {
  public:
-  // This class doesn't take an ownership of *engine.
-  explicit TestSessionClient(EngineInterface *engine);
+  explicit TestSessionClient(std::unique_ptr<EngineInterface> engine);
   ~TestSessionClient();
 
   bool CreateSession();

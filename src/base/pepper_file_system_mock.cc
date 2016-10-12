@@ -129,6 +129,17 @@ bool MockFileNode::Delete() {
   return parent_node_->child_nodes_.erase(name_) > 0;
 }
 
+bool MockFileNode::Query(PP_FileInfo *file_info) const {
+  file_info->size = content_.size();
+  file_info->type = is_directory_ ? PP_FILETYPE_DIRECTORY : PP_FILETYPE_REGULAR;
+  file_info->system_type = PP_FILESYSTEMTYPE_ISOLATED;
+  // Fill dummy value for time stamp.
+  file_info->creation_time = content_.size() + 1;
+  file_info->last_access_time = content_.size() + 1;
+  file_info->last_modified_time = content_.size() + 1;
+  return true;
+}
+
 MockFileNode *MockFileNode::GetNode(const string &path) {
   if (path.empty() || path == kFileDelimiter) {
     return this;
@@ -261,6 +272,12 @@ bool PepperFileSystemMock::SyncMmapToFile() {
     (*it)->SyncToFile();
   }
   return true;
+}
+
+bool PepperFileSystemMock::Query(const string &path, PP_FileInfo *file_info) {
+  scoped_lock l(&mutex_);
+  MockFileNode *node = root_directory_.GetNode(path);
+  return node && node->Query(file_info);
 }
 
 }  // namespace mozc

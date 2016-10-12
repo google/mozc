@@ -45,7 +45,6 @@
         'run_level.cc',
         'scheduler.cc',
         'stopwatch.cc',
-        'timer.cc',
         'unnamed_event.cc',
       ],
       'dependencies': [
@@ -137,8 +136,6 @@
               'VCLinkerTool': {
                 'AdditionalDependencies': [
                   'aux_ulib.lib',  # used in 'win_util.cc'
-                  'propsys.lib',   # used in 'win_util.cc'
-                  'version.lib',  # used in 'util.cc'
                   'KtmW32.lib',  # used in 'file_util.cc'
                 ],
               },
@@ -445,6 +442,14 @@
       'type': 'static_library',
       'sources': [
         'debug.cc',
+      ],
+    },
+    {
+      'target_name': 'serialized_string_array',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'serialized_string_array.cc',
       ],
     },
   ],

@@ -52,7 +52,7 @@
       '<(android_home)/extras/android/support/v13/android-support-v13.jar',
     ],
     'shared_intermediate_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/',
-    'test_connection_data': '<(shared_intermediate_mozc_dir)/data_manager/testing/connection_data.data',
+    'test_mozc_dataset': '<(shared_intermediate_mozc_dir)/data_manager/testing/mock_mozc.data',
     'test_connection_text_data': '<(shared_intermediate_mozc_dir)/data_manager/testing/connection_single_column.txt',
     # e.g. xxxx/out_android/gtest_report
     'test_report_dir': '<(SHARED_INTERMEDIATE_DIR)/../../gtest_report',
@@ -69,14 +69,13 @@
         'easymock_jar_path': '<(DEPTH)/third_party/easymock/easymock-3_1.jar',
         # TODO(matsuzakit): Make copy_and_patch.py support non-jar file tree.
         'easymock_src_path': '<(DEPTH)/third_party/easymock/src/main/java',
-        'guava_jar_path': '<(DEPTH)/third_party/guava/guava-jdk5-13.0.jar',
-        'guava_testlib_jar_path': '<(DEPTH)/third_party/guava/guava-testlib-jdk5-13.0.jar',
+        'guava_jar_path': '<(DEPTH)/third_party/guava/guava-18.0.jar',
+        'guava_testlib_jar_path': '<(DEPTH)/third_party/guava/guava-testlib-18.0.jar',
         # Absorb the difference in file names between Debian/Ubuntu (jsr305.jar)
         # and Fedora (jsr-305.jar).
         # TODO(yukawa): We should not rely on "find" command here.
         'jsr305_jar_path': '<!(find /usr/share/java -name "jsr305.jar" -o -name "jsr-305.jar")',
-        'dictionary_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/system.dictionary',
-        'connection_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/connection_data.data',
+        'mozc_dataset': '<(shared_intermediate_mozc_dir)/data_manager/oss/mozc.data',
         'connection_text_data': '<(shared_intermediate_mozc_dir)/data_manager/oss/connection_single_column.txt',
         'native_test_small_targets': [
           'oss_data_manager_test',
@@ -84,88 +83,40 @@
         'font_dir': '<(third_party_dir)/noto_font',
       },
     }],
-    ['android_arch=="arm" and android_compiler=="gcc"', {
+    ['android_arch=="arm"', {
       'variables': {
         'abi': 'armeabi-v7a',
-        'toolchain': 'arm-linux-androideabi-4.9',
-        'platform': 'android-14',
+        'ndk_target_api_level': '14',
       },
     }],
-    ['android_arch=="arm" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'armeabi-v7a',
-        'toolchain': 'arm-linux-androideabi-clang3.5',
-        'platform': 'android-14',
-      },
-    }],
-    ['android_arch=="x86" and android_compiler=="gcc"', {
+    ['android_arch=="x86"', {
       'variables': {
         'abi': 'x86',
-        'toolchain': 'x86-4.9',
-        'platform': 'android-14',
+        'ndk_target_api_level': '14',
       },
     }],
-    ['android_arch=="x86" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'x86',
-        'toolchain': 'x86-clang3.5',
-        'platform': 'android-14',
-      },
-    }],
-    ['android_arch=="mips" and android_compiler=="gcc"', {
+    ['android_arch=="mips"', {
       'variables': {
         'abi': 'mips',
-        'toolchain': 'mipsel-linux-android-4.9',
-        'platform': 'android-14',
+        'ndk_target_api_level': '14',
       },
     }],
-    ['android_arch=="mips" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'mips',
-        'toolchain': 'mipsel-linux-android-clang3.5',
-        'platform': 'android-14',
-      },
-    }],
-    ['android_arch=="arm64" and android_compiler=="gcc"', {
+    ['android_arch=="arm64"', {
       'variables': {
         'abi': 'arm64-v8a',
-        'toolchain': 'aarch64-linux-android-4.9',
-        'platform': 'android-21',
+        'ndk_target_api_level': '21',
       },
     }],
-    ['android_arch=="arm64" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'arm64-v8a',
-        'toolchain': 'aarch64-linux-android-clang3.5',
-        'platform': 'android-21',
-      },
-    }],
-    ['android_arch=="x86_64" and android_compiler=="gcc"', {
+    ['android_arch=="x86_64"', {
       'variables': {
         'abi': 'x86_64',
-        'toolchain': 'x86_64-4.9',
-        'platform': 'android-21',
+        'ndk_target_api_level': '21',
       },
     }],
-    ['android_arch=="x86_64" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'x86_64',
-        'toolchain': 'x86_64-clang3.5',
-        'platform': 'android-21',
-      },
-    }],
-    ['android_arch=="mips64" and android_compiler=="gcc"', {
+    ['android_arch=="mips64"', {
       'variables': {
         'abi': 'mips64',
-        'toolchain': 'mips64el-linux-android-4.9',
-        'platform': 'android-21',
-      },
-    }],
-    ['android_arch=="mips64" and android_compiler=="clang"', {
-      'variables': {
-        'abi': 'mips64',
-        'toolchain': 'mips64el-linux-android-4.9',
-        'platform': 'android-21',
+        'ndk_target_api_level': '21',
       },
     }],
   ],

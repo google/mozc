@@ -39,7 +39,7 @@ class Segments;
 
 class PredictorInterface {
  public:
-  virtual ~PredictorInterface() {}
+  virtual ~PredictorInterface() = default;
 
   // Returns suggestions.
   // You may need to change the behavior according to the
@@ -73,13 +73,13 @@ class PredictorInterface {
   virtual bool Reload() { return true; }
 
   // Waits for syncer thread to complete.
-  virtual bool WaitForSyncerForTest() { return true; }
+  virtual bool Wait() { return true; }
 
   virtual const string &GetPredictorName() const = 0;
 
  protected:
   // Disable the construction.
-  PredictorInterface() {}
+  PredictorInterface() = default;
 };
 
 }  // namespace mozc

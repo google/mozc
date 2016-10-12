@@ -35,7 +35,16 @@
 
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QProgressDialog>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QInputDialog>
+#include <QtWidgets/QShortcut>
+#else
 #include <QtGui/QProgressDialog>
+#endif
 
 #ifdef OS_WIN
 #include <Windows.h>
@@ -52,12 +61,11 @@
 #include "base/run_level.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#include "dictionary/user_pos.h"
 #include "gui/base/encoding_util.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
@@ -109,14 +117,6 @@ QProgressDialog *CreateProgressDialog(
 
   return progress;
 }
-
-#if defined(OS_WIN) || defined(OS_MACOSX)
-void InstallStyleSheet(const QString &filename) {
-  QFile file(filename);
-  file.open(QFile::ReadOnly);
-  qApp->setStyleSheet(QLatin1String(file.readAll()));
-}
-#endif
 
 // Use QTextStream to read UTF16 text -- we can't use ifstream,
 // since ifstream cannot handle Wide character.
@@ -319,8 +319,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      user_pos_(new dictionary::UserPOS(
-          UserPosManager::GetUserPosManager()->GetUserPOSData())) {
+      pos_list_provider_(new POSListProvider()) {
   setupUi(this);
 
   // Create and set up ImportDialog object.
@@ -362,9 +361,14 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   setContextMenuPolicy(Qt::NoContextMenu);
 
   // toolbar
+  toolbar_->setFloatable(false);
+  toolbar_->setMovable(false);
   dic_menu_button_ = new QPushButton(tr("Tools"), this);
+  dic_menu_button_->setFlat(true);
   new_word_button_ = new QPushButton(tr("Add"), this);
+  new_word_button_->setFlat(true);
   delete_word_button_ = new QPushButton(tr("Remove"), this);
+  delete_word_button_->setFlat(true);
   toolbar_->addWidget(dic_menu_button_);
   toolbar_->addWidget(new_word_button_);
   toolbar_->addWidget(delete_word_button_);
@@ -388,13 +392,17 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // We fix the row height so that paint() is executed faster.
   // This changes allows DictionaryTool handle about 1M words.
+#ifdef MOZC_USE_QT5
+  dic_content_->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+#else
   dic_content_->verticalHeader()->setResizeMode(QHeaderView::Fixed);
+#endif
   dic_content_->verticalHeader()->setDefaultSectionSize(
       GetTableHeight(dic_content_));
 
   // Get a list of POS and set a custom delagate that holds the list.
   vector<string> tmp_pos_vec;
-  user_pos_->GetPOSList(&tmp_pos_vec);
+  pos_list_provider_->GetPOSList(&tmp_pos_vec);
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
     pos_list.append(tmp_pos_vec[i].c_str());
@@ -532,20 +540,6 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   // for Mac-like style
 #ifdef OS_MACOSX
   setUnifiedTitleAndToolBarOnMac(true);
-  InstallStyleSheet(":mac_style.qss");
-#endif
-
-  // for Window Aero Glass support
-#ifdef OS_WIN
-  setContentsMargins(0, 0, 0, 0);
-  WinUtil::InstallStyleSheetsFiles(":win_aero_style.qss",
-                                   ":win_style.qss");
-  if (gui::WinUtil::IsCompositionEnabled()) {
-    WinUtil::ExtendFrameIntoClientArea(this);
-    InstallStyleSheet(":win_aero_style.qss");
-  } else {
-    InstallStyleSheet(":win_style.qss");
-  }
 #endif
 
   StartMonitoringUserEdit();
@@ -1337,7 +1331,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   menu->addSeparator();
   QMenu *change_category_to = menu->addMenu(tr("Change category to"));
   vector<string> pos_list;
-  user_pos_->GetPOSList(&pos_list);
+  pos_list_provider_->GetPOSList(&pos_list);
   vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] = change_category_to->addAction(
@@ -1598,26 +1592,6 @@ bool DictionaryTool::IsWritableToExport(const string &file_name) {
   }
 }
 
-void DictionaryTool::paintEvent(QPaintEvent *event) {
-#ifdef OS_WIN
-  if (!gui::WinUtil::IsCompositionEnabled()) {
-    return;
-  }
-
-  const QRect message_rect = WinUtil::GetTextRect(this, statusbar_message_);
-  const int kMargin = 2;
-  const int kGlowSize = 10;
-  const QRect rect(QPoint(kMargin,
-                          this->height() - statusbar_->height()),
-                   QPoint(message_rect.width() + kMargin + kGlowSize * 2,
-                          this->height()));
-
-  statusbar_->clearMessage();
-  QPainter painter(this);
-  WinUtil::DrawThemeText(statusbar_message_, rect, kGlowSize, &painter);
-#endif
-}
-
 void DictionaryTool::UpdateUIStatus() {
   const bool is_enable_new_dic =
       dic_list_->count() < session_->mutable_storage()->max_dictionary_size();
@@ -1646,35 +1620,7 @@ void DictionaryTool::UpdateUIStatus() {
     statusbar_message_.clear();
   }
 
-#ifdef OS_WIN
-  if (!gui::WinUtil::IsCompositionEnabled()) {
-    statusbar_->showMessage(statusbar_message_);
-  } else {
-    update();
-  }
-#else
   statusbar_->showMessage(statusbar_message_);
-#endif
 }
-
-#ifdef OS_WIN
-bool DictionaryTool::winEvent(MSG *message, long *result) {
-  if (message != NULL &&
-      message->message == WM_LBUTTONDOWN &&
-      toolbar_->cursor().shape() == Qt::ArrowCursor &&
-      WinUtil::IsCompositionEnabled()) {
-    const QWidget *widget = qApp->widgetAt(
-        mapToGlobal(QPoint(message->lParam & 0xFFFF,
-                           (message->lParam >> 16) & 0xFFFF)));
-    if (widget == statusbar_ || widget == toolbar_) {
-      ::PostMessage(message->hwnd, WM_NCLBUTTONDOWN,
-                    static_cast<WPARAM>(HTCAPTION), message->lParam);
-      return true;
-    }
-  }
-
-  return QWidget::winEvent(message, result);
-}
-#endif
 }  // namespace gui
 }  // namespace mozc

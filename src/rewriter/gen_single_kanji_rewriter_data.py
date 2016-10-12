@@ -40,46 +40,10 @@ gen_single_kanji_rewriter_data.py
 __author__ = "hidehiko"
 
 import optparse
-from build_tools import code_generator_util
-from rewriter import embedded_dictionary_compiler
+import struct
 
-# key, value, rank
-NOUN_PREFIX = [
-    ['お', 'お', 1],
-    ['ご', 'ご', 1],
-    # ['ご', '誤'],    # don't register it as 誤 isn't in the ipadic.
-    # ['み', 'み'],    # seems to be rare.
-    ['もと', 'もと', 1],
-    ['だい', '代', 1],
-    ['てい', '低', 0],
-    ['もと', '元', 1],
-    ['ぜん', '全', 0],
-    ['さい', '再', 0],
-    ['しょ', '初', 1],
-    ['はつ', '初', 0],
-    ['ぜん', '前', 1],
-    ['かく', '各', 1],
-    ['どう', '同', 1],
-    ['だい', '大', 1],
-    ['おお', '大', 1],
-    ['とう', '当', 1],
-    ['ご', '御', 1],
-    ['お', '御', 1],
-    ['しん', '新', 1],
-    ['さい', '最', 1],
-    ['み', '未', 0],
-    ['ほん', '本', 1],
-    ['む', '無', 0],
-    ['だい', '第', 1],
-    ['とう', '等', 1],
-    ['やく', '約', 1],
-    ['ひ', '被', 1],
-    ['ちょう', '超', 1],
-    ['ちょう', '長', 1],
-    ['なが', '長', 1],
-    ['ひ', '非', 1],
-    ['こう', '高', 1]
-]
+from build_tools import code_generator_util
+from build_tools import serialized_string_array_builder
 
 
 def ReadSingleKanji(stream):
@@ -113,50 +77,49 @@ def ReadVariant(stream):
   return (variant_types, variant_items)
 
 
-def GenNounPrefix():
-  """Generates noun prefix embedded dictionary entries."""
-  token_map = {}
-  for entry in NOUN_PREFIX:
-    key = entry[0] if entry[0] else None
-    value = entry[1] if entry[1] else None
-    rank = entry[2]
+def WriteSingleKanji(single_kanji_dic, output_tokens, output_string_array):
+  """Writes single kanji list for readings.
 
-    token_map.setdefault(key, []).append(
-        embedded_dictionary_compiler.Token(
-            key, value, None, None, 0, 0, rank))
-
-  return token_map
-
-
-def WriteSingleKanji(outputs, stream):
-  """Writes single kanji list for readings."""
-  stream.write('static const SingleKanjiList kSingleKanjis[] = {\n')
-  for output in outputs:
-    (key, values) = output
-    stream.write('  // %s, %s\n' % (key, values))
-    stream.write(code_generator_util.FormatWithCppEscape(
-        '  { %s, %s },\n', key, values))
-  stream.write('};\n')
+  The token output is an array of uint32s, where array[2 * i] and
+  array[2 * i + 1] are the indices of key and value in the string array.
+  See rewriter/single_kanji_rewriter.cc.
+  """
+  strings = []
+  with open(output_tokens, 'wb') as f:
+    for index, (key, value) in enumerate(single_kanji_dic):
+      f.write(struct.pack('<I', 2 * index))
+      f.write(struct.pack('<I', 2 * index + 1))
+      strings.append(key)
+      strings.append(value)
+  serialized_string_array_builder.SerializeToFile(strings, output_string_array)
 
 
-def WriteVariantInfo(variant_info, stream):
-  """Writes single kanji variants info."""
+def WriteVariantInfo(variant_info,
+                     output_variant_types,
+                     output_variant_tokens,
+                     output_variant_strings):
+  """Writes single kanji variants info.
+
+  The token output is an array of uint32s, where array[3 * i],
+  array[3 * i + 1] and array[3 * i + 2] are the index of target, index of
+  original,  and variant type ID. See rewriter/single_kanji_rewriter.cc.
+  """
   (variant_types, variant_items) = variant_info
 
-  stream.write('static const char *kKanjiVariantTypes[] = {\n')
-  for variant_type in variant_types:
-    stream.write(code_generator_util.FormatWithCppEscape(
-        '  %s,', variant_type))
-    stream.write('  // %s\n' % variant_type)
-  stream.write('};\n')
+  serialized_string_array_builder.SerializeToFile(variant_types,
+                                                  output_variant_types)
 
-  stream.write('static const KanjiVariantItem kKanjiVariants[] = {\n')
-  for item in variant_items:
-    (target, original, variant_type) = item
-    stream.write(code_generator_util.FormatWithCppEscape(
-        '  { %s, %s, %d },', target, original, variant_type))
-    stream.write('  // %s, %s, %d\n' % (target, original, variant_type))
-  stream.write('};\n')
+  strings = []
+  with open(output_variant_tokens, 'wb') as f:
+    for index, (target, original, variant_type) in enumerate(variant_items):
+      f.write(struct.pack('<I', 2 * index))
+      f.write(struct.pack('<I', 2 * index + 1))
+      f.write(struct.pack('<I', variant_type))
+      strings.append(target)
+      strings.append(original)
+
+  serialized_string_array_builder.SerializeToFile(strings,
+                                                  output_variant_strings)
 
 
 def _ParseOptions():
@@ -166,7 +129,21 @@ def _ParseOptions():
                     help='Single kanji file')
   parser.add_option('--variant_file', dest='variant_file',
                     help='Variant rule file')
-  parser.add_option('--output', dest='output', help='Output header file.')
+  parser.add_option('--output_single_kanji_token',
+                    dest='output_single_kanji_token',
+                    help='Output Single Kanji token data.')
+  parser.add_option('--output_single_kanji_string',
+                    dest='output_single_kanji_string',
+                    help='Output Single Kanji string data.')
+  parser.add_option('--output_variant_types',
+                    dest='output_variant_types',
+                    help='Output variant types.')
+  parser.add_option('--output_variant_tokens',
+                    dest='output_variant_tokens',
+                    help='Output variant tokens.')
+  parser.add_option('--output_variant_strings',
+                    dest='output_variant_strings',
+                    help='Output variant strings.')
 
   return parser.parse_args()[0]
 
@@ -180,13 +157,13 @@ def main():
   with open(options.variant_file, 'r') as variant_stream:
     variant_info = ReadVariant(variant_stream)
 
-  noun_prefix = GenNounPrefix()
-
-  with open(options.output, 'w') as output_stream:
-    WriteSingleKanji(single_kanji, output_stream)
-    WriteVariantInfo(variant_info, output_stream)
-    embedded_dictionary_compiler.Compile(
-        'NounPrefixData', noun_prefix, output_stream)
+  WriteSingleKanji(single_kanji,
+                   options.output_single_kanji_token,
+                   options.output_single_kanji_string)
+  WriteVariantInfo(variant_info,
+                   options.output_variant_types,
+                   options.output_variant_tokens,
+                   options.output_variant_strings)
 
 
 if __name__ == '__main__':

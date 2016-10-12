@@ -128,7 +128,7 @@ TEST(SupressionDictionary, ThreadTest) {
     DictionaryLoaderThread thread;
 
     // Load dictionary in another thread.
-    thread.Start();
+    thread.Start("SuppressionDictionaryTest");
 
     for (int i = 0; i < 100; ++i) {
       const string key = "key" + NumberUtil::SimpleItoa(i);

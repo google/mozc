@@ -61,15 +61,21 @@ import javax.annotation.Nullable;
  */
 class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProviderCompat {
 
-  @VisibleForTesting static final int UNDEFINED = Integer.MIN_VALUE;
-  @VisibleForTesting static final int FOLD_BUTTON_ID = Integer.MIN_VALUE + 1;
+  @VisibleForTesting static final int UNDEFINED_VIRTUAL_VIEW_ID = Integer.MAX_VALUE;
+  @VisibleForTesting static final int FOLD_BUTTON_VIRTUAL_VIEW_ID = Integer.MAX_VALUE - 1;
   private Optional<CandidateLayout> layout = Optional.absent();
   // The view backed by this class.
   private final View view;
   // Caches only Row. Caches Span might be slow on construction.
   private Optional<SparseArray<Row>> virtualViewIdToRow = Optional.absent();
   // Virtual ID of focused (in the light of accessibility) view.
-  private int virtualFocusedViewId = UNDEFINED;
+  private int virtualFocusedViewId = UNDEFINED_VIRTUAL_VIEW_ID;
+  // Negative virtual id makes Talkback confused (to be more exact, negative values
+  // seems to be _reserved_).
+  // We used to use candidate ID as virtual view id but it violates Talkback's
+  // assumption.
+  // By adding this offset we can avoid negative virtual view ID.
+  private static final int VIRTUAL_VIEW_ID_OFFSET = 10000;
 
   CandidateWindowAccessibilityNodeProvider(View view) {
     this.view = Preconditions.checkNotNull(view);
@@ -91,7 +97,7 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
    * Returns a {@code Row} which contains a {@code CandidateWord} of which the
    * {@code id} is given {@code virtualViewId}.
    */
-  private Optional<Row> getRow(int virtualViewId) {
+  private Optional<Row> getRowByVirtualViewId(int virtualViewId) {
     if (!virtualViewIdToRow.isPresent()) {
       if (!layout.isPresent()) {
         return Optional.absent();
@@ -103,9 +109,10 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
             // - Skip reserved empty span, which is for folding button.
             // - Use append method expecting that the id is in ascending order.
             //   Even if not, it works well.
-            virtualViewIdToRow.append(span.getCandidateWord().get().getId(), row);
+            virtualViewIdToRow.append(
+                candidateIdToVirtualId(span.getCandidateWord().get().getId()), row);
           } else {
-            virtualViewIdToRow.append(FOLD_BUTTON_ID, row);
+            virtualViewIdToRow.append(FOLD_BUTTON_VIRTUAL_VIEW_ID, row);
           }
         }
       }
@@ -115,15 +122,17 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
   }
 
   @SuppressLint("InlinedApi")
-  private Optional<AccessibilityNodeInfoCompat> createNodeInfoForId(int virtualViewId) {
-    Optional<Row> optionalRow = getRow(virtualViewId);
+  private Optional<AccessibilityNodeInfoCompat> createNodeInfoForVirtualViewId(int virtualViewId) {
+    Preconditions.checkArgument(virtualViewId >= 0);
+    Optional<Row> optionalRow = getRowByVirtualViewId(virtualViewId);
     if (!optionalRow.isPresent()) {
       return Optional.absent();
     }
+    int candidateId = virtualViewIdToCandidateId(virtualViewId);
     Row row = optionalRow.get();
     for (Span span : row.getSpanList()) {
       if (span.getCandidateWord().isPresent()
-          && span.getCandidateWord().get().getId() != virtualViewId) {
+          && span.getCandidateWord().get().getId() != candidateId) {
         continue;
       }
       AccessibilityNodeInfoCompat info = createNodeInfoForSpan(virtualViewId, row, span);
@@ -163,7 +172,7 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
   @Nullable
   @Override
   public AccessibilityNodeInfoCompat createAccessibilityNodeInfo(int virtualViewId) {
-    if (virtualViewId == UNDEFINED) {
+    if (virtualViewId == UNDEFINED_VIRTUAL_VIEW_ID) {
       return null;
     }
     if (virtualViewId == View.NO_ID) {
@@ -179,15 +188,15 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
         for (Span span : row.getSpanList()) {
           if (span.getCandidateWord().isPresent()) {
             // Skip reserved empty span, which is for folding button.
-            info.addChild(view, span.getCandidateWord().get().getId());
+            info.addChild(view, candidateIdToVirtualId(span.getCandidateWord().get().getId()));
           } else {
-            info.addChild(view, FOLD_BUTTON_ID);
+            info.addChild(view, FOLD_BUTTON_VIRTUAL_VIEW_ID);
           }
         }
       }
       return info;
     }
-    return createNodeInfoForId(virtualViewId).orNull();
+    return createNodeInfoForVirtualViewId(virtualViewId).orNull();
   }
 
   private boolean isAccessibilityEnabled() {
@@ -245,7 +254,7 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
     event.setContentDescription(getContentDescription(candidateWord));
     event.setEnabled(true);
     AccessibilityRecordCompat record = AccessibilityEventCompat.asRecord(event);
-    record.setSource(view, candidateWord.getId());
+    record.setSource(view, candidateIdToVirtualId(candidateWord.getId()));
     return event;
   }
 
@@ -261,15 +270,16 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
     return contentDescription;
   }
 
-  private Optional<CandidateWord> getCandidateWordFromId(int id) {
-    Optional<Row> optionalRow = getRow(id);
+  private Optional<CandidateWord> getCandidateWordFromVirtualViewId(int virtualViewId) {
+    Optional<Row> optionalRow = getRowByVirtualViewId(virtualViewId);
     if (!optionalRow.isPresent()) {
       return Optional.absent();
     }
+    int candidateId = virtualViewIdToCandidateId(virtualViewId);
     Row row = optionalRow.get();
     for (Span span : row.getSpanList()) {
       Optional<CandidateWord> candidateWord = span.getCandidateWord();
-      if (candidateWord.isPresent() && candidateWord.get().getId() == id) {
+      if (candidateWord.isPresent() && candidateWord.get().getId() == candidateId) {
         return candidateWord;
       }
     }
@@ -278,7 +288,7 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
 
   @Override
   public boolean performAction(int virtualViewId, int action, Bundle arguments) {
-    Optional<CandidateWord> candidateWord = getCandidateWordFromId(virtualViewId);
+    Optional<CandidateWord> candidateWord = getCandidateWordFromVirtualViewId(virtualViewId);
     return candidateWord.isPresent()
         ? performActionForCandidateWordInternal(candidateWord.get(), virtualViewId, action)
         : false;
@@ -287,12 +297,13 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
   boolean performActionForCandidateWord(CandidateWord candidateWord,
                                         int actionAccessibilityFocus) {
     Preconditions.checkNotNull(candidateWord);
-    return performActionForCandidateWordInternal(candidateWord, candidateWord.getId(),
-                                                 actionAccessibilityFocus);
+    return performActionForCandidateWordInternal(
+        candidateWord, candidateIdToVirtualId(candidateWord.getId()), actionAccessibilityFocus);
   }
 
   private boolean performActionForCandidateWordInternal(CandidateWord candidateWord,
                                                         int virtualViewId, int action) {
+    Preconditions.checkArgument(virtualViewId >= 0);
     Preconditions.checkNotNull(candidateWord);
 
     switch (action) {
@@ -318,7 +329,7 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
         if (virtualFocusedViewId != virtualViewId) {
           return false;
         }
-        virtualFocusedViewId = UNDEFINED;
+        virtualFocusedViewId = UNDEFINED_VIRTUAL_VIEW_ID;
         if (isAccessibilityEnabled()) {
           AccessibilityUtil.sendAccessibilityEvent(
               getContext(),
@@ -330,5 +341,19 @@ class CandidateWindowAccessibilityNodeProvider extends AccessibilityNodeProvider
       default:
         return false;
     }
+  }
+
+  private static int virtualViewIdToCandidateId(int virtualViewId) {
+    if (virtualViewId == UNDEFINED_VIRTUAL_VIEW_ID
+        || virtualViewId == FOLD_BUTTON_VIRTUAL_VIEW_ID) {
+      return virtualViewId;
+    }
+    return virtualViewId - VIRTUAL_VIEW_ID_OFFSET;
+  }
+
+  private static int candidateIdToVirtualId(int candidateId) {
+    Preconditions.checkArgument(candidateId != UNDEFINED_VIRTUAL_VIEW_ID
+                                && candidateId != FOLD_BUTTON_VIRTUAL_VIEW_ID);
+    return candidateId + VIRTUAL_VIEW_ID_OFFSET;
   }
 }

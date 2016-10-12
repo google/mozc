@@ -32,6 +32,7 @@
     'relative_dir': 'mac',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'build_type': 'stable',
+    'mac_auto_updater_dir%': '',
   },
   # Add a dummy target because at least one target is needed in a gyp file.
   'targets': [
@@ -300,22 +301,31 @@
             '<(gen_out_dir)/English.lproj/InfoPlist.strings',
             'Japanese.lproj/Config.xib',
             '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
-            '<(PRODUCT_DIR)/<(branding)Converter.app',
-            '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
-            '<(PRODUCT_DIR)/<(branding)Renderer.app',
-            '<(PRODUCT_DIR)/<(branding)Tool.app',
-            '<(PRODUCT_DIR)/AboutDialog.app',
-            '<(PRODUCT_DIR)/CharacterPalette.app',
-            '<(PRODUCT_DIR)/ConfigDialog.app',
-            '<(PRODUCT_DIR)/DictionaryTool.app',
-            '<(PRODUCT_DIR)/ErrorMessageDialog.app',
-            '<(PRODUCT_DIR)/HandWriting.app',
-            '<(PRODUCT_DIR)/WordRegisterDialog.app',
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
             'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
           },
+          # Ninja does not consider symlinks on mac_bundle_resources.
+          # So 'copies' should be used to copy app directories.
+          'copies': [
+            {
+              'files': [
+                '<(PRODUCT_DIR)/<(branding)Converter.app',
+                '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
+                '<(PRODUCT_DIR)/<(branding)Renderer.app',
+                '<(PRODUCT_DIR)/GuiTool.app',
+                '<(PRODUCT_DIR)/AboutDialog.app',
+                '<(PRODUCT_DIR)/CharacterPalette.app',
+                '<(PRODUCT_DIR)/ConfigDialog.app',
+                '<(PRODUCT_DIR)/DictionaryTool.app',
+                '<(PRODUCT_DIR)/ErrorMessageDialog.app',
+                '<(PRODUCT_DIR)/HandWriting.app',
+                '<(PRODUCT_DIR)/WordRegisterDialog.app',
+              ],
+              'destination': '<(PRODUCT_DIR)/<(branding).app/Contents/Resources',
+            },
+          ],
           'link_settings': {
             'libraries': [
               '$(SDKROOT)/System/Library/Frameworks/Carbon.framework',
@@ -529,6 +539,7 @@
                 '--version_file', '../mozc_version.txt',
                 '--gen_out_dir', '<(gen_out_dir)',
                 '--build_dir', '<(PRODUCT_DIR)',
+                '--auto_updater_dir', '<(mac_auto_updater_dir)',
                 '--build_type', '<(build_type)',
               ],
             },

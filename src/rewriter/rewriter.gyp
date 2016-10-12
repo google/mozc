@@ -34,13 +34,6 @@
   },
   'targets': [
     {
-      'target_name': 'embedded_dictionary',
-      'type': 'static_library',
-      'sources': [
-        'embedded_dictionary.cc',
-      ],
-    },
-    {
       'target_name': 'rewriter',
       'type': 'static_library',
       'sources': [
@@ -48,10 +41,8 @@
         '<(gen_out_dir)/embedded_collocation_suppression_data.h',
         '<(gen_out_dir)/emoji_rewriter_data.h',
         '<(gen_out_dir)/emoticon_rewriter_data.h',
-        '<(gen_out_dir)/reading_correction_data.h',
         '<(gen_out_dir)/single_kanji_rewriter_data.h',
         '<(gen_out_dir)/symbol_rewriter_data.h',
-        '<(gen_out_dir)/usage_rewriter_data.h',
         'calculator_rewriter.cc',
         'collocation_rewriter.cc',
         'collocation_util.cc',
@@ -86,11 +77,12 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../base/base.gyp:serialized_string_array',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:immutable_converter',
-        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/data_manager_base.gyp:serialized_dictionary',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../protocol/protocol.gyp:commands_proto',
@@ -98,14 +90,12 @@
         '../request/request.gyp:conversion_request',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
-        ':embedded_dictionary',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
       ],
       'conditions':[
         ['target_platform=="Android"', {
           'sources!': [
-            '<(gen_out_dir)/usage_rewriter_data.h',
             'usage_rewriter.cc',
           ],
         }],

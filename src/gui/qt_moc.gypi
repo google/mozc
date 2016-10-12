@@ -32,18 +32,19 @@
   'conditions': [['use_qt=="YES"', {
 
   'variables': {
-    'includes': ['qt_vars.gypi'],
     'conditions': [
-      ['qt_dir', {
-        'moc_path': '<(qt_dir)/bin/moc<(EXECUTABLE_SUFFIX)',
-      }, {
+      ['target_platform=="Linux"', {
         'conditions': [
-          ['pkg_config_command', {
-            'moc_path': '<!(<(pkg_config_command) --variable=moc_location QtGui)',
+          ['qt_ver==5', {
+            'moc_path': '<!(pkg-config --variable=host_bins Qt5Core)/moc',
           }, {
-            'moc_path': '<(qt_dir_env)/bin/moc<(EXECUTABLE_SUFFIX)',
+            'moc_path': '<!(pkg-config --variable=moc_location QtGui)',
           }],
         ],
+      }, 'qt_dir', {
+        'moc_path': '<(qt_dir)/bin/moc<(EXECUTABLE_SUFFIX)',
+      }, {
+        'moc_path': 'moc<(EXECUTABLE_SUFFIX)',
       }],
     ],
   },

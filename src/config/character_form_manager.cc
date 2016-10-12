@@ -586,7 +586,9 @@ CharacterFormManager *CharacterFormManager::GetCharacterFormManager() {
 }
 
 CharacterFormManager::CharacterFormManager() : data_(new Data) {
-  ReloadConfig(ConfigHandler::GetConfig());
+  Config config;
+  ConfigHandler::GetConfig(&config);
+  ReloadConfig(config);
 }
 
 CharacterFormManager::~CharacterFormManager() {

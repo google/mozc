@@ -31,7 +31,6 @@ package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
-import org.mozc.android.inputmethod.japanese.util.ResourcesWrapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -39,19 +38,14 @@ import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -86,48 +80,6 @@ import java.util.zip.ZipFile;
  *
  */
 public final class MozcUtil {
-
-  private static class OutOfMemoryRetryingResources extends ResourcesWrapper {
-
-    private final int retryCount;
-    public OutOfMemoryRetryingResources(Resources base, int retryCount) {
-      super(Preconditions.checkNotNull(base));
-      this.retryCount = retryCount;
-    }
-
-    @Override
-    public Drawable getDrawable(int id) throws NotFoundException {
-      Resources base = getBase();
-      for (int i = 0; i < retryCount; ++i) {
-        try {
-          return base.getDrawable(id);
-        } catch (OutOfMemoryError e) {
-          // Retry with running gc.
-          System.gc();
-        }
-      }
-
-      // Final trial.
-      return base.getDrawable(id);
-    }
-
-    @TargetApi(15)
-    @Override
-    public Drawable getDrawableForDensity(int id, int density) throws NotFoundException {
-      Resources base = getBase();
-      for (int i = 0; i < retryCount; ++i) {
-        try {
-          return base.getDrawableForDensity(id, density);
-        } catch (OutOfMemoryError e) {
-          // Retry with running gc.
-          System.gc();
-        }
-      }
-
-      // Final trial.
-      return base.getDrawableForDensity(id, density);
-    }
-  }
 
   /**
    * Simple interface to use mock of TelephonyManager for testing purpose.
@@ -173,8 +125,6 @@ public final class MozcUtil {
   // This constant value affects only the logs printed by Java layer.
   // If you want to change the tag name, see also kProductPrefix in base/const.h.
   public static final String LOGTAG = "Mozc";
-
-  private static final int OUT_OF_MEMORY_RETRY_COUNT = 5;
 
   private static Optional<Boolean> isDebug = Optional.<Boolean>absent();
   private static Optional<Boolean> isDevChannel = Optional.<Boolean>absent();
@@ -535,65 +485,6 @@ public final class MozcUtil {
         TelephonyManager.class.cast(context.getSystemService(Context.TELEPHONY_SERVICE)));
   }
 
-  public static Context getContextWithOutOfMemoryRetrial(Context context) {
-    Preconditions.checkNotNull(context);
-    return new ContextWrapper(context) {
-      final Resources resources =
-          new OutOfMemoryRetryingResources(super.getResources(), OUT_OF_MEMORY_RETRY_COUNT);
-
-      @Override
-      public Resources getResources() {
-        return resources;
-      }
-    };
-  }
-
-  public static <T extends View> T inflateWithOutOfMemoryRetrial(
-      Class<T> clazz, LayoutInflater inflater,
-      int resourceId, Optional<ViewGroup> root, boolean attachToRoot) {
-    Preconditions.checkNotNull(clazz);
-    Preconditions.checkNotNull(inflater);
-    Preconditions.checkNotNull(root);
-    for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
-      try {
-        return clazz.cast(inflater.inflate(resourceId, root.orNull(), attachToRoot));
-      } catch (OutOfMemoryError e) {
-        // Retry with GC.
-        System.gc();
-      }
-    }
-
-    return clazz.cast(inflater.inflate(resourceId, root.orNull(), attachToRoot));
-  }
-
-  public static Bitmap createBitmap(int width, int height, Config config) {
-    Preconditions.checkNotNull(config);
-    for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
-      try {
-        return Bitmap.createBitmap(width, height, config);
-      } catch (OutOfMemoryError e) {
-        // Retry with GC.
-        System.gc();
-      }
-    }
-
-    return Bitmap.createBitmap(width, height, config);
-  }
-
-  public static Bitmap createBitmap(Bitmap src) {
-    Preconditions.checkNotNull(src);
-    for (int i = 0; i < OUT_OF_MEMORY_RETRY_COUNT; ++i) {
-      try {
-        return Bitmap.createBitmap(src);
-      } catch (OutOfMemoryError e) {
-        // Retry with GC.
-        System.gc();
-      }
-    }
-
-    return Bitmap.createBitmap(src);
-  }
-
   /**
    * Sets the given {@code token} and some layout parameters required to show the dialog from
    * the IME service correctly to the {@code dialog}.
@@ -871,7 +762,6 @@ public final class MozcUtil {
    *
    * public accessibility for easier invocation via reflection.
    */
-  @TargetApi(9)
   public static class StrictModeRelaxer {
     private StrictModeRelaxer() {}
     public static void relaxStrictMode() {

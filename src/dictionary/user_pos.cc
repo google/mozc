@@ -30,7 +30,7 @@
 #include "dictionary/user_pos.h"
 
 #include <algorithm>
-#include <map>
+#include <set>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -38,63 +38,68 @@
 namespace mozc {
 namespace dictionary {
 
-UserPOS::UserPOS(const POSToken *pos_token_array)
-    : pos_token_array_(pos_token_array) {
-  DCHECK(pos_token_array_);
-  for (size_t i = 0; pos_token_array_[i].pos != nullptr; ++i) {
-    pos_map_.insert(
-        std::make_pair(string(pos_token_array_[i].pos), &pos_token_array_[i]));
-  }
-  CHECK_GT(pos_map_.size(), 1);
+UserPOS::UserPOS(StringPiece token_array_data, StringPiece string_array_data)
+    : token_array_data_(token_array_data) {
+  DCHECK_EQ(token_array_data.size() % 8, 0);
+  DCHECK(SerializedStringArray::VerifyData(string_array_data));
+  string_array_.Set(string_array_data);
 }
+
+UserPOS::~UserPOS() = default;
 
 void UserPOS::GetPOSList(vector<string> *pos_list) const {
   pos_list->clear();
-  for (size_t i = 0; pos_token_array_[i].pos != nullptr; ++i) {
-    pos_list->push_back(pos_token_array_[i].pos);
+  set<uint16> seen;
+  for (auto iter = begin(); iter != end(); ++iter) {
+    if (!seen.insert(iter.pos_index()).second) {
+      continue;
+    }
+    const StringPiece pos = string_array_[iter.pos_index()];
+    pos_list->emplace_back(pos.data(), pos.size());
   }
 }
 
 bool UserPOS::IsValidPOS(const string &pos) const {
-  map<string, const POSToken*>::const_iterator it = pos_map_.find(pos);
-  return it != pos_map_.end();
+  const auto iter =
+      std::lower_bound(string_array_.begin(), string_array_.end(), pos);
+  if (iter == string_array_.end()) {
+    return false;
+  }
+  return std::binary_search(begin(), end(), iter.index());
 }
 
 bool UserPOS::GetPOSIDs(const string &pos, uint16 *id) const {
-  map<string, const POSToken*>::const_iterator it = pos_map_.find(pos);
-  if (it == pos_map_.end()) {
+  const auto str_iter =
+      std::lower_bound(string_array_.begin(), string_array_.end(), pos);
+  if (str_iter == string_array_.end() || *str_iter != pos) {
     return false;
   }
-
-  const ConjugationType *conjugation_form = it->second->conjugation_form;
-  CHECK(conjugation_form);
-
-  *id = conjugation_form[0].id;
-
+  const auto token_iter = std::lower_bound(begin(), end(), str_iter.index());
+  if (token_iter == end() || token_iter.pos_index() != str_iter.index()) {
+    return false;
+  }
+  *id = token_iter.conjugation_id();
   return true;
 }
 
-bool UserPOS::GetTokens(const string &key,
-                        const string &value,
-                        const string &pos,
-                        vector<Token> *tokens) const {
-  if (key.empty() ||
-      value.empty() ||
-      pos.empty() ||
-      tokens == nullptr) {
+bool UserPOS::GetTokens(const string &key, const string &value,
+                        const string &pos, vector<Token> *tokens) const {
+  if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
     return false;
   }
 
   tokens->clear();
-  map<string, const POSToken*>::const_iterator it = pos_map_.find(pos);
-  if (it == pos_map_.end()) {
+  const auto str_iter =
+      std::lower_bound(string_array_.begin(), string_array_.end(), pos);
+  if (str_iter == string_array_.end() || *str_iter != pos) {
     return false;
   }
-
-  const ConjugationType *conjugation_form = it->second->conjugation_form;
-  CHECK(conjugation_form);
-
-  const size_t size = static_cast<size_t>(it->second->conjugation_size);
+  pair<iterator, iterator> range =
+      std::equal_range(begin(), end(), str_iter.index());
+  if (range.first == range.second) {
+    return false;
+  }
+  const size_t size = range.second - range.first;
   CHECK_GE(size, 1);
   tokens->resize(size);
 
@@ -104,25 +109,30 @@ bool UserPOS::GetTokens(const string &key,
   // Set smaller cost for "短縮よみ" in order to make
   // the rank of the word higher than others.
   const int16 kIsolatedWordCost = 200;
-  const char kIsolatedWordPOS[]
-      = "\xE7\x9F\xAD\xE7\xB8\xAE\xE3\x82\x88\xE3\x81\xBF";
+  const char kIsolatedWordPOS[] =
+      "\xE7\x9F\xAD\xE7\xB8\xAE\xE3\x82\x88\xE3\x81\xBF";
 
   if (size == 1) {  // no conjugation
+    const auto &token_iter = range.first;
     (*tokens)[0].key = key;
     (*tokens)[0].value = value;
-    (*tokens)[0].id = conjugation_form[0].id;
+    (*tokens)[0].id = token_iter.conjugation_id();
     if (pos == kIsolatedWordPOS) {
-      (*tokens)[0].cost= kIsolatedWordCost;
+      (*tokens)[0].cost = kIsolatedWordCost;
     } else {
-      (*tokens)[0].cost= kDefaultCost;
+      (*tokens)[0].cost = kDefaultCost;
     }
   } else {
+    const auto &base_form_token_iter = range.first;
     // expand all other forms
     string key_stem = key;
     string value_stem = value;
     // assume that conjugation_form[0] contains the suffix of "base form".
-    const string base_key_suffix = conjugation_form[0].key_suffix;
-    const string base_value_suffix = conjugation_form[0].value_suffix;
+    const StringPiece base_key_suffix =
+        string_array_[base_form_token_iter.key_suffix_index()];
+    const StringPiece base_value_suffix =
+        string_array_[base_form_token_iter.value_suffix_index()];
+
     if (base_key_suffix.size() < key.size() &&
         base_value_suffix.size() < value.size() &&
         Util::EndsWith(key, base_key_suffix) &&
@@ -130,15 +140,27 @@ bool UserPOS::GetTokens(const string &key,
       key_stem.assign(key, 0, key.size() - base_key_suffix.size());
       value_stem.assign(value, 0, value.size() - base_value_suffix.size());
     }
-    for (size_t i = 0; i < size; ++i) {
-      (*tokens)[i].key   = key_stem   + conjugation_form[i].key_suffix;
-      (*tokens)[i].value = value_stem + conjugation_form[i].value_suffix;
-      (*tokens)[i].id    = conjugation_form[i].id;
-      (*tokens)[i].cost  = kDefaultCost;
+    for (size_t i = 0; i < size; ++i, ++range.first) {
+      const auto &token_iter = range.first;
+      const StringPiece key_suffix =
+          string_array_[token_iter.key_suffix_index()];
+      const StringPiece value_suffix =
+          string_array_[token_iter.value_suffix_index()];
+      Util::ConcatStrings(key_stem, key_suffix, &(*tokens)[i].key);
+      Util::ConcatStrings(value_stem, value_suffix, &(*tokens)[i].value);
+      (*tokens)[i].id = token_iter.conjugation_id();
+      (*tokens)[i].cost = kDefaultCost;
     }
+    DCHECK(range.first == range.second);
   }
 
   return true;
+}
+
+UserPOS *UserPOS::CreateFromDataManager(const DataManagerInterface &manager) {
+  StringPiece token_array_data, string_array_data;
+  manager.GetUserPOSData(&token_array_data, &string_array_data);
+  return new UserPOS(token_array_data, string_array_data);
 }
 
 }  // namespace dictionary

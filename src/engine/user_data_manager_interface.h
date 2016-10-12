@@ -40,7 +40,7 @@ namespace mozc {
 
 class UserDataManagerInterface {
  public:
-  virtual ~UserDataManagerInterface() {}
+  virtual ~UserDataManagerInterface() = default;
 
   // Syncs mutable user data to local file system.
   virtual bool Sync() = 0;
@@ -62,7 +62,7 @@ class UserDataManagerInterface {
       const string &key, const string &value) = 0;
 
   // Waits for syncer thread to complete.
-  virtual bool WaitForSyncerForTest() = 0;
+  virtual bool Wait() = 0;
 };
 
 }  // namespace mozc

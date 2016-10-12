@@ -31,28 +31,27 @@
 #define MOZC_REWRITER_NUMBER_REWRITER_H_
 
 #include "base/port.h"
+#include "base/serialized_string_array.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
 class DataManagerInterface;
-struct CounterSuffixEntry;
 
 class NumberRewriter : public RewriterInterface  {
  public:
   explicit NumberRewriter(const DataManagerInterface *data_manager);
-  virtual ~NumberRewriter();
+  ~NumberRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
-  const CounterSuffixEntry *suffix_array_;
-  size_t suffix_array_size_;
-  const dictionary::POSMatcher *pos_matcher_;
+  SerializedStringArray suffix_array_;
+  const dictionary::POSMatcher pos_matcher_;
 
   DISALLOW_COPY_AND_ASSIGN(NumberRewriter);
 };

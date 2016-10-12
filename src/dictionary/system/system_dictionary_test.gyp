@@ -66,8 +66,8 @@
       'dependencies': [
         '../../base/base.gyp:base_core',
         '../../config/config.gyp:config_handler',
-        '../../data_manager/data_manager.gyp:user_pos_manager',
         '../../data_manager/oss/oss_data_manager_test.gyp:install_oss_data_manager_test_data',
+        '../../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../../request/request.gyp:conversion_request',
         '../../session/session_base.gyp:request_test_util',
         '../../testing/testing.gyp:gtest_main',
@@ -88,7 +88,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
-        '../../data_manager/data_manager.gyp:user_pos_manager',
+        '../../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../../request/request.gyp:conversion_request',
         '../../storage/louds/louds.gyp:louds_trie_builder',
         '../../testing/testing.gyp:gtest_main',

@@ -31,7 +31,6 @@
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#define _ATL_NO_HOSTING
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlstr.h>
@@ -98,7 +97,8 @@ volatile bool g_module_unloaded = false;
 static once_t g_launch_set_default_dialog = MOZC_ONCE_INIT;
 
 void LaunchSetDefaultDialog() {
-  const config::Config &config = config::ConfigHandler::GetConfig();
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
   if (config.has_check_default() && !config.check_default()) {
     // User opted out the default IME checking. Do nothing.
     return;
@@ -245,8 +245,8 @@ void UpdateCommand(const UIContext &context,
   app_info.set_process_id(::GetCurrentProcessId());
   app_info.set_thread_id(::GetCurrentThreadId());
   app_info.set_target_window_handle(
-      reinterpret_cast<uint32>(target_window.m_hWnd));
-  app_info.set_receiver_handle(reinterpret_cast<uint32>(ui_window));
+      WinUtil::EncodeWindowHandle(target_window.m_hWnd));
+  app_info.set_receiver_handle(WinUtil::EncodeWindowHandle(ui_window));
   app_info.set_input_framework(ApplicationInfo::IMM32);
   int visibility = ApplicationInfo::ShowUIDefault;
   if (show_composition_window) {
@@ -921,7 +921,7 @@ class DefaultUIWindow {
   }
 
   void InvalidateLangBarInfoCache() {
-    langbar_info_cache_.reset(nullptr);
+    langbar_info_cache_.reset();
   }
 
   void SetDeferredLangBarUpdate(bool enabled, commands::CompositionMode mode) {

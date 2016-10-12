@@ -164,14 +164,11 @@ TEST(StringPieceTest, CheckSTL) {
   ASSERT_TRUE(e.empty());
   ASSERT_TRUE(e.begin() == e.end());
 
-  d.clear();
+  d = StringPiece();
   ASSERT_SIZE_EQ(d.size(), 0);
   ASSERT_TRUE(d.empty());
   ASSERT_TRUE(d.data() == NULL);
   ASSERT_TRUE(d.begin() == d.end());
-
-  ASSERT_GE(a.max_size(), a.capacity());
-  ASSERT_GE(a.capacity(), a.size());
 
   char buf[4] = { '%', '%', '%', '%' };
   ASSERT_SIZE_EQ(a.copy(buf, 4), 4);
@@ -509,14 +506,8 @@ TEST(StringPieceTest, CheckCustom) {
   c.set("foobar");
   ASSERT_EQ(c, a);
 
-  c.set(static_cast<const void *>("foobar"), 6);
-  ASSERT_EQ(c, a);
-  c.set(static_cast<const void *>("foobar"), 0);
-  ASSERT_EQ(c, e);
-  c.set(static_cast<const void *>("foobar"), 7);
-  ASSERT_NE(c, a);
-
   // as_string
+  c = StringPiece("foobar", 7);
   string s3(a.as_string().c_str(), 7);
   ASSERT_EQ(c, s3);
   string s4(e.as_string());
@@ -570,14 +561,14 @@ TEST(StringPieceTest, Constructors) {
   ASSERT_EQ("12345", StringPiece("12345", 5));
 
   // Tests for StringPiece(const StringPiece, size_type)
-  ASSERT_EQ("45", StringPiece(StringPiece("12345"), 3));
-  ASSERT_EQ("12345", StringPiece(StringPiece("12345"), 0));
-  ASSERT_EQ("", StringPiece(StringPiece("12345"), 5));
+  ASSERT_EQ("45", StringPiece("12345").substr(3));
+  ASSERT_EQ("12345", StringPiece("12345").substr(0));
+  ASSERT_EQ("", StringPiece("12345").substr(5));
 
   // Tests for StringPiece(const StringPiece, size_type, size_type)
-  ASSERT_EQ("234", StringPiece("12345", 1, 3));
-  ASSERT_EQ("2345", StringPiece("12345", 1, 300));
-  ASSERT_EQ("", StringPiece("12345", 1, 0));
+  ASSERT_EQ("234", StringPiece("12345").substr(1, 3));
+  ASSERT_EQ("2345", StringPiece("12345").substr(1, 300));
+  ASSERT_EQ("", StringPiece("12345").substr(1, 0));
 }
 
 }  // namespace mozc

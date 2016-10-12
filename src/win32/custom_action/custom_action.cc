@@ -118,7 +118,9 @@ wstring GetMozcComponentPath(const string &filename) {
 wstring GetProperty(MSIHANDLE msi, const wstring &name) {
   DWORD num_buf = 0;
   // Obtains the size of the property's string, without null termination.
-  UINT result = MsiGetProperty(msi, name.c_str(), L"", &num_buf);
+  // Note: |MsiGetProperty()| requires non-null writable buffer.
+  wchar_t dummy_buffer[1] = {L'\0'};
+  UINT result = MsiGetProperty(msi, name.c_str(), dummy_buffer, &num_buf);
   if (ERROR_MORE_DATA != result) {
     return L"";
   }
@@ -348,17 +350,6 @@ UINT __stdcall InitialInstallation(MSIHANDLE msi_handle) {
   // Write a general error message in case any unexpected error occurs.
   WriteOmahaErrorById(IDS_UNEXPECTED_ERROR);
 
-  // We cannot rely on the result of GetVersion(Ex) in custom actions.
-  // http://b/2430094
-  // http://blogs.msdn.com/cjacks/archive/2009/05/06/why-custom-actions-get-a-windows-vista-version-lie-on-windows-7.aspx
-  // SystemUtil::IsPlatformSupported uses VerifyVersionInfo, which is expected
-  // to be not affected by the version lie for GetVersion(Ex).
-  // MsiEvaluateCondition API may be another way to check the condition.
-  // http://msdn.microsoft.com/en-us/library/aa370104.aspx
-  if (!mozc::SystemUtil::IsPlatformSupported()) {
-    WriteOmahaErrorById(IDS_UNSUPPORTED_PLATFORM);
-    return ERROR_INSTALL_FAILURE;
-  }
   return ERROR_SUCCESS;
 }
 

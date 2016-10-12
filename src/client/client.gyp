@@ -46,6 +46,9 @@
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
       ],
+      'export_dependent_settings': [
+        '../protocol/protocol.gyp:commands_proto',
+      ],
     },
     {
       'target_name': 'client_mock',

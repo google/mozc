@@ -132,7 +132,7 @@ bool HasCharacterFormDescription(const string &value) {
   return true;
 }
 
-VariantsRewriter::VariantsRewriter(const POSMatcher *pos_matcher)
+VariantsRewriter::VariantsRewriter(const POSMatcher pos_matcher)
     : pos_matcher_(pos_matcher) {}
 
 VariantsRewriter::~VariantsRewriter() {}
@@ -227,7 +227,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   // Currently, character_form_message is treated as a "default"
   // description.
   if (!candidate->description.empty()) {
-    character_form_message.clear();
+    character_form_message = StringPiece();
   }
 
   string description;
@@ -325,7 +325,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     if (candidate->attributes & Segment::Candidate::NO_EXTRA_DESCRIPTION) {
       continue;
     }
-    SetDescriptionForTransliteration(*pos_matcher_, candidate);
+    SetDescriptionForTransliteration(pos_matcher_, candidate);
   }
 
   // Regular Candidate
@@ -344,7 +344,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 
     if (original_candidate->attributes &
         Segment::Candidate::NO_VARIANTS_EXPANSION) {
-      SetDescriptionForCandidate(*pos_matcher_, original_candidate);
+      SetDescriptionForCandidate(pos_matcher_, original_candidate);
       VLOG(1) << "Canidate has NO_NORMALIZATION node";
       continue;
     }
@@ -356,7 +356,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
                               &alternative_content_value,
                               &default_inner_segment_boundary,
                               &alternative_inner_segment_boundary)) {
-      SetDescriptionForCandidate(*pos_matcher_, original_candidate);
+      SetDescriptionForCandidate(pos_matcher_, original_candidate);
       continue;
     }
 
@@ -409,11 +409,11 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       new_candidate->lid = original_candidate->lid;
       new_candidate->rid = original_candidate->rid;
       new_candidate->description = original_candidate->description;
-      SetDescription(*pos_matcher_, default_description_type, new_candidate);
+      SetDescription(pos_matcher_, default_description_type, new_candidate);
 
       original_candidate->value = alternative_value;
       original_candidate->content_value = alternative_content_value;
-      SetDescription(*pos_matcher_,
+      SetDescription(pos_matcher_,
                      alternative_description_type, original_candidate);
       ++i;  // skip inserted candidate
     } else if (type == SELECT_VARIANT) {
@@ -422,7 +422,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       original_candidate->content_value = default_content_value;
       original_candidate->inner_segment_boundary.swap(
           default_inner_segment_boundary);
-      SetDescription(*pos_matcher_,
+      SetDescription(pos_matcher_,
                      default_description_type, original_candidate);
     }
     modified = true;

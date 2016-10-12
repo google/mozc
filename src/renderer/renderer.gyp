@@ -361,6 +361,35 @@
             '../protocol/protocol.gyp:renderer_proto',
             'renderer_style_handler',
           ],
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'd2d1.lib',
+                  'dwrite.lib',
+                ],
+              },
+            },
+          },
+        },
+        {
+          'target_name': 'gen_pbgra32_bitmap',
+          'type': 'executable',
+          'sources': [
+            'win32/gen_pbgra32_bitmap.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base_core',
+            '../base/base.gyp:scoped_handle',
+          ],
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalDependencies': [
+                'gdiplus.lib',  # used in 'gen_pbgra32_bitmap.cc'
+              ],
+              'SubSystem': '1',  # 1 == subSystemConsole
+            },
+          },
         },
         {
           'target_name': 'mozc_renderer',
@@ -514,14 +543,14 @@
           },
           'all_dependent_settings': {
             'cflags': [
-              '<!@(<(pkg_config_command) --cflags <@(target_pkgs))',
+              '<!@(pkg-config --cflags <@(target_pkgs))',
             ],
             'link_settings': {
               'libraries': [
-                '<!@(<(pkg_config_command) --libs-only-l <@(target_pkgs))',
+                '<!@(pkg-config --libs-only-l <@(target_pkgs))',
               ],
               'ldflags': [
-                '<!@(<(pkg_config_command) --libs-only-L <@(target_pkgs))',
+                '<!@(pkg-config --libs-only-L <@(target_pkgs))',
               ],
             },
           },

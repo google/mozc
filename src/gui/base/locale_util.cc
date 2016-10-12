@@ -60,7 +60,11 @@
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
 #include <QtCore/QTextCodec>
+#ifdef MOZC_USE_QT5
+#include <QtGui/QGuiApplication>
+#else
 #include <QtGui/QApplication>
+#endif
 #include <QtGui/QtGui>
 #include <map>
 #include <string>
@@ -221,9 +225,11 @@ TranslationDataImpl::TranslationDataImpl()
   }
 #endif
 
+#ifndef MOZC_USE_QT5
   // Set default encoding for multi-byte string to be UTF8
   QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
   QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#endif
 }
 
 void TranslationDataImpl::InstallTranslationMessagesAndFont(

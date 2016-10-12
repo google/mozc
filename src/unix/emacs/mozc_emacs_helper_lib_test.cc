@@ -180,16 +180,14 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   segment->set_value("UNDER_LINE");
   segment = preedit.add_segment();
   segment->set_annotation(mozc::commands::Preedit::Segment::NONE);
-  // "なし"
-  segment->set_value("\xe3\x81\xaa\xe3\x81\x97");
+  segment->set_value("なし");
   PrintAndTestSexpr(preedit,
     "((cursor . 1)"
      "(segment "
       "((annotation . underline)"
        "(value . \"UNDER_LINE\"))"
       "((annotation . none)"
-       // "なし"
-       "(value . \"\xe3\x81\xaa\xe3\x81\x97\"))))");
+       "(value . \"なし\"))))");
 
   // Output
   mozc::commands::Output output;
@@ -214,8 +212,7 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
                  "(segment ((annotation . underline)"
                            "(value . \"UNDER_LINE\"))"
                           "((annotation . none)"
-                           // "なし"
-                           "(value . \"\xe3\x81\xaa\xe3\x81\x97\")))))"
+                           "(value . \"なし\")))))"
      "(key . ((special-key . page-up)"
              "(modifier-keys key-down shift))))");
 }
@@ -256,12 +253,12 @@ TEST_F(MozcEmacsHelperLibTest, UnquoteString) {
 
 TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
   using mozc::emacs::TokenizeSExpr;
-  const string input = " ('abc \" \t\\r\\\n\\\"\"\t-x0\"\xE3\x81\x84\"p)\n";
+  const string input = " ('abc \" \t\\r\\\n\\\"\"\t-x0\"い\"p)\n";
   vector<string> output;
   bool result = TokenizeSExpr(input, &output);
 
   const char *golden[] = {
-    "(", "'", "abc", "\" \t\\r\\\n\\\"\"", "-x0", "\"\xE3\x81\x84\"", "p", ")"
+    "(", "'", "abc", "\" \t\\r\\\n\\\"\"", "-x0", "\"い\"", "p", ")"
   };
 
   EXPECT_TRUE(result);

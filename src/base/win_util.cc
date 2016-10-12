@@ -36,6 +36,7 @@
 #include <Psapi.h>
 #include <Stringapiset.h>
 #include <Winternl.h>
+#include <shellapi.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -172,84 +173,16 @@ bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   return true;
 }
 
-bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,
-                               bool ignore_case, bool *are_equal) {
-  const int compare_result = ::CompareStringOrdinal(
-      lhs.c_str(), lhs.size(), rhs.c_str(), rhs.size(),
-      (ignore_case ? TRUE : FALSE));
-
-  if (are_equal != nullptr) {
-    *are_equal = (compare_result == CSTR_EQUAL);
-  }
-
-  return true;
+uint32 WinUtil::EncodeWindowHandle(HWND window_handle) {
+  return static_cast<uint32>(reinterpret_cast<uintptr_t>(window_handle));
 }
 
-bool WinUtil::NativeEqualString(const wstring &lhs, const wstring &rhs,
-                                bool ignore_case, bool *are_equal) {
-  // http://msdn.microsoft.com/en-us/library/ff561854.aspx
-  typedef BOOLEAN (NTAPI *FPRtlEqualUnicodeString)(
-      __in PCUNICODE_STRING String1,
-      __in PCUNICODE_STRING String2,
-      __in BOOLEAN CaseInSensitive);
-
-  const HMODULE ntdll = GetSystemModuleHandle(L"ntdll.dll");
-  if (ntdll == nullptr) {
-    LOG(ERROR) << "GetSystemModuleHandle failed";
-    return false;
-  }
-
-  const FPRtlEqualUnicodeString rtl_equal_unicode_string =
-      reinterpret_cast<FPRtlEqualUnicodeString>(
-          ::GetProcAddress(ntdll, "RtlEqualUnicodeString"));
-  if (rtl_equal_unicode_string == nullptr) {
-    return false;
-  }
-
-  const UNICODE_STRING lhs_string = {
-    lhs.size(),                     // Length
-    lhs.size() + sizeof(wchar_t),   // MaximumLength
-    const_cast<PWSTR>(lhs.c_str())  // Buffer
-  };
-  const UNICODE_STRING rhs_string = {
-    rhs.size(),                     // Length
-    rhs.size() + sizeof(wchar_t),   // MaximumLength
-    const_cast<PWSTR>(rhs.c_str())  // Buffer
-  };
-  const BOOL compare_result = rtl_equal_unicode_string(
-    &lhs_string, &rhs_string, (ignore_case ? TRUE : FALSE));
-
-  if (are_equal != nullptr) {
-    *are_equal = (compare_result != FALSE);
-  }
-
-  return true;
-}
-
-void WinUtil::CrtEqualString(const wstring &lhs, const wstring &rhs,
-                             bool ignore_case, bool *are_equal) {
-  if (are_equal == nullptr) {
-    return;
-  }
-
-  if (!ignore_case) {
-    DCHECK_NE(nullptr, are_equal);
-    *are_equal = (rhs == lhs);
-    return;
-  }
-
-  const _locale_t locale_id = _create_locale(LC_ALL, "English");
-  const int compare_result = _wcsicmp_l(lhs.c_str(), rhs.c_str(), locale_id);
-  _free_locale(locale_id);
-
-  DCHECK_NE(nullptr, are_equal);
-  *are_equal = (compare_result == 0);
+HWND WinUtil::DecodeWindowHandle(uint32 window_handle_value) {
+  return reinterpret_cast<HWND>(static_cast<uintptr_t>(window_handle_value));
 }
 
 bool WinUtil::SystemEqualString(
       const wstring &lhs, const wstring &rhs, bool ignore_case) {
-  bool are_equal = false;
-
   // We assume a string instance never contains NUL character in principle.
   // So we will raise an error to notify the unexpected situation in debug
   // builds.  In production, however, we will admit such an instance and
@@ -263,19 +196,12 @@ bool WinUtil::SystemEqualString(
   const wstring &lhs_null_trimmed = lhs.substr(0, lhs_null_pos);
   const wstring &rhs_null_trimmed = rhs.substr(0, rhs_null_pos);
 
-  if (Win32EqualString(
-          lhs_null_trimmed, rhs_null_trimmed, ignore_case, &are_equal)) {
-    return are_equal;
-  }
+  const int compare_result = ::CompareStringOrdinal(
+      lhs_null_trimmed.data(), lhs_null_trimmed.size(),
+      rhs_null_trimmed.data(), rhs_null_trimmed.size(),
+      (ignore_case ? TRUE : FALSE));
 
-  if (NativeEqualString(
-          lhs_null_trimmed, rhs_null_trimmed, ignore_case, &are_equal)) {
-    return are_equal;
-  }
-
-  CrtEqualString(lhs_null_trimmed, rhs_null_trimmed, ignore_case, &are_equal);
-
-  return are_equal;
+  return compare_result == CSTR_EQUAL;
 }
 
 bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
@@ -528,19 +454,6 @@ bool WinUtil::GetNtPath(const wstring &dos_path, wstring *nt_path) {
 
   nt_path->clear();
 
-  typedef DWORD (WINAPI *GetFinalPathNameByHandleWFunc)(
-      __in HANDLE file,
-      __out wchar_t *buffer,
-      __in DWORD buffer_num_chars,
-      __in DWORD flags);
-  GetFinalPathNameByHandleWFunc get_final_path_name_by_handle =
-      reinterpret_cast<GetFinalPathNameByHandleWFunc>(
-          ::GetProcAddress(WinUtil::GetSystemModuleHandle(L"kernel32.dll"),
-                           "GetFinalPathNameByHandleW"));
-  if (get_final_path_name_by_handle == nullptr) {
-    return false;
-  }
-
   ScopedHandle file_handle(::CreateFileW(
       dos_path.c_str(), 0,
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -555,7 +468,7 @@ bool WinUtil::GetNtPath(const wstring &dos_path, wstring *nt_path) {
   const size_t kMaxPath = 4096;
   unique_ptr<wchar_t[]> ntpath_buffer(
       new wchar_t[kMaxPath]);
-  const DWORD copied_len_without_null = get_final_path_name_by_handle(
+  const DWORD copied_len_without_null = ::GetFinalPathNameByHandleW(
       file_handle.get(),
       ntpath_buffer.get(),
       kMaxPath,
@@ -625,6 +538,21 @@ bool WinUtil::IsProcessSandboxed() {
   // Thread safety is not required.
   static bool sandboxed = IsProcessSandboxedImpl();
   return sandboxed;
+}
+
+bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb,
+                                      const wchar_t *file,
+                                      const wchar_t *parameters) {
+  const auto result = static_cast<uint32>(reinterpret_cast<uintptr_t>(
+      ::ShellExecuteW(0, verb, file, parameters, SystemUtil::GetSystemDir(),
+                      SW_SHOW)));
+  LOG_IF(ERROR, result <= 32)
+      << "ShellExecute failed."
+      << ", error:" << result
+      << ", verb: " << verb
+      << ", file: " << file
+      << ", parameters: " << parameters;
+  return result > 32;
 }
 
 ScopedCOMInitializer::ScopedCOMInitializer()

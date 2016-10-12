@@ -30,16 +30,12 @@
 #include "dictionary/user_dictionary_util.h"
 
 #include "base/util.h"
-#include "base/protobuf/message.h"
-#include "base/protobuf/unknown_field_set.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
 
 namespace mozc {
 
-using mozc::protobuf::UnknownField;
-using mozc::protobuf::UnknownFieldSet;
 using user_dictionary::UserDictionary;
 using user_dictionary::UserDictionaryCommandStatus;
 
@@ -147,7 +143,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
 }
 
 TEST(UserDictionaryUtilTest, TestSanitize) {
-  string str('\t', 10);
+  string str(10, '\t');
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 5));
   EXPECT_EQ("", str);
 
@@ -330,240 +326,6 @@ TEST(UserDictionaryUtilTest, GetUserDictionaryIndexById) {
   EXPECT_EQ(-1, UserDictionaryUtil::GetUserDictionaryIndexById(storage, -1));
 }
 
-TEST(UserDictionaryUtilTest, ResolveUnknownFieldSet1) {
-  user_dictionary::UserDictionaryStorage storage;
-  {
-    UserDictionary *dictionary = storage.add_dictionaries();
-    UserDictionary::Entry *entry = dictionary->add_entries();
-    entry->set_key("key");
-    entry->set_value("value");
-    entry->set_pos(UserDictionary::NOUN);
-    entry->set_comment("comment");
-  }
-
-  // Do nothing if any entry doesn't have unknown field set.
-  UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
-  EXPECT_PROTO_EQ(
-      "dictionaries <\n"
-      "  entries <\n"
-      "    key: \"key\"\n"
-      "    value: \"value\"\n"
-      "    pos: NOUN\n"
-      "    comment: \"comment\"\n"
-      "  >\n"
-      ">\n",
-      storage);
-}
-
-
-TEST(UserDictionaryUtilTest, ResolveUnknownFieldSet2) {
-  user_dictionary::UserDictionaryStorage storage;
-  {
-    UserDictionary *dictionary = storage.add_dictionaries();
-    UserDictionary::Entry *entry = dictionary->add_entries();
-    entry->set_key("key");
-    entry->set_value("value");
-    entry->set_comment("comment");
-
-    UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-    unknown_field_set->AddVarint(3, 1);
-  }
-
-  // Migrate old enum formatted pos to the actual Entry::pos.
-  UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
-  EXPECT_PROTO_EQ(
-      "dictionaries <\n"
-      "  entries <\n"
-      "    key: \"key\"\n"
-      "    value: \"value\"\n"
-      "    pos: NOUN\n"
-      "    comment: \"comment\"\n"
-      "  >\n"
-      ">\n",
-      storage);
-}
-
-TEST(UserDictionaryUtilTest, ResolveUnknownFieldSet3) {
-  user_dictionary::UserDictionaryStorage storage;
-  {
-    UserDictionary *dictionary = storage.add_dictionaries();
-    UserDictionary::Entry *entry = dictionary->add_entries();
-    entry->set_key("key");
-    entry->set_value("value");
-    entry->set_comment("comment");
-
-    UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-    // "名詞"
-    unknown_field_set->AddLengthDelimited(3, "\xE5\x90\x8D\xE8\xA9\x9E");
-  }
-
-  // Migrate old string formatted pos to the actual Entry::pos.
-  UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
-  EXPECT_PROTO_EQ(
-      "dictionaries <\n"
-      "  entries <\n"
-      "    key: \"key\"\n"
-      "    value: \"value\"\n"
-      "    pos: NOUN\n"
-      "    comment: \"comment\"\n"
-      "  >\n"
-      ">\n",
-      storage);
-}
-
-TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType1) {
-  user_dictionary::UserDictionaryStorage storage;
-  {
-    UserDictionary *dictionary = storage.add_dictionaries();
-    UserDictionary::Entry *entry = dictionary->add_entries();
-    entry->set_key("key");
-    entry->set_value("value");
-    entry->set_comment("comment");
-
-    UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-    // "名詞副詞可能"
-    unknown_field_set->AddLengthDelimited(
-        3,
-        "\xE5\x90\x8D\xE8\xA9\x9E\xE5\x89\xAF\xE8\xA9\x9E"
-        "\xE5\x8F\xAF\xE8\x83\xBD");
-  }
-
-  // Migrate old string formatted pos to the actual Entry::pos.
-  UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
-  EXPECT_PROTO_EQ(
-      "dictionaries <\n"
-      "  entries <\n"
-      "    key: \"key\"\n"
-      "    value: \"value\"\n"
-      "    pos: NOUN\n"
-      "    comment: \"comment\"\n"
-      "  >\n"
-      ">\n",
-      storage);
-}
-
-TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType2) {
-  static const char *kTestLengthDelimited[] = {
-    // "接頭形容詞接続"
-    "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
-    "\xE6\x8E\xA5\xE7\xB6\x9A",
-    // "接頭数接続"
-    "\xE6\x8E\xA5\xE9\xA0\xAD\xE6\x95\xB0\xE6\x8E\xA5\xE7\xB6\x9A",
-    // "接頭動詞接続"
-    "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x8B\x95\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
-    // "接頭名詞接続"
-    "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x90\x8D\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
-  };
-
-  for (size_t test_case_index = 0;
-       test_case_index < arraysize(kTestLengthDelimited); ++test_case_index) {
-    user_dictionary::UserDictionaryStorage storage;
-    {
-      UserDictionary *dictionary = storage.add_dictionaries();
-      UserDictionary::Entry *entry = dictionary->add_entries();
-      entry->set_key("key");
-      entry->set_value("value");
-      entry->set_comment("comment");
-
-      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-      unknown_field_set->AddLengthDelimited(
-          3, kTestLengthDelimited[test_case_index]);
-    }
-
-    // Migrate old string formatted pos to the actual Entry::pos.
-    UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
-    EXPECT_PROTO_EQ(
-        "dictionaries <\n"
-        "  entries <\n"
-        "    key: \"key\"\n"
-        "    value: \"value\"\n"
-        "    pos: PREFIX\n"
-        "    comment: \"comment\"\n"
-        "  >\n"
-        ">\n",
-        storage);
-  }
-}
-
-TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType3) {
-  static const char *kTestLengthDelimited[] = {
-    // "形容詞アウオ段"
-    "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
-    "\xE3\x82\xA2\xE3\x82\xA6\xE3\x82\xAA\xE6\xAE\xB5",
-    // "形容詞イ段"
-    "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E\xE3\x82\xA4\xE6\xAE\xB5",
-  };
-
-  for (size_t test_case_index = 0;
-       test_case_index < arraysize(kTestLengthDelimited); ++test_case_index) {
-    user_dictionary::UserDictionaryStorage storage;
-    {
-      UserDictionary *dictionary = storage.add_dictionaries();
-      UserDictionary::Entry *entry = dictionary->add_entries();
-      entry->set_key("key");
-      entry->set_value("value");
-      entry->set_comment("comment");
-
-      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-      unknown_field_set->AddLengthDelimited(
-          3, kTestLengthDelimited[test_case_index]);
-    }
-
-    // Migrate old string formatted pos to the actual Entry::pos.
-    UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
-    EXPECT_PROTO_EQ(
-        "dictionaries <\n"
-        "  entries <\n"
-        "    key: \"key\"\n"
-        "    value: \"value\"\n"
-        "    pos: ADJECTIVE\n"
-        "    comment: \"comment\"\n"
-        "  >\n"
-        ">\n",
-        storage);
-  }
-}
-
-
-TEST(UserDictionaryUtilTest, ResolveUnknownFieldWithRemovedPosType4) {
-  static const char *kTestLengthDelimited[] = {
-    // "括弧開"
-    "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x8B",
-    // "括弧閉"
-    "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89",
-  };
-
-  for (size_t test_case_index = 0;
-       test_case_index < arraysize(kTestLengthDelimited); ++test_case_index) {
-    user_dictionary::UserDictionaryStorage storage;
-    {
-      UserDictionary *dictionary = storage.add_dictionaries();
-      UserDictionary::Entry *entry = dictionary->add_entries();
-      entry->set_key("key");
-      entry->set_value("value");
-      entry->set_comment("comment");
-
-      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-      unknown_field_set->AddLengthDelimited(
-          3, kTestLengthDelimited[test_case_index]);
-    }
-
-    // Migrate old string formatted pos to the actual Entry::pos.
-    UserDictionaryUtil::ResolveUnknownFieldSet(&storage);
-    EXPECT_PROTO_EQ(
-        "dictionaries <\n"
-        "  entries <\n"
-        "    key: \"key\"\n"
-        "    value: \"value\"\n"
-        "    pos: SYMBOL\n"
-        "    comment: \"comment\"\n"
-        "  >\n"
-        ">\n",
-        storage);
-  }
-}
-
-
 TEST(UserDictionaryUtilTest, CreateDictionary) {
   user_dictionary::UserDictionaryStorage storage;
   uint64 dictionary_id;
@@ -634,59 +396,6 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
 
   // Delete to avoid memoary leaking.
   delete expected_deleted_dictionary;
-}
-
-TEST(UserDictionaryUtilTest, FillDesktopDeprecatedPosField) {
-  user_dictionary::UserDictionaryStorage storage;
-  {
-    UserDictionary *dictionary = storage.add_dictionaries();
-    UserDictionary::Entry *entry = dictionary->add_entries();
-    entry->set_key("key");
-    entry->set_value("value");
-    entry->set_pos(UserDictionary::NOUN);
-    entry->set_comment("comment");
-  }
-
-  UserDictionaryUtil::FillDesktopDeprecatedPosField(&storage);
-  ASSERT_EQ(1, storage.dictionaries_size());
-  const UserDictionary &dictionary = storage.dictionaries(0);
-  ASSERT_EQ(1, dictionary.entries_size());
-  const UserDictionary::Entry &entry = dictionary.entries(0);
-  EXPECT_EQ("key", entry.key());
-  EXPECT_EQ("value", entry.value());
-  EXPECT_EQ(UserDictionary::NOUN, entry.pos());
-  EXPECT_EQ("comment", entry.comment());
-  const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
-  ASSERT_EQ(1, unknown_field_set.field_count());
-  const UnknownField &unknown_field = unknown_field_set.field(0);
-  EXPECT_EQ(3, unknown_field.number());
-  EXPECT_EQ(UnknownField::TYPE_LENGTH_DELIMITED, unknown_field.type());
-  // "名詞"
-  EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", unknown_field.length_delimited());
-}
-
-TEST(UserDictionaryUtilTest, FillDesktopDeprecatedPosFieldEmptyPos) {
-  user_dictionary::UserDictionaryStorage storage;
-  {
-    UserDictionary *dictionary = storage.add_dictionaries();
-    UserDictionary::Entry *entry = dictionary->add_entries();
-    entry->set_key("key");
-    entry->set_value("value");
-    // Don't add pos.
-    entry->set_comment("comment");
-  }
-
-  UserDictionaryUtil::FillDesktopDeprecatedPosField(&storage);
-  ASSERT_EQ(1, storage.dictionaries_size());
-  const UserDictionary &dictionary = storage.dictionaries(0);
-  ASSERT_EQ(1, dictionary.entries_size());
-  const UserDictionary::Entry &entry = dictionary.entries(0);
-  EXPECT_EQ("key", entry.key());
-  EXPECT_EQ("value", entry.value());
-  EXPECT_EQ(UserDictionary::NOUN, entry.pos());
-  EXPECT_EQ("comment", entry.comment());
-  const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
-  EXPECT_EQ(0, unknown_field_set.field_count());
 }
 
 }  // namespace mozc

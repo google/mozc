@@ -56,8 +56,8 @@ class CodeGenByteArrayStreamTest : public testing::Test {
   }
 
   virtual void TearDown() {
-    codegen_stream_.reset(NULL);
-    result_stream_.reset(NULL);
+    codegen_stream_.reset();
+    result_stream_.reset();
   }
 
   string ExpectedOutput(const string &var_name_base,

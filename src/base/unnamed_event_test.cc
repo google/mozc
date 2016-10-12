@@ -62,7 +62,7 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
     UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 400);
-    t.Start();
+    t.Start("UnnamedEventTest");
     EXPECT_FALSE(event.Wait(100));
     EXPECT_FALSE(event.Wait(100));
     EXPECT_TRUE(event.Wait(800));
@@ -73,7 +73,7 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
     UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 100);
-    t.Start();
+    t.Start("UnnamedEventTest");
     EXPECT_TRUE(event.Wait(2000));
     t.Join();
   }
@@ -82,7 +82,7 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
     UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 3000);
-    t.Start();
+    t.Start("UnnamedEventTest");
     EXPECT_FALSE(event.Wait(100));
     EXPECT_FALSE(event.Wait(1000));
     EXPECT_FALSE(event.Wait(1000));
@@ -93,7 +93,7 @@ TEST(UnnamedEventTest, UnnamedEventTest) {
     UnnamedEvent event;
     EXPECT_TRUE(event.IsAvailable());
     UnnamedEventNotifierThread t(&event, 2000);
-    t.Start();
+    t.Start("UnnamedEventTest");
     EXPECT_FALSE(event.Wait(500));
     EXPECT_FALSE(event.Wait(500));
     EXPECT_TRUE(event.Wait(5000));

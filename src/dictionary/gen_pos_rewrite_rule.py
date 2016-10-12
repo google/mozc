@@ -30,7 +30,7 @@
 
 __author__ = "taku"
 
-import sys
+import optparse
 
 
 def IsPrefix(str, key):
@@ -49,8 +49,8 @@ def LoadRewriteMapRule(filename):
   fh = open(filename)
   rule = []
   for line in fh:
-    line = line.rstrip("\n")
-    if not line or line.startswith("#"):
+    line = line.rstrip('\n')
+    if not line or line.startswith('#'):
       continue
     fields = line.split()
     rule.append([fields[0], fields[1]])
@@ -60,12 +60,12 @@ def LoadRewriteMapRule(filename):
 def ReadPOSID(id_file, special_pos_file):
   pos_list = []
 
-  for line in open(id_file, "r"):
+  for line in open(id_file, 'r'):
     fields = line.split()
     pos_list.append(fields[1])
 
-  for line in open(special_pos_file, "r"):
-    if len(line) <= 1 or line[0] == "#":
+  for line in open(special_pos_file, 'r'):
+    if len(line) <= 1 or line[0] == '#':
       continue
     fields = line.split()
     pos_list.append(fields[0])
@@ -73,12 +73,27 @@ def ReadPOSID(id_file, special_pos_file):
   return pos_list
 
 
+def ParseOptions():
+  parser = optparse.OptionParser()
+  parser.add_option('--id_def', dest='id_def',
+                    help='POS ID definition file')
+  parser.add_option('--special_pos', dest='special_pos',
+                    help='Special POS definition file')
+  parser.add_option('--pos_group_def', dest='pos_group_def',
+                    help='Left POS ID group definition file')
+  parser.add_option('--output', dest='output',
+                    help='Output file for binary mode')
+  return parser.parse_args()[0]
+
+
 def main():
+  opts = ParseOptions()
+
   # read lid file
-  pos_list = ReadPOSID(sys.argv[1], sys.argv[2])
+  pos_list = ReadPOSID(opts.id_def, opts.special_pos)
 
   # read rule file
-  rules = LoadRewriteMapRule(sys.argv[3])
+  rules = LoadRewriteMapRule(opts.pos_group_def)
 
   current_id = 1
   id_map = {}
@@ -94,11 +109,11 @@ def main():
           id = current_id
           id_map[rule[1]] = current_id
           current_id += 1
-    ids.append(str(id))
+    ids.append(id)
 
-  print "const uint8 kLidGroup[] = {"
-  print ",\n".join(ids)
-  print "};"
+  with open(opts.output, 'wb') as f:
+    f.write(''.join(chr(id) for id in ids))
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
   main()

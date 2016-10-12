@@ -31,7 +31,6 @@ package org.mozc.android.inputmethod.japanese.session;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Command;
-import org.mozc.android.inputmethod.japanese.util.ZipFileUtil;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -40,11 +39,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.Buffer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipFile;
 
 /**
  * Concrete SessionHandler. Calls JNI.
@@ -53,11 +49,6 @@ import java.util.zip.ZipFile;
 class LocalSessionHandler implements SessionHandler {
 
   private static final String USER_PROFILE_DIRECTORY_NAME = ".mozc";
-  // The file name of the system dictionary and connection data file in the apk.
-  // This is determined in build.xml.
-  // ".imy" extentions expects the the entry is uncompressed.
-  private static final String DICTIONARY_FILE_NAME = "assets/system.dictionary.imy";
-  private static final String CONNECTION_DATA_FILE_NAME = "assets/connection.data.imy";
 
   @Override
   public void initialize(Context context) {
@@ -77,13 +68,6 @@ class LocalSessionHandler implements SessionHandler {
         }
       }
 
-      // Get buffers for the dictionary from the raw .apk file.
-      ZipFile zipfile = new ZipFile(info.sourceDir);
-      Buffer dictionaryBuffer =
-          ZipFileUtil.getBuffer(zipfile, DICTIONARY_FILE_NAME);
-      Buffer connectionDataBuffer =
-          ZipFileUtil.getBuffer(zipfile, CONNECTION_DATA_FILE_NAME);
-
       // Get Java package's version name, to check the version consistency with libmozc.so
       // Note that obtained version name is suffixed by android architecture (e.g., -arm).
       String versionName =
@@ -94,11 +78,7 @@ class LocalSessionHandler implements SessionHandler {
       }
 
       // Load the shared object.
-      MozcJNI.load(userProfileDirectory.getAbsolutePath(),
-                   dictionaryBuffer, connectionDataBuffer, matcher.group(1));
-    } catch (IOException e) {
-      MozcLog.e("Failed to load system dictionary.", e);
-      throw new RuntimeException(e);
+      MozcJNI.load(userProfileDirectory.getAbsolutePath(), null, matcher.group(1));
     } catch (NameNotFoundException e) {
       throw new RuntimeException(e);
     }

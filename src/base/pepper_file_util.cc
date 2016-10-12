@@ -624,6 +624,7 @@ class PepperFileSystem : public PepperFileSystemInterface {
   virtual bool RegisterMmap(MmapSyncInterface *mmap);
   virtual bool UnRegisterMmap(MmapSyncInterface *mmap);
   virtual bool SyncMmapToFile();
+  virtual bool Query(const string &path, PP_FileInfo *file_info);
 
  private:
   // Called in Open()
@@ -646,6 +647,14 @@ PepperFileSystem::PepperFileSystem() {
 
 PepperFileSystem::~PepperFileSystem() {
   VLOG(2) << "PepperFileSystem::~PepperFileSystem";
+}
+
+bool PepperFileSystem::Query(const string &filename, PP_FileInfo *file_info) {
+  VLOG(2) << "PepperFileSystem::Query \"" << filename << "\"";
+  CHECK(!pp::Module::Get()->core()->IsMainThread());
+  CHECK(file_system_.get()) << "PepperFileSystem is not initialized yet";
+  PepperFileQuerer querer(instance_, file_system_.get());
+  return querer.Query(filename, file_info) == PP_OK;
 }
 
 bool PepperFileSystem::Open(pp::Instance *instance, int64 expected_size) {
@@ -689,11 +698,8 @@ void PepperFileSystem::OnOpen(int32_t result, int32_t *ret_result) {
 
 bool PepperFileSystem::FileExists(const string &filename) {
   VLOG(2) << "PepperFileSystem::FileExists \"" << filename << "\"";
-  CHECK(!pp::Module::Get()->core()->IsMainThread());
-  CHECK(file_system_.get()) << "PepperFileSystem is not initialized yet";
   PP_FileInfo info;
-  PepperFileQuerer querer(instance_, file_system_.get());
-  return querer.Query(filename, &info) == PP_OK;
+  return Query(filename, &info);
 }
 
 bool PepperFileSystem::DirectoryExists(const string &dirname) {
@@ -835,6 +841,10 @@ bool PepperFileUtil::UnRegisterMmap(MmapSyncInterface *mmap) {
 
 bool PepperFileUtil::SyncMmapToFile() {
   return GetPepperFileSystem()->SyncMmapToFile();
+}
+
+bool PepperFileUtil::Query(const string &path, PP_FileInfo *file_info) {
+  return GetPepperFileSystem()->Query(path, file_info);
 }
 
 }  // namespace mozc

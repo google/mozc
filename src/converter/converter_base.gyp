@@ -119,7 +119,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
-        '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
@@ -154,6 +153,7 @@
       ],
       'dependencies' : [
         '../base/base.gyp:base',
+        '../protocol/protocol.gyp:segmenter_data_proto',
       ]
     },
     {

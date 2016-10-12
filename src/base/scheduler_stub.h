@@ -59,6 +59,7 @@ class SchedulerStub : public Scheduler::SchedulerInterface {
   virtual bool AddJob(const Scheduler::JobSetting &job_setting);
   virtual bool RemoveJob(const string &name);
   virtual void RemoveAllJobs();
+  virtual bool HasJob(const string &name) const;
 
   // Puts stub internal clock forward.
   // Jobs will be executed according to forwarded time.

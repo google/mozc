@@ -32,19 +32,19 @@
   'conditions': [['use_qt=="YES"', {
 
   'variables': {
-    'includes': ['qt_vars.gypi'],
     'conditions': [
-      ['qt_dir', {
-        'uic_path': '<(qt_dir)/bin/uic<(EXECUTABLE_SUFFIX)',
-      }, {
+      ['target_platform=="Linux"', {
         'conditions': [
-          ['pkg_config_command', {
-            'uic_path':
-              '<!(<(pkg_config_command) --variable=uic_location QtGui)',
+          ['qt_ver==5', {
+            'uic_path': '<!(pkg-config --variable=host_bins Qt5Core)/uic',
           }, {
-            'uic_path': '<(qt_dir_env)/bin/uic<(EXECUTABLE_SUFFIX)',
+            'uic_path': '<!(pkg-config --variable=uic_location QtGui)',
           }],
         ],
+      }, 'qt_dir', {
+        'uic_path': '<(qt_dir)/bin/uic<(EXECUTABLE_SUFFIX)',
+      }, {
+        'uic_path': 'uic<(EXECUTABLE_SUFFIX)',
       }],
     ],
   },

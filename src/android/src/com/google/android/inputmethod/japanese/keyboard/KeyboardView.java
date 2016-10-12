@@ -48,6 +48,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.view.ViewCompat;
 import android.text.InputType;
@@ -77,7 +78,7 @@ public class KeyboardView extends View implements MemoryManageable {
   private final DrawableCache drawableCache = new DrawableCache(getResources());
   private final PopUpPreview.Pool popupPreviewPool =
       new PopUpPreview.Pool(
-          this, Looper.getMainLooper(), backgroundDrawableFactory, drawableCache);
+          this, Looper.getMainLooper(), backgroundDrawableFactory, getResources());
   private final long popupDismissDelay;
 
   private Optional<Keyboard> keyboard = Optional.absent();
@@ -94,6 +95,9 @@ public class KeyboardView extends View implements MemoryManageable {
 
   private final KeyboardAccessibilityDelegate accessibilityDelegate;
 
+  /** Just for testing purpose. If true, HANDLING_TOUCH_EVENET metastate is removed directly. */
+  @VisibleForTesting boolean enableDelayForHandlingTouchEvent = true;
+
   /**
    * Decorator class for {@code Map} for {@code KeyEventContextMap}.
    * <p>
@@ -101,6 +105,23 @@ public class KeyboardView extends View implements MemoryManageable {
    * is updated.
    */
   private final class KeyEventContextMap extends ForwardingMap<Integer, KeyEventContext>{
+
+    // HANDLING_TOUCH_EVENT metastate must be kept turned on for DELAY millisecond
+    // after registered KeyEventContext becomes empty.
+    // Otherwise in the time between last TOUCH_UP event and the result from conversion engine
+    // (though it is typically very short time) Globe key is shown, which triggers unexpected
+    // IME switch.
+    private static final long DELAY = 300;  // in millisecond.
+    // Used for registering delayed update of HANDLING_TOUCH_EVENT.
+    private final Handler delayedHandlingTouchEventHandler = new Handler(Looper.getMainLooper());
+    // A Runnable to unset HANDLING_TOUCH_EVENT.
+    private final Runnable metastateUnsetter = new Runnable() {
+      @Override
+      public void run() {
+        updateMetaStates(Collections.<MetaState>emptySet(),
+                         Collections.singleton(MetaState.HANDLING_TOUCH_EVENT));
+      }
+    };
 
     private final Map<Integer, KeyEventContext> delegate;
 
@@ -116,34 +137,48 @@ public class KeyboardView extends View implements MemoryManageable {
     @Override
     public void clear() {
       super.clear();
-      updateHandlingTouchEventMetaState();
+      // Clearing the map corresponds to initialization so the metastate must be updated
+      // immediately.
+      updateHandlingTouchEventMetaState(false);
     }
 
     @Override
     public KeyEventContext put(Integer key, KeyEventContext value) {
       KeyEventContext result = super.put(key, value);
-      updateHandlingTouchEventMetaState();
+      updateHandlingTouchEventMetaState(true);
       return result;
     }
 
     @Override
     public void putAll(Map<? extends Integer, ? extends KeyEventContext> map) {
       super.putAll(map);
-      updateHandlingTouchEventMetaState();
+      updateHandlingTouchEventMetaState(true);
     }
 
     @Override
     public KeyEventContext remove(Object object) {
       KeyEventContext result = super.remove(object);
-      updateHandlingTouchEventMetaState();
+      updateHandlingTouchEventMetaState(true);
       return result;
     }
 
-    private void updateHandlingTouchEventMetaState() {
+    /**
+     * @param delayForUnset true if unsetting HANDLING_TOUCH_EVENT must be delayed.
+     */
+    private void updateHandlingTouchEventMetaState(boolean delayForUnset) {
+      // Clear the handler to guarantee that the handler has zero or one message.
+      delayedHandlingTouchEventHandler.removeCallbacks(metastateUnsetter);
       if (keyEventContextMap.isEmpty()) {
-        updateMetaStates(Collections.<MetaState>emptySet(),
-                         Collections.singleton(MetaState.HANDLING_TOUCH_EVENT));
+        if (delayForUnset && enableDelayForHandlingTouchEvent) {
+          // After DELAY milliseconds, HANDLING_TOUCH_EVENT will be unset.
+          delayedHandlingTouchEventHandler.postDelayed(metastateUnsetter, DELAY);
+        } else {
+          updateMetaStates(Collections.<MetaState>emptySet(),
+                           Collections.singleton(MetaState.HANDLING_TOUCH_EVENT));
+        }
       } else {
+        // Setting HANDLING_TOUCH_EVENT must be processed immediately in order to inactivate
+        // Globe key as soon as possible.
         updateMetaStates(Collections.singleton(MetaState.HANDLING_TOUCH_EVENT),
                          Collections.<MetaState>emptySet());
       }
@@ -204,7 +239,7 @@ public class KeyboardView extends View implements MemoryManageable {
             processKeyEventContextForOnUpEvent(keyEventContext);
             // Without the invalidation this view cannot know that its content
             // has been updated.
-            invalidate();
+            invalidateIfRequired();
           }
         });
     ViewCompat.setAccessibilityDelegate(this, accessibilityDelegate);
@@ -245,7 +280,7 @@ public class KeyboardView extends View implements MemoryManageable {
     if (keyEventHandler.isPresent()) {
       keyEventHandler.get().cancelDelayedKeyEvent(keyEventContext);
     }
-    backgroundSurface.requestUpdateKey(keyEventContext.key, Optional.<Flick.Direction>absent());
+    backgroundSurface.removePressedKey(keyEventContext.key);
     if (popupEnabled || keyEventContext.longPressCallback.isPresent()) {
       popupPreviewPool.releaseDelayed(keyEventContext.pointerId, popupDismissDelay);
     }
@@ -297,10 +332,8 @@ public class KeyboardView extends View implements MemoryManageable {
     updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
     accessibilityDelegate.setKeyboard(this.keyboard);
     this.drawableCache.clear();
-    backgroundSurface.requestUpdateKeyboard(keyboard, metaState);
-    backgroundSurface.requestUpdateSize(keyboard.contentRight - keyboard.contentLeft,
-                                        keyboard.contentBottom - keyboard.contentTop);
-    invalidate();
+    backgroundSurface.reset(this.keyboard, Collections.<MetaState>emptySet());
+    invalidateIfRequired();
   }
 
   public void setPopupEnabled(boolean popupEnabled) {
@@ -315,12 +348,6 @@ public class KeyboardView extends View implements MemoryManageable {
     return popupEnabled;
   }
 
-  @Override
-  public void onDetachedFromWindow() {
-    backgroundSurface.reset();
-    super.onDetachedFromWindow();
-  }
-
   /** @return the current keyboard instance */
   public Optional<Keyboard> getKeyboard() {
     return keyboard;
@@ -330,9 +357,10 @@ public class KeyboardView extends View implements MemoryManageable {
   public void setSkin(Skin skin) {
     Preconditions.checkNotNull(skin);
     drawableCache.setSkin(skin);
+    popupPreviewPool.setSkin(skin);
     backgroundDrawableFactory.setSkin(skin);
     if (keyboard.isPresent()) {
-      backgroundSurface.requestUpdateKeyboard(keyboard.get(), metaState);
+      backgroundSurface.reset(this.keyboard, Collections.<MetaState>emptySet());
     }
     setBackgroundDrawable(skin.windowBackgroundDrawable.getConstantState().newDrawable());
   }
@@ -359,7 +387,6 @@ public class KeyboardView extends View implements MemoryManageable {
       return;
     }
     // Draw keyboard.
-    backgroundSurface.update();
     backgroundSurface.draw(canvas);
   }
 
@@ -442,14 +469,13 @@ public class KeyboardView extends View implements MemoryManageable {
       // Update the metaState and request to update the full keyboard image
       // to update all key icons.
       setMetaStates(nextMetaStates);
-      backgroundSurface.requestUpdateKeyboard(keyboard.get(), nextMetaStates);
+      backgroundSurface.reset(keyboard, nextMetaStates);
     } else {
       // Remember if a non-modifier key is pressed.
       isKeyPressed = true;
 
-      // Request to update the image of only this key on the view.
-      backgroundSurface.requestUpdateKey(keyEventContext.key,
-                                         Optional.of(keyEventContext.flickDirection));
+      // Add the key as pressed one into the renderer.
+      backgroundSurface.addPressedKey(keyEventContext.key, keyEventContext.flickDirection);
     }
     if (keyEventHandler.isPresent()) {
       // Clear pending key events and overwrite by this press key's one.
@@ -497,11 +523,11 @@ public class KeyboardView extends View implements MemoryManageable {
     if (keyEventContext.isMetaStateToggleEvent()) {
       if (isKeyPressed) {
         // A user pressed at least one key with pressing modifier key, and then the user
-        // released this modifier key. So, we flush all pending events here, and
+        // released this modifier key. So, we flush all pressed keys here, and
         // reset the keyboard's meta state to unmodified.
         flushPendingKeyEvent(keyEventContext.getTouchEvent());
         updateMetaStates(Collections.<MetaState>emptySet(), MetaState.CHAR_TYPE_EXCLUSIVE_GROUP);
-        backgroundSurface.requestUpdateKeyboard(keyboard.get(), Collections.<MetaState>emptySet());
+        backgroundSurface.reset(keyboard, Collections.<MetaState>emptySet());
       }
     } else {
       if (!metaState.isEmpty() && keyEventContextMap.isEmpty()) {
@@ -515,11 +541,11 @@ public class KeyboardView extends View implements MemoryManageable {
         }
         if (!nextMetaState.equals(metaState)) {
           setMetaStates(nextMetaState);
-          backgroundSurface.requestUpdateKeyboard(
-              keyboard.get(), Collections.<MetaState>emptySet());
+          backgroundSurface.reset(keyboard, Collections.<MetaState>emptySet());
         }
       }
     }
+    backgroundSurface.removePressedKey(keyEventContext.key);
   }
 
   private void onMove(MotionEvent event) {
@@ -543,7 +569,7 @@ public class KeyboardView extends View implements MemoryManageable {
         }
         updatePopUp(keyEventContext, false);
       }
-      backgroundSurface.requestUpdateKey(key, Optional.of(keyEventContext.flickDirection));
+      backgroundSurface.addPressedKey(key, keyEventContext.flickDirection);
     }
   }
 
@@ -578,8 +604,8 @@ public class KeyboardView extends View implements MemoryManageable {
         return false;
     }
 
-    // The keyboard's state is somehow changed. Update the view.
-    invalidate();
+    // The keyboard's state might be changed. Update the view if required.
+    invalidateIfRequired();
     return true;
   }
 
@@ -659,7 +685,6 @@ public class KeyboardView extends View implements MemoryManageable {
 
   @Override
   public void trimMemory() {
-    backgroundSurface.trimMemory();
     drawableCache.clear();
     popupPreviewPool.releaseAll();
   }
@@ -692,7 +717,7 @@ public class KeyboardView extends View implements MemoryManageable {
     Preconditions.checkArgument(MetaState.isValidSet(metaState));
     this.metaState = metaState;
     accessibilityDelegate.setMetaState(metaState);
-    backgroundSurface.requestMetaState(metaState);
+    backgroundSurface.setMetaStates(metaState);
   }
 
   public void updateMetaStates(Set<MetaState> addedMetaStates, Set<MetaState> removedMetaStates) {
@@ -701,7 +726,7 @@ public class KeyboardView extends View implements MemoryManageable {
 
     setMetaStates(Sets.union(Sets.difference(metaState, removedMetaStates),
                              addedMetaStates).immutableCopy());
-    invalidate();
+    invalidateIfRequired();
   }
 
   public void setPasswordField(boolean isPasswordField) {
@@ -784,6 +809,12 @@ public class KeyboardView extends View implements MemoryManageable {
           keyEventContext.key, keyEventContext.getCurrentPopUp(), isDelayedPopUp);
     } else {
       popUpPreview.dismiss();
+    }
+  }
+
+  private void invalidateIfRequired() {
+    if (backgroundSurface.isDirty()) {
+      invalidate();
     }
   }
 }

@@ -35,6 +35,7 @@ import optparse
 import sys
 
 from build_tools import code_generator_util
+from build_tools import serialized_string_array_builder
 
 
 def ReadCounterSuffixPosIds(id_file):
@@ -62,18 +63,7 @@ def ReadCounterSuffixes(dictionary_files, ids):
       for x, lid, rid, y, value in stream:
         if (lid == rid) and (lid in ids) and (rid in ids):
           suffixes.add(value)
-  return suffixes
-
-
-def WriteSortedSuffixArray(output_filename, suffixes):
-  with codecs.open(output_filename, 'w', encoding='utf-8') as stream:
-    stream.write('const CounterSuffixEntry kCounterSuffixes[] = {\n')
-    for suffix in sorted(suffixes):
-      utf8_suffix = suffix.encode('utf-8')
-      escaped = code_generator_util.ToCppStringLiteral(utf8_suffix)
-      stream.write(
-          u'  {%s, %du}, // "%s"\n' % (escaped, len(utf8_suffix), suffix))
-    stream.write('};\n')
+  return sorted(s.encode('utf-8') for s in suffixes)
 
 
 def ParseOptions():
@@ -87,7 +77,7 @@ def main():
   options, args = ParseOptions()
   ids = ReadCounterSuffixPosIds(options.id_file)
   suffixes = ReadCounterSuffixes(args, ids)
-  WriteSortedSuffixArray(options.output, suffixes)
+  serialized_string_array_builder.SerializeToFile(suffixes, options.output)
 
 
 if __name__ == '__main__':

@@ -42,7 +42,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
@@ -77,12 +76,13 @@
       ],
       'dependencies': [
         '../converter/converter_base.gyp:converter_mock',
-        '../data_manager/data_manager.gyp:user_pos_manager',
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../engine/engine.gyp:engine',
         '../engine/engine.gyp:mock_converter_engine',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session',
       ],
@@ -97,7 +97,7 @@
         'session_regression_test.cc',
       ],
       'dependencies': [
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
@@ -142,6 +142,7 @@
       ],
       'dependencies': [
         '../converter/converter_base.gyp:converter_mock',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:testing_util',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
@@ -157,7 +158,6 @@
         'session_observer_handler_test.cc',
         'session_usage_observer_test.cc',
         'session_usage_stats_util_test.cc',
-        'session_watch_dog_test.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -177,12 +177,22 @@
         'session_base.gyp:output_util',
         'session_base.gyp:session_usage_stats_util',
       ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          'sources!': [
-            'session_watch_dog_test.cc',
-          ],
-        }],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      # Android is not supported.
+      'target_name': 'session_watch_dog_test',
+      'type': 'executable',
+      'sources': [
+        'session_watch_dog_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../client/client.gyp:client_mock',
+        '../testing/testing.gyp:gtest_main',
+        'session.gyp:session_watch_dog',
       ],
       'variables': {
         'test_size': 'small',
@@ -238,7 +248,6 @@
         'session_handler_stress_test.cc'
       ],
       'dependencies': [
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
         '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:random_keyevents_generator',
@@ -320,8 +329,10 @@
         '../base/base.gyp:base',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
+        '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session_handler',
         'session_base.gyp:request_test_util',
@@ -351,11 +362,13 @@
         'session_regression_test',
         'session_server_test',
         'session_test',
+        'session_watch_dog_test',
       ],
       'conditions': [
         ['target_platform=="Android"', {
           'dependencies!': [
             'session_server_test',
+            'session_watch_dog_test',
             # These tests have been disabled as it takes long execution time.
             # In addition currently they fail.
             # Here we also disable the tests temporarirly.

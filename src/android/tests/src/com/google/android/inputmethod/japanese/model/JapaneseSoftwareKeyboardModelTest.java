@@ -35,6 +35,7 @@ import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.Inp
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
 
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.InputType;
 
 import junit.framework.TestCase;
@@ -43,6 +44,7 @@ import junit.framework.TestCase;
  */
 public class JapaneseSoftwareKeyboardModelTest extends TestCase {
 
+  @SmallTest
   public void testGetKeyboardSpecification() {
     class TestData extends Parameter {
       final KeyboardLayout keyboardLayout;
@@ -262,6 +264,7 @@ public class JapaneseSoftwareKeyboardModelTest extends TestCase {
     }
   }
 
+  @SmallTest
   public void testInputType() {
     class TestData extends Parameter {
       final int inputType;
@@ -283,7 +286,8 @@ public class JapaneseSoftwareKeyboardModelTest extends TestCase {
                      KeyboardMode.NUMBER),
         new TestData(InputType.TYPE_CLASS_NUMBER, KeyboardMode.NUMBER),
         new TestData(InputType.TYPE_CLASS_PHONE, KeyboardMode.NUMBER),
-        new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, null),
+        new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
+                     KeyboardMode.ALPHABET),
         new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_SUBJECT, null),
         new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_FILTER, null),
         new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE, null),
@@ -346,7 +350,8 @@ public class JapaneseSoftwareKeyboardModelTest extends TestCase {
                      KeyboardMode.NUMBER),
         new TestData(InputType.TYPE_CLASS_NUMBER, KeyboardMode.NUMBER),
         new TestData(InputType.TYPE_CLASS_PHONE, KeyboardMode.NUMBER),
-        new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, null),
+        new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
+                     KeyboardMode.ALPHABET),
         new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_SUBJECT, null),
         new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_FILTER, null),
         new TestData(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE, null),
@@ -435,6 +440,7 @@ public class JapaneseSoftwareKeyboardModelTest extends TestCase {
 
   }
 
+  @SmallTest
   public void testInputTypeScenario() {
     JapaneseSoftwareKeyboardModel model = new JapaneseSoftwareKeyboardModel();
     model.setKeyboardLayout(KeyboardLayout.TWELVE_KEYS);
@@ -454,6 +460,20 @@ public class JapaneseSoftwareKeyboardModelTest extends TestCase {
     // Even after the keyboard mode overwriting, the keyboard mode should be revereted before
     // input-type-setting.
     model.setInputType(InputType.TYPE_NULL);
+    assertEquals(KeyboardMode.KANA, model.getKeyboardMode());
+  }
+
+  @SmallTest
+  public void testNumberKeyboardSwitchingIssue_b22676055() {
+    JapaneseSoftwareKeyboardModel model = new JapaneseSoftwareKeyboardModel();
+    model.setKeyboardLayout(KeyboardLayout.TWELVE_KEYS);
+    assertEquals(KeyboardMode.KANA, model.getKeyboardMode());
+    model.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+    assertEquals(KeyboardMode.ALPHABET, model.getKeyboardMode());
+    model.setKeyboardLayout(KeyboardLayout.QWERTY);
+    model.setInputType(InputType.TYPE_CLASS_NUMBER);
+    assertEquals(KeyboardMode.NUMBER, model.getKeyboardMode());
+    model.setInputType(InputType.TYPE_CLASS_TEXT);
     assertEquals(KeyboardMode.KANA, model.getKeyboardMode());
   }
 }

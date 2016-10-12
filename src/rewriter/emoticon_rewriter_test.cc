@@ -30,6 +30,7 @@
 #include "rewriter/emoticon_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -37,16 +38,17 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
-
 namespace {
+
 void AddSegment(const string &key, const string &value,
                 Segments *segments) {
   segments->Clear();
@@ -71,22 +73,19 @@ bool HasEmoticon(const Segments &segments) {
   }
   return false;
 }
-}  // namespace
 
-class EmoticonRewriterTest : public testing::Test {
+class EmoticonRewriterTest : public ::testing::Test {
  protected:
-  EmoticonRewriterTest() {}
-  ~EmoticonRewriterTest() {}
+  testing::MockDataManager mock_data_manager_;
 
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  }
-
-  virtual void TearDown() {}
+ private:
+  testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
 TEST_F(EmoticonRewriterTest, BasicTest) {
-  EmoticonRewriter emoticon_rewriter;
+  std::unique_ptr<EmoticonRewriter> emoticon_rewriter =
+      EmoticonRewriter::CreateFromDataManager(mock_data_manager_);
+
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   ConversionRequest request;
@@ -96,30 +95,30 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment("test", "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
     // "かお"
     AddSegment("\xE3\x81\x8B\xE3\x81\x8A", "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
 
     // "かおもじ"
     AddSegment("\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98",
                "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
 
     // "にこにこ"
     AddSegment("\xE3\x81\xAB\xE3\x81\x93\xE3\x81\xAB\xE3\x81\x93",
                "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
 
     // "ふくわらい"
     AddSegment("\xE3\x81\xB5\xE3\x81\x8F\xE3\x82\x8F\xE3\x82\x89\xE3\x81\x84",
                "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
   }
 
@@ -128,49 +127,52 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment("test", "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
     // "かお"
     AddSegment("\xE3\x81\x8B\xE3\x81\x8A", "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
     // "かおもじ"
     AddSegment("\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98",
                "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
     // "にこにこ"
     AddSegment("\xE3\x81\xAB\xE3\x81\x93\xE3\x81\xAB\xE3\x81\x93",
                "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
     // "ふくわらい"
     AddSegment("\xE3\x81\xB5\xE3\x81\x8F\xE3\x82\x8F\xE3\x82\x89\xE3\x81\x84",
                "test", &segments);
-    emoticon_rewriter.Rewrite(request, &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
   }
 }
 
 TEST_F(EmoticonRewriterTest, MobileEnvironmentTest) {
-  EmoticonRewriter rewriter;
+  std::unique_ptr<EmoticonRewriter> rewriter =
+      EmoticonRewriter::CreateFromDataManager(mock_data_manager_);
+
   commands::Request request;
   ConversionRequest convreq;
   convreq.set_request(&request);
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
   }
 }
 
+}  // namespace
 }  // namespace mozc

@@ -30,7 +30,11 @@
 #ifndef MOZC_GUI_CHARACTER_PAD_HAND_WRITING_CANVAS_H_
 #define MOZC_GUI_CHARACTER_PAD_HAND_WRITING_CANVAS_H_
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QWidget>
+#else
 #include <QtGui/QWidget>
+#endif
 #include <QtCore/QVector>
 #include <QtCore/QPair>
 

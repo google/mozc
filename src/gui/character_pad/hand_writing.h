@@ -30,7 +30,11 @@
 #ifndef MOZC_GUI_CHARACTER_PAD_HAND_WRITING_H_
 #define MOZC_GUI_CHARACTER_PAD_HAND_WRITING_H_
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QMainWindow>
+#else
 #include <QtGui/QMainWindow>
+#endif
 
 #include <memory>
 
@@ -65,11 +69,6 @@ class HandWriting : public QMainWindow,
 
  protected:
   void resizeEvent(QResizeEvent *event);
-
-#ifdef OS_WIN
-  bool winEvent(MSG *message, long *result);
-#endif  // OS_WIN
-
   void updateHandwritingSource(int index);
 
   std::unique_ptr<client::ClientInterface> client_;

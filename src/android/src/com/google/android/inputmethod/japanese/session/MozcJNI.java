@@ -32,8 +32,6 @@ package org.mozc.android.inputmethod.japanese.session;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import com.google.common.base.Preconditions;
 
-import java.nio.Buffer;
-
 /**
  * The wrapper for JNI Mozc server.
  *
@@ -47,16 +45,13 @@ class MozcJNI {
   /**
    * Loads and initializes the JNI library.
    *
-   * @param dictionaryBuffer the buffer pointing the system dictionary
-   * @param connectionDataBuffer the buffer pointing the connection data
+   * @param userProfileDirectoryPath path to user profile directory
+   * @param dataFilePath optional path to data file (e.g., mozc.data), or {@code null}
    * @param expectedVersion expected version name of .so
    */
   static void load(
-      String userProfileDirectoryPath, Buffer dictionaryBuffer, Buffer connectionDataBuffer,
-      String expectedVersion) {
+      String userProfileDirectoryPath, String dataFilePath, String expectedVersion) {
     Preconditions.checkNotNull(userProfileDirectoryPath);
-    Preconditions.checkNotNull(dictionaryBuffer);
-    Preconditions.checkNotNull(connectionDataBuffer);
     Preconditions.checkNotNull(expectedVersion);
 
     if (isLoaded) {
@@ -81,7 +76,10 @@ class MozcJNI {
         message.append(" Server:").append(nativeVersion);
         throw new UnsatisfiedLinkError(message.toString());
       }
-      onPostLoad(userProfileDirectoryPath, dictionaryBuffer, connectionDataBuffer);
+      if (!onPostLoad(userProfileDirectoryPath, dataFilePath)) {
+          MozcLog.e("onPostLoad fails");
+          return;
+      }
       isLoaded = true;
       MozcLog.d("end MozcJNI#load " + System.nanoTime());
     }
@@ -100,14 +98,29 @@ class MozcJNI {
   /**
    * This method initializes the internal state of mozc server, especially dictionary data
    * and session related stuff. We cannot do this in JNI_OnLoad, which is the callback API
-   * for JNI called when the shared object is loaded, because we need to pass the pointers
-   * of dictionary data from Java as only Java knows where the data is in our context.
+   * for JNI called when the shared object is loaded, because we need to pass the file path
+   * of data file from Java as only Java knows where the data is in our context.
    */
-  private static synchronized native void onPostLoad(
-      String userProfileDirectoryPath, Buffer dictionaryData, Buffer connectionData);
+  private static synchronized native boolean onPostLoad(
+      String userProfileDirectoryPath, String dataFilePath);
 
   /**
    * @return Version string of shared object
    */
   private static native String getVersion();
+
+  /**
+   * @return Data version string currently loaded in native layer. Empty if initialization has
+   *     not been done yet.
+   */
+  public static native String getDataVersion();
+
+  /**
+   * Sets suppression policy against sending usage stats.
+   *
+   * <p>Never call this method before JNI is loaded.
+   *
+   * @param suppress suppresses sending if true
+   */
+  private static native void suppressSendingStats(boolean suppress);
 }

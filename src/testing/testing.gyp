@@ -59,6 +59,8 @@
           'GTEST_LANG_CXX11=1',
           'GTEST_HAS_TR1_TUPLE=0',  # disable tr1 tuple in favor of C++11 tuple.
         ],
+        'gtest_dir': '<(third_party_dir)/gtest/googletest',
+        'gmock_dir': '<(third_party_dir)/gtest/googlemock',
         'conditions': [
           ['_toolset=="target" and target_platform=="Android"', {
             'gtest_defines': [
@@ -74,24 +76,24 @@
         ],
       },
       'sources': [
-        '<(DEPTH)/third_party/gmock/src/gmock-cardinalities.cc',
-        '<(DEPTH)/third_party/gmock/src/gmock-internal-utils.cc',
-        '<(DEPTH)/third_party/gmock/src/gmock-matchers.cc',
-        '<(DEPTH)/third_party/gmock/src/gmock-spec-builders.cc',
-        '<(DEPTH)/third_party/gmock/src/gmock.cc',
-        '<(DEPTH)/third_party/gtest/src/gtest-death-test.cc',
-        '<(DEPTH)/third_party/gtest/src/gtest-filepath.cc',
-        '<(DEPTH)/third_party/gtest/src/gtest-port.cc',
-        '<(DEPTH)/third_party/gtest/src/gtest-printers.cc',
-        '<(DEPTH)/third_party/gtest/src/gtest-test-part.cc',
-        '<(DEPTH)/third_party/gtest/src/gtest-typed-test.cc',
-        '<(DEPTH)/third_party/gtest/src/gtest.cc',
+        '<(gmock_dir)/src/gmock-cardinalities.cc',
+        '<(gmock_dir)/src/gmock-internal-utils.cc',
+        '<(gmock_dir)/src/gmock-matchers.cc',
+        '<(gmock_dir)/src/gmock-spec-builders.cc',
+        '<(gmock_dir)/src/gmock.cc',
+        '<(gtest_dir)/src/gtest-death-test.cc',
+        '<(gtest_dir)/src/gtest-filepath.cc',
+        '<(gtest_dir)/src/gtest-port.cc',
+        '<(gtest_dir)/src/gtest-printers.cc',
+        '<(gtest_dir)/src/gtest-test-part.cc',
+        '<(gtest_dir)/src/gtest-typed-test.cc',
+        '<(gtest_dir)/src/gtest.cc',
       ],
       'include_dirs': [
-        '<(DEPTH)/third_party/gmock',
-        '<(DEPTH)/third_party/gmock/include',
-        '<(DEPTH)/third_party/gtest',
-        '<(DEPTH)/third_party/gtest/include',
+        '<(gmock_dir)',
+        '<(gmock_dir)/include',
+        '<(gtest_dir)',
+        '<(gtest_dir)/include',
       ],
       'defines': [
         '<@(gtest_defines)',
@@ -101,8 +103,8 @@
           '<@(gtest_defines)',
         ],
         'include_dirs': [
-          '<(third_party_dir)/gmock/include',
-          '<(third_party_dir)/gtest/include',
+          '<(gmock_dir)/include',
+          '<(gtest_dir)/include',
         ],
       },
       'conditions': [

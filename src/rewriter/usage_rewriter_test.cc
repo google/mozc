@@ -38,11 +38,11 @@
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_pos.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -77,20 +77,20 @@ class UsageRewriterTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&config_);
 
     data_manager_.reset(new testing::MockDataManager);
-
+    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
     suppression_dictionary_.reset(new SuppressionDictionary);
     user_dictionary_.reset(
-        new UserDictionary(new UserPOS(data_manager_->GetUserPOSData()),
-                           data_manager_->GetPOSMatcher(),
+        new UserDictionary(UserPOS::CreateFromDataManager(*data_manager_),
+                           pos_matcher_,
                            suppression_dictionary_.get()));
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     // just in case, reset the config
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
@@ -108,6 +108,7 @@ class UsageRewriterTest : public ::testing::Test {
   std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDictionary> user_dictionary_;
   std::unique_ptr<testing::MockDataManager> data_manager_;
+  dictionary::POSMatcher pos_matcher_;
 };
 
 TEST_F(UsageRewriterTest, CapabilityTest) {

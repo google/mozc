@@ -139,6 +139,28 @@ inline bool IsConnectedWeakCompound(const vector<const Node *> &nodes,
   return false;
 }
 
+bool IsIsolatedWordOrGeneralSymbol(const dictionary::POSMatcher &pos_matcher,
+                                   uint16 pos_id) {
+  return pos_matcher.IsIsolatedWord(pos_id) ||
+         pos_matcher.IsGeneralSymbol(pos_id);
+}
+
+bool ContainsIsolatedWordOrGeneralSymbol(
+    const dictionary::POSMatcher &pos_matcher,
+    const vector<const Node *> &nodes) {
+  for (const Node *node : nodes) {
+    if (IsIsolatedWordOrGeneralSymbol(pos_matcher, node->lid)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IsNormalOrConstrainedNode(const Node *node) {
+  return node != nullptr &&
+      (node->node_type == Node::NOR_NODE || node->node_type == Node::CON_NODE);
+}
+
 }  // namespace
 
 CandidateFilter::CandidateFilter(
@@ -149,7 +171,7 @@ CandidateFilter::CandidateFilter(
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
-      top_candidate_(NULL),
+      top_candidate_(nullptr),
       apply_suggestion_filter_for_exact_match_(
           apply_suggestion_filter_for_exact_match) {
   CHECK(suppression_dictionary_);
@@ -161,7 +183,7 @@ CandidateFilter::~CandidateFilter() {}
 
 void CandidateFilter::Reset() {
   seen_.clear();
-  top_candidate_ = NULL;
+  top_candidate_ = nullptr;
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
@@ -227,11 +249,35 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   const size_t candidate_size = seen_.size();
-  if (top_candidate_ == NULL || candidate_size == 0) {
+  if (top_candidate_ == nullptr || candidate_size == 0) {
     top_candidate_ = candidate;
   }
 
   CHECK(top_candidate_);
+
+  // "短縮よみ" or "記号,一般" must have only 1 node.  Note that "顔文字" POS
+  // from user dictionary is converted to "記号,一般" in Mozc engine.
+  if (nodes.size() > 1 &&
+      ContainsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes)) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+  // This case tests the case where the isolated word or general symbol is in
+  // content word.
+  if (IsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes[0]->lid) &&
+      (IsNormalOrConstrainedNode(nodes[0]->prev) ||
+       IsNormalOrConstrainedNode(nodes[0]->next))) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+
+  // Remove "抑制単語" just in case.
+  if (suppression_dictionary_->SuppressEntry(candidate->key,
+                                             candidate->value) ||
+      (candidate->key != candidate->content_key &&
+       candidate->value != candidate->content_value &&
+       suppression_dictionary_->SuppressEntry(candidate->content_key,
+                                              candidate->content_value))) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
 
   // Don't remove duplications if USER_DICTIONARY.
   if (candidate->attributes & Segment::Candidate::USER_DICTIONARY) {
@@ -249,28 +295,6 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   CHECK(!nodes.empty());
-
-  // "短縮よみ" must only have 1 node.
-  if (pos_matcher_->IsIsolatedWord(nodes[0]->lid) &&
-      (nodes.size() > 1 ||
-       nodes[0]->prev == NULL ||
-       nodes[0]->prev->node_type == Node::NOR_NODE ||
-       nodes[0]->prev->node_type == Node::CON_NODE ||
-       nodes[0]->next == NULL ||
-       nodes[0]->next->node_type == Node::NOR_NODE ||
-       nodes[0]->next->node_type == Node::CON_NODE)) {
-    return CandidateFilter::BAD_CANDIDATE;
-  }
-
-  // Remove "抑制単語" just in case.
-  if (suppression_dictionary_->SuppressEntry(candidate->key,
-                                             candidate->value) ||
-      (candidate->key != candidate->content_key &&
-       candidate->value != candidate->content_value &&
-       suppression_dictionary_->SuppressEntry(candidate->content_key,
-                                              candidate->content_value))) {
-    return CandidateFilter::BAD_CANDIDATE;
-  }
 
   // Suppress "書います", "書いすぎ", "買いて"
   // Basic idea:

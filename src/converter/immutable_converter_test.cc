@@ -50,7 +50,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/suffix_dictionary.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
@@ -66,7 +65,6 @@ using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
-using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::SystemDictionary;
 using mozc::dictionary::UserDictionaryStub;
@@ -96,8 +94,7 @@ class MockDataAndImmutableConverter {
       const DictionaryInterface *suffix_dictionary = NULL) {
     data_manager_.reset(new testing::MockDataManager);
 
-    const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
-    CHECK(pos_matcher);
+    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
 
     suppression_dictionary_.reset(new SuppressionDictionary);
     CHECK(suppression_dictionary_.get());
@@ -113,18 +110,22 @@ class MockDataAndImmutableConverter {
           SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
       dictionary_.reset(new DictionaryImpl(
           sysdic,  // DictionaryImpl takes the ownership
-          new ValueDictionary(*pos_matcher, &sysdic->value_trie()),
+          new ValueDictionary(pos_matcher_, &sysdic->value_trie()),
           &user_dictionary_stub_,
           suppression_dictionary_.get(),
-          pos_matcher));
+          &pos_matcher_));
     }
     CHECK(dictionary_.get());
 
     if (!suffix_dictionary) {
-      const SuffixToken *tokens = NULL;
-      size_t tokens_size = 0;
-      data_manager_->GetSuffixDictionaryData(&tokens, &tokens_size);
-      suffix_dictionary_.reset(new SuffixDictionary(tokens, tokens_size));
+      StringPiece suffix_key_array_data, suffix_value_array_data;
+      const uint32 *token_array;
+      data_manager_->GetSuffixDictionaryData(&suffix_key_array_data,
+                                             &suffix_value_array_data,
+                                             &token_array);
+      suffix_dictionary_.reset(new SuffixDictionary(suffix_key_array_data,
+                                                    suffix_value_array_data,
+                                                    token_array));
       suffix_dictionary = suffix_dictionary_.get();
     }
     CHECK(suffix_dictionary);
@@ -151,7 +152,7 @@ class MockDataAndImmutableConverter {
         suppression_dictionary_.get(),
         connector_.get(),
         segmenter_.get(),
-        pos_matcher,
+        &pos_matcher_,
         pos_group_.get(),
         suggestion_filter_.get()));
     CHECK(immutable_converter_.get());
@@ -172,6 +173,7 @@ class MockDataAndImmutableConverter {
   std::unique_ptr<const SuggestionFilter> suggestion_filter_;
   std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
   UserDictionaryStub user_dictionary_stub_;
+  dictionary::POSMatcher pos_matcher_;
 };
 
 }  // namespace

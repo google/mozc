@@ -28,11 +28,38 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""A tool to generate boundary data."""
+"""A tool to generate boundary data.
+
+Bounday data binary image is an array of uint16 whose length is 2N, where N is
+the number of POS IDs including special POS.  The array has the following
+structure:
+
+-------------------------------------
+prefix penalty of POS ID 0 (2 bytes)
+-------------------------------------
+suffix penalty of POS ID 0 (2 bytes)
+-------------------------------------
+prefix penalty of POS ID 1 (2 bytes)
+-------------------------------------
+suffix penalty of POS ID 1 (2 bytes)
+-------------------------------------
+  .
+  .
+  .
+-------------------------------------
+prefix penalty of POS ID N (2 bytes)
+-------------------------------------
+suffix penalty of POS ID N (2 bytes)
+-------------------------------------
+
+See converter/segmenter.cc for how it's used.
+"""
 
 __author__ = "taku"
 
+import optparse
 import re
+import struct
 import sys
 
 
@@ -71,32 +98,52 @@ def GetCost(patterns, feature):
   return 0
 
 
-def LoadFeatures(file):
+def LoadFeatures(filename):
   features = []
-  for line in open(file, 'r'):
+  for line in open(filename, 'r'):
     fields = line.split()
     features.append(fields[1])
   return features
 
 
+def CountSpecialPos(filename):
+  count = 0
+  for line in open(filename, 'r'):
+    line = line.rstrip()
+    if not line or line[0] == '#':
+      continue
+    count += 1
+  return count
+
+
+def ParseOptions():
+  parser = optparse.OptionParser()
+  parser.add_option('--boundary_def', dest='boundary_def',
+                    help='Boundary definition file')
+  parser.add_option('--id_def', dest='id_def',
+                    help='Boundary definition file')
+  parser.add_option('--special_pos', dest='special_pos',
+                    help='Special POS definition file')
+  parser.add_option('--output', dest='output',
+                    help='Output binary file')
+  return parser.parse_args()[0]
+
+
 def main():
-  (prefix, suffix) = LoadPatterns(sys.argv[1])
-  features = LoadFeatures(sys.argv[2])
-  print 'namespace {'
-  print 'const BoundaryData kBoundaryData[] = {'
+  opts = ParseOptions()
 
-  for n in range(len(features)):
-    print ' { %d, %d }, // "%s"' % \
-        (GetCost(prefix, features[n]),
-         GetCost(suffix, features[n]),
-         features[n])
+  prefix, suffix = LoadPatterns(opts.boundary_def)
+  features = LoadFeatures(opts.id_def)
+  num_special_pos = CountSpecialPos(opts.special_pos)
 
-  # TODO(team): assume that we have up to 10 special POSes.
-  for n in range(10):
-    print ' { 0, 0 },'
+  with open(opts.output, 'wb') as f:
+    for feature in features:
+      f.write(struct.pack('<H', GetCost(prefix, feature)))
+      f.write(struct.pack('<H', GetCost(suffix, feature)))
 
-  print '};'
-  print '}  // namespace'
+    for _ in xrange(num_special_pos):
+      f.write(struct.pack('<H', 0))
+      f.write(struct.pack('<H', 0))
 
 
 if __name__ == '__main__':

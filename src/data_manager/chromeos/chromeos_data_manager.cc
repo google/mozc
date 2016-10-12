@@ -28,180 +28,34 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "data_manager/chromeos/chromeos_data_manager.h"
-#include "data_manager/chromeos/chromeos_data_manager_factory.h"
 
+#include "base/embedded_file.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "converter/boundary_struct.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary_token.h"
-#include "rewriter/correction_rewriter.h"
-#include "rewriter/counter_suffix.h"
-#ifndef NO_USAGE_REWRITER
-#include "rewriter/usage_rewriter_data_structs.h"
-#endif  // NO_USAGE_REWRITER
-
-using mozc::dictionary::SuffixToken;
 
 namespace mozc {
 namespace chromeos {
-
-const DataManagerInterface *CreateDataManager() {
-  return new ChromeOsDataManager();
-}
-
-void DeleteDataManager(const DataManagerInterface *data_manager) {
-  delete data_manager;
-}
-
 namespace {
-// kLidGroup[] is defined in the following automatically generated header file.
-#include "data_manager/chromeos/pos_group_data.h"
+
+// kCrosMozcDataSet is defined.
+#include "data_manager/chromeos/cros_mozc_data.h"
+
+#ifndef MOZC_DATASET_MAGIC_NUMBER
+#error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"
+#endif  // MOZC_DATASET_MAGIC_NUMBER
+
+const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
+
 }  // namespace
 
-const uint8 *ChromeOsDataManager::GetPosGroupData() const {
-  DCHECK(kLidGroup != NULL);
-  return kLidGroup;
+ChromeOsDataManager::ChromeOsDataManager() {
+  const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
+  CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kCrosMozcDataSet), magic))
+      << "Embedded cros_mozc_data.h is broken";
 }
 
-namespace {
-// Automatically generated header containing the definitions of
-// kConnectionData_data and kConnectionData_size.
-#include "data_manager/chromeos/embedded_connection_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetConnectorData(const char **data,
-                                           size_t *size) const {
-  *data = kConnectionData_data;
-  *size = kConnectionData_size;
-}
-
-namespace {
-// Automatically generated header containing the definitions of
-// kDictionaryData_data[] and kDictionaryData_size.
-#include "data_manager/chromeos/embedded_dictionary_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetSystemDictionaryData(
-    const char **data, int *size) const {
-  *data = kDictionaryData_data;
-  *size = kDictionaryData_size;
-}
-
-namespace {
-// Automatically generated headers containing data set for segmenter.
-#include "data_manager/chromeos/boundary_data.h"
-#include "data_manager/chromeos/segmenter_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetSegmenterData(
-    size_t *l_num_elements, size_t *r_num_elements,
-    const uint16 **l_table, const uint16 **r_table,
-    size_t *bitarray_num_bytes, const char **bitarray_data,
-    const BoundaryData **boundary_data) const {
-  *l_num_elements = kCompressedLSize;
-  *r_num_elements = kCompressedRSize;
-  *l_table = kCompressedLIDTable;
-  *r_table = kCompressedRIDTable;
-  *bitarray_num_bytes = kSegmenterBitArrayData_size;
-  *bitarray_data = kSegmenterBitArrayData_data;
-  *boundary_data = kBoundaryData;
-}
-
-namespace {
-// The generated header defines kSuffixTokens[].
-#include "data_manager/chromeos/suffix_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetSuffixDictionaryData(const SuffixToken **tokens,
-                                                  size_t *size) const {
-  *tokens = kSuffixTokens;
-  *size = arraysize(kSuffixTokens);
-}
-
-namespace {
-// Include kReadingCorrections.
-#include "data_manager/chromeos/reading_correction_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetReadingCorrectionData(
-    const ReadingCorrectionItem **array,
-    size_t *size) const {
-  *array = kReadingCorrections;
-  *size = arraysize(kReadingCorrections);
-}
-
-namespace {
-// Include CollocationData::kExistenceData and
-// CollocationData::kExistenceFilter_size.
-#include "data_manager/chromeos/embedded_collocation_data.h"
-// Include CollocationSuppressionData::kExistenceFilter_data and
-// CollocationSuppressionData::kExistenceFilter_size.
-#include "data_manager/chromeos/embedded_collocation_suppression_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetCollocationData(const char **array,
-                                             size_t *size) const {
-  *array = CollocationData::kExistenceFilter_data;
-  *size = CollocationData::kExistenceFilter_size;
-}
-
-void ChromeOsDataManager::GetCollocationSuppressionData(const char **array,
-                                                        size_t *size) const {
-  *array = CollocationSuppressionData::kExistenceFilter_data;
-  *size = CollocationSuppressionData::kExistenceFilter_size;
-}
-
-namespace {
-// Include kSuggestionFilterData_data and kSuggestionFilterData_size.
-#include "data_manager/chromeos/suggestion_filter_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetSuggestionFilterData(const char **data,
-                                                  size_t *size) const {
-  *data = kSuggestionFilterData_data;
-  *size = kSuggestionFilterData_size;
-}
-
-namespace {
-// Include kSymbolData_token_data and kSymbolData_token_size.
-#include "data_manager/chromeos/symbol_rewriter_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetSymbolRewriterData(
-    const EmbeddedDictionary::Token **data,
-    size_t *size) const {
-  *data = kSymbolData_token_data;
-  *size = kSymbolData_token_size;
-}
-
-#ifndef NO_USAGE_REWRITER
-namespace {
-#include "rewriter/usage_rewriter_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetUsageRewriterData(
-    const ConjugationSuffix **base_conjugation_suffix,
-    const ConjugationSuffix **conjugation_suffix_data,
-    const int **conjugation_suffix_data_index,
-    const UsageDictItem **usage_data_value) const {
-  *base_conjugation_suffix = kBaseConjugationSuffix;
-  *conjugation_suffix_data = kConjugationSuffixData;
-  *conjugation_suffix_data_index = kConjugationSuffixDataIndex;
-  *usage_data_value = kUsageData_value;
-}
-#endif  // NO_USAGE_REWRITER
-
-namespace {
-#include "data_manager/chromeos/counter_suffix_data.h"
-}  // namespace
-
-void ChromeOsDataManager::GetCounterSuffixSortedArray(
-    const CounterSuffixEntry **array, size_t *size) const {
-  *array = kCounterSuffixes;
-  *size = arraysize(kCounterSuffixes);
-}
+ChromeOsDataManager::~ChromeOsDataManager() = default;
 
 }  // namespace chromeos
 }  // namespace mozc

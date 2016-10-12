@@ -380,11 +380,11 @@ bool SessionOutput::AddSegment(const string &key,
                                commands::Preedit *preedit) {
   // Key is always normalized as a preedit text.
   string normalized_key;
-  TextNormalizer::NormalizePreeditText(key, &normalized_key);
+  TextNormalizer::NormalizeText(key, &normalized_key);
 
   string normalized_value;
   if (segment_type_mask & PREEDIT) {
-    TextNormalizer::NormalizePreeditText(value, &normalized_value);
+    TextNormalizer::NormalizeText(value, &normalized_value);
   } else if (segment_type_mask & CONVERSION) {
     normalized_value = value;
   } else {
@@ -462,7 +462,7 @@ void SessionOutput::FillConversionResult(const string &key,
                                          commands::Result *result_proto) {
   // Key should be normalized as a preedit text.
   string normalized_key;
-  TextNormalizer::NormalizePreeditText(key, &normalized_key);
+  TextNormalizer::NormalizeText(key, &normalized_key);
 
   // value is already normalized by converter.
   FillConversionResultWithoutNormalization(
@@ -473,7 +473,7 @@ void SessionOutput::FillConversionResult(const string &key,
 void SessionOutput::FillPreeditResult(const string &preedit,
                                       commands::Result *result_proto) {
   string normalized_preedit;
-  TextNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
+  TextNormalizer::NormalizeText(preedit, &normalized_preedit);
 
   FillConversionResultWithoutNormalization(
       normalized_preedit, normalized_preedit, result_proto);

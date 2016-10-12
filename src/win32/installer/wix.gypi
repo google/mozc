@@ -50,48 +50,53 @@
         'additional_args%': [],
         'conditions': [
           ['mozc_zinnia_model_data_path!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dMozcZinniaModelDataPath=<(mozc_zinnia_model_data_path)',
             ],
           }],
           ['debug_crt_merge_module_id_prefix!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dDebugCrtMergeModuleIdPrefix=<(debug_crt_merge_module_id_prefix)',
             ],
           }],
           ['release_crt_merge_module_id_prefix!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dReleaseCrtMergeModuleIdPrefix=<(release_crt_merge_module_id_prefix)',
             ],
           }],
           ['debug_crt_merge_module_path!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dDebugCrtMergeModulePath=<(debug_crt_merge_module_path)',
             ],
           }],
           ['release_crt_merge_module_path!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dReleaseCrtMergeModulePath=<(release_crt_merge_module_path)',
             ],
           }],
           ['qtcore4_dll_path!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dQtCore4DllPath=<(qtcore4_dll_path)',
             ],
           }],
           ['qtcored4_dll_path!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dQtCored4DllPath=<(qtcored4_dll_path)',
             ],
           }],
           ['qtgui4_dll_path!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dQtGui4DllPath=<(qtgui4_dll_path)',
             ],
           }],
           ['qtguid4_dll_path!=""', {
-            'additional_args+': [
+            'additional_args': [
               '-dQtGuid4DllPath=<(qtguid4_dll_path)',
+            ],
+          }],
+          ['MSVS_VERSION=="2015" and use_qt=="YES"', {
+            'additional_args': [
+              r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
             ],
           }],
         ],

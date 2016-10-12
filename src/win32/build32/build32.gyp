@@ -51,11 +51,6 @@
             '../tip/tip.gyp:mozc_tip32',
           ],
           'conditions': [
-            ['use_dynamically_linked_qt!=1', {
-              'dependencies': [
-                '../../gui/gui.gyp:mozc_tool',
-              ],
-            }],
             ['branding=="GoogleJapaneseInput"', {
               'dependencies': [
                 '../custom_action/custom_action.gyp:mozc_custom_action32',

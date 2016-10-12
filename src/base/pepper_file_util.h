@@ -33,6 +33,7 @@
 #ifdef OS_NACL
 
 #include <ppapi/cpp/instance.h>
+#include <ppapi/c/pp_file_info.h>
 
 #include <string>
 
@@ -57,6 +58,7 @@ class PepperFileSystemInterface {
   virtual bool RegisterMmap(MmapSyncInterface *mmap) = 0;
   virtual bool UnRegisterMmap(MmapSyncInterface *mmap) = 0;
   virtual bool SyncMmapToFile() = 0;
+  virtual bool Query(const string &path, PP_FileInfo *file_info) = 0;
 };
 
 // Utility class for Pepper FileIO.
@@ -104,6 +106,9 @@ class PepperFileUtil {
 
   // Call SyncToFile() method of the all registered Mmap objects.
   static bool SyncMmapToFile();
+
+  // Queries file information.
+  static bool Query(const string &path, PP_FileInfo *file_info);
 };
 
 }  // namespace mozc

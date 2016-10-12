@@ -37,8 +37,25 @@
 
 namespace mozc {
 
+// Provides a list of part-of-speech (POS) used by Mozc.  This minimal interface
+// is used by GUI tools so that we can minimize the data embedded in
+// executables.
+class POSListProviderInterface {
+ public:
+  virtual ~POSListProviderInterface() = default;
+
+  // Sets posssible list of POS which Mozc can handle.
+  virtual void GetPOSList(vector<string> *pos_list) const = 0;
+
+ protected:
+  POSListProviderInterface() = default;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(POSListProviderInterface);
+};
+
 // Interface of the helper class used by POS.
-class UserPOSInterface {
+class UserPOSInterface : public POSListProviderInterface {
  public:
   struct Token {
     string key;
@@ -48,10 +65,7 @@ class UserPOSInterface {
     string comment;  // This field comes from user dictionary.
   };
 
-  virtual ~UserPOSInterface() {}
-
-  // Sets posssible list of part-of-speech Mozc can handle
-  virtual void GetPOSList(vector<string> *pos_list) const = 0;
+  virtual ~UserPOSInterface() = default;
 
   // Returns true if the given string is one of the POSes Mozc can handle.
   virtual bool IsValidPOS(const string &pos) const = 0;
@@ -68,7 +82,7 @@ class UserPOSInterface {
                          vector<Token> *tokens) const = 0;
 
  protected:
-  UserPOSInterface() {}
+  UserPOSInterface() = default;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(UserPOSInterface);

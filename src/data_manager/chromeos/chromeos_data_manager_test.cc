@@ -35,9 +35,10 @@
 
 namespace mozc {
 namespace chromeos {
-
 namespace {
-#include "data_manager/chromeos/chromeos_segmenter_inl.h"
+
+#include "data_manager/chromeos/segmenter_inl.h"
+
 }  // namespace
 
 class ChromeOsDataManagerTest : public DataManagerTestBase {
@@ -65,7 +66,9 @@ class ChromeOsDataManagerTest : public DataManagerTestBase {
                  "dictionary09.txt"}),
             mozc::testing::GetSourceFilesInDirOrDie(
                 {"data", "dictionary_chromeos"},
-                {"suggestion_filter.txt"})) {}
+                {"suggestion_filter.txt"}),
+            // ChromeOS doesn't include typing correction models.
+            {}) {}
 };
 
 TEST_F(ChromeOsDataManagerTest, AllTests) {

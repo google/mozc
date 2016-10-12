@@ -30,6 +30,7 @@
 #ifndef MOZC_BASE_FILE_STREAM_H_
 #define MOZC_BASE_FILE_STREAM_H_
 
+#include <string>
 #ifdef MOZC_USE_PEPPER_FILE_IO
 #include <sstream>
 #else  // MOZC_USE_PEPPER_FILE_IO
@@ -55,6 +56,10 @@ class InputFileStream : public istream {
   // Note: Error handling after close() is not correctly implemented.
   // TODO(horo) Implement error handling correctly.
   void close();
+
+  // Helper functions to load the entire content of a file into string.
+  void ReadToString(string *s);
+  string Read();
 
  private:
   std::stringbuf string_buffer_;
@@ -105,6 +110,10 @@ class InputFileStream : public ifstream {
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ifstream::open() function.
   void open(const char* filename, ios_base::openmode mode = ios_base::in);
+
+  // Helper functions to load the entire content of a file into string.
+  void ReadToString(string *s);
+  string Read();
 };
 
 class OutputFileStream : public ofstream {

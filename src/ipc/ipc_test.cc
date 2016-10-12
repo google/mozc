@@ -144,7 +144,7 @@ TEST(IPCTest, IPCTest) {
     cons[i]->SetMachPortManager(&manager);
 #endif
     cons[i]->SetJoinable(true);
-    cons[i]->Start();
+    cons[i]->Start("IPCTest");
   }
   for (size_t i = 0; i < cons.size(); ++i) {
     cons[i]->Join();

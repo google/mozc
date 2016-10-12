@@ -97,7 +97,7 @@ class IPCPathManagerTest : public ::testing::Test {
 
 TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   CreateThread t;
-  t.Start();
+  t.Start("IPCPathManagerTest");
   Util::Sleep(1000);
   IPCPathManager *manager =
       IPCPathManager::GetIPCPathManager("test");
@@ -124,7 +124,7 @@ TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
   vector<BatchGetPathNameThread *> threads(64);
   for (size_t i = 0; i < threads.size(); ++i) {
     threads[i] = new BatchGetPathNameThread;
-    threads[i]->Start();
+    threads[i]->Start("IPCPathManagerBatchTest");
   }
   for (size_t i = 0; i < threads.size(); ++i) {
     threads[i]->Join();

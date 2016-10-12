@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <limits>
@@ -424,10 +425,10 @@ bool NumberUtil::ArabicToSeparatedArabic(
   if (point_pos == StringPiece::npos) {
     point_pos = input_num.size();
   }
-  const StringPiece integer(input_num, 0, point_pos);
+  const StringPiece integer = input_num.substr(0, point_pos);
   // |fraction| has the decimal point with digits in fractional part.
-  const StringPiece fraction(input_num, point_pos,
-                             input_num.size() - point_pos);
+  const StringPiece fraction =
+      input_num.substr(point_pos, input_num.size() - point_pos);
 
   // We don't add separator to number whose integral part starts with '0'
   if (integer[0] == kAsciiZero) {
@@ -634,7 +635,7 @@ const StringPiece SkipWhiteSpace(StringPiece str) {
   StringPiece::size_type i;
   for (i = 0; i < str.size() && isspace(str[i]); ++i) {}
   DCHECK(i == str.size() || !isspace(str[i]));
-  return StringPiece(str, i);
+  return str.substr(i);
 }
 
 // There is an informative discussion about the overflow detection in
@@ -818,9 +819,7 @@ bool NumberUtil::SafeStrToInt64(StringPiece str, int64 *value) {
   }
   uint64 tmp;
   if (stripped_str[0] == '-') {
-    StringPiece opposite_str = StringPiece(stripped_str,
-                                           1,
-                                           stripped_str.size() - 1);
+    StringPiece opposite_str = stripped_str.substr(1, stripped_str.size() - 1);
     if (!SafeStrToUInt64WithBase(opposite_str, 10, &tmp)) {
       return false;
     }
@@ -876,16 +875,18 @@ bool NumberUtil::SafeStrToDouble(StringPiece str, double *value) {
   // to use char buffer instead.  Note: const reference ensures the life of this
   // temporary string until the end!
   const string &s = str.as_string();
-  const char* ptr = s.c_str();
+  const char *ptr = s.c_str();
 
   char *end_ptr;
   errno = 0;  // errno only gets set on errors
   // strtod of GCC accepts hexadecimal number like "0x1234", but that of
   // VisualC++ does not.
   // Note that strtod accepts white spaces at the beginning of the parameter.
-  *value = strtod(ptr, &end_ptr);
+  *value = std::strtod(ptr, &end_ptr);
+
   if (errno != 0 ||
       ptr == end_ptr ||
+      std::isnan(*value) ||
       *value ==  numeric_limits<double>::infinity() ||
       *value == -numeric_limits<double>::infinity()) {
     return false;
@@ -893,20 +894,6 @@ bool NumberUtil::SafeStrToDouble(StringPiece str, double *value) {
   // Trailing white spaces are allowed.
   const StringPiece trailing_str(end_ptr, ptr + s.size() - end_ptr);
   return SkipWhiteSpace(trailing_str).empty();
-}
-
-bool NumberUtil::SafeStrToFloat(StringPiece str, float *value) {
-  double double_value;
-  if (!SafeStrToDouble(str, &double_value)) {
-    return false;
-  }
-  *value = static_cast<float>(double_value);
-
-  if ((*value ==  numeric_limits<float>::infinity()) ||
-      (*value == -numeric_limits<float>::infinity())) {
-    return false;
-  }
-  return true;
 }
 
 namespace {

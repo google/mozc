@@ -32,7 +32,11 @@
 
 #include <QtCore/QString>
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QDialog>
+#else
 #include <QtGui/QDialog>
+#endif
 
 #include <memory>
 
@@ -41,7 +45,7 @@
 
 namespace mozc {
 
-class UserPOSInterface;
+class POSListProviderInterface;
 
 namespace client {
 class ClientInterface;
@@ -116,7 +120,7 @@ class WordRegisterDialog : public QDialog,
   std::unique_ptr<mozc::user_dictionary::UserDictionarySession> session_;
   std::unique_ptr<client::ClientInterface> client_;
   QString window_title_;
-  std::unique_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const POSListProviderInterface> pos_list_provider_;
 };
 
 }  // namespace gui

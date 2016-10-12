@@ -31,7 +31,12 @@
 
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QAbstractButton>
+#include <QtWidgets/QMessageBox>
+#else
 #include <QtGui/QMessageBox>
+#endif
 
 #include "base/flags.h"
 

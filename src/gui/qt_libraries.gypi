@@ -35,21 +35,23 @@
   'conditions': [['use_qt=="YES"', {
 
   'variables': {
-    'includes': ['qt_vars.gypi'],
     'conditions': [
-      ['qt_dir', {
+      ['target_platform=="Linux"', {
+        'conditions': [
+          ['qt_ver==5', {
+            'qt_cflags': ['<!@(pkg-config --cflags Qt5Widgets Qt5Gui Qt5Core)'],
+            'qt_include_dirs': [],
+          }, {
+            'qt_cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
+            'qt_include_dirs': [],
+          }],
+        ],
+      }, 'qt_dir', {
         'qt_cflags': [],
         'qt_include_dirs': ['<(qt_dir)/include'],
       }, {
-        'conditions': [
-          ['pkg_config_command', {
-            'qt_cflags': ['<!@(<(pkg_config_command) --cflags QtGui QtCore)'],
-            'qt_include_dirs': [],
-          }, {
-            'qt_cflags': [],
-            'qt_include_dirs': ['<(qt_dir_env)/include'],
-          }],
-        ],
+        'qt_cflags': [],
+        'qt_include_dirs': [],
       }],
     ],
   },
@@ -60,7 +62,57 @@
   # TODO(yukawa): Use 'link_settings' so that linker settings can be passed
   #     to executables and loadable modules.
   'conditions': [
-    ['OS=="mac"', {
+    ['qt_dir and target_platform=="Windows"', {
+      'configurations': {
+        'Debug_Base': {
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalLibraryDirectories': [
+                '<(qt_dir)/lib',
+              ],
+              'conditions': [
+                ['qt_ver==5', {
+                  'AdditionalDependencies': [
+                    'Qt5Cored.lib',
+                    'Qt5Guid.lib',
+                    'Qt5Widgetsd.lib',
+                  ],
+                }, {
+                  'AdditionalDependencies': [
+                    'QtCored4.lib',
+                    'QtGuid4.lib',
+                  ],
+                }],
+              ],
+            },
+          },
+        },
+        'Release_Base': {
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalLibraryDirectories': [
+                '<(qt_dir)/lib',
+              ],
+              'conditions': [
+                ['qt_ver==5', {
+                  'AdditionalDependencies': [
+                    'Qt5Core.lib',
+                    'Qt5Gui.lib',
+                    'Qt5Widgets.lib',
+                  ],
+                }, {
+                  'AdditionalDependencies': [
+                    'QtCore4.lib',
+                    'QtGui4.lib',
+                  ],
+                }],
+              ],
+            },
+          },
+        },
+      },
+    }],
+    ['target_platform=="Mac"', {
       'conditions': [
         ['qt_dir', {
           # Supposing Qt libraries in qt_dir will be built as static libraries.
@@ -73,9 +125,19 @@
             'mac_framework_dirs': [
               '<(qt_dir)/lib',
             ],
-            'libraries': [
-              '<(qt_dir)/lib/QtCore.framework',
-              '<(qt_dir)/lib/QtGui.framework',
+            'conditions': [
+              ['qt_ver==5', {
+                'libraries': [
+                  '<(qt_dir)/lib/QtCore.framework',
+                  '<(qt_dir)/lib/QtGui.framework',
+                  '<(qt_dir)/lib/QtWidgets.framework',
+                ]
+              }, {
+                'libraries': [
+                  '<(qt_dir)/lib/QtCore.framework',
+                  '<(qt_dir)/lib/QtGui.framework',
+                ]
+              }],
             ],
           },
         }],
@@ -84,27 +146,15 @@
         '$(SDKROOT)/System/Library/Frameworks/Carbon.framework',
       ]
     }],
-    ['OS=="linux"', {
+    ['target_platform=="Linux"', {
       'conditions': [
-        ['qt_dir', {
+        ['qt_ver==5', {
           'libraries': [
-            '-L<(qt_dir)/lib',
-            '-lQtGui',
-            '-lQtCore',
-            # Supposing Qt libraries in qt_dir will be built as static libraries
-            # without support of pkg-config, we need to list all the
-            # dependencies of QtGui.
-            # See http://doc.qt.nokia.com/4.7/requirements-x11.html
-            # pthread library is removed because it must not be specific to Qt.
-            '<!@(<(pkg_config_command) --libs-only-L --libs-only-l'
-            ' xrender xrandr xcursor xfixes xinerama fontconfig freetype2'
-            ' xi xt xext x11'
-            ' sm ice'
-            ' gobject-2.0)',
+            '<!@(pkg-config --libs Qt5Widgets Qt5Gui Qt5Core)',
           ],
         }, {
           'libraries': [
-            '<!@(<(pkg_config_command) --libs QtGui QtCore)',
+            '<!@(pkg-config --libs QtGui QtCore)',
           ],
         }],
       ],

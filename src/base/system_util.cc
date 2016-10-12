@@ -687,59 +687,6 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
 }
 #endif  // OS_WIN
 
-bool SystemUtil::IsPlatformSupported() {
-#if defined(OS_MACOSX)
-  // TODO(yukawa): support Mac.
-  return true;
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
-  // TODO(yukawa): support Linux.
-  return true;
-#elif defined(OS_WIN)
-  // Sometimes we suffer from version lie of GetVersion(Ex) such as
-  // http://b/2430094
-  // This is why we use VerifyVersionInfo here instead of GetVersion(Ex).
-
-  // You can find a table of version number for each version of Windows in
-  // the following page.
-  // http://msdn.microsoft.com/en-us/library/ms724833.aspx
-  {
-    // Windows 7 <= |OSVERSION|: supported
-    OSVERSIONINFOEX osvi = {};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 1;
-    DWORDLONG conditional = 0;
-    VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-    const DWORD typemask = VER_MAJORVERSION | VER_MINORVERSION;
-    if (::VerifyVersionInfo(&osvi, typemask, conditional) != 0) {
-      return true;  // supported
-    }
-  }
-  {
-    // Windows Vista SP2 <= |OSVERSION| < Windows 7: supported
-    OSVERSIONINFOEX osvi = {};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 0;
-    osvi.wServicePackMajor = 2;
-    DWORDLONG conditional = 0;
-    VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditional, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-    const DWORD typemask = VER_MAJORVERSION | VER_MINORVERSION |
-                           VER_SERVICEPACKMAJOR;
-    if (::VerifyVersionInfo(&osvi, typemask, conditional) != 0) {
-      return true;  // supported
-    }
-  }
-  // |OSVERSION| < Windows Vista SP2: not supported
-  return false;  // not support
-#else  // !OS_LINUX && !OS_MACOSX && !OS_WIN
-#error "Unsupported platform".
-#endif  // OS_LINUX, OS_MACOSX, OS_WIN
-}
-
 bool SystemUtil::IsWindows7OrLater() {
 #ifdef OS_WIN
   static const bool result = ::IsWindows7OrGreater();
@@ -821,71 +768,6 @@ const wchar_t *SystemUtil::GetSystemDir() {
   return Singleton<SystemDirectoryCache>::get()->system_dir();
 }
 
-bool SystemUtil::GetFileVersion(const wstring &file_fullpath, int *major,
-                                int *minor, int *build, int *revision) {
-  DCHECK(major);
-  DCHECK(minor);
-  DCHECK(build);
-  DCHECK(revision);
-  string path;
-  Util::WideToUTF8(file_fullpath.c_str(), &path);
-
-  // Accoding to KB826496, we should check file existence.
-  // http://support.microsoft.com/kb/826496
-  if (!FileUtil::FileExists(path)) {
-    LOG(ERROR) << "file not found";
-    return false;
-  }
-
-  DWORD handle = 0;
-  const DWORD version_size =
-      ::GetFileVersionInfoSizeW(file_fullpath.c_str(), &handle);
-
-  if (version_size == 0) {
-    LOG(ERROR) << "GetFileVersionInfoSizeW failed."
-               << " error = " << ::GetLastError();
-    return false;
-  }
-
-  unique_ptr<BYTE[]> version_buffer(new BYTE[version_size]);
-
-  if (!::GetFileVersionInfoW(file_fullpath.c_str(), 0,
-                             version_size, version_buffer.get())) {
-    LOG(ERROR) << "GetFileVersionInfo failed."
-               << " error = " << ::GetLastError();
-    return false;
-  }
-
-  VS_FIXEDFILEINFO *fixed_fileinfo = nullptr;
-  UINT length = 0;
-  if (!::VerQueryValueW(version_buffer.get(), L"\\",
-                        reinterpret_cast<LPVOID *>(&fixed_fileinfo),
-                        &length)) {
-    LOG(ERROR) << "VerQueryValue failed."
-               << " error = " << ::GetLastError();
-    return false;
-  }
-
-  *major = HIWORD(fixed_fileinfo->dwFileVersionMS);
-  *minor = LOWORD(fixed_fileinfo->dwFileVersionMS);
-  *build = HIWORD(fixed_fileinfo->dwFileVersionLS);
-  *revision = LOWORD(fixed_fileinfo->dwFileVersionLS);
-
-  return true;
-}
-
-string SystemUtil::GetFileVersionString(const wstring &file_fullpath) {
-  int major, minor, build, revision;
-  if (!GetFileVersion(file_fullpath, &major, &minor, &build, &revision)) {
-    return "";
-  }
-
-  stringstream buf;
-  buf << major << "." << minor << "." << build << "." << revision;
-
-  return buf.str();
-}
-
 string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
   const string &session_id = GetSessionIdString();
   if (session_id.empty()) {
@@ -936,23 +818,11 @@ string SystemUtil::GetOSVersionString() {
 #endif  // OS_WIN, OS_MACOSX, OS_LINUX
 }
 
-bool SystemUtil::MacOSVersionIsGreaterOrEqual(int32 major,
-                                              int32 minor,
-                                              int32 fix) {
-#ifdef OS_MACOSX
-  return MacUtil::OSVersionIsGreaterOrEqual(major, minor, fix);
-#else
-  return false;
-#endif  // OS_MACOSX
-}
-
 void SystemUtil::DisableIME() {
 #ifdef OS_WIN
-  // turn off IME:
-  // AFAIK disabling TSF under Vista and later OS is almost impossible
-  // so that all we have to do is to prevent from calling
-  // ITfThreadMgr::Activate and ITfThreadMgrEx::ActivateEx in this thread.
-  ::ImmDisableTextFrameService(-1);
+  // Note that ImmDisableTextFrameService API is no longer supported on
+  // Windows Vista and later.
+  // https://msdn.microsoft.com/en-us/library/windows/desktop/dd318537.aspx
   ::ImmDisableIME(-1);
 #endif  // OS_WIN
 }

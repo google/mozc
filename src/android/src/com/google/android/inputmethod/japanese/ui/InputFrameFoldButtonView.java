@@ -51,7 +51,8 @@ public class InputFrameFoldButtonView extends ToggleButton {
   private static final int[] STATE_EMPTY = {};
   private static final int[] STATE_CHECKED = { android.R.attr.state_checked };
 
-  private Drawable arrowDrawable = DummyDrawable.getInstance();
+  private Drawable arrowDownDrawable = DummyDrawable.getInstance();
+  private Drawable arrowUpDrawable = DummyDrawable.getInstance();
   private Drawable backgroundDefaultDrawable = DummyDrawable.getInstance();
   private Drawable backgroundScrolledDrawable = DummyDrawable.getInstance();
   private boolean showBackgroundForScrolled = false;
@@ -77,40 +78,38 @@ public class InputFrameFoldButtonView extends ToggleButton {
   @Override
   protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
     super.onSizeChanged(width, height, oldWidth, oldHeight);
-    backgroundDefaultDrawable.setBounds(0, 0, width, height);
-    backgroundScrolledDrawable.setBounds(0, 0, width, height);
-    arrowDrawable.setBounds(0, 0, width, height);
+    updateDrawableSizes(width, height);
   }
 
-  @Override
+ @Override
   protected void drawableStateChanged() {
-    super.drawableStateChanged();
-    arrowDrawable.setState(isChecked() ? STATE_CHECKED : STATE_EMPTY);
-    invalidate();
-  }
+   super.drawableStateChanged();
+   invalidate();
+ }
 
   @Override
   protected void onDraw(Canvas canvas) {
     Drawable background =
         showBackgroundForScrolled ? backgroundScrolledDrawable : backgroundDefaultDrawable;
     background.draw(canvas);
-    arrowDrawable.draw(canvas);
+    Drawable arrow = isChecked() ? arrowUpDrawable : arrowDownDrawable;
+    arrow.draw(canvas);
   }
 
   public void setSkin(Skin skin) {
     Preconditions.checkNotNull(skin);
     Resources resources = getResources();
-    arrowDrawable = skin.getDrawable(resources, R.raw.keyboard__fold__tab)
-        .getConstantState().newDrawable();
-    arrowDrawable.setBounds(0, 0, getWidth(), getHeight());
+    arrowDownDrawable =
+        skin.getDrawable(resources, R.raw.keyboard_fold_tab_down).getConstantState().newDrawable();
+    arrowUpDrawable =
+        skin.getDrawable(resources, R.raw.keyboard_fold_tab_up).getConstantState().newDrawable();
     backgroundDefaultDrawable =
         skin.getDrawable(resources, R.raw.keyboard_fold_tab_background_default)
             .getConstantState().newDrawable();
-    backgroundDefaultDrawable.setBounds(0, 0, getWidth(), getHeight());
     backgroundScrolledDrawable =
         skin.getDrawable(resources, R.raw.keyboard_fold_tab_background_scrolled)
             .getConstantState().newDrawable();
-    backgroundScrolledDrawable.setBounds(0, 0, getWidth(), getHeight());
+    updateDrawableSizes(getWidth(), getHeight());
     invalidate();
   }
 
@@ -119,5 +118,12 @@ public class InputFrameFoldButtonView extends ToggleButton {
       this.showBackgroundForScrolled = showBackgroundForScrolled;
       invalidate();
     }
+  }
+
+  private void updateDrawableSizes(int width, int height) {
+    backgroundDefaultDrawable.setBounds(0, 0, width, height);
+    backgroundScrolledDrawable.setBounds(0, 0, width, height);
+    arrowDownDrawable.setBounds(0, 0, width, height);
+    arrowUpDrawable.setBounds(0, 0, width, height);
   }
 }

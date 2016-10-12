@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -50,35 +51,51 @@ namespace mozc {
 
 UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
                              const DictionaryInterface *dictionary)
-    : pos_matcher_(data_manager->GetPOSMatcher()),
+    : pos_matcher_(data_manager->GetPOSMatcherData()),
       dictionary_(dictionary),
-      base_conjugation_suffix_(NULL) {
-  const ConjugationSuffix *conjugation_suffix_data = NULL;
-  const int *conjugation_suffix_data_index = NULL;
-  const UsageDictItem *usage_data_value = NULL;
-  data_manager->GetUsageRewriterData(&base_conjugation_suffix_,
+      base_conjugation_suffix_(nullptr) {
+  StringPiece base_conjugation_suffix_data;
+  StringPiece conjugation_suffix_data;
+  StringPiece conjugation_suffix_index_data;
+  StringPiece usage_items_data;
+  StringPiece string_array_data;
+  data_manager->GetUsageRewriterData(&base_conjugation_suffix_data,
                                      &conjugation_suffix_data,
-                                     &conjugation_suffix_data_index,
-                                     &usage_data_value);
-  CHECK(base_conjugation_suffix_);
-  CHECK(conjugation_suffix_data);
-  CHECK(conjugation_suffix_data_index);
-  CHECK(conjugation_suffix_data_index);
-  const UsageDictItem *item = usage_data_value;
+                                     &conjugation_suffix_index_data,
+                                     &usage_items_data,
+                                     &string_array_data);
+  base_conjugation_suffix_ =
+      reinterpret_cast<const uint32 *>(base_conjugation_suffix_data.data());
+  const uint32 *conjugation_suffix =
+      reinterpret_cast<const uint32 *>(conjugation_suffix_data.data());
+  const uint32 *conjugation_suffix_data_index =
+      reinterpret_cast<const uint32 *>(conjugation_suffix_index_data.data());
+
+  DCHECK(SerializedStringArray::VerifyData(string_array_data));
+  string_array_.Set(string_array_data);
+
+  UsageDictItemIterator begin(usage_items_data.data());
+  UsageDictItemIterator end(usage_items_data.data() + usage_items_data.size());
+
   // TODO(taku): To reduce memory footprint, better to replace it with
   // binary search over the conjugation_suffix_data diretly.
-  for (; item->key != NULL; ++item) {
-    for (size_t i = conjugation_suffix_data_index[item->conjugation_id];
-         i < conjugation_suffix_data_index[item->conjugation_id + 1];
+  for (; begin != end; ++begin) {
+    for (size_t i = conjugation_suffix_data_index[begin.conjugation_id()];
+         i < conjugation_suffix_data_index[begin.conjugation_id() + 1];
          ++i) {
-      StrPair key_value1(
-          string(item->key) + conjugation_suffix_data[i].key_suffix,
-          string(item->value) + conjugation_suffix_data[i].value_suffix);
-      key_value_usageitem_map_[key_value1] = item;
-      StrPair key_value2(
-          "",
-          string(item->value) + conjugation_suffix_data[i].value_suffix);
-      key_value_usageitem_map_[key_value2] = item;
+      const StringPiece key = string_array_[begin.key_index()];
+      const StringPiece value = string_array_[begin.value_index()];
+      const StringPiece key_suffix =
+          string_array_[conjugation_suffix[2 * i + 1]];
+      const StringPiece value_suffix =
+          string_array_[conjugation_suffix[2 * i]];
+      StrPair key_value1;
+      Util::ConcatStrings(key, key_suffix, &key_value1.first);
+      Util::ConcatStrings(value, value_suffix, &key_value1.second);
+      key_value_usageitem_map_[key_value1] = begin;
+
+      StrPair key_value2("", key_value1.second);
+      key_value_usageitem_map_[key_value2] = begin;
     }
   }
 }
@@ -121,40 +138,42 @@ string UsageRewriter::GetKanjiPrefixAndOneHiragana(const string &word) {
   return "";
 }
 
-const UsageDictItem* UsageRewriter::LookupUnmatchedUsageHeuristically(
+UsageRewriter::UsageDictItemIterator
+UsageRewriter::LookupUnmatchedUsageHeuristically(
     const Segment::Candidate &candidate) const {
   // We check Unknwon POS ("名詞,サ変接続") as well, since
   // target verbs/adjectives may be in web dictionary.
-  if (!pos_matcher_->IsContentWordWithConjugation(candidate.lid) &&
-      !pos_matcher_->IsUnknown(candidate.lid)) {
-    return NULL;
+  if (!pos_matcher_.IsContentWordWithConjugation(candidate.lid) &&
+      !pos_matcher_.IsUnknown(candidate.lid)) {
+    return UsageDictItemIterator();
   }
 
   const string value = GetKanjiPrefixAndOneHiragana(candidate.content_value);
   if (value.empty()) {
-    return NULL;
+    return UsageDictItemIterator();
   }
 
   // key is empty;
   StrPair key_value("", value);
-  const map<StrPair, const UsageDictItem *>::const_iterator itr =
-      key_value_usageitem_map_.find(key_value);
+  const auto itr = key_value_usageitem_map_.find(key_value);
+  if (itr == key_value_usageitem_map_.end()) {
+    return UsageDictItemIterator();
+  }
   // Check result key part is a prefix of the content_key.
-  if (itr != key_value_usageitem_map_.end() &&
-      Util::StartsWith(candidate.content_key, itr->second->key)) {
+  const StringPiece key = string_array_[itr->second.key_index()];
+  if (Util::StartsWith(candidate.content_key, key)) {
     return itr->second;
   }
 
-  return NULL;
+  return UsageDictItemIterator();
 }
 
-const UsageDictItem* UsageRewriter::LookupUsage(
+UsageRewriter::UsageDictItemIterator UsageRewriter::LookupUsage(
     const Segment::Candidate &candidate) const {
   const string &key = candidate.content_key;
   const string &value = candidate.content_value;
   StrPair key_value(key, value);
-  const map<StrPair, const UsageDictItem *>::const_iterator itr =
-      key_value_usageitem_map_.find(key_value);
+  const auto itr = key_value_usageitem_map_.find(key_value);
   if (itr != key_value_usageitem_map_.end()) {
     return itr->second;
   }
@@ -209,26 +228,34 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
 
       // If comment isn't in the user dictionary, search the system usage
       // dictionary.
-      const UsageDictItem *usage = LookupUsage(segment->candidate(j));
-      if (usage != NULL) {
+      const UsageDictItemIterator iter = LookupUsage(segment->candidate(j));
+      if (iter.IsValid()) {
         Segment::Candidate *candidate = segment->mutable_candidate(j);
         DCHECK(candidate);
-        candidate->usage_id = usage->id;
-        candidate->usage_title
-            .assign(usage->value)
-            .append(
-                base_conjugation_suffix_[usage->conjugation_id].value_suffix);
-        candidate->usage_description = usage->meaning;
-        VLOG(2) << i << ":" << j << ":" <<
-            candidate->content_key << ":" << candidate->content_value <<
-            ":" << usage->key << ":" << usage->value <<
-            ":" << usage->conjugation_id << ":" << usage->meaning;
+        candidate->usage_id = iter.usage_id();
+
+        const StringPiece value_suffix = string_array_[
+            base_conjugation_suffix_[2 * iter.conjugation_id()]];
+        string_array_[iter.value_index()].CopyToString(&candidate->usage_title);
+        value_suffix.AppendToString(&candidate->usage_title);
+
+        string_array_[iter.meaning_index()].CopyToString(
+            &candidate->usage_description);
+
+        VLOG(2) << i << ":" << j
+                << ":" << candidate->content_key
+                << ":" << candidate->content_value
+                << ":" << string_array_[iter.key_index()]
+                << ":" << string_array_[iter.value_index()]
+                << ":" << iter.conjugation_id()
+                << ":" << string_array_[iter.meaning_index()];
         modified = true;
       }
     }
   }
   return modified;
 }
+
 }  // namespace mozc
 
 #endif  // NO_USAGE_REWRITER

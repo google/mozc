@@ -171,9 +171,6 @@ struct Node {
   NodeType node_type;
   uint32 attributes;
 
-  // Equal to that of Candidate.
-  size_t consumed_key_size;
-
   // key: The user input.
   // actual_key: The actual search key that corresponds to the value.
   //           Can differ from key when no modifier conversion is enabled.

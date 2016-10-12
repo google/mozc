@@ -30,44 +30,51 @@
 // Debug Utilities for Qt.
 #include "gui/base/debug_util.h"
 
-#ifdef OS_WIN
-#include <windows.h>
-#endif
-
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 namespace gui {
-namespace {
-void SendLogToDebugger(const char *msg) {
-#if defined(DEBUG) && defined(OS_WIN)
-  wstring wmsg;
-  Util::UTF8ToWide(msg, &wmsg);
-  ::OutputDebugString(wmsg.c_str());
-#endif  // OS_WIN && DEBUG
-}
-}  // namespace
 
-void DebugUtil::MessageHandler(QtMsgType type, const char *msg) {
+#ifdef MOZC_USE_QT5
+void DebugUtil::MessageHandler(QtMsgType type,
+                               const QMessageLogContext &context,
+                               const QString &q_msg) {
+  QByteArray q_ba = q_msg.toUtf8();
+  const StringPiece msg(q_ba.constData(), q_ba.size());
   switch (type) {
     case QtDebugMsg:
-      SendLogToDebugger(msg);
       LOG(INFO) << msg;
       break;
     case QtWarningMsg:
-      SendLogToDebugger(msg);
       LOG(WARNING) << msg;
       break;
     case QtCriticalMsg:
-      SendLogToDebugger(msg);
       LOG(ERROR) << msg;
       break;
     case QtFatalMsg:
-      SendLogToDebugger(msg);
       LOG(FATAL) << msg;
       break;
   }
 }
+#else  // ! MOZC_USE_QT5
+void DebugUtil::MessageHandler(QtMsgType type, const char *msg) {
+  switch (type) {
+    case QtDebugMsg:
+      LOG(INFO) << msg;
+      break;
+    case QtWarningMsg:
+      LOG(WARNING) << msg;
+      break;
+    case QtCriticalMsg:
+      LOG(ERROR) << msg;
+      break;
+    case QtFatalMsg:
+      LOG(FATAL) << msg;
+      break;
+  }
+}
+#endif  // ! MOZC_USE_QT5
+
 }  // namespace gui
 }  // namespace mozc

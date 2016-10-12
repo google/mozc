@@ -30,8 +30,8 @@
 package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
-import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
 
 /**
  * This is a model class of a key, corresponding to a {@code &lt;Key&gt;} element
@@ -214,7 +213,7 @@ public class Key {
 
   @Override
   public String toString() {
-    ToStringHelper helper = Objects.toStringHelper(this);
+    ToStringHelper helper = MoreObjects.toStringHelper(this);
     helper.add("defaultKeyState",
                defaultKeyState.isPresent() ? defaultKeyState.get().toString() : "empty");
     for (KeyState entry : keyStateList) {

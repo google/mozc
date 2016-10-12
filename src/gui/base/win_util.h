@@ -30,8 +30,6 @@
 #ifndef MOZC_GUI_BASE_WIN_UTIL_H_
 #define MOZC_GUI_BASE_WIN_UTIL_H_
 
-#include <QtGui/QWidget>
-
 #include "base/port.h"
 
 namespace mozc {
@@ -39,36 +37,6 @@ namespace gui {
 
 class WinUtil {
  public:
-  // Qt wrapper for DwmIsCompositionEnabled
-  static bool IsCompositionEnabled();
-
-  // Qt wrapper for DwmExtendFrameIntoClientArea
-  static bool ExtendFrameIntoClientArea(QWidget *widget,
-                                        int left, int top,
-                                        int right, int bottom);
-
-  static bool ExtendFrameIntoClientArea(QWidget *widget) {
-    return WinUtil::ExtendFrameIntoClientArea(widget, -1, -1, -1, -1);
-  }
-
-  // Return the rect which is requred to display
-  // "text" on the "widget".
-  static QRect GetTextRect(QWidget *widget, const QString &text);
-
-  // Install style sheets
-  static void InstallStyleSheets(const QString &dwm_on_style,
-                                 const QString &dwm_off_style);
-
-  static void InstallStyleSheetsFiles(const QString &dwm_on_style_file,
-                                      const QString &dwm_off_style_file);
-
-  // Qt Wrapper for DrawThemeTextEx:
-  // Draw "text" on the center of the client "rect".
-  static void DrawThemeText(const QString &text,
-                            const QRect &rect,
-                            int glow_size,
-                            QPainter *painter);
-
   // Activate a visible window first found in the process specified by
   // |process_id|. The caller process must satisfy the condition
   // described in the following document.

@@ -53,8 +53,11 @@ from collections import defaultdict
 import logging
 import optparse
 import re
+import struct
 import sys
+
 from build_tools import code_generator_util
+from build_tools import serialized_string_array_builder
 
 
 def ParseCodePoint(s):
@@ -76,6 +79,16 @@ def ParseCodePoint(s):
   return int(s, 16)
 
 
+_FULLWIDTH_RE = re.compile(ur'[！-～]')   # U+FF01 - U+FF5E
+
+
+def NormalizeString(string):
+  """Normalize full width ascii characters to half width characters."""
+  offset = ord(u'Ａ') - ord(u'A')
+  return _FULLWIDTH_RE.sub(lambda x: unichr(ord(x.group(0)) - offset),
+                           unicode(string, 'utf-8')).encode('utf-8')
+
+
 def ReadEmojiTsv(stream):
   """Parses emoji_data.tsv file and builds the emoji_data_list and reading map.
   """
@@ -88,8 +101,9 @@ def ReadEmojiTsv(stream):
       logging.critical('format error: %s', '\t'.join(columns))
       sys.exit(1)
 
+    code_points = columns[0].split(' ')
     # Emoji code point.
-    emoji = columns[1] if columns[1] else None
+    emoji = columns[1] if columns[1] else ''
     android_pua = ParseCodePoint(columns[2])
     docomo_pua = ParseCodePoint(columns[3])
     softbank_pua = ParseCodePoint(columns[4])
@@ -98,10 +112,19 @@ def ReadEmojiTsv(stream):
     readings = columns[6]
 
     # [7]: Name defined in Unicode.  It is ignored in current implementation.
-    utf8_description = columns[8] if columns[8] else None
-    docomo_description = columns[9] if columns[9] else None
-    softbank_description = columns[10] if columns[10] else None
-    kddi_description = columns[11] if columns[11] else None
+    utf8_description = columns[8] if columns[8] else ''
+    docomo_description = columns[9] if columns[9] else ''
+    softbank_description = columns[10] if columns[10] else ''
+    kddi_description = columns[11] if columns[11] else ''
+
+    if not android_pua or len(code_points) > 1:
+      # Skip some emoji, which is not supported on old devices.
+      # - Unicode 6.1 or later emoji which doesn't have PUA code point.
+      # - Composite emoji which has multiple code point.
+      # NOTE: Some Unicode 6.0 emoji don't have PUA, and it is also omitted.
+      # TODO(hsumita): Check the availability of such emoji and enable it.
+      logging.info('Skip %s', ' '.join(code_points))
+      continue
 
     # Check consistency between carrier PUA codes and descriptions for Android
     # just in case.
@@ -127,62 +150,56 @@ def ReadEmojiTsv(stream):
 
     # \xe3\x80\x80 is a full-width space
     for reading in re.split(r'(?: |\xe3\x80\x80)+', readings.strip()):
-      token_dict[reading].append(index)
+      if reading:
+        token_dict[NormalizeString(reading)].append(index)
 
   return (emoji_data_list, token_dict)
 
 
-def OutputEmojiDataList(emoji_data_list, stream):
-  """Writes the emoji_data_list to stream."""
-  stream.write(
-      'static const mozc::EmojiRewriter::EmojiData kEmojiDataList[] = {\n')
+def OutputData(emoji_data_list, token_dict,
+               token_array_file, string_array_file):
+  """Output token and string arrays to files."""
+  sorted_token_dict = sorted(token_dict.iteritems())
+
+  strings = {}
+  for reading, _ in sorted_token_dict:
+    strings[reading] = 0
   for (emoji, android_pua, utf8_description, docomo_description,
        softbank_description, kddi_description) in emoji_data_list:
-    stream.write('  {%s, %d, %s, %s, %s, %s},\n' % (
-        code_generator_util.ToCppStringLiteral(emoji),
-        android_pua,
-        code_generator_util.ToCppStringLiteral(utf8_description),
-        code_generator_util.ToCppStringLiteral(docomo_description),
-        code_generator_util.ToCppStringLiteral(softbank_description),
-        code_generator_util.ToCppStringLiteral(kddi_description)))
-  stream.write('};\n')
+    strings[emoji] = 0
+    strings[utf8_description] = 0
+    strings[docomo_description] = 0
+    strings[softbank_description] = 0
+    strings[kddi_description] = 0
+  sorted_strings = sorted(strings.iterkeys())
+  for index, s in enumerate(sorted_strings):
+    strings[s] = index
 
+  with open(token_array_file, 'wb') as f:
+    for reading, value_list in sorted_token_dict:
+      reading_index = strings[reading]
+      for value_index in value_list:
+        (emoji, android_pua, utf8_description, docomo_description,
+         softbank_description, kddi_description) = emoji_data_list[value_index]
+        f.write(struct.pack('<I', reading_index))
+        f.write(struct.pack('<I', strings[emoji]))
+        f.write(struct.pack('<I', android_pua))
+        f.write(struct.pack('<I', strings[utf8_description]))
+        f.write(struct.pack('<I', strings[docomo_description]))
+        f.write(struct.pack('<I', strings[softbank_description]))
+        f.write(struct.pack('<I', strings[kddi_description]))
 
-def OutputValueList(token_dict, stream):
-  """Write the value list to stream."""
-  stream.write('static const uint16 kEmojiValueList[] = {\n')
-  for _, value_list in sorted(token_dict.items()):
-    for value in sorted(value_list):
-      stream.write('  %d,\n' % value)
-  stream.write('};\n')
-
-
-def OutputTokenDict(token_dict, stream):
-  """Output token set to stream."""
-  stream.write(
-      'static const mozc::EmojiRewriter::Token kEmojiTokenList[] = {\n')
-  offset = 0
-  # Needs to output in reading's lexicographical order as this array
-  # will be binary-searched.
-  for reading, value_list in sorted(token_dict.items()):
-    size = len(value_list)
-    stream.write('  { %s, kEmojiValueList + %d, %d },\n' % (
-        code_generator_util.ToCppStringLiteral(reading), offset, size))
-    offset += size
-  stream.write('};\n')
-
-
-def OutputData(emoji_data_list, token_dict, stream):
-  """Output C++ generated header to the stream."""
-  OutputEmojiDataList(emoji_data_list, stream)
-  OutputValueList(token_dict, stream)
-  OutputTokenDict(token_dict, stream)
+  serialized_string_array_builder.SerializeToFile(sorted_strings,
+                                                  string_array_file)
 
 
 def ParseOptions():
   parser = optparse.OptionParser()
   parser.add_option('--input', dest='input', help='emoji data file')
-  parser.add_option('--output', dest='output', help='output header file')
+  parser.add_option('--output_token_array', dest='output_token_array',
+                    help='output token array file')
+  parser.add_option('--output_string_array', dest='output_string_array',
+                    help='output string array file')
   return parser.parse_args()[0]
 
 
@@ -191,8 +208,8 @@ def main():
   with open(options.input, 'r') as input_stream:
     (emoji_data_list, token_dict) = ReadEmojiTsv(input_stream)
 
-  with open(options.output, 'w') as output_stream:
-    OutputData(emoji_data_list, token_dict, output_stream)
+  OutputData(emoji_data_list, token_dict,
+             options.output_token_array, options.output_string_array)
 
 
 if __name__ == '__main__':

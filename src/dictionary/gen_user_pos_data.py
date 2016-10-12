@@ -28,48 +28,48 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Utility to generate user_pos_data.h."""
+"""Utility to generate User POS binary data."""
 
 __author__ = "hidehiko"
 
-from collections import defaultdict
-import logging
 import optparse
+import struct
 
-from build_tools import code_generator_util
+from build_tools import serialized_string_array_builder
 from dictionary import pos_util
 
 
-def OutputUserPosDataHeader(user_pos_data, output):
-  """Prints user_pos_data.h to output."""
-  # Output kConjugation
-  for index, (_, conjugation_list) in enumerate(user_pos_data):
-    output.write(
-        'static const ::mozc::dictionary::UserPOS::ConjugationType '
-        'kConjugation%d[] = {\n' % (index))
-    for value_suffix, key_suffix, pos_id in conjugation_list:
-      output.write('  { %s, %s, %d },\n' % (
-          code_generator_util.ToCppStringLiteral(value_suffix),
-          code_generator_util.ToCppStringLiteral(key_suffix),
-          pos_id))
-    output.write('};\n')
+def ToString(s):
+  return s or ''
 
-  # Output PosToken
-  output.write('const ::mozc::dictionary::UserPOS::POSToken kPOSToken[] = {\n')
-  for index, (user_pos, conjunction_list) in enumerate(user_pos_data):
-    output.write('  { %s, %d, kConjugation%d },\n' % (
-        code_generator_util.ToCppStringLiteral(user_pos),
-        len(conjunction_list),
-        index))
-  # Also output the sentinal.
-  output.write('  { NULL, 0, NULL },\n'
-               '};\n')
+
+def OutputUserPosData(user_pos_data, output_token_array, output_string_array):
+  string_index = {}
+  for user_pos, conjugation_list in user_pos_data:
+    string_index[ToString(user_pos)] = 0
+    for value_suffix, key_suffix, _ in conjugation_list:
+      string_index[ToString(value_suffix)] = 0
+      string_index[ToString(key_suffix)] = 0
+  for index, s in enumerate(sorted(string_index)):
+    string_index[s] = index
+
+  with open(output_token_array, 'wb') as f:
+    for user_pos, conjugation_list in sorted(user_pos_data):
+      user_pos_index = string_index[ToString(user_pos)]
+      for value_suffix, key_suffix, conjugation_id in conjugation_list:
+        # One entry is serialized to 8 byte (four uint16 components).
+        f.write(struct.pack('<H', user_pos_index))
+        f.write(struct.pack('<H', string_index[ToString(value_suffix)]))
+        f.write(struct.pack('<H', string_index[ToString(key_suffix)]))
+        f.write(struct.pack('<H', conjugation_id))
+
+  serialized_string_array_builder.SerializeToFile(
+      sorted(string_index.iterkeys()), output_string_array)
 
 
 def ParseOptions():
   parser = optparse.OptionParser()
   # Input: id.def, special_pos.def, user_pos.def, cforms.def
-  # Output: user_pos_data.h
   parser.add_option('--id_file', dest='id_file', help='Path to id.def.')
   parser.add_option('--special_pos_file', dest='special_pos_file',
                     help='Path to special_pos.def')
@@ -77,8 +77,12 @@ def ParseOptions():
                     help='Path to cforms.def')
   parser.add_option('--user_pos_file', dest='user_pos_file',
                     help='Path to user_pos,def')
-  parser.add_option('--output', dest='output',
-                    help='Path to output user_pos_data.h')
+  parser.add_option('--output_token_array', dest='output_token_array',
+                    help='Path to output token array binary data')
+  parser.add_option('--output_string_array', dest='output_string_array',
+                    help='Path to output string array data')
+  parser.add_option('--output_pos_list', dest='output_pos_list',
+                    help='Path to output POS list binary file')
   return parser.parse_args()[0]
 
 
@@ -91,8 +95,12 @@ def main():
   user_pos = pos_util.UserPos(pos_database, inflection_map)
   user_pos.Parse(options.user_pos_file)
 
-  with open(options.output, 'w') as stream:
-    OutputUserPosDataHeader(user_pos.data, stream)
+  OutputUserPosData(user_pos.data,
+                    options.output_token_array, options.output_string_array)
+
+  if options.output_pos_list:
+    serialized_string_array_builder.SerializeToFile(
+        [pos for (pos, _) in user_pos.data], options.output_pos_list)
 
 
 if __name__ == '__main__':

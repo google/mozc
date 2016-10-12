@@ -29,6 +29,7 @@
 
 #include "base/init_mozc.h"
 
+
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
@@ -49,6 +50,7 @@ DEFINE_string(log_dir,
               "",
               "If specified, logfiles are written into this directory "
               "instead of the default logging directory.");
+
 
 namespace mozc {
 namespace {
@@ -86,6 +88,7 @@ void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags) {
 
   const string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
   Logging::InitLogStream(GetLogFilePathFromProgramName(program_name));
+
 }
 
 }  // namespace mozc

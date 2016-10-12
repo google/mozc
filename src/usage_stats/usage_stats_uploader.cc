@@ -357,7 +357,11 @@ bool UsageStatsUploader::Send(void *data) {
                     AndroidUtil::kSystemPropertyModel, "Unknown")));
 #endif  // OS_ANDROID
 
-  UsageStatsUpdater::UpdateStats(config::ConfigHandler::GetConfig());
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    UsageStatsUpdater::UpdateStats(config);
+  }
 
   UploadUtil uploader;
   uploader.SetHeader("Daily", elapsed_sec, params);

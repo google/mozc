@@ -88,6 +88,7 @@
         '../protobuf/protobuf.gyp:protobuf',
         'candidates_proto',
         'config_proto',
+        'engine_builder_proto',
         'genproto_commands_proto#host',
         'user_dictionary_storage_proto',
       ],
@@ -207,6 +208,60 @@
       ],
       'export_dependent_settings': [
         'genproto_user_dictionary_storage_proto#host',
+      ],
+    },
+    {
+      'target_name': 'genproto_segmenter_data_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'segmenter_data.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'segmenter_data_proto',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/segmenter_data.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_segmenter_data_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_segmenter_data_proto#host',
+      ],
+    },
+    {
+      'target_name': 'genproto_engine_builder_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'engine_builder.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'engine_builder_proto',
+      'type': 'static_library',
+      'toolsets': ['target', 'host'],
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/engine_builder.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_engine_builder_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_engine_builder_proto#host',
       ],
     },
   ],

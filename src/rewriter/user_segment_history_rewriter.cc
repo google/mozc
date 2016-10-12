@@ -829,7 +829,7 @@ bool UserSegmentHistoryRewriter::Reload() {
   if (!storage_->OpenOrCreate(filename.c_str(),
                               kValueSize, kLRUSize, kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserSegmentHistoryRewriter";
-    storage_.reset(NULL);
+    storage_.reset();
     return false;
   }
 

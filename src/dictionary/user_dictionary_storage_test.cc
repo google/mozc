@@ -37,22 +37,17 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
-#include "base/protobuf/unknown_field_set.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "testing/base/public/testing_util.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
-using mozc::protobuf::UnknownField;
-using mozc::protobuf::UnknownFieldSet;
-using mozc::testing::SerializeUnknownFieldSetAsString;
 using user_dictionary::UserDictionary;
 
 namespace {
@@ -476,46 +471,6 @@ TEST_F(UserDictionaryStorageTest, AddToAutoRegisteredDictionary) {
   }
 }
 
-#ifndef OS_ANDROID
-// This is a test to check if the data stored by the new binary can be read
-// by an older binary, considering the Dev -> Stable converting users.
-// We can remove when the new Stable binary which supports reading new format
-// is spread enough.
-TEST_F(UserDictionaryStorageTest, BackwardCompatibilityTest) {
-  {
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    // Add dummy entry.
-    {
-      UserDictionary *dictionary = storage.add_dictionaries();
-      UserDictionary::Entry *entry = dictionary->add_entries();
-      entry->set_key("key");
-      entry->set_value("value");
-      entry->set_comment("comment");
-      entry->set_pos(UserDictionary::NOUN);
-    }
-
-    ASSERT_TRUE(storage.Lock());
-    ASSERT_TRUE(storage.Save());
-    ASSERT_TRUE(storage.UnLock());
-  }
-
-  // Make sure that the deprecated field is filled (in string).
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  ASSERT_TRUE(storage.LoadWithoutMigration());
-
-  ASSERT_EQ(1, storage.dictionaries_size());
-  const UserDictionary &dictionary = storage.dictionaries(0);
-  ASSERT_EQ(1, dictionary.entries_size());
-  const UserDictionary::Entry &entry = dictionary.entries(0);
-  const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
-  ASSERT_EQ(1, unknown_field_set.field_count());
-  const UnknownField &unknown_field = unknown_field_set.field(0);
-  EXPECT_EQ(3, unknown_field.number());
-  EXPECT_EQ(UnknownField::TYPE_LENGTH_DELIMITED, unknown_field.type());
-  EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", unknown_field.length_delimited());
-}
-#endif
-
 TEST_F(UserDictionaryStorageTest, Export) {
   const int kDummyDictionaryId = 10;
   const string kPath = FileUtil::JoinPath(FLAGS_test_tmpdir, "exported_file");
@@ -548,150 +503,5 @@ TEST_F(UserDictionaryStorageTest, Export) {
             string(mapped_data.begin(), mapped_data.size()));
 #endif  // OS_WIN
 }
-
-namespace {
-
-enum SerializedPosType {
-  NEW_ENUM_POS,
-  LEGACY_STRING_POS,
-  LEGACY_ENUM_POS,
-};
-
-void AddTestDummyUserDictionary(
-    SerializedPosType serialized_pos_type, UnknownFieldSet *storage) {
-  UnknownFieldSet dictionary;
-  for (int i = UserDictionary::PosType_MIN;
-       i <= UserDictionary::PosType_MAX; ++i) {
-    UnknownFieldSet entry;
-    entry.AddLengthDelimited(1, Util::StringPrintf("key%d", i));
-    entry.AddLengthDelimited(2, Util::StringPrintf("value%d", i));
-    switch (serialized_pos_type) {
-      case NEW_ENUM_POS:
-        entry.AddVarint(5, i);
-        break;
-      case LEGACY_STRING_POS:
-        entry.AddLengthDelimited(
-            3,
-            UserDictionaryUtil::GetStringPosType(
-                static_cast<UserDictionary::PosType>(i)));
-        break;
-      case LEGACY_ENUM_POS:
-        entry.AddVarint(3, i);
-        break;
-      default:
-        LOG(FATAL) << "Unknown serialized pos type: " << serialized_pos_type;
-    }
-    entry.AddLengthDelimited(4, Util::StringPrintf("comment%d", i));
-    dictionary.AddLengthDelimited(
-        4, SerializeUnknownFieldSetAsString(entry));
-  }
-  storage->AddLengthDelimited(
-      2, SerializeUnknownFieldSetAsString(dictionary));
-}
-
-void WriteToFile(const string &value, const string &filepath) {
-  OutputFileStream stream(filepath.c_str(), ios::out|ios::binary|ios::trunc);
-  stream.write(value.data(), value.size());
-}
-
-}  // namespace
-
-class UserDictionaryStorageMigrationTest
-    : public UserDictionaryStorageTest,
-      public ::testing::WithParamInterface<SerializedPosType> {
-};
-
-TEST_P(UserDictionaryStorageMigrationTest, Load) {
-  {
-    // Create serialized user dictionary data directly.
-    UnknownFieldSet storage;
-    AddTestDummyUserDictionary(GetParam(), &storage);
-    WriteToFile(SerializeUnknownFieldSetAsString(storage),
-                GetUserDictionaryFile());
-  }
-
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  ASSERT_TRUE(storage.Load());
-
-  ASSERT_EQ(1, storage.dictionaries_size()) << storage.Utf8DebugString();
-  const UserDictionary &dictionary = storage.dictionaries(0);
-  ASSERT_EQ(UserDictionary::PosType_MAX - UserDictionary::PosType_MIN + 1,
-            dictionary.entries_size())
-      << dictionary.Utf8DebugString();
-  for (int i = 0; i < dictionary.entries_size(); ++i) {
-    const int id = UserDictionary::PosType_MIN + i;
-    const UserDictionary::Entry &entry = dictionary.entries(i);
-    EXPECT_EQ(Util::StringPrintf("key%d", id), entry.key())
-        << entry.Utf8DebugString();
-    EXPECT_EQ(Util::StringPrintf("value%d", id), entry.value())
-        << entry.Utf8DebugString();
-    EXPECT_EQ(id, entry.pos()) << entry.Utf8DebugString();
-    EXPECT_EQ(Util::StringPrintf("comment%d", id), entry.comment())
-        << entry.Utf8DebugString();
-  }
-}
-
-TEST_P(UserDictionaryStorageMigrationTest, LoadWithoutMigration) {
-  {
-    // Create serialized user dictionary data directly.
-    UnknownFieldSet storage;
-    AddTestDummyUserDictionary(GetParam(), &storage);
-    WriteToFile(SerializeUnknownFieldSetAsString(storage),
-                GetUserDictionaryFile());
-  }
-
-  UserDictionaryStorage storage(GetUserDictionaryFile());
-  ASSERT_TRUE(storage.LoadWithoutMigration());
-
-  ASSERT_EQ(1, storage.dictionaries_size()) << storage.Utf8DebugString();
-  const UserDictionary &dictionary = storage.dictionaries(0);
-  ASSERT_EQ(UserDictionary::PosType_MAX - UserDictionary::PosType_MIN + 1,
-            dictionary.entries_size())
-      << dictionary.Utf8DebugString();
-  for (int i = 0; i < dictionary.entries_size(); ++i) {
-    const int id = UserDictionary::PosType_MIN + i;
-    const UserDictionary::Entry &entry = dictionary.entries(i);
-    EXPECT_EQ(Util::StringPrintf("key%d", id), entry.key())
-        << entry.Utf8DebugString();
-    EXPECT_EQ(Util::StringPrintf("value%d", id), entry.value())
-        << entry.Utf8DebugString();
-    switch (GetParam()) {
-      case NEW_ENUM_POS:
-        ASSERT_TRUE(entry.has_pos());
-        EXPECT_EQ(id, entry.pos());
-        break;
-      case LEGACY_STRING_POS: {
-        const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
-        ASSERT_EQ(1, unknown_field_set.field_count());
-        const UnknownField &unknown_field = unknown_field_set.field(0);
-        EXPECT_EQ(UnknownField::TYPE_LENGTH_DELIMITED, unknown_field.type());
-        EXPECT_EQ(3, unknown_field.number());
-        EXPECT_EQ(
-            UserDictionaryUtil::GetStringPosType(
-                static_cast<UserDictionary::PosType>(id)),
-            unknown_field.length_delimited());
-        break;
-      }
-      case LEGACY_ENUM_POS: {
-        const UnknownFieldSet &unknown_field_set = entry.unknown_fields();
-        ASSERT_EQ(1, unknown_field_set.field_count());
-        const UnknownField &unknown_field = unknown_field_set.field(0);
-        EXPECT_EQ(UnknownField::TYPE_VARINT, unknown_field.type());
-        EXPECT_EQ(3, unknown_field.number());
-        EXPECT_EQ(id, unknown_field.varint());
-        break;
-      }
-      default:
-        LOG(FATAL) << "Unknown serialized pos type: " << GetParam();
-    }
-    EXPECT_EQ(Util::StringPrintf("comment%d", id), entry.comment())
-        << entry.Utf8DebugString();
-  }
-}
-
-INSTANTIATE_TEST_CASE_P(
-    UserDictionaryStorageProtoMigration,
-    UserDictionaryStorageMigrationTest,
-    ::testing::Values(NEW_ENUM_POS, LEGACY_STRING_POS, LEGACY_ENUM_POS));
 
 }  // namespace mozc

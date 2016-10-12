@@ -41,7 +41,6 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/win_util.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 
@@ -283,25 +282,9 @@ class GdiTextRenderer : public TextRenderer {
 class DirectWriteTextRenderer : public TextRenderer {
  public:
   static DirectWriteTextRenderer *Create() {
-    const auto d2d1 = WinUtil::LoadSystemLibrary(L"d2d1.dll");
-    const auto d2d1_create_factory  =
-        reinterpret_cast<D2D1CreateFactoryPtr>(
-            ::GetProcAddress(d2d1, "D2D1CreateFactory"));
-    if (d2d1_create_factory == nullptr) {
-      return nullptr;
-    }
-
-    const auto dwrite = WinUtil::LoadSystemLibrary(L"dwrite.dll");
-    const auto dwrite_create_factory  =
-        reinterpret_cast<DWriteCreateFactoryPtr>(
-            ::GetProcAddress(dwrite, "DWriteCreateFactory"));
-    if (dwrite_create_factory == nullptr) {
-      return nullptr;
-    }
-
     HRESULT hr = S_OK;
     CComPtr<ID2D1Factory> d2d_factory;
-    hr = d2d1_create_factory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
+    hr = ::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
                              __uuidof(ID2D1Factory),
                              nullptr,
                              reinterpret_cast<void **>(&d2d_factory));
@@ -309,7 +292,7 @@ class DirectWriteTextRenderer : public TextRenderer {
       return nullptr;
     }
     CComPtr<IDWriteFactory> dwrite_factory;
-    hr = dwrite_create_factory(
+    hr = ::DWriteCreateFactory(
         DWRITE_FACTORY_TYPE_SHARED,
         __uuidof(IDWriteFactory),
         reinterpret_cast<IUnknown **>(&dwrite_factory));
@@ -321,43 +304,19 @@ class DirectWriteTextRenderer : public TextRenderer {
     if (FAILED(hr)) {
       return nullptr;
     }
-    const auto kernel32 = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-    const auto get_user_default_locale_name =
-        reinterpret_cast<GetUserDefaultLocaleNamePtr>(
-            ::GetProcAddress(kernel32, "GetUserDefaultLocaleName"));
-    if (get_user_default_locale_name == nullptr) {
-      return nullptr;
-    }
-    return new DirectWriteTextRenderer(
-        d2d_factory, dwrite_factory, interop, get_user_default_locale_name);
+    return new DirectWriteTextRenderer(d2d_factory, dwrite_factory, interop);
   }
   virtual ~DirectWriteTextRenderer() {
   }
 
  private:
-  typedef int (WINAPI *GetUserDefaultLocaleNamePtr)(LPWSTR locale_name,
-                                                    int locale_name_buffer_len);
-
-  typedef HRESULT (WINAPI *D2D1CreateFactoryPtr)(
-      D2D1_FACTORY_TYPE factory_type,
-      const IID &iid,
-      const D2D1_FACTORY_OPTIONS *factory_options,
-      void **factory);
-
-  typedef HRESULT (WINAPI *DWriteCreateFactoryPtr)(
-      DWRITE_FACTORY_TYPE factory_type,
-      const IID &iid,
-      IUnknown **factory);
-
   DirectWriteTextRenderer(
       ID2D1Factory *d2d2_factory,
       IDWriteFactory *dwrite_factory,
-      IDWriteGdiInterop *dwrite_interop,
-      GetUserDefaultLocaleNamePtr get_user_default_locale_name)
+      IDWriteGdiInterop *dwrite_interop)
       : d2d2_factory_(d2d2_factory),
         dwrite_factory_(dwrite_factory),
-        dwrite_interop_(dwrite_interop),
-        get_user_default_locale_name_(get_user_default_locale_name) {
+        dwrite_interop_(dwrite_interop) {
     OnThemeChanged();
   }
 
@@ -441,8 +400,10 @@ class DirectWriteTextRenderer : public TextRenderer {
     for (size_t i = 0; i < display_list.size(); ++i) {
       const auto &item = display_list[i];
       const D2D1_RECT_F render_rect = {
-        item.rect.Left(), item.rect.Top(), item.rect.Right(),
-        item.rect.Bottom(),
+        static_cast<float>(item.rect.Left()),
+        static_cast<float>(item.rect.Top()),
+        static_cast<float>(item.rect.Right()),
+        static_cast<float>(item.rect.Bottom()),
       };
       dc_render_target_->DrawText(item.text.data(),
                                   item.text.size(),
@@ -530,7 +491,7 @@ class DirectWriteTextRenderer : public TextRenderer {
     }
 
     wchar_t locale_name[LOCALE_NAME_MAX_LENGTH] = {};
-    if (get_user_default_locale_name_(locale_name, arraysize(locale_name))
+    if (::GetUserDefaultLocaleName(locale_name, arraysize(locale_name))
         == 0) {
       return nullptr;
     }
@@ -573,7 +534,6 @@ class DirectWriteTextRenderer : public TextRenderer {
   mutable CComPtr<ID2D1DCRenderTarget> dc_render_target_;
   CComPtr<IDWriteGdiInterop> dwrite_interop_;
   vector<RenderInfo> render_info_;
-  GetUserDefaultLocaleNamePtr get_user_default_locale_name_;
 
   DISALLOW_COPY_AND_ASSIGN(DirectWriteTextRenderer);
 };
@@ -587,14 +547,15 @@ TextRenderer::~TextRenderer() {
 TextRenderer *TextRenderer::Create() {
   // In some environments, DirectWrite cannot render characters in the
   // candidate window or even worse may cause crash.  As a workaround,
-  // this function always returns new GidTextRenderer().
-  //
-  // TODO: Reactivate the following code when b/23803925 is fixed.
-  //
-  // auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
-  // if (dwrite_text_renderer != nullptr) {
-  //   return dwrite_text_renderer;
-  // }
+  // we try to use DirectWrite only on Windows 8.1 and later.
+  // TODO(yukawa): Reactivate the following code for older OSes when
+  // the root cause of b/23803925 is identified.
+  if (SystemUtil::IsWindows8_1OrLater()) {
+    auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
+    if (dwrite_text_renderer != nullptr) {
+      return dwrite_text_renderer;
+    }
+  }
   return new GdiTextRenderer();
 }
 

@@ -42,7 +42,6 @@
       ],
       'dependencies': [
         '../composer/composer.gyp:composer',
-        '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction.gyp:prediction_protocol',

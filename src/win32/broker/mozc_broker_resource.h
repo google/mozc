@@ -34,10 +34,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by TextService_template.rc
 //
-#define IDS_DIALOG_TITLE                101
-#define IDS_DIALOG_MESSAGE              102
-#define IDS_DIALOG_FILE_CORRUPTED       103
-#define IDS_DIALOG_FILE_NOT_FOUND       104
 
 // Next default values for new objects
 //

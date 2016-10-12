@@ -62,7 +62,7 @@ class ConverterInterface;
 
 namespace session {
 
-class SessionConverterStressTest : public testing::Test {
+class SessionConverterStressTest : public ::testing::Test {
  public:
   SessionConverterStressTest() {
     if (!FLAGS_test_deterministic) {

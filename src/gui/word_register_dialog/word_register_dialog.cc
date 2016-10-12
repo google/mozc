@@ -39,6 +39,9 @@
 #endif  // OS_WIN
 
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QMessageBox>
+#endif
 #include <cstdlib>
 #ifdef OS_WIN
 #include <memory>  // for std::unique_ptr
@@ -50,11 +53,10 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -86,7 +88,11 @@ QString GetEnv(const char *envname) {
   const DWORD num_copied =
       ::GetEnvironmentVariable(wenvname.c_str(), buffer.get(), buffer_size);
   if (num_copied > 0) {
+#ifdef MOZC_USE_QT5
+    return QString::fromUtf16(buffer.get());
+#else
     return QString::fromWCharArray(buffer.get());
+#endif
   }
   return "";
 #endif  // OS_WIN
@@ -104,8 +110,7 @@ WordRegisterDialog::WordRegisterDialog()
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(tr("Mozc")),
-      user_pos_(new dictionary::UserPOS(
-          UserPosManager::GetUserPosManager()->GetUserPOSData())) {
+      pos_list_provider_(new POSListProvider()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
@@ -145,7 +150,7 @@ WordRegisterDialog::WordRegisterDialog()
 
   // Initialize ComboBox
   vector<string> pos_set;
-  user_pos_->GetPOSList(&pos_set);
+  pos_list_provider_->GetPOSList(&pos_set);
   CHECK(!pos_set.empty());
 
   for (size_t i = 0; i < pos_set.size(); ++i) {
@@ -482,7 +487,7 @@ const QString WordRegisterDialog::TrimValue(const QString &str) const {
 void WordRegisterDialog::EnableIME() {
 #ifdef OS_WIN
   // TODO(taku): implement it for other platform.
-  HIMC himc = ::ImmGetContext(winId());
+  HIMC himc = ::ImmGetContext(reinterpret_cast<HWND>(winId()));
   if (himc != NULL) {
     ::ImmSetOpenStatus(himc, TRUE);
   }

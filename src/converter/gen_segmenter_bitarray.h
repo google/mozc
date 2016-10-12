@@ -40,7 +40,10 @@ class SegmenterBitarrayGenerator {
  public:
   typedef bool (*IsBoundaryFunc)(uint16 rid, uint16 lid);
   static void GenerateBitarray(int lsize, int rsize, IsBoundaryFunc func,
-                               const string &output_file);
+                               const string &output_size_info,
+                               const string &output_ltable,
+                               const string &output_rtable,
+                               const string &output_bitarray);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SegmenterBitarrayGenerator);

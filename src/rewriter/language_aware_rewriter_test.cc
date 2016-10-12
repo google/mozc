@@ -33,24 +33,19 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "request/conversion_request.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/base/public/googletest.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
@@ -72,73 +67,66 @@ void InsertASCIISequence(const string &text, composer::Composer *composer) {
 
 }  // namespace
 
-class LanguageAwareRewriterTest : public testing::Test {
+class LanguageAwareRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   LanguageAwareRewriterTest() {}
-  virtual ~LanguageAwareRewriterTest() {}
+  ~LanguageAwareRewriterTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers mocked PackedDataManager.
-    unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     dictionary_mock_.reset(new DictionaryMock);
   }
 
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    packed::RegisterPackedDataManager(NULL);
-#endif  // MOZC_USE_PACKED_DICTIONARY
-    dictionary_mock_.reset(NULL);
+  void TearDown() override {
+    dictionary_mock_.reset();
     usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   LanguageAwareRewriter *CreateLanguageAwareRewriter() const {
     return new LanguageAwareRewriter(
-        *UserPosManager::GetUserPosManager()->GetPOSMatcher(),
+        dictionary::POSMatcher(data_manager_.GetPOSMatcherData()),
         dictionary_mock_.get());
+  }
+
+  bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
+                                     const string &key, string *composition,
+                                     Segments *segments) {
+    commands::Request client_request;
+    client_request.set_language_aware_input(
+        commands::Request::LANGUAGE_AWARE_SUGGESTION);
+
+    composer::Table table;
+    config::Config default_config;
+    table.InitializeWithRequestAndConfig(client_request, default_config,
+                                         data_manager_);
+
+    composer::Composer composer(&table, &client_request, &default_config);
+    InsertASCIISequence(key, &composer);
+    composer.GetStringForPreedit(composition);
+
+    // Perform the rewrite command.
+    segments->set_request_type(Segments::SUGGESTION);
+    if (segments->conversion_segments_size() == 0) {
+      segments->add_segment();
+    }
+    Segment *segment = segments->mutable_conversion_segment(0);
+    segment->set_key(*composition);
+    ConversionRequest request(&composer, &client_request, &default_config);
+
+    return rewriter->Rewrite(request, segments);
   }
 
   unique_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
+
+  const testing::MockDataManager data_manager_;
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
 };
 
 namespace {
-bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
-                                   const string &key,
-                                   string *composition,
-                                   Segments *segments) {
-  commands::Request client_request;
-  client_request.set_language_aware_input(
-      commands::Request::LANGUAGE_AWARE_SUGGESTION);
-
-  composer::Table table;
-  config::Config default_config;
-  table.InitializeWithRequestAndConfig(client_request, default_config);
-
-  composer::Composer composer(&table, &client_request, &default_config);
-  InsertASCIISequence(key, &composer);
-  composer.GetStringForPreedit(composition);
-
-  // Perform the rewrite command.
-  segments->set_request_type(Segments::SUGGESTION);
-  if (segments->conversion_segments_size() == 0) {
-    segments->add_segment();
-  }
-  Segment *segment = segments->mutable_conversion_segment(0);
-  segment->set_key(*composition);
-  ConversionRequest request(&composer, &client_request, &default_config);
-
-  return rewriter->Rewrite(request, segments);
-}
 
 void PushFrontCandidate(const string &data, Segment *segment) {
   Segment::Candidate *candidate = segment->push_front_candidate();
@@ -319,7 +307,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
 
     composer::Table table;
     config::Config default_config;
-    table.InitializeWithRequestAndConfig(client_request, default_config);
+    table.InitializeWithRequestAndConfig(client_request, default_config,
+                                         data_manager_);
 
     composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence("python", &composer);

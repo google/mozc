@@ -83,7 +83,7 @@ import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TabHost;
@@ -293,12 +293,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-      LayoutInflater inflater = LayoutInflater.from(context);
-      inflater = inflater.cloneInContext(context);
-
-      View view = MozcUtil.inflateWithOutOfMemoryRetrial(
-          View.class, inflater, R.layout.symbol_candidate_view, Optional.<ViewGroup>absent(),
-          false);
+      View view = LayoutInflater.from(context).inflate(R.layout.symbol_candidate_view, null);
       SymbolCandidateView symbolCandidateView =
           SymbolCandidateView.class.cast(view.findViewById(R.id.symbol_input_candidate_view));
       symbolCandidateView.setCandidateSelectListener(candidateSelectListener);
@@ -479,19 +474,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     }
   }
 
-  private class OutAnimationAdapter extends AnimationAdapter {
-    @Override
-    public void onAnimationEnd(Animation animation) {
-      // Releases candidate resources. Also, on some devices, this cancels repeating invalidation
-      // to support emoji related stuff.
-      TabHost tabHost = getTabHost();
-      tabHost.setOnTabChangedListener(null);
-      ViewPager candidateViewPager = getCandidateViewPager();
-      candidateViewPager.setAdapter(null);
-      candidateViewPager.setOnPageChangeListener(null);
-    }
-  }
-
   /**
    * Name to represent this view for logging.
    */
@@ -551,7 +533,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   }
 
   {
-    setOutAnimationListener(new OutAnimationAdapter());
     sharedPreferences =
         Preconditions.checkNotNull(PreferenceManager.getDefaultSharedPreferences(getContext()));
   }
@@ -575,14 +556,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
   void inflateSelf() {
     Preconditions.checkState(!isInflated(), "The symbol input view is already inflated.");
 
-    // Hack: Because we wrap the real context to inject "retrying" for Drawable loading,
-    // LayoutInflater.from(getContext()).getContext() may be different from getContext().
-    // So, we clone the inflater here, too, with actual context.
-    Context context = getContext();
-    LayoutInflater inflater = LayoutInflater.from(context);
-    inflater = inflater.cloneInContext(context);
-    MozcUtil.inflateWithOutOfMemoryRetrial(
-        SymbolInputView.class, inflater, R.layout.symbol_view, Optional.<ViewGroup>of(this), true);
+    LayoutInflater.from(getContext()).inflate(R.layout.symbol_view, this);
     // Note: onFinishInflate won't be invoked on android ver 3.0 or later, while it is invoked
     // on android 2.3 or earlier. So, we define another (but similar) method and invoke it here
     // manually.
@@ -599,6 +573,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
       setVerticalDimension(viewHeight.get(), keyboardHeightScale.get());
     }
 
+    initializeNumberKeyboard();
     initializeMinorCategoryTab();
     initializeCloseButton();
     initializeDeleteButton();
@@ -660,11 +635,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
     enableEmoji(emojiEnabled);
 
-    // Disable h/w acceleration to use a PictureDrawable.
-    for (SymbolMajorCategory majorCategory : SymbolMajorCategory.values()) {
-      getMajorCategoryButton(majorCategory).setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-    }
-
     updateSkinAwareDrawable();
     reset();
   }
@@ -694,7 +664,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     setLayoutHeight(this, symbolInputViewHeight);
     setLayoutHeight(getMajorCategoryFrame(), majorCategoryHeight);
     setLayoutHeight(findViewById(R.id.number_keyboard), numberKeyboardHeight.get());
-    setLayoutHeight(findViewById(R.id.number_keyboard_frame), LayoutParams.WRAP_CONTENT);
+    setLayoutHeight(getNumberKeyboardFrame(), LayoutParams.WRAP_CONTENT);
   }
 
   public int getNumberKeyboardHeight() {
@@ -773,11 +743,37 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
               majorCategoryButtonDrawableFactory.createCenterButtonDrawable());
           break;
       }
-      view.setImageDrawable(skin.getDrawable(resources, majorCategory.buttonImageResourceId));
+      view.setImageDrawable(BackgroundDrawableFactory.createSelectableDrawable(
+          skin.getDrawable(resources, majorCategory.buttonSelectedImageResourceId),
+          Optional.of(skin.getDrawable(resources, majorCategory.buttonImageResourceId))));
       // Update the padding since setBackgroundDrawable() overwrites it.
       view.setMaxImageHeight(
           resources.getDimensionPixelSize(majorCategory.maxImageHeightResourceId));
     }
+  }
+
+  private void initializeNumberKeyboard() {
+    final KeyboardFactory factory = new KeyboardFactory();
+
+    getNumberKeyboardView().addOnLayoutChangeListener(new OnLayoutChangeListener() {
+      @Override
+      public void onLayoutChange(
+          View view, int left, int top, int right, int bottom,
+          int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        int width = right - left;
+        int height = bottom - top;
+        int oldWidth = oldRight - oldLeft;
+        int oldHeight = oldBottom - oldTop;
+        if (width == 0 || height == 0 || (width == oldWidth && height == oldHeight)) {
+          return;
+        }
+        KeyboardView keyboardView = KeyboardView.class.cast(view);
+        Keyboard keyboard =
+            factory.get(getResources(), KeyboardSpecification.SYMBOL_NUMBER, width, height);
+        keyboardView.setKeyboard(keyboard);
+        keyboardView.invalidate();
+      }
+    });
   }
 
   private void initializeMinorCategoryTab() {
@@ -811,6 +807,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     getTabHost().setBackgroundDrawable(
         skin.windowBackgroundDrawable.getConstantState().newDrawable());
     TabWidget tabWidget = getTabWidget();
+    // Explicitly set non-transparent drawable to avoid strange background on
+    // some devices.
+    tabWidget.setBackgroundDrawable(
+        skin.buttonFrameBackgroundDrawable.getConstantState().newDrawable());
     for (int i = 0; i < tabWidget.getTabCount(); ++i) {
       View view = tabWidget.getChildTabViewAt(i);
       view.setBackgroundDrawable(createTabBackgroundDrawable(skin));
@@ -829,6 +829,14 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     });
   }
 
+  private void resetNumberKeyboard() {
+    if (!isInflated()) {
+      return;
+    }
+    // Resets candidate expansion.
+    setLayoutHeight(getNumberKeyboardFrame(), LayoutParams.WRAP_CONTENT);
+  }
+
   private void resetTabImageForMinorCategory() {
     if (!isInflated()) {
       return;
@@ -836,18 +844,25 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     TabWidget tabWidget = getTabWidget();
     List<SymbolMinorCategory> minorCategoryList = currentMajorCategory.minorCategories;
     int definedTabSize = Math.min(minorCategoryList.size(), tabWidget.getChildCount());
+    Resources resources = getResources();
     for (int i = 0; i < definedTabSize; ++i) {
       MozcImageView view = MozcImageView.class.cast(tabWidget.getChildTabViewAt(i));
       SymbolMinorCategory symbolMinorCategory = minorCategoryList.get(i);
-      view.setRawId(symbolMinorCategory.drawableResourceId);
+      if (symbolMinorCategory.drawableResourceId != SymbolMinorCategory.INVALID_RESOURCE_ID
+          && symbolMinorCategory.selectedDrawableResourceId
+                 != SymbolMinorCategory.INVALID_RESOURCE_ID) {
+        view.setImageDrawable(BackgroundDrawableFactory.createSelectableDrawable(
+            skin.getDrawable(resources, symbolMinorCategory.selectedDrawableResourceId),
+            Optional.of(skin.getDrawable(resources, symbolMinorCategory.drawableResourceId))));
+      }
       if (symbolMinorCategory.maxImageHeightResourceId != SymbolMinorCategory.INVALID_RESOURCE_ID) {
         view.setMaxImageHeight(
-            getResources().getDimensionPixelSize(symbolMinorCategory.maxImageHeightResourceId));
+            resources.getDimensionPixelSize(symbolMinorCategory.maxImageHeightResourceId));
       }
       if (symbolMinorCategory.contentDescriptionResourceId
           != SymbolMinorCategory.INVALID_RESOURCE_ID) {
         view.setContentDescription(
-            getResources().getString(symbolMinorCategory.contentDescriptionResourceId));
+            resources.getString(symbolMinorCategory.contentDescriptionResourceId));
       }
     }
   }
@@ -995,13 +1010,33 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   @Override
   public void setVisibility(int visibility) {
-    int previousVisibility = getVisibility();
+    boolean isVisible = visibility == View.VISIBLE;
+    boolean previousIsVisible = getVisibility() == View.VISIBLE;
     super.setVisibility(visibility);
+
+    if (previousIsVisible == isVisible) {
+      return;
+    }
+
+    if (!isVisible) {
+      // Releases candidate resources. Also, on some devices, this cancels repeating invalidation
+      // to support emoji related stuff.
+      TabHost tabHost = getTabHost();
+      if (tabHost != null) {
+        tabHost.setOnTabChangedListener(null);
+      }
+      ViewPager candidateViewPager = getCandidateViewPager();
+      if (candidateViewPager != null) {
+        candidateViewPager.setAdapter(null);
+        candidateViewPager.setOnPageChangeListener(null);
+      }
+    }
+
     if (viewEventListener.isPresent()) {
-      if (previousVisibility == View.VISIBLE && visibility != View.VISIBLE) {
-        viewEventListener.get().onCloseSymbolInputView();
-      } else if (previousVisibility != View.VISIBLE && visibility == View.VISIBLE) {
+      if (isVisible) {
         viewEventListener.get().onShowSymbolInputView(Collections.<TouchEvent>emptyList());
+      } else {
+        viewEventListener.get().onCloseSymbolInputView();
       }
     }
   }
@@ -1091,7 +1126,7 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
     if (currentMajorCategory == SymbolMajorCategory.NUMBER) {
       findViewById(android.R.id.tabhost).setVisibility(View.GONE);
       findViewById(R.id.number_frame).setVisibility(View.VISIBLE);
-      setNumberKeyboard();
+      resetNumberKeyboard();
     } else {
       findViewById(android.R.id.tabhost).setVisibility(View.VISIBLE);
       findViewById(R.id.number_frame).setVisibility(View.GONE);
@@ -1128,26 +1163,6 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
           currentMajorCategory == SymbolMajorCategory.EMOJI
           && !emojiEnabled ? View.VISIBLE : View.GONE);
     }
-  }
-
-  private void setNumberKeyboard() {
-    final KeyboardSpecification spec = KeyboardSpecification.SYMBOL_NUMBER;
-    final KeyboardFactory factory = new KeyboardFactory();
-
-    getNumberKeyboardView().addOnLayoutChangeListener(new OnLayoutChangeListener() {
-      @Override
-      public void onLayoutChange(
-          View view, int left, int top, int right, int bottom,
-          int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        if (right - left == 0 || bottom - top == 0) {
-          return;
-        }
-        KeyboardView keyboardView = KeyboardView.class.cast(view);
-        Keyboard keyboard = factory.get(getResources(), spec, right - left, bottom - top);
-        keyboardView.setKeyboard(keyboard);
-        keyboardView.invalidate();
-      }
-    });
   }
 
   private void updateMinorCategory() {
@@ -1254,6 +1269,10 @@ public class SymbolInputView extends InOutAnimatedFrameLayout implements MemoryM
 
   private KeyboardView getNumberKeyboardView() {
     return KeyboardView.class.cast(findViewById(R.id.number_keyboard));
+  }
+
+  private FrameLayout getNumberKeyboardFrame() {
+    return FrameLayout.class.cast(findViewById(R.id.number_keyboard_frame));
   }
 
   private LinearLayout getMajorCategoryFrame() {

@@ -86,8 +86,7 @@ void NormalizeT13ns(vector<string> *t13ns) {
   string normalized;
   for (size_t i = 0; i < t13ns->size(); ++i) {
     normalized.clear();
-    TextNormalizer::NormalizeTransliterationText(
-        t13ns->at(i), &normalized);
+    TextNormalizer::NormalizeText(t13ns->at(i), &normalized);
     t13ns->at(i) = normalized;
   }
 }

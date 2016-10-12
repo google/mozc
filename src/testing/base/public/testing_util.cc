@@ -30,14 +30,10 @@
 #include "testing/base/public/testing_util.h"
 
 #include <memory>
-#include <string>
 
 #include "base/logging.h"
-#include "base/protobuf/coded_stream.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
-#include "base/protobuf/wire_format.h"
-#include "base/protobuf/zero_copy_stream_impl.h"
 
 namespace mozc {
 namespace testing {
@@ -47,11 +43,6 @@ using ::mozc::protobuf::FieldDescriptor;
 using ::mozc::protobuf::Message;
 using ::mozc::protobuf::Reflection;
 using ::mozc::protobuf::TextFormat;
-using ::mozc::protobuf::UnknownFieldSet;
-// Need to access internal methods in order to access wire format directly.
-using ::mozc::protobuf::internal::WireFormat;
-using ::mozc::protobuf::io::CodedOutputStream;
-using ::mozc::protobuf::io::StringOutputStream;
 
 namespace internal {
 
@@ -240,15 +231,6 @@ namespace {
     const char *expect, const Message &actual) {
   return EqualsProtoWithParse(
       expect_string, actual_string, expect, actual, true);
-}
-
-string SerializeUnknownFieldSetAsString(
-    const UnknownFieldSet &unknown_field_set) {
-  string result;
-  StringOutputStream raw_stream(&result);
-  CodedOutputStream coded_stream(&raw_stream);
-  WireFormat::SerializeUnknownFields(unknown_field_set, &coded_stream);
-  return result;
 }
 
 }  // namespace testing

@@ -279,13 +279,12 @@ void Util::SplitStringAllowEmpty(StringPiece str,
   }
 }
 
-void Util::SplitStringToUtf8Chars(const string &str, vector<string> *output) {
-  size_t begin = 0;
-  const size_t end = str.size();
-
+void Util::SplitStringToUtf8Chars(StringPiece str, vector<string> *output) {
+  const char *begin = str.data();
+  const char *const end = str.data() + str.size();
   while (begin < end) {
-    const size_t mblen = OneCharLen(str.c_str() + begin);
-    output->push_back(str.substr(begin, mblen));
+    const size_t mblen = OneCharLen(begin);
+    output->emplace_back(begin, mblen);
     begin += mblen;
   }
   DCHECK_EQ(begin, end);
@@ -613,7 +612,7 @@ bool Util::SplitFirstChar32(StringPiece s,
   }
 
   *first_char32 = 0;
-  rest->clear();
+  *rest = StringPiece();
 
   while (true) {
     if (s.empty()) {
@@ -706,7 +705,7 @@ bool Util::SplitLastChar32(StringPiece s,
   }
 
   *last_char32 = 0;
-  rest->clear();
+  *rest = StringPiece();
 
   if (s.empty()) {
     return false;
@@ -1022,12 +1021,44 @@ void Util::Sleep(uint32 msec) {
 
 namespace {
 
-void EscapeInternal(char input, const string &prefix, string *output) {
+void EscapeInternal(char input, StringPiece prefix, string *output) {
   const int hi = ((static_cast<int>(input) & 0xF0) >> 4);
   const int lo = (static_cast<int>(input) & 0x0F);
-  *output += prefix;
+  prefix.AppendToString(output);
   *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
+}
+
+bool ParseHexChar(char c, char *n) {
+  if ('0' <= c && c <= '9') {
+    *n = c - '0';
+    return true;
+  }
+  if ('a' <= c && c <= 'f') {
+    *n = (c - 'a') + 10;
+    return true;
+  }
+  if ('A' <= c && c <= 'F') {
+    *n = (c - 'A') + 10;
+    return true;
+  }
+  return false;
+}
+
+// Note: we cannot use strtoul() because it requires input to be
+// null-terminated (StringPiece may not be null-terminated).
+bool UnescapeInternal(StringPiece input, StringPiece prefix, char *output) {
+  if (!Util::StartsWith(input, prefix)) {
+    return false;
+  }
+  input.remove_prefix(prefix.size());
+  char hi, lo;
+  if (input.size() < 2 || !ParseHexChar(input[0], &hi) ||
+      !ParseHexChar(input[1], &lo)) {
+    return false;
+  }
+  *output = (hi << 4) | lo;
+  return true;
 }
 
 int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
@@ -1416,11 +1447,32 @@ void Util::AppendCGIParams(const vector<pair<string, string> > &params,
   }
 }
 
-void Util::Escape(const string &input, string *output) {
+void Util::Escape(StringPiece input, string *output) {
   output->clear();
   for (size_t i = 0; i < input.size(); ++i) {
     EscapeInternal(input[i], "\\x", output);
   }
+}
+
+string Util::Escape(StringPiece input) {
+  string s;
+  Escape(input, &s);
+  return s;
+}
+
+bool Util::Unescape(StringPiece input, string *output) {
+  output->clear();
+  // Expected input format is "\xNN\xNN\xNN...", so input is parsed every four
+  // bytes (4 is the length of \xNN pattern).
+  for (; !input.empty(); input.remove_prefix(4)) {
+    char c;
+    // Try parsing \xNN pattern of 4 bytes.
+    if (!UnescapeInternal(input, "\\x", &c)) {
+      return false;
+    }
+    output->append(1, c);
+  }
+  return true;
 }
 
 void Util::EscapeUrl(const string &input, string *output) {
@@ -1678,12 +1730,44 @@ Util::FormType Util::GetFormType(const string &str) {
 // Util::CharcterSet Util::GetCharacterSet(char32 ucs4);
 #include "base/character_set.h"
 
-Util::CharacterSet Util::GetCharacterSet(const string &str) {
+Util::CharacterSet Util::GetCharacterSet(StringPiece str) {
   CharacterSet result = ASCII;
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     result = max(result, GetCharacterSet(iter.Get()));
   }
   return result;
+}
+
+// CAUTION: Be careful to change the implementation of serialization.  Some
+// files use this format, so compatibility can be lost.  See, e.g.,
+// data_manager/dataset_writer.cc.
+string Util::SerializeUint64(uint64 x) {
+  const char s[8] = {
+      static_cast<char>(x >> 56),
+      static_cast<char>((x >> 48) & 0xFF),
+      static_cast<char>((x >> 40) & 0xFF),
+      static_cast<char>((x >> 32) & 0xFF),
+      static_cast<char>((x >> 24) & 0xFF),
+      static_cast<char>((x >> 16) & 0xFF),
+      static_cast<char>((x >> 8) & 0xFF),
+      static_cast<char>(x & 0xFF),
+  };
+  return string(s, 8);
+}
+
+bool Util::DeserializeUint64(StringPiece s, uint64 *x) {
+  if (s.size() != 8) {
+    return false;
+  }
+  *x = static_cast<uint64>(s[0]) << 56 |
+       static_cast<uint64>(s[1]) << 48 |
+       static_cast<uint64>(s[2]) << 40 |
+       static_cast<uint64>(s[3]) << 32 |
+       static_cast<uint64>(s[4]) << 24 |
+       static_cast<uint64>(s[5]) << 16 |
+       static_cast<uint64>(s[6]) << 8 |
+       static_cast<uint64>(s[7]);
+  return true;
 }
 
 }  // namespace mozc

@@ -30,10 +30,17 @@
 #ifndef MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_TOOL_H_
 #define MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_TOOL_H_
 
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QSplitterHandle>
+#include <QtWidgets/QSplitter>
+#else
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
 #include <QtGui/QSplitterHandle>
 #include <QtGui/QSplitter>
+#endif
 
 #include <memory>
 #include <string>
@@ -44,7 +51,7 @@
 
 namespace mozc {
 
-class UserPOSInterface;
+class POSListProviderInterface;
 
 namespace client {
 class ClientInterface;
@@ -77,13 +84,7 @@ class DictionaryTool : public QMainWindow,
   // modifications on data before closing the window.
   void closeEvent(QCloseEvent *event);
 
-  void paintEvent(QPaintEvent *event);
-
   bool eventFilter(QObject *obj, QEvent *event);
-
-#ifdef OS_WIN
-  bool winEvent(MSG * message, long * result);
-#endif  // OS_WIN
 
  private slots:
   void CreateDictionary();
@@ -255,7 +256,7 @@ class DictionaryTool : public QMainWindow,
   // The maximum number of entries for a dictionary currently selected.
   int max_entry_size_;
 
-  std::unique_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const POSListProviderInterface> pos_list_provider_;
 };
 
 }  // namespace gui

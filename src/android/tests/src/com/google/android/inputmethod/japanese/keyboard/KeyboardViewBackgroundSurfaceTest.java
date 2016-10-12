@@ -52,10 +52,8 @@ import android.test.suitebuilder.annotation.SmallTest;
 import org.easymock.IMocksControl;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
  */
@@ -96,32 +94,6 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
 
   private static KeyEntity createInvalidKeyEntity() {
     return createInvalidKeyEntity(1, 'a', 0);
-  }
-
-  @SmallTest
-  public void testInitialize() {
-    Resources resources = createNiceMock(MockResourcesWithDisplayMetrics.class);
-    KeyboardViewBackgroundSurface surface = new KeyboardViewBackgroundSurface(
-        new BackgroundDrawableFactory(resources),
-        new DrawableCache(resources));
-
-    // If the surface is an instance constructed right now, initialization is needed later.
-    surface.requestUpdateSize(100, 100);
-    assertTrue(surface.isInitializationNeeded());
-
-    // We don't need initialization twice consecutively.
-    surface.initialize();
-    assertFalse(surface.isInitializationNeeded());
-
-    // If given view size is different from the last initialization's, we need to initialize
-    // again.
-    surface.requestUpdateSize(200, 300);
-    assertTrue(surface.isInitializationNeeded());
-
-    // Also, after reset for initialized surface, we need to initialize again as well.
-    surface.initialize();
-    surface.reset();
-    assertTrue(surface.isInitializationNeeded());
   }
 
   @SmallTest
@@ -319,8 +291,6 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
 
     IMocksControl canvasControl = createControl();
     final SurfaceCanvas canvas = canvasControl.createMock(SurfaceCanvas.class);
-    int surfaceWidth = WIDTH * 3;
-    int surfaceHeight = HEIGHT * 3;
     int expectedKeyWidth = WIDTH - HORIZONTAL_GAP;
     int expectedKeyHeight = HEIGHT;
 
@@ -329,7 +299,6 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     Drawable background = factory.getDrawable(DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND);
 
     // The first case is just a simple senario, just setting a new keyboard.
-    canvas.clearRegion(0, 0, surfaceWidth, surfaceHeight);
     canvas.drawDrawable(background, 2, 0, expectedKeyWidth, expectedKeyHeight);
     canvas.drawDrawableAtCenterWithKeepAspectRatio(
         icon1, 2, 0, expectedKeyWidth, expectedKeyHeight);
@@ -363,73 +332,111 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
     canvasControl.replay();
 
     KeyboardViewBackgroundSurface surface =
-        new KeyboardViewBackgroundSurface(factory, drawableCache) {
-      @Override
-      void initialize() {
-        super.initialize();
-        this.surfaceCanvas = Optional.of(canvas);
-      }
-    };
+        new KeyboardViewBackgroundSurface(factory, drawableCache);
 
-    surface.requestUpdateSize(surfaceWidth, surfaceHeight);
-    surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
-    surface.update();
+    surface.reset(Optional.of(keyboard), Collections.<MetaState>emptySet());
+    surface.draw(canvas);
 
     canvasControl.verify();
 
     // The second case is just updating some keys.
+    surface.clearPressedKey();
     canvasControl.reset();
-    canvas.clearRegion(WIDTH, HEIGHT, WIDTH, HEIGHT);
+    canvas.drawDrawable(background, 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon1, 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH + 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon2, WIDTH + 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH * 2 + 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon3, WIDTH * 2 + 2, 0, expectedKeyWidth, expectedKeyHeight);
+
+    canvas.drawDrawable(background, 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon4, 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
     canvas.drawDrawable(background, WIDTH + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
     canvas.drawDrawableAtCenterWithKeepAspectRatio(
         icon5, WIDTH + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH * 2 + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon6, WIDTH * 2 + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
 
-    canvas.clearRegion(0, HEIGHT * 2, WIDTH, HEIGHT);
     canvas.drawDrawable(background, 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
     canvas.drawDrawableAtCenterWithKeepAspectRatio(
         leftIcon7, 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon8, WIDTH + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(
+        background, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon9, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+
     canvasControl.replay();
 
-    surface.requestUpdateKey(key5, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key7, Optional.of(Direction.LEFT));
-    surface.update();
+    surface.addPressedKey(key5, Direction.CENTER);
+    surface.addPressedKey(key7, Direction.LEFT);
+    surface.draw(canvas);
 
     canvasControl.verify();
 
     // The third senario is updating some keys multiple times.
+    surface.clearPressedKey();
     canvasControl.reset();
-    canvas.clearRegion(WIDTH, HEIGHT * 2, WIDTH, HEIGHT);
-    canvas.drawDrawable(background, WIDTH + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
-    canvas.drawDrawableAtCenterWithKeepAspectRatio(
-        icon8, WIDTH + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
-
-    canvas.clearRegion(0, 0, WIDTH, HEIGHT);
     canvas.drawDrawable(background, 2, 0, expectedKeyWidth, expectedKeyHeight);
     canvas.drawDrawableAtCenterWithKeepAspectRatio(
         icon1, 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH + 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon2, WIDTH + 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH * 2 + 2, 0, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon3, WIDTH * 2 + 2, 0, expectedKeyWidth, expectedKeyHeight);
+
+    canvas.drawDrawable(background, 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon4, 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon5, WIDTH + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH * 2 + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon6, WIDTH * 2 + 2, HEIGHT, expectedKeyWidth, expectedKeyHeight);
+
+    canvas.drawDrawable(background, 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon7, 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(background, WIDTH + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon8, WIDTH + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawable(
+        background, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
+    canvas.drawDrawableAtCenterWithKeepAspectRatio(
+        icon9, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
 
     canvasControl.replay();
 
-    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key8, Optional.of(Direction.LEFT));
-    surface.requestUpdateKey(key8, Optional.of(Direction.RIGHT));
-    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key8, Optional.of(Direction.UP));
-    surface.requestUpdateKey(key8, Optional.of(Direction.DOWN));
-    surface.requestUpdateKey(key8, Optional.<Direction>absent());
+    surface.addPressedKey(key8, Direction.CENTER);
+    surface.addPressedKey(key8, Direction.LEFT);
+    surface.addPressedKey(key8, Direction.RIGHT);
+    surface.addPressedKey(key8, Direction.CENTER);
+    surface.addPressedKey(key8, Direction.UP);
+    surface.addPressedKey(key8, Direction.DOWN);
+    surface.removePressedKey(key8);
 
-    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key1, Optional.of(Direction.UP));
-    surface.requestUpdateKey(key1, Optional.of(Direction.DOWN));
-    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
+    surface.addPressedKey(key1, Direction.CENTER);
+    surface.addPressedKey(key1, Direction.UP);
+    surface.addPressedKey(key1, Direction.DOWN);
+    surface.addPressedKey(key1, Direction.CENTER);
 
-    surface.update();
+    surface.draw(canvas);
 
     canvasControl.verify();
 
     // The fourth senario is updating some keys, and then setting the keyboard.
+    surface.clearPressedKey();
     canvasControl.reset();
-    canvas.clearRegion(0, 0, surfaceWidth, surfaceHeight);
     canvas.drawDrawable(background, 2, 0, expectedKeyWidth, expectedKeyHeight);
     canvas.drawDrawableAtCenterWithKeepAspectRatio(
         icon1, 2, 0, expectedKeyWidth, expectedKeyHeight);
@@ -462,17 +469,17 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
         icon9, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
     canvasControl.replay();
 
-    surface.requestUpdateKey(key5, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key7, Optional.of(Direction.LEFT));
+    surface.addPressedKey(key5, Direction.CENTER);
+    surface.addPressedKey(key7, Direction.LEFT);
 
-    surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
-    surface.update();
+    surface.reset(Optional.of(keyboard), Collections.<MetaState>emptySet());
+    surface.draw(canvas);
 
     canvasControl.verify();
 
     // The fifth senario is updating some keys, setting the keyboard, and then updating some keys.
+    surface.clearPressedKey();
     canvasControl.reset();
-    canvas.clearRegion(0, 0, surfaceWidth, surfaceHeight);
     canvas.drawDrawable(background, 2, 0, expectedKeyWidth, expectedKeyHeight);
     canvas.drawDrawableAtCenterWithKeepAspectRatio(
         icon1, 2, 0, expectedKeyWidth, expectedKeyHeight);
@@ -505,75 +512,28 @@ public class KeyboardViewBackgroundSurfaceTest extends InstrumentationTestCaseWi
         icon9, WIDTH * 2 + 2, HEIGHT * 2, expectedKeyWidth, expectedKeyHeight);
     canvasControl.replay();
 
-    surface.requestUpdateKey(key5, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key2, Optional.of(Direction.LEFT));
+    surface.addPressedKey(key5, Direction.CENTER);
+    surface.addPressedKey(key2, Direction.LEFT);
 
-    surface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
+    surface.reset(Optional.of(keyboard), Collections.<MetaState>emptySet());
 
-    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key8, Optional.of(Direction.LEFT));
-    surface.requestUpdateKey(key8, Optional.of(Direction.RIGHT));
-    surface.requestUpdateKey(key8, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key8, Optional.of(Direction.UP));
-    surface.requestUpdateKey(key8, Optional.of(Direction.DOWN));
-    surface.requestUpdateKey(key8, Optional.<Direction>absent());
+    surface.addPressedKey(key8, Direction.CENTER);
+    surface.addPressedKey(key8, Direction.LEFT);
+    surface.addPressedKey(key8, Direction.RIGHT);
+    surface.addPressedKey(key8, Direction.CENTER);
+    surface.addPressedKey(key8, Direction.UP);
+    surface.addPressedKey(key8, Direction.DOWN);
+    surface.removePressedKey(key8);
 
-    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
-    surface.requestUpdateKey(key1, Optional.of(Direction.UP));
-    surface.requestUpdateKey(key1, Optional.of(Direction.DOWN));
-    surface.requestUpdateKey(key1, Optional.of(Direction.CENTER));
+    surface.addPressedKey(key1, Direction.CENTER);
+    surface.addPressedKey(key1, Direction.UP);
+    surface.addPressedKey(key1, Direction.DOWN);
+    surface.addPressedKey(key1, Direction.CENTER);
 
-    surface.requestUpdateKey(key7, Optional.of(Direction.LEFT));
+    surface.addPressedKey(key7, Direction.LEFT);
 
-    surface.update();
+    surface.draw(canvas);
 
     canvasControl.verify();
-  }
-
-  @SmallTest
-  public void testRequestMetaState() {
-    Set<MetaState> empty = EnumSet.noneOf(MetaState.class);
-    Collection<Flick> center = Collections.singleton(
-        new Flick(Direction.CENTER,
-                  new KeyEntity(0, 0, 0, true, 0,
-                                Optional.<String>absent(), false, Optional.<PopUp>absent(),
-                                0, 0, 0, 0)));
-    Key keyWithNoMetaStates = new Key(
-        0, 0, 0, 0, 0, 0, false, false,
-        Stick.EVEN, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
-        Arrays.asList(
-            new KeyState("", empty, empty, empty, center)));
-    Key keyWithCapsLock = new Key(
-        0, 0, 0, 0, 0, 0, false, false,
-        Stick.EVEN, DrawableType.TWELVEKEYS_REGULAR_KEY_BACKGROUND,
-        Arrays.asList(
-            new KeyState("", empty, empty, empty, center),
-            new KeyState("", EnumSet.of(MetaState.CAPS_LOCK), empty, empty, center)));
-    Keyboard keyboard = new Keyboard(Optional.of(""), Arrays.asList(
-        new Row(Arrays.asList(keyWithNoMetaStates, keyWithCapsLock), 0, 0)), 0,
-        KeyboardSpecification.TWELVE_KEY_TOGGLE_FLICK_KANA);
-
-    KeyboardViewBackgroundSurface surface = new KeyboardViewBackgroundSurface(
-        new BackgroundDrawableFactory(createNiceMock(MockResourcesWithDisplayMetrics.class)),
-        createDrawableCacheMock());
-
-    surface.requestUpdateKeyboard(keyboard, EnumSet.noneOf(MetaState.class));
-
-    assertTrue(surface.pendingKeys.isEmpty());
-
-    // keyWithCapsLock is requested to be redrawn.
-    surface.requestMetaState(EnumSet.of(MetaState.CAPS_LOCK));
-    assertEquals(1, surface.pendingKeys.size());
-    assertSame(keyWithCapsLock, surface.pendingKeys.keySet().toArray()[0]);
-
-    // Same metastates. No update.
-    surface.pendingKeys.clear();
-    surface.requestMetaState(EnumSet.of(MetaState.CAPS_LOCK));
-    assertTrue(surface.pendingKeys.isEmpty());
-
-    // No metastete -> keyWithGlobe and keyWithCapsLock are redrawn.
-    surface.pendingKeys.clear();
-    surface.requestMetaState(EnumSet.noneOf(MetaState.class));
-    assertEquals(1, surface.pendingKeys.size());
   }
 }

@@ -36,11 +36,13 @@
 #include <string>
 
 #include "base/compiler_specific.h"
+#include "base/file_util.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/stl_util.h"
+#include "base/string_piece.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -57,15 +59,27 @@ namespace dictionary {
 namespace {
 
 struct OrderByKey {
-  bool operator()(const UserPOS::Token *lhs,
-                  const UserPOS::Token *rhs) const {
-    return lhs->key < rhs->key;
+  bool operator()(const UserPOS::Token *token, StringPiece key) const {
+    return token->key < key;
+  }
+
+  bool operator()(StringPiece key, const UserPOS::Token *token) const {
+    return key < token->key;
+  }
+};
+
+struct OrderByKeyPrefix {
+  bool operator()(const UserPOS::Token *token, StringPiece prefix) const {
+    return StringPiece(token->key).substr(0, prefix.size()) < prefix;
+  }
+
+  bool operator()(StringPiece prefix, const UserPOS::Token *token) const {
+    return prefix < StringPiece(token->key).substr(0, prefix.size());
   }
 };
 
 struct OrderByKeyThenById {
-  bool operator()(const UserPOS::Token *lhs,
-                  const UserPOS::Token *rhs) const {
+  bool operator()(const UserPOS::Token *lhs, const UserPOS::Token *rhs) const {
     const int comp = lhs->key.compare(rhs->key);
     return comp == 0 ? (lhs->id < rhs->id) : (comp < 0);
   }
@@ -109,10 +123,11 @@ void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
 
 class UserDictionary::TokensIndex : public vector<UserPOS::Token *> {
  public:
-  explicit TokensIndex(const UserPOSInterface *user_pos,
-                       SuppressionDictionary *suppression_dictionary)
+  TokensIndex(const UserPOSInterface *user_pos,
+              SuppressionDictionary *suppression_dictionary)
       : user_pos_(user_pos),
         suppression_dictionary_(suppression_dictionary) {}
+
   ~TokensIndex() {
     Clear();
   }
@@ -207,11 +222,11 @@ MOZC_CLANG_POP_WARNING();
 class UserDictionary::UserDictionaryReloader : public Thread {
  public:
   explicit UserDictionaryReloader(UserDictionary *dic)
-      : auto_register_mode_(false), dic_(dic) {
+      : modified_at_(0), auto_register_mode_(false), dic_(dic) {
     DCHECK(dic_);
   }
 
-  virtual ~UserDictionaryReloader() {
+  ~UserDictionaryReloader() override {
     Join();
   }
 
@@ -225,14 +240,31 @@ class UserDictionary::UserDictionaryReloader : public Thread {
       value_ = value;
       pos_ = pos;
     }
-    Start();
+    Start("UserDictionaryReloader");
   }
 
-  void StartReload() {
-    Start();
+  // When the user dictionary exists AND the modification time has been updated,
+  // reloads the dictionary.  Returns true when reloader thread is started.
+  bool MaybeStartReload() {
+    FileTimeStamp modification_time;
+    if (!FileUtil::GetModificationTime(
+        Singleton<UserDictionaryFileManager>::get()->GetFileName(),
+        &modification_time)) {
+      // If the file doesn't exist, return doing nothing.
+      // Therefore if the file is deleted after first reload,
+      // second reload does nothing so the content loaded by first reload
+      // is kept as is.
+      return false;
+    }
+    if (modified_at_ == modification_time) {
+      return false;
+    }
+    modified_at_ = modification_time;
+    Start("UserDictionaryReloader");
+    return true;
   }
 
-  virtual void Run() {
+  void Run() override {
     std::unique_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
         Singleton<UserDictionaryFileManager>::get()->GetFileName()));
 
@@ -261,6 +293,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   }
 
  private:
+  FileTimeStamp modified_at_;
   Mutex mutex_;
   bool auto_register_mode_;
   UserDictionary *dic_;
@@ -272,7 +305,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
 };
 
 UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
-                               const POSMatcher *pos_matcher,
+                               POSMatcher pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
     : ALLOW_THIS_IN_INITIALIZER_LIST(
           reloader_(new UserDictionaryReloader(this))),
@@ -282,7 +315,6 @@ UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
       tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)),
       mutex_(new ReaderWriterMutex) {
   DCHECK(user_pos_.get());
-  DCHECK(pos_matcher_);
   DCHECK(suppression_dictionary_);
   Reload();
 }
@@ -325,17 +357,12 @@ void UserDictionary::LookupPredictive(
   }
 
   // Find the starting point of iteration over dictionary contents.
-  UserPOS::Token key_token;
-  key.CopyToString(&key_token.key);
-  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
-
   Token token;
-  for (; it != tokens_->end(); ++it) {
-    if (!Util::StartsWith((*it)->key, key)) {
-      break;
-    }
-    switch (callback->OnKey((*it)->key)) {
+  for (auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
+                                     OrderByKeyPrefix());
+       range.first != range.second; ++range.first) {
+    const UserPOS::Token &user_pos_token = **range.first;
+    switch (callback->OnKey(user_pos_token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -344,12 +371,12 @@ void UserDictionary::LookupPredictive(
       default:
         break;
     }
-    FillTokenFromUserPOSToken(**it, &token);
+    FillTokenFromUserPOSToken(user_pos_token, &token);
     // Override POS IDs for suggest only words.
-    if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
-      token.lid = token.rid = pos_matcher_->GetUnknownId();
+    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
+      token.lid = token.rid = pos_matcher_.GetUnknownId();
     }
-    if (callback->OnToken((*it)->key, (*it)->key, token) ==
+    if (callback->OnToken(user_pos_token.key, user_pos_token.key, token) ==
         Callback::TRAVERSE_DONE) {
       return;
     }
@@ -375,23 +402,22 @@ void UserDictionary::LookupPrefix(
   }
 
   // Find the starting point for iteration over dictionary contents.
-  UserPOS::Token key_token;
-  key_token.key.assign(key.data(), Util::OneCharLen(key.data()));
-  vector<UserPOS::Token *>::const_iterator it = std::lower_bound(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
-
+  const StringPiece first_char = key.substr(0, Util::OneCharLen(key.data()));
   Token token;
-  for (; it != tokens_->end(); ++it) {
-    if ((*it)->key > key) {
+  for (auto it = std::lower_bound(tokens_->begin(), tokens_->end(), first_char,
+                                  OrderByKey());
+       it != tokens_->end(); ++it) {
+    const UserPOS::Token &user_pos_token = **it;
+    if (user_pos_token.key > key) {
       break;
     }
-    if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
+    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
-    if (!Util::StartsWith(key, (*it)->key)) {
+    if (!Util::StartsWith(key, user_pos_token.key)) {
       continue;
     }
-    switch (callback->OnKey((*it)->key)) {
+    switch (callback->OnKey(user_pos_token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -402,8 +428,8 @@ void UserDictionary::LookupPrefix(
       default:
         break;
     }
-    FillTokenFromUserPOSToken(**it, &token);
-    switch (callback->OnToken((*it)->key, (*it)->key, token)) {
+    FillTokenFromUserPOSToken(user_pos_token, &token);
+    switch (callback->OnToken(user_pos_token.key, user_pos_token.key, token)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_CULL:
@@ -424,11 +450,8 @@ void UserDictionary::LookupExact(
       conversion_request.config().incognito_mode()) {
     return;
   }
-  UserPOS::Token key_token;
-  key.CopyToString(&key_token.key);
-  typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range = std::equal_range(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
+  auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
+                                OrderByKey());
   if (range.first == range.second) {
     return;
   }
@@ -439,7 +462,7 @@ void UserDictionary::LookupExact(
   Token token;
   for (; range.first != range.second; ++range.first) {
     const UserPOS::Token &user_pos_token = **range.first;
-    if (pos_matcher_->IsSuggestOnlyWord(user_pos_token.id)) {
+    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
     FillTokenFromUserPOSToken(user_pos_token, &token);
@@ -467,17 +490,13 @@ bool UserDictionary::LookupComment(StringPiece key, StringPiece value,
     return false;
   }
 
-  UserPOS::Token key_token;
-  key.CopyToString(&key_token.key);
-  typedef vector<UserPOS::Token *>::const_iterator TokenIterator;
-  pair<TokenIterator, TokenIterator> range = std::equal_range(
-      tokens_->begin(), tokens_->end(), &key_token, OrderByKey());
-
   // Set the comment that was found first.
-  for (; range.first != range.second; ++range.first) {
-    const UserPOS::Token *token = *range.first;
-    if (token->value == value && !token->comment.empty()) {
-      comment->assign(token->comment);
+  for (auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
+                                     OrderByKey());
+       range.first != range.second; ++range.first) {
+    const UserPOS::Token &token = **range.first;
+    if (token.value == value && !token.comment.empty()) {
+      comment->assign(token.comment);
       return true;
     }
   }
@@ -488,11 +507,13 @@ bool UserDictionary::Reload() {
   if (reloader_->IsRunning()) {
     return false;
   }
-
   suppression_dictionary_->Lock();
   DCHECK(suppression_dictionary_->IsLocked());
-  reloader_->StartReload();
-
+  // When the reloader is started, |suppression_dictionary_| is unlocked by the
+  // reloader.  When not started, need to unlock it here.
+  if (!reloader_->MaybeStartReload()) {
+    suppression_dictionary_->UnLock();
+  }
   return true;
 }
 
@@ -580,9 +601,11 @@ bool UserDictionary::Load(
     Swap(dummy_empty_tokens);
   }
 
+  suppression_dictionary_->Lock();
   TokensIndex *tokens = new TokensIndex(user_pos_.get(),
                                         suppression_dictionary_);
-  tokens->Load(storage);
+  tokens->Load(storage);  // |suppression_dictionary_| is unlocked in Load().
+  DCHECK(!suppression_dictionary_->IsLocked());
   Swap(tokens);
   return true;
 }

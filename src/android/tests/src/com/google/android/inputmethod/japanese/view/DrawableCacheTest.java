@@ -44,6 +44,28 @@ import android.test.suitebuilder.annotation.SmallTest;
  */
 public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
 
+  private class TestDrawable extends ColorDrawable {
+    public TestDrawable() {
+      super(Color.BLACK);
+    }
+
+    @Override
+    public ConstantState getConstantState() {
+      return new ConstantState() {
+        @Override
+        public int getChangingConfigurations() {
+          return 0;
+        }
+
+        @Override
+        public Drawable newDrawable() {
+          // Return the same instance.
+          return TestDrawable.this;
+        }
+      };
+    }
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -69,7 +91,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     verifyAll();
 
     // For first getDrawable, it loads from resources instance.
-    Drawable drawable = new ColorDrawable(Color.BLACK);
+    Drawable drawable = new TestDrawable();
     resetAll();
     expect(resources.getResourceTypeName(1)).andReturn("drawable");
     expect(resources.getDrawable(1)).andReturn(drawable);
@@ -104,7 +126,7 @@ public class DrawableCacheTest extends InstrumentationTestCaseWithMock {
     Resources resources = createMock(MockResources.class);
     DrawableCache drawableCache = new DrawableCache(resources);
     drawableCache.setSkin(SkinType.ORANGE_LIGHTGRAY.getSkin(resources));
-    Drawable drawable = new ColorDrawable(Color.BLACK);
+    Drawable drawable = new TestDrawable();
     expect(resources.getResourceTypeName(1)).andReturn("drawable");
     expect(resources.getDrawable(1)).andReturn(drawable);
     replayAll();

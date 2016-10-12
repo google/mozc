@@ -732,10 +732,9 @@ void SystemDictionary::LookupPredictive(
     // encoded_actual_key_prediction_suffix = encode("ぐる")
     const StringPiece encoded_actual_key =
         key_trie_.RestoreKeyString(state.node, encoded_actual_key_buffer);
-    const StringPiece encoded_actual_key_prediction_suffix(
-        encoded_actual_key,
-        encoded_key.size(),
-        encoded_actual_key.size() - encoded_key.size());
+    const StringPiece encoded_actual_key_prediction_suffix =
+        encoded_actual_key.substr(
+            encoded_key.size(), encoded_actual_key.size() - encoded_key.size());
 
     // decoded_key = "くーぐる" (= key + prediction suffix)
     decoded_key.clear();
@@ -828,7 +827,7 @@ void RunCallbackOnEachPrefix(const LoudsTrie &key_trie,
     if (!key_trie.IsTerminalNode(node)) {
       continue;
     }
-    const StringPiece encoded_prefix(encoded_key, 0, i);
+    const StringPiece encoded_prefix = encoded_key.substr(0, i);
     const StringPiece prefix(key, codec->GetDecodedKeyLength(encoded_prefix));
 
     switch (callback->OnKey(prefix)) {
@@ -935,7 +934,7 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
       break;
     }
 
-    const StringPiece encoded_prefix(encoded_key, 0, key_pos);
+    const StringPiece encoded_prefix = encoded_key.substr(0, key_pos);
     const StringPiece prefix(key, codec_->GetDecodedKeyLength(encoded_prefix));
     Callback::ResultType result = callback->OnKey(prefix);
     if (result == Callback::TRAVERSE_DONE ||
@@ -1097,7 +1096,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
   string lookup_key;
   lookup_key.reserve(str.size());
   while (pos < str.size()) {
-    const StringPiece suffix(str, pos);
+    const StringPiece suffix = str.substr(pos);
     lookup_key.clear();
     codec_->EncodeValue(suffix, &lookup_key);
     AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
@@ -1108,7 +1107,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
 }
 
 void SystemDictionary::ClearReverseLookupCache() const {
-  reverse_lookup_cache_.reset(nullptr);
+  reverse_lookup_cache_.reset();
 }
 
 namespace {

@@ -40,7 +40,6 @@
 #include "base/freelist.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 
@@ -79,15 +78,15 @@ uint64 Token::GetID() const {
 
 static const size_t kTokenSize = 1000;
 
-DictionaryGenerator::DictionaryGenerator()
+DictionaryGenerator::DictionaryGenerator(
+    const DataManagerInterface &data_manager)
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
-      token_map_(new map<uint64, Token *>),
-      user_pos_(new dictionary::UserPOS(
-          UserPosManager::GetUserPosManager()->GetUserPOSData())),
-      open_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
-                       ->GetOpenBracketId()),
-      close_bracket_id_(UserPosManager::GetUserPosManager()->GetPOSMatcher()
-                        ->GetCloseBracketId()) {}
+      token_map_(new map<uint64, Token *>) {
+  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
+  open_bracket_id_ = pos_matcher.GetOpenBracketId();
+  close_bracket_id_ = pos_matcher.GetCloseBracketId();
+  user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(data_manager));
+}
 
 DictionaryGenerator::~DictionaryGenerator() {}
 

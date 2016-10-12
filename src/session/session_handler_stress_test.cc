@@ -36,7 +36,6 @@
 
 #include "base/file_util.h"
 #include "base/port.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
@@ -60,26 +59,16 @@ DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace {
 
 using session::testing::SessionHandlerTestBase;
 using session::testing::TestSessionClient;
 
-class SessionHandlerStressTest : public SessionHandlerTestBase {
- protected:
-  virtual EngineInterface *CreateEngine() {
-    return EngineFactory::Create();
-  }
-
- private:
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
-};
-
-TEST_F(SessionHandlerStressTest, BasicStressTest) {
+TEST(SessionHandlerStressTest, BasicStressTest) {
   vector<commands::KeyEvent> keys;
   commands::Output output;
-  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
-  TestSessionClient client(engine.get());
+  std::unique_ptr<Engine> engine(EngineFactory::Create());
+  TestSessionClient client(std::move(engine));
   size_t keyevents_size = 0;
   const size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
@@ -99,4 +88,5 @@ TEST_F(SessionHandlerStressTest, BasicStressTest) {
   EXPECT_TRUE(client.DeleteSession());
 }
 
+}  // namespace
 }  // namespace mozc

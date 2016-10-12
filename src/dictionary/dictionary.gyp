@@ -54,6 +54,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:serialized_string_array',
       ],
     },
     {
@@ -81,8 +82,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../data_manager/data_manager.gyp:user_pos_manager',
-        '../data_manager/testing/mock_data_manager_base.gyp:mock_user_pos_manager',
+        '../data_manager/data_manager_base.gyp:data_manager',
         'dictionary_base.gyp:pos_matcher',
         'system/system_dictionary.gyp:system_dictionary_builder',
       ],
@@ -91,17 +91,6 @@
           'LargeAddressAware': '2',
         },
       },
-    },
-    {
-      'target_name': 'install_gen_system_dictionary_data_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_system_dictionary_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi'
-      ],
     },
     {
       'target_name': 'dictionary_mock',

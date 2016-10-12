@@ -33,16 +33,15 @@
 #include <memory>
 
 #include "base/port.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
-#include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
 
 namespace mozc {
 
 class Connector;
 class ConverterInterface;
-class DataManagerInterface;
 class ImmutableConverterInterface;
 class PredictorInterface;
 class RewriterInterface;
@@ -50,33 +49,79 @@ class Segmenter;
 class SuggestionFilter;
 class UserDataManagerInterface;
 
+namespace dictionary {
+class POSMatcher;
+class UserDictionary;
+}  // namespace dictionary
+
 // Builds and manages a set of modules that are necessary for conversion engine.
 class Engine : public EngineInterface {
  public:
-  Engine();
-  virtual ~Engine();
+  // There are two types of engine: desktop and mobile.  The differences are the
+  // underlying prediction engine (DesktopPredictor or MobilePredictor) and
+  // learning preference (to learn content word or not).  See Init() for the
+  // details of implementation.
 
-  // Initializes the object by given a data manager (providing embedded data
-  // set) and predictor factory function.
-  // Predictor factory is used to select DefaultPredictor and MobilePredictor.
+  // Creates an instance with desktop configuration from a data manager.  The
+  // ownership of data manager is passed to the engine instance.
+  static std::unique_ptr<Engine> CreateDesktopEngine(
+      std::unique_ptr<const DataManagerInterface> data_manager);
+
+  // Helper function for the above factory, where data manager is instantiated
+  // by a default constructor.  Intended to be used for OssDataManager etc.
+  template <typename DataManagerType>
+  static std::unique_ptr<Engine> CreateDesktopEngineHelper() {
+    return CreateDesktopEngine(
+        std::unique_ptr<const DataManagerType>(new DataManagerType()));
+  }
+
+  // Creates an instance with mobile configuration from a data manager.  The
+  // ownership of data manager is passed to the engine instance.
+  static std::unique_ptr<Engine> CreateMobileEngine(
+      std::unique_ptr<const DataManagerInterface> data_manager);
+
+  // Helper function for the above factory, where data manager is instantiated
+  // by a default constructor.  Intended to be used for OssDataManager etc.
+  template <typename DataManagerType>
+  static std::unique_ptr<Engine> CreateMobileEngineHelper() {
+    return CreateMobileEngine(
+        std::unique_ptr<const DataManagerType>(new DataManagerType()));
+  }
+
+  Engine();
+  ~Engine() override;
+
+  ConverterInterface *GetConverter() const override { return converter_.get(); }
+  PredictorInterface *GetPredictor() const override { return predictor_; }
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
+    return suppression_dictionary_.get();
+  }
+
+  bool Reload() override;
+
+  UserDataManagerInterface *GetUserDataManager() override {
+    return user_data_manager_.get();
+  }
+
+  StringPiece GetDataVersion() const override {
+    return data_manager_->GetDataVersion();
+  }
+
+  const DataManagerInterface *GetDataManager() const override {
+    return data_manager_.get();
+  }
+
+ private:
+  // Initializes the object by the given data manager and predictor factory
+  // function.  Predictor factory is used to select DefaultPredictor and
+  // MobilePredictor.
   void Init(const DataManagerInterface *data_manager,
             PredictorInterface *(*predictor_factory)(PredictorInterface *,
                                                      PredictorInterface *),
             bool enable_content_word_learning);
 
-  virtual ConverterInterface *GetConverter() const { return converter_.get(); }
-  virtual PredictorInterface *GetPredictor() const { return predictor_; }
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
-    return suppression_dictionary_.get();
-  }
-
-  virtual bool Reload();
-
-  virtual UserDataManagerInterface *GetUserDataManager() {
-    return user_data_manager_.get();
-  }
-
- private:
+  std::unique_ptr<const DataManagerInterface> data_manager_;
+  std::unique_ptr<const dictionary::POSMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<const Connector> connector_;
   std::unique_ptr<const Segmenter> segmenter_;

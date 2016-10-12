@@ -34,16 +34,11 @@
 #include <string>
 #include <vector>
 
+#include "base/serialized_string_array.h"
+#include "base/string_piece.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-
-struct ReadingCorrectionItem {
-  // ex. (value, error, correction) = ("雰囲気", "ふいんき", "ふんいき")
-  const char *value;
-  const char *error;
-  const char *correction;
-};
 
 class ConversionRequest;
 class DataManagerInterface;
@@ -57,19 +52,31 @@ class CorrectionRewriter : public RewriterInterface  {
   static CorrectionRewriter *CreateCorrectionRewriter(
       const DataManagerInterface *data_manager);
 
-  CorrectionRewriter(const ReadingCorrectionItem *reading_corrections,
-                     size_t array_size);
-  virtual ~CorrectionRewriter();
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  CorrectionRewriter(StringPiece value_array_data, StringPiece error_array_data,
+                     StringPiece correction_array_data);
+  ~CorrectionRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const {
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
+
+  int capability(const ConversionRequest &request) const override {
     return RewriterInterface::ALL;
   }
 
  private:
-  const ReadingCorrectionItem *reading_corrections_;
-  size_t size_;
+  struct ReadingCorrectionItem {
+    ReadingCorrectionItem(StringPiece v, StringPiece e, StringPiece c)
+        : value(v), error(e), correction(c) {}
+
+    // ex. (value, error, correction) = ("雰囲気", "ふいんき", "ふんいき")
+    StringPiece value;
+    StringPiece error;
+    StringPiece correction;
+  };
+
+  // Sets |candidate| fields from |iterm|.
+  static void SetCandidate(const ReadingCorrectionItem &item,
+                           Segment::Candidate *candidate);
 
   // Looks up corrections with key and value. Return true if at least
   // one correction is found in the internal dictionary.
@@ -79,7 +86,11 @@ class CorrectionRewriter : public RewriterInterface  {
   bool LookupCorrection(
       const string &key,
       const string &value,
-      vector<const ReadingCorrectionItem *> *results) const;
+      vector<ReadingCorrectionItem> *results) const;
+
+  SerializedStringArray value_array_;
+  SerializedStringArray error_array_;
+  SerializedStringArray correction_array_;
 };
 
 }  // namespace mozc

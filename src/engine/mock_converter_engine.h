@@ -47,13 +47,21 @@ class UserDataManagerMock;
 class MockConverterEngine : public EngineInterface {
  public:
   MockConverterEngine();
-  virtual ~MockConverterEngine();
+  ~MockConverterEngine() override;
 
-  virtual ConverterInterface *GetConverter() const;
-  virtual PredictorInterface *GetPredictor() const;
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary();
-  virtual bool Reload();
-  virtual UserDataManagerInterface *GetUserDataManager();
+  ConverterInterface *GetConverter() const override;
+  PredictorInterface *GetPredictor() const override;
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
+  bool Reload() override;
+  UserDataManagerInterface *GetUserDataManager() override;
+
+  StringPiece GetDataVersion() const override {
+    return "mock converter engine";
+  }
+
+  const DataManagerInterface *GetDataManager() const override {
+    return nullptr;
+  }
 
   void SetUserDataManager(UserDataManagerMock *manager);
   ConverterMock* mutable_converter_mock();

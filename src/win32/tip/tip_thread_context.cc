@@ -87,7 +87,11 @@ int32 TipThreadContext::GetFocusRevision() const {
 }
 
 void TipThreadContext::IncrementFocusRevision() {
-  ++state_->focus_revision;
+  if (state_->focus_revision < kint32max) {
+    state_->focus_revision++;
+  } else {
+    state_->focus_revision = 0;
+  }
 }
 
 }  // namespace tsf

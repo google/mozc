@@ -66,10 +66,10 @@ def GenerateBuildProfile():
   Returns:
     Build profile string.
   """
-  build_details = ''
+  build_details = []
 
 
-  return build_details
+  return '; '.join(build_details)
 
 
 def main():

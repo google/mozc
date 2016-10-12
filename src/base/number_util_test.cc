@@ -473,21 +473,14 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("-1.7976931348623158e308", &value));
   EXPECT_EQ(-1.7976931348623158e308, value);
 
-  // We don't strongly assert that a hexadecimal number can be accepted with
-  // Visual C++.
-#if defined(_MSC_VER)
-  if (NumberUtil::SafeStrToDouble("0x1234", &value)) {
-    EXPECT_EQ(static_cast<double>(0x1234), value);
-  }
-#else
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
   EXPECT_EQ(static_cast<double>(0x1234), value);
-#endif  // _MSC_VER or else.
 
   EXPECT_FALSE(
       NumberUtil::SafeStrToDouble("1.7976931348623159e308",
                                   &value));  // overflow
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("-1.7976931348623159e308", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToDouble("NaN", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("3e", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble(".", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("", &value));
@@ -502,71 +495,6 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   EXPECT_EQ(3.1415, value);
   EXPECT_FALSE(NumberUtil::SafeStrToDouble(StringPiece(kString + 12, 6),
                                            &value));
-}
-
-TEST(NumberUtilTest, SafeStrToFloat) {
-  float value = 1.0;
-
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat("0", &value));
-  EXPECT_EQ(0.0, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0.0, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat("-0", &value));
-  EXPECT_EQ(0.0, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat("1.0e1", &value));
-  EXPECT_EQ(10.0, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat("-5.0e-1", &value));
-  EXPECT_EQ(-0.5, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat(".0", &value));
-  EXPECT_EQ(0.0, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat("0.", &value));
-  EXPECT_EQ(0.0, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat("0.0", &value));
-  EXPECT_EQ(0.0, value);
-  // We don't strongly assert that a hexadecimal number can be accepted with
-  // Visual C++.
-#if defined(_MSC_VER)
-  if (NumberUtil::SafeStrToFloat("0x1234", &value)) {
-    EXPECT_EQ(static_cast<float>(0x1234), value);
-  }
-#else
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat("0x1234", &value));
-  EXPECT_EQ(static_cast<float>(0x1234), value);
-#endif  // _MSC_VER or else.
-
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat("3.4028236e38",  // overflow
-                                          &value));
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat("-3.4028236e38", &value));
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat("3e", &value));
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat(".", &value));
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat("", &value));
-
-  // Test for StringPiece input.
-  const char *kString = "0.01 3.14 float";
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat(StringPiece(kString, 4),
-                                         &value));
-  EXPECT_EQ(0.01f, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToFloat(StringPiece(kString + 5, 4),
-                                         &value));
-  EXPECT_EQ(3.14f, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToFloat(StringPiece(kString + 10, 5),
-                                          &value));
-}
-
-TEST(NumberUtilTest, StrToFloat) {
-  EXPECT_EQ(0.0, NumberUtil::StrToFloat("0"));
-  EXPECT_EQ(0.0, NumberUtil::StrToFloat(" \t\r\n\v\f0 \t\r\n\v\f"));
-  EXPECT_EQ(0.0, NumberUtil::StrToFloat("-0"));
-  EXPECT_EQ(10.0, NumberUtil::StrToFloat("1.0e1"));
-  EXPECT_EQ(-0.5, NumberUtil::StrToFloat("-5.0e-1"));
-  EXPECT_EQ(0.0, NumberUtil::StrToFloat(".0"));
-  EXPECT_EQ(0.0, NumberUtil::StrToFloat("0."));
-  EXPECT_EQ(0.0, NumberUtil::StrToFloat("0.0"));
-
-  // Test for StringPiece input.
-  const char *kString = "0.01 3.14";
-  EXPECT_EQ(0.01f, NumberUtil::StrToFloat(StringPiece(kString, 4)));
-  EXPECT_EQ(3.14f, NumberUtil::StrToFloat(StringPiece(kString + 5, 4)));
 }
 
 TEST(NumberUtilTest, IsArabicNumber) {

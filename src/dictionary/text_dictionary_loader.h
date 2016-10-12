@@ -48,6 +48,7 @@ class TextDictionaryLoader {
  public:
   // TODO(noriyukit): Better to pass the pointer of pos_matcher.
   explicit TextDictionaryLoader(const POSMatcher& pos_matcher);
+  TextDictionaryLoader(uint16 zipcode_id, uint16 isolated_word_id);
   virtual ~TextDictionaryLoader();
 
   // Loads tokens from system dictionary files and reading correction
@@ -86,8 +87,6 @@ class TextDictionaryLoader {
   // Allows derived classes to implement custom filtering rules.
   virtual Token *ParseTSV(const vector<StringPiece> &columns) const;
 
-  const POSMatcher *pos_matcher_;
-
  private:
   static void LoadReadingCorrectionTokens(
       const string &reading_correction_filename,
@@ -105,6 +104,8 @@ class TextDictionaryLoader {
 
   Token *ParseTSVLine(StringPiece line) const;
 
+  const uint16 zipcode_id_;
+  const uint16 isolated_word_id_;
   vector<Token *> tokens_;
 
   FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);

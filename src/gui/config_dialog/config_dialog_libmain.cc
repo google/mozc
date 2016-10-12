@@ -31,9 +31,15 @@
 
 #include <QtCore/QStringList>
 #include <QtCore/QTextCodec>
+#ifdef MOZC_USE_QT5
+#include <QtGui/QtGui>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QDialog>
+#else
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
 #include <QtGui/QtGui>
+#endif
 #include "base/system_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"

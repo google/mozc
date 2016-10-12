@@ -45,6 +45,7 @@
       ],
       'dependencies': [
         '../config/config.gyp:config_handler',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../session/session_base.gyp:request_test_util',

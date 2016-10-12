@@ -121,15 +121,23 @@ def WriteCppDataArray(data, variable_name, target_compiler, stream):
   stream.write('const size_t k%s_size = %d;\n' % (variable_name, len(data)))
 
 
-def ToJavaStringLiteral(codepoint):
-  """Returns string literal with surrogate pair support."""
-  utf16_string = unichr(codepoint).encode('utf-16be')
-  if len(utf16_string) == 2:
-    (u0, l0) = utf16_string
-    return r'"\u%02X%02X"' % (ord(u0), ord(l0))
-  else:
-    (u0, l0, u1, l1) = utf16_string
-    return r'"\u%02X%02X\u%02X%02X"' % (ord(u0), ord(l0), ord(u1), ord(l1))
+def ToJavaStringLiteral(codepoint_list):
+  """Returns string literal with surrogate pair and emoji support."""
+  if type(codepoint_list) is int:
+    codepoint_list = (codepoint_list,)
+  if codepoint_list is None or len(codepoint_list) == 0:
+    return 'null'
+  result = r'"'
+  for codepoint in codepoint_list:
+    utf16_string = unichr(codepoint).encode('utf-16be')
+    if len(utf16_string) == 2:
+      (u0, l0) = utf16_string
+      result += r'\u%02X%02X' % (ord(u0), ord(l0))
+    else:
+      (u0, l0, u1, l1) = utf16_string
+      result += r'\u%02X%02X\u%02X%02X' % (ord(u0), ord(l0), ord(u1), ord(l1))
+  result += r'"'
+  return result
 
 
 def SkipLineComment(stream, comment_prefix='#'):

@@ -30,6 +30,10 @@
 #include "gui/dictionary_tool/import_dialog.h"
 
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QFileDialog>
+#endif
+
 #include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_importer.h"

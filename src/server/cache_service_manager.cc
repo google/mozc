@@ -32,7 +32,6 @@
 #include "server/cache_service_manager.h"
 
 #include <windows.h>
-#include <strsafe.h>
 #include <wincrypt.h>
 
 #include <memory>
@@ -44,7 +43,6 @@
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "server/mozc_cache_service_resource.h"
 #include "server/win32_service_state.pb.h"
 
 using std::unique_ptr;
@@ -78,34 +76,6 @@ class ScopedSCHandle {
  private:
   SC_HANDLE handle_;
 };
-
-// Returns a redirector for the specified string resource for Vista or later.
-// Returns an empty string if any error occurs.
-// See http://msdn.microsoft.com/en-us/library/dd374120.aspx for details.
-wstring GetRegistryStringRedirector(int resource_id) {
-  const wchar_t kRegistryStringRedirectionPattern[] = L"@%s,-%d";
-  const wstring &service_path = CacheServiceManager::GetUnquotedServicePath();
-  wchar_t buffer[MAX_PATH] = { L'\0' };
-
-  HRESULT hr = ::StringCchPrintf(
-      buffer, arraysize(buffer), kRegistryStringRedirectionPattern,
-      CacheServiceManager::GetUnquotedServicePath().c_str(), resource_id);
-  if (hr != S_OK) {
-    return L"";
-  }
-  const wstring redirector(buffer);
-  // If this program is running on Windows Vista or later,
-  // just returns the redirector.
-  return redirector;
-}
-
-wstring GetDisplayName() {
-  return GetRegistryStringRedirector(IDS_DISPLAYNAME);
-}
-
-wstring GetDescription() {
-  return GetRegistryStringRedirector(IDS_DESCRIPTION);
-}
 
 // This function serializes a given message (any type of protobuf message)
 // as a wstring encoded by base64.
@@ -261,25 +231,6 @@ bool StopService(const ScopedSCHandle &service_handle) {
   return true;
 }
 
-bool SetServiceDescription(const ScopedSCHandle &service_handle,
-                           const wstring &description) {
-  // +1 for '\0'
-  const size_t buffer_length = description.size() + 1;
-  unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_length]);
-  description._Copy_s(buffer.get(), buffer_length, description.size());
-  buffer[buffer_length - 1] = L'\0';
-
-  SERVICE_DESCRIPTION desc = {};
-  desc.lpDescription = buffer.get();
-  if (!::ChangeServiceConfig2(service_handle.get(),
-                              SERVICE_CONFIG_DESCRIPTION, &desc)) {
-    LOG(ERROR) << "ChangeServiceConfig2 failed: " << ::GetLastError();
-    return false;
-  }
-
-  return true;
-}
-
 // Set *nice-to-have* features for the cache service.
 // We do not care about any failure because it is not critical for the
 // functionality of the cache service itself.
@@ -308,8 +259,16 @@ void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
   // See http://msdn.microsoft.com/en-us/library/ms685976.aspx for details.
   {
     SERVICE_REQUIRED_PRIVILEGES_INFO privileges_info = {};
-    privileges_info.pmszRequiredPrivileges = SE_INC_BASE_PRIORITY_NAME
-                                             TEXT("\0");
+    // |SERVICE_REQUIRED_PRIVILEGES_INFO::pmszRequiredPrivileges| needs to be
+    // terminated with two L'\0's.
+    wstring required_privileges(SE_INC_BASE_PRIORITY_NAME);
+    required_privileges.push_back(L'\0');
+    required_privileges.push_back(L'\0');
+    // |SERVICE_REQUIRED_PRIVILEGES_INFO::pmszRequiredPrivileges| needs to be
+    // writtable for some reasons.
+    std::unique_ptr<wchar_t[]> buffer(new wchar_t[required_privileges.size()]);
+    required_privileges.copy(buffer.get(), required_privileges.size());
+    privileges_info.pmszRequiredPrivileges = buffer.get();
     if (!::ChangeServiceConfig2(service_handle.get(),
                                 SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO,
                                 &privileges_info)) {
@@ -354,12 +313,8 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
   if (!::ChangeServiceConfig(service_handle.get(), SERVICE_NO_CHANGE,
                              static_cast<DWORD>(state.load_type()),
                              SERVICE_NO_CHANGE, NULL, NULL, NULL, NULL, NULL,
-                             NULL, GetDisplayName().c_str())) {
+                             NULL, NULL)) {
     LOG(ERROR) << "ChangeServiceConfig failed: " << ::GetLastError();
-    return false;
-  }
-
-  if (!SetServiceDescription(service_handle, GetDescription())) {
     return false;
   }
 

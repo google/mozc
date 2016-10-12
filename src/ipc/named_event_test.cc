@@ -105,7 +105,7 @@ class NamedEventTest : public testing::Test {
 
 TEST_F(NamedEventTest, NamedEventBasicTest) {
   NamedEventListenerThread listner(kName, 0, 50, 100);
-  listner.Start();
+  listner.Start("NamedEventBasicTest");
   Util::Sleep(200);
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
@@ -151,7 +151,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
   vector<std::unique_ptr<NamedEventListenerThread>> listeners(kNumRequests);
   for (size_t i = 0; i < kNumRequests; ++i) {
     listeners[i].reset(new NamedEventListenerThread(kName, 33 * i, 50, 100));
-    listeners[i]->Start();
+    listeners[i]->Start("NamedEventMultipleListenerTest");
   }
 
   Util::Sleep(200);

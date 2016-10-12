@@ -104,18 +104,15 @@ def ParseArgs():
                     help='[NATIVE] Limits testcases to run.')
   parser.add_option('--native_abi', dest='abi', default='armeabi',
                     help='[JAVA][NATIVE] ABI of built test executables.')
-  parser.add_option('--mozc_dictionary_data_file',
-                    dest='mozc_dictionary_data_file', default=None,
-                    help='[NATIVE] Path to system.dictionary file.')
-  parser.add_option('--mozc_connection_data_file',
-                    dest='mozc_connection_data_file', default=None,
-                    help='[NATIVE] Path to connection.data file.')
+  parser.add_option('--mozc_dataset_file',
+                    dest='mozc_dataset_file', default=None,
+                    help='[NATIVE] Path to mozc.data file.')
   parser.add_option('--mozc_connection_text_data_file',
                     dest='mozc_connection_text_data_file', default=None,
                     help='[NATIVE] Path to connection_single_column.txt file.')
-  parser.add_option('--mozc_test_connection_data_file',
-                    dest='mozc_test_connection_data_file', default=None,
-                    help='[NATIVE] Path to test_connection.data file.')
+  parser.add_option('--mozc_test_dataset_file',
+                    dest='mozc_test_dataset_file', default=None,
+                    help='[NATIVE] Path to mock_mozc.data file.')
   parser.add_option('--mozc_test_connection_text_data_file',
                     dest='mozc_test_connection_text_data_file', default=None,
                     help='[NATIVE] Path to connection_single_column.txt file.')
@@ -277,8 +274,8 @@ class AndroidDevice(android_util.AndroidDevice):
         self._RunCommand('rm', remote_report_path)
 
   def SetUpTest(self, device, mount_point, remote_dir,
-                dictionary_data, connection_data, connection_text_data,
-                test_connection_data, test_connection_text_data,
+                mozc_dataset, connection_text_data,
+                test_dataset, test_connection_text_data,
                 mozc_data_dir):
     """Set up the android to run tests."""
     self.WaitForMount()
@@ -292,23 +289,19 @@ class AndroidDevice(android_util.AndroidDevice):
     # data is set at jni loading time, but it is necessary to somehow
     # set the data in native tests. So, copy the dictionary data to the
     # emulator.
-    self.CopyFile(host_path=dictionary_data,
+    self.CopyFile(host_path=mozc_dataset,
                   remote_path=os.path.join(remote_dir,
-                                           'embedded_data', 'dictionary_data'),
-                  operation='push')
-    self.CopyFile(host_path=connection_data,
-                  remote_path=os.path.join(remote_dir,
-                                           'embedded_data', 'connection_data'),
+                                           'embedded_data', 'mozc_data'),
                   operation='push')
     self.CopyFile(host_path=connection_text_data,
                   remote_path=os.path.join(remote_dir,
                                            'data_manager', 'android',
                                            'connection_single_column.txt'),
                   operation='push')
-    self.CopyFile(host_path=test_connection_data,
+    self.CopyFile(host_path=test_dataset,
                   remote_path=os.path.join(remote_dir,
                                            'data_manager', 'testing',
-                                           'connection_data.data'),
+                                           'mock_mozc.data'),
                   operation='push')
     self.CopyFile(host_path=test_connection_text_data,
                   remote_path=os.path.join(remote_dir,
@@ -339,10 +332,9 @@ class AndroidDevice(android_util.AndroidDevice):
       error_messages = []
       self.SetUpTest(options.remote_device, options.remote_mount_point,
                      options.remote_dir,
-                     options.mozc_dictionary_data_file,
-                     options.mozc_connection_data_file,
+                     options.mozc_dataset_file,
                      options.mozc_connection_text_data_file,
-                     options.mozc_test_connection_data_file,
+                     options.mozc_test_dataset_file,
                      options.mozc_test_connection_text_data_file,
                      options.mozc_data_dir)
       if options.testcase:

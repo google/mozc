@@ -30,7 +30,6 @@
 package org.mozc.android.inputmethod.japanese.preference;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
-import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard;
@@ -41,6 +40,7 @@ import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.Key
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
 import org.mozc.android.inputmethod.japanese.view.Skin;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
@@ -256,7 +256,7 @@ public class KeyboardPreviewDrawable extends Drawable {
       return null;
     }
 
-    Bitmap bitmap = MozcUtil.createBitmap(width, height, Config.ARGB_8888);
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
     Canvas canvas = new Canvas(bitmap);
     canvas.scale(scale, scale);
     DrawableCache drawableCache = new DrawableCache(resources);
@@ -277,11 +277,8 @@ public class KeyboardPreviewDrawable extends Drawable {
       backgroundDrawableFactory.setSkin(skin);
       KeyboardViewBackgroundSurface backgroundSurface =
           new KeyboardViewBackgroundSurface(backgroundDrawableFactory, drawableCache);
-      backgroundSurface.requestUpdateKeyboard(keyboard, Collections.<MetaState>emptySet());
-      backgroundSurface.requestUpdateSize(virtualWidth, virtualHeight);
-      backgroundSurface.update();
+      backgroundSurface.reset(Optional.of(keyboard), Collections.<MetaState>emptySet());
       backgroundSurface.draw(canvas);
-      backgroundSurface.reset();  // Release the background bitmap and its canvas.
     }
 
     return bitmap;

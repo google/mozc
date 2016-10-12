@@ -30,6 +30,12 @@
 #ifndef MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_
 #define MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_
 
+#include <memory>
+
+#include "base/port.h"
+#include "base/serialized_string_array.h"
+#include "data_manager/data_manager_interface.h"
+#include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -37,16 +43,31 @@ namespace mozc {
 
 class SingleKanjiRewriter : public RewriterInterface  {
  public:
-  explicit SingleKanjiRewriter(const dictionary::POSMatcher &pos_matcher);
-  virtual ~SingleKanjiRewriter();
+  explicit SingleKanjiRewriter(const DataManagerInterface &data_manager);
+  ~SingleKanjiRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::POSMatcher pos_matcher_;
+
+  StringPiece single_kanji_token_array_;
+  SerializedStringArray single_kanji_string_array_;
+
+  SerializedStringArray variant_type_array_;
+
+  StringPiece variant_token_array_;
+  SerializedStringArray variant_string_array_;
+
+  // Since noun_prefix_dictionary_ is just a tentative workaround,
+  // we copy the SingleKanji structure so that we can remove this workaround
+  // easily. Also, the logic of NounPrefix insertion is put independently from
+  // the single kanji dictionary. Ideally, we want to regenerate our
+  // language model for fixing noun-prefix issue.
+  std::unique_ptr<SerializedDictionary> noun_prefix_dictionary_;
 };
 
 }  // namespace mozc

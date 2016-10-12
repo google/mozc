@@ -34,7 +34,7 @@ import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.DeletionRange;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 import android.util.Log;
 
@@ -90,8 +90,9 @@ public class SelectionTracker {
 
     @Override
     public String toString() {
-      return String.format("candidates(%d, %d), selection(%d, %d)",
-          candidatesStart, candidatesEnd, selectionStart, selectionEnd);
+      return MoreObjects.toStringHelper(this)
+          .add("candidates", candidatesStart).addValue(candidatesEnd)
+          .add("selection", selectionStart).addValue(selectionEnd).toString();
     }
 
     // Skipped to implement hashCode intentionally, as we don't expect use it.
@@ -226,7 +227,7 @@ public class SelectionTracker {
    */
   public void onRender(DeletionRange deletionRange, String commitText, Preedit preedit) {
     if (MozcLog.isLoggable(Log.DEBUG)) {
-      MozcLog.d("onRender: " + Objects.firstNonNull(preedit, "").toString());
+      MozcLog.d("onRender: " + MoreObjects.firstNonNull(preedit, "").toString());
     }
     int preeditStartPosition = getPreeditStartPosition();
     if (deletionRange != null) {
@@ -317,7 +318,8 @@ public class SelectionTracker {
    */
   public int onUpdateSelection(int oldSelStart, int oldSelEnd,
                                int newSelStart, int newSelEnd,
-                               int candidatesStart, int candidatesEnd) {
+                               int candidatesStart, int candidatesEnd,
+                               boolean isIgnoringMoveToTail) {
     if (MozcLog.isLoggable(Log.DEBUG)) {
       MozcLog.d(String.format("onUpdateSelection: %d %d %d %d %d %d",
                               oldSelStart, oldSelEnd, newSelStart, newSelEnd,
@@ -331,6 +333,7 @@ public class SelectionTracker {
     //    change from IME, i.e. MozcService.
     // 2-1) During composition, users can move the caret position by tapping somewhere around the
     //    current preedit text.
+    //    NOTE: ApplicationCompatibility#isIgnoringTapEvent() should be taken care of.
     // 2-2) During composition, users can make a selection region by long-tapping somewhere text.
     // 3) Unexpected cursor/selection moving coming from outside of MozcService.
 
@@ -362,7 +365,13 @@ public class SelectionTracker {
       if (newSelStart == newSelEnd) {
         // This is case 2-1)
         // In composition with tapping somewhere.
-        return MozcUtil.clamp(newSelStart - candidatesStart, 0, candidatesEnd - candidatesStart);
+        int newPosition = MozcUtil.clamp(newSelStart - candidatesStart,
+                                         0, candidatesEnd - candidatesStart);
+        // Ignore move to the tail when isIgnoringMoveToTail is set.
+        if (isIgnoringMoveToTail && newPosition == candidatesEnd - candidatesStart) {
+          return DO_NOTHING;
+        }
+        return newPosition;
       }
 
       // This is case 2-2).
@@ -418,7 +427,7 @@ public class SelectionTracker {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("recordQueue", recordQueue)
         .add("initialSelectionStart", initialSelectionStart)
         .add("initialSelectionEnd", initialSelectionEnd)

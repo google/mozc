@@ -74,7 +74,8 @@ public class DrawableCache {
     Integer key = Integer.valueOf(resourceId);
     Optional<Drawable> drawable = Optional.fromNullable(cacheMap.get(key));
     if (!drawable.isPresent()) {
-      drawable = Optional.of(skin.getDrawable(resources, resourceId));
+      drawable = Optional.of(
+          skin.getDrawable(resources, resourceId).getConstantState().newDrawable());
       cacheMap.put(key, drawable.get());
     }
     return drawable;

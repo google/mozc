@@ -566,12 +566,10 @@ class UserDictionaryUtil {
            .onMalformedInput(CodingErrorAction.REPORT)
            .onUnmappableCharacter(CodingErrorAction.REPORT)
            .decode(buffer);
-        String str = result.toString();
-        if (str.length() > 0 && str.charAt(0) == 0xFEFF) {
-          // Remove leading BOM if necessary.
-          str = str.substring(1);
+        if (result.length() > 0 && result.charAt(0) == 0xFEFF) {
+            result.position(result.position() + 1);  // Skip BOM
         }
-        return str;
+        return result.toString();
       } catch (Exception e) {
         // Ignore exceptions, and retry next encoding.
       }

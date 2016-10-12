@@ -30,9 +30,6 @@
 #ifndef MOZC_GUI_BASE_ENCODING_UTIL_H_
 #define MOZC_GUI_BASE_ENCODING_UTIL_H_
 
-// Currently EncodingUtil is not available on Android.
-#ifndef OS_ANDROID
-
 #include <string>
 
 #include "base/port.h"
@@ -48,7 +45,5 @@ class EncodingUtil {
 };
 
 }  // namespace mozc
-
-#endif  // OS_ANDROID
 
 #endif  // MOZC_GUI_BASE_ENCODING_UTIL_H_

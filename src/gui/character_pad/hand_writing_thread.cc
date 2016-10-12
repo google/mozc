@@ -32,6 +32,9 @@
 // MutexLocker locks in the constructor and unlocks in the destructor.
 #include <QtCore/QMutexLocker>
 #include <QtGui/QtGui>
+#ifdef MOZC_USE_QT5
+#include <QtWidgets/QListWidgetItem>
+#endif
 
 #include "base/clock.h"
 #include "base/logging.h"

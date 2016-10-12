@@ -30,14 +30,29 @@
 
 __author__ = "taku"
 
-import sys
+import optparse
+import struct
 
-from build_tools import code_generator_util
+from build_tools import serialized_string_array_builder
+
+
+def _ParseOptions():
+  parser = optparse.OptionParser()
+  parser.add_option('--input', dest='input', help='Input suffix file')
+  parser.add_option('--output_key_array', dest='output_key_array',
+                    help='Output serialized string array for keys')
+  parser.add_option('--output_value_array', dest='output_value_array',
+                    help='Output serialized string array for values')
+  parser.add_option('--output_token_array', dest='output_token_array',
+                    help='Output uint32 array for lid, rid and cost.')
+  return parser.parse_args()[0]
 
 
 def main():
+  opts = _ParseOptions()
+
   result = []
-  with open(sys.argv[1], 'r') as stream:
+  with open(opts.input, 'r') as stream:
     for line in stream:
       line = line.rstrip('\r\n')
       fields = line.split('\t')
@@ -48,22 +63,30 @@ def main():
       value = fields[4]
 
       if key == value:
-        value = None
+        value = ''
 
-      result.append((line, (key, value, lid, rid, cost)))
+      result.append((key, value, lid, rid, cost))
 
-  # Sort entries in the key-incremental order.
-  result.sort(key=lambda e: e[1][0])
+  # Sort entries in ascending order of key.
+  result.sort(key=lambda e: e[0])
 
-  print 'const ::mozc::dictionary::SuffixToken kSuffixTokens[] = {'
-  for (line, (key, value, lid, rid, cost)) in result:
-    print '// "%s"' % line
-    print '{ %s, %s, %d, %d, %d },' % (
-        code_generator_util.ToCppStringLiteral(key),
-        code_generator_util.ToCppStringLiteral(value),
-        lid, rid, cost)
-  print '};'
+  # Write keys to serialized string array.
+  serialized_string_array_builder.SerializeToFile(
+      list(entry[0] for entry in result), opts.output_key_array)
+
+  # Write values to serialized string array.
+  serialized_string_array_builder.SerializeToFile(
+      list(entry[1] for entry in result), opts.output_value_array)
+
+  # Write a sequence of (lid, rid, cost) to uint32 array:
+  #   {lid[0], rid[0], cost[0], lid[1], rid[1], cost[1], ...}
+  # So the final array has 3 * len(result) elements.
+  with open(opts.output_token_array, 'wb') as f:
+    for _, _, lid, rid, cost in result:
+      f.write(struct.pack('<I', lid))
+      f.write(struct.pack('<I', lid))
+      f.write(struct.pack('<I', cost))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()

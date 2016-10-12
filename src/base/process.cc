@@ -30,9 +30,7 @@
 #include "base/process.h"
 
 #ifdef OS_WIN
-#include <windows.h>
-#include <shellapi.h>
-#include <shlobj.h>
+#include <Windows.h>
 #else
 #include <string.h>
 #include <sys/stat.h>
@@ -65,6 +63,7 @@
 
 #ifdef OS_WIN
 #include "base/scoped_handle.h"
+#include "base/win_util.h"
 #endif  // OS_WIN
 
 #ifdef OS_MACOSX
@@ -83,34 +82,6 @@ extern char **environ;
 
 namespace mozc {
 
-namespace {
-#ifdef OS_WIN
-// ShellExecute to execute file in system dir.
-// Since Windows does not allow rename or delete a directory which
-// is set to the working directory by existing processes, we should
-// avoid unexpected directory locking by background processes.
-// System dir is expected to be more appropriate than tha directory
-// where the executable exist, because installer can rename the
-// executable to another directory and delete the application directory.
-bool ShellExecuteInSystemDir(const wchar_t *verb,
-                             const wchar_t *file,
-                             const wchar_t *parameters,
-                             INT show_command) {
-  const int result =
-      reinterpret_cast<int>(::ShellExecuteW(0, verb, file, parameters,
-                                            SystemUtil::GetSystemDir(),
-                                            show_command));
-  LOG_IF(ERROR, result <= 32)
-      << "ShellExecute failed."
-      << ", error:" << result
-      << ", verb: " << verb
-      << ", file: " << file
-      << ", parameters: " << parameters;
-  return result > 32;
-}
-#endif  // OS_WIN
-}  // namespace
-
 bool Process::OpenBrowser(const string &url) {
   // url must start with http:// or https:// or file://
   if (url.find("http://") != 0 &&
@@ -122,7 +93,7 @@ bool Process::OpenBrowser(const string &url) {
 #ifdef OS_WIN
   wstring wurl;
   Util::UTF8ToWide(url, &wurl);
-  return ShellExecuteInSystemDir(L"open", wurl.c_str(), NULL, SW_SHOW);
+  return WinUtil::ShellExecuteInSystemDir(L"open", wurl.c_str(), nullptr);
 #endif
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)

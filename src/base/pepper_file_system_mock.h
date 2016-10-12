@@ -62,6 +62,7 @@ class MockFileNode {
   bool AddDirectory(const string &dirname);
   bool Rename(const string &fiename, MockFileNode *parent_node);
   bool Delete();
+  bool Query(PP_FileInfo *file_info) const;
   MockFileNode *GetNode(const string &path);
   string DebugMessage() const;
 
@@ -93,6 +94,7 @@ class PepperFileSystemMock : public PepperFileSystemInterface {
   virtual bool RegisterMmap(MmapSyncInterface *mmap);
   virtual bool UnRegisterMmap(MmapSyncInterface *mmap);
   virtual bool SyncMmapToFile();
+  virtual bool Query(const string &filename, PP_FileInfo *file_info);
 
  private:
   set<MmapSyncInterface*> mmap_set_;

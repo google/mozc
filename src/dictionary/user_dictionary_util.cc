@@ -36,15 +36,12 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/protobuf/message.h"
-#include "base/protobuf/unknown_field_set.h"
 #include "base/util.h"
 #include "dictionary/user_pos_interface.h"
 
 namespace mozc {
 
 using ::mozc::protobuf::RepeatedPtrField;
-using ::mozc::protobuf::UnknownField;
-using ::mozc::protobuf::UnknownFieldSet;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 namespace {
@@ -54,9 +51,6 @@ const size_t kMaxValueSize = 300;
 const size_t kMaxCommentSize = 300;
 const char kInvalidChars[]= "\n\r\t";
 const char kUserDictionaryFile[] = "user://user_dictionary.db";
-
-const mozc::user_dictionary::UserDictionary::PosType kInvalidPosType =
-    static_cast<mozc::user_dictionary::UserDictionary::PosType>(-1);
 
 // Maximum string length for dictionary name.
 const size_t kMaxDictionaryNameSize = 300;
@@ -385,193 +379,6 @@ user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
 
   // Not found. Return invalid value.
   return static_cast<user_dictionary::UserDictionary::PosType>(-1);
-}
-
-namespace {
-
-const UnknownField *GetUnknownFieldByTagNumber(
-    const UnknownFieldSet &unknown_field_set, int tag_number) {
-  for (int i = 0; i < unknown_field_set.field_count(); ++i) {
-    const UnknownField &field = unknown_field_set.field(i);
-    if (field.number() == tag_number) {
-      // Use first entry.
-      return &field;
-    }
-  }
-  return NULL;
-}
-
-void RemoveUnknownFieldByTagNumber(
-    int tag_number, UnknownFieldSet *unknown_field_set) {
-  UnknownFieldSet temporary_unknown_field_set;
-  for (int i = 0; i < unknown_field_set->field_count(); ++i) {
-    const UnknownField &field = unknown_field_set->field(i);
-    if (field.number() == tag_number) {
-      continue;
-    }
-    temporary_unknown_field_set.AddField(field);
-  }
-  unknown_field_set->Swap(&temporary_unknown_field_set);
-}
-
-struct RemovedPosTypeResolveTable {
-  const char *name;
-  mozc::user_dictionary::UserDictionary::PosType pos_type;
-};
-
-const RemovedPosTypeResolveTable kRemovedPosType[] = {
-  // Removed in CL/9909127.
-  // "名詞副詞可能"
-  { "\xE5\x90\x8D\xE8\xA9\x9E\xE5\x89\xAF\xE8\xA9\x9E\xE5\x8F\xAF\xE8\x83\xBD",
-    mozc::user_dictionary::UserDictionary::NOUN },
-  // "接頭形容詞接続"
-  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
-    "\xE6\x8E\xA5\xE7\xB6\x9A",
-    mozc::user_dictionary::UserDictionary::PREFIX },
-  // "接頭数接続"
-  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE6\x95\xB0\xE6\x8E\xA5\xE7\xB6\x9A",
-    mozc::user_dictionary::UserDictionary::PREFIX },
-  // "接頭動詞接続"
-  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x8B\x95\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
-    mozc::user_dictionary::UserDictionary::PREFIX },
-  // "接頭名詞接続"
-  { "\xE6\x8E\xA5\xE9\xA0\xAD\xE5\x90\x8D\xE8\xA9\x9E\xE6\x8E\xA5\xE7\xB6\x9A",
-    mozc::user_dictionary::UserDictionary::PREFIX },
-  // "形容詞アウオ段"
-  { "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E"
-    "\xE3\x82\xA2\xE3\x82\xA6\xE3\x82\xAA\xE6\xAE\xB5",
-    mozc::user_dictionary::UserDictionary::ADJECTIVE },
-  // "形容詞イ段"
-  { "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E\xE3\x82\xA4\xE6\xAE\xB5",
-    mozc::user_dictionary::UserDictionary::ADJECTIVE },
-
-  // Removed in CL/18000642.
-  // "括弧開"
-  { "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x8B",
-    mozc::user_dictionary::UserDictionary::SYMBOL },
-  // "括弧閉"
-  { "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89",
-    mozc::user_dictionary::UserDictionary::SYMBOL },
-};
-
-mozc::user_dictionary::UserDictionary::PosType ResolveRemovedPosType(
-    const string &name) {
-  for (size_t i = 0; i < arraysize(kRemovedPosType); ++i) {
-    if (name == kRemovedPosType[i].name) {
-      return kRemovedPosType[i].pos_type;
-    }
-  }
-
-  // Not found. Return invalid pos type.
-  return kInvalidPosType;
-}
-
-// The deprecated tag number of "pos" field in UserDictionary::Entry.
-const int kDeprecatedPosTagNumber = 3;
-
-}  // namespace
-
-bool UserDictionaryUtil::ResolveUnknownFieldSet(
-    user_dictionary::UserDictionaryStorage *storage) {
-  using mozc::user_dictionary::UserDictionary;
-  typedef UserDictionary::Entry Entry;
-
-  bool result = true;
-  for (int i = 0; i < storage->dictionaries_size(); ++i) {
-    UserDictionary *dictionary = storage->mutable_dictionaries(i);
-    for (int j = 0; j < dictionary->entries_size(); ++j) {
-      Entry *entry = dictionary->mutable_entries(j);
-
-      const UnknownField *unknown_field = GetUnknownFieldByTagNumber(
-          entry->unknown_fields(), kDeprecatedPosTagNumber);
-      if (unknown_field == NULL) {
-        // Here, there are two cases:
-        // 1) The entry is already in the new format. Don't need migration.
-        // 2) The entry doesn't have POS actually.
-        // Note that it is "possible" (but not valid) for an entry to keep
-        // its POS field empty. Do not treat it as "resolving failure."
-        LOG_IF(WARNING, !entry->has_pos()) << "Unknown field is not found.";
-        continue;
-      }
-
-      UserDictionary::PosType pos_type = kInvalidPosType;
-      switch (unknown_field->type()) {
-        case UnknownField::TYPE_VARINT:
-          pos_type =
-              static_cast<UserDictionary::PosType>(unknown_field->varint());
-          break;
-        case UnknownField::TYPE_LENGTH_DELIMITED:
-          pos_type = ToPosType(unknown_field->length_delimited().c_str());
-          if (pos_type == kInvalidPosType) {
-            // The value may be created by very old mozc dictionary tool.
-            // Try to find the value from a list containing removed pos names.
-            pos_type =
-                ResolveRemovedPosType(unknown_field->length_delimited());
-          }
-          break;
-        default:
-          LOG(ERROR) << "Unknown deprecated pos type value: "
-                     << unknown_field->type();
-          break;
-      }
-
-      if (pos_type == kInvalidPosType) {
-        LOG(ERROR) << "Failed to resolve old pos data.";
-        if (!entry->has_pos()) {
-          // If there is no pos here, users cannot use this entry for the
-          // conversion. Thus, as a fallback, we fill NOUN by default.
-          entry->set_pos(UserDictionary::NOUN);
-        }
-        result = false;
-        continue;
-      }
-
-      if (entry->has_pos()) {
-        if (entry->pos() != pos_type) {
-          LOG(ERROR) << "Failed to resolve the entry due to "
-                     << "pos type inconsistency: "
-                     << entry->pos() << ", " << pos_type;
-          result = false;
-          continue;
-        }
-      } else {
-        entry->set_pos(pos_type);
-      }
-
-      // In future, we may want to add some fields into the message.
-      // So, don't touch any fields other than ones we processed.
-      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-      RemoveUnknownFieldByTagNumber(
-          kDeprecatedPosTagNumber, unknown_field_set);
-      if (unknown_field_set->field_count() == 0) {
-        entry->DiscardUnknownFields();
-      }
-    }
-  }
-
-  return result;
-}
-
-void UserDictionaryUtil::FillDesktopDeprecatedPosField(
-    user_dictionary::UserDictionaryStorage *storage) {
-  for (int i = 0; i < storage->dictionaries_size(); ++i) {
-    user_dictionary::UserDictionary *dictionary =
-        storage->mutable_dictionaries(i);
-    for (int j = 0; j < dictionary->entries_size(); ++j) {
-      user_dictionary::UserDictionary::Entry *entry =
-          dictionary->mutable_entries(j);
-      if (!entry->has_pos()) {
-        // No pos is found, so don't need backward compatibility process.
-        continue;
-      }
-
-      UnknownFieldSet *unknown_field_set = entry->mutable_unknown_fields();
-      static const int kDeprecatedPosTagNumber = 3;
-      unknown_field_set->AddLengthDelimited(
-          kDeprecatedPosTagNumber,
-          UserDictionaryUtil::GetStringPosType(entry->pos()));
-    }
-  }
 }
 
 uint64 UserDictionaryUtil::CreateNewDictionaryId(

@@ -174,17 +174,24 @@ int32 GetContextRevision() {
   if (g_context_revision_tls_index == kInvalidTlsIndex) {
     return 0;
   }
-  const int32 revision =
-    reinterpret_cast<int32>(::TlsGetValue(g_context_revision_tls_index));
-  return revision;
+  const uintptr_t raw_value = reinterpret_cast<uintptr_t>(
+      ::TlsGetValue(g_context_revision_tls_index));
+  return static_cast<int32>(raw_value);
 }
 
 void IncrementContextRevision() {
   if (g_context_revision_tls_index == kInvalidTlsIndex) {
     return;
   }
-  const int32 next_age = GetContextRevision() + 1;
-  TlsSetValue(g_context_revision_tls_index, reinterpret_cast<void *>(next_age));
+  int32 revision = GetContextRevision();
+  if (revision < kint32max) {
+    ++revision;
+  } else {
+    revision = 0;
+  }
+  const uintptr_t raw_value = static_cast<uintptr_t>(revision);
+  ::TlsSetValue(g_context_revision_tls_index,
+                reinterpret_cast<void *>(raw_value));
 }
 
 void FillContext(HIMC himc, mozc::commands::Context *context) {

@@ -121,12 +121,6 @@ class SystemUtil {
   static bool EnsureVitalImmutableDataIsAvailable();
 #endif  // OS_WIN
 
-  // Return true if the OS is supported.
-  // [OS_MACOSX] This function never returns false.
-  // [OS_LINUX, OS_ANDROID, OS_NACL] This function never returns false.
-  // TODO(yukawa): support Mac and Linux.
-  static bool IsPlatformSupported();
-
   // returns true if the version of Windows is 6.1 or later.
   static bool IsWindows7OrLater();
 
@@ -154,20 +148,6 @@ class SystemUtil {
   // This function is thread safe.
   static const wchar_t *GetSystemDir();
 
-  // Retrieves version of the specified file.
-  // If the function fails, returns false.
-  static bool GetFileVersion(const wstring &file_fullpath,
-                             int *major,
-                             int *minor,
-                             int *build,
-                             int *revision);
-
-  // Retrieves version string of the specified file.
-  // The version string consists of 4 digits separated by comma
-  // like "X.YY.ZZZ.WWWW".
-  // If the function fails, the return value is an empty string.
-  static string GetFileVersionString(const wstring &file_fullpath);
-
   // Returns "MSCTF.AsmCacheReady.<desktop name><session #>" to work around
   // b/5765783.
   // Returns an empty string if fails.
@@ -180,9 +160,6 @@ class SystemUtil {
   // return string representing os version
   // TODO(toshiyuki): Add unittests.
   static string GetOSVersionString();
-
-  // returns true if platform is MacOSX and the version is acceptable.
-  static bool MacOSVersionIsGreaterOrEqual(int32 major, int32 minor, int32 fix);
 
   // disable IME in the current process/thread
   static void DisableIME();

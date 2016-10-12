@@ -268,7 +268,7 @@ bool LRUStorage::Clear() {
     return false;
   }
   memset(mmap_->begin() + offset, '\0', mmap_->size() - offset);
-  lru_list_.reset(NULL);
+  lru_list_.reset();
   map_.clear();
   Open(mmap_->begin(), mmap_->size());
   return true;
@@ -495,8 +495,8 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
 
 void LRUStorage::Close() {
   filename_.clear();
-  mmap_.reset(NULL);
-  lru_list_.reset(NULL);
+  mmap_.reset();
+  lru_list_.reset();
   map_.clear();
 }
 

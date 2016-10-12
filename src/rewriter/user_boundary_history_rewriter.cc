@@ -201,7 +201,7 @@ bool UserBoundaryHistoryRewriter::Reload() {
   if (!storage_->OpenOrCreate(filename.c_str(),
                               kValueSize, kLRUSize, kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserBoundaryHistoryRewriter";
-    storage_.reset(NULL);
+    storage_.reset();
     return false;
   }
 

@@ -34,10 +34,10 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/pos_matcher.h"
 #include "rewriter/number_compound_util.h"
 
 namespace mozc {
@@ -129,10 +129,16 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
 }  // namespace
 
 FocusCandidateRewriter::FocusCandidateRewriter(
-    const DataManagerInterface *data_manager) {
-  data_manager->GetCounterSuffixSortedArray(&suffix_array_,
-                                            &suffix_array_size_);
-  pos_matcher_ = data_manager->GetPOSMatcher();
+    const DataManagerInterface *data_manager)
+    : pos_matcher_(data_manager->GetPOSMatcherData()) {
+  const char *array = nullptr;
+  size_t size = 0;
+  data_manager->GetCounterSuffixSortedArray(&array, &size);
+  const StringPiece data(array, size);
+  // Data manager is responsible for providing a valid data.  Just verify data
+  // in debug build.
+  DCHECK(SerializedStringArray::VerifyData(data));
+  suffix_array_.Set(data);
 }
 
 FocusCandidateRewriter::~FocusCandidateRewriter() {}
@@ -391,13 +397,12 @@ bool FocusCandidateRewriter::ParseNumberCandidate(
   // Otherwise, the following wrong rewrite will occur.
   // Example: "一階へは | 二回 | 行った -> 一階へは | 二階 | 行った"
   if (cand.content_value.size() != cand.value.size()) {
-    if (!pos_matcher_->IsParallelMarker(cand.rid)) {
+    if (!pos_matcher_.IsParallelMarker(cand.rid)) {
       return false;
     }
   }
   return number_compound_util::SplitStringIntoNumberAndCounterSuffix(
-      suffix_array_, suffix_array_size_,
-      cand.content_value, number, suffix, script_type);
+      suffix_array_, cand.content_value, number, suffix, script_type);
 }
 
 }  // namespace mozc

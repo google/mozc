@@ -450,4 +450,21 @@ TEST_F(FileUtilTest, NormalizeDirectorySeparator) {
 #endif  // OS_WIN
 }
 
+TEST_F(FileUtilTest, GetModificationTime) {
+  FileTimeStamp time_stamp = 0;
+  EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file", &time_stamp));
+
+  const string &path = FileUtil::JoinPath(FLAGS_test_tmpdir, "testfile");
+  CreateTestFile(path, "content");
+  EXPECT_TRUE(FileUtil::GetModificationTime(path, &time_stamp));
+  EXPECT_NE(0, time_stamp);
+
+  FileTimeStamp time_stamp2 = 0;
+  EXPECT_TRUE(FileUtil::GetModificationTime(path, &time_stamp2));
+  EXPECT_EQ(time_stamp, time_stamp2);
+
+  // Cleanup
+  FileUtil::Unlink(path);
+}
+
 }  // namespace mozc

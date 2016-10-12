@@ -43,17 +43,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
-
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#ifdef MOZC_BUILD
-#include "data_manager/packed/packed_data_oss.h"
-#endif  // MOZC_BUILD
-
-#include "data_manager/packed/packed_data_manager.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 
@@ -64,34 +54,8 @@ using mozc::config::Config;
 using mozc::config::ConfigHandler;
 
 class ConverterRegressionTest : public ::testing::Test {
- protected:
-  ConverterRegressionTest() {
-  }
-  virtual ~ConverterRegressionTest() {
-  }
-
-  virtual void SetUp() {
-    user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Use a full-size dictionary for regression tests.
-    std::unique_ptr<mozc::packed::PackedDataManager>
-        data_manager(new mozc::packed::PackedDataManager);
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    mozc::packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-  }
-
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    mozc::packed::RegisterPackedDataManager(nullptr);
-#endif  // MOZC_USE_PACKED_DICTIONARY
-    SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
-  }
-
  private:
-  string user_profile_directory_backup_;
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {

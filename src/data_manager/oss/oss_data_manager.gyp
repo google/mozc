@@ -40,6 +40,7 @@
     'platform_data_dir': '<(mozc_dir)/data/dictionary_oss',
     'boundary_def': '<(mozc_dir)/data/rules/boundary.def',
     'dataset_tag': 'oss',
+    'use_1byte_cost_for_connection_data': 'false',
     'dictionary_files': [
       '<(platform_data_dir)/dictionary00.txt',
       '<(platform_data_dir)/dictionary01.txt',
@@ -53,7 +54,11 @@
       '<(platform_data_dir)/dictionary09.txt',
       '<(platform_data_dir)/reading_correction.tsv',
     ],
-    'gen_test_dictionary': 'false',
+    # Hex-escaped string of "\xEFMOZC\r\n"
+    'magic_number': "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A",
+    'mozc_data_varname': 'kOssMozcDataSet',
+    'out_mozc_data': 'mozc.data',
+    'out_mozc_data_header': 'mozc_data.h',
   },
   # This 'includes' defines the following targets:
   #   - oss_data_manager  (type: static_library)

@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
 
 #include "base/port.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 
@@ -46,8 +47,8 @@ class SessionObserverInterface;
 
 class SessionHandlerInterface {
  public:
-  SessionHandlerInterface() {}
-  virtual ~SessionHandlerInterface() {}
+  SessionHandlerInterface() = default;
+  virtual ~SessionHandlerInterface() = default;
 
   // Returns true if SessionHandle is available.
   virtual bool IsAvailable() const = 0;
@@ -59,6 +60,8 @@ class SessionHandlerInterface {
 
   virtual void AddObserver(
       session::SessionObserverInterface *observer) = 0;
+
+  virtual StringPiece GetDataVersion() const = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionHandlerInterface);

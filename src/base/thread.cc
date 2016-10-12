@@ -65,7 +65,8 @@ struct ThreadInternalState {
   bool joinable_;
 };
 
-void Thread::Start() {
+void Thread::Start(const string &thread_name) {
+  // TODO(mozc-dev): Set thread name.
   if (IsRunning()) {
     return;
   }
@@ -127,7 +128,7 @@ struct ThreadInternalState {
   bool joinable_;
 };
 
-void Thread::Start() {
+void Thread::Start(const string &thread_name) {
   if (IsRunning()) {
     return;
   }
@@ -138,7 +139,15 @@ void Thread::Start() {
   if (0 != pthread_create(state_->handle_.get(), 0, &Thread::WrapperForPOSIX,
                           static_cast<void *>(this))) {
       state_->is_running_ = false;
-      state_->handle_.reset(nullptr);
+      state_->handle_.reset();
+  } else {
+#if defined(OS_NACL)
+    // NaCl doesn't support setname.
+#elif defined(OS_MACOSX)
+    pthread_setname_np(thread_name.c_str());
+#else  // !(OS_NACL | OS_MACOSX)
+    pthread_setname_np(*state_->handle_, thread_name.c_str());
+#endif  // !(OS_NACL | OS_MACOSX)
   }
 }
 
@@ -147,7 +156,10 @@ bool Thread::IsRunning() const {
 }
 
 void Thread::Detach() {
-  state_->handle_.reset(nullptr);
+  if (state_->handle_ != nullptr) {
+    pthread_detach(*state_->handle_);
+    state_->handle_.reset();
+  }
 }
 
 void Thread::Join() {
@@ -158,7 +170,7 @@ void Thread::Join() {
     return;
   }
   pthread_join(*state_->handle_, nullptr);
-  state_->handle_.reset(nullptr);
+  state_->handle_.reset();
 }
 
 namespace {
@@ -213,29 +225,16 @@ void PThreadCancel(pthread_t thread_id) {
 
 #endif  // OS_ANDROID or OS_NACL or others
 
-#ifndef OS_NACL
-
 void PThreadCleanupRoutine(void *ptr) {
   bool *is_running = static_cast<bool *>(ptr);
   *is_running = false;
 }
-
-#endif  // !OS_NACL
 
 }  // namespace
 
 void *Thread::WrapperForPOSIX(void *ptr) {
   Thread *p = static_cast<Thread *>(ptr);
   InitPThreadCancel();
-#ifdef OS_NACL
-  {
-    p->Run();
-    // TODO(horo): In NaCl we can't use pthread_cleanup_push() and
-    // pthread_cleanup_pop(). So we set "is_running_ = false" here.
-    // This hack makes the meaning of IsRunning() different in NaCl.
-    p->state_->is_running_ = false;
-  }
-#else  // OS_NACL
   {
     // Caveat: the pthread_cleanup_push/pthread_cleanup_pop pair should be put
     //     in the same function. Never move them into any other function.
@@ -244,7 +243,6 @@ void *Thread::WrapperForPOSIX(void *ptr) {
     p->Run();
     pthread_cleanup_pop(1);
   }
-#endif  // OS_NACL
   return nullptr;
 }
 
@@ -254,7 +252,7 @@ void Thread::Terminate() {
     // pthread_cancel (or pthread_kill in PThreadCancel on Android) is
     // asynchronous. Join the thread to behave like TerminateThread on Windows.
     Join();
-    state_->handle_.reset(nullptr);
+    state_->handle_.reset();
   }
 }
 

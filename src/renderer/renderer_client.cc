@@ -125,7 +125,7 @@ class RendererLauncher : public RendererLauncherInterface,
     path_ = path;
     disable_renderer_path_check_ = disable_renderer_path_check;
     ipc_client_factory_interface_ = ipc_client_factory_interface;
-    Thread::Start();
+    Thread::Start("Renderer");
   }
 
   void Run() {
@@ -285,7 +285,7 @@ class RendererLauncher : public RendererLauncherInterface,
         CallCommand(client.get(), *(pending_command_.get()));
       }
     }
-    pending_command_.reset(NULL);
+    pending_command_.reset();
 
     // |renderer_status_| is also protected by mutex.
     // Until this method finsihs, SetPendingCommand is blocked.

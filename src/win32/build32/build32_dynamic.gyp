@@ -42,12 +42,8 @@
         {
           'target_name': 'mozc_win32_build32_dynamic',
           'type': 'none',
-          'conditions': [
-            ['use_dynamically_linked_qt==1', {
-              'dependencies': [
-                '../../gui/gui.gyp:mozc_tool',
-              ],
-            }],
+          'dependencies': [
+            '../../gui/gui.gyp:mozc_tool',
           ],
         },
       ],

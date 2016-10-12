@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/key_parser.h"
@@ -42,9 +41,8 @@
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "data_manager/user_pos_manager.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
-#include "engine/engine_interface.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "engine/engine.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/candidates.pb.h"
@@ -56,8 +54,8 @@
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
 #include "session/session_converter_interface.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
@@ -404,7 +402,9 @@ void SwitchInputMode(commands::CompositionMode mode, Session *session) {
 // since History segments are almost hidden from
 class ConverterMockForReset : public ConverterMock {
  public:
-  virtual bool ResetConversion(Segments *segments) const {
+  ConverterMockForReset() : reset_conversion_called_(false) {}
+
+  bool ResetConversion(Segments *segments) const override {
     reset_conversion_called_ = true;
     return true;
   }
@@ -417,7 +417,6 @@ class ConverterMockForReset : public ConverterMock {
     reset_conversion_called_ = false;
   }
 
-  ConverterMockForReset() : reset_conversion_called_(false) {}
  private:
   mutable bool reset_conversion_called_;
 };
@@ -425,27 +424,33 @@ class ConverterMockForReset : public ConverterMock {
 class MockConverterEngineForReset : public EngineInterface {
  public:
   MockConverterEngineForReset() : converter_mock_(new ConverterMockForReset) {}
-  virtual ~MockConverterEngineForReset() {}
+  ~MockConverterEngineForReset() override = default;
 
-  virtual ConverterInterface *GetConverter() const {
+  ConverterInterface *GetConverter() const override {
     return converter_mock_.get();
   }
 
-  virtual PredictorInterface *GetPredictor() const {
-    return NULL;
+  PredictorInterface *GetPredictor() const override {
+    return nullptr;
   }
 
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
-    return NULL;
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
+    return nullptr;
   }
 
-  virtual bool Reload() {
+  bool Reload() override {
     return true;
   }
 
-  virtual UserDataManagerInterface *GetUserDataManager() {
-    return NULL;
+  UserDataManagerInterface *GetUserDataManager() override {
+    return nullptr;
   }
+
+  const DataManagerInterface *GetDataManager() const override {
+    return nullptr;
+  }
+
+  StringPiece GetDataVersion() const override { return StringPiece(); }
 
   const ConverterMockForReset &converter_mock() const {
     return *converter_mock_;
@@ -461,7 +466,9 @@ class MockConverterEngineForReset : public EngineInterface {
 
 class ConverterMockForRevert : public ConverterMock {
  public:
-  virtual bool RevertConversion(Segments *segments) const {
+  ConverterMockForRevert() : revert_conversion_called_(false) {}
+
+  bool RevertConversion(Segments *segments) const override {
     revert_conversion_called_ = true;
     return true;
   }
@@ -474,7 +481,6 @@ class ConverterMockForRevert : public ConverterMock {
     revert_conversion_called_ = false;
   }
 
-  ConverterMockForRevert() : revert_conversion_called_(false) {}
  private:
   mutable bool revert_conversion_called_;
 };
@@ -483,27 +489,33 @@ class MockConverterEngineForRevert : public EngineInterface {
  public:
   MockConverterEngineForRevert()
       : converter_mock_(new ConverterMockForRevert) {}
-  virtual ~MockConverterEngineForRevert() {}
+  ~MockConverterEngineForRevert() override = default;
 
-  virtual ConverterInterface *GetConverter() const {
+  ConverterInterface *GetConverter() const override {
     return converter_mock_.get();
   }
 
-  virtual PredictorInterface *GetPredictor() const {
-    return NULL;
+  PredictorInterface *GetPredictor() const override {
+    return nullptr;
   }
 
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() {
-    return NULL;
+  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
+    return nullptr;
   }
 
-  virtual bool Reload() {
+  bool Reload() override {
     return true;
   }
 
-  virtual UserDataManagerInterface *GetUserDataManager() {
-    return NULL;
+  UserDataManagerInterface *GetUserDataManager() override {
+    return nullptr;
   }
+
+  const DataManagerInterface *GetDataManager() const override {
+    return nullptr;
+  }
+
+  StringPiece GetDataVersion() const override { return StringPiece(); }
 
   const ConverterMockForRevert &converter_mock() const {
     return *converter_mock_;
@@ -519,11 +531,9 @@ class MockConverterEngineForRevert : public EngineInterface {
 
 }  // namespace
 
-class SessionTest : public testing::Test {
+class SessionTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+  void SetUp() override {
     UsageStats::ClearAllStatsForTest();
 
     mobile_request_.reset(new Request);
@@ -534,10 +544,10 @@ class SessionTest : public testing::Test {
 
     t13n_rewriter_.reset(
         new TransliterationRewriter(
-            *UserPosManager::GetUserPosManager()->GetPOSMatcher()));
+            dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData())));
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     UsageStats::ClearAllStatsForTest();
   }
 
@@ -665,7 +675,7 @@ class SessionTest : public testing::Test {
     session->SetRequest(&request);
     table_.reset(new composer::Table());
     table_->InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session->SetTable(table_.get());
   }
 
@@ -830,13 +840,15 @@ class SessionTest : public testing::Test {
   //    If you directly define a variable here without std::unique_ptr, its
   //    constructor will be called *BEFORE* SetUp() is called.
   std::unique_ptr<MockConverterEngine> engine_;
-  std::unique_ptr<EngineInterface> mock_data_engine_;
+  std::unique_ptr<Engine> mock_data_engine_;
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> mobile_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
+  const testing::MockDataManager mock_data_manager_;
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
 // This test is intentionally defined at this location so that this
@@ -5928,41 +5940,6 @@ TEST_F(SessionTest, Issue1571043) {
   }
 }
 
-TEST_F(SessionTest, Issue1799384) {
-  // This is a unittest against http://b/1571043.
-  // - ConvertToHiragana converts Vu to U+3094 "ヴ"
-  std::unique_ptr<Session> session(new Session(engine_.get()));
-  InitSessionToPrecomposition(session.get());
-  commands::Command command;
-  InsertCharacterChars("ravu", session.get(), &command);
-  // TODO(komatsu) "ヴ" might be preferred on Mac.
-  // "らヴ"
-  EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4", GetComposition(command));
-
-  {  // Initialize GetConverterMock() to generate t13n candidates.
-    Segments segments;
-    Segment *segment;
-    segments.set_request_type(Segments::CONVERSION);
-    segment = segments.add_segment();
-    // "らヴ"
-    segment->set_key("\xE3\x82\x89\xE3\x83\xB4");
-    Segment::Candidate *candidate;
-    candidate = segment->add_candidate();
-    // "らぶ"
-    candidate->value = "\xE3\x82\x89\xE3\x81\xB6";
-    ConversionRequest request;
-    SetComposer(session.get(), &request);
-    FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
-  }
-
-  command.Clear();
-  EXPECT_TRUE(session->ConvertToHiragana(&command));
-
-  // "らヴ"
-  EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4", GetComposition(command));
-}
-
 TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as
@@ -7665,6 +7642,20 @@ bool FindCandidateID(const commands::Candidates &candidates,
   return false;
 }
 
+void FindCandidateIDs(const commands::Candidates &candidates,
+                      const string &value, vector<int> *ids) {
+  CHECK(ids);
+  ids->clear();
+  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
+    const commands::Candidates::Candidate &candidate =
+        candidates.candidate(i);
+    LOG(INFO) <<  candidate.value();
+    if (candidate.value() == value) {
+      ids->push_back(candidate.id());
+    }
+  }
+}
+
 TEST_F(SessionTest, CommitCandidate_T13N) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get(), *mobile_request_);
@@ -8254,7 +8245,7 @@ TEST_F(SessionTest, Issue4437420) {
   session.SetRequest(&request);
   std::unique_ptr<composer::Table> table(new composer::Table());
   table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session.SetTable(table.get());
   // Type "2*" to produce "A".
   SetSendKeyCommand("2", &command);
@@ -8274,7 +8265,7 @@ TEST_F(SessionTest, Issue4437420) {
   session.SetRequest(&request);
   table.reset(new composer::Table());
   table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session.SetTable(table.get());
   // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
@@ -8330,7 +8321,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
 
     // Type "2" to produce "a".
@@ -8375,7 +8366,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
     SetSendKeyCommand("3", &command);
@@ -8421,7 +8412,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
     // Type "3*{<}*{<}", and composition should change
     // "さ"->"ざ"->(No change)->"さ"->(No change).
@@ -8475,7 +8466,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
     // Type "{<}" and do nothing
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
@@ -8558,7 +8549,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig());
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session.SetTable(&table);
 
     // commit "あ" to push UNDO stack
@@ -8591,6 +8582,74 @@ TEST_F(SessionTest, UndoKeyAction) {
     EXPECT_PREEDIT("\xE3\x81\x93", command);
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
+  }
+}
+
+TEST_F(SessionTest, DedupAfterUndo) {
+  commands::Command command;
+  {
+    Session session(mock_data_engine_.get());
+    InitSessionToPrecomposition(&session, *mobile_request_);
+
+    // Undo requires capability DELETE_PRECEDING_TEXT.
+    commands::Capability capability;
+    capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+    session.set_client_capability(capability);
+
+    SwitchInputMode(commands::HIRAGANA, &session);
+
+    commands::Request request(*mobile_request_);
+    request.set_special_romanji_table(
+        commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+    session.SetRequest(&request);
+
+    composer::Table table;
+    table.InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+    session.SetTable(&table);
+
+    // Type "!" to produce "！".
+    SetSendKeyCommand("!", &command);
+    session.SendKey(&command);
+    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    // "！"
+    EXPECT_EQ("\xef\xbc\x81", GetComposition(command));
+
+    ASSERT_TRUE(command.output().has_candidates());
+
+    vector<int> ids;
+    // "！"
+    FindCandidateIDs(
+        command.output().candidates(), "\xef\xbc\x81", &ids);
+    EXPECT_GE(1, ids.size());
+
+    FindCandidateIDs(command.output().candidates(), "!", &ids);
+    EXPECT_GE(1, ids.size());
+
+    const int candidate_size_before_undo =
+        command.output().candidates().candidate_size();
+
+    command.Clear();
+    session.CommitFirstSuggestion(&command);
+    EXPECT_FALSE(command.output().has_preedit());
+    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+
+    command.Clear();
+    session.Undo(&command);
+    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    ASSERT_TRUE(command.output().has_candidates());
+
+    // "！"
+    FindCandidateIDs(
+        command.output().candidates(), "\xef\xbc\x81", &ids);
+    EXPECT_GE(1, ids.size());
+
+    FindCandidateIDs(command.output().candidates(), "!", &ids);
+    EXPECT_GE(1, ids.size());
+
+    EXPECT_EQ(command.output().candidates().candidate_size(),
+              candidate_size_before_undo);
   }
 }
 
@@ -8910,7 +8969,7 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session->SetTable(&table);
 
   SwitchInputFieldType(commands::Context::PASSWORD, session.get());

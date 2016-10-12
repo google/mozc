@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.view;
 import com.google.common.base.Optional;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -82,21 +83,22 @@ public class CandidateBackgroundDrawable extends BaseBackgroundDrawable {
     int bottom = this.bottom;
 
     // Render border color.
-    paint.reset();
-    paint.setAntiAlias(true);
-    paint.setColor(borderColor);
-    canvas.drawRect(left, top, right, bottom, paint);
+    if (Color.alpha(borderColor) != 0) {
+      paint.reset();
+      paint.setColor(borderColor);
+      canvas.drawRect(left, top, right, bottom, paint);
+    }
 
     // Render left/top highlight.
-    paint.reset();
-    paint.setAntiAlias(true);
-    paint.setColor(highlightColor);
-    canvas.drawRect(left, top, Math.max(left, right - 1), Math.max(top, bottom - 1), paint);
+    if (Color.alpha(highlightColor) != 0) {
+      paint.reset();
+      paint.setColor(highlightColor);
+      canvas.drawRect(left, top, Math.max(left, right - 1), Math.max(top, bottom - 1), paint);
+    }
 
     // Render filling color.
     if (shader.isPresent()) {
       paint.reset();
-      paint.setAntiAlias(true);
       paint.setShader(shader.get());
       canvas.drawRect(left + 1, top + 1,
                       Math.max(left + 1, right - 1), Math.max(top + 1, bottom - 1), paint);
@@ -112,7 +114,9 @@ public class CandidateBackgroundDrawable extends BaseBackgroundDrawable {
     top = canvasRect.top;
     right = canvasRect.right;
     bottom = canvasRect.bottom;
-    shader = Optional.<Shader>of(
-        new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP));
+    if (Color.alpha(topColor | bottomColor) != 0) {
+      shader = Optional.<Shader>of(
+          new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP));
+    }
   }
 }

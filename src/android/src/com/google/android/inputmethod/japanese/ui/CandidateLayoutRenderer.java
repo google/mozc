@@ -233,10 +233,12 @@ public class CandidateLayoutRenderer {
     Rect clipBounds = this.clipBounds;
     canvas.getClipBounds(clipBounds);
 
+    boolean drawSeparators = Color.alpha(separatorPaint.getColor()) != 0;
+
     int focusedIndex = this.focusedIndex;
     for (Row row : candidateLayout.getRowList()) {
       float top = row.getTop();
-      if (top > clipBounds.bottom) {
+      if (top >= clipBounds.bottom) {
         break;
       }
       if (top + row.getHeight() < clipBounds.top) {
@@ -260,7 +262,7 @@ public class CandidateLayoutRenderer {
                      && isFocused(span.getCandidateWord().get(),
                                   focusedIndex, pressedCandidateIndex),
                  carrierEmojiRenderHelper);
-        if (span.getLeft() != 0f) {
+        if (drawSeparators && span.getLeft() != 0f) {
           float separatorX = span.getLeft();
           canvas.drawLine(separatorX, separatorTop, separatorX, separatorBottom, separatorPaint);
         }

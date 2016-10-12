@@ -118,8 +118,8 @@ bool BasePredictor::ClearHistoryEntry(const string &key, const string &value) {
   return user_history_predictor_->ClearHistoryEntry(key, value);
 }
 
-bool BasePredictor::WaitForSyncerForTest() {
-  return user_history_predictor_->WaitForSyncerForTest();
+bool BasePredictor::Wait() {
+  return user_history_predictor_->Wait();
 }
 
 bool BasePredictor::Sync() {

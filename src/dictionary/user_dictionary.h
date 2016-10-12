@@ -51,43 +51,41 @@ namespace dictionary {
 class UserDictionary : public DictionaryInterface {
  public:
   UserDictionary(const UserPOSInterface *user_pos,
-                 const POSMatcher *pos_matcher,
+                 POSMatcher pos_matcher,
                  SuppressionDictionary *suppression_dictionary);
-  virtual ~UserDictionary();
+  ~UserDictionary() override;
 
-  virtual bool HasKey(StringPiece key) const;
-  virtual bool HasValue(StringPiece value) const;
+  bool HasKey(StringPiece key) const override;
+  bool HasValue(StringPiece value) const override;
+
   // Lookup methods don't support kana modifier insensitive lookup, i.e.,
   // Callback::OnActualKey() is never called.
-  virtual void LookupPredictive(StringPiece key,
-                                const ConversionRequest &conversion_request,
-                                Callback *callback) const;
-
-  virtual void LookupPrefix(StringPiece key,
-                            const ConversionRequest &conversion_request,
-                            Callback *callback) const;
-
-  virtual void LookupExact(StringPiece key,
-                           const ConversionRequest &conversion_request,
-                           Callback *callback) const;
-
-  virtual void LookupReverse(StringPiece str,
-                             const ConversionRequest &conversion_request,
-                             Callback *callback) const;
+  void LookupPredictive(StringPiece key,
+                        const ConversionRequest &conversion_request,
+                        Callback *callback) const override;
+  void LookupPrefix(StringPiece key,
+                    const ConversionRequest &conversion_request,
+                    Callback *callback) const override;
+  void LookupExact(StringPiece key,
+                   const ConversionRequest &conversion_request,
+                   Callback *callback) const override;
+  void LookupReverse(StringPiece str,
+                     const ConversionRequest &conversion_request,
+                     Callback *callback) const override;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
   // returned and string is kept as-is.
-  virtual bool LookupComment(StringPiece key, StringPiece value,
-                             const ConversionRequest &conversion_request,
-                             string *comment) const;
+  bool LookupComment(StringPiece key, StringPiece value,
+                     const ConversionRequest &conversion_request,
+                     string *comment) const override;
 
   // Loads dictionary from UserDictionaryStorage.
   // mainly for unittesting
   bool Load(const user_dictionary::UserDictionaryStorage &storage);
 
   // Reloads dictionary asynchronously
-  bool Reload();
+  bool Reload() override;
 
   // Waits until reloader finishes
   void WaitForReloader();
@@ -115,7 +113,7 @@ class UserDictionary : public DictionaryInterface {
 
   std::unique_ptr<UserDictionaryReloader> reloader_;
   std::unique_ptr<const UserPOSInterface> user_pos_;
-  const POSMatcher *pos_matcher_;
+  const POSMatcher pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
   TokensIndex *tokens_;
   mutable std::unique_ptr<ReaderWriterMutex> mutex_;

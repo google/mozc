@@ -38,6 +38,9 @@
 #include <iterator>
 #include <string>
 
+// Include namespace.h instead of port.h to reduce a dependency.
+#include "base/namespace.h"
+
 namespace mozc {
 
 
@@ -147,9 +150,6 @@ class StringPiece {
   const_reverse_iterator rend() const {
     return const_reverse_iterator(ptr_);
   }
-
-  size_type max_size() const { return length_; }
-  size_type capacity() const { return length_; }
 
   size_type copy(char *buf, size_type n, size_type pos = 0) const;
 

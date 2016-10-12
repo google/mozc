@@ -77,7 +77,7 @@ bool ContainCandidate(const Segments &segments, const string &candidate) {
 
 }  // namespace
 
-class UnicodeRewriterTest : public testing::Test {
+class UnicodeRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   UnicodeRewriterTest() {}

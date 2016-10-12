@@ -35,7 +35,6 @@ import static org.easymock.EasyMock.expect;
 
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.Annotation;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
-import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
@@ -142,13 +141,12 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
     };
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_AbsentLayout() {
     CandidateWindowAccessibilityNodeProvider provider =
         new CandidateWindowAccessibilityNodeProvider(createMockView());
     assertNull(provider.createAccessibilityNodeInfo(
-        CandidateWindowAccessibilityNodeProvider.UNDEFINED));
+        CandidateWindowAccessibilityNodeProvider.UNDEFINED_VIRTUAL_VIEW_ID));
     assertEquals(0, provider.createAccessibilityNodeInfo(View.NO_ID).getChildCount());
     assertNull(provider.createAccessibilityNodeInfo(1));
   }
@@ -159,10 +157,9 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
         new CandidateWindowAccessibilityNodeProvider(createMockView());
     provider.setCandidateLayout(Optional.of(createMockLayout()));
     assertNull(provider.createAccessibilityNodeInfo(
-        CandidateWindowAccessibilityNodeProvider.UNDEFINED));
+        CandidateWindowAccessibilityNodeProvider.UNDEFINED_VIRTUAL_VIEW_ID));
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_NoId() {
     CandidateWindowAccessibilityNodeProvider provider =
@@ -175,14 +172,13 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
     // Note: There is no way to get the id of children. Testing is omitted.
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testCreateAccessibilityNodeInfo_WithId() {
     View view = createMockView();
     CandidateWindowAccessibilityNodeProvider provider =
         new CandidateWindowAccessibilityNodeProvider(view);
     provider.setCandidateLayout(Optional.of(createMockLayout()));
-    AccessibilityNodeInfoCompat info = provider.createAccessibilityNodeInfo(1);
+    AccessibilityNodeInfoCompat info = provider.createAccessibilityNodeInfo(10001);
 
     assertEquals(0, info.getChildCount());
     assertEquals(getInstrumentation().getTargetContext().getPackageName(), info.getPackageName());
@@ -200,7 +196,6 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
     assertTrue((info.getActions() & AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS) != 0);
   }
 
-  @ApiLevel(14)
   @SmallTest
   public void testPerformAction() {
     CandidateWindowAccessibilityNodeProvider provider =
@@ -221,8 +216,9 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
     replayAll();
     provider.setCandidateLayout(Optional.of(createMockLayout()));
 
+
     // action: ACTION_ACCESSIBILITY_FOCUS
-    // key: 1
+    // key: 10001
     // previous key: UNDEFINED
     // expectation: TYPE_VIEW_ACCESSIBILITY_FOCUSED
     {
@@ -233,15 +229,15 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
       manager.sendAccessibilityEvent(capture(event));
       replayAll();
       assertTrue(
-          provider.performAction(1,
+          provider.performAction(10001,
                                  AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS, null));
       assertEquals(AccessibilityEventCompat.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
                    event.getValue().getEventType());
       verifyAll();
     }
     // action: ACTION_ACCESSIBILITY_FOCUS
-    // key: 1
-    // previous key: 1 (set by above test)
+    // key: 10001
+    // previous key: 10001 (set by above test)
     // expectation: returning false
     {
       resetAll();
@@ -249,13 +245,13 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
       expect(manager.isTouchExplorationEnabled()).andStubReturn(true);
       replayAll();
       assertFalse(
-          provider.performAction(1,
+          provider.performAction(10001,
                                  AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS, null));
       verifyAll();
     }
     // action: ACTION_ACCESSIBILITY_FOCUS
-    // key: 4
-    // previous key: 1 (set by above test)
+    // key: 10004
+    // previous key: 10001 (set by above test)
     // expectation: TYPE_VIEW_ACCESSIBILITY_FOCUSED
     {
       resetAll();
@@ -265,15 +261,15 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
       manager.sendAccessibilityEvent(capture(event));
       replayAll();
       assertTrue(
-          provider.performAction(4,
+          provider.performAction(10004,
                                  AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS, null));
       assertEquals(AccessibilityEventCompat.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
                    event.getValue().getEventType());
       verifyAll();
     }
     // action: ACTION_CLEAR_ACCESSIBILITY_FOCUS
-    // key: 1
-    // previous key: 4 (set by above test)
+    // key: 10001
+    // previous key: 10004 (set by above test)
     // expectation: returning false
     {
       resetAll();
@@ -281,14 +277,14 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
       expect(manager.isTouchExplorationEnabled()).andStubReturn(true);
       replayAll();
       assertFalse(
-          provider.performAction(1,
+          provider.performAction(10001,
                                  AccessibilityNodeInfoCompat.ACTION_CLEAR_ACCESSIBILITY_FOCUS,
                                  null));
       verifyAll();
     }
     // action: ACTION_CLEAR_ACCESSIBILITY_FOCUS
-    // key: 1
-    // previous key: 1 (set by *this* test)
+    // key: 10001
+    // previous key: 10001 (set by *this* test)
     // expectation: TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED
     {
       // Preparation
@@ -297,7 +293,7 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
       expect(manager.isTouchExplorationEnabled()).andStubReturn(true);
       manager.sendAccessibilityEvent(anyObject(AccessibilityEvent.class));
       replayAll();
-      provider.performAction(1,
+      provider.performAction(10001,
           AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS, null);
       // Testing
       resetAll();
@@ -307,7 +303,7 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
       manager.sendAccessibilityEvent(capture(event));
       replayAll();
       assertTrue(
-          provider.performAction(1,
+          provider.performAction(10001,
                                  AccessibilityNodeInfoCompat.ACTION_CLEAR_ACCESSIBILITY_FOCUS,
                                  null));
       assertEquals(AccessibilityEventCompat.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
@@ -319,7 +315,6 @@ public class CandidateWindowAccessibilityNodeProviderTest extends Instrumentatio
   // Note AccessibilityEvent doesn't contain information enough to verify
   // the behavior of performActionForKey method (sourceId is required but not accessible).
   // Indirect verification instead.
-  @ApiLevel(14)
   @SmallTest
   public void testPerformActionForWord() {
     CandidateWindowAccessibilityNodeProvider provider =

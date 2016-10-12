@@ -30,32 +30,23 @@
 #include "dictionary/suffix_dictionary.h"
 
 #include <algorithm>
-#include <cstring>
 #include <string>
 
-#include "base/iterator_adapter.h"
 #include "base/logging.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/suffix_dictionary_token.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
 
-struct SuffixTokenKeyAdapter : public AdapterBase<const char *> {
-  value_type operator()(const SuffixToken *token) const {
-    return token->key;
-  }
-};
-
 class ComparePrefix {
  public:
   explicit ComparePrefix(size_t max_len) : max_len_(max_len) {}
 
-  // Note: the inputs don't need to be null-terminated.
-  bool operator()(const char *x, const char *y) const {
-    return std::strncmp(x, y, max_len_) < 0;
+  bool operator()(StringPiece x, StringPiece y) const {
+    return x.substr(0, max_len_) < y.substr(0, max_len_);
   }
 
  private:
@@ -64,10 +55,16 @@ class ComparePrefix {
 
 }  // namespace
 
-SuffixDictionary::SuffixDictionary(const SuffixToken *suffix_tokens,
-                                   size_t suffix_tokens_size)
-    : suffix_tokens_(suffix_tokens),
-      suffix_tokens_size_(suffix_tokens_size) {}
+SuffixDictionary::SuffixDictionary(StringPiece key_array_data,
+                                   StringPiece value_array_data,
+                                   const uint32 *token_array)
+    : token_array_(token_array) {
+  DCHECK(SerializedStringArray::VerifyData(key_array_data));
+  DCHECK(SerializedStringArray::VerifyData(value_array_data));
+  DCHECK(token_array_);
+  key_array_.Set(key_array_data);
+  value_array_.Set(value_array_data);
+}
 
 SuffixDictionary::~SuffixDictionary() {}
 
@@ -93,18 +90,14 @@ void SuffixDictionary::LookupPredictive(
     StringPiece key,
     const ConversionRequest &conversion_request,
     Callback *callback) const {
-  typedef IteratorAdapter<const SuffixToken *, SuffixTokenKeyAdapter> Iter;
-  pair<Iter, Iter> range = std::equal_range(
-      MakeIteratorAdapter(suffix_tokens_, SuffixTokenKeyAdapter()),
-      MakeIteratorAdapter(suffix_tokens_ + suffix_tokens_size_,
-                          SuffixTokenKeyAdapter()),
-      key.data(), ComparePrefix(key.size()));
-
+  using Iter = SerializedStringArray::const_iterator;
+  pair<Iter, Iter> range = std::equal_range(key_array_.begin(),
+                                            key_array_.end(),
+                                            key, ComparePrefix(key.size()));
   Token token;
   token.attributes = Token::NONE;  // Common for all suffix tokens.
   for (; range.first != range.second; ++range.first) {
-    const SuffixToken &suffix_token = *range.first.base();
-    token.key = suffix_token.key;
+    (*range.first).CopyToString(&token.key);
     switch (callback->OnKey(token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -116,10 +109,15 @@ void SuffixDictionary::LookupPredictive(
       default:
         break;
     }
-    token.value = (suffix_token.value == NULL) ? token.key : suffix_token.value;
-    token.lid = suffix_token.lid;
-    token.rid = suffix_token.rid;
-    token.cost = suffix_token.wcost;
+    const size_t index = range.first - key_array_.begin();
+    if (value_array_[index].empty()) {
+      token.value = token.key;
+    } else {
+      value_array_[index].CopyToString(&token.value);
+    }
+    token.lid = token_array_[3 * index];
+    token.rid = token_array_[3 * index + 1];
+    token.cost = token_array_[3 * index + 2];
     if (callback->OnToken(token.key, token.key, token) !=
         Callback::TRAVERSE_CONTINUE) {
       break;

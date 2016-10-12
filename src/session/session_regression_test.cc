@@ -32,6 +32,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -41,7 +42,7 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine_factory.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -56,13 +57,11 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
 DECLARE_bool(use_history_rewriter);
 
 namespace mozc {
-
 namespace {
+
 string GetComposition(const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return "";
@@ -86,9 +85,9 @@ void InitSessionToPrecomposition(session::Session* session) {
 
 }  // namespace
 
-class SessionRegressionTest : public testing::Test {
+class SessionRegressionTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
@@ -96,14 +95,14 @@ class SessionRegressionTest : public testing::Test {
 
     // Note: engine must be created after setting all the flags, as it
     // internally depends on global flags, e.g., for creation of rewriters.
-    engine_.reset(EngineFactory::Create());
+    std::unique_ptr<Engine> engine(EngineFactory::Create());
 
-    handler_.reset(new SessionHandler(engine_.get()));
+    handler_.reset(new SessionHandler(std::move(engine)));
     ResetSession();
     CHECK(session_.get());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     // just in case, reset the config in test_tmpdir
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -150,18 +149,16 @@ class SessionRegressionTest : public testing::Test {
     session_.reset(static_cast<session::Session *>(handler_->NewSession()));
     commands::Request request;
     table_.reset(new composer::Table());
-    table_->InitializeWithRequestAndConfig(request, config_);
+    table_->InitializeWithRequestAndConfig(request, config_, data_manager_);
     session_->SetTable(table_.get());
   }
 
+  const testing::MockDataManager data_manager_;
   bool orig_use_history_rewriter_;
-  std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<SessionHandler> handler_;
   std::unique_ptr<session::Session> session_;
   std::unique_ptr<composer::Table> table_;
   config::Config config_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
 };
 
 

@@ -30,6 +30,7 @@
 #include "rewriter/symbol_rewriter.h"
 
 #include <algorithm>
+#include <cstring>
 #include <set>
 #include <string>
 #include <vector>
@@ -44,7 +45,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
 // SymbolRewriter:
@@ -71,17 +71,17 @@ const size_t kMaxInsertToMedium = 15;
 // static function
 const string SymbolRewriter::GetDescription(
     const string &value,
-    const char *description,
-    const char *additional_description) {
-  if (description == NULL) {
+    StringPiece description,
+    StringPiece additional_description) {
+  if (description.empty()) {
     return "";
   }
-  string result = description;
+  string result = description.as_string();
   // Merge description
-  if (additional_description != NULL) {
-    result.append("(");
-    result.append(additional_description);
-    result.append(")");
+  if (!additional_description.empty()) {
+    result.append(1, '(');
+    additional_description.AppendToString(&result);
+    result.append(1, ')');
   }
   return result;
 }
@@ -125,36 +125,36 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
 
 // TODO(toshiyuki): Should we move this under Util module?
 bool SymbolRewriter::IsPlatformDependent(
-    const EmbeddedDictionary::Value &value) {
-  if (value.value == NULL) {
+    SerializedDictionary::const_iterator iter) {
+  if (iter.value().empty()) {
     return false;
   }
-  const Util::CharacterSet cset = Util::GetCharacterSet(value.value);
+  const Util::CharacterSet cset = Util::GetCharacterSet(iter.value());
   return (cset >= Util::JISX0212);
 }
 
 // Return true if two symbols are in same group
 // static function
-bool SymbolRewriter::InSameSymbolGroup(const EmbeddedDictionary::Value &lhs,
-                                       const EmbeddedDictionary::Value &rhs) {
+bool SymbolRewriter::InSameSymbolGroup(
+    SerializedDictionary::const_iterator lhs,
+    SerializedDictionary::const_iterator rhs) {
   // "矢印記号", "矢印記号"
   // "ギリシャ(大文字)", "ギリシャ(小文字)"
-  if (lhs.description == NULL || rhs.description == NULL) {
+  if (lhs.description().empty() || rhs.description().empty()) {
     return false;
   }
-  const int cmp_len = max(strlen(lhs.description), strlen(rhs.description));
-  if (strncmp(lhs.description, rhs.description, cmp_len) == 0) {
-    return true;
-  }
-  return false;
+  const size_t cmp_len =
+      max(lhs.description().size(), rhs.description().size());
+  return std::strncmp(lhs.description().data(),
+                      rhs.description().data(), cmp_len) == 0;
 }
 
 // Insert Symbol into segment.
 // static function
-void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
-                                      size_t size,
-                                      bool context_sensitive,
-                                      Segment *segment) {
+void SymbolRewriter::InsertCandidates(
+    const SerializedDictionary::IterRange &range,
+    bool context_sensitive,
+    Segment *segment) {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candiadtes_size is 0";
     return;
@@ -169,7 +169,7 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
 
   // If the original candidates given by ImmutableConveter already
   // include the target symbols, do assign description to these candidates.
-  AddDescForCurrentCandidates(value, size, segment);
+  AddDescForCurrentCandidates(range, segment);
 
   const string &candidate_key = ((!segment->key().empty()) ?
                                  segment->key() :
@@ -199,20 +199,21 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
     }
   }
 
+  const size_t range_size = range.second - range.first;
   size_t inserted_count = 0;
   bool finish_first_part = false;
   const Segment::Candidate &base_candidate = segment->candidate(0);
-  for (size_t i = 0; i < size; ++i) {
+  for (auto iter = range.first; iter != range.second; ++iter) {
     Segment::Candidate *candidate = segment->insert_candidate(offset);
     DCHECK(candidate);
 
     candidate->Init();
-    candidate->lid = value[i].lid;
-    candidate->rid = value[i].rid;
+    candidate->lid = iter.lid();
+    candidate->rid = iter.rid();
     candidate->cost = base_candidate.cost;
     candidate->structure_cost = base_candidate.structure_cost;
-    candidate->value = value[i].value;
-    candidate->content_value = value[i].value;
+    iter.value().CopyToString(&candidate->value);
+    iter.value().CopyToString(&candidate->content_value);
     candidate->key = candidate_key;
     candidate->content_key = candidate_key;
 
@@ -228,21 +229,21 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
     }
 
     candidate->description = GetDescription(candidate->value,
-                                            value[i].description,
-                                            value[i].additional_description);
+                                            iter.description(),
+                                            iter.additional_description());
     ++offset;
     ++inserted_count;
 
     // Insert to latter position
     // If number of rest symbols is small, insert current position.
-    if (i + 1 < size &&
+    const auto next = iter + 1;
+    if (next != range.second &&
         !finish_first_part &&
         inserted_count >= kMaxInsertToMedium &&
-        size - inserted_count >= 5 &&
+        range_size - inserted_count >= 5 &&
         // Do not divide symbols which seem to be in the same group
         // providing that they are not platform dependent characters.
-        (!InSameSymbolGroup(value[i], value[i + 1]) ||
-         IsPlatformDependent(value[i + 1]))) {
+        (!InSameSymbolGroup(iter, next) || IsPlatformDependent(next))) {
       offset = segment->candidates_size();
       finish_first_part = true;
     }
@@ -251,21 +252,21 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
 
 // static
 void SymbolRewriter::AddDescForCurrentCandidates(
-    const EmbeddedDictionary::Value *value, size_t size, Segment *segment) {
+    const SerializedDictionary::IterRange &range, Segment *segment) {
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     Segment::Candidate *candidate = segment->mutable_candidate(i);
     string full_width_value, half_width_value;
     Util::HalfWidthToFullWidth(candidate->value, &full_width_value);
     Util::FullWidthToHalfWidth(candidate->value, &half_width_value);
 
-    for (size_t j = 0; j < size; ++j) {
-      if (candidate->value == value[j].value ||
-          full_width_value == value[j].value ||
-          half_width_value == value[j].value) {
+    for (auto iter = range.first; iter != range.second; ++iter) {
+      if (candidate->value == iter.value() ||
+          full_width_value == iter.value() ||
+          half_width_value == iter.value()) {
         candidate->description =
             GetDescription(candidate->value,
-                           value[j].description,
-                           value[j].additional_description);
+                           iter.description(),
+                           iter.additional_description());
         break;
       }
     }
@@ -276,16 +277,15 @@ bool SymbolRewriter::RewriteEachCandidate(Segments *segments) const {
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     const string &key = segments->conversion_segment(i).key();
-    const EmbeddedDictionary::Token *token = dictionary_->Lookup(key);
-    if (token == NULL) {
+    const SerializedDictionary::IterRange range = dictionary_->equal_range(key);
+    if (range.first == range.second) {
       continue;
     }
 
     // if key is symbol, no need to see the context
     const bool context_sensitive = !IsSymbol(key);
 
-    InsertCandidates(token->value, token->value_size,
-                     context_sensitive,
+    InsertCandidates(range, context_sensitive,
                      segments->mutable_conversion_segment(i));
 
     modified = true;
@@ -301,8 +301,8 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
     key += segments->conversion_segment(i).key();
   }
 
-  const EmbeddedDictionary::Token *token = dictionary_->Lookup(key);
-  if (token == NULL) {
+  const SerializedDictionary::IterRange range = dictionary_->equal_range(key);
+  if (range.first == range.second) {
     return false;
   }
 
@@ -321,7 +321,7 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
       parent_converter_->ResizeSegment(segments, request, 0, diff);
     }
   } else {
-    InsertCandidates(token->value, token->value_size,
+    InsertCandidates(range,
                      false,   // not context sensitive
                      segments->mutable_conversion_segment(0));
   }
@@ -333,12 +333,11 @@ SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter,
                                const DataManagerInterface *data_manager)
     : parent_converter_(parent_converter) {
   DCHECK(parent_converter_);
-  const EmbeddedDictionary::Token *data;
-  size_t size;
-  data_manager->GetSymbolRewriterData(&data, &size);
-  DCHECK(data);
-  DCHECK(size);
-  dictionary_.reset(new EmbeddedDictionary(data, size));
+  StringPiece token_array_data, string_array_data;
+  data_manager->GetSymbolRewriterData(&token_array_data, &string_array_data);
+  DCHECK(SerializedDictionary::VerifyData(token_array_data, string_array_data));
+  dictionary_.reset(new SerializedDictionary(token_array_data,
+                                             string_array_data));
 }
 
 SymbolRewriter::~SymbolRewriter() {}

@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.view;
 import com.google.common.base.Optional;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -90,10 +91,9 @@ public class RectKeyDrawable extends BaseBackgroundDrawable {
     int bottom = this.bottom;
 
     // Render shadow first.
-    if ((shadowColor & 0xFF000000) != 0) {
+    if (Color.alpha(shadowColor) != 0) {
       Rect bound = getBounds();
       paint.reset();
-      paint.setAntiAlias(true);
       paint.setColor(shadowColor);
       canvas.drawRect(left + 1, top + 1,
                       Math.min(right + 1, bound.right),
@@ -104,16 +104,13 @@ public class RectKeyDrawable extends BaseBackgroundDrawable {
     // Render base region.
     if (shader.isPresent()) {
       paint.reset();
-      paint.setAntiAlias(true);
       paint.setShader(shader.get());
       canvas.drawRect(left, top, right, bottom, paint);
     }
 
     // Render highlight and shade.
-    if (((highlightColor | lightShadeColor | darkShadeColor) & 0xFF000000) != 0) {
+    if (Color.alpha(highlightColor | lightShadeColor | darkShadeColor) != 0) {
       paint.reset();
-      paint.setAntiAlias(true);
-
       paint.setColor(highlightColor);
       canvas.drawRect(left, top, right, top + 1, paint);
       paint.setColor(lightShadeColor);
@@ -133,7 +130,11 @@ public class RectKeyDrawable extends BaseBackgroundDrawable {
     top = canvasRect.top;
     right = canvasRect.right;
     bottom = canvasRect.bottom;
-    shader = Optional.<Shader>of(
-        new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP));
+    if (Color.alpha(topColor | bottomColor) != 0) {
+      shader = Optional.<Shader>of(
+          new LinearGradient(0, top, 0, bottom, topColor, bottomColor, TileMode.CLAMP));
+    } else {
+      shader = Optional.<Shader>absent();
+    }
   }
 }

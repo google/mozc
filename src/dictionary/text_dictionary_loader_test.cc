@@ -34,8 +34,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/util.h"
-#include "data_manager/scoped_data_manager_initializer_for_testing.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -65,17 +64,18 @@ class TextDictionaryLoaderTest : public ::testing::Test {
   // considering this class as POD.
   TextDictionaryLoaderTest() {}
 
-  virtual void SetUp() {
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  void SetUp() override {
+    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
   }
 
   TextDictionaryLoader *CreateTextDictionaryLoader() {
-    return new TextDictionaryLoader(*pos_matcher_);
+    return new TextDictionaryLoader(pos_matcher_);
   }
 
-  const POSMatcher *pos_matcher_;
-  scoped_data_manager_initializer_for_testing
-      scoped_data_manager_initializer_for_testing_;
+  POSMatcher pos_matcher_;
+
+ private:
+  const testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
@@ -183,8 +183,8 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ZIP_CODE"));
-    EXPECT_EQ(pos_matcher_->GetZipcodeId(), token.lid);
-    EXPECT_EQ(pos_matcher_->GetZipcodeId(), token.rid);
+    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.lid);
+    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
   }
 
@@ -193,8 +193,8 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ENGLISH:RATED"));
-    EXPECT_EQ(pos_matcher_->GetIsolatedWordId(), token.lid);
-    EXPECT_EQ(pos_matcher_->GetIsolatedWordId(), token.rid);
+    EXPECT_EQ(pos_matcher_.GetIsolatedWordId(), token.lid);
+    EXPECT_EQ(pos_matcher_.GetIsolatedWordId(), token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
   }
 

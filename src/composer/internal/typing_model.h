@@ -34,6 +34,7 @@
 
 #include "base/port.h"
 #include "base/string_piece.h"
+#include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -53,17 +54,17 @@ class TypingModel {
               const uint8 *cost_table, size_t cost_table_size,
               const int32 *mapping_table);
 
-  virtual ~TypingModel() {}
+  virtual ~TypingModel();
 
   // Gets cost value from key.
   // virtual for mocking.
   virtual int GetCost(StringPiece key) const;
 
-  // Gets a TypingModel based on SpecialRomanjiTable.
-  // NULL if no corresponding model is available.
-  static const TypingModel *GetTypingModel(
-      const mozc::commands::Request::SpecialRomanjiTable
-          &special_romanji_table);
+  // Creates a TypingModel based on SpecialRomanjiTable.
+  // nullptr if no corresponding model is available.
+  static std::unique_ptr<const TypingModel> CreateTypingModel(
+      const mozc::commands::Request::SpecialRomanjiTable &special_romanji_table,
+      const DataManagerInterface& data_manager);
 
   // No data means its const is infinity.
   static const int kInfinity;

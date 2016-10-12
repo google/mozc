@@ -9,6 +9,6 @@
   <key>CFBundleSignature</key>
   <string>????</string>
   <key>CFBundleExecutable</key>
-  <string>${BRANDING}Tool_lib</string>
+  <string>GuiTool_lib</string>
 </dict>
 </plist>

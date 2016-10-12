@@ -47,6 +47,7 @@
         '../converter/converter_base.gyp:converter_util',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
+        '../request/request.gyp:conversion_request',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:keymap',
@@ -74,15 +75,25 @@
       ],
     },
     {
+      # Android is not supported.
+      'target_name': 'session_watch_dog',
+      'type': 'static_library',
+      'sources': [
+        'session_watch_dog.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../client/client.gyp:client',
+      ],
+    },
+    {
       'target_name': 'session_handler',
       'type': 'static_library',
       'sources': [
         'session_handler.cc',
         'session_observer_handler.cc',
-        'session_watch_dog.cc',
       ],
       'dependencies': [
-        '../client/client.gyp:client',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
@@ -90,17 +101,16 @@
         '../engine/engine.gyp:engine_factory',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
+        '../protocol/protocol.gyp:engine_builder_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:generic_storage_manager',
+        ':session_watch_dog',
       ],
       'conditions': [
         ['(target_platform=="NaCl" and _toolset=="target") or target_platform=="Android"', {
-          'sources!': [
-            'session_watch_dog.cc',
-          ],
           'dependencies!': [
-            '../client/client.gyp:client',
+            ':session_watch_dog',
           ],
         }],
       ],

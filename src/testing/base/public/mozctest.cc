@@ -31,6 +31,7 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 
 namespace mozc {
@@ -68,6 +69,15 @@ vector<string> GetSourceFilesInDirOrDie(
         << "File doesn't exist: " << paths.back();
   }
   return paths;
+}
+
+ScopedTmpUserProfileDirectory::ScopedTmpUserProfileDirectory()
+    : original_dir_(SystemUtil::GetUserProfileDirectory()) {
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+}
+
+ScopedTmpUserProfileDirectory::~ScopedTmpUserProfileDirectory() {
+  SystemUtil::SetUserProfileDirectory(original_dir_);
 }
 
 }  // namespace testing

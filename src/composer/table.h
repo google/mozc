@@ -40,6 +40,7 @@
 
 #include "base/port.h"
 #include "base/trie.h"
+#include "data_manager/data_manager_interface.h"
 
 namespace mozc {
 
@@ -100,7 +101,8 @@ class Table {
   virtual ~Table();
 
   bool InitializeWithRequestAndConfig(const commands::Request &request,
-                                      const config::Config &config);
+                                      const config::Config &config,
+                                      const DataManagerInterface &data_manager);
 
 
   // Return true if adding the input-pending pair makes a loop of
@@ -162,8 +164,8 @@ class Table {
   // characters.  The default value is false.
   bool case_sensitive_;
 
-  // Typing model. NULL if no corresponding model is available.
-  const TypingModel* typing_model_;
+  // Typing model. nullptr if no corresponding model is available.
+  std::unique_ptr<const TypingModel> typing_model_;
 
   DISALLOW_COPY_AND_ASSIGN(Table);
 };
@@ -175,7 +177,10 @@ class TableManager {
   // Return Table for the request and the config
   // TableManager has ownership of the return value;
   const Table *GetTable(const commands::Request &request,
-                        const config::Config &config);
+                        const config::Config &config,
+                        const DataManagerInterface &data_manager);
+
+  void ClearCaches();
 
  private:
   // Table caches.
@@ -184,7 +189,7 @@ class TableManager {
   //  config::Config::PreeditMethod
   //  config::Config::PunctuationMethod
   //  config::Config::SymbolMethod
-  map<uint32, const Table*> table_map_;
+  map<uint32, std::unique_ptr<const Table>> table_map_;
   // Fingerprint for Config::custom_roman_table;
   uint32 custom_roman_table_fingerprint_;
 };

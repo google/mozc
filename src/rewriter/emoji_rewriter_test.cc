@@ -32,34 +32,30 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/system_util.h"
+#include "base/string_piece.h"
+#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_manager.h"
-#include "data_manager/packed/packed_data_mock.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/variants_rewriter.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
+namespace {
 
 using mozc::commands::Request;
-
-namespace {
 
 // "えもじ"
 const char kEmoji[] = "\xE3\x81\x88\xE3\x82\x82\xE3\x81\x98";
@@ -97,7 +93,6 @@ bool HasExpectedCandidate(const Segments &segments,
   const Segment &segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     const Segment::Candidate &candidate = segment.candidate(i);
-    LOG(ERROR) << "[i]" << candidate.value;
     if (candidate.value == expect_value) {
       return true;
     }
@@ -119,47 +114,96 @@ void ChooseEmojiCandidate(Segments *segments) {
   segment->set_segment_type(Segment::FIXED_VALUE);
 }
 
-// Dictionary data set for tests.
-const EmojiRewriter::EmojiData kTestEmojiData[] = {
-  // An actual emoji character
-  {"\xF0\x9F\x90\xAD", 0, "nezumi picture", NULL, NULL, NULL},
-
-  // Meta candidates.
-  {"DOG", 0, "inu", NULL, NULL, NULL},
-  {"CAT", 0, "neko", NULL, NULL, NULL},
-  {"MOUSE", 0, "nezumi", NULL, NULL, NULL},
-  {"RAT", 0, "nezumi", NULL, NULL, NULL},
-
-  // Test data for carrier.
-  {"COW", 0xFE001, "ushi", NULL, NULL, NULL},
-  {"TIGER", 0xFE002, "tora", "docomo", NULL, NULL},
-  {"RABIT", 0xFE003, "usagi", NULL, "softbank", NULL},
-  {"DRAGON", 0xFE004, "ryu", NULL, NULL, "kddi"},
-
-  // No unicode available.
-  {NULL, 0xFE011, NULL, "docomo", NULL, NULL},
-  {NULL, 0xFE012, NULL, NULL, "softbank", NULL},
-  {NULL, 0xFE013, NULL, NULL, NULL, "kddi"},
-
-  // Multiple carriers available.
-  {NULL, 0xFE021, NULL, "docomo", "softbank", NULL},
-  {NULL, 0xFE022, NULL, "docomo", NULL, "kddi"},
-  {NULL, 0xFE023, NULL, NULL, "softbank", "kddi"},
-  {NULL, 0xFE024, NULL, "docomo", "softbank", "kddi"},
+struct EmojiData {
+  const char *key;
+  const char *unicode;
+  const uint32 android_pua;
+  const char *description_unicode;
+  const char *description_docomo;
+  const char *description_softbank;
+  const char *description_kddi;
 };
 
-const uint16 kValueList[] = {0,
-                             1, 2, 3, 4,
-                             5, 6, 7, 8,
-                             9, 10, 11,
-                             12, 13, 14, 15};
-const EmojiRewriter::Token kTestToken[] = {
-  // Keys (the first string of each element) must be sorted lexicographically.
-  {"Emoji", kValueList, 1},  // value is ""
-  {"Inu", kValueList + 1, 1},  // value is "DOG"
-  {"Neko", kValueList + 2, 1},  // value is "CAT"
-  {"Nezumi", kValueList + 3, 2},  // values are "MOUSE" and "RAT"
-  {"X", kValueList + 5, 11},  // values for carrier test.
+// Elements must be sorted lexicographically by key (first string).
+const EmojiData kTestEmojiList[] = {
+  // An actual emoji character
+  {"Emoji", "\xF0\x9F\x90\xAD", 0, "nezumi picture", "", "", ""},
+
+  // Meta candidates.
+  {"Inu", "DOG", 0, "inu", "", "", ""},
+  {"Neko", "CAT", 0, "neko", "", "", ""},
+  {"Nezumi", "MOUSE", 0, "nezumi", "", "", ""},
+  {"Nezumi", "RAT", 0, "nezumi", "", "", ""},
+
+  // Test data for carrier.
+  {"X", "COW", 0xFE001, "ushi", "", "", ""},
+  {"X", "TIGER", 0xFE002, "tora", "docomo", "", ""},
+  {"X", "RABIT", 0xFE003, "usagi", "", "softbank", ""},
+  {"X", "DRAGON", 0xFE004, "ryu", "", "", "kddi"},
+
+  // No unicode available.
+  {"X", "", 0xFE011, "", "docomo", "", ""},
+  {"X", "", 0xFE012, "", "", "softbank", ""},
+  {"X", "", 0xFE013, "", "", "", "kddi"},
+
+  // Multiple carriers available.
+  {"X", "", 0xFE021, "", "docomo", "softbank", ""},
+  {"X", "", 0xFE022, "", "docomo", "", "kddi"},
+  {"X", "", 0xFE023, "", "", "softbank", "kddi"},
+  {"X", "", 0xFE024, "", "docomo", "softbank", "kddi"},
+};
+
+// This data manager overrides GetEmojiRewriterData() to return the above test
+// data for EmojiRewriter.
+class TestDataManager : public testing::MockDataManager {
+ public:
+  TestDataManager() {
+    // Collect all the strings and temporarily assing 0 as index.
+    map<string, size_t> string_index;
+    for (const EmojiData &data : kTestEmojiList) {
+      string_index[data.key] = 0;
+      string_index[data.unicode] = 0;
+      string_index[data.description_unicode] = 0;
+      string_index[data.description_docomo] = 0;
+      string_index[data.description_softbank] = 0;
+      string_index[data.description_kddi] = 0;
+    }
+
+    // Set index.
+    vector<StringPiece> strings;
+    size_t index = 0;
+    for (auto &iter : string_index) {
+      strings.push_back(iter.first);
+      iter.second = index++;
+    }
+
+    // Create token array.
+    for (const EmojiData &data : kTestEmojiList) {
+      token_array_.push_back(string_index[data.key]);
+      token_array_.push_back(string_index[data.unicode]);
+      token_array_.push_back(data.android_pua);
+      token_array_.push_back(string_index[data.description_unicode]);
+      token_array_.push_back(string_index[data.description_docomo]);
+      token_array_.push_back(string_index[data.description_softbank]);
+      token_array_.push_back(string_index[data.description_kddi]);
+    }
+
+    // Create string array.
+    string_array_data_ =
+        SerializedStringArray::SerializeToBuffer(strings, &string_array_buf_);
+  }
+
+  void GetEmojiRewriterData(StringPiece *token_array_data,
+                            StringPiece *string_array_data) const override {
+    token_array_data->set(reinterpret_cast<const char*>(token_array_.data()),
+                          token_array_.size() * sizeof(uint32));
+    *string_array_data = string_array_data_;
+  }
+
+ private:
+  vector<uint32> token_array_;
+  StringPiece string_array_data_;
+  std::unique_ptr<uint32[]> string_array_buf_;
 };
 
 string ToAndroidPuaString(int pua) {
@@ -168,8 +212,6 @@ string ToAndroidPuaString(int pua) {
   return str;
 }
 
-}  // namespace
-
 class EmojiRewriterTest : public ::testing::Test {
  protected:
   EmojiRewriterTest() {
@@ -177,47 +219,31 @@ class EmojiRewriterTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
-    original_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+  void SetUp() override {
     // Enable emoji conversion
     config::ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_emoji_conversion(true);
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers mocked PackedDataManager.
-    unique_ptr<packed::PackedDataManager>
-        data_manager(new packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-
-    rewriter_.reset(new EmojiRewriter(
-        kTestEmojiData, arraysize(kTestEmojiData),
-        kTestToken, arraysize(kTestToken),
-        kValueList));
+    rewriter_.reset(new EmojiRewriter(test_data_manager_));
+    full_data_rewriter_.reset(new EmojiRewriter(mock_data_manager_));
   }
 
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    packed::RegisterPackedDataManager(NULL);
-#endif  // MOZC_USE_PACKED_DICTIONARY
+  void TearDown() override {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-    SystemUtil::SetUserProfileDirectory(original_profile_directory_);
   }
 
   ConversionRequest convreq_;
   commands::Request request_;
   config::Config config_;
   std::unique_ptr<EmojiRewriter> rewriter_;
+  std::unique_ptr<EmojiRewriter> full_data_rewriter_;
 
  private:
-  string original_profile_directory_;
+  const testing::ScopedTmpUserProfileDirectory scoped_tmp_profile_dir_;
+  const testing::MockDataManager mock_data_manager_;
+  const TestDataManager test_data_manager_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
@@ -413,9 +439,10 @@ TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {
 }
 
 TEST_F(EmojiRewriterTest, CheckDescription) {
+  const testing::MockDataManager data_manager;
   Segments segments;
   VariantsRewriter variants_rewriter(
-      UserPosManager::GetUserPosManager()->GetPOSMatcher());
+      dictionary::POSMatcher(data_manager.GetPOSMatcherData()));
 
   SetSegment("Emoji", "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
@@ -508,4 +535,86 @@ TEST_F(EmojiRewriterTest, CheckUsageStats) {
   EXPECT_COUNT_STATS(kStatsKey, 2);
 }
 
+TEST_F(EmojiRewriterTest, QueryNormalization) {
+  {
+    Segments segments;
+    // "Ｎｅｋｏ"
+    SetSegment("\xEF\xBC\xAE\xEF\xBD\x85\xEF\xBD\x8B\xEF\xBD\x8F", "Neko",
+               &segments);
+    EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("Neko", "Neko", &segments);
+    EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  }
+}
+
+TEST_F(EmojiRewriterTest, FullDataTest) {
+  // U+1F646 (FACE WITH OK GESTURE)
+  {
+    Segments segments;
+    // "ＯＫ"
+    SetSegment("\xEF\xBC\xAF\xEF\xBC\xAB", "OK", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("OK", "OK", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+2795 (HEAVY PLUS SIGN)
+  {
+    Segments segments;
+    // "＋"
+    SetSegment("\xEF\xBC\x8B", "+", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("+", "+", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+1F522 (INPUT SYMBOL FOR NUMBERS)
+  {
+    Segments segments;
+    // "１２３４"
+    SetSegment("\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94", "1234",
+               &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("1234", "1234", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+1F552 (CLOCK FACE THREE OCLOCK)
+  {
+    Segments segments;
+    // "３じ"
+    SetSegment("\xEF\xBC\x93\xE3\x81\x98", "3ji", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("\x33\xE3\x81\x98", "3ji", &segments);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  // U+31 U+20E3 (KEYCAP 1)
+  // Since emoji_rewriter does not support multi-codepoint characters,
+  // Rewrite function returns false though ideally it should be supported.
+  {
+    Segments segments;
+    // "１"
+    SetSegment("\xEF\xBC\x91", "1", &segments);
+    EXPECT_FALSE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+  {
+    Segments segments;
+    SetSegment("1", "1", &segments);
+    EXPECT_FALSE(full_data_rewriter_->Rewrite(convreq_, &segments));
+  }
+}
+
+}  // namespace
 }  // namespace mozc

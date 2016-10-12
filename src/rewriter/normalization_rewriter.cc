@@ -55,15 +55,10 @@ bool NormalizeCandidate(Segment::Candidate *candidate,
 
   string value, content_value;
   switch (type) {
-    case CANDIDATE:
-      TextNormalizer::NormalizeCandidateText(candidate->value, &value);
-      TextNormalizer::NormalizeCandidateText(candidate->content_value,
-                                             &content_value);
-      break;
+    case CANDIDATE:  // Go through to TRANSLITERATION
     case TRANSLITERATION:
-      TextNormalizer::NormalizeTransliterationText(candidate->value, &value);
-      TextNormalizer::NormalizeTransliterationText(candidate->content_value,
-                                                   &content_value);
+      TextNormalizer::NormalizeText(candidate->value, &value);
+      TextNormalizer::NormalizeText(candidate->content_value, &content_value);
       break;
     default:
       LOG(ERROR) << "unkown type";

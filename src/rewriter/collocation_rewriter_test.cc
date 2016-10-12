@@ -74,14 +74,14 @@ class CollocationRewriterTest : public ::testing::Test {
     const size_t segments_size;
   };
 
-  CollocationRewriterTest() {}
-  virtual ~CollocationRewriterTest() {}
+  CollocationRewriterTest() = default;
+  ~CollocationRewriterTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     const mozc::testing::MockDataManager data_manager;
-    pos_matcher_ = data_manager.GetPOSMatcher();
+    pos_matcher_.Set(data_manager.GetPOSMatcherData());
     collocation_rewriter_.reset(new CollocationRewriter(&data_manager));
   }
 
@@ -126,7 +126,7 @@ class CollocationRewriterTest : public ::testing::Test {
     return result;
   }
 
-  const POSMatcher *pos_matcher_;
+  POSMatcher pos_matcher_;
 
  private:
   std::unique_ptr<const CollocationRewriter> collocation_rewriter_;
@@ -143,7 +143,7 @@ TEST_F(CollocationRewriterTest, NekowoKaitai) {
   const char *kNekowo =
       "\xE3\x81\xAD\xE3\x81\x93\xE3\x82\x92";  // "ねこを"
   const char *kNeko = "\xE3\x81\xAD\xE3\x81\x93";  // "ねこ"
-  const uint16 id = pos_matcher_->GetUnknownId();
+  const uint16 id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
     {kNekowo, kNeko,
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"
@@ -195,7 +195,7 @@ TEST_F(CollocationRewriterTest, MagurowoKaitai) {
       "\xE3\x81\xBE\xE3\x81\x90\xE3\x82\x8D\xE3\x82\x92";  // "まぐろを"
   const char *kMaguro =
       "\xE3\x81\xBE\xE3\x81\x90\xE3\x82\x8D";  // "まぐろ"
-  const uint16 id = pos_matcher_->GetUnknownId();
+  const uint16 id = pos_matcher_.GetUnknownId();
   const CandidateData kMagurowoCands[] = {
     {kMagurowo, kMaguro,
      "\xE3\x83\x9E\xE3\x82\xB0\xE3\x83\xAD\xE3\x82\x92",  // "マグロを"
@@ -241,7 +241,7 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
   const char *kNekowo =
       "\xE3\x81\xAD\xE3\x81\x93\xE3\x82\x92";  // "ねこを"
   const char *kNeko = "\xE3\x81\xAD\xE3\x81\x93";  // "ねこ"
-  const uint16 id = pos_matcher_->GetUnknownId();
+  const uint16 id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
     {kNekowo, kNeko,
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"
@@ -255,7 +255,7 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
 
   // "すごく"
   const char *kSugoku = "\xe3\x81\x99\xe3\x81\x94\xe3\x81\x8f";
-  const uint16 adverb_id = pos_matcher_->GetAdverbId();
+  const uint16 adverb_id = pos_matcher_.GetAdverbId();
   const CandidateData kSugokuCands[] = {
     {kSugoku, kSugoku, kSugoku, kSugoku, 0, adverb_id, adverb_id},
   };
@@ -298,7 +298,7 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
   const char *kNekowo =
       "\xE3\x81\xAD\xE3\x81\x93\xE3\x82\x92";  // "ねこを"
   const char *kNeko = "\xE3\x81\xAD\xE3\x81\x93";  // "ねこ"
-  const uint16 id = pos_matcher_->GetUnknownId();
+  const uint16 id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
     {kNekowo, kNeko,
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"
@@ -362,7 +362,7 @@ TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
   const char *kNekowo =
       "\xE3\x81\xAD\xE3\x81\x93\xE3\x82\x92";  // "ねこを"
   const char *kNeko = "\xE3\x81\xAD\xE3\x81\x93";  // "ねこ"
-  const uint16 id = pos_matcher_->GetUnknownId();
+  const uint16 id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
     {kNekowo, kNeko,
      "\xE3\x83\x8D\xE3\x82\xB3\xE3\x82\x92",  // "ネコを"

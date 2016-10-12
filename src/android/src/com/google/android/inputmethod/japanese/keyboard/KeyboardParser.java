@@ -34,7 +34,7 @@ import org.mozc.android.inputmethod.japanese.keyboard.Key.Stick;
 import org.mozc.android.inputmethod.japanese.keyboard.Keyboard.KeyboardSpecification;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
@@ -895,7 +895,7 @@ public class KeyboardParser {
     {
       TypedArray attributes = resources.obtainAttributes(parser, KEY_STATE_ATTRIBUTES);
       try {
-        contentDescription = Objects.firstNonNull(
+        contentDescription = MoreObjects.firstNonNull(
             attributes.getText(KEY_STATE_CONTENT_DESCRIPTION_INDEX), "").toString();
         metaStateSet = parseMetaState(attributes, KEY_STATE_META_STATE_INDEX);
         nextAddMetaState = parseMetaState(attributes, KEY_STATE_NEXT_META_STATE_INDEX);

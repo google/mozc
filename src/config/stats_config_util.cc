@@ -234,7 +234,9 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
   virtual ~AndroidStatsConfigUtilImpl() {
   }
   virtual bool IsEnabled() {
-    return ConfigHandler::GetConfig().general_config().upload_usage_stats();
+    Config config;
+    ConfigHandler::GetConfig(&config);
+    return config.general_config().upload_usage_stats();
   }
   virtual bool SetEnabled(bool val) {
     // TODO(horo): Implement this.
@@ -254,7 +256,9 @@ class NaclStatsConfigUtilImpl : public StatsConfigUtilInterface {
   virtual ~NaclStatsConfigUtilImpl() {
   }
   virtual bool IsEnabled() {
-    return ConfigHandler::GetConfig().general_config().upload_usage_stats();
+    Config config;
+    ConfigHandler::GetConfig(&config);
+    return config.general_config().upload_usage_stats();
   }
   virtual bool SetEnabled(bool val) {
     return false;

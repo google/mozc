@@ -148,7 +148,7 @@
       }],
       ['branding=="Mozc"', {
         'nacl_mozc_files': [
-          '<(gen_out_dir)/nacl_mozc/zipped_data_oss',
+          '<(gen_out_dir)/nacl_mozc/mozc.data',
         ],
       }],
     ],
@@ -172,8 +172,10 @@
         '../../base/base.gyp:base',
         '../../composer/composer.gyp:key_parser',
         '../../config/config.gyp:config_handler',
+        '../../data_manager/data_manager_base.gyp:data_manager',
         '../../dictionary/dictionary_base.gyp:user_dictionary',
         '../../dictionary/dictionary_base.gyp:user_pos',
+        '../../engine/engine.gyp:engine',
         '../../net/net.gyp:http_client',
         '../../net/net.gyp:json_util',
         '../../protocol/protocol.gyp:commands_proto',
@@ -413,12 +415,12 @@
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {
               'files': [
-                '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/zipped_data_chromeos',
+                '<(SHARED_INTERMEDIATE_DIR)/data_manager/chromeos/zipped_data_chromeos',
               ],
             }],
             ['branding=="Mozc"', {
               'files': [
-                '<(SHARED_INTERMEDIATE_DIR)/data_manager/packed/zipped_data_oss',
+                '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/mozc.data',
               ],
             }],
           ],

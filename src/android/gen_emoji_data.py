@@ -38,11 +38,27 @@ __author__ = "yoichio"
 from collections import defaultdict
 import logging
 import optparse
+import re
 import sys
 
 from build_tools import code_generator_util
 
-CATEGORY_LIST = ['FACE', 'FOOD', 'CITY', 'ACTIVITY', 'NATURE']
+# Table to convert categories.
+# "offset" will be added to each emoji index to keep the order.
+# We assign 100,000 and greater values for carrier emoji, so "offset" should be
+# less than 100,000.
+_CATEGORY_MAP = {
+  'SMILEY_PEOPLE': {'category': 'FACE', 'offset': 0},
+  'ANIMALS_NATURE': {'category': 'FOOD', 'offset': 0},
+  'FOOD_DRINK': {'category': 'FOOD', 'offset': 10000},
+  'TRAVEL_PLACES': {'category': 'CITY', 'offset': 0},
+  'ACTIVITY': {'category': 'ACTIVITY', 'offset': 0},
+  'OBJECTS': {'category': 'ACTIVITY', 'offset': 10000},
+  'SYMBOLS': {'category': 'NATURE', 'offset': 0},
+  'FLAGS': {'category': 'NATURE', 'offset': 10000},
+}
+_CATEGORY_LIST = list(set(
+    [entry['category'] for entry in _CATEGORY_MAP.itervalues()]))
 
 
 def ReadData(stream):
@@ -52,23 +68,36 @@ def ReadData(stream):
   stream = code_generator_util.SelectColumn(stream, [0, 2, 8, 9, 10, 11, 12])
   for (code, pua_code, japanese_name, docomo_name, softbank_name, kddi_name,
        category_index) in stream:
-    if not pua_code or pua_code[0] == '>':
-      continue
+    if bool(code) != bool(japanese_name):
+      if code:
+        logging.fatal('No Japanese name for %s found.' % code)
+      else:
+        logging.fatal('No Unicode code point for %s found.' % japanese_name)
+      sys.exit(-1)
     if not code:
-      if japanese_name:
-        logging.fatal('No Unicode emoji code point found.')
-        sys.exit(-1)
       # Use dummy code point
       code = '0'
+    if not pua_code:
+      # Use dummy code point
+      pua_code = '0'
+    if pua_code[0] == '>':
+      # Don't skip entires which has non-primary PUA codepoint since they also
+      # has unique Unicode codepoint.
+      # e.g. "BLACK SQUARE BUTTON" and "LARGE BLUE CIRCLE"
+      pua_code = pua_code[1:]
 
+    code_values = [int(c, 16) for c in re.split(r' +', code.strip())]
+    pua_code_value = int(pua_code, 16)
     (category, index) = category_index.split('-')
+    index = int(index) + _CATEGORY_MAP[category]['offset']
+    category = _CATEGORY_MAP[category]['category']
     category_map[category].append(
-        (index, int(code, 16), int(pua_code, 16),
+        (index, code_values, pua_code_value,
          japanese_name, docomo_name, softbank_name, kddi_name))
   return category_map
 
 
-CHARA_NORMALIZE_MAP = {
+_CHARACTER_NORMALIZE_MAP = {
     u'Ａ': 'A',
     u'Ｂ': 'B',
     u'Ｃ': 'C',
@@ -140,11 +169,13 @@ CHARA_NORMALIZE_MAP = {
 
 
 def PreprocessName(name):
+  if not name:
+    return 'null'
   name = unicode(name, 'utf-8')
-  name = u''.join(CHARA_NORMALIZE_MAP.get(c, c) for c in name)
+  name = u''.join(_CHARACTER_NORMALIZE_MAP.get(c, c) for c in name)
   name = name.encode('utf-8')
   name = name.replace('(', '\\n(')
-  return name
+  return '"%s"' % name
 
 
 def OutputData(category_map, stream):
@@ -154,12 +185,12 @@ def OutputData(category_map, stream):
   stream.write('package org.mozc.android.inputmethod.japanese.emoji;\n'
                'public class EmojiData {\n')
 
-  for category in CATEGORY_LIST:
+  for category in _CATEGORY_LIST:
     # The content of data list is
     # 0: Index in the category
-    # 1: Code point of Unicode 6.0 emoji
-    # 2: Code point of carrier emoji.
-    # 3: Japanese Unicode 6.0 emoji name
+    # 1: Code points of Unicode emoji
+    # 2: Code point of carrier emoji
+    # 3: Japanese Unicode emoji name
     # 4: DOCOMO carrier emoji name
     # 5: Softbank carrier emoji name
     # 6: KDDI carrier emoji name
@@ -168,53 +199,40 @@ def OutputData(category_map, stream):
     stream.write(
         '  public static final String[] %s_VALUES = new String[]{\n' %
         category)
-    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
-      stream.write(
-          '    %s,\n' % (code_generator_util.ToJavaStringLiteral(code)))
+    for _, codes, pua_code, japanese, docomo, softbank, kddi in data_list:
+      stream.write('    %s,\n' % code_generator_util.ToJavaStringLiteral(codes))
     stream.write('  };\n')
 
     stream.write(
         '  public static final String[] %s_PUA_VALUES = new String[]{\n' %
         category)
-    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
+    for _, codes, pua_code, japanese, docomo, softbank, kddi in data_list:
       stream.write(
-          '    %s,\n' % (code_generator_util.ToJavaStringLiteral(pua_code)))
+          '    %s,\n' % code_generator_util.ToJavaStringLiteral(pua_code))
     stream.write('  };\n')
 
     stream.write(
         '  public static final String[] UNICODE_%s_NAME = {\n' % category)
-    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
-      if japanese:
-        stream.write('    "%s", \n' % PreprocessName(japanese))
-      else:
-        stream.write('    null, \n')
+    for _, codes, pua_code, japanese, docomo, softbank, kddi in data_list:
+      stream.write('    %s, \n' % PreprocessName(japanese))
     stream.write('  };\n')
 
     stream.write(
         '  public static final String[] DOCOMO_%s_NAME = {\n' % category)
-    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
-      if docomo:
-        stream.write('    "%s", \n' % PreprocessName(docomo))
-      else:
-        stream.write('    null, \n')
+    for _, codes, pua_code, japanese, docomo, softbank, kddi in data_list:
+      stream.write('    %s, \n' % PreprocessName(docomo))
     stream.write('  };\n')
 
     stream.write(
         '  public static final String[] SOFTBANK_%s_NAME = {\n' % category)
-    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
-      if softbank:
-        stream.write('    "%s", \n' % PreprocessName(softbank))
-      else:
-        stream.write('    null, \n')
+    for _, codes, pua_code, japanese, docomo, softbank, kddi in data_list:
+      stream.write('    %s, \n' % PreprocessName(softbank))
     stream.write('  };\n')
 
     stream.write(
         '  public static final String[] KDDI_%s_NAME = {\n' % category)
-    for _, code, pua_code, japanese, docomo, softbank, kddi in data_list:
-      if kddi:
-        stream.write('    "%s", \n' % PreprocessName(kddi))
-      else:
-        stream.write('    null, \n')
+    for _, codes, pua_code, japanese, docomo, softbank, kddi in data_list:
+      stream.write('    %s, \n' % PreprocessName(kddi))
     stream.write('  };\n')
 
   stream.write('}\n')

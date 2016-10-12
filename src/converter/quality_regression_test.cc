@@ -46,13 +46,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/request_test_util.h"
-#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-#ifdef MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/packed/packed_data_oss.h"
-#include "data_manager/packed/packed_data_manager.h"
-#endif  // MOZC_USE_PACKED_DICTIONARY
+#include "testing/base/public/mozctest.h"
 
 using mozc::quality_regression::QualityRegressionUtil;
 
@@ -67,28 +62,8 @@ extern TestCase kTestData[];
 
 namespace {
 
-class QualityRegressionTest : public testing::Test {
+class QualityRegressionTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Registers full-size PackedDataManager.
-    std::unique_ptr<mozc::packed::PackedDataManager> data_manager(
-        new mozc::packed::PackedDataManager());
-    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
-                                    kPackedSystemDictionary_size)));
-    mozc::packed::RegisterPackedDataManager(data_manager.release());
-#endif  // MOZC_USE_PACKED_DICTIONARY
-  }
-
-  virtual void TearDown() {
-#ifdef MOZC_USE_PACKED_DICTIONARY
-    // Unregisters mocked PackedDataManager.
-    mozc::packed::RegisterPackedDataManager(nullptr);
-#endif  // MOZC_USE_PACKED_DICTIONARY
-  }
-
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
     CHECK(util);
     map<string, vector<pair<float, string>>> results, disabled_results;
@@ -177,6 +152,9 @@ class QualityRegressionTest : public testing::Test {
       }
     }
   }
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
 

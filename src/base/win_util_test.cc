@@ -96,186 +96,59 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   EXPECT_FALSE(is_lock_held());
 }
 
-TEST(WinUtilTest, Win32EqualStringTest) {
-  bool result = false;
+TEST(WinUtilTest, WindowHandleTest) {
+  // Should round-trip as long as the handle value is in uint32 range.
+  const HWND k32bitSource = reinterpret_cast<HWND>(
+      static_cast<uintptr_t>(0x1234));
+  EXPECT_EQ(k32bitSource, WinUtil::DecodeWindowHandle(
+      WinUtil::EncodeWindowHandle(k32bitSource)));
 
-  result = false;
-  EXPECT_TRUE(WinUtil::Win32EqualString(
-      L"abc",
-      L"AbC",
-      true,
-      &result));
-  EXPECT_TRUE(result);
-
-  // case-sensitive
-  EXPECT_TRUE(WinUtil::Win32EqualString(
-      L"abc",
-      L"AbC",
-      false,
-      &result));
-  EXPECT_FALSE(result);
-
-  // Test case in http://b/2977223
-  result = false;
-  EXPECT_TRUE(WinUtil::Win32EqualString(
-      L"abc",
-      L"a" L"\x202c" L"bc",   // U+202C: POP DIRECTIONAL FORMATTING
-      true,
-      &result));
-  EXPECT_FALSE(result);
-
-  // Test case in http://b/2977235
-  result = false;
-  EXPECT_TRUE(WinUtil::Win32EqualString(
-      L"\x01bf",    // U+01BF: LATIN LETTER WYNN
-      L"\x01f7",    // U+01F7: LATIN CAPITAL LETTER WYNN
-      true,
-      &result));
-  EXPECT_TRUE(result);
-
-  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-  result = false;
-  EXPECT_TRUE(WinUtil::Win32EqualString(
-      L"\x03c2",    // U+03C2: GREEK SMALL LETTER FINAL SIGMA
-      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-      true,
-      &result));
-  // Windows XP En/Ja: U+03C2 and U+03A3 are the same caracter.
-  // Windows Vista En/Ja: U+03C2 and U+03A3 are the same caracter.
-  // Windows 7 En/Ja: U+03C2 and U+03A3 are different from each other.
-  if (SystemUtil::IsWindows7OrLater()) {
-    EXPECT_FALSE(result);
-  } else {
-    EXPECT_TRUE(result);
-  }
-
-  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-  result = false;
-  EXPECT_TRUE(WinUtil::Win32EqualString(
-      L"\x03c3",    // U+03C3: GREEK SMALL LETTER SIGMA
-      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-      true,
-      &result));
-  EXPECT_TRUE(result);
+#if defined(_M_X64)
+  // OK to drop higher 32-bit.
+  const HWND k64bitSource = reinterpret_cast<HWND>(
+      static_cast<uintptr_t>(0xf0f1f2f3e4e5e6e7ULL));
+  const HWND k64bitExpected = reinterpret_cast<HWND>(
+      static_cast<uintptr_t>(0x00000000e4e5e6e7ULL));
+  EXPECT_EQ(k64bitExpected, WinUtil::DecodeWindowHandle(
+      WinUtil::EncodeWindowHandle(k64bitSource)));
+#endif  // _M_X64
 }
 
-TEST(WinUtilTest, NativeEqualStringTest) {
-  bool result = false;
-
-  result = false;
-  EXPECT_TRUE(WinUtil::NativeEqualString(
+TEST(WinUtilTest, SystemEqualStringTest) {
+  EXPECT_TRUE(WinUtil::SystemEqualString(
       L"abc",
       L"AbC",
-      true,
-      &result));
-  EXPECT_TRUE(result);
+      true));
 
   // case-sensitive
-  EXPECT_TRUE(WinUtil::NativeEqualString(
+  EXPECT_FALSE(WinUtil::SystemEqualString(
       L"abc",
       L"AbC",
-      false,
-      &result));
-  EXPECT_FALSE(result);
+      false));
 
   // Test case in http://b/2977223
-  result = false;
-  EXPECT_TRUE(WinUtil::NativeEqualString(
+  EXPECT_FALSE(WinUtil::SystemEqualString(
       L"abc",
       L"a" L"\x202c" L"bc",   // U+202C: POP DIRECTIONAL FORMATTING
-      true,
-      &result));
-  EXPECT_FALSE(result);
+      true));
 
   // Test case in http://b/2977235
-  result = false;
-  EXPECT_TRUE(WinUtil::NativeEqualString(
+  EXPECT_TRUE(WinUtil::SystemEqualString(
       L"\x01bf",    // U+01BF: LATIN LETTER WYNN
       L"\x01f7",    // U+01F7: LATIN CAPITAL LETTER WYNN
-      true,
-      &result));
-  EXPECT_TRUE(result);
+      true));
 
-  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-  result = false;
-  EXPECT_TRUE(WinUtil::NativeEqualString(
+  // http://www.siao2.com/2005/05/26/421987.aspx
+  EXPECT_FALSE(WinUtil::SystemEqualString(
       L"\x03c2",    // U+03C2: GREEK SMALL LETTER FINAL SIGMA
       L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-      true,
-      &result));
-  // Windows XP En/Ja: U+03C2 and U+03A3 are the same caracter.
-  // Windows Vista En/Ja: U+03C2 and U+03A3 are the same caracter.
-  // Windows 7 En/Ja: U+03C2 and U+03A3 are different from each other.
-  if (SystemUtil::IsWindows7OrLater()) {
-    EXPECT_FALSE(result);
-  } else {
-    EXPECT_TRUE(result);
-  }
+      true));
 
-  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-  result = false;
-  EXPECT_TRUE(WinUtil::NativeEqualString(
+  // http://www.siao2.com/2005/05/26/421987.aspx
+  EXPECT_TRUE(WinUtil::SystemEqualString(
       L"\x03c3",    // U+03C3: GREEK SMALL LETTER SIGMA
       L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-      true,
-      &result));
-  EXPECT_TRUE(result);
-}
-
-TEST(WinUtilTest, CrtEqualStringTest) {
-  bool result = false;
-  WinUtil::CrtEqualString(
-    L"abc",
-    L"AbC",
-    true,
-    &result);
-  EXPECT_TRUE(result);
-
-  // case-sensitive
-  WinUtil::CrtEqualString(
-      L"abc",
-      L"AbC",
-      false,
-      &result);
-  EXPECT_FALSE(result);
-
-  // Test case in http://b/2977223
-  result = false;
-  WinUtil::CrtEqualString(
-    L"abc",
-    L"a" L"\x202c" L"bc",   // U+202C: POP DIRECTIONAL FORMATTING
-    true,
-    &result);
-  EXPECT_FALSE(result);
-
-  // Test case in http://b/2977235
-  result = false;
-  WinUtil::CrtEqualString(
-    L"\x01bf",    // U+01BF: LATIN LETTER WYNN
-    L"\x01f7",    // U+01F7: LATIN CAPITAL LETTER WYNN
-    true,
-    &result);
-  EXPECT_TRUE(result);
-
-  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-  result = false;
-  WinUtil::CrtEqualString(
-      L"\x03c2",    // U+03C2: GREEK SMALL LETTER FINAL SIGMA
-      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-      true,
-      &result);
-  // Unfortunately, this result is not compatible with Win32EqualString/
-  // NativeEqualString.
-  EXPECT_FALSE(result);
-
-  // http://blogs.msdn.com/b/michkap/archive/2005/05/26/421987.aspx
-  result = false;
-  WinUtil::CrtEqualString(
-      L"\x03c3",    // U+03C3: GREEK SMALL LETTER SIGMA
-      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
-      true,
-      &result);
-  EXPECT_TRUE(result);
+      true));
 }
 
 // Actually WinUtil::SystemEqualString raises DCHECK error when argument

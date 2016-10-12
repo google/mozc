@@ -32,7 +32,7 @@ package org.mozc.android.inputmethod.japanese.emoji;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.EmojiCarrierType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Request.RewriterCapability;
-import org.mozc.android.inputmethod.japanese.view.CarrierEmojiRenderHelper.RenderableChecker;
+import org.mozc.android.inputmethod.japanese.emoji.EmojiRenderableChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -106,17 +106,9 @@ public class EmojiUtil {
     // Lazy initialization
     synchronized (EmojiUtil.class) {
       if (!unicodeEmojiRenderable.isPresent()) {
-        RenderableChecker checker = null;
-        boolean result = false;
-        try {
-          checker = new RenderableChecker();
-          int blackSunWithRays = 0x2600;
-          result = checker.isRenderable(blackSunWithRays);
-        } finally {
-          if (checker != null) {
-            checker.release();
-          }
-        }
+        EmojiRenderableChecker checker = new EmojiRenderableChecker();
+        String blackSunWithRays = "\u2600";
+        boolean result = checker.isRenderable(blackSunWithRays);
         unicodeEmojiRenderable = Optional.of(result);
       }
     }

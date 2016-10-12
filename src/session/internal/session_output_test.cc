@@ -686,9 +686,7 @@ TEST(SessionOutputTest, AddSegment) {
   commands::Preedit preedit;
   int index = 0;
   {
-    // "ゔ" and "〜" are characters to be processed by
-    // TextNormalizer::NormalizePreeditText and
-    // TextNormalizer::NormalizeCandidateText
+    // "〜" is a character to be processed by TextNormalizer::NormalizeText
     const string kKey = "ゔ〜 preedit focused";
     const string kValue = "ゔ〜 PREEDIT FOCUSED";
     const int types = SessionOutput::PREEDIT | SessionOutput::FOCUSED;
@@ -697,10 +695,10 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     string normalized_value;
-    TextNormalizer::NormalizePreeditText(kValue, &normalized_value);
+    TextNormalizer::NormalizeText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
@@ -716,10 +714,10 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     string normalized_value;
-    TextNormalizer::NormalizePreeditText(kValue, &normalized_value);
+    TextNormalizer::NormalizeText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
@@ -735,7 +733,7 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     // Normalization is performed in Rewriter.
     string normalized_value = kValue;
@@ -754,7 +752,7 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     // Normalization is performed in Rewriter.
     string normalized_value = kValue;
@@ -786,53 +784,19 @@ TEST(SessionOutputTest, FillConversionResultWithoutNormalization) {
 }
 
 TEST(SessionOutputTest, FillConversionResult) {
-  {
-    commands::Result result;
-    SessionOutput::FillConversionResult("abc", "ABC", &result);
-    EXPECT_EQ(commands::Result::STRING, result.type());
-    EXPECT_EQ("abc", result.key());
-    EXPECT_EQ("ABC", result.value());
-  }
-
-  // Check text normalization for *key*
-  {
-    // "ゔ"
-    const char kToBeReplaced[] = "\xE3\x82\x94";
-    // "ヴ"
-    const char kReplaced[] = "\xE3\x83\xB4";
-
-    // SessionOutput::FillConversionResult assumes that
-    // the given value is already normalized.
-    commands::Result result;
-    SessionOutput::FillConversionResult(
-        kToBeReplaced, kReplaced, &result);
-    EXPECT_EQ(commands::Result::STRING, result.type());
-    EXPECT_EQ(kReplaced, result.key());
-    EXPECT_EQ(kReplaced, result.value());
-  }
+  commands::Result result;
+  SessionOutput::FillConversionResult("abc", "ABC", &result);
+  EXPECT_EQ(commands::Result::STRING, result.type());
+  EXPECT_EQ("abc", result.key());
+  EXPECT_EQ("ABC", result.value());
 }
 
 TEST(SessionOutputTest, FillPreeditResult) {
-  {
-    commands::Result result;
-    SessionOutput::FillPreeditResult("ABC", &result);
-    EXPECT_EQ(commands::Result::STRING, result.type());
-    EXPECT_EQ("ABC", result.key());
-    EXPECT_EQ("ABC", result.value());
-  }
-
-  {
-    // "ゔ"
-    const char kToBeReplaced[] = "\xE3\x82\x94";
-    // "ヴ"
-    const char kReplaced[] = "\xE3\x83\xB4";
-
-    commands::Result result;
-    SessionOutput::FillPreeditResult(kToBeReplaced, &result);
-    EXPECT_EQ(commands::Result::STRING, result.type());
-    EXPECT_EQ(kReplaced, result.key());
-    EXPECT_EQ(kReplaced, result.value());
-  }
+  commands::Result result;
+  SessionOutput::FillPreeditResult("ABC", &result);
+  EXPECT_EQ(commands::Result::STRING, result.type());
+  EXPECT_EQ("ABC", result.key());
+  EXPECT_EQ("ABC", result.value());
 }
 
 TEST(SessionOutputTest, FillAllCandidateWords_NonForcused) {

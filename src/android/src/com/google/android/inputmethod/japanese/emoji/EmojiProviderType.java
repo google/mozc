@@ -32,7 +32,7 @@ package org.mozc.android.inputmethod.japanese.emoji;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.MozcUtil.TelephonyManagerInterface;
 import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 import android.content.SharedPreferences;
@@ -146,7 +146,7 @@ public enum EmojiProviderType {
     Preconditions.checkNotNull(telephonyManager);
 
     // TODO(hsumita): Consider to make the default value UNICODE.
-    return Objects.firstNonNull(NETWORK_OPERATOR_MAP.get(telephonyManager.getNetworkOperator()),
+    return MoreObjects.firstNonNull(NETWORK_OPERATOR_MAP.get(telephonyManager.getNetworkOperator()),
                                 NONE);
   }
 }

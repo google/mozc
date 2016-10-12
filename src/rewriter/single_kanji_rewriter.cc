@@ -30,13 +30,13 @@
 #include "rewriter/single_kanji_rewriter.h"
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -44,7 +44,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
 using mozc::dictionary::POSMatcher;
@@ -52,110 +51,222 @@ using mozc::dictionary::POSMatcher;
 namespace mozc {
 namespace {
 
-struct SingleKanjiList {
-  // reading, single_kanji_s
-  // { "あ", "亜阿有..." }
-  const char *key;
-  const char *values;
-};
-
-struct KanjiVariantItem {
-  // target, original, type_id
-  // { "亞", "亜", 0 } ,
-  const char *target;
-  const char *original;
-  int type_id;
-};
-
-#include "rewriter/single_kanji_rewriter_data.h"
-
-// Since NounPrefixDictionary is just a tentative workaround,
-// we copy the SingleKanji structure so that we can remove this workaround
-// easily. Also, the logic of NounPrefix insertion is put independently from
-// the single kanji dictionary. Ideally, we want to regenerate our
-// language model for fixing noun-prefix issue.
-class NounPrefixDictionary {
+// A random access iterator over uint32 array that increments a pointer by N:
+// iter     -> array[0]
+// iter + 1 -> array[N]
+// iter + 2 -> array[2 * N]
+// ...
+template <size_t N>
+class Uint32ArrayIterator
+    : public std::iterator<std::random_access_iterator_tag, uint32> {
  public:
-  NounPrefixDictionary()
-      : dic_(new EmbeddedDictionary(kNounPrefixData_token_data,
-                                    kNounPrefixData_token_size)) {}
+  explicit Uint32ArrayIterator(const uint32 *ptr) : ptr_(ptr) {}
 
-  ~NounPrefixDictionary() {}
+  uint32 operator*() const { return *ptr_; }
 
-  EmbeddedDictionary *GetDictionary() const {
-    return dic_.get();
+  uint32 operator[](size_t i) const {
+    DCHECK_LT(i, N);
+    return ptr_[i];
+  }
+
+  void swap(Uint32ArrayIterator &x) {
+    using std::swap;
+    swap(ptr_, x.ptr_);
+  }
+
+  friend void swap(Uint32ArrayIterator &x, Uint32ArrayIterator &y) {
+    x.swap(y);
+  }
+
+  Uint32ArrayIterator &operator++() {
+    ptr_ += N;
+    return *this;
+  }
+
+  Uint32ArrayIterator operator++(int) {
+    const uint32 *tmp = ptr_;
+    ptr_ += N;
+    return Uint32ArrayIterator(tmp);
+  }
+
+  Uint32ArrayIterator &operator--() {
+    ptr_ -= N;
+    return *this;
+  }
+
+  Uint32ArrayIterator operator--(int) {
+    const uint32 *tmp = ptr_;
+    ptr_ -= N;
+    return Uint32ArrayIterator(tmp);
+  }
+
+  Uint32ArrayIterator &operator+=(ptrdiff_t n) {
+    ptr_ += n * N;
+    return *this;
+  }
+
+  Uint32ArrayIterator &operator-=(ptrdiff_t n) {
+    ptr_ -= n * N;
+    return *this;
+  }
+
+  friend Uint32ArrayIterator operator+(Uint32ArrayIterator x, ptrdiff_t n) {
+    return Uint32ArrayIterator(x.ptr_ + n * N);
+  }
+
+  friend Uint32ArrayIterator operator+(ptrdiff_t n, Uint32ArrayIterator x) {
+    return Uint32ArrayIterator(x.ptr_ + n * N);
+  }
+
+  friend Uint32ArrayIterator operator-(Uint32ArrayIterator x, ptrdiff_t n) {
+    return Uint32ArrayIterator(x.ptr_ - n * N);
+  }
+
+  friend ptrdiff_t operator-(Uint32ArrayIterator x, Uint32ArrayIterator y) {
+    return (x.ptr_ - y.ptr_) / N;
+  }
+
+  friend bool operator==(Uint32ArrayIterator x, Uint32ArrayIterator y) {
+    return x.ptr_ == y.ptr_;
+  }
+
+  friend bool operator!=(Uint32ArrayIterator x, Uint32ArrayIterator y) {
+    return x.ptr_ != y.ptr_;
+  }
+
+  friend bool operator<(Uint32ArrayIterator x, Uint32ArrayIterator y) {
+    return x.ptr_ < y.ptr_;
+  }
+
+  friend bool operator<=(Uint32ArrayIterator x, Uint32ArrayIterator y) {
+    return x.ptr_ <= y.ptr_;
+  }
+
+  friend bool operator>(Uint32ArrayIterator x, Uint32ArrayIterator y) {
+    return x.ptr_ > y.ptr_;
+  }
+
+  friend bool operator>=(Uint32ArrayIterator x, Uint32ArrayIterator y) {
+    return x.ptr_ >= y.ptr_;
   }
 
  private:
-  std::unique_ptr<EmbeddedDictionary> dic_;
+  const uint32 *ptr_;
 };
 
-struct SingleKanjiListCompare {
-  bool operator()(const SingleKanjiList &lhs,
-                  const SingleKanjiList &rhs) const {
-    return (strcmp(lhs.key, rhs.key) < 0);
-  }
-};
-
-// Lookup SingleKanjiList from key (reading).
-// Returns false if not found.
-bool LookupKanjiList(const string &key, vector<string> *kanji_list) {
+// Looks up single kanji list from key (reading).  Returns false if not found.
+// The underlying token array, |single_kanji_token_array|, has the following
+// format:
+//
+// +------------------+
+// | index of key 0   |
+// +------------------+
+// | index of value 0 |
+// +------------------+
+// | index of key 1   |
+// +------------------+
+// | index of value 1 |
+// +------------------+
+// | ...              |
+//
+// Here, each element is of uint32 type.  Each of actual string values are
+// stored in |single_kanji_string_array| at its index.
+bool LookupKanjiList(StringPiece single_kanji_token_array,
+                     const SerializedStringArray &single_kanji_string_array,
+                     const string &key, vector<string> *kanji_list) {
   DCHECK(kanji_list);
-  SingleKanjiList key_item;
-  key_item.key = key.c_str();
-  const SingleKanjiList *result =
-      std::lower_bound(kSingleKanjis, kSingleKanjis + arraysize(kSingleKanjis),
-                       key_item, SingleKanjiListCompare());
-  if (result == (kSingleKanjis + arraysize(kSingleKanjis)) ||
-      key.compare(result->key) != 0) {
+  const uint32* token_array =
+      reinterpret_cast<const uint32*>(single_kanji_token_array.data());
+  const size_t token_array_size =
+      single_kanji_token_array.size() / sizeof(uint32);
+
+  const Uint32ArrayIterator<2> end(token_array + token_array_size);
+  const auto iter = std::lower_bound(
+      Uint32ArrayIterator<2>(token_array), end, key,
+      [&single_kanji_string_array](uint32 index, const string &target_key) {
+        return single_kanji_string_array[index] < target_key;
+      });
+  if (iter == end || single_kanji_string_array[iter[0]] != key) {
     return false;
   }
-  Util::SplitStringToUtf8Chars(result->values, kanji_list);
+  const StringPiece values = single_kanji_string_array[iter[1]];
+  Util::SplitStringToUtf8Chars(values, kanji_list);
   return true;
 }
 
-struct KanjiVariantItemCompare {
-  bool operator()(const KanjiVariantItem &lhs,
-                  const KanjiVariantItem &rhs) const {
-    return (strcmp(lhs.target, rhs.target) < 0);
-  }
-};
-
-// Generates kanji variant description from key.
-// Does nothing if not found.
-void GenerateDescription(const string &key, string *desc) {
+// Generates kanji variant description from key.  Does nothing if not found.
+// The underlying token array, |variant_token_array|, has the following
+// format:
+//
+// +-------------------------+
+// | index of target 0       |
+// +-------------------------+
+// | index of original 0     |
+// +-------------------------+
+// | index of variant type 0 |
+// +-------------------------+
+// | index of target 1       |
+// +-------------------------+
+// | index of original 1     |
+// +-------------------------+
+// | index of variant type 1 |
+// +-------------------------+
+// | ...                     |
+//
+// Here, each element is of uint32 type.  Actual strings of target and original
+// are stored in |variant_string_array|, while strings of variant type are
+// stored in |variant_type|.
+void GenerateDescription(StringPiece variant_token_array,
+                         const SerializedStringArray &variant_string_array,
+                         const SerializedStringArray &variant_type,
+                         const string &key, string *desc) {
   DCHECK(desc);
-  KanjiVariantItem key_item;
-  key_item.target = key.c_str();
-  const KanjiVariantItem *result = std::lower_bound(
-      kKanjiVariants, kKanjiVariants + arraysize(kKanjiVariants), key_item,
-      KanjiVariantItemCompare());
-  if (result == (kKanjiVariants + arraysize(kKanjiVariants)) ||
-      key.compare(result->target) != 0) {
+  const uint32 *token_array =
+      reinterpret_cast<const uint32*>(variant_token_array.data());
+  const size_t token_array_size =
+      variant_token_array.size() / sizeof(uint32);
+
+  const Uint32ArrayIterator<3> end(token_array + token_array_size);
+  const auto iter = std::lower_bound(
+      Uint32ArrayIterator<3>(token_array), end, key,
+      [&variant_string_array](uint32 index, const string &target_key) {
+        return variant_string_array[index] < target_key;
+      });
+  if (iter == end || variant_string_array[iter[0]] != key) {
     return;
   }
-  DCHECK_LT(result->type_id, arraysize(kKanjiVariantTypes));
-  desc->assign(Util::StringPrintf(
-      // "%sの%s"
-      "%s\xe3\x81\xae%s",
-      result->original, kKanjiVariantTypes[result->type_id]));
+  const StringPiece original = variant_string_array[iter[1]];
+  const uint32 type_id = iter[2];
+  DCHECK_LT(type_id, variant_type.size());
+  // Format like "XXXのYYY"
+  original.CopyToString(desc);
+  desc->append("\xe3\x81\xae");  // "の"
+  variant_type[type_id].AppendToString(desc);
 }
 
 // Add single kanji variants description to existing candidates,
 // because if we have candidates with same value, the lower ranked candidate
 // will be removed.
-void AddDescriptionForExsistingCandidates(Segment *segment) {
+void AddDescriptionForExsistingCandidates(
+    StringPiece variant_token_array,
+    const SerializedStringArray &variant_string_array,
+    const SerializedStringArray &variant_type,
+    Segment *segment) {
   DCHECK(segment);
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     Segment::Candidate *cand = segment->mutable_candidate(i);
     if (!cand->description.empty()) {
       continue;
     }
-    GenerateDescription(cand->value, &cand->description);
+    GenerateDescription(variant_token_array, variant_string_array,
+                        variant_type, cand->value, &cand->description);
   }
 }
 
-void FillCandidate(const string &key, const string &value,
+void FillCandidate(StringPiece variant_token_array,
+                   const SerializedStringArray &variant_string_array,
+                   const SerializedStringArray &variant_type,
+                   const string &key, const string &value,
                    int cost, uint16 single_kanji_id,
                    Segment::Candidate *cand) {
   cand->lid = single_kanji_id;
@@ -167,11 +278,15 @@ void FillCandidate(const string &key, const string &value,
   cand->value = value;
   cand->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
   cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-  GenerateDescription(value, &cand->description);
+  GenerateDescription(variant_token_array, variant_string_array,
+                      variant_type, value, &cand->description);
 }
 
 // Insert SingleKanji into segment.
-void InsertCandidate(bool is_single_segment,
+void InsertCandidate(StringPiece variant_token_array,
+                     const SerializedStringArray &variant_string_array,
+                     const SerializedStringArray &variant_type,
+                     bool is_single_segment,
                      uint16 single_kanji_id,
                      const vector<string> &kanji_list,
                      Segment *segment) {
@@ -193,18 +308,17 @@ void InsertCandidate(bool is_single_segment,
   // Append single-kanji
   for (size_t i = 0; i < kanji_list.size(); ++i) {
     Segment::Candidate *c = segment->push_back_candidate();
-    FillCandidate(candidate_key, kanji_list[i],
+    FillCandidate(variant_token_array, variant_string_array,
+                  variant_type, candidate_key, kanji_list[i],
                   kOffsetCost + i, single_kanji_id, c);
   }
 }
 
-// Insert Noun prefix into segment.
 void InsertNounPrefix(const POSMatcher &pos_matcher,
                       Segment *segment,
-                      const EmbeddedDictionary::Value *dict_values,
-                      size_t dict_values_size) {
-  DCHECK(dict_values);
-  DCHECK_GT(dict_values_size, 0);
+                      SerializedDictionary::iterator begin,
+                      SerializedDictionary::iterator end) {
+  DCHECK(begin != end);
 
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
@@ -218,28 +332,64 @@ void InsertNounPrefix(const POSMatcher &pos_matcher,
   const string &candidate_key = ((!segment->key().empty()) ?
                                  segment->key() :
                                  segment->candidate(0).key);
-  for (int i = 0; i < dict_values_size; ++i) {
+  for (auto iter = begin; iter != end; ++iter) {
     const int insert_pos = min(
         static_cast<int>(segment->candidates_size()),
-        static_cast<int>(dict_values[i].cost +
+        static_cast<int>(iter.cost() +
                          (segment->candidate(0).attributes &
                           Segment::Candidate::CONTEXT_SENSITIVE) ? 1 : 0));
     Segment::Candidate *c = segment->insert_candidate(insert_pos);
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();
     c->cost = 5000;
-    c->content_value = dict_values[i].value;
+    iter.value().CopyToString(&c->content_value);
     c->key = candidate_key;
     c->content_key = candidate_key;
-    c->value = dict_values[i].value;
+    iter.value().CopyToString(&c->value);
     c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   }
 }
+
 }  // namespace
 
-SingleKanjiRewriter::SingleKanjiRewriter(const POSMatcher &pos_matcher)
-    : pos_matcher_(&pos_matcher) {}
+SingleKanjiRewriter::SingleKanjiRewriter(
+    const DataManagerInterface &data_manager)
+    : pos_matcher_(data_manager.GetPOSMatcherData()) {
+  StringPiece string_array_data;
+  StringPiece variant_type_array_data;
+  StringPiece variant_string_array_data;
+  StringPiece noun_prefix_token_array_data;
+  StringPiece noun_prefix_string_array_data;
+  data_manager.GetSingleKanjiRewriterData(
+      &single_kanji_token_array_,
+      &string_array_data,
+      &variant_type_array_data,
+      &variant_token_array_,
+      &variant_string_array_data,
+      &noun_prefix_token_array_data,
+      &noun_prefix_string_array_data);
+  // Single Kanji token array is an array of uint32.  Its size must be multiple
+  // of 2; see the comment above LookupKanjiList.
+  DCHECK_EQ(0, single_kanji_token_array_.size() % (2 * sizeof(uint32)));
+  DCHECK(SerializedStringArray::VerifyData(string_array_data));
+  single_kanji_string_array_.Set(string_array_data);
+
+  DCHECK(SerializedStringArray::VerifyData(variant_type_array_data));
+  variant_type_array_.Set(variant_type_array_data);
+
+  // Variant token array is an array of uint32.  Its size must be multiple
+  // of 3; see the comment above GenerateDescription.
+  DCHECK_EQ(0, variant_token_array_.size() % (3 * sizeof(uint32)));
+  DCHECK(SerializedStringArray::VerifyData(variant_string_array_data));
+  variant_string_array_.Set(variant_string_array_data);
+
+  DCHECK(SerializedDictionary::VerifyData(noun_prefix_token_array_data,
+                                          noun_prefix_string_array_data));
+  noun_prefix_dictionary_.reset(new SerializedDictionary(
+      noun_prefix_token_array_data,
+      noun_prefix_string_array_data));
+}
 
 SingleKanjiRewriter::~SingleKanjiRewriter() {}
 
@@ -262,15 +412,22 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   const bool is_single_segment = (segments_size == 1);
   for (size_t i = 0; i < segments_size; ++i) {
     AddDescriptionForExsistingCandidates(
+        variant_token_array_,
+        variant_string_array_,
+        variant_type_array_,
         segments->mutable_conversion_segment(i));
 
     const string &key = segments->conversion_segment(i).key();
     vector<string> kanji_list;
-    if (!LookupKanjiList(key, &kanji_list)) {
+    if (!LookupKanjiList(single_kanji_token_array_, single_kanji_string_array_,
+                         key, &kanji_list)) {
       continue;
     }
-    InsertCandidate(is_single_segment,
-                    pos_matcher_->GetGeneralSymbolId(),
+    InsertCandidate(variant_token_array_,
+                    variant_string_array_,
+                    variant_type_array_,
+                    is_single_segment,
+                    pos_matcher_.GetGeneralSymbolId(),
                     kanji_list,
                     segments->mutable_conversion_segment(i));
 
@@ -289,7 +446,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
       const Segment::Candidate &right_candidate =
           segments->conversion_segment(i + 1).candidate(0);
       // right segment must be a noun.
-      if (!pos_matcher_->IsContentNoun(right_candidate.lid)) {
+      if (!pos_matcher_.IsContentNoun(right_candidate.lid)) {
         continue;
       }
     } else if (segments_size != 1) {  // also apply if segments_size == 1.
@@ -297,14 +454,13 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     }
 
     const string &key = segments->conversion_segment(i).key();
-    const EmbeddedDictionary::Token *token =
-        Singleton<NounPrefixDictionary>::get()->GetDictionary()->Lookup(key);
-    if (token == NULL) {
+    const auto range = noun_prefix_dictionary_->equal_range(key);
+    if (range.first == range.second) {
       continue;
     }
-    InsertNounPrefix(*pos_matcher_,
+    InsertNounPrefix(pos_matcher_,
                      segments->mutable_conversion_segment(i),
-                     token->value, token->value_size);
+                     range.first, range.second);
     // Ignore the next noun content word.
     ++i;
     modified = true;

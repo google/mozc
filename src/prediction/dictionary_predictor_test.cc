@@ -39,7 +39,7 @@
 #include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/singleton.h"
+#include "base/serialized_string_array.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -61,11 +61,10 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
-#include "dictionary/suffix_dictionary_token.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "prediction/suggestion_filter.h"
-#include "prediction/zero_query_list.h"
+#include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -84,12 +83,10 @@ using mozc::dictionary::DictionaryMock;
 using mozc::dictionary::POSMatcher;
 using mozc::dictionary::PosGroup;
 using mozc::dictionary::SuffixDictionary;
-using mozc::dictionary::SuffixToken;
 using mozc::dictionary::SuppressionDictionary;
 using mozc::dictionary::Token;
 using testing::_;
 
-DECLARE_string(test_tmpdir);
 DECLARE_bool(enable_expansion_for_dictionary_predictor);
 
 namespace mozc {
@@ -108,10 +105,14 @@ DictionaryInterface *CreateSystemDictionaryFromDataManager(
 
 DictionaryInterface *CreateSuffixDictionaryFromDataManager(
     const DataManagerInterface &data_manager) {
-  const SuffixToken *tokens = NULL;
-  size_t size = 0;
-  data_manager.GetSuffixDictionaryData(&tokens, &size);
-  return new SuffixDictionary(tokens, size);
+  StringPiece suffix_key_array_data, suffix_value_array_data;
+  const uint32 *token_array;
+  data_manager.GetSuffixDictionaryData(&suffix_key_array_data,
+                                       &suffix_value_array_data,
+                                       &token_array);
+  return new SuffixDictionary(suffix_key_array_data,
+                              suffix_value_array_data,
+                              token_array);
 }
 
 SuggestionFilter *CreateSuggestionFilter(
@@ -163,6 +164,7 @@ class TestableDictionaryPredictor : public DictionaryPredictor {
   // Test-only subclass: Just changing access levels
  public:
   TestableDictionaryPredictor(
+      const DataManagerInterface &data_manager,
       const ConverterInterface *converter,
       const ImmutableConverterInterface *immutable_converter,
       const DictionaryInterface *dictionary,
@@ -171,7 +173,8 @@ class TestableDictionaryPredictor : public DictionaryPredictor {
       const Segmenter *segmenter,
       const POSMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter)
-      : DictionaryPredictor(converter,
+      : DictionaryPredictor(data_manager,
+                            converter,
                             immutable_converter,
                             dictionary,
                             suffix_dictionary,
@@ -212,9 +215,7 @@ class MockDataAndPredictor {
   // suffix dictionary is singleton.
   void Init(const DictionaryInterface *dictionary = NULL,
             const DictionaryInterface *suffix_dictionary = NULL) {
-    testing::MockDataManager data_manager;
-
-    pos_matcher_ = data_manager.GetPOSMatcher();
+    pos_matcher_.Set(data_manager_.GetPOSMatcherData());
     suppression_dictionary_.reset(new SuppressionDictionary);
     if (!dictionary) {
       dictionary_mock_ = new DictionaryMock;
@@ -225,43 +226,44 @@ class MockDataAndPredictor {
     }
     if (!suffix_dictionary) {
       suffix_dictionary_.reset(
-          CreateSuffixDictionaryFromDataManager(data_manager));
+          CreateSuffixDictionaryFromDataManager(data_manager_));
     } else {
       suffix_dictionary_.reset(suffix_dictionary);
     }
     CHECK(suffix_dictionary_.get());
 
-    connector_.reset(Connector::CreateFromDataManager(data_manager));
+    connector_.reset(Connector::CreateFromDataManager(data_manager_));
     CHECK(connector_.get());
 
-    segmenter_.reset(Segmenter::CreateFromDataManager(data_manager));
+    segmenter_.reset(Segmenter::CreateFromDataManager(data_manager_));
     CHECK(segmenter_.get());
 
-    pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
-    suggestion_filter_.reset(CreateSuggestionFilter(data_manager));
+    pos_group_.reset(new PosGroup(data_manager_.GetPosGroupData()));
+    suggestion_filter_.reset(CreateSuggestionFilter(data_manager_));
     immutable_converter_.reset(
         new ImmutableConverterImpl(dictionary_.get(),
                                    suffix_dictionary_.get(),
                                    suppression_dictionary_.get(),
                                    connector_.get(),
                                    segmenter_.get(),
-                                   pos_matcher_,
+                                   &pos_matcher_,
                                    pos_group_.get(),
                                    suggestion_filter_.get()));
     converter_.reset(new ConverterMock());
     dictionary_predictor_.reset(
-        new TestableDictionaryPredictor(converter_.get(),
+        new TestableDictionaryPredictor(data_manager_,
+                                        converter_.get(),
                                         immutable_converter_.get(),
                                         dictionary_.get(),
                                         suffix_dictionary_.get(),
                                         connector_.get(),
                                         segmenter_.get(),
-                                        data_manager.GetPOSMatcher(),
+                                        &pos_matcher_,
                                         suggestion_filter_.get()));
   }
 
   const POSMatcher &pos_matcher() const {
-    return *pos_matcher_;
+    return pos_matcher_;
   }
 
   DictionaryMock *mutable_dictionary() {
@@ -281,7 +283,8 @@ class MockDataAndPredictor {
   }
 
  private:
-  const POSMatcher *pos_matcher_;
+  const testing::MockDataManager data_manager_;
+  POSMatcher pos_matcher_;
   unique_ptr<SuppressionDictionary> suppression_dictionary_;
   unique_ptr<const Connector> connector_;
   unique_ptr<const Segmenter> segmenter_;
@@ -366,9 +369,9 @@ void PrependHistorySegments(const string &key,
 
 class MockTypingModel : public mozc::composer::TypingModel {
  public:
-  MockTypingModel() : TypingModel(NULL, 0, NULL, 0, NULL) {}
-  ~MockTypingModel() {}
-  int GetCost(StringPiece key) const {
+  MockTypingModel() : TypingModel(nullptr, 0, nullptr, 0, nullptr) {}
+  ~MockTypingModel() override = default;
+  int GetCost(StringPiece key) const override {
     return 10;
   }
 };
@@ -631,7 +634,9 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment->set_key(query);
 
       EXPECT_CALL(*check_dictionary,
-                  LookupPredictive(_, ::testing::Ref(*convreq_), _));
+                  LookupPredictive(::testing::Ne(""),
+                                   ::testing::Ref(*convreq_), _))
+          .Times(::testing::AtLeast(1));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateUnigramPrediction(
@@ -730,7 +735,9 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment->set_key(query);
 
       EXPECT_CALL(*check_dictionary,
-                  LookupPredictive(_, ::testing::Ref(*convreq_), _));
+                  LookupPredictive(::testing::Ne(""),
+                                   ::testing::Ref(*convreq_), _))
+          .Times(::testing::AtLeast(1));
 
       vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateSuffixPrediction(
@@ -813,7 +820,7 @@ class DictionaryPredictorTest : public ::testing::Test {
         data_and_predictor->dictionary_predictor();
 
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-    table_->typing_model_ = Singleton<MockTypingModel>::get();
+    table_->typing_model_.reset(new MockTypingModel());
     InsertInputSequenceForProbableKeyEvent(
         key, corrected_key_codes, composer_.get());
 
@@ -1316,6 +1323,48 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
   EXPECT_EQ(1, segments.conversion_segments_size());
 }
 
+TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
+  const char kHiraganaA[] = "\xE3\x81\x82";
+
+  DictionaryMock mock_dict;
+  // A system dictionary entry "a".
+  mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA, "a", Token::NONE);
+  // System dictionary entries "a0", ..., "a9", which are detected as redundant
+  // by MaybeRedundant(); see dictionary_predictor.cc.
+  for (int i = 0; i < 10; ++i) {
+    mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA,
+                                  Util::StringPrintf("a%d", i), Token::NONE);
+  }
+  // A user dictionary entry "aaa".  MaybeRedundant() detects this entry as
+  // redundant but it should not be filtered in prediction.
+  mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA, "aaa",
+                                Token::USER_DICTIONARY);
+
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(false);
+  table_->LoadFromFile("system://12keys-hiragana.tsv");
+  composer_->SetTable(table_.get());
+  InsertInputSequence(kHiraganaA, composer_.get());
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  Segment *segment = segments.add_segment();
+  segment->set_key(kHiraganaA);
+
+  vector<DictionaryPredictor::Result> results;
+  DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
+      mock_dict, *convreq_, segments, &results);
+
+  // Check if "aaa" is not filtered.
+  auto iter = results.begin();
+  for (; iter != results.end(); ++iter) {
+    if (iter->key == kHiraganaA && iter->value == "aaa" &&
+        iter->IsUserDictionaryResult()) {
+      break;
+    }
+  }
+  EXPECT_NE(results.end(), iter);
+}
+
 TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
   unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
@@ -1565,14 +1614,16 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
       Segmenter::CreateFromDataManager(data_manager));
   unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
+  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   unique_ptr<TestableDictionaryPredictor> predictor(
-      new TestableDictionaryPredictor(converter.get(),
+      new TestableDictionaryPredictor(data_manager,
+                                      converter.get(),
                                       immutable_converter.get(),
                                       dictionary.get(),
                                       suffix_dictionary.get(),
                                       connector.get(),
                                       segmenter.get(),
-                                      data_manager.GetPOSMatcher(),
+                                      &pos_matcher,
                                       suggestion_filter.get()));
 
   // "わたしのなまえはなかのです"
@@ -2832,6 +2883,91 @@ TEST_F(DictionaryPredictorTest, SetLMCost) {
   EXPECT_GT(results[2].cost, results[1].cost);
 }
 
+namespace {
+
+void AddTestableDictionaryPredictorResult(
+    const char *key, const char *value, int wcost,
+    TestableDictionaryPredictor::PredictionTypes prediction_types,
+    Token::AttributesBitfield attributes,
+    vector<TestableDictionaryPredictor::Result> *results) {
+  results->push_back(TestableDictionaryPredictor::MakeEmptyResult());
+  TestableDictionaryPredictor::Result *result = &results->back();
+  result->key = key;
+  result->value = value;
+  result->wcost = wcost;
+  result->SetTypesAndTokenAttributes(prediction_types, attributes);
+}
+
+}  // namespace
+
+TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
+  unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const TestableDictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+
+  // "あいか"
+  const char *kAikaHiragana = "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x8b";
+  // "愛佳"
+  const char *kAikaKanji = "\xe6\x84\x9b\xe4\xbd\xb3";
+
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  Segment *segment = segments.add_segment();
+  ASSERT_NE(nullptr, segment);
+  segment->set_key(kAikaHiragana);
+
+  {
+    // Cost of words in user dictionary should be decreased.
+    const int kOrigianlWordCost = 10000;
+    vector<TestableDictionaryPredictor::Result> results;
+    AddTestableDictionaryPredictorResult(
+        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY,
+        &results);
+
+    predictor->SetLMCost(segments, &results);
+
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(kAikaKanji, results[0].value);
+    EXPECT_GT(kOrigianlWordCost, results[0].cost);
+    EXPECT_LE(1, results[0].cost);
+  }
+
+  {
+    // Cost of words in user dictionary should not be decreased to below 1.
+    const int kOrigianlWordCost = 10;
+    vector<TestableDictionaryPredictor::Result> results;
+    AddTestableDictionaryPredictorResult(
+        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY,
+        &results);
+
+    predictor->SetLMCost(segments, &results);
+
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(kAikaKanji, results[0].value);
+    EXPECT_GT(kOrigianlWordCost, results[0].cost);
+    EXPECT_LE(1, results[0].cost);
+  }
+
+  {
+    // Cost of words not in user dictionary should not be decreased.
+    const int kOrigianlWordCost = 10000;
+    vector<TestableDictionaryPredictor::Result> results;
+    AddTestableDictionaryPredictorResult(
+        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        TestableDictionaryPredictor::UNIGRAM, Token::NONE,
+        &results);
+
+    predictor->SetLMCost(segments, &results);
+
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(kAikaKanji, results[0].value);
+    EXPECT_EQ(kOrigianlWordCost, results[0].cost);
+  }
+}
+
 TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   testing::MockDataManager data_manager;
 
@@ -3158,14 +3294,16 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
       Segmenter::CreateFromDataManager(data_manager));
   unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
+  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   unique_ptr<TestableDictionaryPredictor> predictor(
-      new TestableDictionaryPredictor(converter.get(),
+      new TestableDictionaryPredictor(data_manager,
+                                      converter.get(),
                                       immutable_converter.get(),
                                       dictionary.get(),
                                       suffix_dictionary.get(),
                                       connector.get(),
                                       segmenter.get(),
-                                      data_manager.GetPOSMatcher(),
+                                      &pos_matcher,
                                       suggestion_filter.get()));
   Segments segments;
   // "わたしのなまえはなかのです"
@@ -3351,27 +3489,42 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
 }
 
 namespace {
-const char *kTestKey0 = "\xe3\x81\x82";  // "あ"
-const ZeroQueryEntry kTestValues0[] = {
-  // emoji exclamation
-  {ZERO_QUERY_EMOJI, "", EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04},
-  {ZERO_QUERY_EMOJI, "\xE2\x9D\x95", EMOJI_UNICODE, 0xfeb0b},  // "❕"
-  {ZERO_QUERY_NONE, "\xE2\x9D\xA3", EMOJI_NONE, 0x0},  // "❣"
-};
-const char *kTestKey1 = "\xe3\x81\x82\xe3\x81\x82";  // "ああ"
-const ZeroQueryEntry kTestValues1[] = {
+
+const char kTestTokenArray[] =
+    // {"あ", "", ZERO_QUERY_EMOJI, EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04}
+    "\x04\x00\x00\x00"
+    "\x00\x00\x00\x00"
+    "\x03\x00"
+    "\x06\x00"
+    "\x04\xeb\x0f\x00"
+    // {"あ", "❕", ZERO_QUERY_EMOJI, EMOJI_UNICODE, 0xfeb0b},
+    "\x04\x00\x00\x00"
+    "\x02\x00\x00\x00"
+    "\x03\x00"
+    "\x01\x00"
+    "\x0b\xeb\x0f\x00"
+    // {"あ", "❣", ZERO_QUERY_NONE, EMOJI_NONE, 0x00},
+    "\x04\x00\x00\x00"
+    "\x03\x00\x00\x00"
+    "\x00\x00"
+    "\x00\x00"
+    "\x00\x00\x00\x00"
+    // {"ああ", "( •̀ㅁ•́;)", ZERO_QUERY_EMOTICON, EMOJI_NONE, 0x00}
+    "\x05\x00\x00\x00"
+    "\x01\x00\x00\x00"
+    "\x02\x00"
+    "\x00\x00"
+    "\x00\x00\x00\x00";
+
+const char *kTestStrings[] = {
+  "",
   // "( •̀ㅁ•́;)"
-  {
-    ZERO_QUERY_EMOTICON,
-    "\x28\x20\xE2\x80\xA2\xCC\x80\xE3\x85\x81\xE2\x80\xA2\xCC\x81\x3B\x29",
-    EMOJI_NONE, 0x0
-  },
+  "\x28\x20\xE2\x80\xA2\xCC\x80\xE3\x85\x81\xE2\x80\xA2\xCC\x81\x3B\x29",
+  "\xE2\x9D\x95",  // "❕"
+  "\xE2\x9D\xA3",  // "❣"
+  "\xE3\x81\x82",  // "あ"
+  "\xE3\x81\x82\xE3\x81\x82",  // "ああ"
 };
-const ZeroQueryList kTestData_data[] = {
-  {kTestKey0, kTestValues0, 3},
-  {kTestKey1, kTestValues1, 1},
-};
-const size_t kTestData_size = 2;
 
 struct TestEntry {
   int32 available_emoji_carrier;
@@ -3404,9 +3557,27 @@ struct TestEntry {
         types.c_str());
   }
 };
+
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
+  // Create test zero query data.
+  std::unique_ptr<uint32[]> string_data_buffer;
+  ZeroQueryDict zero_query_dict;
+  {
+    // kTestTokenArray contains a trailing '\0', so create a StringPiece that
+    // excludes it by subtracting 1.
+    const StringPiece token_array_data(kTestTokenArray,
+                                       arraysize(kTestTokenArray) - 1);
+    vector<StringPiece> strs;
+    for (const char *str : kTestStrings) {
+      strs.push_back(str);
+    }
+    const StringPiece string_array_data =
+        SerializedStringArray::SerializeToBuffer(strs, &string_data_buffer);
+    zero_query_dict.Init(token_array_data, string_array_data);
+  }
+
   vector<TestEntry> test_entries;
   {
     TestEntry entry;
@@ -3518,9 +3689,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
     vector<DictionaryPredictor::ZeroQueryResult> actual_candidates;
     const bool actual_result =
         DictionaryPredictor::GetZeroQueryCandidatesForKey(
-            request, test_entry.key,
-            kTestData_data, kTestData_data + kTestData_size,
-            &actual_candidates);
+            request, test_entry.key, zero_query_dict, &actual_candidates);
     EXPECT_EQ(test_entry.expected_result, actual_result)
         << test_entry.DebugString();
     for (size_t j = 0; j < test_entry.expected_candidates.size(); ++j) {

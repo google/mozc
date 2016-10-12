@@ -55,7 +55,7 @@ KeyMapManager *KeyMapFactory::GetKeyMapManager(
 
   // create new instance
   KeyMapManager *manager = pool_.Alloc();
-  keymaps_.insert(make_pair(keymap, manager));
+  keymaps_.insert(std::make_pair(keymap, manager));
   manager->Initialize(keymap);
   return manager;
 }

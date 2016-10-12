@@ -53,11 +53,6 @@ class ImeUtil {
   // in some special situations like CustomAction.
   static bool SetDefault();
 
-  // Activates the IMM32 version of Google Japanese Input for the current
-  // process.
-  // Returns true if the operation completed successfully.
-  static bool ActivateForCurrentProcess();
-
   // Looks like the TSF needs to rebuild a certain cache after changing the
   // input details. This task usually takes a few hundreds msec. However,
   // if we broadcast WM_INPUTLANGCHANGEREQUEST message to all the desktop

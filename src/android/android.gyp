@@ -68,7 +68,6 @@
             '../build_tools/run_after_chdir.py', 'tests',
             'ant',
             'debug',
-            '-Dgyp.protobuf_java_root=<(protobuf_java_root)',
             '-Dsdk.dir=<(android_home)',
           ],
         },
@@ -99,7 +98,6 @@
       'target_name': 'apk',
       'type': 'none',
       'dependencies': [
-        'protobuf/protobuf.gyp:protobuf_java',
         'resources/resources.gyp:resources',
         'sdk_apk_dependencies',
         'userfeedback/userfeedback.gyp:userfeedback',
@@ -151,6 +149,7 @@
       'target_name': 'common_apk_dependencies',
       'type': 'none',
       'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf_jar',
         'android_manifest',
         'assets',
         'mozc',
@@ -207,9 +206,7 @@
       'target_name': 'assets',
       'type': 'none',
       'dependencies': [
-        'assets_connection_data',
         'assets_credits',
-        'assets_dictionary',
         'assets_touch_stat_data',
       ]
     },
@@ -225,58 +222,6 @@
       }],
     },
     {
-      'target_name': 'assets_connection_data',
-      'type': 'none',
-      'conditions': [
-        ['use_separate_connection_data==1',
-          {
-            'actions': [
-              {
-                'action_name': 'assets_copy_connection_data',
-                'inputs': [
-                  '<(connection_data)',
-                ],
-                'outputs': [
-                  '<(sdk_asset_dir)/connection.data.imy',
-                ],
-                'action': [
-                  # Note that multiple output files cannot be handled
-                  # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
-                ],
-              },
-            ],
-          },
-        ],
-      ],
-    },
-    {
-      'target_name': 'assets_dictionary',
-      'type': 'none',
-      'conditions': [
-        ['use_separate_dictionary==1',
-          {
-            'actions': [
-              {
-                'action_name': 'assets_copy_dictionary',
-                'inputs': [
-                  '<(dictionary_data)'
-                ],
-                'outputs': [
-                  '<(sdk_asset_dir)/system.dictionary.imy',
-                ],
-                'action': [
-                  # Note that multiple output files cannot be handled
-                  # by copy_file script.
-                  '<@(copy_file)', '<@(_inputs)', '<@(_outputs)',
-                ],
-              },
-            ],
-          },
-        ],
-      ],
-    },
-    {
       # CAVEAT:
       # This target is not actually used for build but placed here just to
       # execute 'make-standalone-toolchain.sh' in GYP evaluation phase as a
@@ -289,12 +234,13 @@
       'type': 'none',
       'variables': {
         'make_standalone_toolchain_commands': [
-          'bash',
-          '<(android_ndk_home)/build/tools/make-standalone-toolchain.sh',
-          '--toolchain=<(toolchain)',
-          '--stl=<(android_stl)',
+          'python',
+          '<(android_ndk_home)/build/tools/make_standalone_toolchain.py',
+          '--force',
+          '--arch=<(android_arch)',
+          '--stl=libc++',
           '--install-dir=<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)',
-          '--platform=<(platform)',
+          '--api=<(ndk_target_api_level)',
         ],
         'make_standalone_toolchain_result': '<!(<(make_standalone_toolchain_commands))',
       },
@@ -573,12 +519,18 @@
       'sources': [
         'jni/mozcjni.cc',
       ],
+      'defines': [
+        'MOZC_USE_CUSTOM_DATA_MANAGER',
+      ],
       'product_dir': '<(abs_android_dir)/libs/<(abi)',
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:jni_proxy',
+        '../data_manager/data_manager_base.gyp:data_manager',
+        '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
         '../dictionary/dictionary.gyp:dictionary',
-        '../engine/engine.gyp:engine_factory',
+        '../engine/engine.gyp:engine',
+        '../engine/engine.gyp:engine_builder',
         '../session/session.gyp:session',
         '../session/session.gyp:session_handler',
         '../session/session.gyp:session_usage_observer',
@@ -588,17 +540,6 @@
          # -s: Strip unused symbols
          # --version-script: Remove almost all exportable symbols
          '-Wl,-s,--version-script,<(abs_android_dir)/libmozc.lds',
-      ],
-      'conditions': [
-        ['branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            '../data_manager/android/android_data_manager.gyp:android_data_manager',
-          ]
-        }, {
-          'dependencies': [
-            '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
-          ]
-        }],
       ],
     },
     {
@@ -625,17 +566,6 @@
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
       ],
-      'conditions': [
-        ['branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            '../data_manager/android/android_data_manager_test.gyp:install_android_data_manager_test_data',
-          ]
-        }, {
-          'dependencies': [
-            '../data_manager/oss/oss_data_manager_test.gyp:install_oss_data_manager_test_data',
-          ]
-        }],
-      ],
     },
     {
       'target_name': 'run_native_test',
@@ -648,11 +578,10 @@
           'action': [
             'python', 'run_android_test.py',
             '--android_home=<(android_home)',
-            '--mozc_connection_data_file=<(connection_data)',
             '--mozc_connection_text_data_file=<(connection_text_data)',
             '--mozc_data_dir=<(mozc_data_dir)',
-            '--mozc_dictionary_data_file=<(dictionary_data)',
-            '--mozc_test_connection_data_file=<(test_connection_data)',
+            '--mozc_dataset_file=<(mozc_dataset)',
+            '--mozc_test_dataset_file=<(test_mozc_dataset)',
             '--mozc_test_connection_text_data_file=<(test_connection_text_data)',
             '--native_abi=<(abi)',
             '--output_report_dir=<(test_report_dir)',

@@ -40,7 +40,6 @@
         'dictionary_impl_test.cc',
         'dictionary_mock_test.cc',
         'suffix_dictionary_test.cc',
-        'suppression_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
         'user_dictionary_session_handler_test.cc',
         'user_dictionary_session_test.cc',
@@ -53,8 +52,8 @@
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '../data_manager/testing/mock_data_manager_base.gyp:mock_user_pos_manager',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../testing/testing.gyp:testing_util',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
@@ -62,8 +61,23 @@
         'dictionary.gyp:dictionary_mock',
         'dictionary.gyp:dictionary_test_util',
         'dictionary_base.gyp:pos_matcher',
-        'dictionary_base.gyp:suppression_dictionary',
         'dictionary_base.gyp:user_dictionary',
+        'dictionary_base.gyp:user_pos',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'suppression_dictionary_test',
+      'type': 'executable',
+      'sources': [
+        'suppression_dictionary_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        'dictionary_base.gyp:suppression_dictionary',
       ],
       'variables': {
         'test_size': 'small',
@@ -77,8 +91,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../data_manager/data_manager.gyp:user_pos_manager',
-        '../data_manager/data_manager_test.gyp:scoped_data_manager_initializer_for_testing',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../testing/testing.gyp:gtest_main',
         'dictionary_base.gyp:text_dictionary_loader',
       ],
@@ -92,6 +105,7 @@
       'type': 'none',
       'dependencies': [
         'dictionary_test',
+        'suppression_dictionary_test',
         'text_dictionary_loader_test',
       ],
     },

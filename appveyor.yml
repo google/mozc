@@ -35,9 +35,9 @@ init:
 - git config --global core.autocrlf input
 install:
 - git submodule update --init --recursive
-- choco install ninja -version 1.6.0
+- choco install ninja -version 1.7.1
 build_script:
 - cd src
-- python build_mozc.py gyp --noqt
+- python build_mozc.py gyp --qtdir=C:\Qt\5.6\msvc2015 --qtver=5
 - python build_mozc.py build -c Release package
 test: off

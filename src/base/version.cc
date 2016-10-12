@@ -72,6 +72,10 @@ int Version::GetMozcVersionRevision() {
   return version::kMozcVersionRevision;
 }
 
+const char *Version::GetMozcEngineVersion() {
+  return version::kMozcEngineVersion;
+}
+
 bool Version::CompareVersion(const string &lhs, const string &rhs) {
   if (lhs == rhs) {
     return false;

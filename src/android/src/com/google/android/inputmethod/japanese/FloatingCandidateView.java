@@ -36,6 +36,7 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Output;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
 import org.mozc.android.inputmethod.japanese.ui.FloatingCandidateLayoutRenderer;
 import org.mozc.android.inputmethod.japanese.ui.FloatingModeIndicator;
+import org.mozc.android.inputmethod.japanese.util.CursorAnchorInfoWrapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -52,7 +53,6 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.widget.PopupWindow;
 
@@ -65,7 +65,8 @@ public class FloatingCandidateView extends View {
   private interface FloatingCandidateViewProxy {
     public void draw(Canvas canvas);
     public void viewSizeChanged(int width, int height);
-    public void setCursorAnchorInfo(CursorAnchorInfo info);
+    public void onStartInputView(EditorInfo editorInfo);
+    public void setCursorAnchorInfo(CursorAnchorInfoWrapper info);
     public void setCandidates(Command outCommand);
     public void setEditorInfo(EditorInfo editorInfo);
     public void setCompositionMode(CompositionMode mode);
@@ -82,7 +83,10 @@ public class FloatingCandidateView extends View {
     public void viewSizeChanged(int width, int height) {}
 
     @Override
-    public void setCursorAnchorInfo(CursorAnchorInfo info) {}
+    public void onStartInputView(EditorInfo editorInfo) {}
+
+    @Override
+    public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {}
 
     @Override
     public void setCandidates(Command outCommand) {}
@@ -140,7 +144,7 @@ public class FloatingCandidateView extends View {
     private int basePositionTop;
     private int basePositionBottom;
     private int basePositionX;
-    private Optional<CursorAnchorInfo> cursorAnchorInfo = Optional.absent();
+    private Optional<CursorAnchorInfoWrapper> cursorAnchorInfo = Optional.absent();
     private Category candidatesCategory = Category.CONVERSION;
     private int highlightedCharacterStart;
     private int compositionCharacterEnd;
@@ -225,9 +229,14 @@ public class FloatingCandidateView extends View {
       updateCandidateWindowWithSize(width, height);
     }
 
-    /** Sets {@link CursorAnchorInfo} to update the candidate window position. */
     @Override
-    public void setCursorAnchorInfo(CursorAnchorInfo info) {
+    public void onStartInputView(EditorInfo editorInfo) {
+      modeIndicator.onStartInputView(editorInfo);
+    }
+
+    /** Sets {@link CursorAnchorInfoWrapper} to update the candidate window position. */
+    @Override
+    public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {
       cursorAnchorInfo = Optional.of(info);
       modeIndicator.setCursorAnchorInfo(info);
       updateCandidateWindow();
@@ -362,7 +371,7 @@ public class FloatingCandidateView extends View {
 
     /**
      * Update {@code basePositionTop}, {@code basePositionBottom} and {@code basePositionX} using
-     * {@code cursorAnchorInfo}.
+     * {@code cursorAnchorInfoWrapper}.
      */
     private void updateBasePosition(Rect windowRect, int viewWidth) {
       if (!cursorAnchorInfo.isPresent()) {
@@ -370,7 +379,7 @@ public class FloatingCandidateView extends View {
         return;
       }
 
-      CursorAnchorInfo info = cursorAnchorInfo.get();
+      CursorAnchorInfoWrapper info = cursorAnchorInfo.get();
       int composingStartIndex = info.getComposingTextStart() + highlightedCharacterStart;
       int composingEndIndex = info.getComposingTextStart() + compositionCharacterEnd - 1;
       RectF firstCharacterBounds = info.getCharacterBounds(composingStartIndex);
@@ -491,13 +500,6 @@ public class FloatingCandidateView extends View {
         : new FloatingCandidateViewStub();
   }
 
-  @Override
-  protected void onFinishInflate() {
-    // Use software renderer since hardware renderer doesn't support Paint#setShadowLayer() and
-    // Canvas#drawPicture() which is used by MozcDrawable.
-    this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-  }
-
   public static boolean isAvailable() {
     return Build.VERSION.SDK_INT >= 21;
   }
@@ -520,8 +522,12 @@ public class FloatingCandidateView extends View {
     floatingCandidateViewProxy.viewSizeChanged(width, height);
   }
 
-  /** Sets {@link CursorAnchorInfo} to update the candidate window position. */
-  public void setCursorAnchorInfo(CursorAnchorInfo info) {
+  public void onStartInputView(EditorInfo editorInfo) {
+    floatingCandidateViewProxy.onStartInputView(editorInfo);
+  }
+
+  /** Sets {@link CursorAnchorInfoWrapper} to update the candidate window position. */
+  public void setCursorAnchorInfo(CursorAnchorInfoWrapper info) {
     floatingCandidateViewProxy.setCursorAnchorInfo(info);
   }
 

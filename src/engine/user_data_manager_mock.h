@@ -44,15 +44,16 @@ namespace mozc {
 class UserDataManagerMock : public UserDataManagerInterface {
  public:
   UserDataManagerMock();
-  virtual ~UserDataManagerMock();
+  ~UserDataManagerMock() override;
 
-  virtual bool Sync();
-  virtual bool Reload();
-  virtual bool ClearUserHistory();
-  virtual bool ClearUserPrediction();
-  virtual bool ClearUnusedUserPrediction();
-  virtual bool ClearUserPredictionEntry(const string &key, const string &value);
-  virtual bool WaitForSyncerForTest();
+  bool Sync() override;
+  bool Reload() override;
+  bool ClearUserHistory() override;
+  bool ClearUserPrediction() override;
+  bool ClearUnusedUserPrediction() override;
+  bool ClearUserPredictionEntry(const string &key,
+                                const string &value) override;
+  bool Wait() override;
 
   int GetFunctionCallCount(const string &name);
 

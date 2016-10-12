@@ -50,55 +50,46 @@
       ],
     },
     {
-      'target_name': 'scoped_data_manager_initializer_for_testing',
-      'type': 'static_library',
+      'target_name': 'dataset_writer_test',
+      'type': 'executable',
       'toolsets': [ 'target' ],
       'sources': [
-        'scoped_data_manager_initializer_for_testing.cc',
+        'dataset_writer_test.cc',
       ],
-      'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            ':scoped_packed_data_manager_initializer_for_testing'
-          ],
-        }],
-        ['target_platform=="Android"', {
-          'dependencies': [
-            ':scoped_android_data_manager_initializer_for_testing'
-          ],
-        }],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
+        '../testing/testing.gyp:testing',
+        'data_manager_base.gyp:dataset_proto',
+        'data_manager_base.gyp:dataset_writer',
       ],
     },
-  ],
-  'conditions': [
-    ['use_packed_dictionary==1', {
-      'targets': [
-        {
-          'target_name': 'scoped_packed_data_manager_initializer_for_testing',
-          'type': 'static_library',
-          'toolsets': [ 'target' ],
-          'sources': [
-            '<(gen_out_dir)/packed/packed_data_mock.h',
-            'packed/scoped_packed_data_manager_initializer_for_testing.cc',
-          ],
-          'dependencies': [
-            'packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
-            'packed/packed_data_manager_base.gyp:packed_data_manager',
-          ],
-        },
+    {
+      'target_name': 'dataset_reader_test',
+      'type': 'executable',
+      'toolsets': [ 'target' ],
+      'sources': [
+        'dataset_reader_test.cc',
       ],
-    }],
-    ['target_platform=="Android"', {
-      'targets': [
-        {
-          'target_name': 'scoped_android_data_manager_initializer_for_testing',
-          'type': 'static_library',
-          'toolsets': [ 'target' ],
-          'sources': [
-            'android/scoped_android_data_manager_initializer_for_testing.cc',
-          ],
-        },
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:testing',
+        'data_manager_base.gyp:dataset_proto',
+        'data_manager_base.gyp:dataset_reader',
+        'data_manager_base.gyp:dataset_writer',
       ],
-    }],
+    },
+    {
+      'target_name': 'serialized_dictionary_test',
+      'type': 'executable',
+      'sources': ['serialized_dictionary_test.cc'],
+      'dependencies': [
+        '../base/base.gyp:serialized_string_array',
+        '../testing/testing.gyp:gtest_main',
+        'data_manager_base.gyp:serialized_dictionary',
+      ],
+    },
   ],
 }

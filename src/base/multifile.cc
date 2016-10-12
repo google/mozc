@@ -46,7 +46,7 @@ InputMultiFile::InputMultiFile(const string &filenames, ios_base::openmode mode)
 }
 
 InputMultiFile::~InputMultiFile() {
-  ifs_.reset(NULL);
+  ifs_.reset();
 }
 
 bool InputMultiFile::ReadLine(string* line) {

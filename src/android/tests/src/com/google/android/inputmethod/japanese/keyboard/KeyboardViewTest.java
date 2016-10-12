@@ -530,6 +530,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnTouchEvent_releaseModified() {
+    view.enableDelayForHandlingTouchEvent = false;
     Key key = createKeyWithModifiedState(0, 0, 'a', 'A');
     view.setKeyboard(createDummyKeyboard(key));
     Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
@@ -569,6 +570,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnTouchEvent_releaseModifierSimple() {
+    view.enableDelayForHandlingTouchEvent = false;
     Key key = createModifierKey(0, 0, -1, EnumSet.of(MetaState.SHIFT),
                                 Collections.<MetaState>emptySet());
     view.setKeyboard(createDummyKeyboard(key));
@@ -674,6 +676,7 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
 
   @SmallTest
   public void testOnTouchEvent_releaseModifierOneTime() {
+    view.enableDelayForHandlingTouchEvent = false;
     Key targetKey = view.getKeyboard().get().getRowList().get(0).getKeyList().get(0);
     KeyEventContext keyEventContext =
         new KeyEventContext(targetKey, 0, 0, 0, 100, 60, 1, Collections.<MetaState>emptySet());
@@ -1157,27 +1160,13 @@ public class KeyboardViewTest extends InstrumentationTestCaseWithMock {
     }
   }
 
-  @SmallTest
-  public void testOnDetachedFromWindow() {
-    KeyboardViewBackgroundSurface keyboardViewBackgroundSurface =
-        createKeyboardViewBackgroundSurfaceMock();
-    keyboardViewBackgroundSurface.reset();
-    replayAll();
-    VisibilityProxy.setField(view, "backgroundSurface", keyboardViewBackgroundSurface);
-
-    view.onDetachedFromWindow();
-
-    verifyAll();
-  }
-
   @SuppressWarnings("unchecked")
   @SmallTest
   public void testSetSkinType() {
     Resources resources = getInstrumentation().getTargetContext().getResources();
     KeyboardViewBackgroundSurface keyboardViewBackgroundSurface =
         createKeyboardViewBackgroundSurfaceMock();
-    keyboardViewBackgroundSurface.requestUpdateKeyboard(
-        isA(Keyboard.class), isA(Set.class));
+    keyboardViewBackgroundSurface.reset(isA(Optional.class), isA(Set.class));
 
     DrawableCache drawableCache = createMockBuilder(DrawableCache.class)
         .withConstructor(Resources.class)

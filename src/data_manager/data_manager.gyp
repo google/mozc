@@ -34,24 +34,22 @@
   },
   'targets': [
     {
-      'target_name': 'user_pos_manager',
-      'type': 'none',
-      'toolsets': [ 'target', 'host' ],
+      'target_name': 'pos_list_provider',
+      'type': 'static_library',
+      'toolsets': [ 'target' ],
       'sources': [
-        'user_pos_manager.h',
+        'pos_list_provider.cc',
       ],
+      'hard_dependency': 1,
+      'variables': {
+        'pos_list_dep%': 'oss/oss_data_manager_base.gyp:gen_oss_embedded_pos_list#host',
+      },
       'dependencies': [
-        'oss/oss_data_manager_base.gyp:oss_user_pos_manager',
+        '../base/base.gyp:serialized_string_array',
+        '<(pos_list_dep)',
       ],
-      'conditions': [
-        ['use_packed_dictionary==1', {
-          'dependencies': [
-            'packed/packed_data_manager_base.gyp:packed_data_manager'
-          ],
-          'dependencies!': [
-            'oss/oss_data_manager_base.gyp:oss_user_pos_manager'
-          ]
-        }],
+      'export_dependent_settings': [
+        '<(pos_list_dep)',
       ],
     },
     {
