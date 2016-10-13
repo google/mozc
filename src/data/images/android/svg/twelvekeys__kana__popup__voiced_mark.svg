@@ -30,11 +30,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink"
-     version="1.1"
-     width="112px"
-     height="112px">
-  <polyline id="style-keyicon-bound" style="fill:none;stroke:#CCCBCB;stroke-miterlimit:10;" points="56,34 34,34 34,78 78,78 78,56 "/>
-  <text id="style-keyicon-main" x="53" y="62" style="font-size:90px;text-anchor:middle;dominant-baseline:central;">゛</text>
+<svg id="svg3068" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="112px" width="112px" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <polyline id="style-keyicon-bound" stroke="#CCCBCB" points="56,34,34,34,34,78,78,78,78,56" stroke-miterlimit="10" fill="none"/>
+ <path id="style-keyicon-main_1_" d="m66.978,31.861c1.8903,2.6173,5.5255,8.8699,7.125,11.705l-4.3622,1.8903c-1.6003-3.053-4.9444-9.2328-6.9069-11.85zm9.2334-3.5625c1.8176,2.69,5.4528,8.7972,7.125,11.705l-4.2895,1.8176c-1.7449-3.1263-5.0166-9.088-7.0523-11.705z"/>
 </svg>
