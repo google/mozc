@@ -113,7 +113,7 @@ void ProcessLoop() {
     mozc::emacs::RemoveUsageData(command.mutable_output());
 
     // Output results.
-    vector<string> buffer;
+    std::vector<string> buffer;
     mozc::emacs::PrintMessage(command.output(), &buffer);
     string output;
     mozc::Util::JoinStrings(buffer, "", &output);

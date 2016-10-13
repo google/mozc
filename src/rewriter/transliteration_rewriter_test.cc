@@ -957,7 +957,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
                                        mock_data_manager_);
 
   // Expected t13n of Godan keyboard.
-  vector<const char *> keycode_to_t13n_map(
+  std::vector<const char *> keycode_to_t13n_map(
       128, static_cast<const char *>(NULL));
   keycode_to_t13n_map['"'] = "";
   keycode_to_t13n_map['\''] = "";

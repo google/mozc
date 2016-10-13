@@ -100,7 +100,8 @@ class ConverterMock : public ConverterInterface {
   void GetFocusSegmentValue(Segments *segments, size_t *segment_index,
                             int *candidate_index);
   void GetFreeSegmentValue(Segments *segments, size_t *segment_index);
-  void GetCommitSegments(Segments *segments, vector<size_t> *candidate_index);
+  void GetCommitSegments(Segments *segments,
+                         std::vector<size_t> *candidate_index);
   void GetResizeSegment1(Segments *segments, size_t *segment_index,
                         int *offset_length);
   void GetResizeSegment2(Segments *segments, size_t *start_segment_index,
@@ -152,7 +153,7 @@ class ConverterMock : public ConverterInterface {
   bool FreeSegmentValue(Segments *segments,
                         size_t segment_index) const;
   bool CommitSegments(Segments *segments,
-                      const vector<size_t> &candidate_index) const;
+                      const std::vector<size_t> &candidate_index) const;
   bool ResizeSegment(Segments *segments,
                      const ConversionRequest &request,
                      size_t segment_index,
@@ -179,11 +180,11 @@ class ConverterMock : public ConverterInterface {
     string key;
     size_t segment_index;
     int candidate_index;
-    vector<size_t> candidate_index_list;
+    std::vector<size_t> candidate_index_list;
     int offset_length;
     size_t start_segment_index;
     size_t segments_size;
-    vector<uint8> new_size_array;
+    std::vector<uint8> new_size_array;
     string current_segment_key;
     string new_segment_key;
     ConverterInput() {}

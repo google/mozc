@@ -126,10 +126,10 @@ class DictionaryMock : public DictionaryInterface {
                       Token::AttributesBitfield token_attributes);
 
  private:
-  map<string, vector<Token *>> reverse_dictionary_;
-  map<string, vector<Token *>> prefix_dictionary_;
-  map<string, vector<Token *>> exact_dictionary_;
-  map<string, vector<Token *>> predictive_dictionary_;
+  std::map<string, std::vector<Token *>> reverse_dictionary_;
+  std::map<string, std::vector<Token *>> prefix_dictionary_;
+  std::map<string, std::vector<Token *>> exact_dictionary_;
+  std::map<string, std::vector<Token *>> predictive_dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryMock);
 };

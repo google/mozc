@@ -1621,7 +1621,7 @@ const char *kWeekDayString[] = {
 //      - output "result" : will be stored candidate strings
 // If the input year is invalid ( accept only [ 1 - 99 ] ) , this function
 // returns false and clear output vector.
-bool ExpandYear(const string &prefix, int year, vector<string> *result) {
+bool ExpandYear(const string &prefix, int year, std::vector<string> *result) {
   DCHECK(result);
   if (year <= 0 || year >= 100) {
     result->clear();
@@ -1638,7 +1638,7 @@ bool ExpandYear(const string &prefix, int year, vector<string> *result) {
 
   string arabic = NumberUtil::SimpleItoa(year);
 
-  vector<NumberUtil::NumberString> output;
+  std::vector<NumberUtil::NumberString> output;
 
   NumberUtil::ArabicToKanji(arabic, &output);
 
@@ -1681,7 +1681,7 @@ enum {
 };
 
 bool AdToEraForCourt(const YearData *data, int size,
-                     int year, vector<string> *results) {
+                     int year, std::vector<string> *results) {
   for (int i = size - 1; i >= 0; --i) {
     if (i == size - 1 && year > data[i].ad) {
       ExpandYear(data[i].era, year - data[i].ad + 1, results);
@@ -1753,7 +1753,8 @@ bool ExtractYearFromKey(const YearData &year_data,
 }
 
 bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
-                     vector<string> *results, vector<string> *descriptions) {
+                     std::vector<string> *results,
+                     std::vector<string> *descriptions) {
   if (!Util::EndsWith(key, kNenKey)) {
     return false;
   }
@@ -1776,7 +1777,7 @@ bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
 
     // Get wide arabic numbers
     // e.g.) 1989 -> "１９８９", "一九八九"
-    vector<NumberUtil::NumberString> output;
+    std::vector<NumberUtil::NumberString> output;
     const string ad_year_str(NumberUtil::SimpleItoa(ad_year));
     NumberUtil::ArabicToWideArabic(ad_year_str, &output);
     // add half-width arabic number to `output` (e.g. "1989")
@@ -1788,7 +1789,7 @@ bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
     for (size_t j = 0; j < output.size(); ++j) {
       // "元徳", "建武" and "明徳" require dedupe
       const string value(output[j].value + kNenValue);
-      vector<string>::const_iterator found =
+      std::vector<string>::const_iterator found =
           std::find(results->begin(), results->end(), value);
       if (found != results->end()) {
         continue;
@@ -1873,13 +1874,13 @@ bool IsValidDateInThisYear(uint32 month, uint32 day) {
 
 // convert AD to Japanese ERA.
 // The results will have multiple variants.
-bool DateRewriter::AdToEra(int year, vector<string> *results) const {
+bool DateRewriter::AdToEra(int year, std::vector<string> *results) const {
   if (year < 645 || year > 2050) {    // TODO(taku) is it enough?
     return false;
   }
 
   // The order is south to north.
-  vector<string> eras;
+  std::vector<string> eras;
   bool r = false;
   r = AdToEraForCourt(kEraData, arraysize(kEraData), year, &eras);
   if (year > 1331 && year < 1393) {
@@ -1902,8 +1903,8 @@ bool DateRewriter::AdToEra(int year, vector<string> *results) const {
 }
 
 bool DateRewriter::EraToAd(const string &key,
-                           vector<string> *results,
-                           vector<string> *descritions) const {
+                           std::vector<string> *results,
+                           std::vector<string> *descritions) const {
   bool ret = false;
   // The order is south to north, older to newer
   ret |= EraToAdForCourt(kEraData, arraysize(kEraData),
@@ -1914,7 +1915,7 @@ bool DateRewriter::EraToAd(const string &key,
 }
 
 bool DateRewriter::ConvertTime(uint32 hour, uint32 min,
-                               vector<string> *results) const {
+                               std::vector<string> *results) const {
   DCHECK(results);
   if (!IsValidTime(hour, min)) {
     return false;
@@ -1961,7 +1962,7 @@ bool DateRewriter::ConvertTime(uint32 hour, uint32 min,
 }
 
 bool DateRewriter::ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
-                                       vector<string> *results) const {
+                                       std::vector<string> *results) const {
     DCHECK(results);
     if (!IsValidDate(year, month, day)) {
       return false;
@@ -1982,7 +1983,7 @@ bool DateRewriter::ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
 }
 
 bool DateRewriter::ConvertDateWithoutYear(uint32 month, uint32 day,
-                                          vector<string> *results) const {
+                                          std::vector<string> *results) const {
     DCHECK(results);
     if (!IsValidDateInThisYear(month, day)) {
       return false;
@@ -2023,14 +2024,14 @@ bool DateRewriter::RewriteTime(Segment *segment,
         size : max(cand_idx + 1, kMinimumDateCandidateIdx);
 
     struct tm t_st;
-    vector<string> era;
+    std::vector<string> era;
     switch (type) {
       case REWRITE_DATE: {
         if (!Clock::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
           LOG(ERROR) << "GetTmWithOffsetSecond() failed";
           return false;
         }
-        vector<string> results;
+        std::vector<string> results;
         ConvertDateWithYear(t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday,
                             &results);
         if (AdToEra(t_st.tm_year + 1900, &era) && !era.empty()) {
@@ -2043,7 +2044,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
         results.push_back(Util::StringPrintf("%s" "\xE6\x9B\x9C\xE6\x97\xA5",
                                              kWeekDayString[t_st.tm_wday]));
 
-        for (vector<string>::reverse_iterator rit = results.rbegin();
+        for (std::vector<string>::reverse_iterator rit = results.rbegin();
              rit != results.rend(); ++rit) {
           Insert(cand, insert_idx , *rit, description, segment);
         }
@@ -2089,9 +2090,9 @@ bool DateRewriter::RewriteTime(Segment *segment,
           LOG(ERROR) << "GetCurrentTm failed";
           return false;
         }
-        vector<string> times;
+        std::vector<string> times;
         ConvertTime(t_st.tm_hour, t_st.tm_min, &times);
-        for (vector<string>::reverse_iterator rit = times.rbegin();
+        for (std::vector<string>::reverse_iterator rit = times.rbegin();
              rit != times.rend(); ++rit) {
           Insert(cand, insert_idx, *rit, description, segment);
         }
@@ -2255,7 +2256,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
     return false;
   }
 
-  vector<string> results;
+  std::vector<string> results;
   if (!AdToEra(year, &results)) {
     return false;
   }
@@ -2289,7 +2290,7 @@ bool DateRewriter::RewriteAd(Segment *segment) const {
     VLOG(2) << "No candidates are found";
     return false;
   }
-  vector<string> results, descriptions;
+  std::vector<string> results, descriptions;
   const bool ret = EraToAd(key, &results, &descriptions);
 
   // Insert position is the last of candidates
@@ -2400,7 +2401,7 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
       segment->candidate(0) : segment->meta_candidate(0);
 
   bool is_modified = false;
-  vector<string> result;
+  std::vector<string> result;
   is_modified |= ConvertDateWithoutYear(upper_number, lower_number, &result);
 
   for (size_t i = 0; i < result.size(); ++i) {

@@ -60,7 +60,7 @@ class Connector {
 
   int LookupCost(uint16 rid, uint16 lid) const;
 
-  vector<Row *> rows_;
+  std::vector<Row *> rows_;
   const uint16 *default_cost_;
   int resolution_;
 

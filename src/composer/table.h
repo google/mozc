@@ -127,7 +127,7 @@ class Table {
                             size_t *key_length,
                             bool *fixed) const;
   void LookUpPredictiveAll(const string &input,
-                           vector<const Entry *> *results) const;
+                           std::vector<const Entry *> *results) const;
   // TODO(komatsu): Delete this function.
   bool HasSubRules(const string &input) const;
 
@@ -157,7 +157,7 @@ class Table {
 
   typedef Trie<const Entry*> EntryTrie;
   std::unique_ptr<EntryTrie> entries_;
-  typedef set<const Entry*> EntrySet;
+  typedef std::set<const Entry*> EntrySet;
   EntrySet entry_set_;
 
   // If false, input alphabet characters are normalized to lower
@@ -189,7 +189,7 @@ class TableManager {
   //  config::Config::PreeditMethod
   //  config::Config::PunctuationMethod
   //  config::Config::SymbolMethod
-  map<uint32, std::unique_ptr<const Table>> table_map_;
+  std::map<uint32, std::unique_ptr<const Table>> table_map_;
   // Fingerprint for Config::custom_roman_table;
   uint32 custom_roman_table_fingerprint_;
 };

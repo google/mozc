@@ -179,7 +179,8 @@ class NBestGeneratorTest : public ::testing::Test {
 
   const Node *GetEndNode(const ImmutableConverterImpl &converter,
                          const Segments &segments, const Node &begin_node,
-                         const vector<uint16> &group, bool is_single_segment) {
+                         const std::vector<uint16> &group,
+                         bool is_single_segment) {
     const Node *end_node = NULL;
     for (Node *node = begin_node.next; node->next != NULL; node = node->next) {
       end_node = node->next;
@@ -218,7 +219,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  vector<uint16> group;
+  std::vector<uint16> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
@@ -283,7 +284,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  vector<uint16> group;
+  std::vector<uint16> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
@@ -346,7 +347,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  vector<uint16> group;
+  std::vector<uint16> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
@@ -372,7 +373,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
             "\xe3\x81\x84",
             top_cand.value);
 
-  vector<StringPiece> keys, values, content_keys, content_values;
+  std::vector<StringPiece> keys, values, content_keys, content_values;
   for (Segment::Candidate::InnerSegmentIterator iter(&top_cand);
        !iter.Done(); iter.Next()) {
     keys.push_back(iter.GetKey());

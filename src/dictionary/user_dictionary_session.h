@@ -107,7 +107,7 @@ class UserDictionarySession {
 
   // Deletes the entries in the dictionary specified by dictionary_id.
   UserDictionaryCommandStatus::Status DeleteEntry(
-      uint64 dictionary_id, const vector<int> &index_list);
+      uint64 dictionary_id, const std::vector<int> &index_list);
 
   // Imports entries from the text data into the dictionary with dictionary_id.
   UserDictionaryCommandStatus::Status ImportFromString(
@@ -139,7 +139,7 @@ class UserDictionarySession {
 
   std::unique_ptr<mozc::UserDictionaryStorage> storage_;
   string default_dictionary_name_;
-  deque<UndoCommand*> undo_history_;
+  std::deque<UndoCommand*> undo_history_;
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionarySession);
 };

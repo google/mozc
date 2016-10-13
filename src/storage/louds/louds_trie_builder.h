@@ -61,8 +61,8 @@ class LoudsTrieBuilder {
  private:
   bool built_;
 
-  vector<string> word_list_;
-  vector<int> id_list_;
+  std::vector<string> word_list_;
+  std::vector<int> id_list_;
   string image_;
 
   DISALLOW_COPY_AND_ASSIGN(LoudsTrieBuilder);

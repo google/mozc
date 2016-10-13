@@ -169,7 +169,7 @@ class Trie {
   //  - Return 'abc', 'abd' for the key 'ab'
   //  - Return nothing for the key 'b'
   void LookUpPredictiveAll(StringPiece key,
-                           vector<T> *data_list) const {
+                           std::vector<T> *data_list) const {
     DCHECK(data_list);
     if (!key.empty()) {
       if (!HasSubTrie(GetKeyHead(key))) {
@@ -222,7 +222,7 @@ class Trie {
     return trie_.find(GetKeyHead(key).as_string())->second;
   }
 
-  typedef map<const string, Trie<T> *> SubTrie;
+  typedef std::map<const string, Trie<T> *> SubTrie;
   SubTrie trie_;
   bool has_data_;
   T data_;

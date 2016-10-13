@@ -74,7 +74,7 @@ TEST(BitArray, BitArrayTest) {
     // set array
     BitArray array(size);
     EXPECT_EQ(size, array.size());
-    vector<int> target(size);
+    std::vector<int> target(size);
     for (size_t j = 0; j < size; ++j) {
       const bool v = (Util::Random(2) == 0);
       if (v) {

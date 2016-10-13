@@ -52,7 +52,7 @@ class MemoryStorageImpl : public storage::StorageInterface {
 
   virtual bool Lookup(const string &key, string *value) const {
     CHECK(value);
-    map<string, string>::const_iterator it = data_.find(key);
+    std::map<string, string>::const_iterator it = data_.find(key);
     if (it == data_.end()) {
       return false;
     }
@@ -66,7 +66,7 @@ class MemoryStorageImpl : public storage::StorageInterface {
   }
 
   virtual bool Erase(const string &key) {
-    map<string, string>::iterator it = data_.find(key);
+    std::map<string, string>::iterator it = data_.find(key);
     if (it != data_.end()) {
       data_.erase(it);
       return true;
@@ -87,7 +87,7 @@ class MemoryStorageImpl : public storage::StorageInterface {
   virtual ~MemoryStorageImpl() {}
 
  private:
-  map<string, string> data_;
+  std::map<string, string> data_;
 };
 
 }  // namespace

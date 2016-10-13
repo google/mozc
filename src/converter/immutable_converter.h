@@ -149,13 +149,13 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   // Costs will be modified using the existing candidates.
   void InsertFirstSegmentToCandidates(Segments *segments,
                                       const Lattice &lattice,
-                                      const vector<uint16> &group,
+                                      const std::vector<uint16> &group,
                                       size_t max_candidates_size,
                                       FilterType filter_type) const;
 
   void InsertCandidates(Segments *segments,
                         const Lattice &lattice,
-                        const vector<uint16> &group,
+                        const std::vector<uint16> &group,
                         size_t max_candidates_size,
                         InsertCandidatesType type,
                         FilterType filter_type) const;
@@ -164,13 +164,13 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   // Returns true if |node| is valid node for segment end.
   bool IsSegmentEndNode(const Segments &segments,
                         const Node *node,
-                        const vector<uint16> &group,
+                        const std::vector<uint16> &group,
                         bool is_single_segment) const;
 
   // Helper function for InsertCandidates().
   // Returns the segment for inserting candidates.
   Segment *GetInsertTargetSegment(const Lattice &lattice,
-                                  const vector<uint16> &group,
+                                  const std::vector<uint16> &group,
                                   InsertCandidatesType type,
                                   size_t begin_pos,
                                   const Node *node,
@@ -178,10 +178,10 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
 
   bool MakeSegments(const ConversionRequest &request,
                     const Lattice &lattice,
-                    const vector<uint16> &group,
+                    const std::vector<uint16> &group,
                     Segments *segments) const;
 
-  void MakeGroup(const Segments &segments, vector<uint16> *group) const;
+  void MakeGroup(const Segments &segments, std::vector<uint16> *group) const;
 
   inline int GetCost(const Node *lnode, const Node *rnode) const {
     const int kInvalidPenaltyCost = 100000;

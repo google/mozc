@@ -99,9 +99,9 @@ template<typename BaseIter, typename Adapter>
 class IteratorAdapter {
  public:
   // Standard type traits for iterator.
-  typedef typename iterator_traits<BaseIter>::iterator_category
+  typedef typename std::iterator_traits<BaseIter>::iterator_category
       iterator_category;
-  typedef typename iterator_traits<BaseIter>::difference_type
+  typedef typename std::iterator_traits<BaseIter>::difference_type
       difference_type;
   typedef typename Adapter::value_type value_type;
   typedef typename Adapter::pointer pointer;

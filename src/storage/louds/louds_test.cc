@@ -41,8 +41,8 @@ namespace storage {
 namespace louds {
 namespace {
 
-vector<uint8> MakeSequence(StringPiece s) {
-  vector<uint8> seq;
+std::vector<uint8> MakeSequence(StringPiece s) {
+  std::vector<uint8> seq;
   int bit_len = 0;
   for (size_t i = 0; i < s.size(); ++i) {
     if (bit_len % 8 == 0) {
@@ -105,7 +105,7 @@ TEST_P(LoudsTest, Basic) {
   const CacheSizeParam &param = GetParam();
 
   // Test with the trie illustrated in louds.h.
-  const vector<uint8> kSeq = MakeSequence("10 110 0 110 0 0");
+  const std::vector<uint8> kSeq = MakeSequence("10 110 0 110 0 0");
   Louds louds;
   louds.Init(kSeq.data(), kSeq.size(),
              param.bitvec_lb0_cache_size,

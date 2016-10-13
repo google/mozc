@@ -332,13 +332,14 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
 #endif  // OS_WIN
 }
 
-string FileUtil::JoinPath(const vector<StringPiece> &components) {
+string FileUtil::JoinPath(const std::vector<StringPiece> &components) {
   string output;
   JoinPath(components, &output);
   return output;
 }
 
-void FileUtil::JoinPath(const vector<StringPiece> &components, string *output) {
+void FileUtil::JoinPath(const std::vector<StringPiece> &components,
+                        string *output) {
   output->clear();
   for (size_t i = 0; i < components.size(); ++i) {
     if (components[i].empty()) {

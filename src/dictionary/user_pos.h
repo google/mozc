@@ -180,11 +180,11 @@ class UserPOS : public UserPOSInterface {
   ~UserPOS() override;
 
   // Implementation of UserPOSInterface.
-  void GetPOSList(vector<string> *pos_list) const override;
+  void GetPOSList(std::vector<string> *pos_list) const override;
   bool IsValidPOS(const string &pos) const override;
   bool GetPOSIDs(const string &pos, uint16 *id) const override;
   bool GetTokens(const string &key, const string &value, const string &pos,
-                 vector<Token> *tokens) const override;
+                 std::vector<Token> *tokens) const override;
 
   iterator begin() const { return iterator(token_array_data_.data()); }
   iterator end() const {

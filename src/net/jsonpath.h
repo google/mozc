@@ -69,7 +69,7 @@ class JsonPath {
   // }
   static bool Parse(const Json::Value &root,
                     const string &jsonpath,
-                    vector<const Json::Value *> *output);
+                    std::vector<const Json::Value *> *output);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(JsonPath);

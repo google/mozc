@@ -48,10 +48,10 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
   DictionaryFileCodec();
   virtual ~DictionaryFileCodec();
 
-  virtual void WriteSections(const vector<DictionaryFileSection> &sections,
+  virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
                              ostream *ofs) const;
   virtual bool ReadSections(const char *image, int length,
-                            vector<DictionaryFileSection> *sections) const;
+                            std::vector<DictionaryFileSection> *sections) const;
   virtual string GetSectionName(const string &name) const;
 
  private:

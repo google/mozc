@@ -190,29 +190,36 @@ void PrintFlags(string *output) {
     const Flag *flag = it->second;
     switch (flag->type) {
       case I:
-        os << "  type: int32  default: " <<
-            *(reinterpret_cast<const int *>(flag->default_storage)) << endl;
+        os << "  type: int32  default: "
+           << *(reinterpret_cast<const int *>(flag->default_storage))
+           << std::endl;
         break;
       case B:
-        os << "  type: bool  default: " <<
-            (*(reinterpret_cast<const bool *>(flag->default_storage))
-             ? "true" : "false") << endl;
+        os << "  type: bool  default: "
+           << (*(reinterpret_cast<const bool *>(flag->default_storage))
+                   ? "true"
+                   : "false")
+           << std::endl;
         break;
       case I64:
-        os << "  type: int64 default: " <<
-            *(reinterpret_cast<const int64 *>(flag->default_storage)) << endl;
+        os << "  type: int64 default: "
+           << *(reinterpret_cast<const int64 *>(flag->default_storage))
+           << std::endl;
         break;
       case U64:
-        os << "  type: uint64  default: " <<
-            *(reinterpret_cast<const uint64 *>(flag->default_storage)) << endl;
+        os << "  type: uint64  default: "
+           << *(reinterpret_cast<const uint64 *>(flag->default_storage))
+           << std::endl;
         break;
       case D:
-        os << "  type: double  default: " <<
-            *(reinterpret_cast<const double *>(flag->default_storage)) << endl;
+        os << "  type: double  default: "
+           << *(reinterpret_cast<const double *>(flag->default_storage))
+           << std::endl;
         break;
       case S:
-        os << "  type: string  default: " <<
-            *(reinterpret_cast<const string *>(flag->default_storage)) << endl;
+        os << "  type: string  default: "
+           << *(reinterpret_cast<const string *>(flag->default_storage))
+           << std::endl;
         break;
       default:
         break;
@@ -304,7 +311,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
 #endif
     if (!SetFlag(key, value)) {
 #ifndef IGNORE_INVALID_FLAG
-      cerr << "Unknown/Invalid flag " << key << endl;
+      cerr << "Unknown/Invalid flag " << key << std::endl;
       exit(1);
 #endif
     }

@@ -176,10 +176,9 @@ void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
   }
 }
 
-void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
-                                   int32 cost, int32 structure_cost,
-                                   int32 wcost,
-                                   const vector<const Node *> &nodes) const {
+void NBestGenerator::MakeCandidate(
+    Segment::Candidate *candidate, int32 cost, int32 structure_cost,
+    int32 wcost, const std::vector<const Node *> &nodes) const {
   CHECK(!nodes.empty());
 
   candidate->Init();

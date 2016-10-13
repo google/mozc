@@ -224,7 +224,7 @@ class SessionConverterTest : public ::testing::Test {
     candidate->value = "\xe5\x8d\xb0\xe6\x88\xbf";
 
     // Set dummy T13Ns
-    vector<Segment::Candidate> *meta_candidates =
+    std::vector<Segment::Candidate> *meta_candidates =
         segment->mutable_meta_candidates();
     meta_candidates->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
@@ -243,10 +243,10 @@ class SessionConverterTest : public ::testing::Test {
       Segment *segment = segments->mutable_conversion_segment(i);
       CHECK(segment);
       const size_t composition_len = Util::CharsLen(segment->key());
-      vector<string> t13ns;
+      std::vector<string> t13ns;
       composer->GetSubTransliterations(
           composition_pos, composition_len, &t13ns);
-      vector<Segment::Candidate> *meta_candidates =
+      std::vector<Segment::Candidate> *meta_candidates =
           segment->mutable_meta_candidates();
       meta_candidates->resize(transliteration::NUM_T13N_TYPES);
       for (size_t j = 0; j < transliteration::NUM_T13N_TYPES; ++j) {
@@ -363,8 +363,8 @@ class SessionConverterTest : public ::testing::Test {
 
   static ::testing::AssertionResult ExpectSelectedCandidateIndices(
       const char *, const char *,
-      const SessionConverter &converter, const vector<int> &expected) {
-    const vector<int> &actual = converter.selected_candidate_indices_;
+      const SessionConverter &converter, const std::vector<int> &expected) {
+    const std::vector<int> &actual = converter.selected_candidate_indices_;
 
     if (expected.size() != actual.size()) {
       return ::testing::AssertionFailure()
@@ -417,7 +417,7 @@ TEST_F(SessionConverterTest, Convert) {
   SetAiueo(&segments);
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionForRequest(&segments, true);
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
   composer_->InsertCharacterPreedit(kChars_Aiueo);
@@ -494,7 +494,7 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
 
   EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HALF_ASCII));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   {  // Check the conversion #1
     commands::Output output;
@@ -558,7 +558,7 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
 
   // Convert
   EXPECT_TRUE(converter.Convert(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   expected_indices.push_back(0);
   {  // Check the conversion #1
@@ -622,7 +622,7 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
   convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::FULL_ASCII));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   {  // Check the conversion #1
     commands::Output output;
@@ -692,7 +692,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.Convert(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   expected_indices.push_back(0);
   {
@@ -1023,7 +1023,7 @@ TEST_F(SessionConverterTest, Transliterations) {
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.Convert(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1048,7 +1048,7 @@ TEST_F(SessionConverterTest, Transliterations) {
             "\xe6\x96\x87\xe5\xad\x97\xe7\xa8\xae",
             candidates.candidate(1).value());
 
-  vector<string> t13ns;
+  std::vector<string> t13ns;
   composer_->GetTransliterations(&t13ns);
 
   EXPECT_TRUE(candidates.has_subcandidates());
@@ -1092,7 +1092,7 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
     convertermock_->SetStartConversionForRequest(&segments, true);
   }
   EXPECT_TRUE(converter.Convert(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   expected_indices.push_back(0);
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1163,7 +1163,7 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
 TEST_F(SessionConverterTest, ConvertToHalfWidth) {
   SessionConverter converter(
       convertermock_.get(), request_.get(), config_.get());
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   // "あ"
   composer_->InsertCharacterKeyAndPreedit("a", "\xE3\x81\x82");
   // "ｂ"
@@ -1274,7 +1274,7 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1315,7 +1315,7 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
     FillT13Ns(&segments, composer_.get());
     convertermock_->SetStartConversionForRequest(&segments, true);
     EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    vector<int> expected_indices;
+    std::vector<int> expected_indices;
     expected_indices.push_back(0);
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1390,7 +1390,7 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
     FillT13Ns(&segments, composer_.get());
     convertermock_->SetStartConversionForRequest(&segments, true);
     EXPECT_TRUE(converter.Convert(*composer_));
-    vector<int> expected_indices;
+    std::vector<int> expected_indices;
     expected_indices.push_back(0);
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1497,7 +1497,7 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
   // "かまぼこのいんぼう"
   composer_->InsertCharacterPreedit(kKamabokono + kInbou);
   EXPECT_TRUE(converter.Convert(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   expected_indices.push_back(0);
   EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -1666,7 +1666,7 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegments_atLastSegment) {
 TEST_F(SessionConverterTest, CommitPreedit) {
   SessionConverter converter(
       convertermock_.get(), request_.get(), config_.get());
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   composer_->InsertCharacterPreedit(kChars_Aiueo);
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1718,7 +1718,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   // Suggestion
   convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   EXPECT_TRUE(IsCandidateListVisible(converter));
   EXPECT_TRUE(converter.IsActive());
@@ -1801,7 +1801,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   // Suggestion
   convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   EXPECT_TRUE(IsCandidateListVisible(converter));
   EXPECT_TRUE(converter.IsActive());
@@ -1917,7 +1917,7 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   convertermock_->SetStartSuggestionForRequest(&suggestion_segments, true);
   convertermock_->SetStartPartialSuggestion(&suggestion_segments, false);
   EXPECT_TRUE(converter.Suggest(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   EXPECT_TRUE(IsCandidateListVisible(converter));
   EXPECT_TRUE(converter.IsActive());
@@ -2013,7 +2013,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   // Suggestion
   convertermock_->SetStartSuggestionForRequest(&segments, true);
   EXPECT_TRUE(converter.Suggest(*composer_));
-  vector<int> expected_indices;
+  std::vector<int> expected_indices;
   expected_indices.push_back(0);
   EXPECT_TRUE(IsCandidateListVisible(converter));
   EXPECT_TRUE(converter.IsActive());
@@ -2510,7 +2510,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
       "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a_2";
     // New meta candidates.
     // They should be ignored.
-    vector<Segment::Candidate> *meta_candidates =
+    std::vector<Segment::Candidate> *meta_candidates =
         segment->mutable_meta_candidates();
     meta_candidates->clear();
     meta_candidates->resize(1);
@@ -2527,7 +2527,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
     EXPECT_EQ(4, candidate_list.size());
     EXPECT_TRUE(candidate_list.focused());
     size_t sub_cand_list_count = 0;
-    set<int> id_set;
+    std::set<int> id_set;
     for (size_t i = 0; i < candidate_list.size(); ++i) {
       if (candidate_list.candidate(i).IsSubcandidateList()) {
         ++sub_cand_list_count;

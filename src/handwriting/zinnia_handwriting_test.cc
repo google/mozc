@@ -60,7 +60,7 @@ TEST_F(ZinniaHandwritingTest, Recognize) {
   stroke.push_back(std::make_pair(0.8, 0.5));
   strokes.push_back(stroke);
 
-  vector<string> results;
+  std::vector<string> results;
   const HandwritingStatus status = zinnia_->Recognize(strokes, &results);
   EXPECT_EQ(HANDWRITING_NO_ERROR, status);
   // "一"

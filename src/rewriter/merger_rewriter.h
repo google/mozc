@@ -154,7 +154,7 @@ class MergerRewriter : public RewriterInterface {
   }
 
  private:
-  vector<RewriterInterface *> rewriters_;
+  std::vector<RewriterInterface *> rewriters_;
 
   DISALLOW_COPY_AND_ASSIGN(MergerRewriter);
 };

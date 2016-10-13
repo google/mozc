@@ -555,7 +555,8 @@ class DictionaryPredictorTest : public ::testing::Test {
     return ret;
   }
 
-  void GenerateKeyEvents(const string &text, vector<commands::KeyEvent> *keys) {
+  void GenerateKeyEvents(const string &text,
+                         std::vector<commands::KeyEvent> *keys) {
     keys->clear();
 
     const char *begin = text.data();
@@ -577,7 +578,7 @@ class DictionaryPredictorTest : public ::testing::Test {
   }
 
   void InsertInputSequence(const string &text, composer::Composer *composer) {
-    vector<commands::KeyEvent> keys;
+    std::vector<commands::KeyEvent> keys;
     GenerateKeyEvents(text, &keys);
 
     for (size_t i = 0; i < keys.size(); ++i) {
@@ -588,7 +589,7 @@ class DictionaryPredictorTest : public ::testing::Test {
   void InsertInputSequenceForProbableKeyEvent(const string &text,
                                               const uint32 *corrected_key_codes,
                                               composer::Composer *composer) {
-    vector<commands::KeyEvent> keys;
+    std::vector<commands::KeyEvent> keys;
     GenerateKeyEvents(text, &keys);
 
     for (size_t i = 0; i < keys.size(); ++i) {
@@ -638,7 +639,7 @@ class DictionaryPredictorTest : public ::testing::Test {
                                    ::testing::Ref(*convreq_), _))
           .Times(::testing::AtLeast(1));
 
-      vector<TestableDictionaryPredictor::Result> results;
+      std::vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateUnigramPrediction(
           TestableDictionaryPredictor::UNIGRAM,
           *convreq_, segments, &results);
@@ -700,7 +701,7 @@ class DictionaryPredictorTest : public ::testing::Test {
       EXPECT_CALL(*check_dictionary,
                   LookupPredictive(_, ::testing::Ref(*convreq_), _));
 
-      vector<TestableDictionaryPredictor::Result> results;
+      std::vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateBigramPrediction(
           TestableDictionaryPredictor::BIGRAM,
           *convreq_, segments, &results);
@@ -739,7 +740,7 @@ class DictionaryPredictorTest : public ::testing::Test {
                                    ::testing::Ref(*convreq_), _))
           .Times(::testing::AtLeast(1));
 
-      vector<TestableDictionaryPredictor::Result> results;
+      std::vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateSuffixPrediction(
           TestableDictionaryPredictor::SUFFIX,
           *convreq_, segments, &results);
@@ -759,7 +760,7 @@ class DictionaryPredictorTest : public ::testing::Test {
   }
 
   bool FindResultByValue(
-      const vector<TestableDictionaryPredictor::Result> &results,
+      const std::vector<TestableDictionaryPredictor::Result> &results,
       const string &value) {
     for (size_t i = 0; i < results.size(); ++i) {
       if (results[i].value == value) {
@@ -787,12 +788,12 @@ class DictionaryPredictorTest : public ::testing::Test {
     Segments segments;
     MakeSegmentsForPrediction(key, &segments);
 
-    vector<TestableDictionaryPredictor::Result> results;
+    std::vector<TestableDictionaryPredictor::Result> results;
     predictor->AggregateEnglishPrediction(
         TestableDictionaryPredictor::ENGLISH,
         *convreq_, segments, &results);
 
-    set<string> values;
+    std::set<string> values;
     for (size_t i = 0; i < results.size(); ++i) {
       EXPECT_EQ(TestableDictionaryPredictor::ENGLISH, results[i].types);
       EXPECT_TRUE(Util::StartsWith(results[i].value, expected_prefix))
@@ -827,12 +828,12 @@ class DictionaryPredictorTest : public ::testing::Test {
     Segments segments;
     MakeSegmentsForPrediction(key, &segments);
 
-    vector<TestableDictionaryPredictor::Result> results;
+    std::vector<TestableDictionaryPredictor::Result> results;
     predictor->AggregateTypeCorrectingPrediction(
         TestableDictionaryPredictor::TYPING_CORRECTION,
         *convreq_, segments, &results);
 
-    set<string> values;
+    std::set<string> values;
     for (size_t i = 0; i < results.size(); ++i) {
       EXPECT_EQ(TestableDictionaryPredictor::TYPING_CORRECTION,
                 results[i].types);
@@ -1298,7 +1299,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramPrediction) {
 
   MakeSegmentsForSuggestion(kKey, &segments);
 
-  vector<DictionaryPredictor::Result> results;
+  std::vector<DictionaryPredictor::Result> results;
 
   predictor->AggregateUnigramPrediction(
       DictionaryPredictor::BIGRAM,
@@ -1350,7 +1351,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
   Segment *segment = segments.add_segment();
   segment->set_key(kHiraganaA);
 
-  vector<DictionaryPredictor::Result> results;
+  std::vector<DictionaryPredictor::Result> results;
   DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
       mock_dict, *convreq_, segments, &results);
 
@@ -1385,7 +1386,7 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
 
     predictor->AggregateBigramPrediction(
         DictionaryPredictor::UNIGRAM,
@@ -1436,7 +1437,7 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
 
     predictor->AggregateBigramPrediction(
         DictionaryPredictor::BIGRAM,
@@ -1466,7 +1467,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
 
     predictor->AggregateBigramPrediction(
         DictionaryPredictor::UNIGRAM, *convreq_, segments, &results);
@@ -1666,7 +1667,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
 
     MakeSegmentsForSuggestion(kKey, &segments);
 
-    vector<TestableDictionaryPredictor::Result> results;
+    std::vector<TestableDictionaryPredictor::Result> results;
     convreq_->set_use_actual_converter_for_realtime_conversion(false);
 
     predictor->AggregateRealtimeConversion(
@@ -1693,7 +1694,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
 
     MakeSegmentsForSuggestion(kKey, &segments);
 
-    vector<TestableDictionaryPredictor::Result> results;
+    std::vector<TestableDictionaryPredictor::Result> results;
     convreq_->set_use_actual_converter_for_realtime_conversion(true);
 
     predictor->AggregateRealtimeConversion(
@@ -1834,7 +1835,7 @@ TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
 
   PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
-  vector<DictionaryPredictor::Result> results;
+  std::vector<DictionaryPredictor::Result> results;
 
   // Since SuffixDictionary only returns when key is "い".
   // result should be empty.
@@ -1904,7 +1905,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction) {
 
   PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
-  vector<DictionaryPredictor::Result> results;
+  std::vector<DictionaryPredictor::Result> results;
 
   // Candidates generated by AggregateSuffixPrediction should have SUFFIX type.
   predictor->AggregateSuffixPrediction(
@@ -2046,15 +2047,15 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
     const char kHistoryValue[] = "12";
     const char kExpectedValue[] = "\xE6\x9C\x88";  // "月" (month)
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
         *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
-    vector<DictionaryPredictor::Result>::const_iterator target =
+    std::vector<DictionaryPredictor::Result>::const_iterator target =
         results.end();
-    for (vector<DictionaryPredictor::Result>::const_iterator it =
+    for (std::vector<DictionaryPredictor::Result>::const_iterator it =
              results.begin();
          it != results.end(); ++it) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
@@ -2081,7 +2082,7 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
         DictionaryPredictor::SUFFIX,
         *convreq_, segments, &results);
     target = results.end();
-    for (vector<DictionaryPredictor::Result>::const_iterator it =
+    for (std::vector<DictionaryPredictor::Result>::const_iterator it =
              results.begin();
          it != results.end(); ++it) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
@@ -2100,14 +2101,14 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
     const char kHistoryValue[] = "66050713";
     const char kExpectedValue[] = "\xE5\x80\x8B";  // "個" (piece)
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
         *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     bool found = false;
-    for (vector<DictionaryPredictor::Result>::const_iterator it =
+    for (std::vector<DictionaryPredictor::Result>::const_iterator it =
              results.begin();
          it != results.end(); ++it) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
@@ -2173,14 +2174,14 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
     const TestCase &test_case = kTestCases[i];
     PrependHistorySegments(
         test_case.history_key, test_case.history_value, &segments);
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
         *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     bool found = false;
-    for (vector<DictionaryPredictor::Result>::const_iterator it =
+    for (std::vector<DictionaryPredictor::Result>::const_iterator it =
              results.begin();
          it != results.end(); ++it) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
@@ -2222,14 +2223,14 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
     const TestCase &test_case = kTestCases[i];
     PrependHistorySegments(
         test_case.history_key, test_case.history_value, &segments);
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     predictor->AggregateSuffixPrediction(
         DictionaryPredictor::SUFFIX,
         *convreq_, segments, &results);
     EXPECT_FALSE(results.empty());
 
     bool found = false;
-    for (vector<DictionaryPredictor::Result>::const_iterator it =
+    for (std::vector<DictionaryPredictor::Result>::const_iterator it =
              results.begin();
          it != results.end(); ++it) {
       EXPECT_EQ(it->types, DictionaryPredictor::SUFFIX);
@@ -2373,7 +2374,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
 
   MakeSegmentsForSuggestion(kKey, &segments);
 
-  vector<DictionaryPredictor::Result> results;
+  std::vector<DictionaryPredictor::Result> results;
 
   convreq_->set_use_actual_converter_for_realtime_conversion(false);
   predictor->AggregateRealtimeConversion(
@@ -2413,7 +2414,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
 
   MakeSegmentsForSuggestion(kCapriHiragana, &segments);
 
-  vector<DictionaryPredictor::Result> results;
+  std::vector<DictionaryPredictor::Result> results;
 
   convreq_->set_use_actual_converter_for_realtime_conversion(false);
   predictor->AggregateUnigramPrediction(
@@ -2496,7 +2497,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
       data_and_predictor->dictionary_predictor();
 
   {
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     DictionaryPredictor::Result *result;
 
     results.push_back(DictionaryPredictor::Result());
@@ -2538,7 +2539,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
   }
 
   {
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     DictionaryPredictor::Result *result;
 
     results.push_back(DictionaryPredictor::Result());
@@ -2569,7 +2570,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
   }
 
   {
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     DictionaryPredictor::Result *result;
 
     results.push_back(DictionaryPredictor::Result());
@@ -2600,7 +2601,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
   }
 
   {
-    vector<DictionaryPredictor::Result> results;
+    std::vector<DictionaryPredictor::Result> results;
     DictionaryPredictor::Result *result;
 
     results.push_back(DictionaryPredictor::Result());
@@ -2687,14 +2688,14 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
   }
   {
     string base;
-    set<string> expanded;
+    std::set<string> expanded;
     composer_->GetQueriesForPrediction(&base, &expanded);
     // "あ"
     EXPECT_EQ("\xe3\x81\x82", base);
     EXPECT_GT(expanded.size(), 5);
   }
 
-  vector<TestableDictionaryPredictor::Result> results;
+  std::vector<TestableDictionaryPredictor::Result> results;
   TestableDictionaryPredictor::Result *result;
 
   results.push_back(TestableDictionaryPredictor::MakeEmptyResult());
@@ -2764,14 +2765,14 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
   }
   {
     string base;
-    set<string> expanded;
+    std::set<string> expanded;
     composer_->GetQueriesForPrediction(&base, &expanded);
     // "あ"
     EXPECT_EQ("\xe3\x81\x82", base);
     EXPECT_EQ(2, expanded.size());
   }
 
-  vector<TestableDictionaryPredictor::Result> results;
+  std::vector<TestableDictionaryPredictor::Result> results;
   TestableDictionaryPredictor::Result *result;
 
   results.push_back(TestableDictionaryPredictor::MakeEmptyResult());
@@ -2837,7 +2838,7 @@ TEST_F(DictionaryPredictorTest, SetLMCost) {
   // "てすと"
   segment->set_key("\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8");
 
-  vector<TestableDictionaryPredictor::Result> results;
+  std::vector<TestableDictionaryPredictor::Result> results;
   TestableDictionaryPredictor::Result *result;
 
   results.push_back(TestableDictionaryPredictor::MakeEmptyResult());
@@ -2889,7 +2890,7 @@ void AddTestableDictionaryPredictorResult(
     const char *key, const char *value, int wcost,
     TestableDictionaryPredictor::PredictionTypes prediction_types,
     Token::AttributesBitfield attributes,
-    vector<TestableDictionaryPredictor::Result> *results) {
+    std::vector<TestableDictionaryPredictor::Result> *results) {
   results->push_back(TestableDictionaryPredictor::MakeEmptyResult());
   TestableDictionaryPredictor::Result *result = &results->back();
   result->key = key;
@@ -2920,7 +2921,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
   {
     // Cost of words in user dictionary should be decreased.
     const int kOrigianlWordCost = 10000;
-    vector<TestableDictionaryPredictor::Result> results;
+    std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
         kAikaHiragana, kAikaKanji, kOrigianlWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY,
@@ -2937,7 +2938,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
   {
     // Cost of words in user dictionary should not be decreased to below 1.
     const int kOrigianlWordCost = 10;
-    vector<TestableDictionaryPredictor::Result> results;
+    std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
         kAikaHiragana, kAikaKanji, kOrigianlWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY,
@@ -2954,7 +2955,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
   {
     // Cost of words not in user dictionary should not be decreased.
     const int kOrigianlWordCost = 10000;
-    vector<TestableDictionaryPredictor::Result> results;
+    std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
         kAikaHiragana, kAikaKanji, kOrigianlWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::NONE,
@@ -3036,7 +3037,7 @@ TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
 
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
-  vector<TestableDictionaryPredictor::Result> results;
+  std::vector<TestableDictionaryPredictor::Result> results;
   predictor->AggregateUnigramPrediction(
       TestableDictionaryPredictor::UNIGRAM,
       *convreq_, segments, &results);
@@ -3314,7 +3315,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
       "\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99";
   MakeSegmentsForSuggestion(kKey, &segments);
 
-  vector<TestableDictionaryPredictor::Result> results;
+  std::vector<TestableDictionaryPredictor::Result> results;
   predictor->AggregateRealtimeConversion(
       TestableDictionaryPredictor::REALTIME, *convreq_,
       &segments, &results);
@@ -3342,7 +3343,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  vector<TestableDictionaryPredictor::Result> results;
+  std::vector<TestableDictionaryPredictor::Result> results;
   const int kTestSize = 20;
   for (size_t i = 0; i < kTestSize; ++i) {
     results.push_back(TestableDictionaryPredictor::MakeEmptyResult());
@@ -3377,7 +3378,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  vector<TestableDictionaryPredictor::Result> results;
+  std::vector<TestableDictionaryPredictor::Result> results;
   const int kTotalCandidateSize = 100;
   const int kLowCostCandidateSize = 5;
   for (size_t i = 0; i < kTotalCandidateSize; ++i) {
@@ -3531,8 +3532,8 @@ struct TestEntry {
   string key;
   bool expected_result;
   // candidate value and ZeroQueryType.
-  vector<string> expected_candidates;
-  vector<int32> expected_types;
+  std::vector<string> expected_candidates;
+  std::vector<int32> expected_types;
 
   string DebugString() const {
     string candidates;
@@ -3569,7 +3570,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
     // excludes it by subtracting 1.
     const StringPiece token_array_data(kTestTokenArray,
                                        arraysize(kTestTokenArray) - 1);
-    vector<StringPiece> strs;
+    std::vector<StringPiece> strs;
     for (const char *str : kTestStrings) {
       strs.push_back(str);
     }
@@ -3578,7 +3579,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
     zero_query_dict.Init(token_array_data, string_array_data);
   }
 
-  vector<TestEntry> test_entries;
+  std::vector<TestEntry> test_entries;
   {
     TestEntry entry;
     entry.available_emoji_carrier = 0;
@@ -3686,7 +3687,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
     composer::Composer composer(&table, &client_request, &config);
     const ConversionRequest request(&composer, &client_request, &config);
 
-    vector<DictionaryPredictor::ZeroQueryResult> actual_candidates;
+    std::vector<DictionaryPredictor::ZeroQueryResult> actual_candidates;
     const bool actual_result =
         DictionaryPredictor::GetZeroQueryCandidatesForKey(
             request, test_entry.key, zero_query_dict, &actual_candidates);

@@ -285,7 +285,7 @@ bool ParseProtobufFromString(const string &text, Message *message) {
   const size_t separator_pos = text.find('=');
   const string full_name = text.substr(0, separator_pos);
   const string value = text.substr(separator_pos + 1);
-  vector<string> names;
+  std::vector<string> names;
   Util::SplitStringUsing(full_name, ".", &names);
 
   Message *msg = message;
@@ -354,7 +354,7 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
 
   string line_text;
   int line_number = 0;
-  vector<string> columns;
+  std::vector<string> columns;
   while (getline(input_stream, line_text)) {
     ++line_number;
     SCOPED_TRACE(Util::StringPrintf("Scenario: %s [%s:%d]",

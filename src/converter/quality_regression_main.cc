@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());
 
-  vector<QualityRegressionUtil::TestItem> items;
+  std::vector<QualityRegressionUtil::TestItem> items;
   QualityRegressionUtil::ParseFile(FLAGS_test_file, &items);
 
   for (size_t i = 0; i < items.size(); ++i) {

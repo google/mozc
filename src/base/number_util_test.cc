@@ -919,7 +919,7 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
 
 TEST(NumberUtilTest, ArabicToWideArabicTest) {
   string arabic;
-  vector<NumberUtil::NumberString> output;
+  std::vector<NumberUtil::NumberString> output;
 
   arabic = "12345";
   output.clear();
@@ -1093,7 +1093,7 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
   };
 
   for (size_t i = 0; i < arraysize(kData); ++i) {
-    vector<NumberUtil::NumberString> output;
+    std::vector<NumberUtil::NumberString> output;
     ASSERT_LE(kData[i].expect_num, kMaxCandsInArabicToKanjiTest);
     EXPECT_TRUE(NumberUtil::ArabicToKanji(kData[i].input, &output));
     ASSERT_EQ(output.size(), kData[i].expect_num)
@@ -1110,7 +1110,7 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
     "asf56789", "0.001", "-100", "123456789012345678901"
   };
   for (size_t i = 0; i < arraysize(kFailInputs); ++i) {
-    vector<NumberUtil::NumberString> output;
+    std::vector<NumberUtil::NumberString> output;
     EXPECT_FALSE(NumberUtil::ArabicToKanji(kFailInputs[i], &output));
     ASSERT_EQ(output.size(), 0) << "input : " << kFailInputs[i];
   }
@@ -1119,7 +1119,7 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
 // ArabicToSeparatedArabic TEST
 TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
   string arabic;
-  vector<NumberUtil::NumberString> output;
+  std::vector<NumberUtil::NumberString> output;
 
   // Test data expected to succeed
   const char* kSuccess[][3] = {
@@ -1168,7 +1168,7 @@ TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
 // ArabicToOtherForms
 TEST(NumberUtilTest, ArabicToOtherFormsTest) {
   string arabic;
-  vector<NumberUtil::NumberString> output;
+  std::vector<NumberUtil::NumberString> output;
 
   arabic = "5";
   output.clear();
@@ -1215,7 +1215,7 @@ TEST(NumberUtilTest, ArabicToOtherFormsTest) {
 // ArabicToOtherRadixes
 TEST(NumberUtilTest, ArabicToOtherRadixesTest) {
   string arabic;
-  vector<NumberUtil::NumberString> output;
+  std::vector<NumberUtil::NumberString> output;
 
   arabic = "1";
   output.clear();

@@ -59,7 +59,7 @@ class UserPOSTest : public ::testing::Test {
 };
 
 TEST_F(UserPOSTest, UserPOSBasicTest) {
-  vector<string> pos_list;
+  std::vector<string> pos_list;
   user_pos_->GetPOSList(&pos_list);
   EXPECT_FALSE(pos_list.empty());
 
@@ -72,10 +72,10 @@ TEST_F(UserPOSTest, UserPOSBasicTest) {
 }
 
 TEST_F(UserPOSTest, UserPOSGetTokensTest) {
-  vector<string> pos_list;
+  std::vector<string> pos_list;
   user_pos_->GetPOSList(&pos_list);
 
-  vector<UserPOS::Token> tokens;
+  std::vector<UserPOS::Token> tokens;
   EXPECT_FALSE(user_pos_->GetTokens("", "test",
                                     pos_list[0],
                                     &tokens));
@@ -104,7 +104,7 @@ TEST_F(UserPOSTest, UserPOSGetTokensTest) {
 }
 
 TEST_F(UserPOSTest, ConjugationTest) {
-  vector<UserPOS::Token> tokens1, tokens2;
+  std::vector<UserPOS::Token> tokens1, tokens2;
   // EXPECT_TRUE(user_pos_->GetTokens("わら", "嗤",
   // "動詞ワ行五段", &tokens1));
   // EXPECT_TRUE(user_pos_->GetTokens("わらう", "嗤う",

@@ -59,9 +59,9 @@ class UploadUtil {
   // <type>&<elapsed_sec>&<name1>=<val1> ...
   // type is transmission type (Daily, Weekly, etc.)
   // elapsed_sec is the time elapsed since the last transmission.
-  void SetHeader(const string &type,
-                 int elapsed_sec,
-                 const vector<pair<string, string> > &optional_url_params);
+  void SetHeader(
+      const string &type, int elapsed_sec,
+      const std::vector<std::pair<string, string> > &optional_url_params);
 
   // Enables using HTTPS. Default is false.
   void SetUseHttps(bool use_https);
@@ -92,7 +92,7 @@ class UploadUtil {
  private:
   string stat_header_;
   string stat_values_;
-  vector<pair<string, string> > optional_url_params_;
+  std::vector<std::pair<string, string> > optional_url_params_;
   bool use_https_;
 
   DISALLOW_COPY_AND_ASSIGN(UploadUtil);

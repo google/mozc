@@ -103,7 +103,8 @@ SystemDictionaryBuilder::SystemDictionaryBuilder(
 
 SystemDictionaryBuilder::~SystemDictionaryBuilder() {}
 
-void SystemDictionaryBuilder::BuildFromTokens(const vector<Token *> &tokens) {
+void SystemDictionaryBuilder::BuildFromTokens(
+    const std::vector<Token *> &tokens) {
   KeyInfoList key_info_list;
   ReadTokens(tokens, &key_info_list);
 
@@ -130,7 +131,7 @@ void SystemDictionaryBuilder::WriteToStream(
     const string &intermediate_output_file_base_path,
     ostream *output_stream) const {
   // Memory images of each section
-  vector<DictionaryFileSection> sections;
+  std::vector<DictionaryFileSection> sections;
   DictionaryFileCodecInterface *file_codec =
       DictionaryFileCodecFactory::GetCodec();
   DictionaryFileSection value_trie_section(
@@ -152,7 +153,7 @@ void SystemDictionaryBuilder::WriteToStream(
 
   sections.push_back(token_array_section);
   uint32 frequent_pos_array[256] = {0};
-  for (map<uint32, int>::const_iterator i = frequent_pos_.begin();
+  for (std::map<uint32, int>::const_iterator i = frequent_pos_.begin();
        i != frequent_pos_.end(); ++i) {
     frequent_pos_array[i->second] = i->first;
   }
@@ -223,7 +224,7 @@ struct TokenPtrLessThan {
 
 }  // namespace
 
-void SystemDictionaryBuilder::ReadTokens(const vector<Token *> &tokens,
+void SystemDictionaryBuilder::ReadTokens(const std::vector<Token *> &tokens,
                                          KeyInfoList *key_info_list) const {
   // Create KeyInfoList in two steps.
   // 1. Create an array of Token with (stably) sorting Token::key.
@@ -232,10 +233,10 @@ void SystemDictionaryBuilder::ReadTokens(const vector<Token *> &tokens,
   //    [KeyInfo(key:aaa)[Token 1][Token 2]][KeyInfo(key:abc)[Token 3]][...]
 
   // Step 1.
-  typedef vector<Token *> ReduceBuffer;
+  typedef std::vector<Token *> ReduceBuffer;
   ReduceBuffer reduce_buffer;
   reduce_buffer.reserve(tokens.size());
-  for (vector<Token *>::const_iterator iter = tokens.begin();
+  for (std::vector<Token *>::const_iterator iter = tokens.begin();
        iter != tokens.end(); ++iter) {
     Token *token = *iter;
     CHECK(!token->key.empty()) << "empty key string in input";
@@ -271,7 +272,7 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   // Calculate frequency of each pos
   // TODO(toshiyuki): It might be better to count frequency
   // with considering same_as_prev_pos.
-  map<uint32, int> pos_map;
+  std::map<uint32, int> pos_map;
   for (KeyInfoList::const_iterator itr = key_info_list.begin();
        itr != key_info_list.end(); ++itr) {
     const KeyInfo &key_info = *itr;
@@ -282,15 +283,15 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   }
 
   // Get histgram of frequency
-  map<int, int> freq_map;
-  for (map<uint32, int>::const_iterator jt = pos_map.begin();
+  std::map<int, int> freq_map;
+  for (std::map<uint32, int>::const_iterator jt = pos_map.begin();
        jt != pos_map.end(); ++jt) {
     freq_map[jt->second]++;
   }
   // Compute the lower threshold of frequence
   int num_freq_pos = 0;
   int freq_threshold = INT_MAX;
-  for (map<int, int>::reverse_iterator kt = freq_map.rbegin();
+  for (std::map<int, int>::reverse_iterator kt = freq_map.rbegin();
        kt != freq_map.rend(); ++kt) {
     if (num_freq_pos + kt->second > 255) {
       break;
@@ -304,7 +305,7 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   VLOG(1) << "Pos threshold=" << freq_threshold;
   int freq_pos_idx = 0;
   int num_tokens = 0;
-  map<uint32, int>::iterator lt;
+  std::map<uint32, int>::iterator lt;
   for (lt = pos_map.begin(); lt != pos_map.end(); ++lt) {
     if (lt->second >= freq_threshold) {
       frequent_pos_[lt->first] = freq_pos_idx;
@@ -385,7 +386,7 @@ void SystemDictionaryBuilder::SetPosType(KeyInfoList *key_info_list) const {
       TokenInfo *token_info = &(key_info->tokens[i]);
       const uint32 pos = GetCombinedPos(token_info->token->lid,
                                         token_info->token->rid);
-      map<uint32, int>::const_iterator itr = frequent_pos_.find(pos);
+      std::map<uint32, int>::const_iterator itr = frequent_pos_.find(pos);
       if (itr != frequent_pos_.end()) {
         token_info->pos_type = TokenInfo::FREQUENT_POS;
         token_info->id_in_frequent_pos_map = itr->second;
@@ -446,7 +447,7 @@ void SystemDictionaryBuilder::BuildTokenArray(
   //   |key_info_list[X].id_in_key_trie| -> |key_info_list[X]|
   // assuming |key_info_list[X].id_in_key_trie| is unique and successive.
   {
-    vector<const KeyInfo *> id_to_keyinfo_table;
+    std::vector<const KeyInfo *> id_to_keyinfo_table;
     id_to_keyinfo_table.resize(key_info_list.size());
     for (KeyInfoList::const_iterator itr = key_info_list.begin();
          itr != key_info_list.end(); ++itr) {

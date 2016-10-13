@@ -177,11 +177,12 @@ bool KeyMapManager::LoadFile(const char *filename) {
 }
 
 bool KeyMapManager::LoadStream(istream *ifs) {
-  vector<string> errors;
+  std::vector<string> errors;
   return LoadStreamWithErrors(ifs, &errors);
 }
 
-bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
+bool KeyMapManager::LoadStreamWithErrors(istream *ifs,
+                                         std::vector<string> *errors) {
   string line;
   getline(*ifs, line);  // Skip the first line.
   while (!ifs->eof()) {
@@ -192,7 +193,7 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
       continue;
     }
 
-    vector<string> rules;
+    std::vector<string> rules;
     Util::SplitStringUsing(line, "\t", &rules);
     if (rules.size() != 3) {
       LOG(ERROR) << "Invalid format: " << line;
@@ -310,9 +311,9 @@ bool KeyMapManager::AddCommand(const string &state_name,
 
 namespace {
 template<typename T> bool GetNameInternal(
-    const map<T, string> &reverse_command_map, T command, string *name) {
+    const std::map<T, string> &reverse_command_map, T command, string *name) {
   DCHECK(name);
-  typename map<T, string>::const_iterator iter =
+  typename std::map<T, string>::const_iterator iter =
       reverse_command_map.find(command);
   if (iter == reverse_command_map.end()) {
     return false;
@@ -752,9 +753,9 @@ bool KeyMapManager::ParseCommandConversion(
 }
 
 void KeyMapManager::GetAvailableCommandNameDirect(
-    set<string> *command_names) const {
+    std::set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, DirectInputState::Commands>::const_iterator iter
+  for (std::map<string, DirectInputState::Commands>::const_iterator iter
            = command_direct_map_.begin();
        iter != command_direct_map_.end(); ++iter) {
     command_names->insert(iter->first);
@@ -762,9 +763,9 @@ void KeyMapManager::GetAvailableCommandNameDirect(
 }
 
 void KeyMapManager::GetAvailableCommandNamePrecomposition(
-    set<string> *command_names) const {
+    std::set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, PrecompositionState::Commands>::const_iterator iter
+  for (std::map<string, PrecompositionState::Commands>::const_iterator iter
            = command_precomposition_map_.begin();
        iter != command_precomposition_map_.end(); ++iter) {
     command_names->insert(iter->first);
@@ -772,9 +773,9 @@ void KeyMapManager::GetAvailableCommandNamePrecomposition(
 }
 
 void KeyMapManager::GetAvailableCommandNameComposition(
-    set<string> *command_names) const {
+    std::set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, CompositionState::Commands>::const_iterator iter
+  for (std::map<string, CompositionState::Commands>::const_iterator iter
            = command_composition_map_.begin();
        iter != command_composition_map_.end(); ++iter) {
     command_names->insert(iter->first);
@@ -782,9 +783,9 @@ void KeyMapManager::GetAvailableCommandNameComposition(
 }
 
 void KeyMapManager::GetAvailableCommandNameConversion(
-    set<string> *command_names) const {
+    std::set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, ConversionState::Commands>::const_iterator iter
+  for (std::map<string, ConversionState::Commands>::const_iterator iter
            = command_conversion_map_.begin();
        iter != command_conversion_map_.end(); ++iter) {
     command_names->insert(iter->first);
@@ -792,17 +793,17 @@ void KeyMapManager::GetAvailableCommandNameConversion(
 }
 
 void KeyMapManager::GetAvailableCommandNameZeroQuerySuggestion(
-    set<string> *command_names) const {
+    std::set<string> *command_names) const {
   GetAvailableCommandNamePrecomposition(command_names);
 }
 
 void KeyMapManager::GetAvailableCommandNameSuggestion(
-    set<string> *command_names) const {
+    std::set<string> *command_names) const {
   GetAvailableCommandNameComposition(command_names);
 }
 
 void KeyMapManager::GetAvailableCommandNamePrediction(
-    set<string> *command_names) const {
+    std::set<string> *command_names) const {
   GetAvailableCommandNameConversion(command_names);
 }
 

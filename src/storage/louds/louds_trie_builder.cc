@@ -98,7 +98,7 @@ void LoudsTrieBuilder::Build() {
   std::sort(word_list_.begin(), word_list_.end());
   word_list_.erase(std::unique(word_list_.begin(), word_list_.end()),
                    word_list_.end());
-  vector<Entry> entry_list;
+  std::vector<Entry> entry_list;
   entry_list.reserve(word_list_.size());
   for (size_t i = 0; i < word_list_.size(); ++i) {
     entry_list.push_back(Entry(word_list_[i], i));
@@ -223,7 +223,7 @@ int LoudsTrieBuilder::GetId(const string &word) const {
   CHECK(built_);
 
   // Binary search the word.
-  vector<string>::const_iterator iter =
+  std::vector<string>::const_iterator iter =
       std::lower_bound(word_list_.begin(), word_list_.end(), word);
   if (iter == word_list_.end() || *iter != word) {
     // Not found.

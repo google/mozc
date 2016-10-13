@@ -50,7 +50,7 @@ class MockHandwriting : public HandwritingInterface {
   }
 
   virtual HandwritingStatus Recognize(const Strokes &unused_strokes,
-                                      vector<string> *candidates) const {
+                                      std::vector<string> *candidates) const {
     CHECK(candidates);
     candidates->clear();
     for (size_t i = 0; i < candidates_.size(); ++i) {
@@ -65,7 +65,7 @@ class MockHandwriting : public HandwritingInterface {
     return return_status_;
   }
 
-  void SetCandidates(const vector<string> &candidates) {
+  void SetCandidates(const std::vector<string> &candidates) {
     candidates_.clear();
     for (size_t i = 0; i < candidates.size(); ++i) {
       candidates_.push_back(candidates[i]);
@@ -85,7 +85,7 @@ class MockHandwriting : public HandwritingInterface {
   }
 
  private:
-  vector<string> candidates_;
+  std::vector<string> candidates_;
   int commit_counter_;
   HandwritingStatus return_status_;
 };
@@ -105,13 +105,13 @@ class HandwritingManagerTest : public testing::Test {
 };
 
 TEST_F(HandwritingManagerTest, Recognize) {
-  vector<string> expected_candidates;
+  std::vector<string> expected_candidates;
   expected_candidates.push_back("foo");
   expected_candidates.push_back("bar");
   expected_candidates.push_back("baz");
   mock_handwriting_.SetCandidates(expected_candidates);
 
-  vector<string> result;
+  std::vector<string> result;
   Strokes dummy_strokes;
   EXPECT_EQ(HANDWRITING_NO_ERROR,
             HandwritingManager::Recognize(dummy_strokes, &result));
@@ -134,7 +134,7 @@ TEST_F(HandwritingManagerTest, Commit) {
 }
 
 TEST_F(HandwritingManagerTest, RecognizeError) {
-  vector<string> result;
+  std::vector<string> result;
   Strokes dummy_strokes;
   mock_handwriting_.SetReturnStatus(HANDWRITING_ERROR);
   EXPECT_EQ(HANDWRITING_ERROR,

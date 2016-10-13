@@ -45,7 +45,7 @@ using ::mozc::commands::KeyEvent;
 using ::mozc::config::Config;
 using ::mozc::config::ConfigHandler;
 
-void PushKey(const string &key_string, vector<KeyInformation> *keys) {
+void PushKey(const string &key_string, std::vector<KeyInformation> *keys) {
   KeyEvent key;
   if (!KeyParser::ParseKey(key_string, &key)) {
     return;
@@ -73,7 +73,7 @@ TEST(KeyInfoUtilTest, ExtractSortedDirectModeKeys) {
 
   const auto &actual = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
 
-  vector<KeyInformation> expected;
+  std::vector<KeyInformation> expected;
   PushKey("HENKAN", &expected);
   PushKey("Ctrl j", &expected);
   PushKey("Ctrl k", &expected);
@@ -87,7 +87,7 @@ TEST(KeyInfoUtilTest, ExtractSortedDirectModeKeys) {
 }
 
 TEST(KeyInfoUtilTest, ContainsKey) {
-  vector<KeyInformation> direct_mode_keys;
+  std::vector<KeyInformation> direct_mode_keys;
   PushKey("HENKAN", &direct_mode_keys);
   PushKey("Ctrl j", &direct_mode_keys);
   PushKey("Ctrl k", &direct_mode_keys);

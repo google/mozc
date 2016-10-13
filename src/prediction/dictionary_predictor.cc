@@ -146,9 +146,9 @@ class DictionaryPredictor::PredictiveLookupCallback
  public:
   PredictiveLookupCallback(DictionaryPredictor::PredictionTypes types,
                            size_t limit, size_t original_key_len,
-                           const set<string> *subsequent_chars,
+                           const std::set<string> *subsequent_chars,
                            bool is_zero_query,
-                           vector<DictionaryPredictor::Result> *results)
+                           std::vector<DictionaryPredictor::Result> *results)
       : penalty_(0), types_(types), limit_(limit),
         original_key_len_(original_key_len),
         subsequent_chars_(subsequent_chars),
@@ -203,9 +203,9 @@ class DictionaryPredictor::PredictiveLookupCallback
   const DictionaryPredictor::PredictionTypes types_;
   const size_t limit_;
   const size_t original_key_len_;
-  const set<string> *subsequent_chars_;
+  const std::set<string> *subsequent_chars_;
   const bool is_zero_query_;
-  vector<DictionaryPredictor::Result> *results_;
+  std::vector<DictionaryPredictor::Result> *results_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PredictiveLookupCallback);
@@ -214,12 +214,11 @@ class DictionaryPredictor::PredictiveLookupCallback
 class DictionaryPredictor::PredictiveBigramLookupCallback :
       public PredictiveLookupCallback {
  public:
-  PredictiveBigramLookupCallback(DictionaryPredictor::PredictionTypes types,
-                                 size_t limit, size_t original_key_len,
-                                 const set<string> *subsequent_chars,
-                                 StringPiece history_value,
-                                 bool is_zero_query,
-                                 vector<DictionaryPredictor::Result> *results)
+  PredictiveBigramLookupCallback(
+      DictionaryPredictor::PredictionTypes types, size_t limit,
+      size_t original_key_len, const std::set<string> *subsequent_chars,
+      StringPiece history_value, bool is_zero_query,
+      std::vector<DictionaryPredictor::Result> *results)
       : PredictiveLookupCallback(types, limit, original_key_len,
                                  subsequent_chars, is_zero_query, results),
         history_value_(history_value) {}
@@ -251,7 +250,7 @@ class DictionaryPredictor::PredictiveBigramLookupCallback :
 // If we have words A and AB, for example "六本木" and "六本木ヒルズ",
 // assume that cost(A) < cost(AB).
 class DictionaryPredictor::ResultWCostLess :
-      public binary_function<Result, Result, bool> {
+      public std::binary_function<Result, Result, bool> {
  public:
   bool operator() (const DictionaryPredictor::Result &lhs,
                    const DictionaryPredictor::Result &rhs) const {
@@ -260,7 +259,7 @@ class DictionaryPredictor::ResultWCostLess :
 };
 
 class DictionaryPredictor::ResultCostLess :
-      public binary_function<Result, Result, bool> {
+      public std::binary_function<Result, Result, bool> {
  public:
   bool operator() (const DictionaryPredictor::Result &lhs,
                    const DictionaryPredictor::Result &rhs) const {
@@ -370,7 +369,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  vector<Result> results;
+  std::vector<Result> results;
   if (!AggregatePrediction(request, segments, &results)) {
     return false;
   }
@@ -384,7 +383,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
 bool DictionaryPredictor::AggregatePrediction(
     const ConversionRequest &request,
     Segments *segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   DCHECK(segments);
   DCHECK(results);
 
@@ -421,7 +420,7 @@ bool DictionaryPredictor::AggregatePrediction(
 
 void DictionaryPredictor::SetCost(const ConversionRequest &request,
                                   const Segments &segments,
-                                  vector<Result> *results) const {
+                                  std::vector<Result> *results) const {
   DCHECK(results);
 
   if (IsMixedConversionEnabled(request.request())) {
@@ -435,7 +434,7 @@ void DictionaryPredictor::SetCost(const ConversionRequest &request,
 
 void DictionaryPredictor::RemovePrediction(const ConversionRequest &request,
                                            const Segments &segments,
-                                           vector<Result> *results) const {
+                                           std::vector<Result> *results) const {
   DCHECK(results);
 
   if (!IsMixedConversionEnabled(request.request())) {
@@ -449,7 +448,7 @@ void DictionaryPredictor::RemovePrediction(const ConversionRequest &request,
 
 bool DictionaryPredictor::AddPredictionToCandidates(
     const ConversionRequest &request,
-    Segments *segments, vector<Result> *results) const {
+    Segments *segments, std::vector<Result> *results) const {
   DCHECK(segments);
   DCHECK(results);
   const bool mixed_conversion = IsMixedConversionEnabled(request.request());
@@ -475,7 +474,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
                           results->size());
 
   int added = 0;
-  set<string> seen;
+  std::set<string> seen;
 
   int added_suffix = 0;
   bool cursor_at_tail =
@@ -784,8 +783,8 @@ bool DictionaryPredictor::GetHistoryKeyAndValue(
   return true;
 }
 
-void DictionaryPredictor::SetPredictionCost(const Segments &segments,
-                                            vector<Result> *results) const {
+void DictionaryPredictor::SetPredictionCost(
+    const Segments &segments, std::vector<Result> *results) const {
   DCHECK(results);
 
   int rid = 0;  // 0 (BOS) is default
@@ -895,7 +894,7 @@ void DictionaryPredictor::SetPredictionCost(const Segments &segments,
 }
 
 void DictionaryPredictor::SetLMCost(const Segments &segments,
-                                    vector<Result> *results) const {
+                                    std::vector<Result> *results) const {
   DCHECK(results);
 
   // ranking for mobile
@@ -975,7 +974,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
 }
 
 void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
-    const Segments &segments, vector<Result> *results) const {
+    const Segments &segments, std::vector<Result> *results) const {
   if (segments.conversion_segments_size() == 0) {
     return;
   }
@@ -1027,7 +1026,7 @@ size_t DictionaryPredictor::GetMissSpelledPosition(
 
 void DictionaryPredictor::RemoveMissSpelledCandidates(
     size_t request_key_len,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   DCHECK(results);
 
   if (results->size() <= 1) {
@@ -1048,7 +1047,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
       return;
     }
 
-    vector<size_t> same_key_index, same_value_index;
+    std::vector<size_t> same_key_index, same_value_index;
     for (size_t j = 0; j < results->size(); ++j) {
       if (i == j) {
         continue;
@@ -1151,7 +1150,7 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
 bool DictionaryPredictor::PushBackTopConversionResult(
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   DCHECK_EQ(1, segments.conversion_segments_size());
 
   Segments tmp_segments;
@@ -1214,7 +1213,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
     PredictionTypes types,
     const ConversionRequest &request,
     Segments *segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!(types & REALTIME)) {
     return;
   }
@@ -1312,7 +1311,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
     PredictionTypes types,
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!(types & UNIGRAM)) {
     return;
   }
@@ -1332,7 +1331,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
 void DictionaryPredictor::AggregateUnigramCandidate(
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   DCHECK(results);
   DCHECK(dictionary_);
 
@@ -1354,7 +1353,7 @@ void DictionaryPredictor::AggregateUnigramCandidate(
 void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   AggregateUnigramCandidateForMixedConversion(*dictionary_, request,
                                               segments, results);
 }
@@ -1363,10 +1362,10 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     const dictionary::DictionaryInterface &dictionary,
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) {
+    std::vector<Result> *results) {
   const size_t cutoff_threshold = kPredictionMaxResultsSize;
 
-  vector<Result> raw_result;
+  std::vector<Result> raw_result;
   // No history key
   GetPredictiveResults(dictionary, "", request, segments, UNIGRAM,
                        cutoff_threshold, &raw_result);
@@ -1383,7 +1382,7 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
 
   // min_iter is the beginning of the remaining results (inclusive), and
   // max_iter is the end of the remaining results (exclusive).
-  typedef vector<Result>::iterator Iter;
+  typedef std::vector<Result>::iterator Iter;
   Iter min_iter = raw_result.begin();
   Iter max_iter = raw_result.end();
   for (size_t i = 0; i < kDeleteTrialNum; ++i) {
@@ -1435,7 +1434,7 @@ void DictionaryPredictor::AggregateBigramPrediction(
     PredictionTypes types,
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!(types & BIGRAM)) {
     return;
   }
@@ -1458,7 +1457,7 @@ void DictionaryPredictor::AddBigramResultsFromHistory(
     const string &history_value,
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   // Check that history_key/history_value are in the dictionary.
   FindValueCallback find_history_callback(history_value);
   dictionary_->LookupPrefix(history_key, request, &find_history_callback);
@@ -1584,7 +1583,7 @@ void DictionaryPredictor::GetPredictiveResults(
     const Segments &segments,
     PredictionTypes types,
     size_t lookup_limit,
-    vector<Result> *results) {
+    std::vector<Result> *results) {
   if (!request.has_composer() ||
       !FLAGS_enable_expansion_for_dictionary_predictor) {
     const string &query_key = segments.conversion_segment(0).key();
@@ -1603,7 +1602,7 @@ void DictionaryPredictor::GetPredictiveResults(
   // Example2 kana input: for "あか", we will get |base|, "あ" and |expanded|,
   // "か", and "が".
   string base;
-  set<string> expanded;
+  std::set<string> expanded;
   request.composer().GetQueriesForPrediction(&base, &expanded);
   const bool is_zero_query = base.empty() && expanded.empty();
   string input_key;
@@ -1633,7 +1632,7 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
     const Segments &segments,
     PredictionTypes types,
     size_t lookup_limit,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!request.has_composer() ||
       !FLAGS_enable_expansion_for_dictionary_predictor) {
     const string &query_key = segments.conversion_segment(0).key();
@@ -1653,7 +1652,7 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
   // Example2 kana input: for "あか", we will get |base|, "あ" and |expanded|,
   // "か", and "が".
   string base;
-  set<string> expanded;
+  std::set<string> expanded;
   request.composer().GetQueriesForPrediction(&base, &expanded);
   string input_key = history_key;
   input_key.append(base);
@@ -1672,7 +1671,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
     const Segments &segments,
     PredictionTypes types,
     size_t lookup_limit,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!request.has_composer()) {
     GetPredictiveResults(dictionary, history_key, request, segments, types,
                          lookup_limit, results);
@@ -1731,12 +1730,12 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
     const Segments &segments,
     PredictionTypes types,
     size_t lookup_limit,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!request.has_composer()) {
     return;
   }
 
-  vector<composer::TypeCorrectedQuery> queries;
+  std::vector<composer::TypeCorrectedQuery> queries;
   request.composer().GetTypeCorrectedQueriesForPrediction(&queries);
   for (size_t query_index = 0; query_index < queries.size(); ++query_index) {
     const composer::TypeCorrectedQuery &query = queries[query_index];
@@ -1760,7 +1759,7 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
 // static
 bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
     const ConversionRequest &request, const string &key,
-    const ZeroQueryDict &dict, vector<ZeroQueryResult> *results) {
+    const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results) {
   const int32 available_emoji_carrier =
       request.request().available_emoji_carrier();
 
@@ -1801,8 +1800,8 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
 
 // static
 void DictionaryPredictor::AppendZeroQueryToResults(
-    const vector<ZeroQueryResult> &candidates, uint16 lid, uint16 rid,
-    vector<Result> *results) {
+    const std::vector<ZeroQueryResult> &candidates, uint16 lid, uint16 rid,
+    std::vector<Result> *results) {
   int cost = 0;
 
   for (size_t i = 0; i < candidates.size(); ++i) {
@@ -1826,19 +1825,19 @@ void DictionaryPredictor::AppendZeroQueryToResults(
 // Returns true if we add zero query result.
 bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
     const ConversionRequest &request,
-    const Segments &segments, vector<Result> *results) const {
+    const Segments &segments, std::vector<Result> *results) const {
   string number_key;
   if (!GetNumberHistory(segments, &number_key)) {
     return false;
   }
 
-  vector<ZeroQueryResult> candidates_for_number_key;
+  std::vector<ZeroQueryResult> candidates_for_number_key;
   GetZeroQueryCandidatesForKey(request,
                                number_key,
                                zero_query_number_dict_,
                                &candidates_for_number_key);
 
-  vector<ZeroQueryResult> default_candidates_for_number;
+  std::vector<ZeroQueryResult> default_candidates_for_number;
   GetZeroQueryCandidatesForKey(request,
                                "default",
                                zero_query_number_dict_,
@@ -1859,7 +1858,7 @@ bool DictionaryPredictor::AggregateNumberZeroQueryPrediction(
 // Returns true if we add zero query result.
 bool DictionaryPredictor::AggregateZeroQueryPrediction(
     const ConversionRequest &request,
-    const Segments &segments, vector<Result> *results) const {
+    const Segments &segments, std::vector<Result> *results) const {
   const size_t history_size = segments.history_segments_size();
   if (history_size <= 0) {
     return false;
@@ -1869,7 +1868,7 @@ bool DictionaryPredictor::AggregateZeroQueryPrediction(
   DCHECK_GT(last_segment.candidates_size(), 0);
   const string &history_value = last_segment.candidate(0).value;
 
-  vector<ZeroQueryResult> candidates;
+  std::vector<ZeroQueryResult> candidates;
   if (!GetZeroQueryCandidatesForKey(request,
                                     history_value,
                                     zero_query_dict_,
@@ -1886,7 +1885,7 @@ void DictionaryPredictor::AggregateSuffixPrediction(
     PredictionTypes types,
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!(types & SUFFIX)) {
     return;
   }
@@ -1916,7 +1915,7 @@ void DictionaryPredictor::AggregateEnglishPrediction(
     PredictionTypes types,
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!(types & ENGLISH)) {
     return;
   }
@@ -1943,7 +1942,7 @@ void DictionaryPredictor::AggregateTypeCorrectingPrediction(
     PredictionTypes types,
     const ConversionRequest &request,
     const Segments &segments,
-    vector<Result> *results) const {
+    std::vector<Result> *results) const {
   if (!(types & TYPING_CORRECTION)) {
     return;
   }

@@ -57,7 +57,7 @@ TEST(KeyParserTest, KeyCode) {
 }
 
 TEST(KeyParserTest, ModifierKeys) {
-  const pair<string, uint32> kTestData[] = {
+  const std::pair<string, uint32> kTestData[] = {
       std::make_pair("ctrl", commands::KeyEvent::CTRL),
       std::make_pair("leftctrl",
                      commands::KeyEvent::CTRL | commands::KeyEvent::LEFT_CTRL),
@@ -101,7 +101,7 @@ TEST(KeyParserTest, MultipleModifierKeys) {
 }
 
 TEST(KeyParserTest, SpecialKeys) {
-  const pair<string, commands::KeyEvent::SpecialKey> kTestData[] = {
+  const std::pair<string, commands::KeyEvent::SpecialKey> kTestData[] = {
       std::make_pair("on", commands::KeyEvent::ON),
       std::make_pair("off", commands::KeyEvent::OFF),
       std::make_pair("left", commands::KeyEvent::LEFT),

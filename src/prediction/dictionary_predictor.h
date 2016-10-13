@@ -139,7 +139,7 @@ class DictionaryPredictor : public PredictorInterface {
     // If the candidate key and value are
     // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
     // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
-    vector<uint32> inner_segment_boundary;
+    std::vector<uint32> inner_segment_boundary;
     uint32 candidate_attributes;
     // Segment::Candidate::SourceInfo.
     // Will be used for usage stats.
@@ -162,39 +162,39 @@ class DictionaryPredictor : public PredictorInterface {
   void AggregateRealtimeConversion(PredictionTypes types,
                                    const ConversionRequest &request,
                                    Segments *segments,
-                                   vector<Result> *results) const;
+                                   std::vector<Result> *results) const;
 
   void AggregateUnigramPrediction(PredictionTypes types,
                                   const ConversionRequest &request,
                                   const Segments &segments,
-                                  vector<Result> *results) const;
+                                  std::vector<Result> *results) const;
 
   void AggregateBigramPrediction(PredictionTypes types,
                                  const ConversionRequest &request,
                                  const Segments &segments,
-                                 vector<Result> *results) const;
+                                 std::vector<Result> *results) const;
 
   void AggregateSuffixPrediction(PredictionTypes types,
                                  const ConversionRequest &request,
                                  const Segments &segments,
-                                 vector<Result> *results) const;
+                                 std::vector<Result> *results) const;
 
   void AggregateEnglishPrediction(PredictionTypes types,
                                   const ConversionRequest &request,
                                   const Segments &segments,
-                                  vector<Result> *results) const;
+                                  std::vector<Result> *results) const;
 
   void AggregateTypeCorrectingPrediction(PredictionTypes types,
                                          const ConversionRequest &request,
                                          const Segments &segments,
-                                         vector<Result> *results) const;
+                                         std::vector<Result> *results) const;
 
   void ApplyPenaltyForKeyExpansion(const Segments &segments,
-                                   vector<Result> *results) const;
+                                   std::vector<Result> *results) const;
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
                                  Segments *segments,
-                                 vector<Result> *results) const;
+                                 std::vector<Result> *results) const;
 
  private:
   FRIEND_TEST(DictionaryPredictorTest, GetPredictionTypes);
@@ -232,7 +232,7 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
   FRIEND_TEST(DictionaryPredictorTest, GetZeroQueryCandidates);
 
-  typedef pair<string, ZeroQueryType> ZeroQueryResult;
+  typedef std::pair<string, ZeroQueryType> ZeroQueryResult;
 
   // Looks up the given range and appends zero query candidate list for |key|
   // to |results|.
@@ -241,39 +241,39 @@ class DictionaryPredictor : public PredictorInterface {
       const ConversionRequest &request,
       const string &key,
       const ZeroQueryDict &dict,
-      vector<ZeroQueryResult> *results);
+      std::vector<ZeroQueryResult> *results);
 
   static void AppendZeroQueryToResults(
-      const vector<ZeroQueryResult> &candidates,
-      uint16 lid, uint16 rid, vector<Result> *results);
+      const std::vector<ZeroQueryResult> &candidates,
+      uint16 lid, uint16 rid, std::vector<Result> *results);
 
   // Returns false if no results were aggregated.
   bool AggregatePrediction(const ConversionRequest &request,
                            Segments *segments,
-                           vector<Result> *results) const;
+                           std::vector<Result> *results) const;
 
   bool AggregateNumberZeroQueryPrediction(const ConversionRequest &request,
                                           const Segments &segments,
-                                          vector<Result> *results) const;
+                                          std::vector<Result> *results) const;
 
   bool AggregateZeroQueryPrediction(const ConversionRequest &request,
                                     const Segments &segments,
-                                    vector<Result> *result) const;
+                                    std::vector<Result> *result) const;
 
   void SetCost(const ConversionRequest &request,
-               const Segments &segments, vector<Result> *results) const;
+               const Segments &segments, std::vector<Result> *results) const;
 
   // Removes prediciton by setting NO_PREDICTION to result type if necessary.
   void RemovePrediction(const ConversionRequest &request,
                         const Segments &segments,
-                        vector<Result> *results) const;
+                        std::vector<Result> *results) const;
 
   // Adds prediction results from history key and value.
   void AddBigramResultsFromHistory(const string &history_key,
                                    const string &history_value,
                                    const ConversionRequest &request,
                                    const Segments &segments,
-                                   vector<Result> *results) const;
+                                   std::vector<Result> *results) const;
 
   // Changes the prediction type for irrelevant bigram candidate.
   void CheckBigramResult(const dictionary::Token &history_token,
@@ -289,7 +289,7 @@ class DictionaryPredictor : public PredictorInterface {
       const Segments &segments,
       PredictionTypes types,
       size_t lookup_limit,
-      vector<Result> *results);
+      std::vector<Result> *results);
 
   void GetPredictiveResultsForBigram(
       const dictionary::DictionaryInterface &dictionary,
@@ -299,7 +299,7 @@ class DictionaryPredictor : public PredictorInterface {
       const Segments &segments,
       PredictionTypes types,
       size_t lookup_limit,
-      vector<Result> *results) const;
+      std::vector<Result> *results) const;
 
   // Performs a custom look up for English words where case-conversion might be
   // applied to lookup key and/or output results.
@@ -310,7 +310,7 @@ class DictionaryPredictor : public PredictorInterface {
       const Segments &segments,
       PredictionTypes types,
       size_t lookup_limit,
-      vector<Result> *results) const;
+      std::vector<Result> *results) const;
 
   // Performs look-ups using type-corrected queries from composer. Usually
   // involves multiple look-ups from dictionary.
@@ -321,7 +321,7 @@ class DictionaryPredictor : public PredictorInterface {
       const Segments &segments,
       PredictionTypes types,
       size_t lookup_limit,
-      vector<Result> *results) const;
+      std::vector<Result> *results) const;
 
   // Returns the position of misspelled character position.
   //
@@ -383,18 +383,18 @@ class DictionaryPredictor : public PredictorInterface {
   //   do nothing.
   // }
   void RemoveMissSpelledCandidates(size_t request_key_len,
-                                   vector<Result> *results) const;
+                                   std::vector<Result> *results) const;
 
   // Scoring function which takes prediction bounus into account.
   // It basically reranks the candidate by lang_prob * (1 + remain_len).
   // This algorithm is mainly used for desktop.
   void SetPredictionCost(const Segments &segments,
-                         vector<Result> *results) const;
+                         std::vector<Result> *results) const;
 
   // Language model-based scoring function.
   // This algorithm is mainly used for mobile.
   void SetLMCost(const Segments &segments,
-                 vector<Result> *results) const;
+                 std::vector<Result> *results) const;
 
   // Returns true if the suggestion is classified
   // as "aggressive".
@@ -429,7 +429,7 @@ class DictionaryPredictor : public PredictorInterface {
   // Aggregates unigram candidate for non mixed conversion.
   void AggregateUnigramCandidate(const ConversionRequest &request,
                                  const Segments &segments,
-                                 vector<Result> *results) const;
+                                 std::vector<Result> *results) const;
 
   // Aggregates unigram candidate for mixed conversion.
   // This reduces redundant candidates.
@@ -437,13 +437,13 @@ class DictionaryPredictor : public PredictorInterface {
       const dictionary::DictionaryInterface &dictionary,
       const ConversionRequest &request,
       const Segments &segments,
-      vector<Result> *results);
+      std::vector<Result> *results);
 
   // The same as the static version of this method above but uses |dictionary_|.
   void AggregateUnigramCandidateForMixedConversion(
       const ConversionRequest &request,
       const Segments &segments,
-      vector<Result> *results) const;
+      std::vector<Result> *results) const;
 
   // Returns cutoff threshold of unigram candidates.
   // AggregateUnigramPrediction method does not return any candidates
@@ -456,7 +456,7 @@ class DictionaryPredictor : public PredictorInterface {
   // |results|.
   bool PushBackTopConversionResult(const ConversionRequest &request,
                                    const Segments &segments,
-                                   vector<Result> *results) const;
+                                   std::vector<Result> *results) const;
 
   void MaybeRecordUsageStats(const Segment::Candidate &candidate) const;
 

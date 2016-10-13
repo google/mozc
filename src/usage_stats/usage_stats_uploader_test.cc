@@ -89,10 +89,10 @@ class TestHTTPClient : public HTTPClientInterface {
       return false;
     }
 
-    vector<string> data_set;
+    std::vector<string> data_set;
     Util::SplitStringUsing(data, "&", &data_set);
     for (size_t i = 0; i < expected_data_.size(); ++i) {
-      vector<string>::const_iterator itr =
+      std::vector<string>::const_iterator itr =
           std::find(data_set.begin(), data_set.end(), expected_data_[i]);
       const bool found = (itr != data_set.end());
       // we can't compile EXPECT_NE(itr, data_set.end()), so we use EXPECT_TRUE
@@ -120,7 +120,7 @@ class TestHTTPClient : public HTTPClientInterface {
  private:
   // usage stats key and value parameter
   // format is "<key>:<type>=<value>"
-  vector<string> expected_data_;
+  std::vector<string> expected_data_;
   Result result_;
 };
 
@@ -182,7 +182,7 @@ class UsageStatsUploaderTest : public ::testing::Test {
   }
 
   void SetValidResult() {
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(std::make_pair("sourceid", "ime"));
     params.push_back(std::make_pair("hl", "ja"));
     params.push_back(std::make_pair("v", Version::GetMozcVersion()));
@@ -477,8 +477,8 @@ TEST_F(UsageStatsUploaderTest, UploadTouchEventStats) {
 
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardStats");
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardMissStats");
-  map<string, map<uint32, Stats::TouchEventStats> > touch_stats;
-  map<string, map<uint32, Stats::TouchEventStats> > miss_touch_stats;
+  std::map<string, map<uint32, Stats::TouchEventStats> > touch_stats;
+  std::map<string, map<uint32, Stats::TouchEventStats> > miss_touch_stats;
 
   Stats::TouchEventStats &event_stats1 = touch_stats["KEYBOARD_01"][10];
   SetEventStats(10, 2, 3, 8, 2, 4, 10, 2, 5, 16, 2, 2, 2,

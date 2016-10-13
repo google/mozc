@@ -55,8 +55,8 @@ class DictionaryFileBuilder {
  private:
   // DictionaryFileBuilder does not take the ownership of |file_codec_|.
   DictionaryFileCodecInterface *file_codec_;
-  vector<DictionaryFileSection> sections_;
-  set<string> added_;
+  std::vector<DictionaryFileSection> sections_;
+  std::set<string> added_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryFileBuilder);
 };

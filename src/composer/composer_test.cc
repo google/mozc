@@ -693,7 +693,7 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
 
   {
     string base, preedit;
-    set<string> expanded;
+    std::set<string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("us");
     composer_->GetQueriesForPrediction(&base, &expanded);
@@ -734,7 +734,7 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
 
   {
     string base, preedit;
-    set<string> expanded;
+    std::set<string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("_$");
     composer_->GetQueriesForPrediction(&base, &expanded);
@@ -1118,7 +1118,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    pair<string, bool> kTestDataAscii[] = {
+    std::pair<string, bool> kTestDataAscii[] = {
         std::make_pair("a", false), std::make_pair("A", true),
         std::make_pair("a", true), std::make_pair("a", true),
         std::make_pair("A", true), std::make_pair("A", true),
@@ -1151,7 +1151,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    pair<string, bool> kTestDataAscii[] = {
+    std::pair<string, bool> kTestDataAscii[] = {
         std::make_pair("A", false), std::make_pair("a", true),
         std::make_pair("A", true), std::make_pair("A", true),
         std::make_pair("a", true), std::make_pair("a", true),
@@ -1184,7 +1184,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    pair<string, bool> kTestDataKatakana[] = {
+    std::pair<string, bool> kTestDataKatakana[] = {
         std::make_pair("a", false), std::make_pair("A", true),
         std::make_pair("a", false), std::make_pair("a", false),
         std::make_pair("A", true), std::make_pair("A", true),
@@ -1217,7 +1217,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    pair<string, bool> kTestDataKatakana[] = {
+    std::pair<string, bool> kTestDataKatakana[] = {
         std::make_pair("A", false), std::make_pair("a", true),
         std::make_pair("A", false), std::make_pair("A", false),
         std::make_pair("a", true), std::make_pair("a", true),
@@ -3216,7 +3216,7 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
     string conversion_query;
     string prediction_query;
     string base;
-    set<string> expanded;
+    std::set<string> expanded;
     composer_->InsertCharacterPreedit(kTestStr);
     composer_->GetStringForPreedit(&preedit);
     composer_->GetQueryForConversion(&conversion_query);
@@ -3233,8 +3233,8 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
     string conversion_query;
     string prediction_query;
     string base;
-    set<string> expanded;
-    vector<string> chars;
+    std::set<string> expanded;
+    std::vector<string> chars;
     Util::SplitStringToUtf8Chars(kTestStr, &chars);
     for (size_t i = 0; i < chars.size(); ++i) {
       composer_->InsertCharacterPreedit(chars[i]);
@@ -3294,7 +3294,7 @@ class TypingCorrectionTest : public ::testing::Test {
   }
 
   static bool IsTypingCorrectorClearedOrInvalidated(const Composer &composer) {
-    vector<TypeCorrectedQuery> queries;
+    std::vector<TypeCorrectedQuery> queries;
     composer.GetTypeCorrectedQueriesForPrediction(&queries);
     return queries.empty();
   }

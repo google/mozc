@@ -391,7 +391,7 @@ class SessionConverter : public SessionConverterInterface {
   Segment::Candidate::Command updated_command_;
 
   // Selected index data of each segments for usage stats.
-  vector<int> selected_candidate_indices_;
+  std::vector<int> selected_candidate_indices_;
 
   // Revision number of client context with which the converter determines when
   // the history segments should be invalidated. See the implemenation of

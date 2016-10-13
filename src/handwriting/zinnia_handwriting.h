@@ -54,7 +54,7 @@ class ZinniaHandwriting : public HandwritingInterface {
   static string GetModelFileName();
 
   HandwritingStatus Recognize(const Strokes &strokes,
-                              vector<string> *candidates) const;
+                              std::vector<string> *candidates) const;
 
   HandwritingStatus Commit(const Strokes &strokes, const string &result);
 

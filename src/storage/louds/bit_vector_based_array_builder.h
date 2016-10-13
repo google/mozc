@@ -68,7 +68,7 @@ class BitVectorBasedArrayBuilder {
   const string &image() const;
  private:
   bool built_;
-  vector<string> elements_;
+  std::vector<string> elements_;
   size_t base_length_;
   size_t step_length_;
 

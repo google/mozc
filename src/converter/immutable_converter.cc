@@ -1095,13 +1095,13 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
   // Note that, the average number of lid/rid variation is less than 30 in
   // most cases. So, in order to avoid too many allocations for internal
   // nodes of std::map, we use vector of key-value pairs.
-  typedef vector<pair<int, pair<int, Node*>>> BestMap;
+  typedef std::vector<std::pair<int, pair<int, Node*>>> BestMap;
   typedef OrderBy<FirstKey, Less> OrderByFirst;
   BestMap lbest, rbest;
   lbest.reserve(128);
   rbest.reserve(128);
 
-  const pair<int, Node*> kInvalidValue(INT_MAX, static_cast<Node*>(NULL));
+  const std::pair<int, Node*> kInvalidValue(INT_MAX, static_cast<Node*>(NULL));
 
   for (size_t pos = calc_begin_pos; pos <= calc_end_pos; ++pos) {
     lbest.clear();
@@ -1232,7 +1232,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     conversion_key += segments.conversion_segment(i).key();
   }
   DCHECK_NE(string::npos, key.find(conversion_key));
-  vector<string> conversion_key_chars;
+  std::vector<string> conversion_key_chars;
   Util::SplitStringToUtf8Chars(conversion_key, &conversion_key_chars);
 
   // do nothing if the conversion key is short
@@ -1665,7 +1665,7 @@ void ImmutableConverterImpl::Resegment(
 void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
     Segments *segments,
     const Lattice &lattice,
-    const vector<uint16> &group,
+    const std::vector<uint16> &group,
     size_t max_candidates_size,
     FilterType filter_type) const {
   const size_t only_first_segment_candidate_pos =
@@ -1722,7 +1722,7 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
 
 bool ImmutableConverterImpl::IsSegmentEndNode(
     const Segments &segments, const Node *node,
-    const vector<uint16> &group, bool is_single_segment) const {
+    const std::vector<uint16> &group, bool is_single_segment) const {
   DCHECK(node->next);
   if (node->next->node_type == Node::EOS_NODE) {
     return true;
@@ -1771,7 +1771,7 @@ bool ImmutableConverterImpl::IsSegmentEndNode(
 
 Segment *ImmutableConverterImpl::GetInsertTargetSegment(
     const Lattice &lattice,
-    const vector<uint16> &group,
+    const std::vector<uint16> &group,
     InsertCandidatesType type,
     size_t begin_pos,
     const Node *node,
@@ -1796,7 +1796,7 @@ Segment *ImmutableConverterImpl::GetInsertTargetSegment(
 void ImmutableConverterImpl::InsertCandidates(
     Segments *segments,
     const Lattice &lattice,
-    const vector<uint16> &group,
+    const std::vector<uint16> &group,
     size_t max_candidates_size,
     InsertCandidatesType type,
     FilterType filter_type) const {
@@ -1867,7 +1867,7 @@ void ImmutableConverterImpl::InsertCandidates(
 
 bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                                           const Lattice &lattice,
-                                          const vector<uint16> &group,
+                                          const std::vector<uint16> &group,
                                           Segments *segments) const {
   if (segments == NULL) {
     LOG(WARNING) << "Segments is NULL";
@@ -1947,7 +1947,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
 }
 
 void ImmutableConverterImpl::MakeGroup(
-    const Segments &segments, vector<uint16> *group) const {
+    const Segments &segments, std::vector<uint16> *group) const {
   group->clear();
   for (size_t i = 0; i < segments.segments_size(); ++i) {
     for (size_t j = 0; j < segments.segment(i).key().size(); ++j) {
@@ -1970,7 +1970,7 @@ bool ImmutableConverterImpl::ConvertForRequest(
     return false;
   }
 
-  vector<uint16> group;
+  std::vector<uint16> group;
   MakeGroup(*segments, &group);
 
   if (is_prediction) {

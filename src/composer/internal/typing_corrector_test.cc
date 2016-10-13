@@ -50,7 +50,7 @@ using mozc::config::ConfigHandler;
 // Embedded cost for testing purpose.
 class CostTableForTest {
  public:
-  typedef map<StringPiece, ProbableKeyEvents> CorrectionTable;
+  typedef std::map<StringPiece, ProbableKeyEvents> CorrectionTable;
 
   CostTableForTest() {
     {
@@ -307,14 +307,14 @@ class TypingCorrectorTest : public ::testing::Test {
     }
   }
 
-  bool FindKey(const vector<TypeCorrectedQuery> &queries,
+  bool FindKey(const std::vector<TypeCorrectedQuery> &queries,
                const string &key) {
     for (size_t i = 0; i < queries.size(); ++i) {
-      const set<string> &expanded = queries[i].expanded;
+      const std::set<string> &expanded = queries[i].expanded;
       if (expanded.empty() && queries[i].base == key) {
         return true;
       }
-      for (set<string>::const_iterator itr = expanded.begin();
+      for (std::set<string>::const_iterator itr = expanded.begin();
            itr != expanded.end(); ++itr) {
         if (queries[i].base + *itr == key) {
           return true;
@@ -420,11 +420,11 @@ TEST_F(TypingCorrectorTest, TypingCorrection) {
   for (size_t i = 0; i < arraysize(kTestCases); ++i) {
     SCOPED_TRACE(string("key: ") + kTestCases[i].keys);
     InsertOneByOne(kTestCases[i].keys, &corrector);
-    vector<TypeCorrectedQuery> queries;
+    std::vector<TypeCorrectedQuery> queries;
     corrector.GetQueriesForPrediction(&queries);
     // Number of queries can be equal to kCorrectedQueries.
     EXPECT_GE(kCorrectedQueryResults, queries.size());
-    for (vector<TypeCorrectedQuery>::iterator it = queries.begin();
+    for (std::vector<TypeCorrectedQuery>::iterator it = queries.begin();
          it != queries.end();
          ++it) {
       // Empty TypeCorrectedQuery is unexpected.
@@ -458,7 +458,7 @@ TEST_F(TypingCorrectorTest, Invalidate) {
   table->InsertCharacter(&corrector, "o");
   table->InsertCharacter(&corrector, "u");
 
-  vector<TypeCorrectedQuery> queries;
+  std::vector<TypeCorrectedQuery> queries;
   corrector.GetQueriesForPrediction(&queries);
   EXPECT_TRUE(queries.empty());
 }

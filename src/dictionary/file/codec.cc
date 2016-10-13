@@ -46,7 +46,7 @@ DictionaryFileCodec::DictionaryFileCodec() : filemagic_(20110701) {}
 DictionaryFileCodec::~DictionaryFileCodec() {}
 
 void DictionaryFileCodec::WriteSections(
-    const vector<DictionaryFileSection> &sections,
+    const std::vector<DictionaryFileSection> &sections,
     ostream *ofs) const {
   DCHECK(ofs);
   WriteHeader(ofs);
@@ -83,7 +83,7 @@ string DictionaryFileCodec::GetSectionName(const string &name) const {
 
 bool DictionaryFileCodec::ReadSections(
     const char *image, int length,
-    vector<DictionaryFileSection> *sections) const {
+    std::vector<DictionaryFileSection> *sections) const {
   DCHECK(sections);
   const char *ptr = image;
   const int filemagic = filecodec_util::ReadInt(ptr);

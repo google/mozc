@@ -63,7 +63,7 @@ namespace {
 
 // Parses key events.  If |input| gets EOF, returns false.
 bool ReadKeys(istream *input,
-              vector<commands::KeyEvent> *keys,
+              std::vector<commands::KeyEvent> *keys,
               string *answer) {
   keys->clear();
   answer->clear();
@@ -126,7 +126,7 @@ int Loop(istream *input) {
 
   commands::Command command;
   commands::Output output;
-  vector<commands::KeyEvent> keys;
+  std::vector<commands::KeyEvent> keys;
   string answer;
 
   // TODO(tok): Stop the test if server is crashed.  Currently, we cannot

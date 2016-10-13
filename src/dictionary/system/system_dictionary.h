@@ -136,8 +136,8 @@ class SystemDictionary : public DictionaryInterface {
                                           Callback *callback) const;
   void RegisterReverseLookupTokensForValue(StringPiece value,
                                            Callback *callback) const;
-  void ScanTokens(const set<int> &id_set, ReverseLookupCache *cache) const;
-  void RegisterReverseLookupResults(const set<int> &id_set,
+  void ScanTokens(const std::set<int> &id_set, ReverseLookupCache *cache) const;
+  void RegisterReverseLookupResults(const std::set<int> &id_set,
                                     const ReverseLookupCache &cache,
                                     Callback *callback) const;
   void InitReverseLookupIndex();
@@ -157,7 +157,7 @@ class SystemDictionary : public DictionaryInterface {
       StringPiece encoded_key,
       const KeyExpansionTable &table,
       size_t limit,
-      vector<PredictiveLookupSearchState> *result) const;
+      std::vector<PredictiveLookupSearchState> *result) const;
 
   storage::louds::LoudsTrie key_trie_;
   storage::louds::LoudsTrie value_trie_;

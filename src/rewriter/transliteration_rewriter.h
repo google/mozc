@@ -60,7 +60,7 @@ class TransliterationRewriter : public RewriterInterface  {
                          Segment::Candidate *cand) const;
   // Sets transliteration values into segment.  If t13ns is invalid,
   // false is returned.
-  bool SetTransliterations(const vector<string> &t13ns,
+  bool SetTransliterations(const std::vector<string> &t13ns,
                            const string &key,
                            Segment *segment) const;
   bool FillT13nsFromComposer(const ConversionRequest &request,

@@ -137,7 +137,7 @@ TEST(IPCTest, IPCTest) {
 
   // mozc::Thread is not designed as value-semantics.
   // So here we use pointers to maintain these instances.
-  vector<MultiConnections *> cons(kNumThreads);
+  std::vector<MultiConnections *> cons(kNumThreads);
   for (size_t i = 0; i < cons.size(); ++i) {
     cons[i] = new MultiConnections;
 #ifdef OS_MACOSX

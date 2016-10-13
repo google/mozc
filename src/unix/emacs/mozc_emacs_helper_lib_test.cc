@@ -55,7 +55,7 @@ class MozcEmacsHelperLibTest : public testing::Test {
 
   void PrintAndTestSexpr(
       const mozc::protobuf::Message &message, const string &sexpr) {
-    vector<string> buffer;
+    std::vector<string> buffer;
     mozc::emacs::PrintMessage(message, &buffer);
     string output;
     mozc::Util::JoinStrings(buffer, "", &output);
@@ -254,7 +254,7 @@ TEST_F(MozcEmacsHelperLibTest, UnquoteString) {
 TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
   using mozc::emacs::TokenizeSExpr;
   const string input = " ('abc \" \t\\r\\\n\\\"\"\t-x0\"い\"p)\n";
-  vector<string> output;
+  std::vector<string> output;
   bool result = TokenizeSExpr(input, &output);
 
   const char *golden[] = {

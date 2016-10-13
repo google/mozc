@@ -401,7 +401,7 @@ const char kAttributeDelimiter[] = " ";
 TableAttributes ParseAttributes(const string &input) {
   TableAttributes attributes = NO_TABLE_ATTRIBUTE;
 
-  vector<string> attribute_strings;
+  std::vector<string> attribute_strings;
   Util::SplitStringAllowEmpty(input, kAttributeDelimiter, &attribute_strings);
 
   for (size_t i = 0; i < attribute_strings.size(); ++i) {
@@ -430,7 +430,7 @@ bool Table::LoadFromStream(istream *is) {
       continue;
     }
 
-    vector<string> rules;
+    std::vector<string> rules;
     Util::SplitStringAllowEmpty(line, "\t", &rules);
     if (rules.size() == 4) {
       const TableAttributes attributes = ParseAttributes(rules[3]);
@@ -477,7 +477,7 @@ const Entry *Table::LookUpPrefix(const string &input,
 }
 
 void Table::LookUpPredictiveAll(const string &input,
-                                vector<const Entry *> *results) const {
+                                std::vector<const Entry *> *results) const {
   if (case_sensitive_) {
     entries_->LookUpPredictiveAll(input, results);
   } else {

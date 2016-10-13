@@ -66,7 +66,8 @@ class QualityRegressionTest : public ::testing::Test {
  protected:
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
     CHECK(util);
-    map<string, vector<pair<float, string>>> results, disabled_results;
+    std::map<string, std::vector<std::pair<float, string>>> results,
+        disabled_results;
 
     int num_executed_cases = 0, num_disabled_cases = 0;
     for (size_t i = 0; kTestData[i].line; ++i) {
@@ -79,7 +80,7 @@ class QualityRegressionTest : public ::testing::Test {
       string actual_value;
       const bool test_result = util->ConvertAndTest(item, &actual_value);
 
-      map<string, vector<pair<float, string>>> *table = nullptr;
+      std::map<string, std::vector<std::pair<float, string>>> *table = nullptr;
       if (kTestData[i].enabled) {
         ++num_executed_cases;
         table = &results;
@@ -113,9 +114,9 @@ class QualityRegressionTest : public ::testing::Test {
   // results don't affect test results but closable issues are reported.
   static void ExamineResults(
       const bool enabled, uint32 platform,
-      map<string, vector<pair<float, string>>> *results) {
+      std::map<string, std::vector<std::pair<float, string>>> *results) {
     for (auto it = results->begin(); it != results->end(); ++it) {
-      vector<pair<float, string>> *values = &it->second;
+      std::vector<std::pair<float, string>> *values = &it->second;
       std::sort(values->begin(), values->end());
       size_t correct = 0;
       bool all_passed = true;

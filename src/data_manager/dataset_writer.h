@@ -65,7 +65,7 @@ class DataSetWriter {
 
   string image_;
   DataSetMetadata metadata_;
-  set<string> seen_names_;
+  std::set<string> seen_names_;
 };
 
 }  // namespace mozc

@@ -136,7 +136,7 @@ void ValueDictionary::LookupPredictive(
   Token token;
 
   // Traverse subtree rooted at |node|.
-  queue<LoudsTrie::Node> queue;
+  std::queue<LoudsTrie::Node> queue;
   queue.push(node);
   do {
     node = queue.front();

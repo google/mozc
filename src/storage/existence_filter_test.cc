@@ -105,7 +105,7 @@ TEST(ExistenceFilterTest, MinFilterSizeEstimateTest) {
 }
 
 TEST(ExistenceFilterTest, ReadWriteTest) {
-  vector<string> words;
+  std::vector<string> words;
   words.push_back("a");
   words.push_back("b");
   words.push_back("c");
@@ -136,7 +136,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
 }
 
 TEST(ExistenceFilterTest, InsertAndExistsTest) {
-  vector<string> words;
+  std::vector<string> words;
   words.push_back("a");
   words.push_back("b");
   words.push_back("c");

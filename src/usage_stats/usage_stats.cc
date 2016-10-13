@@ -320,14 +320,15 @@ bool UsageStats::GetStatsForTest(const string &name, Stats *stats) {
 }
 
 void UsageStats::StoreTouchEventStats(
-    const string &name, const map<string, TouchEventStatsMap> &touch_stats) {
+    const string &name,
+    const std::map<string, TouchEventStatsMap> &touch_stats) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   if (touch_stats.empty()) {
     return;
   }
 
   Stats stats;
-  map<string, TouchEventStatsMap> tmp_stats(touch_stats);
+  std::map<string, TouchEventStatsMap> tmp_stats(touch_stats);
   if (GetterInternal(name, Stats::VIRTUAL_KEYBOARD, &stats)) {
     for (size_t i = 0; i < stats.virtual_keyboard_stats_size(); ++i) {
       const Stats::VirtualKeyboardStats &virtual_keyboard_stats =
@@ -349,7 +350,7 @@ void UsageStats::StoreTouchEventStats(
   }
 
   stats.clear_virtual_keyboard_stats();
-  for (map<string, TouchEventStatsMap>::const_iterator iter =
+  for (std::map<string, TouchEventStatsMap>::const_iterator iter =
            tmp_stats.begin();
        iter != tmp_stats.end(); ++iter) {
     Stats::VirtualKeyboardStats *virtual_keyboard_stats =

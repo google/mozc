@@ -351,11 +351,11 @@ void Segment::clear_meta_candidates() {
   meta_candidates_.clear();
 }
 
-const vector<Segment::Candidate> &Segment::meta_candidates() const {
+const std::vector<Segment::Candidate> &Segment::meta_candidates() const {
   return meta_candidates_;
 }
 
-vector<Segment::Candidate> *Segment::mutable_meta_candidates() {
+std::vector<Segment::Candidate> *Segment::mutable_meta_candidates() {
   return &meta_candidates_;
 }
 

@@ -493,7 +493,7 @@ TEST(CandidateTest, InnerSegmentIterator) {
     candidate.value = "redgreenblue";
     candidate.PushBackInnerSegmentBoundary(4, 3, 4, 3);
     candidate.PushBackInnerSegmentBoundary(6, 9, 3, 5);
-    vector<StringPiece> keys, values, content_keys, content_values;
+    std::vector<StringPiece> keys, values, content_keys, content_values;
     for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
          !iter.Done(); iter.Next()) {
       keys.push_back(iter.GetKey());
@@ -547,7 +547,7 @@ TEST(SegmentTest, MetaCandidateTest) {
   EXPECT_EQ(0, segment.meta_candidates_size());
 
   const int kCandidatesSize = 5;
-  vector<string> values;
+  std::vector<string> values;
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     values.push_back(string('a' + i, 1));
   }
@@ -597,7 +597,7 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   // mutable_meta_candidates
   {
-    vector<Segment::Candidate> *meta_candidates =
+    std::vector<Segment::Candidate> *meta_candidates =
         segment.mutable_meta_candidates();
     EXPECT_EQ(kCandidatesSize, meta_candidates->size());
     Segment::Candidate cand;
@@ -608,7 +608,7 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   // meta_candidates
   {
-    const vector<Segment::Candidate> &meta_candidates =
+    const std::vector<Segment::Candidate> &meta_candidates =
         segment.meta_candidates();
     EXPECT_EQ(kCandidatesSize + 1, meta_candidates.size());
     for (size_t i = 0; i < kCandidatesSize; ++i) {

@@ -45,7 +45,7 @@ class POSListProviderInterface {
   virtual ~POSListProviderInterface() = default;
 
   // Sets posssible list of POS which Mozc can handle.
-  virtual void GetPOSList(vector<string> *pos_list) const = 0;
+  virtual void GetPOSList(std::vector<string> *pos_list) const = 0;
 
  protected:
   POSListProviderInterface() = default;
@@ -79,7 +79,7 @@ class UserPOSInterface : public POSListProviderInterface {
   virtual bool GetTokens(const string &key,
                          const string &value,
                          const string &pos,
-                         vector<Token> *tokens) const = 0;
+                         std::vector<Token> *tokens) const = 0;
 
  protected:
   UserPOSInterface() = default;

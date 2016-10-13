@@ -88,7 +88,7 @@ struct NounPrefix {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, true);
 
-  map<string, mozc::SerializedDictionary::TokenList> tokens;
+  std::map<string, mozc::SerializedDictionary::TokenList> tokens;
   for (const NounPrefix &entry : kNounPrefixList) {
     std::unique_ptr<mozc::SerializedDictionary::CompilerToken> token(
         new mozc::SerializedDictionary::CompilerToken);

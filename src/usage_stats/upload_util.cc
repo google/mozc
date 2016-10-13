@@ -56,7 +56,7 @@ UploadUtil::~UploadUtil() {
 void UploadUtil::SetHeader(
     const string &type,
     int elapsed_sec,
-    const vector<pair<string, string> > &optional_url_params) {
+    const std::vector<std::pair<string, string> > &optional_url_params) {
   if (elapsed_sec < 0) {
     LOG(WARNING) << "elapsed_sec < 0";
     elapsed_sec = 0;

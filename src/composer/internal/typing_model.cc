@@ -38,7 +38,7 @@
 namespace mozc {
 namespace composer {
 
-const uint8 TypingModel::kNoData = numeric_limits<uint8>::max();
+const uint8 TypingModel::kNoData = std::numeric_limits<uint8>::max();
 const int TypingModel::kInfinity = (2 << 20);  // approximately equals 1e+6
 
 TypingModel::TypingModel(const char *characters,
@@ -47,7 +47,7 @@ TypingModel::TypingModel(const char *characters,
                          size_t cost_table_size,
                          const int32 *mapping_table) :
     character_to_radix_table_(
-        new unsigned char[numeric_limits<unsigned char>::max()]),
+        new unsigned char[std::numeric_limits<unsigned char>::max()]),
     characters_size_(characters_size),
     cost_table_(cost_table),
     cost_table_size_(cost_table_size),

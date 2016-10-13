@@ -62,7 +62,7 @@ class TestCPUStats : public CPUStatsInterface {
     return static_cast<size_t>(1);
   }
 
-  void SetCPULoads(const vector<float> &cpu_loads) {
+  void SetCPULoads(const std::vector<float> &cpu_loads) {
     scoped_lock l(&mutex_);
     cpu_loads_index_ = 0;
     cpu_loads_ = cpu_loads;
@@ -70,7 +70,7 @@ class TestCPUStats : public CPUStatsInterface {
 
  private:
   Mutex mutex_;
-  vector<float> cpu_loads_;
+  std::vector<float> cpu_loads_;
   int cpu_loads_index_;
 };
 
@@ -94,7 +94,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
   InitializeClient(&client);
   mozc::TestCPUStats stats;
 
-  vector<float> cpu_loads;
+  std::vector<float> cpu_loads;
   // no CPU loads
   for (int i = 0; i < 20; ++i) {
     cpu_loads.push_back(0.0);
@@ -133,7 +133,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   InitializeClient(&client);
   mozc::TestCPUStats stats;
 
-  vector<float> cpu_loads;
+  std::vector<float> cpu_loads;
   // high CPU loads
   for (int i = 0; i < 20; ++i) {
     cpu_loads.push_back(0.8);

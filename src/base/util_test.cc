@@ -49,11 +49,11 @@ namespace {
 
 #ifndef OS_NACL
 // Disabled on NaCl since it uses a mock file system.
-void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
+void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
   CHECK(test_map);
   const string &path = testing::GetSourceFileOrDie({
       "data", "test", "character_set", "character_set.tsv"});
-  map<string, Util::CharacterSet> character_set_type_map;
+  std::map<string, Util::CharacterSet> character_set_type_map;
   character_set_type_map["ASCII"] = Util::ASCII;
   character_set_type_map["JISX0201"] = Util::JISX0201;
   character_set_type_map["JISX0208"] = Util::JISX0208;
@@ -73,11 +73,11 @@ void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
       continue;
     }
 
-    vector<string> col;
+    std::vector<string> col;
     mozc::Util::SplitStringUsing(line, "\t", &col);
     CHECK_GE(col.size(), 2) << "format error: " << line;
     const char32 ucs4 = NumberUtil::SimpleAtoi(col[0]);
-    map<string, Util::CharacterSet>::const_iterator itr =
+    std::map<string, Util::CharacterSet>::const_iterator itr =
         character_set_type_map.find(col[1]);
     // We cannot use CHECK_NE here because of overload resolution.
     CHECK(character_set_type_map.end() != itr)
@@ -88,9 +88,9 @@ void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
 #endif  // !OS_NACL
 
 Util::CharacterSet GetExpectedCharacterSet(
-    const map<char32, Util::CharacterSet> &test_map,
+    const std::map<char32, Util::CharacterSet> &test_map,
     char32 ucs4) {
-  map<char32, Util::CharacterSet>::const_iterator itr =
+  std::map<char32, Util::CharacterSet>::const_iterator itr =
       test_map.find(ucs4);
   if (test_map.find(ucs4) == test_map.end()) {
     // If the test data does not have an entry, it should be
@@ -103,7 +103,7 @@ Util::CharacterSet GetExpectedCharacterSet(
 }  // namespace
 
 TEST(UtilTest, JoinStrings) {
-  vector<string> input;
+  std::vector<string> input;
   input.push_back("ab");
   input.push_back("cdef");
   input.push_back("ghr");
@@ -114,14 +114,14 @@ TEST(UtilTest, JoinStrings) {
 
 TEST(UtilTest, JoinStringPieces) {
   {
-    vector<StringPiece> input;
+    std::vector<StringPiece> input;
     input.push_back("ab");
     string output;
     Util::JoinStringPieces(input, ":", &output);
     EXPECT_EQ("ab", output);
   }
   {
-    vector<StringPiece> input;
+    std::vector<StringPiece> input;
     input.push_back("ab");
     input.push_back("cdef");
     input.push_back("ghr");
@@ -130,7 +130,7 @@ TEST(UtilTest, JoinStringPieces) {
     EXPECT_EQ("ab:cdef:ghr", output);
   }
   {
-    vector<StringPiece> input;
+    std::vector<StringPiece> input;
     input.push_back("ab");
     input.push_back("cdef");
     input.push_back("ghr");
@@ -402,7 +402,7 @@ TEST(UtilTest, SplitIterator_MultiDelimiter_AllowEmpty) {
 TEST(UtilTest, SplitStringUsing) {
   {
     const string input = "a b  c def";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringUsing(input, " ", &output);
     EXPECT_EQ(output.size(), 4);
     EXPECT_EQ("a", output[0]);
@@ -412,7 +412,7 @@ TEST(UtilTest, SplitStringUsing) {
   }
   {
     const string input = " a b  c";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringUsing(input, " ", &output);
     EXPECT_EQ(output.size(), 3);
     EXPECT_EQ("a", output[0]);
@@ -421,7 +421,7 @@ TEST(UtilTest, SplitStringUsing) {
   }
   {
     const string input = "a b  c ";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringUsing(input, " ", &output);
     EXPECT_EQ(output.size(), 3);
     EXPECT_EQ("a", output[0]);
@@ -430,7 +430,7 @@ TEST(UtilTest, SplitStringUsing) {
   }
   {
     const string input = "a:b  cd ";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringUsing(input, ": ", &output);
     EXPECT_EQ(output.size(), 3);
     EXPECT_EQ("a", output[0]);
@@ -439,7 +439,7 @@ TEST(UtilTest, SplitStringUsing) {
   }
   {
     const string input = "Empty delimiter";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringUsing(input, "", &output);
     EXPECT_EQ(output.size(), 1);
     EXPECT_EQ(input, output[0]);
@@ -449,7 +449,7 @@ TEST(UtilTest, SplitStringUsing) {
 TEST(UtilTest, SplitStringAllowEmpty) {
   {
     const string input = "a b  c def";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringAllowEmpty(input, " ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("a", output[0]);
@@ -460,7 +460,7 @@ TEST(UtilTest, SplitStringAllowEmpty) {
   }
   {
     const string input = " a b  c";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringAllowEmpty(input, " ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("", output[0]);
@@ -471,7 +471,7 @@ TEST(UtilTest, SplitStringAllowEmpty) {
   }
   {
     const string input = "a b  c ";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringAllowEmpty(input, " ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("a", output[0]);
@@ -482,7 +482,7 @@ TEST(UtilTest, SplitStringAllowEmpty) {
   }
   {
     const string input = "a:b  c ";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringAllowEmpty(input, ": ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("a", output[0]);
@@ -493,7 +493,7 @@ TEST(UtilTest, SplitStringAllowEmpty) {
   }
   {
     const string input = "Empty delimiter";
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringAllowEmpty(input, "", &output);
     EXPECT_EQ(output.size(), 1);
     EXPECT_EQ(input, output[0]);
@@ -560,7 +560,7 @@ TEST(UtilTest, StripWhiteSpaces) {
 
 TEST(UtilTest, SplitStringToUtf8Chars) {
   {
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringToUtf8Chars("", &output);
     EXPECT_EQ(0, output.size());
   }
@@ -580,7 +580,7 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
       joined_string += kInputs[i];
     }
 
-    vector<string> output;
+    std::vector<string> output;
     Util::SplitStringToUtf8Chars(joined_string, &output);
     EXPECT_EQ(arraysize(kInputs), output.size());
 
@@ -591,7 +591,7 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
 }
 
 TEST(UtilTest, SplitCSV) {
-  vector<string> answer_vector;
+  std::vector<string> answer_vector;
 
   Util::SplitCSV(
       "Google,x,\"Buchheit, Paul\",\"string with \"\" quote in it\"",
@@ -1545,7 +1545,7 @@ TEST(UtilTest, DecodeURI) {
 }
 
 TEST(UtilTest, AppendCGIParams) {
-  vector<pair<string, string> > params;
+  std::vector<std::pair<string, string> > params;
   string url;
   Util::AppendCGIParams(params, &url);
   EXPECT_TRUE(url.empty());
@@ -2044,7 +2044,7 @@ TEST(UtilTest, FormType) {
 //
 // Disabled on NaCl since it uses a mock file system.
 TEST(UtilTest, CharacterSetFullTest) {
-  map<char32, Util::CharacterSet> test_set;
+  std::map<char32, Util::CharacterSet> test_set;
   FillTestCharacterSetMap(&test_set);
   EXPECT_FALSE(test_set.empty());
 

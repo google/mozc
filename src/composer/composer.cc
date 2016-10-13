@@ -814,7 +814,7 @@ void Composer::GetQueryForPrediction(string *output) const {
 }
 
 void Composer::GetQueriesForPrediction(
-    string *base, set<string> *expanded) const {
+    string *base, std::set<string> *expanded) const {
   DCHECK(base);
   DCHECK(expanded);
   DCHECK(composition_.get());
@@ -832,7 +832,7 @@ void Composer::GetQueriesForPrediction(
 }
 
 void Composer::GetTypeCorrectedQueriesForPrediction(
-    vector<TypeCorrectedQuery> *queries) const {
+    std::vector<TypeCorrectedQuery> *queries) const {
   typing_corrector_.GetQueriesForPrediction(queries);
 }
 
@@ -1050,7 +1050,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
   // Create a vector of scripts of query characters to avoid
   // processing query string many times.
   const size_t chars_len = Util::CharsLen(*query);
-  vector<Script> char_scripts;
+  std::vector<Script> char_scripts;
   char_scripts.reserve(chars_len);
 
   // flags to determine whether continue to the next step.

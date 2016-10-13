@@ -61,7 +61,7 @@ class URLImpl {
     *url = uninstallation_survey_url_;
     if (!version.empty()) {
       *url += "&";
-      vector<pair<string, string> > params;
+      std::vector<std::pair<string, string> > params;
       params.push_back(std::make_pair(kSurveyVersionEntry, version));
       Util::AppendCGIParams(params, url);
     }
@@ -73,7 +73,7 @@ class URLImpl {
     uninstallation_survey_url_.clear();
     uninstallation_survey_url_ = kSurveyBaseURL;
     uninstallation_survey_url_ += "?";
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(
         std::make_pair(kSurveyContactTypeEntry, kSurveyContactType));
     params.push_back(

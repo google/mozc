@@ -56,12 +56,12 @@ class JobRecorder : public Scheduler::SchedulerInterface {
     }
     return false;
   }
-  const vector<Scheduler::JobSetting> &job_settings() const {
+  const std::vector<Scheduler::JobSetting> &job_settings() const {
     return job_settings_;
   }
 
  private:
-  vector<Scheduler::JobSetting> job_settings_;
+  std::vector<Scheduler::JobSetting> job_settings_;
 };
 }  // namespace
 class SessionServerTest : public testing::Test {

@@ -268,7 +268,7 @@ const char kOldTwenty[] = "\xE5\xBB\xBF";
 }  // namespace
 
 bool NumberUtil::ArabicToKanji(StringPiece input_num,
-                               vector<NumberString> *output) {
+                               std::vector<NumberString> *output) {
   DCHECK(output);
   // "零"
   const char *const kNumZero = "\xe9\x9b\xb6";
@@ -305,7 +305,7 @@ bool NumberUtil::ArabicToKanji(StringPiece input_num,
   input_num.AppendToString(&input);
 
   // Segment into kDigitsInBigRank-digits pieces
-  vector<string> ranked_numbers;
+  std::vector<string> ranked_numbers;
   for (int i = static_cast<int>(input.size()) - kDigitsInBigRank; i >= 0;
        i -= kDigitsInBigRank) {
     ranked_numbers.push_back(input.substr(i, kDigitsInBigRank));
@@ -413,7 +413,7 @@ const NumberStringVariation kNumDigitsVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToSeparatedArabic(
-    StringPiece input_num, vector<NumberString> *output) {
+    StringPiece input_num, std::vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalNumber(input_num)) {
@@ -484,7 +484,7 @@ const NumberStringVariation kSingleDigitsVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToWideArabic(
-    StringPiece input_num, vector<NumberString> *output) {
+    StringPiece input_num, std::vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -529,7 +529,7 @@ const NumberStringVariation kSpecialNumericVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToOtherForms(
-    StringPiece input_num, vector<NumberString> *output) {
+    StringPiece input_num, std::vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -581,7 +581,7 @@ const int kMaxInt64Size = 24;
 }  // namespace
 
 bool NumberUtil::ArabicToOtherRadixes(
-    StringPiece input_num, vector<NumberString> *output) {
+    StringPiece input_num, std::vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -887,8 +887,8 @@ bool NumberUtil::SafeStrToDouble(StringPiece str, double *value) {
   if (errno != 0 ||
       ptr == end_ptr ||
       std::isnan(*value) ||
-      *value ==  numeric_limits<double>::infinity() ||
-      *value == -numeric_limits<double>::infinity()) {
+      *value ==  std::numeric_limits<double>::infinity() ||
+      *value == -std::numeric_limits<double>::infinity()) {
     return false;
   }
   // Trailing white spaces are allowed.
@@ -902,8 +902,8 @@ namespace {
 //   [1, 2, 3, 10, 100] => begin points to [10, 100], output = 123
 // Returns false when overflow happened.
 bool ReduceLeadingNumbersAsBase10System(
-    vector<uint64>::const_iterator *begin,
-    const vector<uint64>::const_iterator &end,
+    std::vector<uint64>::const_iterator *begin,
+    const std::vector<uint64>::const_iterator &end,
     uint64 *output) {
   *output = 0;
   for (; *begin < end; ++*begin) {
@@ -923,7 +923,7 @@ bool ReduceLeadingNumbersAsBase10System(
 //   [1, 2, 3] => 123
 //   [1, 2, 3, 10] => false
 // Returns false if a number greater than 10 was found or overflow happened.
-bool InterpretNumbersAsBase10System(const vector<uint64> &numbers,
+bool InterpretNumbersAsBase10System(const std::vector<uint64> &numbers,
                                     uint64 *output) {
   auto begin = numbers.begin();
   const bool success =
@@ -934,8 +934,8 @@ bool InterpretNumbersAsBase10System(const vector<uint64> &numbers,
 
 // Reads a leading number in a sequence and advances the iterator. Returns false
 // if the range is empty or the leading number is not less than 10.
-bool ReduceOnesDigit(vector<uint64>::const_iterator *begin,
-                     const vector<uint64>::const_iterator &end,
+bool ReduceOnesDigit(std::vector<uint64>::const_iterator *begin,
+                     const std::vector<uint64>::const_iterator &end,
                      uint64 *num) {
   if (*begin == end || **begin >= 10) {
     return false;
@@ -963,8 +963,8 @@ bool ReduceOnesDigit(vector<uint64>::const_iterator *begin,
 //     [2, 1000, ...] => 2000
 //     [1, 1000, ...] => 1000
 //     [1, 2, 3, 4, ...] => 1234
-bool ReduceDigitsHelper(vector<uint64>::const_iterator *begin,
-                        const vector<uint64>::const_iterator &end,
+bool ReduceDigitsHelper(std::vector<uint64>::const_iterator *begin,
+                        const std::vector<uint64>::const_iterator &end,
                         uint64 *num,
                         const uint64 expected_base) {
   // Skip leading zero(s).
@@ -1018,20 +1018,20 @@ bool ReduceDigitsHelper(vector<uint64>::const_iterator *begin,
   return false;
 }
 
-inline bool ReduceTensDigit(vector<uint64>::const_iterator *begin,
-                            const vector<uint64>::const_iterator &end,
+inline bool ReduceTensDigit(std::vector<uint64>::const_iterator *begin,
+                            const std::vector<uint64>::const_iterator &end,
                             uint64 *num) {
   return ReduceDigitsHelper(begin, end, num, 10);
 }
 
-inline bool ReduceHundredsDigit(vector<uint64>::const_iterator *begin,
-                                const vector<uint64>::const_iterator &end,
+inline bool ReduceHundredsDigit(std::vector<uint64>::const_iterator *begin,
+                                const std::vector<uint64>::const_iterator &end,
                                 uint64 *num) {
   return ReduceDigitsHelper(begin, end, num, 100);
 }
 
-inline bool ReduceThousandsDigit(vector<uint64>::const_iterator *begin,
-                                 const vector<uint64>::const_iterator &end,
+inline bool ReduceThousandsDigit(std::vector<uint64>::const_iterator *begin,
+                                 const std::vector<uint64>::const_iterator &end,
                                  uint64 *num) {
   return ReduceDigitsHelper(begin, end, num, 1000);
 }
@@ -1042,8 +1042,8 @@ inline bool ReduceThousandsDigit(vector<uint64>::const_iterator *begin,
 //        => begin points to [10000, ...], num = 1234
 //   [3, 100, 4, 100]
 //        => error because same base number appears twice
-bool ReduceNumberLessThan10000(vector<uint64>::const_iterator *begin,
-                               const vector<uint64>::const_iterator &end,
+bool ReduceNumberLessThan10000(std::vector<uint64>::const_iterator *begin,
+                               const std::vector<uint64>::const_iterator &end,
                                uint64 *num) {
   *num = 0;
   bool success = false;
@@ -1075,7 +1075,7 @@ bool ReduceNumberLessThan10000(vector<uint64>::const_iterator *begin,
 //   "一万二千三百四十五" = [1, 10000, 2, 1000, 3, 100, 4, 10, 5] => 12345
 // Base-10 numbers must be decreasing, i.e.,
 //   "一十二百" = [1, 10, 2, 100] => error
-bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
+bool InterpretNumbersInJapaneseWay(const std::vector<uint64> &numbers,
                                    uint64 *output) {
   uint64 last_base = kuint64max;
   auto begin = numbers.begin();
@@ -1105,7 +1105,7 @@ bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
 
 // Interprets a sequence of numbers directly or in a Japanese reading way
 // depending on the maximum number in the sequence.
-bool NormalizeNumbersHelper(const vector<uint64> &numbers,
+bool NormalizeNumbersHelper(const std::vector<uint64> &numbers,
                             uint64 *number_output) {
   const auto itr_max = std::max_element(numbers.begin(), numbers.end());
   if (itr_max == numbers.end()) {
@@ -1131,7 +1131,7 @@ bool NormalizeNumbersInternal(StringPiece input,
   DCHECK(arabic_output);
   const char *begin = input.data();
   const char *end = input.data() + input.size();
-  vector<uint64> numbers;
+  std::vector<uint64> numbers;
   numbers.reserve(input.size());
 
   // Map Kanji number string to digits, e.g., "二百十一" -> [2, 100, 10, 1].

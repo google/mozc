@@ -61,22 +61,22 @@ class SystemDictionaryBuilder {
     // id of the key(=reading) string in key trie
     int id_in_key_trie;
     string key;
-    vector<TokenInfo> tokens;
+    std::vector<TokenInfo> tokens;
   };
 
   SystemDictionaryBuilder();
   explicit SystemDictionaryBuilder(const SystemDictionaryCodecInterface *codec);
   virtual ~SystemDictionaryBuilder();
-  void BuildFromTokens(const vector<Token *> &tokens);
+  void BuildFromTokens(const std::vector<Token *> &tokens);
 
   void WriteToFile(const string &output_file) const;
   void WriteToStream(const string &intermediate_output_file_base_path,
                      ostream *output_stream) const;
 
  private:
-  typedef deque<KeyInfo> KeyInfoList;
+  typedef std::deque<KeyInfo> KeyInfoList;
 
-  void ReadTokens(const vector<Token *>& tokens,
+  void ReadTokens(const std::vector<Token *>& tokens,
                   KeyInfoList *key_info_list) const;
 
   void BuildFrequentPos(const KeyInfoList &key_info_list);
@@ -101,7 +101,7 @@ class SystemDictionaryBuilder {
       token_array_builder_;
 
   // mapping from {left_id, right_id} to POS index (0--255)
-  map<uint32, int> frequent_pos_;
+  std::map<uint32, int> frequent_pos_;
 
   const SystemDictionaryCodecInterface *codec_;
 

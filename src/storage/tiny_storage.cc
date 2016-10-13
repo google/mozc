@@ -102,7 +102,7 @@ class TinyStorageImpl : public StorageInterface {
  private:
   string filename_;
   bool should_sync_;
-  map<string, string> dic_;
+  std::map<string, string> dic_;
 
   DISALLOW_COPY_AND_ASSIGN(TinyStorageImpl);
 };
@@ -245,7 +245,7 @@ bool TinyStorageImpl::Sync() {
   ofs.write(reinterpret_cast<const char *>(&size),
             sizeof(size));
 
-  for (map<string, string>::const_iterator it = dic_.begin();
+  for (std::map<string, string>::const_iterator it = dic_.begin();
        it != dic_.end(); ++it) {
     if (it->first.empty()) {
       continue;
@@ -305,7 +305,7 @@ bool TinyStorageImpl::Insert(const string &key, const string &value) {
 }
 
 bool TinyStorageImpl::Erase(const string &key) {
-  map<string, string>::iterator it = dic_.find(key);
+  std::map<string, string>::iterator it = dic_.find(key);
   if (it == dic_.end()) {
     VLOG(2) << "cannot erase key: " << key;
     return false;
@@ -316,7 +316,7 @@ bool TinyStorageImpl::Erase(const string &key) {
 }
 
 bool TinyStorageImpl::Lookup(const string &key, string *value) const {
-  map<string, string>::const_iterator it = dic_.find(key);
+  std::map<string, string>::const_iterator it = dic_.find(key);
   if (it == dic_.end()) {
     VLOG(3) << "cannot find key: " << key;
     return false;

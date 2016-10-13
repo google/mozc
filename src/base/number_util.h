@@ -121,32 +121,32 @@ class NumberUtil {
   // value, desc and style are stored same size and same order.
   // if invalid string is set, this function do nothing.
   static bool ArabicToKanji(StringPiece input_num,
-                            vector<NumberString> *output);
+                            std::vector<NumberString> *output);
 
   // Converts half-width Arabic number string to Separated Arabic string.
   // (e.g. 1234567890 are converted to 1,234,567,890)
   // Arguments are same as ArabicToKanji (above).
   static bool ArabicToSeparatedArabic(StringPiece input_num,
-                                      vector<NumberString> *output);
+                                      std::vector<NumberString> *output);
 
   // Converts half-width Arabic number string to full-width Arabic number
   // string.
   // Arguments are same as ArabicToKanji (above).
   static bool ArabicToWideArabic(StringPiece input_num,
-                                 vector<NumberString> *output);
+                                 std::vector<NumberString> *output);
 
   // Converts half-width Arabic number to various styles.
   // Arguments are same as ArabicToKanji (above).
   //   - Roman style (i) (ii) ...
   static bool ArabicToOtherForms(StringPiece input_num,
-                                 vector<NumberString> *output);
+                                 std::vector<NumberString> *output);
 
   // Converts half-width Arabic number to various radices (2,8,16).
   // Arguments are same as ArabicToKanji (above).
   // Excepted number of input digits is smaller than 20, but it can be
   // converted only if it can be stored in an unsigned 64-bit integer.
   static bool ArabicToOtherRadixes(StringPiece input_num,
-                                   vector<NumberString> *output);
+                                   std::vector<NumberString> *output);
 
   // Converts the string to a 32-/64-bit signed/unsigned int.  Returns true if
   // success or false if the string is in the wrong format.

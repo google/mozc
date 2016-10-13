@@ -426,7 +426,7 @@ bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
     return false;
   }
 
-  vector<string> result;
+  std::vector<string> result;
   storage->GetAllValues(&result);
   output->mutable_storage_entry()->set_type(storage_type);
   for (size_t i = 0; i < result.size(); ++i) {
@@ -759,7 +759,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
       suspend_time +
       max(10, min(FLAGS_last_command_timeout, 7200));
 
-  vector<SessionID> remove_ids;
+  std::vector<SessionID> remove_ids;
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {

@@ -39,8 +39,8 @@ namespace {
 
 #include "data_manager/oss/segmenter_inl.h"
 
-pair<string, string> GetTypingModelEntry(const string &fname) {
-  return pair<string, string>(
+std::pair<string, string> GetTypingModelEntry(const string &fname) {
+  return std::pair<string, string>(
       fname,
       mozc::testing::GetSourceFileOrDie(
           {"data_manager", "oss", fname + ".data"}));

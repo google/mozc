@@ -47,7 +47,7 @@ namespace renderer {
 
 namespace {
 const string UpdateVersion(int diff) {
-  vector<string> tokens;
+  std::vector<string> tokens;
   Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
   EXPECT_EQ(tokens.size(), 4);
   char buf[64];

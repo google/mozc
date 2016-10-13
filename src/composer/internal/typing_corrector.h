@@ -91,13 +91,13 @@ class TypingCorrector {
                        const ProbableKeyEvents &probable_key_events);
 
   // Extracts type-corrected queries for prediction.
-  void GetQueriesForPrediction(vector<TypeCorrectedQuery> *queries) const;
+  void GetQueriesForPrediction(std::vector<TypeCorrectedQuery> *queries) const;
 
  private:
   friend class TypingCorrectorTest;
 
   // Represents one type-correction: key sequence and its penalty (cost).
-  typedef pair<string, int> KeyAndPenalty;
+  typedef std::pair<string, int> KeyAndPenalty;
 
   // Less-than comparator for KeyAndPenalty. Since this functor accesses
   // KeyAndPenalty, we need to define it in private member.
@@ -109,7 +109,7 @@ class TypingCorrector {
   size_t max_correction_query_results_;
   const config::Config *config_;
   string raw_key_;
-  vector<KeyAndPenalty> top_n_;
+  std::vector<KeyAndPenalty> top_n_;
 
   DISALLOW_COPY_AND_ASSIGN(TypingCorrector);
 };

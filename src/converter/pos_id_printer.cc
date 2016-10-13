@@ -49,7 +49,7 @@ PosIdPrinter::PosIdPrinter(istream *id_def) {
   }
 
   string line;
-  vector<string> columns;
+  std::vector<string> columns;
   while (getline(*id_def, line)) {
     columns.clear();
     Util::SplitStringUsing(line, " ", &columns);
@@ -62,7 +62,7 @@ PosIdPrinter::PosIdPrinter(istream *id_def) {
 PosIdPrinter::~PosIdPrinter() {}
 
 string PosIdPrinter::IdToString(int id) const {
-  map<int, string>::const_iterator iter = id_to_pos_map_.find(id);
+  std::map<int, string>::const_iterator iter = id_to_pos_map_.find(id);
   if (iter == id_to_pos_map_.end()) {
     return "";
   }

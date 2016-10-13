@@ -313,7 +313,7 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
 
 TEST_F(KeyMapTest, LoadStreamWithErrors) {
   KeyMapManager manager;
-  vector<string> errors;
+  std::vector<string> errors;
   std::unique_ptr<istream> is(
       ConfigFileStream::LegacyOpen("system://atok.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
@@ -395,7 +395,7 @@ TEST_F(KeyMapTest, DirectModeDoesNotSupportInsertSpace) {
   // InsertSpace, InsertAlternateSpace, InsertHalfSpace, and InsertFullSpace
   // are not supported in direct mode.
   KeyMapManager manager;
-  set<string> names;
+  std::set<string> names;
   manager.GetAvailableCommandNameDirect(&names);
 
   // We cannot use EXPECT_EQ because of overload resolution here.

@@ -152,7 +152,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
 
   RepeatedPtrField<UserDictionary::Entry> GetAllUserDictionaryEntries(
       uint64 session_id, uint64 dictionary_id) {
-    vector<int> indices;
+    std::vector<int> indices;
     const uint32 entries_size =
         GetUserDictionaryEntrySize(session_id, dictionary_id);
     for (uint32 i = 0; i < entries_size; ++i) {
@@ -162,7 +162,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   }
 
   RepeatedPtrField<UserDictionary::Entry> GetUserDictionaryEntries(
-      uint64 session_id, uint64 dictionary_id, const vector<int> &indices) {
+      uint64 session_id, uint64 dictionary_id,
+      const std::vector<int> &indices) {
     Clear();
     command_->set_type(UserDictionaryCommand::GET_ENTRIES);
     command_->set_session_id(session_id);
@@ -450,7 +451,7 @@ TEST_F(UserDictionarySessionHandlerTest, GetEntries) {
                          "key3", "value3", UserDictionary::SYMBOL, "comment3");
   ASSERT_EQ(3, GetUserDictionaryEntrySize(session_id, dictionary_id));
 
-  vector<int> indices;
+  std::vector<int> indices;
   indices.push_back(0);
   indices.push_back(2);
   GetUserDictionaryEntries(session_id, dictionary_id, indices);

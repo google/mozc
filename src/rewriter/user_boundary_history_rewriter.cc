@@ -245,7 +245,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     return false;
   }
 
-  deque<pair<string, size_t>> keys(target_segments_size -
+  std::deque<std::pair<string, size_t>> keys(target_segments_size -
                                    history_segments_size);
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
     const Segment &segment = segments->segment(i);

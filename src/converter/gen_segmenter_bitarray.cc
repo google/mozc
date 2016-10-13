@@ -63,9 +63,9 @@ class StateTable {
   void Build() {
     compressed_table_.resize(idarray_.size());
     uint16 id = 0;
-    map<string, uint16> dup;
+    std::map<string, uint16> dup;
     for (size_t i = 0; i < idarray_.size(); ++i) {
-      map<string, uint16>::const_iterator it = dup.find(idarray_[i]);
+      std::map<string, uint16>::const_iterator it = dup.find(idarray_[i]);
       if (it != dup.end()) {
         compressed_table_[i] = it->second;
       } else {
@@ -100,8 +100,8 @@ class StateTable {
   }
 
  private:
-  vector<string> idarray_;
-  vector<uint16> compressed_table_;
+  std::vector<string> idarray_;
+  std::vector<uint16> compressed_table_;
   size_t compressed_size_;
 
   DISALLOW_COPY_AND_ASSIGN(StateTable);
@@ -113,7 +113,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
     const string &output_ltable, const string &output_rtable,
     const string &output_bitarray) {
   // Load the original matrix into an array
-  vector<uint8> array((lsize + 1) * (rsize + 1));
+  std::vector<uint8> array((lsize + 1) * (rsize + 1));
 
   for (size_t rid = 0; rid <= lsize; ++rid) {
     for (size_t lid = 0; lid <= rsize; ++lid) {

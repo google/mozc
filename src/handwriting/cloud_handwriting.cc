@@ -55,7 +55,7 @@ bool SendHandwritingFeedback(const string &request) {
 
 // static
 bool CloudHandwriting::ParseResponse(const string &json,
-                                     vector<string> *candidates) {
+                                     std::vector<string> *candidates) {
   // The response format is internal only just in case.
 
   return true;
@@ -81,7 +81,7 @@ string CloudHandwriting::CreateFeedback(
 }
 
 HandwritingStatus CloudHandwriting::Recognize(
-    const Strokes &strokes, vector<string> *candidates) const {
+    const Strokes &strokes, std::vector<string> *candidates) const {
   string output;
   if (!MakeHandwritingRequest(CreateRequest(strokes), &output)) {
     return HANDWRITING_NETWORK_ERROR;

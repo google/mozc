@@ -152,7 +152,7 @@ TEST(LatticeTest, AddSuffixTest) {
     for (size_t i = 0; i <= key_size; ++i) {
       // check for begin_nodes
       if (i < key_size) {
-        set<int> lengths;
+        std::set<int> lengths;
         for (Node *node = lattice.begin_nodes(i);
              node != NULL;
              node = node->bnext) {
@@ -162,7 +162,7 @@ TEST(LatticeTest, AddSuffixTest) {
       }
       // check for end_nodes
       if (i > 0) {
-        set<int> lengths;
+        std::set<int> lengths;
         for (Node *node = lattice.end_nodes(i);
              node != NULL;
              node = node->enext) {
@@ -204,7 +204,7 @@ TEST(LatticeTest, ShrinkKeyTest) {
     for (size_t i = 0; i <= key_size; ++i) {
       // check for begin_nodes
       if (i < key_size) {
-        set<int> lengths;
+        std::set<int> lengths;
         for (Node *node = lattice.begin_nodes(i);
              node != NULL;
              node = node->bnext) {
@@ -214,7 +214,7 @@ TEST(LatticeTest, ShrinkKeyTest) {
       }
       // check for end_nodes
       if (i > 0) {
-        set<int> lengths;
+        std::set<int> lengths;
         for (Node *node = lattice.end_nodes(i);
              node != NULL;
              node = node->enext) {

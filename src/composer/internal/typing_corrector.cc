@@ -114,7 +114,7 @@ void TypingCorrector::InsertCharacter(
   // Approximation of dynamic programming to find N least cost key sequences.
   // At each insertion, generate all the possible paths from previous N least
   // key sequences, and keep only new N least key sequences.
-  vector<KeyAndPenalty> tmp;
+  std::vector<KeyAndPenalty> tmp;
   tmp.reserve(top_n_.size() * probable_key_events.size());
   for (size_t i = 0; i < top_n_.size(); ++i) {
     for (size_t j = 0; j < probable_key_events.size(); ++j) {
@@ -177,7 +177,7 @@ void TypingCorrector::SetConfig(const config::Config *config) {
 }
 
 void TypingCorrector::GetQueriesForPrediction(
-    vector<TypeCorrectedQuery> *queries) const {
+    std::vector<TypeCorrectedQuery> *queries) const {
   queries->clear();
   if (!IsAvailable() || table_ == NULL || raw_key_.empty()) {
     return;
@@ -206,18 +206,18 @@ void TypingCorrector::GetQueriesForPrediction(
   // e.g. "shamoji" -> "しゃもじ"
   // If there is ambiguity, queries are created.
   // e.g. "kaish" -> "かいしゃ", "かいしゅ" and "かいしょ".
-  set<string> raw_queries;
+  std::set<string> raw_queries;
   {
     input.set_raw(raw_key_);
     input.set_is_new_input(true);
     c.InsertInput(0, input);
     string raw_base;
-    set<string> raw_expanded;
+    std::set<string> raw_expanded;
     c.GetExpandedStrings(&raw_base, &raw_expanded);
     if (raw_expanded.empty()) {
       raw_queries.insert(raw_base);
     } else {
-      for (set<string>::iterator it = raw_expanded.begin();
+      for (std::set<string>::iterator it = raw_expanded.begin();
            it != raw_expanded.end();
            ++it) {
         raw_queries.insert(raw_base + *it);
@@ -264,7 +264,7 @@ void TypingCorrector::GetQueriesForPrediction(
       // This typing correction input has ambiguity.
       // e.g. "kaish" -> "かいしゃ", "かいしゅ" and "かいしょ".
       // So we have to check expanded queries.
-      for (set<string>::iterator it = query->expanded.begin();
+      for (std::set<string>::iterator it = query->expanded.begin();
            it != query->expanded.end();) {
         if (raw_queries.find(query->base + *it) != raw_queries.end()) {
           query->expanded.erase(it++);

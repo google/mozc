@@ -55,7 +55,7 @@ class EnglishVariantsRewriter : public RewriterInterface  {
   bool IsT13NCandidate(Segment::Candidate *candidate) const;
   bool IsEnglishCandidate(Segment::Candidate *candidate) const;
   bool ExpandEnglishVariants(const string &input,
-                             vector<string> *variants) const;
+                             std::vector<string> *variants) const;
   bool ExpandEnglishVariantsWithSegment(Segment *seg) const;
 };
 

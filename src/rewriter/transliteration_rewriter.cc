@@ -81,7 +81,7 @@ bool IsComposerApplicable(const ConversionRequest &request,
   return true;
 }
 
-void NormalizeT13ns(vector<string> *t13ns) {
+void NormalizeT13ns(std::vector<string> *t13ns) {
   DCHECK(t13ns);
   string normalized;
   for (size_t i = 0; i < t13ns->size(); ++i) {
@@ -115,7 +115,7 @@ struct IsNonnegativeAndLessThan<std::false_type> {
   }
 };
 
-void ModifyT13nsForGodan(const string &key, vector<string> *t13ns) {
+void ModifyT13nsForGodan(const string &key, std::vector<string> *t13ns) {
   static const char * const kKeycodeToT13nMap[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -171,7 +171,7 @@ void ModifyT13nsForGodan(const string &key, vector<string> *t13ns) {
   (*t13ns)[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
 }
 
-bool IsTransliterated(const vector<string> &t13ns) {
+bool IsTransliterated(const std::vector<string> &t13ns) {
   if (t13ns.empty() || t13ns[0].empty()) {
     return false;
   }
@@ -218,7 +218,7 @@ void GetIds(const Segment &segment, T13nIds *ids) {
 }
 
 void ModifyT13ns(const ConversionRequest &request,
-                 const Segment &segment, vector<string> *t13ns) {
+                 const Segment &segment, std::vector<string> *t13ns) {
   commands::Request::SpecialRomanjiTable special_romanji_table =
       request.request().special_romanji_table();
   if (special_romanji_table == commands::Request::GODAN_TO_HIRAGANA) {
@@ -239,7 +239,7 @@ bool TransliterationRewriter::FillT13nsFromComposer(
   // the composition string.
   if (segments->conversion_segments_size() == 1 &&
       request.composer().GetLength() == request.composer().GetCursor()) {
-    vector<string> t13ns;
+    std::vector<string> t13ns;
     request.composer().GetTransliterations(&t13ns);
     Segment *segment = segments->mutable_conversion_segment(0);
     CHECK(segment);
@@ -259,7 +259,7 @@ bool TransliterationRewriter::FillT13nsFromComposer(
       continue;
     }
     const size_t composition_len = Util::CharsLen(key);
-    vector<string> t13ns;
+    std::vector<string> t13ns;
     request.composer().GetSubTransliterations(composition_pos,
                                               composition_len,
                                               &t13ns);
@@ -303,7 +303,7 @@ bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
     Util::LowerString(&full_ascii_lower);
     Util::CapitalizeString(&full_ascii_capitalized);
 
-    vector<string> t13ns;
+    std::vector<string> t13ns;
     t13ns.resize(transliteration::NUM_T13N_TYPES);
     t13ns[transliteration::HIRAGANA] = hiragana;
     t13ns[transliteration::FULL_KATAKANA] = full_katakana;
@@ -438,7 +438,8 @@ void TransliterationRewriter::InitT13nCandidate(
 }
 
 bool TransliterationRewriter::SetTransliterations(
-    const vector<string> &t13ns, const string &key, Segment *segment) const {
+    const std::vector<string> &t13ns, const string &key,
+    Segment *segment) const {
   if (t13ns.size() != transliteration::NUM_T13N_TYPES ||
       !IsTransliterated(t13ns)) {
     return false;
@@ -449,7 +450,7 @@ bool TransliterationRewriter::SetTransliterations(
   T13nIds ids;
   GetIds(*segment, &ids);
 
-  vector<Segment::Candidate> *meta_candidates =
+  std::vector<Segment::Candidate> *meta_candidates =
       segment->mutable_meta_candidates();
   meta_candidates->resize(transliteration::NUM_T13N_TYPES);
 

@@ -60,7 +60,7 @@ namespace {
 
 void Convert() {
   const char kSeparator[] = "\t";
-  vector<string> entries;
+  std::vector<string> entries;
 
   if (FLAGS_suppression_data.empty()) {
     const string kDummyStr = "__NO_DATA__";
@@ -73,7 +73,7 @@ void Convert() {
       if (line.empty()) {
         continue;
       }
-      vector<string> fields;
+      std::vector<string> fields;
       Util::SplitStringUsing(line, kSeparator, &fields);
       CHECK_GE(fields.size(), 2);
       entries.push_back(fields[0] + kSeparator + fields[1]);

@@ -48,7 +48,7 @@ class JsonPathTest : public testing::Test {
         << reader.getFormattedErrorMessages()
         << " "
         << json;
-    vector<const Json::Value *> output;
+    std::vector<const Json::Value *> output;
     if (!JsonPath::Parse(root, jsonpath, &output)) {
       return "ERROR";
     }

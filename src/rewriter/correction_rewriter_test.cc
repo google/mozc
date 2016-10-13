@@ -73,9 +73,9 @@ class CorrectionRewriterTest : public testing::Test {
 
   void SetUp() override {
     // Create a rewriter with one entry: (TSUKIGIME, gekkyoku, tsukigime)
-    const vector<StringPiece> values = {"TSUKIGIME"};
-    const vector<StringPiece> errors = {"gekkyoku"};
-    const vector<StringPiece> corrections = {"tsukigime"};
+    const std::vector<StringPiece> values = {"TSUKIGIME"};
+    const std::vector<StringPiece> errors = {"gekkyoku"};
+    const std::vector<StringPiece> corrections = {"tsukigime"};
     rewriter_.reset(new CorrectionRewriter(
         SerializedStringArray::SerializeToBuffer(values, &values_buf_),
         SerializedStringArray::SerializeToBuffer(errors, &errors_buf_),

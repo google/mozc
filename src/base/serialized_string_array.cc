@@ -108,7 +108,7 @@ bool SerializedStringArray::VerifyData(StringPiece data) {
 }
 
 StringPiece SerializedStringArray::SerializeToBuffer(
-    const vector<StringPiece> &strs, std::unique_ptr<uint32[]> *buffer) {
+    const std::vector<StringPiece> &strs, std::unique_ptr<uint32[]> *buffer) {
   const size_t header_byte_size = 4 * (1 + 2 * strs.size());
 
   // Calculate the offsets of each string.
@@ -142,8 +142,8 @@ StringPiece SerializedStringArray::SerializeToBuffer(
                      current_offset);
 }
 
-void SerializedStringArray::SerializeToFile(const vector<StringPiece> &strs,
-                                            const string &filepath) {
+void SerializedStringArray::SerializeToFile(
+    const std::vector<StringPiece> &strs, const string &filepath) {
   std::unique_ptr<uint32[]> buffer;
   const StringPiece data = SerializeToBuffer(strs, &buffer);
   OutputFileStream ofs(filepath.c_str(), ios_base::out | ios_base::binary);

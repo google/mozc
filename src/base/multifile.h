@@ -55,9 +55,9 @@ class InputMultiFile {
  private:
   bool OpenNext();
 
-  vector<string> filenames_;
+  std::vector<string> filenames_;
   const ios_base::openmode mode_;
-  vector<string>::iterator next_iter_;
+  std::vector<string>::iterator next_iter_;
   std::unique_ptr<InputFileStream> ifs_;
 
   DISALLOW_COPY_AND_ASSIGN(InputMultiFile);

@@ -103,7 +103,7 @@ class DictionaryImpl : public DictionaryInterface {
 
   // Convenient container to handle the above three dictionaries as one
   // composite dictionary.
-  vector<const DictionaryInterface *> dics_;
+  std::vector<const DictionaryInterface *> dics_;
 
   // Suppression dictionary is used to suppress entries.
   const SuppressionDictionary *suppression_dictionary_;

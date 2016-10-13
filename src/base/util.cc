@@ -233,7 +233,7 @@ template class SplitIterator<MultiDelimiter, AllowEmpty>;
 
 void Util::SplitStringUsing(StringPiece str,
                             const char *delim,
-                            vector<string> *output) {
+                            std::vector<string> *output) {
   if (delim[0] != '\0' && delim[1] == '\0') {
     for (SplitIterator<SingleDelimiter> iter(str, delim);
          !iter.Done(); iter.Next()) {
@@ -249,7 +249,7 @@ void Util::SplitStringUsing(StringPiece str,
 
 void Util::SplitStringUsing(StringPiece str,
                             const char *delim,
-                            vector<StringPiece> *output) {
+                            std::vector<StringPiece> *output) {
   if (delim[0] != '\0' && delim[1] == '\0') {
     for (SplitIterator<SingleDelimiter> iter(str, delim);
          !iter.Done(); iter.Next()) {
@@ -265,7 +265,7 @@ void Util::SplitStringUsing(StringPiece str,
 
 void Util::SplitStringAllowEmpty(StringPiece str,
                                  const char *delim,
-                                 vector<string> *output) {
+                                 std::vector<string> *output) {
   if (delim[0] != '\0' && delim[1] == '\0') {
     for (SplitIterator<SingleDelimiter, AllowEmpty> iter(str, delim);
          !iter.Done(); iter.Next()) {
@@ -279,7 +279,8 @@ void Util::SplitStringAllowEmpty(StringPiece str,
   }
 }
 
-void Util::SplitStringToUtf8Chars(StringPiece str, vector<string> *output) {
+void Util::SplitStringToUtf8Chars(StringPiece str,
+                                  std::vector<string> *output) {
   const char *begin = str.data();
   const char *const end = str.data() + str.size();
   while (begin < end) {
@@ -290,7 +291,7 @@ void Util::SplitStringToUtf8Chars(StringPiece str, vector<string> *output) {
   DCHECK_EQ(begin, end);
 }
 
-void Util::SplitCSV(const string &input, vector<string> *output) {
+void Util::SplitCSV(const string &input, std::vector<string> *output) {
   std::unique_ptr<char[]> tmp(new char[input.size() + 1]);
   char *str = tmp.get();
   memcpy(str, input.data(), input.size());
@@ -337,7 +338,7 @@ void Util::SplitCSV(const string &input, vector<string> *output) {
   }
 }
 
-void Util::JoinStrings(const vector<string> &input,
+void Util::JoinStrings(const std::vector<string> &input,
                        const char *delim,
                        string *output) {
   output->clear();
@@ -349,7 +350,7 @@ void Util::JoinStrings(const vector<string> &input,
   }
 }
 
-void Util::JoinStringPieces(const vector<StringPiece> &pieces,
+void Util::JoinStringPieces(const std::vector<StringPiece> &pieces,
                             const char *delim,
                             string *output) {
   if (pieces.empty()) {
@@ -1423,16 +1424,16 @@ void Util::DecodeURI(const string &src, string *output) {
   }
 }
 
-void Util::AppendCGIParams(const vector<pair<string, string> > &params,
-                           string *base) {
+void Util::AppendCGIParams(
+    const std::vector<std::pair<string, string> > &params, string *base) {
   if (params.size() == 0 || base == NULL) {
     return;
   }
 
   string encoded;
-  for (vector<pair<string, string> >::const_iterator it = params.begin();
-       it != params.end();
-       ++it) {
+  for (std::vector<std::pair<string, string> >::const_iterator it =
+           params.begin();
+       it != params.end(); ++it) {
     // Append "<first>=<encoded second>&"
     base->append(it->first);
     base->append("=");

@@ -46,7 +46,7 @@ EnglishVariantsRewriter::~EnglishVariantsRewriter() {}
 
 bool EnglishVariantsRewriter::ExpandEnglishVariants(
     const string &input,
-    vector<string> *variants) const {
+    std::vector<string> *variants) const {
   DCHECK(variants);
 
   if (input.empty()) {
@@ -128,7 +128,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
       modified = true;
       original_candidate->attributes |=
           Segment::Candidate::NO_VARIANTS_EXPANSION;
-      vector<string> variants;
+      std::vector<string> variants;
       if (ExpandEnglishVariants(original_candidate->content_value,
                                 &variants)) {
         CHECK(!variants.empty());

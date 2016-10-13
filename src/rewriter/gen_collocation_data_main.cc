@@ -57,7 +57,7 @@ namespace {
 void Convert() {
   InputFileStream ifs(FLAGS_collocation_data.c_str());
   string line;
-  vector<string> entries;
+  std::vector<string> entries;
   while (!getline(ifs, line).fail()) {
     if (line.empty()) {
       continue;

@@ -54,7 +54,7 @@ int InstanceCounter<T>::instance_count = 0;
 }  // namespace
 
 TEST(STLDeleteElementsTest, STLDeleteElements) {
-  vector<InstanceCounter<string> *> v;
+  std::vector<InstanceCounter<string> *> v;
   v.push_back(new InstanceCounter<string>());
   v.push_back(new InstanceCounter<string>());
   v.push_back(new InstanceCounter<string>());
@@ -66,7 +66,7 @@ TEST(STLDeleteElementsTest, STLDeleteElements) {
   EXPECT_EQ(0, v.size());
 
   // Deleting NULL pointers to containers is ok.
-  vector<InstanceCounter<string> *> *p = NULL;
+  std::vector<InstanceCounter<string> *> *p = NULL;
   STLDeleteElements(p);
 }
 

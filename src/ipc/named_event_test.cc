@@ -148,7 +148,8 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
 
   // mozc::Thread is not designed as value-semantics.
   // So here we use pointers to maintain these instances.
-  vector<std::unique_ptr<NamedEventListenerThread>> listeners(kNumRequests);
+  std::vector<std::unique_ptr<NamedEventListenerThread>> listeners(
+      kNumRequests);
   for (size_t i = 0; i < kNumRequests; ++i) {
     listeners[i].reset(new NamedEventListenerThread(kName, 33 * i, 50, 100));
     listeners[i]->Start("NamedEventMultipleListenerTest");

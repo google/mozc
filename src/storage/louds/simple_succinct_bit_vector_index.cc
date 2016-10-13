@@ -48,7 +48,7 @@ class ZeroBitAdapter : public AdapterBase<int> {
   // Needs to be default constructive to create invalid iterator.
   ZeroBitAdapter() : index_(nullptr), chunk_size_(0) {}
 
-  ZeroBitAdapter(const vector<int>* index, int chunk_size)
+  ZeroBitAdapter(const std::vector<int>* index, int chunk_size)
       : index_(index), chunk_size_(chunk_size) {}
 
   value_type operator()(const int *ptr) const {
@@ -59,7 +59,7 @@ class ZeroBitAdapter : public AdapterBase<int> {
   }
 
  private:
-  const vector<int> *index_;
+  const std::vector<int> *index_;
   int chunk_size_;
 };
 
@@ -102,7 +102,7 @@ int Count1Bits(const uint32 *data, int length) {
 
 // Stores index (the camulative number of the 1-bits from begin of each chunk).
 void InitIndex(
-    const uint8 *data, int length, int chunk_size, vector<int> *index) {
+    const uint8 *data, int length, int chunk_size, std::vector<int> *index) {
   DCHECK_GE(chunk_size, 4);
   DCHECK(IsPowerOfTwo(chunk_size)) << chunk_size;
   DCHECK_EQ(length % 4, 0);
@@ -128,9 +128,9 @@ void InitIndex(
   CHECK_EQ(chunk_length + 1, index->size());
 }
 
-void InitLowerBound0Cache(const vector<int> &index, int chunk_size,
+void InitLowerBound0Cache(const std::vector<int> &index, int chunk_size,
                           size_t increment, size_t size,
-                          vector<const int *> *cache) {
+                          std::vector<const int *> *cache) {
   DCHECK_GT(increment, 0);
   cache->clear();
   cache->reserve(size + 2);
@@ -147,9 +147,9 @@ void InitLowerBound0Cache(const vector<int> &index, int chunk_size,
   cache->push_back(index.data() + index.size());
 }
 
-void InitLowerBound1Cache(const vector<int> &index, int chunk_size,
+void InitLowerBound1Cache(const std::vector<int> &index, int chunk_size,
                           size_t increment, size_t size,
-                          vector<const int *> *cache) {
+                          std::vector<const int *> *cache) {
   DCHECK_GT(increment, 0);
   cache->clear();
   cache->reserve(size + 2);

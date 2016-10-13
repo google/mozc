@@ -115,7 +115,7 @@ string SegmentTypeToString(Segment::SegmentType type) {
 }
 
 string CandidateAttributesToString(uint32 attrs) {
-  vector<string> v;
+  std::vector<string> v;
 #define ADD_STR(fieldname)                       \
   do {                                           \
     if (attrs & Segment::Candidate::fieldname)   \
@@ -171,7 +171,7 @@ string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
   if (cand.inner_segment_boundary.empty()) {
     return "";
   }
-  vector<string> pieces;
+  std::vector<string> pieces;
   for (Segment::Candidate::InnerSegmentIterator iter(&cand);
        !iter.Done(); iter.Next()) {
     string s = "<";
@@ -192,7 +192,7 @@ string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
 
 void PrintCandidate(const Segment &parent, int num,
                     const Segment::Candidate &cand, ostream *os) {
-  vector<string> lines;
+  std::vector<string> lines;
   if (parent.key() != cand.key) {
     lines.push_back("key: " + cand.key);
   }
@@ -244,7 +244,7 @@ bool ExecCommand(const ConverterInterface &converter,
                  Segments *segments,
                  const string &line,
                  const commands::Request &request) {
-  vector<string> fields;
+  std::vector<string> fields;
   Util::SplitStringUsing(line, "\t ", &fields);
 
 #define CHECK_FIELDS_LENGTH(length) \
@@ -334,7 +334,7 @@ bool ExecCommand(const ConverterInterface &converter,
                                        NumberUtil::SimpleAtoi(fields[2]));
   } else if (func == "commitfirstsegment") {
     CHECK_FIELDS_LENGTH(2);
-    vector<size_t> singleton_vector;
+    std::vector<size_t> singleton_vector;
     singleton_vector.push_back(NumberUtil::SimpleAtoi(fields[1]));
     return converter.CommitSegments(segments, singleton_vector);
   } else if (func == "freesegmentvalue" || func == "free") {
@@ -349,7 +349,7 @@ bool ExecCommand(const ConverterInterface &converter,
                                      NumberUtil::SimpleAtoi(fields[1]),
                                      NumberUtil::SimpleAtoi(fields[2]));
     } else if (fields.size() > 3) {
-      vector<uint8> new_arrays;
+      std::vector<uint8> new_arrays;
       for (size_t i = 3; i < fields.size(); ++i) {
         new_arrays.push_back(
             static_cast<uint8>(NumberUtil::SimpleAtoi(fields[i])));

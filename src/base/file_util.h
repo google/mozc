@@ -109,8 +109,9 @@ class FileUtil {
   static bool AtomicRename(const string &from, const string &to);
 
   // Joins the give path components using the OS-specific path delimiter.
-  static string JoinPath(const vector<StringPiece> &components);
-  static void JoinPath(const vector<StringPiece> &components, string *output);
+  static string JoinPath(const std::vector<StringPiece> &components);
+  static void JoinPath(const std::vector<StringPiece> &components,
+                       string *output);
 
   // Joins the given two path components using the OS-specific path delimiter.
   static string JoinPath(const string &path1, const string &path2) {

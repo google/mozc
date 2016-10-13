@@ -232,8 +232,8 @@ void SessionOutput::FillUsages(const Segment &segment,
   size_t c_end = 0;
   cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
 
-  typedef pair<int32, commands::Information *> IndexInfoPair;
-  map<int32, IndexInfoPair> usageid_information_map;
+  typedef std::pair<int32, commands::Information *> IndexInfoPair;
+  std::map<int32, IndexInfoPair> usageid_information_map;
   // Store usages.
   for (size_t i = c_begin; i <= c_end; ++i) {
     if (cand_list.candidate(i).IsSubcandidateList()) {
@@ -247,7 +247,7 @@ void SessionOutput::FillUsages(const Segment &segment,
 
     int index;
     commands::Information *info;
-    map<int32, IndexInfoPair>::iterator info_itr =
+    std::map<int32, IndexInfoPair>::iterator info_itr =
       usageid_information_map.find(candidate.usage_id);
 
     if (info_itr == usageid_information_map.end()) {
@@ -292,7 +292,7 @@ void SessionOutput::FillSubLabel(commands::Footer *footer) {
 
   // Append third number of the version to sub_label.
   const string version = Version::GetMozcVersion();
-  vector<string> version_numbers;
+  std::vector<string> version_numbers;
   Util::SplitStringUsing(version, ".", &version_numbers);
   if (version_numbers.size() > 2) {
     string sub_label("build ");

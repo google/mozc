@@ -54,7 +54,7 @@ class SessionObserverHandler {
   void EvalCommandHandler(const commands::Command &command);
 
  private:
-  vector<SessionObserverInterface *> observers_;
+  std::vector<SessionObserverInterface *> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionObserverHandler);
 };

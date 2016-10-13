@@ -58,7 +58,7 @@ class PosIdPrinter {
   string IdToString(int id) const;
 
  private:
-  map<int, string> id_to_pos_map_;
+  std::map<int, string> id_to_pos_map_;
 
   DISALLOW_COPY_AND_ASSIGN(PosIdPrinter);
 };

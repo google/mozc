@@ -42,12 +42,13 @@ namespace dictionary {
 class DictionaryFileCodecInterface {
  public:
   // Writes sections to an output file stream.
-  virtual void WriteSections(const vector<DictionaryFileSection> &sections,
+  virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
                              ostream *ofs) const = 0;
 
   // Reads sections from memory image.
-  virtual bool ReadSections(const char *image, int length,
-                            vector<DictionaryFileSection> *sections) const = 0;
+  virtual bool ReadSections(
+      const char *image, int length,
+      std::vector<DictionaryFileSection> *sections) const = 0;
 
   // Gets section name.
   virtual string GetSectionName(const string &name) const = 0;

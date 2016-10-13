@@ -60,9 +60,9 @@ DataManagerTestBase::DataManagerTestBase(
     IsBoundaryFunc is_boundary,
     const string &connection_txt_file,
     const int expected_resolution,
-    const vector<string> &dictionary_files,
-    const vector<string> &suggestion_filter_files,
-    const vector<pair<string, string>> &typing_model_files)
+    const std::vector<string> &dictionary_files,
+    const std::vector<string> &suggestion_filter_files,
+    const std::vector<std::pair<string, string>> &typing_model_files)
     : data_manager_(data_manager),
       lsize_(lsize),
       rsize_(rsize),
@@ -225,7 +225,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   for (size_t i = 0; i < dictionary_files_.size(); ++i) {
     InputFileStream input(dictionary_files_[i].c_str());
     CHECK(input) << "cannot open: " << dictionary_files_[i];
-    vector<string> fields;
+    std::vector<string> fields;
     string line;
     while (getline(input, line)) {
       fields.clear();

@@ -342,7 +342,7 @@ bool UsageStatsUploader::Send(void *data) {
     return false;
   }
 
-  vector<pair<string, string> > params;
+  std::vector<std::pair<string, string> > params;
   params.push_back(std::make_pair("hl", "ja"));
   params.push_back(std::make_pair("v", Version::GetMozcVersion()));
   string client_id;

@@ -56,13 +56,13 @@ class DataSetReader {
   // Verifies the checksum of binary image.
   static bool VerifyChecksum(StringPiece memblock);
 
-  const map<string, StringPiece> &name_to_data_map() const {
+  const std::map<string, StringPiece> &name_to_data_map() const {
     return name_to_data_map_;
   }
 
  private:
   // The value points to a block of the specified |memblock|.
-  map<string, StringPiece> name_to_data_map_;
+  std::map<string, StringPiece> name_to_data_map_;
 };
 
 }  // namespace mozc

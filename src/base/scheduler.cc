@@ -225,7 +225,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
       return false;
     }
 
-    pair<map<string, Job>::iterator, bool> insert_result =
+    std::pair<std::map<string, Job>::iterator, bool> insert_result =
         jobs_.insert(std::make_pair(job_setting.name(), Job(job_setting)));
     if (!insert_result.second) {
       LOG(ERROR) << "insert failed";
@@ -299,7 +299,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     return delay;
   }
 
-  map<string, Job> jobs_;
+  std::map<string, Job> jobs_;
   Mutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(SchedulerImpl);

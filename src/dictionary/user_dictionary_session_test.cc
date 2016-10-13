@@ -514,7 +514,7 @@ TEST_F(UserDictionarySessionTest, DeleteEntry) {
                    session.storage());
 
 
-  vector<int> index_list;
+  std::vector<int> index_list;
   index_list.push_back(1);
   index_list.push_back(3);
   EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,

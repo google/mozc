@@ -46,7 +46,7 @@ DictionaryFileBuilder::DictionaryFileBuilder(
 }
 
 DictionaryFileBuilder::~DictionaryFileBuilder() {
-  for (vector<DictionaryFileSection>::iterator itr = sections_.begin();
+  for (std::vector<DictionaryFileSection>::iterator itr = sections_.begin();
        itr != sections_.end(); itr++) {
     delete [] itr->ptr;
   }

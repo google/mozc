@@ -48,15 +48,15 @@ namespace testing {
 //
 // This call gives the absolute path to data/test/dictionary/id.def. (Note that
 // the actual result is separated by OS-specific path separator.)
-string GetSourcePath(const vector<StringPiece> &components);
+string GetSourcePath(const std::vector<StringPiece> &components);
 
 // Gets an absolute path of test resource file.  If the file doesn't exist,
 // terminates the program.
-string GetSourceFileOrDie(const vector<StringPiece> &components);
+string GetSourceFileOrDie(const std::vector<StringPiece> &components);
 
 // Gets an absolute path of test resource directory.  If the directory doesn't
 // exist, terminates the program.
-string GetSourceDirOrDie(const vector<StringPiece> &components);
+string GetSourceDirOrDie(const std::vector<StringPiece> &components);
 
 // Gets absolute paths of test resource files in a directory.  If one of files
 // don't exit, terminates the program.
@@ -66,9 +66,9 @@ string GetSourceDirOrDie(const vector<StringPiece> &components);
 //   "/test/srcdir/my/dir/file1",
 //   "/test/srcdir/my/dir/file2",
 // };
-vector<string> GetSourceFilesInDirOrDie(
-    const vector<StringPiece> &dir_components,
-    const vector<StringPiece> &filenames);
+std::vector<string> GetSourceFilesInDirOrDie(
+    const std::vector<StringPiece> &dir_components,
+    const std::vector<StringPiece> &filenames);
 
 // Temporarily sets the user profile directory to FLAGS_test_tmpdir during the
 // scope.  The original directory is restored at the end of the scope.

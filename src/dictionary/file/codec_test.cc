@@ -65,7 +65,7 @@ class CodecTest : public ::testing::Test {
                   const string &name,
                   const char *ptr,
                   int len,
-                  vector<DictionaryFileSection> *sections) const {
+                  std::vector<DictionaryFileSection> *sections) const {
     CHECK(codec);
     CHECK(sections);
     sections->push_back(
@@ -73,7 +73,7 @@ class CodecTest : public ::testing::Test {
   }
 
   bool FindSection(const DictionaryFileCodecInterface *codec,
-                   const vector<DictionaryFileSection> &sections,
+                   const std::vector<DictionaryFileSection> &sections,
                    const string &name,
                    int *index) const {
     CHECK(codec);
@@ -99,14 +99,15 @@ class CodecTest : public ::testing::Test {
 
 class CodecMock : public DictionaryFileCodecInterface {
  public:
-  virtual void WriteSections(const vector<DictionaryFileSection> &sections,
+  virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
                              ostream *ofs) const {
     const string value = "dummy value";
     ofs->write(value.data(), value.size());
   }
 
-  virtual bool ReadSections(const char *image, int length,
-                            vector<DictionaryFileSection> *sections) const {
+  virtual bool ReadSections(
+      const char *image, int length,
+      std::vector<DictionaryFileSection> *sections) const {
     sections->push_back(DictionaryFileSection(NULL, 0, "dummy name"));
     return true;
   }
@@ -122,7 +123,7 @@ TEST_F(CodecTest, FactoryTest) {
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
   EXPECT_TRUE(codec != NULL);
-  vector<DictionaryFileSection> sections;
+  std::vector<DictionaryFileSection> sections;
   {
     OutputFileStream ofs;
     ofs.open(test_file_.c_str(), ios_base::out | ios_base::binary);
@@ -155,7 +156,7 @@ TEST_F(CodecTest, DefaultTest) {
       DictionaryFileCodecFactory::GetCodec();
   EXPECT_TRUE(codec != NULL);
   {
-    vector<DictionaryFileSection> write_sections;
+    std::vector<DictionaryFileSection> write_sections;
     const string value0 = "Value 0 test";
     AddSection(codec, "Section 0", value0.data(), value0.size(),
                &write_sections);
@@ -167,7 +168,7 @@ TEST_F(CodecTest, DefaultTest) {
     codec->WriteSections(write_sections, &ofs);
   }
   char buf[1024] = {};  // sections will reference this buffer.
-  vector<DictionaryFileSection> sections;
+  std::vector<DictionaryFileSection> sections;
   {
     EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
@@ -192,7 +193,7 @@ TEST_F(CodecTest, CodecTest) {
       DictionaryFileCodecFactory::GetCodec();
   EXPECT_TRUE(codec != NULL);
   {
-    vector<DictionaryFileSection> write_sections;
+    std::vector<DictionaryFileSection> write_sections;
     const string value0 = "Value 0 test";
     AddSection(codec, "Section 0", value0.data(), value0.size(),
                &write_sections);
@@ -204,7 +205,7 @@ TEST_F(CodecTest, CodecTest) {
     codec->WriteSections(write_sections, &ofs);
   }
   char buf[1024] = {};  // sections will reference this buffer.
-  vector<DictionaryFileSection> sections;
+  std::vector<DictionaryFileSection> sections;
   {
     EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;

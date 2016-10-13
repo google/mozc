@@ -156,7 +156,7 @@ bool Process::SpawnProcess(const string &path,
   return create_process_succeeded;
 #else
 
-  vector<string> arg_tmp;
+  std::vector<string> arg_tmp;
   Util::SplitStringUsing(arg, " ", &arg_tmp);
   std::unique_ptr<const char * []> argv(new const char *[arg_tmp.size() + 2]);
   argv[0] = path.c_str();

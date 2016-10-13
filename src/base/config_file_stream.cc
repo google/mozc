@@ -70,7 +70,7 @@ string RemovePrefix(const char *prefix, const string &filename) {
 class OnMemoryFileMap {
  public:
   string get(const string &key) const {
-    map<string, string>::const_iterator it = map_.find(key);
+    std::map<string, string>::const_iterator it = map_.find(key);
     if (it != map_.end()) {
       return it->second;
     }
@@ -86,7 +86,7 @@ class OnMemoryFileMap {
   }
 
  private:
-  map<string, string> map_;
+  std::map<string, string> map_;
 };
 
 #include "base/config_file_stream_data.h"

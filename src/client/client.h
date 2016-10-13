@@ -239,7 +239,7 @@ class Client : public ClientInterface {
 
   // for unittest
   // copy the history inputs to |result|.
-  void GetHistoryInputs(vector<commands::Input> *result) const;
+  void GetHistoryInputs(std::vector<commands::Input> *result) const;
 
   uint64 id_;
   IPCClientFactoryInterface *client_factory_;
@@ -251,7 +251,7 @@ class Client : public ClientInterface {
   uint32 server_protocol_version_;
   uint32 server_process_id_;
   string server_product_version_;
-  vector<commands::Input> history_inputs_;
+  std::vector<commands::Input> history_inputs_;
   // Remember the composition mode of input session for playback.
   commands::CompositionMode last_mode_;
   commands::Capability client_capability_;

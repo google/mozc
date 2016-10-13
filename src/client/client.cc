@@ -277,7 +277,7 @@ void Client::ResetHistory() {
 #endif
 }
 
-void Client::GetHistoryInputs(vector<commands::Input> *output) const {
+void Client::GetHistoryInputs(std::vector<commands::Input> *output) const {
   output->clear();
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     output->push_back(history_inputs_[i]);

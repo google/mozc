@@ -87,7 +87,7 @@ ZinniaHandwriting::ZinniaHandwriting(StringPiece model_file)
 ZinniaHandwriting::~ZinniaHandwriting() {}
 
 HandwritingStatus ZinniaHandwriting::Recognize(
-    const Strokes &strokes, vector<string> *candidates) const {
+    const Strokes &strokes, std::vector<string> *candidates) const {
   if (zinnia_model_error_) {
     return HANDWRITING_ERROR;
   }

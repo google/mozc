@@ -78,10 +78,11 @@ class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
 
   // Compress tokens
   virtual void EncodeTokens(
-      const vector<TokenInfo> &tokens, string *output) const;
+      const std::vector<TokenInfo> &tokens, string *output) const;
 
   // Decompress tokens
-  virtual void DecodeTokens(const uint8 *ptr, vector<TokenInfo> *tokens) const;
+  virtual void DecodeTokens(const uint8 *ptr,
+                            std::vector<TokenInfo> *tokens) const;
 
   // Decompress a token.
   virtual bool DecodeToken(
@@ -98,7 +99,7 @@ class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
 
  private:
   void EncodeToken(
-      const vector<TokenInfo> &tokens, int index, string *output) const;
+      const std::vector<TokenInfo> &tokens, int index, string *output) const;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionaryCodec);
 };

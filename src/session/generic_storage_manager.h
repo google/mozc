@@ -88,7 +88,7 @@ class GenericStorageInterface {
   virtual const char *Lookup(const string &key) = 0;
   // Lists all the values.
   // If something goes wrong, returns false.
-  virtual bool GetAllValues(vector<string> *values) = 0;
+  virtual bool GetAllValues(std::vector<string> *values) = 0;
   // Clears all the entries.
   virtual bool Clear() = 0;
 };
@@ -109,7 +109,7 @@ class GenericLruStorage : public GenericStorageInterface {
   virtual const char *Lookup(const string &key);
 
   // The order is new to old.
-  virtual bool GetAllValues(vector<string> *values);
+  virtual bool GetAllValues(std::vector<string> *values);
 
   virtual bool Clear();
 

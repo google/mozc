@@ -137,7 +137,7 @@ class LRUCache {
   // lookup is not necessary.
   bool Evict(Element* element);
 
-  typedef map<Key, Element*> Table;
+  typedef std::map<Key, Element*> Table;
 
   Table* table_;
   Element* free_list_;     // singly linked list of Element

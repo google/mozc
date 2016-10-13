@@ -1172,7 +1172,7 @@ bool Session::ConvertReverse(commands::Command *command) {
 
   composer::Composer *composer = context_->mutable_composer();
   composer->Reset();
-  vector<string> reading_characters;
+  std::vector<string> reading_characters;
   composer->InsertCharacterPreedit(reading);
   composer->set_source_text(composition);
   // start conversion here.

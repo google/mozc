@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     CHECK(renderer_client->Activate());
   }
 
-  vector<mozc::commands::KeyEvent> keys;
+  std::vector<mozc::commands::KeyEvent> keys;
   mozc::commands::Output output;
   int32 keyevents_size = 0;
 

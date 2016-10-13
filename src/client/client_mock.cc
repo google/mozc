@@ -39,7 +39,7 @@ namespace client {
 #define MockConstBoolImplementation(method_name, argument) \
   bool ClientMock::method_name(argument) const {           \
     function_counter_[#method_name]++;                     \
-    map<string, bool>::const_iterator it =                 \
+    std::map<string, bool>::const_iterator it =                 \
         return_bool_values_.find(#method_name);            \
     if (it != return_bool_values_.end()) {                 \
       return it->second;                                   \
@@ -49,7 +49,7 @@ namespace client {
 #define MockBoolImplementation(method_name, argument)      \
   bool ClientMock::method_name(argument) {                 \
     function_counter_[#method_name]++;                     \
-    map<string, bool>::const_iterator it =                 \
+    std::map<string, bool>::const_iterator it =                 \
         return_bool_values_.find(#method_name);            \
     if (it != return_bool_values_.end()) {                 \
       return it->second;                                   \
@@ -96,23 +96,23 @@ MockBoolImplementation(OpenBrowser, const string &url);
 
 // Another boilerplate for the method with an "output" as its second
 // argument.
-#define MockImplementationWithContextAndOutput(method_name, argtype)         \
-  bool ClientMock::method_name(argtype argument,                             \
-                               const commands::Context &context,             \
-                               commands::Output *output) {                   \
-    function_counter_[#method_name]++;                                       \
-    called_##method_name##_.CopyFrom(argument);                              \
-    map<string, commands::Output>::const_iterator it =                       \
-        outputs_.find(#method_name);                                         \
-    if (it != outputs_.end()) {                                              \
-      output->CopyFrom(it->second);                                          \
-    }                                                                        \
-    map<string, bool>::const_iterator retval =                               \
-        return_bool_values_.find(#method_name);                              \
-    if (retval != return_bool_values_.end()) {                               \
-      return retval->second;                                                 \
-    }                                                                        \
-    return false;                                                            \
+#define MockImplementationWithContextAndOutput(method_name, argtype) \
+  bool ClientMock::method_name(argtype argument,                     \
+                               const commands::Context &context,     \
+                               commands::Output *output) {           \
+    function_counter_[#method_name]++;                               \
+    called_##method_name##_.CopyFrom(argument);                      \
+    std::map<string, commands::Output>::const_iterator it =          \
+        outputs_.find(#method_name);                                 \
+    if (it != outputs_.end()) {                                      \
+      output->CopyFrom(it->second);                                  \
+    }                                                                \
+    std::map<string, bool>::const_iterator retval =                  \
+        return_bool_values_.find(#method_name);                      \
+    if (retval != return_bool_values_.end()) {                       \
+      return retval->second;                                         \
+    }                                                                \
+    return false;                                                    \
   }
 
 MockImplementationWithContextAndOutput(SendKeyWithContext,
@@ -130,7 +130,8 @@ MockImplementationWithContextAndOutput(SendCommandWithContext,
 bool ClientMock::GetConfig(config::Config *config) {
   function_counter_["GetConfig"]++;
   config->CopyFrom(called_config_);
-  map<string, bool>::const_iterator it = return_bool_values_.find("GetConfig");
+  std::map<string, bool>::const_iterator it =
+      return_bool_values_.find("GetConfig");
   if (it != return_bool_values_.end()) {
     return it->second;
   }
@@ -141,7 +142,8 @@ bool ClientMock::GetConfig(config::Config *config) {
 bool ClientMock::SetConfig(const config::Config &config) {
   function_counter_["SetConfig"]++;
   called_config_.CopyFrom(config);
-  map<string, bool>::const_iterator it = return_bool_values_.find("SetConfig");
+  std::map<string, bool>::const_iterator it =
+      return_bool_values_.find("SetConfig");
   if (it != return_bool_values_.end()) {
     return it->second;
   }
@@ -157,7 +159,7 @@ bool ClientMock::LaunchTool(const string &mode, const string &extra_arg) {
 // Other methods to deal with internal data such like operations over
 // function counters or setting the expected return values.
 void ClientMock::ClearFunctionCounter() {
-  for (map<string, int>::iterator it = function_counter_.begin();
+  for (std::map<string, int>::iterator it = function_counter_.begin();
        it != function_counter_.end(); it++) {
     it->second = 0;
   }

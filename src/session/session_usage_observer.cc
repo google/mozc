@@ -160,7 +160,7 @@ bool SessionUsageObserver::SaveCachedStats(void *data) {
 
 void SessionUsageObserver::EvalCreateSession(
     const commands::Input &input, const commands::Output &output,
-    map<uint64, SessionState> *states) {
+    std::map<uint64, SessionState> *states) {
   // Number of create session
   SessionState state;
   state.set_id(output.id());
@@ -529,7 +529,7 @@ void SessionUsageObserver::EvalCommandHandler(
     return;
   }
 
-  map<uint64, SessionState>::iterator iter = states_.find(input.id());
+  std::map<uint64, SessionState>::iterator iter = states_.find(input.id());
   if (iter == states_.end()) {
     LOG(WARNING) << "unknown session";
     // Unknown session

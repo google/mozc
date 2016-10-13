@@ -175,7 +175,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     SessionHandler handler(CreateMockDataEngine());
 
     // Create session_size + 1 sessions
-    vector<uint64> ids;
+    std::vector<uint64> ids;
     for (size_t i = 0; i <= session_size; ++i) {
       uint64 id = 0;
       EXPECT_TRUE(CreateSession(&handler, &id));
@@ -199,7 +199,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     SessionHandler handler(CreateMockDataEngine());
 
     // Create session_size sessions
-    vector<uint64> ids;
+    std::vector<uint64> ids;
     for (size_t i = 0; i < session_size; ++i) {
       uint64 id = 0;
       EXPECT_TRUE(CreateSession(&handler, &id));
@@ -451,7 +451,7 @@ class MockStorage : public GenericStorageInterface {
     return NULL;
   }
 
-  virtual bool GetAllValues(vector<string> *values) {
+  virtual bool GetAllValues(std::vector<string> *values) {
     values->clear();
     for (size_t i = 0; i < arraysize(kStorageTestData); ++i) {
       values->push_back(kStorageTestData[i]);

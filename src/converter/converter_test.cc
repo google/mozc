@@ -343,7 +343,7 @@ class ConverterTest : public ::testing::Test {
   }
 
   ConverterAndData *CreateConverterAndDataWithUserDefinedEntries(
-      const vector<UserDefinedEntry> &user_defined_entries,
+      const std::vector<UserDefinedEntry> &user_defined_entries,
       RewriterInterface *rewriter, PredictorType predictor_type) {
     ConverterAndData *ret = new ConverterAndData;
 
@@ -664,7 +664,7 @@ TEST_F(ConverterTest, CommitSegments) {
   // Test "CommitFirstSegment" feature.
   {
     // Commit 1st segment.
-    vector<size_t> index_list;
+    std::vector<size_t> index_list;
     index_list.push_back(0);
     converter->CommitSegments(&segments, index_list);
 
@@ -685,7 +685,7 @@ TEST_F(ConverterTest, CommitSegments) {
   // Test "CommitHeadToFocusedSegment" feature.
   {
     // Commit 1st and 2nd segments.
-    vector<size_t> index_list;
+    std::vector<size_t> index_list;
     index_list.push_back(0);
     index_list.push_back(0);
     converter->CommitSegments(&segments, index_list);
@@ -1838,7 +1838,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
 
 TEST_F(ConverterTest, UserEntryShouldBePromoted) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   // "哀" is not in the test dictionary
   user_defined_entries.push_back(
       // "あい", "哀"
@@ -1866,7 +1866,7 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted) {
 
 TEST_F(ConverterTest, UserEntryShouldBePromoted_MobilePrediction) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   // "哀" is not in the test dictionary
   user_defined_entries.push_back(
       // "あい", "哀"
@@ -1907,7 +1907,7 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted_MobilePrediction) {
 
 TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   // "哀" is not in the test dictionary
   user_defined_entries.push_back(
       // "あい", "哀"
@@ -1939,7 +1939,7 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
 
 TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized_Prediction) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   // "哀" is not in the test dictionary
   user_defined_entries.push_back(
       // "あい", "哀"
@@ -1973,7 +1973,7 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized_Prediction) {
 
 TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   user_defined_entries.push_back(
       // "じゅ"
       UserDefinedEntry("\xe3\x81\x98\xe3\x82\x85",
@@ -2003,7 +2003,7 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
 
 TEST_F(ConverterTest, AbbreviationShouldBeIndependent_Prediction) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   user_defined_entries.push_back(
       // "じゅ"
       UserDefinedEntry("\xe3\x81\x98\xe3\x82\x85",
@@ -2038,7 +2038,7 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent_Prediction) {
 
 TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   user_defined_entries.push_back(
       // "じゅ"
       UserDefinedEntry("\xe3\x81\x98\xe3\x82\x85",
@@ -2068,7 +2068,7 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
 
 TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent_Prediction) {
   using user_dictionary::UserDictionary;
-  vector<UserDefinedEntry> user_defined_entries;
+  std::vector<UserDefinedEntry> user_defined_entries;
   user_defined_entries.push_back(
       // "じゅ"
       UserDefinedEntry("\xe3\x81\x98\xe3\x82\x85",

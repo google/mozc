@@ -366,7 +366,7 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
 
   // Result will be, "私の|名前は|中ノです" with mock dictionary.
   const Segment::Candidate &cand = segments.segment(0).candidate(0);
-  vector<StringPiece> keys, values, content_keys, content_values;
+  std::vector<StringPiece> keys, values, content_keys, content_values;
   for (Segment::Candidate::InnerSegmentIterator iter(&cand);
        !iter.Done(); iter.Next()) {
     keys.push_back(iter.GetKey());
@@ -448,7 +448,7 @@ TEST(ImmutableConverterTest, NotConnectedTest) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  vector<uint16> group;
+  std::vector<uint16> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 

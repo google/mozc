@@ -138,7 +138,7 @@ bool ExtractLastTokenWithScriptType(const string &text,
     }
   }
 
-  vector<char32> reverse_last_token;
+  std::vector<char32> reverse_last_token;
   Util::ScriptType last_script_type_found = Util::GetScriptType(iter.Get());
   for (; !iter.Done(); iter.Next()) {
     const char32 w = iter.Get();
@@ -151,7 +151,7 @@ bool ExtractLastTokenWithScriptType(const string &text,
   *last_script_type = last_script_type_found;
   // TODO(yukawa): Replace reverse_iterator with const_reverse_iterator when
   //     build failure on Android is fixed.
-  for (vector<char32>::reverse_iterator it = reverse_last_token.rbegin();
+  for (std::vector<char32>::reverse_iterator it = reverse_last_token.rbegin();
        it != reverse_last_token.rend(); ++it) {
     Util::UCS4ToUTF8Append(*it, last_token);
   }
@@ -654,7 +654,7 @@ bool ConverterImpl::FreeSegmentValue(Segments *segments,
 
 bool ConverterImpl::CommitSegments(
     Segments *segments,
-    const vector<size_t> &candidate_index) const {
+    const std::vector<size_t> &candidate_index) const {
   const size_t conversion_segment_index = segments->history_segments_size();
   for (size_t i = 0; i < candidate_index.size(); ++i) {
     // 2nd argument must always be 0 because on each iteration
@@ -811,7 +811,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   size_t consumed = 0;
   const size_t key_len = Util::CharsLen(key);
-  vector<string> new_keys;
+  std::vector<string> new_keys;
   new_keys.reserve(array_size + 1);
 
   for (size_t i = 0; i < array_size; ++i) {

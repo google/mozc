@@ -116,7 +116,7 @@ class SerializedDictionary {
     int16 cost;
   };
 
-  using TokenList = vector<std::unique_ptr<CompilerToken>>;
+  using TokenList = std::vector<std::unique_ptr<CompilerToken>>;
 
   static const size_t kTokenByteLength = 24;
 
@@ -283,18 +283,18 @@ class SerializedDictionary {
 
   using const_iterator = iterator;
 
-  using IterRange = pair<const_iterator, const_iterator>;
+  using IterRange = std::pair<const_iterator, const_iterator>;
 
   // Creates serialized data into buffers.  The first and second StringPieces of
   // returned value points to memory block for token array and string array,
   // respectively.  The input stream should supply TSV file of Mozc's dctionary
   // format; see, e.g., data/symbol/symbol.tsv.
-  static pair<StringPiece, StringPiece> Compile(
+  static std::pair<StringPiece, StringPiece> Compile(
       std::istream *input,
       std::unique_ptr<uint32[]> *output_token_array_buf,
       std::unique_ptr<uint32[]> *output_string_array_buf);
-  static pair<StringPiece, StringPiece> Compile(
-      const map<string, TokenList> &dic,
+  static std::pair<StringPiece, StringPiece> Compile(
+      const std::map<string, TokenList> &dic,
       std::unique_ptr<uint32[]> *output_token_array_buf,
       std::unique_ptr<uint32[]> *output_string_array_buf);
 
@@ -302,7 +302,7 @@ class SerializedDictionary {
   static void CompileToFiles(const string &input,
                              const string &output_token_array,
                              const string &output_string_array);
-  static void CompileToFiles(const map<string, TokenList> &dic,
+  static void CompileToFiles(const std::map<string, TokenList> &dic,
                              const string &output_token_array,
                              const string &output_string_array);
 

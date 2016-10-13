@@ -62,7 +62,7 @@ class DictionaryMockTest : public ::testing::Test {
   static bool SearchMatchingToken(const string &key,
                                   const string &value,
                                   uint8 attributes,
-                                  const vector<Token> &tokens);
+                                  const std::vector<Token> &tokens);
 
   unique_ptr<DictionaryMock> mock_;
   ConversionRequest convreq_;
@@ -71,7 +71,7 @@ class DictionaryMockTest : public ::testing::Test {
 bool DictionaryMockTest::SearchMatchingToken(const string &key,
                                              const string &value,
                                              uint8 attributes,
-                                             const vector<Token> &tokens) {
+                                             const std::vector<Token> &tokens) {
   for (size_t i = 0; i < tokens.size(); ++i) {
     const Token &token = tokens[i];
     if (token.key == key && token.value == value &&
@@ -164,21 +164,21 @@ TEST_F(DictionaryMockTest, LookupReverse) {
   const string k1 = "\xE4\xBB\x8A\xE6\x97\xA5";
   const string v1 = "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86";
 
-  vector<Token> source_tokens;
+  std::vector<Token> source_tokens;
   unique_ptr<Token> t0(CreateToken(k0, v0));
   unique_ptr<Token> t1(CreateToken(k1, v1));
 
   source_tokens.push_back(*t0.get());
   source_tokens.push_back(*t1.get());
 
-  for (vector<Token>::iterator it = source_tokens.begin();
+  for (std::vector<Token>::iterator it = source_tokens.begin();
        it != source_tokens.end(); ++it) {
     GetMock()->AddLookupReverse(it->key, it->key, it->value, Token::NONE);
   }
 
   CollectTokenCallback callback;
   dic->LookupReverse(k1, convreq_, &callback);
-  const vector<Token> &result_tokens = callback.tokens();
+  const std::vector<Token> &result_tokens = callback.tokens();
   EXPECT_TRUE(SearchMatchingToken(t0->key, t0->value, 0, result_tokens))
       << "Failed to find: " << t0->key;
   EXPECT_TRUE(SearchMatchingToken(t1->key, t1->value, 0, result_tokens))
@@ -195,13 +195,14 @@ TEST_F(DictionaryMockTest, LookupPredictive) {
   const string k2 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
                     "\xbb";
 
-  vector<Token> tokens;
+  std::vector<Token> tokens;
   unique_ptr<Token> t1(CreateToken(k1, "v0", Token::NONE));
   unique_ptr<Token> t2(CreateToken(k2, "v1", Token::NONE));
   tokens.push_back(*t1.get());
   tokens.push_back(*t2.get());
 
-  for (vector<Token>::iterator it = tokens.begin(); it != tokens.end(); ++it) {
+  for (std::vector<Token>::iterator it = tokens.begin(); it != tokens.end();
+       ++it) {
     GetMock()->AddLookupPredictive(k0, it->key, it->value, Token::NONE);
   }
 

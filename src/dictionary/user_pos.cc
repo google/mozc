@@ -47,9 +47,9 @@ UserPOS::UserPOS(StringPiece token_array_data, StringPiece string_array_data)
 
 UserPOS::~UserPOS() = default;
 
-void UserPOS::GetPOSList(vector<string> *pos_list) const {
+void UserPOS::GetPOSList(std::vector<string> *pos_list) const {
   pos_list->clear();
-  set<uint16> seen;
+  std::set<uint16> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
     if (!seen.insert(iter.pos_index()).second) {
       continue;
@@ -83,7 +83,7 @@ bool UserPOS::GetPOSIDs(const string &pos, uint16 *id) const {
 }
 
 bool UserPOS::GetTokens(const string &key, const string &value,
-                        const string &pos, vector<Token> *tokens) const {
+                        const string &pos, std::vector<Token> *tokens) const {
   if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
     return false;
   }
@@ -94,7 +94,7 @@ bool UserPOS::GetTokens(const string &key, const string &value,
   if (str_iter == string_array_.end() || *str_iter != pos) {
     return false;
   }
-  pair<iterator, iterator> range =
+  std::pair<iterator, iterator> range =
       std::equal_range(begin(), end(), str_iter.index());
   if (range.first == range.second) {
     return false;

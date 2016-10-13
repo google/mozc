@@ -81,7 +81,7 @@ static const size_t kTokenSize = 1000;
 DictionaryGenerator::DictionaryGenerator(
     const DataManagerInterface &data_manager)
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
-      token_map_(new map<uint64, Token *>) {
+      token_map_(new std::map<uint64, Token *>) {
   const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();
@@ -92,7 +92,8 @@ DictionaryGenerator::~DictionaryGenerator() {}
 
 void DictionaryGenerator::AddToken(const Token &token) {
   Token *new_token = NULL;
-  map<uint64, Token *>::const_iterator it = token_map_->find(token.GetID());
+  std::map<uint64, Token *>::const_iterator it =
+      token_map_->find(token.GetID());
   if (it != token_map_->end()) {
     new_token = it->second;
   } else {
@@ -118,10 +119,10 @@ struct CompareToken {
   }
 };
 
-void GetSortedTokens(const map<uint64, Token *> *token_map,
-                     vector<const Token *> *tokens) {
+void GetSortedTokens(const std::map<uint64, Token *> *token_map,
+                     std::vector<const Token *> *tokens) {
   tokens->clear();
-  for (map<uint64, Token *>::const_iterator it = token_map->begin();
+  for (std::map<uint64, Token *>::const_iterator it = token_map->begin();
        it != token_map->end();
        ++it) {
     tokens->push_back(it->second);
@@ -137,7 +138,7 @@ bool DictionaryGenerator::Output(const string &filename) const {
     return false;
   }
 
-  vector<const Token *> tokens;
+  std::vector<const Token *> tokens;
   GetSortedTokens(token_map_.get(), &tokens);
 
   uint32 num_same_keys = 0;
