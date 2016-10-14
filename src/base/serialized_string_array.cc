@@ -34,7 +34,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/system_util.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace {
@@ -44,7 +44,7 @@ const uint32 kEmptyArrayData = 0x00000000;
 }  // namespace
 
 SerializedStringArray::SerializedStringArray() {
-  DCHECK(SystemUtil::IsLittleEndian()) << "Little endian is assumed";
+  DCHECK(Util::IsLittleEndian()) << "Little endian is assumed";
   clear();
 }
 

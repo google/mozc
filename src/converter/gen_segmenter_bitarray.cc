@@ -42,7 +42,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/system_util.h"
+#include "base/util.h"
 #include "protocol/segmenter_data.pb.h"
 
 namespace mozc {
@@ -189,7 +189,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   CHECK(barray.array());
   CHECK_GT(barray.size(), 0);
 
-  CHECK(SystemUtil::IsLittleEndian())
+  CHECK(Util::IsLittleEndian())
       << "Architecture must be little endian";
   {
     mozc::converter::SegmenterDataSizeInfo pb;

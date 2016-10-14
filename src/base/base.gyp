@@ -451,6 +451,9 @@
       'sources': [
         'serialized_string_array.cc',
       ],
+      'dependencies': [
+        'base_core',
+      ],
     },
   ],
   'conditions': [

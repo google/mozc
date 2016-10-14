@@ -460,6 +460,9 @@ class Util {
   // length of s is not eight or s is in an invalid format.
   static bool DeserializeUint64(StringPiece s, uint64 *x);
 
+  // Checks endian-ness at runtime.
+  static bool IsLittleEndian();
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(Util);
 };

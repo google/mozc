@@ -104,7 +104,6 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
-#include "base/system_util.h"
 #include "base/util.h"
 
 DEFINE_string(usage_data_file, "", "usage data file");
@@ -249,7 +248,7 @@ uint32 Lookup(const std::map<string, uint32> &m, const string &key) {
 }
 
 void Convert() {
-  CHECK(SystemUtil::IsLittleEndian());
+  CHECK(Util::IsLittleEndian());
 
   // Load cforms_file
   std::map<string, std::vector<ConjugationType>> inflection_map;

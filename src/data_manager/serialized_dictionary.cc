@@ -43,7 +43,6 @@
 #include "base/port.h"
 #include "base/serialized_string_array.h"
 #include "base/string_piece.h"
-#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -114,7 +113,7 @@ std::pair<StringPiece, StringPiece> SerializedDictionary::Compile(
     const std::map<string, TokenList> &dic,
     std::unique_ptr<uint32[]> *output_token_array_buf,
     std::unique_ptr<uint32[]> *output_string_array_buf) {
-  CHECK(SystemUtil::IsLittleEndian());
+  CHECK(Util::IsLittleEndian());
 
   // Build a mapping from string to its index in a serialized string array.
   // Note that duplicate keys share the same index, so data is slightly

@@ -167,9 +167,6 @@ class SystemUtil {
   // retrieve total physical memory. returns 0 if any error occurs.
   static uint64 GetTotalPhysicalMemory();
 
-  // check endian-ness at runtime.
-  static bool IsLittleEndian();
-
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(SystemUtil);
 };

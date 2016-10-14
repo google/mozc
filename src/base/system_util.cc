@@ -865,21 +865,4 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
 #endif  // OS_WIN, OS_MACOSX, OS_LINUX
 }
 
-bool SystemUtil::IsLittleEndian() {
-#ifndef OS_WIN
-  union {
-    unsigned char c[4];
-    unsigned int i;
-  } u;
-  static_assert(sizeof(u.c) == sizeof(u.i),
-                "Expecting (unsigned) int is 32-bit integer.");
-  static_assert(sizeof(u) == sizeof(u.i),
-                "Checking alignment.");
-  u.i = 0x12345678U;
-  return u.c[0] == 0x78U;
-#else  // OS_WIN
-  return true;
-#endif  // OS_WIN
-}
-
 }  // namespace mozc
