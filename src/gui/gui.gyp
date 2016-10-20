@@ -1014,18 +1014,17 @@
             'INSTALL_PATH': '@executable_path/../Frameworks',
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_lib_info',
           },
-          'dependencies+': [
+          'dependencies': [
             'gen_mozc_tool_lib_info_plist',
             'prelauncher_lib',
+            '../base/base.gyp:breakpad',
           ],
+          'link_settings': {
+            'libraries': [
+              '<(mac_breakpad_framework)',
+            ],
+          },
           'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'link_settings': {
-                'libraries': [
-                  '<(mac_breakpad_framework)',
-                ],
-              },
-            }],
             ['use_qt=="YES"', {
               'postbuilds': [
                 {

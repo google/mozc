@@ -36,19 +36,21 @@
   <string>1</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
-  <key>GoogleBreakpadProduct</key>
-  <string>Google_Japanese_IME_Mac</string>
-  <key>GoogleBreakpadProductDisplay</key>
+  <key>BreakpadProduct</key>
+  <string>${BREAKPAD_PRODUCT}</string>
+  <key>BreakpadProductDisplay</key>
   <string>${PRODUCT_NAME}</string>
-  <key>GoogleBreakpadVersion</key>
+  <key>BreakpadVersion</key>
   <string>${GOOGLE_VERSIONINFO_LONG}</string>
-  <key>GoogleBreakpadURL</key>
-  <string>https://clients2.google.com/cr/report</string>
-  <key>GoogleBreakpadReportInterval</key>
+  <key>BreakpadURL</key>
+  <string>${BREAKPAD_URL}</string>
+  <key>BreakpadReportInterval</key>
   <string>86400</string>
-  <key>GoogleBreakpadSkipConfirm</key>
+  <key>BreakpadSkipConfirm</key>
   <string>YES</string>
-  <key>GoogleBreakpadSendAndExit</key>
+  <key>BreakpadSendAndExit</key>
+  <string>YES</string>
+  <key>BreakpadInProcess</key>
   <string>YES</string>
 </dict>
 </plist>

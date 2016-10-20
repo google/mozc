@@ -113,12 +113,6 @@ def main():
                   '@executable_path/../Frameworks/%s' % toollib_framework,
                   GetReferenceTo(toollib_framework))
 
-  # Change the reference to GoogleBreakpad from the target application
-  breakpad_framework = GetFrameworkPath('GoogleBreakpad', 'A')
-  InstallNameTool(target,
-                  '@executable_path/../Frameworks/%s' % breakpad_framework,
-                  GetReferenceTo(breakpad_framework))
-
 
 if __name__ == '__main__':
   main()

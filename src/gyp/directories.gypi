@@ -50,14 +50,13 @@
 
     'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
 
-    # For some reasons, mac_breakpad_dir cannot be inside of 'conditions',
-    # otherwise it errors.
-    # TODO(komatsu): Move them to the 'conditions' block.
-    #
-    # Assign dummy value to avoid errors of GYP.
-    # TODO: Update this.
-    'mac_breakpad_dir': 'dummy_mac_breakpad_dir',
-    'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
+    # Ninja requires <(abs_depth) instead of <(DEPTH).
+    'mac_breakpad_dir': '<(PRODUCT_DIR)/Breakpad',
+    # This points to the same dir with mac_breakpad_dir, but this should use
+    # '${BUILT_PRODUCTS_DIR}' instead of '<(PRODUCT_DIR)'.
+    # See post_build_mac.gypi
+    'mac_breakpad_tools_dir': '${BUILT_PRODUCTS_DIR}/Breakpad',
+    'mac_breakpad_framework': '<(mac_breakpad_dir)/Breakpad.framework',
 
     'conditions': [
       ['target_platform=="Windows"', {

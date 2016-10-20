@@ -382,11 +382,6 @@
           ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
         ],
         'conditions': [
-          ['branding=="GoogleJapaneseInput"', {
-            'mac_framework_dirs': [
-              '<(mac_breakpad_dir)',
-            ],
-          }],
           ['target_platform=="Mac"', {
             'xcode_settings': {
               'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',

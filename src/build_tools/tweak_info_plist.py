@@ -81,15 +81,22 @@ def main():
 
   version = mozc_version.MozcVersion(options.version_file)
 
-  # \xC2\xA9 is the copyright mark in UTF-8
-  copyright_message = '\xC2\xA9 %d Google Inc.' % _COPYRIGHT_YEAR
+  copyright_message = (u'© %d Google Inc.' % _COPYRIGHT_YEAR).encode('utf-8')
   long_version = version.GetVersionString()
   short_version = version.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@')
-  domain_prefix = 'org.mozc'
-  product_name = 'Mozc'
+
   if options.branding == 'GoogleJapaneseInput':
     domain_prefix = 'com.google'
     product_name = 'Google Japanese Input'
+    breakpad_product = 'Google_Japanese_IME_Mac'
+    breakpad_url = 'https://clients2.google.com/cr/report'
+  else:
+    domain_prefix = 'org.mozc'
+    product_name = 'Mozc'
+    breakpad_product = 'Mozc'
+    # Reports are generated under $TMPDIR, but not sent to a server.
+    breakpad_url = 'file:///dev/null'
+
   variables = {
       'GOOGLE_VERSIONINFO_LONG': long_version,
       'GOOGLE_VERSIONINFO_SHORT': short_version,
@@ -98,7 +105,9 @@ def main():
         '%s %s, %s' % (product_name, long_version, copyright_message),
       'BRANDING': options.branding,
       'DOMAIN_PREFIX': domain_prefix,
-      }
+      'BREAKPAD_PRODUCT': breakpad_product,
+      'BREAKPAD_URL': breakpad_url,
+  }
 
   open(options.output, 'w').write(
       tweak_data.ReplaceVariables(open(options.input).read(), variables))

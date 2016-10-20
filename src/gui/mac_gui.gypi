@@ -66,4 +66,5 @@
       ],
     }],
   ],
+  'includes': ['../gyp/postbuilds_mac.gypi'],
 }
