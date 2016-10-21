@@ -3,7 +3,7 @@ How to build Mozc on OS X
 
 # System Requirements
 
-We only support OS X 10.7 or later intel only.
+Only 64-bit macOS 10.9 and later versions are supported.
 
 # Software Requirements
 
@@ -31,7 +31,7 @@ First, you'll need to generate Xcode project using a tool called [GYP](https://c
 
 ```
 cd ~/work/mozc/src
-GYP_DEFINES="mac_sdk=10.7 mac_deployment_target=10.7" python build_mozc.py gyp --noqt
+GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.9" python build_mozc.py gyp --noqt
 ```
 
 You can customize the SDK version and target OS version here. Then, build Mozc.app and necessary files:
@@ -49,7 +49,7 @@ Executables are written in `~/work/mozc/src/out_mac/Release` for Release builds,
 To build GUI tools, you need to specify --qtdir instead of --noqt.
 
 ```
-GYP_DEFINES="mac_sdk=10.7 mac_deployment_target=10.7" python build_mozc.py gyp --qtdir ~/myqt
+GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.9" python build_mozc.py gyp --qtdir ~/myqt
 ```
 
 In the above case, `~/myqt` should contain Qt's sources, headers and libraries built from `configure` and `make`.

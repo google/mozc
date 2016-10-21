@@ -69,7 +69,7 @@ def Xcodebuild(projdir, target, arch, outdir):
 
 def BuildBreakpad(outdir):
   projdir = os.path.join(outdir, 'src/client/mac/Breakpad.xcodeproj')
-  Xcodebuild(projdir, 'Breakpad', 'i386', outdir)
+  Xcodebuild(projdir, 'Breakpad', 'x86_64', outdir)
 
 
 def BuildDumpSyms(outdir):

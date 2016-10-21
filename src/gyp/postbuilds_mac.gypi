@@ -54,9 +54,9 @@
       'postbuild_name': 'dump symbols',
       'action': [
         'python', '../build_tools/redirect.py',
-        '${BUILT_PRODUCTS_DIR}/<(product_name)_i386.breakpad',
+        '${BUILT_PRODUCTS_DIR}/<(product_name)_x86_64.breakpad',
         '<(mac_breakpad_tools_dir)/dump_syms',
-        '-a', 'i386',
+        '-a', 'x86_64',
         '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
       ],
     },

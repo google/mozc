@@ -47,7 +47,7 @@
 
     # Versioning stuff for Mac.
     'mac_sdk%': '10.9',
-    'mac_deployment_target%': '10.7',
+    'mac_deployment_target%': '10.9',
 
 
     # 'conditions' is put inside of 'variables' so that we can use
@@ -384,12 +384,12 @@
         'conditions': [
           ['target_platform=="Mac"', {
             'xcode_settings': {
+              'ARCHS': ['x86_64'],
               'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
             },
           }],
         ],
         'xcode_settings': {
-          'ARCHS': ['i386'],
           'SDKROOT': 'macosx<(mac_sdk)',
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
           'GCC_SYMBOLS_PRIVATE_EXTERN': 'NO',  # No -fvisibility=hidden
