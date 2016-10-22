@@ -779,25 +779,48 @@ def GypMain(options, unused_args):
     abs_out_win_dir = GetBuildBaseName(target_platform)
     copy_script = os.path.join(
         ABS_SCRIPT_DIR, 'build_tools', 'copy_dll_and_symbol.py')
+    copy_params = []
     if qt_version == '4':
-      copy_modes = [
-          {'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4'},
-          {'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4'}]
+      copy_params.append({
+          'basenames': 'QtCored4;QtGuid4',
+          'dll_paths': abs_qt_bin_dir,
+          'pdb_paths': abs_qt_lib_dir,
+          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic')})
+      copy_params.append({
+          'basenames': 'QtCore4;QtGui4',
+          'dll_paths': abs_qt_bin_dir,
+          'pdb_paths': abs_qt_lib_dir,
+          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic')})
     elif qt_version == '5':
-      copy_modes = [
-          {'configuration': 'DebugDynamic',
-           'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd'},
-          {'configuration': 'ReleaseDynamic',
-           'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets'}]
-    else:
-      copy_modes = []
-    for mode in copy_modes:
+      copy_params.append({
+          'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd',
+          'dll_paths': abs_qt_bin_dir,
+          'pdb_paths': abs_qt_lib_dir,
+          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic')})
+      copy_params.append({
+          'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets',
+          'dll_paths': abs_qt_bin_dir,
+          'pdb_paths': abs_qt_lib_dir,
+          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic')})
+      copy_params.append({
+          'basenames': 'qwindowsd',
+          'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic',
+                                     'platforms')})
+      copy_params.append({
+          'basenames': 'qwindows',
+          'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic',
+                                     'platforms')})
+    for copy_param in copy_params:
       copy_commands = [
           copy_script,
-          '--basenames', mode['basenames'],
-          '--dll_paths', abs_qt_bin_dir,
-          '--pdb_paths', os.pathsep.join([abs_qt_bin_dir, abs_qt_lib_dir]),
-          '--target_dir', os.path.join(abs_out_win_dir, mode['configuration']),
+          '--basenames', copy_param['basenames'],
+          '--dll_paths', copy_param['dll_paths'],
+          '--pdb_paths', copy_param['pdb_paths'],
+          '--target_dir', copy_param['target_dir'],
       ]
       RunOrDie(copy_commands)
 
