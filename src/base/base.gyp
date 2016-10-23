@@ -70,7 +70,6 @@
         }],
         ['target_platform=="NaCl" and _toolset=="target"', {
           'sources!': [
-            'crash_report_handler.cc',
             'process.cc',
           ],
           # TODO(hsumita): Move this link settings to more suitable position.
