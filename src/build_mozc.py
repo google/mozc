@@ -272,14 +272,7 @@ def ParseGypOptions(args):
   parser.add_option('--gypdir', dest='gypdir',
                     help='Specifies the location of GYP to be used.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
-
-  default_qtver = '5'
-  # TODO(yukawa): Support Qt5 on Windows
-  if IsWindows():
-    default_qtver = '4'
-  parser.add_option('--qtver', dest='qtver', choices=('4', '5'),
-                    default=default_qtver)
-
+  parser.add_option('--qtver', dest='qtver', choices=('4', '5'), default='5')
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='data/version/mozc_version_template.bzl')
