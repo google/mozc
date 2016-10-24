@@ -244,7 +244,14 @@ void LogStreamImpl::Write(LogSeverity severity, const string &log) {
     __android_log_write(severity, kProductPrefix,
                         const_cast<char*>(log.c_str()));
 #else  // OS_ANDROID
-    *real_log_stream_ << log;
+    // Since our logging mechanism is essentially singleton, it is indeed
+    // possible that this method is called before |Logging::InitLogStream()|.
+    // b/32360767 is an example, where |SystemUtil::GetLoggingDirectory()|
+    // called as a preparation for |Logging::InitLogStream()| internally
+    // triggered |LOG(ERROR)|.
+    if (real_log_stream_) {
+      *real_log_stream_ << log;
+    }
 #endif  // OS_ANDROID
   }
 }
