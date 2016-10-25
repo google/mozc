@@ -1,5 +1,5 @@
 EXPORTS
-    RefreshPolicy
+    CallIERefreshElevationPolicy
     InstallIME
     InstallIMERollback
     UninstallIME

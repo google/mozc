@@ -259,7 +259,7 @@ BOOL APIENTRY DllMain(HMODULE module,
   return TRUE;
 }
 
-UINT __stdcall RefreshPolicy(MSIHANDLE msi_handle) {
+UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
   HRESULT result = CallSystemDllFunction(kIEFrameDll,
                                          "IERefreshElevationPolicy");

@@ -36,7 +36,7 @@
 #include <msi.h>
 
 // Makes ieuser.exe update the cache of the elevation policies.
-UINT __stdcall RefreshPolicy(MSIHANDLE msi_handle);
+UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle);
 
 // Install Mozc as an IME.
 UINT __stdcall InstallIME(MSIHANDLE msi_handle);

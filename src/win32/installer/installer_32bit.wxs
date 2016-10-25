@@ -773,8 +773,8 @@
     <CustomAction Id='UnregisterTIPRollback32' BinaryKey='CustomActions32'
         DllEntry='UnregisterTIPRollback' Execute='rollback' Impersonate='no'
         Return='ignore' />
-    <CustomAction Id='RefreshPolicy' BinaryKey='CustomActions32'
-        DllEntry='RefreshPolicy' Execute='commit' Impersonate='no' />
+    <CustomAction Id='CallIERefreshElevationPolicy' BinaryKey='CustomActions32'
+        DllEntry='CallIERefreshElevationPolicy' Execute='commit' Impersonate='no' />
     <CustomAction Id='OpenUninstallSurveyPage' BinaryKey='CustomActions32'
         DllEntry='OpenUninstallSurveyPage' Impersonate='yes' Return='ignore' />
     <CustomAction Id='ShutdownServer' BinaryKey='CustomActions32'
@@ -856,7 +856,7 @@
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
       <SelfRegModules />
-      <Custom Action='RefreshPolicy' After='SelfRegModules'>
+      <Custom Action='CallIERefreshElevationPolicy' After='SelfRegModules'>
         (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 600)
       </Custom>
       <!--
