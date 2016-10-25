@@ -1,4 +1,5 @@
 EXPORTS
+    EnsureAllApplicationPackagesPermisssions
     CallIERefreshElevationPolicy
     InstallIME
     InstallIMERollback

@@ -862,6 +862,10 @@
     <CustomAction Id='UnregisterTIPRollback64' BinaryKey='CustomActions64'
         DllEntry='UnregisterTIPRollback' Execute='rollback' Impersonate='no'
         Return='ignore' />
+    <CustomAction Id='EnsureAllApplicationPackagesPermisssions'
+        BinaryKey='CustomActions64'
+        DllEntry='EnsureAllApplicationPackagesPermisssions' Execute='deferred'
+        Impersonate='no' Return='ignore' />
     <CustomAction Id='CallIERefreshElevationPolicy' BinaryKey='CustomActions32'
         DllEntry='CallIERefreshElevationPolicy' Execute='commit' Impersonate='no' />
     <CustomAction Id='OpenUninstallSurveyPage' BinaryKey='CustomActions32'
@@ -1007,8 +1011,12 @@
         (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602) AND (VersionNT64) AND (NOT UPGRADING)
       </Custom>
       <Custom Action='RegisterTIP64'
-          Before='EnsureIMEIsDisabledForServiceAccountAfterInstall' >
+          Before='EnsureAllApplicationPackagesPermisssions' >
         (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602) AND (VersionNT64)
+      </Custom>
+      <Custom Action='EnsureAllApplicationPackagesPermisssions'
+          Before='EnsureIMEIsDisabledForServiceAccountAfterInstall' >
+        (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602)
       </Custom>
       <Custom Action='EnsureIMEIsDisabledForServiceAccountAfterInstall'
           Before='InstallFinalize' >

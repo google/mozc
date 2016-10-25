@@ -47,6 +47,7 @@
 #include "base/url.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "base/win_sandbox.h"
 #include "base/win_util.h"
 #include "client/client_interface.h"
 #include "config/stats_config_util.h"
@@ -235,6 +236,30 @@ BOOL APIENTRY DllMain(HMODULE module,
   }
 
   return TRUE;
+}
+
+// [Return='ignore']
+UINT __stdcall EnsureAllApplicationPackagesPermisssions(MSIHANDLE msi_handle) {
+  DEBUG_BREAK_FOR_DEBUGGER();
+  if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+          GetMozcComponentPath(mozc::kMozcServerName))) {
+    return ERROR_INSTALL_FAILURE;
+  }
+  if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+          GetMozcComponentPath(mozc::kMozcRenderer))) {
+    return ERROR_INSTALL_FAILURE;
+  }
+  if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+          GetMozcComponentPath(mozc::kMozcTIP32))) {
+    return ERROR_INSTALL_FAILURE;
+  }
+  if (mozc::SystemUtil::IsWindowsX64()) {
+    if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+            GetMozcComponentPath(mozc::kMozcTIP64))) {
+      return ERROR_INSTALL_FAILURE;
+    }
+  }
+  return ERROR_SUCCESS;
 }
 
 UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle) {

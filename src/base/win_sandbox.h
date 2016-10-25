@@ -184,6 +184,16 @@ class WinSandbox {
       IntegrityLevel integrity_level,
       ScopedHandle* restricted_token);
 
+  // Returns true |file_name| already has or is updated to have an ACE
+  // (Access Control Entry) for "All Application Packages" group to have the
+  // following access masks:
+  //   - FILE_READ_DATA
+  //   - FILE_READ_EA
+  //   - FILE_EXECUTE
+  //   - READ_CONTROL
+  //   - SYNCHRONIZE
+  static bool EnsureAllApplicationPackagesPermisssion(const wstring &file_name);
+
  protected:
   // Returns SDDL for given |shareble_object_type|.
   // This method is placed here for unit testing.
