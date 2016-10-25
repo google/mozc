@@ -56,6 +56,11 @@
                 '../custom_action/custom_action.gyp:mozc_custom_action32',
                ],
             }],
+            ['use_qt!="YES"', {
+              'dependencies': [
+                '../../gui/gui.gyp:mozc_tool',
+              ],
+            }],
           ],
         },
       ],

@@ -73,9 +73,11 @@
           'qwindows_dll_path': '',
           'qwindowsd_dll_path': '',
           'mozc_zinnia_model_data_path': '',
+          'mozc_tool_path': '<(outdir32)/GoogleIMEJaTool.exe',
           'conditions': [
             ['use_qt=="YES"', {
               'mozc_zinnia_model_data_path': '<(DEPTH)/third_party/zinnia/tomoe/handwriting-light-ja.model',
+              'mozc_tool_path': '<(outdir32_dynamic)/GoogleIMEJaTool.exe',
             }],
             ['use_qt=="YES" and qt_ver==4', {
               'qtcore4_dll_path': '<(qt_dir)/bin/QtCore4.dll',
@@ -112,7 +114,7 @@
         'qwindows_dll_path': '<(qwindows_dll_path)',
         'qwindowsd_dll_path': '<(qwindowsd_dll_path)',
         'mozc_zinnia_model_data_path': '<(mozc_zinnia_model_data_path)',
-        'mozc_tool_path': '<(outdir32_dynamic)/GoogleIMEJaTool.exe',
+        'mozc_tool_path': '<(mozc_tool_path)',
         'mozc_broker32_path': '<(outdir32)/GoogleIMEJaBroker32.exe',
         'mozc_broker64_path': '<(outdir64)/GoogleIMEJaBroker64.exe',
         'mozc_ca32_path': '<(outdir32)/GoogleIMEJaInstallerHelper32.dll',
