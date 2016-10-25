@@ -49,6 +49,7 @@
     'VCLinkerTool': {
       'AdditionalDependencies': [
         'crypt32.lib',  # used in 'custom_action.cc'
+        'iepmapi.lib',  # used in 'custom_action.cc'
         'msi.lib',      # used in 'custom_action.cc'
       ],
     },
