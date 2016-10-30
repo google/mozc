@@ -52,7 +52,7 @@ void defaultLinkActivated(const QString &str) {
 
 // set document file paths by adding <server_path>/documents/ to file name.
 bool AddLocalPath(string *str) {
-  const char *filenames[] = { "credits_en.html", "credits_ja.html" };
+  const char *filenames[] = { "credits_en.html" };
   for (size_t i = 0; i < arraysize(filenames); ++i) {
     if (str->find(filenames[i]) != string::npos) {
       string tmp;

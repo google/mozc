@@ -480,11 +480,6 @@
               <?endif?>
             <?endif?>
             <Directory Id='DocumentsDir' Name='documents'>
-              <Component Id='CreditsJa' Guid='*'>
-                <File Id='credits_ja.html' Name='credits_ja.html' DiskId='1'
-                      Checksum='yes' Vital='yes'
-                      Source='$(var.DocumentsDir)/credits_ja.html' />
-              </Component>
               <Component Id='CreditsEn' Guid='*'>
                 <File Id='credits_en.html' Name='credits_en.html' DiskId='1'
                       Checksum='yes' Vital='yes'
@@ -743,7 +738,6 @@
       <ComponentRef Id='SysProcs' />
       <ComponentRef Id='PrelaunchProcesses' />
       <ComponentRef Id='GIMEJaElevationPolicy32' />
-      <ComponentRef Id='CreditsJa' />
       <ComponentRef Id='CreditsEn' />
     </Feature>
 

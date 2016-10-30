@@ -295,7 +295,6 @@
             '../data/images/mac/hiragana.tiff',
             '../data/images/mac/product_icon.icns',
             '../data/installer/credits_en.html',
-            '../data/installer/credits_ja.html',
             'English.lproj/Config.xib',
             '<(gen_out_dir)/English.lproj/InfoPlist.strings',
             'Japanese.lproj/Config.xib',

@@ -181,7 +181,7 @@
     "message": "Copyright © 2013 Google Inc. All Rights Reserved."
   },
   "configOssCreditsDescription": {
-    "message": "本ソフトウェアは<a href=\"./credits_ja.html\">オープンソースソフトウェア</a>を利用しています。"
+    "message": "本ソフトウェアは<a href=\"./credits_en.html\">オープンソースソフトウェア</a>を利用しています。"
   },
   "configDialogCancel": {
     "message": "キャンセル"

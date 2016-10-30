@@ -40,7 +40,6 @@
       '<(gen_out_dir)/nacl_mozc/_locales/en/messages.json',
       '<(gen_out_dir)/nacl_mozc/_locales/ja/messages.json',
       '<(gen_out_dir)/nacl_mozc/credits_en.html',
-      '<(gen_out_dir)/nacl_mozc/credits_ja.html',
       '<(gen_out_dir)/nacl_mozc/dictionary_tool.js',
       '<(gen_out_dir)/nacl_mozc/key_translator.js',
       '<(gen_out_dir)/nacl_mozc/manifest.json',
@@ -392,7 +391,6 @@
           'files': [
             '../../data/images/product_icon_32bpp-128.png',
             '../../data/installer/credits_en.html',
-            '../../data/installer/credits_ja.html',
             '<(gen_out_dir)/manifest.json',
             '<(gen_out_dir)/nacl_mozc_version.js',
             '<(PRODUCT_DIR)/nacl_session_handler_x86_32.nexe',
