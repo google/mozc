@@ -50,6 +50,7 @@
         'english_variants_rewriter_test.cc',
         'focus_candidate_rewriter_test.cc',
         'fortune_rewriter_test.cc',
+        'katakana_promotion_rewriter_test.cc',
         'merger_rewriter_test.cc',
         'normalization_rewriter_test.cc',
         'number_compound_util_test.cc',
