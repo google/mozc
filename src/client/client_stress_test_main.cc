@@ -38,6 +38,7 @@
 
 #include <memory>
 
+#include "base/logging.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
@@ -59,7 +60,6 @@ DEFINE_int32(key_duration, 10, "key duration (msec)");
 DEFINE_bool(test_renderer, false, "test renderer");
 DEFINE_bool(test_testsendkey, true, "test TestSendKey");
 
-DECLARE_bool(logtostderr);
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);

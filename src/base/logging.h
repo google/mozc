@@ -34,6 +34,7 @@
 #include <iostream>
 #include <string>
 
+#include "base/flags.h"
 #include "base/namespace.h"
 #include "base/port.h"
 
@@ -278,6 +279,8 @@ class NullLogFinalizer {
 #endif  // DEBUG
 
 #define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
+
+DECLARE_bool(logtostderr);
 
 
 #define DVLOG_IF(verboselevel, condition) \
