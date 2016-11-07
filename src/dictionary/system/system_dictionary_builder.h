@@ -51,6 +51,7 @@ class LoudsTrieBuilder;
 namespace dictionary {
 
 class SystemDictionaryCodecInterface;
+class DictionaryFileCodecInterface;
 struct Token;
 
 class SystemDictionaryBuilder {
@@ -65,7 +66,8 @@ class SystemDictionaryBuilder {
   };
 
   SystemDictionaryBuilder();
-  explicit SystemDictionaryBuilder(const SystemDictionaryCodecInterface *codec);
+  SystemDictionaryBuilder(const SystemDictionaryCodecInterface *codec,
+                          const DictionaryFileCodecInterface *file_codec);
   virtual ~SystemDictionaryBuilder();
   void BuildFromTokens(const std::vector<Token *> &tokens);
 
@@ -104,6 +106,7 @@ class SystemDictionaryBuilder {
   std::map<uint32, int> frequent_pos_;
 
   const SystemDictionaryCodecInterface *codec_;
+  const DictionaryFileCodecInterface *file_codec_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionaryBuilder);
 };

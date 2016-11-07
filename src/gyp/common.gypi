@@ -123,7 +123,7 @@
       }],
       ['target_platform=="NaCl"', {
         'compiler_target': 'clang',
-        'compiler_target_version_int': 304,  # Clang 3.3 or higher
+        'compiler_target_version_int': 304,  # Clang 3.4 or higher
         'compiler_host': 'clang',
         'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],

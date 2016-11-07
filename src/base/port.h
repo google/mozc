@@ -56,6 +56,7 @@
 #endif  // !OS_ANDROID && !OS_NACL
 #endif  // OS_LINUX
 
+
 #ifndef MOZC_OS_DEFINED
 #error "OS_XXX (e.g., OS_WIN) must be defined."
 #endif  // !MOZC_OS_DEFINED

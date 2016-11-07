@@ -38,7 +38,6 @@
 
 #include <memory>
 
-#include "base/logging.h"
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"

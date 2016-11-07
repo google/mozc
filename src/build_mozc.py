@@ -1172,7 +1172,6 @@ def CleanMain(options, unused_args):
     elif IsMac():
       directory_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                     '*.xcodeproj')))
-  file_names.append('%s/mozc_version.txt' % SRC_DIR)
 
   # mozc_version.txt does not always exist.
   version_file = '%s/mozc_version.txt' % SRC_DIR

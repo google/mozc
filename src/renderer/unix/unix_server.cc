@@ -158,7 +158,7 @@ void UnixServer::OpenPipe() {
     return;
   }
 
-  // TODO(nona): Close unsued fd.
+  // TODO(nona): Close unused fd.
   fcntl(pipefd_[0], F_SETFL, O_NONBLOCK);
   fcntl(pipefd_[1], F_SETFL, O_NONBLOCK);
 }

@@ -175,7 +175,6 @@
         '../config/config.gyp:config_handler',
         '../protocol/protocol.gyp:config_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
-        '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_pos_map#host',
         'pos_matcher',

@@ -40,7 +40,6 @@
 # include <curl/curl.h>
 #endif  // defined(OS_WIN), defined(OS_ANDROID), defined(HAVE_CURL)
 
-
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 #include "base/compiler_specific.h"

@@ -31,8 +31,6 @@
 
 #include "base/embedded_file.h"
 #include "base/logging.h"
-#include "base/singleton.h"
-#include "converter/boundary_struct.h"
 
 namespace mozc {
 namespace chromeos {

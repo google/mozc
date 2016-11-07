@@ -185,7 +185,6 @@
     <string name="pref_sound_feedback_volume_middle_text">標準</string>
     <string name="pref_sound_feedback_volume_high_text">大きい</string>
 
-
     <string name="symbol_input_no_history">まだ履歴がありません。\n\n右にスライドして\n候補を選んでください。</string>
     <string name="symbol_emoji_disabled_message">この入力先には、\n絵文字を入力できません。</string>
 
