@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">Япон</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Гарын програм</string>
+<string name="pref_software_keyboard_advanced_settings_title">Гарын програмын дээд тохиргоонууд</string>
+<string name="pref_fragment_software_keyboard_title">Програм хангамжийн гар</string>
+<string name="pref_fragment_input_support_title">Оролтын дэмжлэг</string>
+<string name="pref_fragment_conversion_title">Хувиргалт</string>
+<string name="pref_fragment_dictionary_title">Толь бичиг</string>
+<string name="pref_fragment_user_feedback_title">Хэрэглэгчийн санал хүсэлт</string>
+<string name="pref_fragment_about_title">Тухай</string>
+<string name="pref_fragment_development_title">Хөгжүүлэлт</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Босоо горимд зориулсан гарын тохиргоо</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Ландшафтын горимд зориулсан гарын тохиргоо</string>
+<string name="pref_keyboard_layout_title">Гарын зураглал</string>
+<string name="pref_input_style_title">Оролтын загвар</string>
+<string name="pref_qwerty_layout_for_alphabet_title">QWERTY горим</string>
+<string name="pref_flick_sensitivity_title">Flick хурд</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Хөрөг зургийн тохиргоог ашиглах</string>
+<string name="pref_keyboard_height_ratio_title">Гарын өндөр</string>
+<string name="pref_input_feedback_category_title">Хариу үйлдлийн тохиргоо</string>
+<string name="pref_haptic_feedback_title">Мэдрэгдэх хариу</string>
+<string name="pref_haptic_feedback_duration_title">Мэдрэгдэх хариу үйлдлийн үргэлжлэх хугацаа</string>
+<string name="pref_sound_feedback_title">Аудио хариу үйлдэл</string>
+<string name="pref_sound_feedback_volume_title">Аудио хариу үйлдлийн дууны хэмжээ</string>
+<string name="pref_popup_feedback_title">Попап хариу үйлдэл</string>
+<string name="pref_other_input_support_preference_category_title">Бусад оролтын тохиргоо</string>
+<string name="pref_fullscreen_title">Бүтэн дэлгэцийн горим</string>
+<string name="pref_skin_type_title">Гарын загвар</string>
+<string name="pref_hardware_title">Хардвер гарын тохиргоо</string>
+<string name="pref_voice_input_title">Дууны оролтын товчийг харуулах</string>
+<string name="pref_conversion_category_title">Хувиргах тохиргоо</string>
+<string name="pref_layout_adjustment_title">Layout тохируулга</string>
+<string name="pref_space_character_form_title">Хагас-өргөн орон зайг ашиглах</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Хувиргалт засагч</string>
+<string name="pref_typing_correction_title">Бичвэрийн залруулга</string>
+<string name="pref_other_incognito_mode_title">Нууцлалын горим</string>
+<string name="pref_emoji_provider_type_title">Emoji үзүүлэгч сонгох</string>
+<string name="pref_dictionry_category_title">Толь бичгийн тохиргоо</string>
+<string name="pref_dictionary_personalization_title">Хувийн тохиргоо</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Толь бичгийн Хэрэгсэл</string>
+<string name="pref_clear_category_title">Түүх цэвэрлэх</string>
+<string name="pref_clear_conversion_history_title">Хувиргалтын түүх</string>
+<string name="pref_clear_symbol_history_title">Тэмдэгтийн түүх</string>
+<string name="pref_clear_user_dictionary_title">Хэрэглэгчийн толь</string>
+<string name="pref_user_feedback_category_title">Хэрэглэгчийн санал хүсэлт</string>
+<string name="pref_other_usage_stats_title">Ашиглалтын статистикийг илгээх</string>
+<string name="pref_about_about_this_software_title">Энэ програмын тухай</string>
+<string name="pref_about_version_title">Хувилбар</string>
+<string name="pref_about_terms_of_service_title">Үйлчилгээний нөхцөл</string>
+<string name="pref_about_privacy_policy_title">Нууцлалын бодлого</string>
+<string name="pref_about_oss_credits_title">Нээлттэй програм хангамж</string>
+<string name="pref_launcher_icon_visibility_title">Апп дүрсийг харуулах</string>
+<string name="pref_haptic_feedback_description">Чичиргээ идэвхжүүлэх товчлуур дарна уу.</string>
+<string name="pref_sound_feedback_description">Дуу идэвхжүүлэх товчлуур дарна уу.</string>
+<string name="pref_popup_feedback_description">Попап идэвхжүүлэх товчлуур дарна уу.</string>
+<string name="pref_keyboard_layout_description">Гарын layout солих</string>
+<string name="pref_keyboard_layout_title_12keys">12 товчлуур</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">Godan Гар</string>
+<string name="pref_keyboard_layout_description_12keys">Гар утасны layout.</string>
+<string name="pref_keyboard_layout_description_qwerty">PC гарын layout.</string>
+<string name="pref_keyboard_layout_description_godan">Romaji-тусгай үзүүлэн. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;Usage&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Оролтын төрлийг сонгох.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Сонговол QWERTY зураглалыг үсгэн горимд гол зураглалыг үл хамааран ашиглах болно.</string>
+<string name="pref_fullscreen_description">Сонговол дараах текст хэсэг бүтэн дэлгэцээр харагбдах болно.</string>
+<string name="pref_flick_sensitivity_description">flick хурдыг тааруулна уу.</string>
+<string name="pref_layout_adjustment_description">Гар тохируулга өөрчлөх.</string>
+<string name="pref_keyboard_height_ratio_description">Гарын өндрийг өөрчлөх.</string>
+<string name="pref_space_character_form_description">Оролтын горим ямар ч бай үргэлж хагас-өргөн орон зайг ашиглана.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Хувиргалтанд kana засагчийг ашиглана уу. 12 товч болон Godan гарт хавсаргасан . жишээ нь, か つ こ う → 学校</string>
+<string name="pref_typing_correction_description">Буруу бичсэнийг илрүүлэх болон зассан хэлбэрийг харуулна. жишээ нь, す ん か い → 深海</string>
+<string name="pref_emoji_provider_type_description">Emoji ашиглахын тулд Emoji үзүүлэгчийг сонгоно уу.</string>
+<string name="pref_skin_type_description">Програм хангамжийн гарны харагдах байдлыг өөрчлах зорилгоор гарны тохиргоог сонго.</string>
+<string name="pref_voice_input_description">Програм хангамжийн гаран дээр дуу хойлооны оруулгын товчийг харуулах.</string>
+<string name="pref_hardware_keymap_description">Хардвер гаранд гол зураглалыг сонгоно уу.</string>
+<string name="pref_dictionary_personalization_description">Сүүлийн оролт дээр тулгуурлан хувийн саналуудыг идэвхжүүлнэ.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">Хэрэглэгчийн толь бичгүүдийг засварлах.</string>
+<string name="pref_clear_category_description">Хувийн эсвэл саналын мэдээллийг цэвэрлэх.</string>
+<string name="pref_clear_conversion_history_description">Хувиргалтын түүх цэвэрлэх.</string>
+<string name="pref_clear_symbol_history_description">Тэмдэгт оролтын түүх цэвэрлэх.</string>
+<string name="pref_clear_user_dictionary_description">Хэрэглэгчийн толь бичгийг цэвэрлэх.</string>
+<string name="pref_other_incognito_mode_description">Түр зуур хувийн тохиргоо, санал болон хэрэглэгчийн толь бичгийг хаасан.</string>
+<string name="pref_other_usage_stats_description">Хэрэглээний статистик %1$s-д илгээнэ үү. Эдгээр нь зөвхөн %1$s-н бүтээгдэхүүн болон үйлчилгээг сайжруулахад ашиглагдах болно.</string>
+<string name="pref_about_terms_of_service_description">Үйлчилгээний нөхцлийг үзүүлэх (вэб хуудас).</string>
+<string name="pref_about_privacy_policy_description">Нууцлалын бодлогыг үзүүлэх (вэб хуудас).</string>
+<string name="pref_about_oss_credits_description">Энэ програм нь нээлттэй эхийн програм хангамжийг ашигладаг: лиценз үзэх.</string>
+<string name="pref_launcher_icon_visibility_description">Эхлүүлэгч дээр аппликешний дүрсийг харуулах</string>
+<string name="pref_input_style_setting_entry_toggle">Toggle</string>
+<string name="pref_input_style_setting_entry_flick">Flick</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Toggle &amp; Flick</string>
+<string name="pref_fullscreen_portrait">Хөрөг дээр идэвхжүүлэх</string>
+<string name="pref_fullscreen_landscape">Хэвтээ дээр идэвхжүүлэх</string>
+<string name="pref_emoji_provider_type_unicode">Emoji хаах</string>
+<string name="pref_emoji_provider_type_docomo">NTT DoCoMo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (Au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">Улбар шар/Цагаан саарал</string>
+<string name="pref_skin_type_blue_lightgray">Цэнхэр/Цагаан саарал</string>
+<string name="pref_skin_type_blue_darkgray">Цэнхэр/хар саарал</string>
+<string name="pref_skin_type_material_design_light">Материал дизайн (Цагаан)</string>
+<string name="pref_skin_type_material_design_dark">Материал дизайн (Хар)</string>
+<string name="pref_hardware_keymap_default">Системийн Анхдагч</string>
+<string name="pref_hardware_keymap_japanese109A">Японы 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 түлхүүр</string>
+<string name="pref_dictionary_personalization_entry_enabled">Идэвхжүүлэх</string>
+<string name="pref_dictionary_personalization_entry_readonly">Хөлдөөсөн</string>
+<string name="pref_dictionary_personalization_entry_disabled">Идэвхгүйжүүлэх</string>
+<string name="pref_layout_adjustment_entry_fill">Бөглөх</string>
+<string name="pref_layout_adjustment_entry_right">Баруун</string>
+<string name="pref_layout_adjustment_entry_left">Зүүн</string>
+<string name="firsttime_close_button">Дараагийн &gt;&gt;</string>
+<string name="firsttime_description_thank_you">%s ашиглаж байгаад баярлалаа.</string>
+<string name="firsttime_description_usage_stats">Бид %s-н бүтээгдэхүүн болон үйлчилгээг сайжруулахын тулд таниас хэрэглээний статистикийг идэвхжүүлэхийг эелдгээр асууж байна.\n\nЭнэ тохируулгыг тохиргоо дэлгэцнээс өөрчилж болно.</string>
+<string name="firsttime_send_usage_stats_devchannel">Та хөгжүүлэлтийн хувилбарыг ашиглаж байгаа учир хэрэглээний статистикүүд идэвхжсэн байна.</string>
+<string name="pref_ime_enable_alert_title">Текст тохиргооны суулгац</string>
+<string name="pref_ime_enable_alert_message">%s-г идэвхжүүлнэ үү.</string>
+<string name="pref_ime_switch_alert_title">Оролтын тохиргоо</string>
+<string name="pref_ime_switch_alert_message">Оролтыг %s болгож өөрчлөнө үү.</string>
+<string name="pref_ime_alert_next">Дараах</string>
+<string name="pref_ime_alert_cancel">Цуцлах</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Бага</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Дунд</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Өндөр</string>
+<string name="pref_haptic_feedback_duration_low_text">Богино</string>
+<string name="pref_haptic_feedback_duration_high_text">Урт</string>
+<string name="pref_sound_feedback_volume_low_text">Багадаа</string>
+<string name="pref_sound_feedback_volume_middle_text">Дундаж</string>
+<string name="pref_sound_feedback_volume_high_text">Ихдээ</string>
+<string name="symbol_input_no_history">Түүх алга.\n\nХөтөчийн категори руу\n дэлгэцийг зөөнө үү.</string>
+<string name="symbol_emoji_disabled_message">Энэ текст талбар Emoji оролтыг дэмждэггүй.</string>
+<string name="menu_dialog_title">Оруулах сонголтууд</string>
+<string name="menu_item_input_method">Оруулах аргыг сонгох</string>
+<string name="menu_item_preferences">%s тохиргоо</string>
+<string name="menu_item_mushroom">Launch Mushroom</string>
+<string name="user_dictionary_tool_app_name">Толь бичгийн хэрэгсэл</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Шинэ үг</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Үг устгах</string>
+<string name="user_dictionary_tool_menu_undo_title">Буцаах</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Шинэ толь бичиг</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Одоогийн толь бичгийн нэрийг өөрчлөх</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Одоогийн толь бичгийг устгах</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Одоогийн толь бичгийг гаргах</string>
+<string name="user_dictionary_tool_default_dictionary_name">Хэрэглэгчийн толь бичиг 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Шинэ толь бичиг үүсгэх</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Толь бичгийн нэрийг засах</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Толь бичгийн нэр</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Шинэ үг нэмэх</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Үгийг засах</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Тайлбар</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Word</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Категори</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Оролтын эх сонгох</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Оролтын товлолт сонгох</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Шинэ толь бичиг болгож оруулах</string>
+<string name="user_dictionary_tool_delete_done_message">Үйлдэл устгах амжилттай боллоо.</string>
+<string name="user_dictionary_tool_undo_done_message">Үйлдэл буцаах амжилттай боллоо.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Устгахыг хүсч байгаа үгээ сонгоно уу.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Дата оруулах зөвхөн файл дээр ажиллана.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Файлыг уншиж чадахгүй байна.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ZIP файл хоосон байна.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Хэрэглэгчийн толь бичгийг экспортлох ямар ч апп (жишээ нь, Google Docs) байхгүй байна.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Хэрэглэгчийн толь бичгийг экспортлох амжилтгүй боллоо.</string>
+<string name="user_dictionary_tool_status_error_general">Үйлдэл амжилтгүй болсон байна.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Файлыг нээж чадахгүй байна.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Файлыг уншиж чадахгүй байна.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Өгөгдлийн хэмжээ нь файлын хэмжээний хязгаарыг давсан байна.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Дахиад толь бичиг үүсгэх боломжгүй.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Энэ толь бичигт дахиад бичилт үүсгэх боломжгүй.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Толь бичгийн нэрийг бичнэ үү.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Нэр хэтэрхий урт байна.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Нэр нь буруу шинж(үүд) агуулсан байна.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Нэр нь аль хэдийн орсон байна.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Тайлбарыг оруулна уу.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Тайлбар хэтэрхий урт байна.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Тайлбар нь буруу шинж(үүд) агуулсан байна.</string>
+<string name="user_dictionary_tool_status_error_word_empty">Үгийг бичнэ үү.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Үг нь хэтэрхий урт байна.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Үг нь буруу шинж(үүд) агуулсан байна.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Оролтын эх хэтэрхий олон үг агуулсан байна.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Зарим үгийг оруулах боломжгүй.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Ямар ч буцаах үйлдэл байхгүй.</string>
+<string name="japanese_pos_noun">Нэр үг</string>
+<string name="japanese_pos_abbreviation">Товчлол</string>
+<string name="japanese_pos_suggestion_only">Зөвхөн санал</string>
+<string name="japanese_pos_proper_noun">Оноосон нэр үг</string>
+<string name="japanese_pos_personal_name">Хувийн нэр</string>
+<string name="japanese_pos_family_name">Овгийн нэр</string>
+<string name="japanese_pos_first_name">Өөрийн нэр</string>
+<string name="japanese_pos_organization_name">Байгууллагын нэр</string>
+<string name="japanese_pos_place_name">Газрын нэр</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA-дүрмийн бус холбоо нэр үг</string>
+<string name="japanese_pos_adjective_verbal_noun">Тэмдэг нэр үйлт нэр</string>
+<string name="japanese_pos_number">Дугаар</string>
+<string name="japanese_pos_alphabet">Цагаан толгой</string>
+<string name="japanese_pos_symbol">Символ</string>
+<string name="japanese_pos_emoticon">Emoticon</string>
+<string name="japanese_pos_adverb">Дайвар үг</string>
+<string name="japanese_pos_prenoun_adjectival">Төлөөны нэр</string>
+<string name="japanese_pos_conjunction">Холбоос үг</string>
+<string name="japanese_pos_interjection">Аялга үг</string>
+<string name="japanese_pos_prefix">Угтвар үг</string>
+<string name="japanese_pos_counter_suffix">Counter дагавар</string>
+<string name="japanese_pos_generic_suffix">Generic дагавар</string>
+<string name="japanese_pos_person_name_suffix">Хүний нэрний дагавар</string>
+<string name="japanese_pos_place_name_suffix">Газрын нэрний дагавар</string>
+<string name="japanese_pos_wa_group1_verb">WA-Групп1 үйл үг</string>
+<string name="japanese_pos_ka_group1_verb">KA-Групп1 үйл үг</string>
+<string name="japanese_pos_sa_group1_verb">SA-Групп1 үйл үг</string>
+<string name="japanese_pos_ta_group1_verb">ТТ-Групп1 үйл үг</string>
+<string name="japanese_pos_na_group1_verb">NA-Групп1 үйл үг</string>
+<string name="japanese_pos_ma_group1_verb">MA-Групп1 үйл үг</string>
+<string name="japanese_pos_ra_group1_verb">RA-Групп1 verb</string>
+<string name="japanese_pos_ga_group1_verb">GA-Групп1 үйл үг</string>
+<string name="japanese_pos_ba_group1_verb">BA-Групп1 үйл үг</string>
+<string name="japanese_pos_ha_group1_verb">HA-Групп1 үйл үг</string>
+<string name="japanese_pos_group2_verb">Групп2 үйл үг</string>
+<string name="japanese_pos_kuru_group3_verb">Kuru-Групп3 үйл үг</string>
+<string name="japanese_pos_suru_group3_verb">Suru-Групп3 үйл үг</string>
+<string name="japanese_pos_zuru_group3_verb">Zuru-Групп3 үйл үг</string>
+<string name="japanese_pos_ru_group3_verb">Ru-Групп3 үйл үг</string>
+<string name="japanese_pos_adjective">Тэмдэг нэр</string>
+<string name="japanese_pos_sentence_ending_particle">Өгүүлбэрийн төгсөлийн сул үг</string>
+<string name="japanese_pos_punctuation">Цэг таслал</string>
+<string name="japanese_pos_free_standing_word">Чөлөөт тогтвортой үг</string>
+<string name="japanese_pos_suppression_word">Далдлах үг</string>
+<string name="yes">Тийм</string>
+<string name="no">Үгүй</string>
+</resources>

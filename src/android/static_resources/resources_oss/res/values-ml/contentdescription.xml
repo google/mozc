@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="cd_keyboard_kana">Kana കീബോർഡ്</string>
+<string name="cd_keyboard_alphabet">അക്ഷരമാല കീബോർഡ്</string>
+<string name="cd_keyboard_number">നമ്പർ കീബോർഡ്</string>
+<string name="cd_key_shift">shift</string>
+<string name="cd_key_up">മുകളിലേയ്‌ക്കുള്ള അമ്പടയാളം</string>
+<string name="cd_key_left">ഇടത്തേക്കുള്ള അമ്പടയാളം</string>
+<string name="cd_key_right">വലത്തേക്കുള്ള അമ്പടയാളം</string>
+<string name="cd_key_down">താഴേയ്‌ക്കുള്ള അമ്പടയാളം</string>
+<string name="cd_key_chartype_to_kana">Kana കീബോർഡിലേക്ക് മാറുക</string>
+<string name="cd_key_chartype_to_abc">അക്ഷരമാല കീബോർഡിലേക്ക് മാറുക</string>
+<string name="cd_key_chartype_to_abc_123">ചിഹ്ന കീബോർഡിലേക്ക് മാറുക</string>
+<string name="cd_key_undo">പഴയപടിയാക്കുക</string>
+<string name="cd_key_symbol">ചിഹ്നം ടൈപ്പുചെയ്യൽ സ്ക്രീൻ</string>
+<string name="cd_key_alt">ഇതര ചിഹ്നങ്ങൾ</string>
+<string name="cd_key_alt_unmodified">സാധാരണ ചിഹ്നങ്ങൾ</string>
+<string name="cd_key_capslock">ക്യാപ്സ് ലോക്ക്</string>
+<string name="cd_key_capsunlock">ക്യാപ്സ് അൺലോക്ക്</string>
+<string name="cd_key_menu_dialog">മെനു തുറക്കുക</string>
+<string name="cd_key_globe">ടൈപ്പുചെയ്യൽ രീതി മാറുക</string>
+<string name="cd_key_uchar_backspace">backspace</string>
+<string name="cd_key_uchar_linefeed">ലൈൻഫീഡ്</string>
+<string name="cd_key_uchar_space">space</string>
+<string name="cd_key_uchar_exclamation_mark">ആശ്‌ചര്യ ചിഹ്നം</string>
+<string name="cd_key_uchar_quotation_mark" translation_description='When ["] key in the keyboard is pressed, this string is spoken up for accessibility'>ഉദ്ധരണി ചിഹ്നം</string>
+<string name="cd_key_uchar_number_sign">നമ്പർ ചിഹ്നം</string>
+<string name="cd_key_uchar_dollar_sign">ഡോളർ ചിഹ്നം</string>
+<string name="cd_key_uchar_percent_sign">ശതമാന ചിഹ്നം</string>
+<string name="cd_key_uchar_ampersand">സമുച്ചയം</string>
+<string name="cd_key_uchar_apostrophe">വിശ്ലേഷം</string>
+<string name="cd_key_uchar_left_parenthesis">ഇടത് പരാന്തിസിസ്</string>
+<string name="cd_key_uchar_right_parenthesis">വലത് പരാന്തിസിസ്</string>
+<string name="cd_key_uchar_asterisk">നക്ഷത്രചിഹ്നം</string>
+<string name="cd_key_uchar_plus_sign">അധിക ചിഹ്നം</string>
+<string name="cd_key_uchar_comma">കോമ</string>
+<string name="cd_key_uchar_hyphen_minus">ഹൈഫൺ</string>
+<string name="cd_key_uchar_full_stop">വിരാമം</string>
+<string name="cd_key_uchar_solidus">സ്ലാഷ്</string>
+<string name="cd_key_uchar_digit_zero">0</string>
+<string name="cd_key_uchar_digit_one">1</string>
+<string name="cd_key_uchar_digit_two">2</string>
+<string name="cd_key_uchar_digit_three">3</string>
+<string name="cd_key_uchar_digit_four">4</string>
+<string name="cd_key_uchar_digit_five">5</string>
+<string name="cd_key_uchar_digit_six">6</string>
+<string name="cd_key_uchar_digit_seven">7</string>
+<string name="cd_key_uchar_digit_eight">8</string>
+<string name="cd_key_uchar_digit_nine">9</string>
+<string name="cd_key_uchar_colon">അപൂർണ്ണവിരാമം</string>
+<string name="cd_key_uchar_semicolon">അർദ്ധവിരാമം</string>
+<string name="cd_key_uchar_less_than_sign">അരോഹണ ചിഹ്നം</string>
+<string name="cd_key_uchar_equals_sign">സമചിഹ്നം</string>
+<string name="cd_key_uchar_greater_than_sign">അവരോഹണ ചിഹ്നം</string>
+<string name="cd_key_uchar_question_mark">ചോദ്യ ചിഹ്നം</string>
+<string name="cd_key_uchar_commercial_at">അറ്റ് ചിഹ്നം</string>
+<string name="cd_key_uchar_latin_capital_letter_a">A</string>
+<string name="cd_key_uchar_latin_capital_letter_b">B</string>
+<string name="cd_key_uchar_latin_capital_letter_c">C</string>
+<string name="cd_key_uchar_latin_capital_letter_d">D</string>
+<string name="cd_key_uchar_latin_capital_letter_e">E</string>
+<string name="cd_key_uchar_latin_capital_letter_f">F</string>
+<string name="cd_key_uchar_latin_capital_letter_g">G</string>
+<string name="cd_key_uchar_latin_capital_letter_h">H</string>
+<string name="cd_key_uchar_latin_capital_letter_i">I</string>
+<string name="cd_key_uchar_latin_capital_letter_j">J</string>
+<string name="cd_key_uchar_latin_capital_letter_k">K</string>
+<string name="cd_key_uchar_latin_capital_letter_l">L</string>
+<string name="cd_key_uchar_latin_capital_letter_m">M</string>
+<string name="cd_key_uchar_latin_capital_letter_n">N</string>
+<string name="cd_key_uchar_latin_capital_letter_o">O</string>
+<string name="cd_key_uchar_latin_capital_letter_p">P</string>
+<string name="cd_key_uchar_latin_capital_letter_q">Q</string>
+<string name="cd_key_uchar_latin_capital_letter_r">R</string>
+<string name="cd_key_uchar_latin_capital_letter_s">S</string>
+<string name="cd_key_uchar_latin_capital_letter_t">T</string>
+<string name="cd_key_uchar_latin_capital_letter_u">U</string>
+<string name="cd_key_uchar_latin_capital_letter_v">V</string>
+<string name="cd_key_uchar_latin_capital_letter_w">W</string>
+<string name="cd_key_uchar_latin_capital_letter_x">X</string>
+<string name="cd_key_uchar_latin_capital_letter_y">Y</string>
+<string name="cd_key_uchar_latin_capital_letter_z">Z</string>
+<string name="cd_key_uchar_left_square_bracket">ഇടത് ചതുര ബ്രാക്കറ്റ്</string>
+<string name="cd_key_uchar_reverse_solidus">ബാക്ക് സ്ലാഷ്</string>
+<string name="cd_key_uchar_right_square_bracket">വലത് ചതുര ബ്രാക്കറ്റ്</string>
+<string name="cd_key_uchar_circumflex_accent">ഹാറ്റ്</string>
+<string name="cd_key_uchar_low_line">അണ്ടർ സ്‌കോർ</string>
+<string name="cd_key_uchar_grave_accent">ഗ്രേവ്</string>
+<string name="cd_key_uchar_latin_small_letter_a">a</string>
+<string name="cd_key_uchar_latin_small_letter_b">b</string>
+<string name="cd_key_uchar_latin_small_letter_c">c</string>
+<string name="cd_key_uchar_latin_small_letter_d">d</string>
+<string name="cd_key_uchar_latin_small_letter_e">e</string>
+<string name="cd_key_uchar_latin_small_letter_f">f</string>
+<string name="cd_key_uchar_latin_small_letter_g">g</string>
+<string name="cd_key_uchar_latin_small_letter_h">h</string>
+<string name="cd_key_uchar_latin_small_letter_i">i</string>
+<string name="cd_key_uchar_latin_small_letter_j">j</string>
+<string name="cd_key_uchar_latin_small_letter_k">k</string>
+<string name="cd_key_uchar_latin_small_letter_l">l</string>
+<string name="cd_key_uchar_latin_small_letter_m">m</string>
+<string name="cd_key_uchar_latin_small_letter_n">n</string>
+<string name="cd_key_uchar_latin_small_letter_o">o</string>
+<string name="cd_key_uchar_latin_small_letter_p">p</string>
+<string name="cd_key_uchar_latin_small_letter_q">q</string>
+<string name="cd_key_uchar_latin_small_letter_r">r</string>
+<string name="cd_key_uchar_latin_small_letter_s">s</string>
+<string name="cd_key_uchar_latin_small_letter_t">t</string>
+<string name="cd_key_uchar_latin_small_letter_u">u</string>
+<string name="cd_key_uchar_latin_small_letter_v">v</string>
+<string name="cd_key_uchar_latin_small_letter_w">w</string>
+<string name="cd_key_uchar_latin_small_letter_x">x</string>
+<string name="cd_key_uchar_latin_small_letter_y">y</string>
+<string name="cd_key_uchar_latin_small_letter_z">z</string>
+<string name="cd_key_uchar_left_curly_bracket">ഇടത് ചുരുൾ ബ്രാക്കറ്റ്</string>
+<string name="cd_key_uchar_vertical_line">ലംബ രേഖ</string>
+<string name="cd_key_uchar_right_curly_bracket">വലത് ചുരുൾ ബ്രാക്കറ്റ്</string>
+<string name="cd_key_uchar_tilde">ടിൽഡ്</string>
+<string name="cd_key_action_done">പൂർത്തിയായി</string>
+<string name="cd_key_action_go">പോകുക</string>
+<string name="cd_key_action_next">അടുത്തത്</string>
+<string name="cd_key_action_previous">മുമ്പത്തെ</string>
+<string name="cd_key_action_search">തിരയുക</string>
+<string name="cd_key_action_send">അയയ്ക്കുക</string>
+<string name="cd_key_composing_done">സമർപ്പിക്കുക</string>
+<string name="cd_key_kana_line_a">A നിര</string>
+<string name="cd_key_kana_line_ka">KA നിര</string>
+<string name="cd_key_kana_line_sa">SA നിര</string>
+<string name="cd_key_kana_line_ta">TA നിര</string>
+<string name="cd_key_kana_line_na">NA നിര</string>
+<string name="cd_key_kana_line_ha">HA നിര</string>
+<string name="cd_key_kana_line_ma">MA നിര</string>
+<string name="cd_key_kana_line_ya">YA നിര</string>
+<string name="cd_key_kana_line_ra">RA നിര</string>
+<string name="cd_key_kana_modifier">വോയ്‌സ്‌ഡ് ശബ്ദ ചിഹ്നം</string>
+<string name="cd_key_kana_line_wa">WA നിര</string>
+<string name="cd_key_kana_punctuation">വിരാമ ചിഹ്നം</string>
+<string name="cd_key_uchar_katakana_middle_dot">മധ്യഭാഗത്തെ ഡോട്ട്</string>
+<string name="cd_key_uchar_ideographic_comma">കോമ</string>
+<string name="cd_key_uchar_ideographic_full_stop">വിരാമം</string>
+<string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark">ദൈർഘ്യമുള്ള ശബ്‌ദചിഹ്നം</string>
+<string name="cd_key_alphabet_abc">ABC</string>
+<string name="cd_key_alphabet_def">DEF</string>
+<string name="cd_key_alphabet_ghi">GHI</string>
+<string name="cd_key_alphabet_jkl">JKL</string>
+<string name="cd_key_alphabet_mno">MNO</string>
+<string name="cd_key_alphabet_pqrs">PQRS</string>
+<string name="cd_key_alphabet_tuv">TUV</string>
+<string name="cd_key_alphabet_wxyz">WXYZ</string>
+<string name="cd_key_alphabet_capitalize">വലിയക്ഷരമാക്കുക</string>
+<string name="spoken_use_headphone_for_password">ഉച്ചത്തിൽ പറയുന്ന പാസ്‌വേഡ് കീകൾ കേൾക്കാൻ ഹെഡ്സെറ്റ് പ്ലഗ് ഇൻ ചെയ്യുക</string>
+<string name="cd_keyboard_fold_button">കാൻഡിഡേറ്റ് വിൻഡോയുടെ വലുപ്പം മാറ്റുക</string>
+<string name="cd_close_symbol_window">കീബോർഡിലേക്ക് മടങ്ങുക</string>
+<string name="cd_symbol_window_number">നമ്പർ</string>
+<string name="cd_symbol_window_symbol">ചിഹ്നം</string>
+<string name="cd_symbol_window_emoticon">ഇമോട്ടിക്കോൺ</string>
+<string name="cd_symbol_window_emoji">ഇമോജി</string>
+<string name="cd_symbol_window_enter">ലൈൻഫീഡ്</string>
+<string name="cd_symbol_window_backspace">ബാക്ക്‌സ്പെയ്സ്</string>
+<string name="cd_symbol_window_minor_history">ചരിത്രം</string>
+<string name="cd_symbol_window_minor_symbol_general">പൊതു ചിഹ്‌നം</string>
+<string name="cd_symbol_window_minor_symbol_half">പൂർണ്ണ, പകുതി വീതി ചിഹ്‌നം</string>
+<string name="cd_symbol_window_minor_symbol_parenthesis">പരാന്തിസിസ് ചിഹ്‌നം</string>
+<string name="cd_symbol_window_minor_symbol_arrow">അമ്പടയാള ചിഹ്നം</string>
+<string name="cd_symbol_window_minor_symbol_math">ഗണിത ചിഹ്നം</string>
+<string name="cd_symbol_window_minor_emoticon_smile">പുഞ്ചിരി ഇമോട്ടിക്കോൺ</string>
+<string name="cd_symbol_window_minor_emoticon_sweat">വിയർക്കുന്ന ഇമോട്ടിക്കോൺ</string>
+<string name="cd_symbol_window_minor_emoticon_surprise">ആശ്‌ചര്യ ഇമോട്ടിക്കോൺ</string>
+<string name="cd_symbol_window_minor_emoticon_sadness">വിഷാദ ഇമോട്ടിക്കോൺ</string>
+<string name="cd_symbol_window_minor_emoticon_displeasure">കോപം പ്രകടിപ്പിക്കുന്ന ഇമോട്ടിക്കോൺ</string>
+<string name="cd_symbol_window_minor_emoji_face">മുഖം ഇമോജി</string>
+<string name="cd_symbol_window_minor_emoji_food">ആഹാര ഇമോജി</string>
+<string name="cd_symbol_window_minor_emoji_activity">പ്രവർത്തന ഇമോജി</string>
+<string name="cd_symbol_window_minor_emoji_city">നഗരം ഇമോജി</string>
+<string name="cd_symbol_window_minor_emoji_nature">പ്രകൃതി ഇമോജി</string>
+<string name="help_userdictionary_dictionary_name">ഇൻപുട്ട് നിഘണ്ടുവിന്റെ പേര്</string>
+<string name="help_userdictionary_edit_word_value">ഇൻപുട്ട് പദം</string>
+<string name="help_userdictionary_edit_word_key">ഇൻപുട്ട് റീഡിംഗ്</string>
+<string name="cd_voice_input">വോയ്‌സ് ഇൻപുട്ട്</string>
+<string name="cd_narrow_frame_widen_button">കീബോർഡ് കാണിക്കുക</string>
+</resources>

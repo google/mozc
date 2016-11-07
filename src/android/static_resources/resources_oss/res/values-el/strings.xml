@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">Ιαπωνικά</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Πληκτρολόγιο λογισμικού</string>
+<string name="pref_software_keyboard_advanced_settings_title">Σύνθετες ρυθμίσεις πληκτρολογίου λογισμικού</string>
+<string name="pref_fragment_software_keyboard_title">Software keyboard</string>
+<string name="pref_fragment_input_support_title">Input support</string>
+<string name="pref_fragment_conversion_title">Conversion</string>
+<string name="pref_fragment_dictionary_title">Dictionary</string>
+<string name="pref_fragment_user_feedback_title">User feedback</string>
+<string name="pref_fragment_about_title">About</string>
+<string name="pref_fragment_development_title">Development</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Προτιμήσεις πληκτρολογίου λογισμικού για κατακόρυφο προσανατολισμό</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Προτιμήσεις του πληκτρολογίου λογισμικού για οριζόντιο προσανατολισμό</string>
+<string name="pref_keyboard_layout_title">Διάταξη πληκτρολογίου</string>
+<string name="pref_input_style_title">Στυλ εισαγωγής</string>
+<string name="pref_qwerty_layout_for_alphabet_title">Λειτουργία QWERTY</string>
+<string name="pref_flick_sensitivity_title">Ευαισθησία κίνησης</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Χρήση ρυθμίσεων κατακόρυφου προσανατολισμού</string>
+<string name="pref_keyboard_height_ratio_title">Ύψος πληκτρολογίου</string>
+<string name="pref_input_feedback_category_title">Προτιμήσεις εισαγωγής σχολίων</string>
+<string name="pref_haptic_feedback_title">Απτικά σχόλια</string>
+<string name="pref_haptic_feedback_duration_title">Διάρκεια απτικών σχολίων</string>
+<string name="pref_sound_feedback_title">Ηχητικά σχόλια</string>
+<string name="pref_sound_feedback_volume_title">Ένταση ηχητικών σχολίων</string>
+<string name="pref_popup_feedback_title">Αναδυόμενα σχόλια</string>
+<string name="pref_other_input_support_preference_category_title">Άλλες προτιμήσεις υποστήριξης εισαγωγής</string>
+<string name="pref_fullscreen_title">Λειτουργία πλήρους οθόνης</string>
+<string name="pref_skin_type_title">Keyboard theme</string>
+<string name="pref_hardware_title">Προτιμήσεις για τα πληκτρολόγια υλικού</string>
+<string name="pref_voice_input_title">Show voice input button</string>
+<string name="pref_conversion_category_title">Προτιμήσεις μετατροπής</string>
+<string name="pref_layout_adjustment_title">Ρύθμιση διάταξης</string>
+<string name="pref_space_character_form_title">Χρήση χώρου μισού πλάτους</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Μετατροπή χωρίς διάκριση τροποποιητή</string>
+<string name="pref_typing_correction_title">Διόρθωση πληκτρολόγησης</string>
+<string name="pref_other_incognito_mode_title">Λειτουργία ανώνυμης περιήγησης</string>
+<string name="pref_emoji_provider_type_title">Επιλογή παρόχου emoticon</string>
+<string name="pref_dictionry_category_title">Προτιμήσεις λεξικού</string>
+<string name="pref_dictionary_personalization_title">Εξατομίκευση</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Εργαλείο λεξικού</string>
+<string name="pref_clear_category_title">Διαγραφή ιστορικού</string>
+<string name="pref_clear_conversion_history_title">Ιστορικό μετατροπών</string>
+<string name="pref_clear_symbol_history_title">Ιστορικό συμβόλων</string>
+<string name="pref_clear_user_dictionary_title">Λεξικό χρήστη</string>
+<string name="pref_user_feedback_category_title">Σχόλια χρηστών</string>
+<string name="pref_other_usage_stats_title">Αποστολή στατιστικών στοιχείων χρήσης</string>
+<string name="pref_about_about_this_software_title">Σχετικά με αυτό το λογισμικό</string>
+<string name="pref_about_version_title">Έκδοση</string>
+<string name="pref_about_terms_of_service_title">Όροι Παροχής Υπηρεσιών</string>
+<string name="pref_about_privacy_policy_title">Πολιτική Απορρήτου</string>
+<string name="pref_about_oss_credits_title">Λογισμικό ανοικτού κώδικα</string>
+<string name="pref_launcher_icon_visibility_title">Εμφάνιση εικονιδίου εφαρμογής</string>
+<string name="pref_haptic_feedback_description">Δόνηση κατά το πάτημα πλήκτρων.</string>
+<string name="pref_sound_feedback_description">Ήχος κατά το πάτημα πλήκτρων.</string>
+<string name="pref_popup_feedback_description">Εμφάνιση αναδυόμενου παραθύρου κατά το πάτημα πλήκτρων.</string>
+<string name="pref_keyboard_layout_description">Αλλαγή διάταξης πληκτρολογίου.</string>
+<string name="pref_keyboard_layout_title_12keys">12 πλήκτρα</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">Πληκτρολόγιο Godan</string>
+<string name="pref_keyboard_layout_description_12keys">Διάταξη κινητού τηλεφώνου.</string>
+<string name="pref_keyboard_layout_description_qwerty">Διάταξη πληκτρολογίου υπολογιστή.</string>
+<string name="pref_keyboard_layout_description_godan">Διάταξη για Romaji. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;Χρήση&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Επιλογή στυλ εισαγωγής.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Εάν επιλεγεί, η διάταξη QWERTY θα χρησιμοποιηθεί για τη λειτουργία εισαγωγής αλφαβήτου, ανεξάρτητα από την κύρια διάταξη.</string>
+<string name="pref_fullscreen_description">Εάν επιλεγεί, το πλαίσιο κειμένου στόχου εμφανίζεται σε λειτουργία πλήρους οθόνης.</string>
+<string name="pref_flick_sensitivity_description">Προσαρμογή ευαισθησίας κίνησης.</string>
+<string name="pref_layout_adjustment_description">Προσαρμογή εναλλαγής πληκτρολογίου.</string>
+<string name="pref_keyboard_height_ratio_description">Αλλαγή του ύψους του πληκτρολογίου.</string>
+<string name="pref_space_character_form_description">Να χρησιμοποιείται πάντα ο χώρος μισού πλάτους, ανεξάρτητα από τον τρόπο εισαγωγής.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Χρήση μετατροπής χωρίς διάκριση τροποποιητή kana . Ισχύει για το πληκτρολόγιο 12 χαρακτήρων και το πληκτρολόγιο Godan. π.χ. かつこう→学校</string>
+<string name="pref_typing_correction_description">Εντοπισμός τυχόν λανθασμένων πληκτρολογήσεων και εμφάνιση διορθωμένων υποψήφιων προτάσεων. π.χ. すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">Επιλέξτε τον κατάλληλο πάροχο emoticon για τη χρήση emoticon.</string>
+<string name="pref_skin_type_description">Select the keyboard theme to customize the software keyboard look.</string>
+<string name="pref_voice_input_description">Show voice input button on the software keyboard.</string>
+<string name="pref_hardware_keymap_description">Επιλογή αντιστοίχισης πλήκτρων για τα πληκτρολόγια υλικού.</string>
+<string name="pref_dictionary_personalization_description">Ενεργοποίηση προσωπικών προτάσεων με βάση την προηγούμενη εισαγωγή.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">Επεξεργασία λεξικών χρήστη.</string>
+<string name="pref_clear_category_description">Διαγραφή δεδομένων εξατομίκευσης ή προτάσεων.</string>
+<string name="pref_clear_conversion_history_description">Διαγραφή ιστορικού μετατροπών.</string>
+<string name="pref_clear_symbol_history_description">Διαγραφή ιστορικού εισαγωγής συμβόλων.</string>
+<string name="pref_clear_user_dictionary_description">Διαγραφή λεξικού χρήστη.</string>
+<string name="pref_other_incognito_mode_description">Προσωρινή απενεργοποίηση εξατομίκευσης, προτάσεων και λεξικού χρήστη.</string>
+<string name="pref_other_usage_stats_description">Αποστολή στατιστικών στοιχείων χρήσης σε %1$s. Αυτά θα χρησιμοποιούνται μόνο για τη βελτίωση των προϊόντων και υπηρεσιών %1$s.</string>
+<string name="pref_about_terms_of_service_description">Εμφάνιση των Όρων Παροχής Υπηρεσιών (ιστοσελίδα).</string>
+<string name="pref_about_privacy_policy_description">Εμφάνιση της Πολιτική Απορρήτου (ιστοσελίδα).</string>
+<string name="pref_about_oss_credits_description">Αυτό το λογισμικό χρησιμοποιεί λογισμικό ανοικτού κώδικα: Προβολή αδειών.</string>
+<string name="pref_launcher_icon_visibility_description">Προβολή εικονιδίου εφαρμογής στην εφαρμογή εκκίνησης</string>
+<string name="pref_input_style_setting_entry_toggle">Εναλλαγή</string>
+<string name="pref_input_style_setting_entry_flick">Κίνηση</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Εναλλαγή και κίνηση</string>
+<string name="pref_fullscreen_portrait">Ενεργοποίηση στον κατακόρυφο προσανατολισμό</string>
+<string name="pref_fullscreen_landscape">Ενεργοποίηση στον οριζόντιο προσανατολισμό</string>
+<string name="pref_emoji_provider_type_unicode">Απενεργοποίηση emoticon εταιρείας κινητής τηλεφωνίας</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">Πορτοκαλί/ανοικτό γκρι</string>
+<string name="pref_skin_type_blue_lightgray">Μπλε/ανοικτό γκρι</string>
+<string name="pref_skin_type_blue_darkgray">Μπλε/σκούρο γκρι</string>
+<string name="pref_skin_type_material_design_light">Σχεδιασμός υλικού (Ανοικτό)</string>
+<string name="pref_skin_type_material_design_dark">Σχεδιασμός υλικού (Σκούρο)</string>
+<string name="pref_hardware_keymap_default">Προεπιλογή συστήματος</string>
+<string name="pref_hardware_keymap_japanese109A">Ιαπωνικά 109Α</string>
+<string name="pref_hardware_keymap_twelvekey">12 πλήκτρα</string>
+<string name="pref_dictionary_personalization_entry_enabled">Ενεργοποίηση</string>
+<string name="pref_dictionary_personalization_entry_readonly">Παγωμένο</string>
+<string name="pref_dictionary_personalization_entry_disabled">Απενεργοποίηση</string>
+<string name="pref_layout_adjustment_entry_fill">Συμπλήρωση</string>
+<string name="pref_layout_adjustment_entry_right">Δεξιά</string>
+<string name="pref_layout_adjustment_entry_left">Αριστερά</string>
+<string name="firsttime_close_button">Επόμενο &gt;&gt;</string>
+<string name="firsttime_description_thank_you">Ευχαριστούμε που χρησιμοποιείτε το %s.</string>
+<string name="firsttime_description_usage_stats">Για να βελτιώσουμε τα προϊόντα και τις υπηρεσίες %s, σας ζητούμε να εξετάσετε το ενδεχόμενο να ενεργοποιήσετε τα στατιστικά στοιχεία χρήσης.\n\nΜπορείτε να αλλάξετε αυτήν τη ρύθμιση από την οθόνη των προτιμήσεων.</string>
+<string name="firsttime_send_usage_stats_devchannel">Τα στατιστικά στοιχεία χρήσης είναι ενεργοποιημένα, επειδή χρησιμοποιείτε μια έκδοση ανάπτυξης.</string>
+<string name="pref_ime_enable_alert_title">Ρύθμιση για τις ρυθμίσεις κειμένου</string>
+<string name="pref_ime_enable_alert_message">Ενεργοποιήστε το %s.</string>
+<string name="pref_ime_switch_alert_title">Ρύθμιση για τη μέθοδο εισαγωγής</string>
+<string name="pref_ime_switch_alert_message">Αλλάξτε τη μέθοδο εισαγωγής σε %s.</string>
+<string name="pref_ime_alert_next">Επόμενο</string>
+<string name="pref_ime_alert_cancel">Άκυρο</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Χαμηλό</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Μεσαίο</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Υψηλό</string>
+<string name="pref_haptic_feedback_duration_low_text">Σύντομο</string>
+<string name="pref_haptic_feedback_duration_high_text">Μεγάλο</string>
+<string name="pref_sound_feedback_volume_low_text">Ελάχιστο</string>
+<string name="pref_sound_feedback_volume_middle_text">Μεσαίο</string>
+<string name="pref_sound_feedback_volume_high_text">Μέγιστο</string>
+<string name="symbol_input_no_history">Δεν υπάρχει ιστορικό.\n\nΣύρετε τη οθόνη\nγια να περιηγηθείτε στις κατηγορίες.</string>
+<string name="symbol_emoji_disabled_message">Αυτό το πεδίο κειμένου δεν υποστηρίζει εισαγωγή Emoticon.</string>
+<string name="menu_dialog_title">Επιλογές εισαγωγής</string>
+<string name="menu_item_input_method">Επιλογή μεθόδου εισαγωγής</string>
+<string name="menu_item_preferences">Ρυθμίσεις %s</string>
+<string name="menu_item_mushroom">Launch Mushroom</string>
+<string name="user_dictionary_tool_app_name">Εργαλείο λεξικού</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Νέα λέξη</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Διαγραφή λέξης</string>
+<string name="user_dictionary_tool_menu_undo_title">Αναίρεση</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Νέο λεξικό</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Μετονομασία τρέχοντος λεξικού</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Διαγραφή τρέχοντος λεξικού</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Εξαγωγή τρέχοντος λεξικού</string>
+<string name="user_dictionary_tool_default_dictionary_name">Λεξικό χρήστη 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Δημιουργία νέου λεξικού</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Επεξεργασία ονόματος λεξικού</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Όνομα λεξικού</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Προσθήκη λέξης</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Επεξεργασία λέξης</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Ερμηνεία</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Λέξη</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Κατηγορία</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Επιλογή πηγής εισαγωγής</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Επιλογή προορισμού εισαγωγής</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Εισαγωγή ως νέο λεξικό</string>
+<string name="user_dictionary_tool_delete_done_message">Επιτυχής λειτουργία διαγραφής.</string>
+<string name="user_dictionary_tool_undo_done_message">Επιτυχής λειτουργία αναίρεσης.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Επιλέξτε τις λέξεις που θέλετε να διαγράψετε.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Η εισαγωγή δεδομένων λειτουργεί μόνο σε αρχεία.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Δεν ήταν δυνατή η ανάγνωση του αρχείου.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">Το αρχείο ZIP είναι κενό.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Δεν υπάρχουν εφαρμογές (π.χ. Έγγραφα Google) για την εξαγωγή του λεξικού χρήστη.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Αποτυχία εξαγωγής λεξικού χρήστη.</string>
+<string name="user_dictionary_tool_status_error_general">Η λειτουργία απέτυχε.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Δεν ήταν δυνατό το άνοιγμα του αρχείου.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Δεν ήταν δυνατή η ανάγνωση του αρχείου.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Το μέγεθος των δεδομένων υπερβαίνει το όριο μεγέθους του αρχείου.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Δεν είναι δυνατή η δημιουργία περισσότερων λεξικών.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Δεν είναι δυνατή η δημιουργία περισσότερων καταχωρίσεων σε αυτό το λεξικό.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Πληκτρολογήστε το όνομα του λεξικού.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Το όνομα είναι υπερβολικά μεγάλο.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Το όνομα περιέχει μη έγκυρους χαρακτήρες.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Το όνομα υπάρχει ήδη.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Πληκτρολογήστε την ερμηνεία.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Η ερμηνεία είναι πολύ μεγάλη.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Η ερμηνεία περιέχει μη έγκυρους χαρακτήρες.</string>
+<string name="user_dictionary_tool_status_error_word_empty">Πληκτρολογήστε τη λέξη.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Η λέξη είναι πολύ μεγάλη.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Η λέξη περιέχει μη έγκυρους χαρακτήρες.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Το εισαγόμενο κείμενο-πηγή περιέχει πάρα πολλές λέξεις.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Δεν ήταν δυνατή η εισαγωγή ορισμένων λέξεων.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Δεν υπάρχει πλέον λειτουργία με δυνατότητα αναίρεσης.</string>
+<string name="japanese_pos_noun">Ουσιαστικό</string>
+<string name="japanese_pos_abbreviation">Συντομογραφία</string>
+<string name="japanese_pos_suggestion_only">Μόνο πρόταση</string>
+<string name="japanese_pos_proper_noun">Κύριο όνομα</string>
+<string name="japanese_pos_personal_name">Προσωπικό όνομα</string>
+<string name="japanese_pos_family_name">Επώνυμο</string>
+<string name="japanese_pos_first_name">Όνομα</string>
+<string name="japanese_pos_organization_name">Όνομα οργανισμού</string>
+<string name="japanese_pos_place_name">Όνομα τοποθεσίας</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA-ουσιαστικό ανώμαλης κλίσης</string>
+<string name="japanese_pos_adjective_verbal_noun">Επιθετικό ρηματικό ουσιαστικό</string>
+<string name="japanese_pos_number">Αριθμός</string>
+<string name="japanese_pos_alphabet">Αλφάβητο</string>
+<string name="japanese_pos_symbol">Σύμβολο</string>
+<string name="japanese_pos_emoticon">Emoticon</string>
+<string name="japanese_pos_adverb">Επίρρημα</string>
+<string name="japanese_pos_prenoun_adjectival">Επιθετική αντωνυμία</string>
+<string name="japanese_pos_conjunction">Σύνδεσμος</string>
+<string name="japanese_pos_interjection">Επιφώνημα</string>
+<string name="japanese_pos_prefix">Πρόθεμα</string>
+<string name="japanese_pos_counter_suffix">Κατάληξη μετρητή</string>
+<string name="japanese_pos_generic_suffix">Γενική κατάληξη</string>
+<string name="japanese_pos_person_name_suffix">Πρόθεμα ονόματος ατόμου</string>
+<string name="japanese_pos_place_name_suffix">Προσθήκη προθέματος ονόματος</string>
+<string name="japanese_pos_wa_group1_verb">Ρήμα WA-Group1</string>
+<string name="japanese_pos_ka_group1_verb">Ρήμα KA-Group1</string>
+<string name="japanese_pos_sa_group1_verb">Ρήμα SA-Group1</string>
+<string name="japanese_pos_ta_group1_verb">Ρήμα TA-Group1</string>
+<string name="japanese_pos_na_group1_verb">Ρήμα NA-Group1</string>
+<string name="japanese_pos_ma_group1_verb">Ρήμα MA-Group1</string>
+<string name="japanese_pos_ra_group1_verb">Ρήμα RA-Group1</string>
+<string name="japanese_pos_ga_group1_verb">Ρήμα GA-Group1</string>
+<string name="japanese_pos_ba_group1_verb">Ρήμα BA-Group1</string>
+<string name="japanese_pos_ha_group1_verb">Ρήμα HA-Group1</string>
+<string name="japanese_pos_group2_verb">Ρήμα Group2</string>
+<string name="japanese_pos_kuru_group3_verb">Ρήμα Kuru-Group3</string>
+<string name="japanese_pos_suru_group3_verb">Ρήμα Suru-Group3</string>
+<string name="japanese_pos_zuru_group3_verb">Ρήμα Zuru-Group3</string>
+<string name="japanese_pos_ru_group3_verb">Ρήμα Ru-Group3</string>
+<string name="japanese_pos_adjective">Επίθετο</string>
+<string name="japanese_pos_sentence_ending_particle">Τμήμα κατάληξης πρότασης</string>
+<string name="japanese_pos_punctuation">Σημεία στίξης</string>
+<string name="japanese_pos_free_standing_word">Ανεξάρτητη λέξη</string>
+<string name="japanese_pos_suppression_word">Εξαρτημένη λέξη</string>
+<string name="yes">Ναι</string>
+<string name="no">Όχι</string>
+</resources>

@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">Japonų</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Virtualioji klaviatūra</string>
+<string name="pref_software_keyboard_advanced_settings_title">Išplėstiniai virtualiosios klaviatūros nustatymai</string>
+<string name="pref_fragment_software_keyboard_title">Software keyboard</string>
+<string name="pref_fragment_input_support_title">Input support</string>
+<string name="pref_fragment_conversion_title">Conversion</string>
+<string name="pref_fragment_dictionary_title">Dictionary</string>
+<string name="pref_fragment_user_feedback_title">User feedback</string>
+<string name="pref_fragment_about_title">About</string>
+<string name="pref_fragment_development_title">Development</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Virtualiosios klaviatūros nuostatos veikiant portreto režimui</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Virtualiosios klaviatūros nuostatos veikiant gulsčiojo ekrano režimui</string>
+<string name="pref_keyboard_layout_title">Klaviatūros išdėstymas</string>
+<string name="pref_input_style_title">Įvesties stilius</string>
+<string name="pref_qwerty_layout_for_alphabet_title">QWERTY režimas</string>
+<string name="pref_flick_sensitivity_title">Brūkštelėjimo jautrumas</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Naudoti portreto režimo nustatymus</string>
+<string name="pref_keyboard_height_ratio_title">Klaviatūros aukštis</string>
+<string name="pref_input_feedback_category_title">Įvesties grįžtamojo ryšio nuostatos</string>
+<string name="pref_haptic_feedback_title">Grįžtamasis ryšys apie lytėjimą</string>
+<string name="pref_haptic_feedback_duration_title">Lytėjimo grįžtamojo ryšio trukmė</string>
+<string name="pref_sound_feedback_title">Garso grįžtamasis ryšys</string>
+<string name="pref_sound_feedback_volume_title">Garso grįžtamojo ryšio apimtis</string>
+<string name="pref_popup_feedback_title">Iššokantysis grįžtamasis ryšys</string>
+<string name="pref_other_input_support_preference_category_title">Kitos įvesties palaikymo nuostatos</string>
+<string name="pref_fullscreen_title">Viso ekrano režimas</string>
+<string name="pref_skin_type_title">Keyboard theme</string>
+<string name="pref_hardware_title">Aparatinių klaviatūrų nuostatos</string>
+<string name="pref_voice_input_title">Show voice input button</string>
+<string name="pref_conversion_category_title">Konversijų nuostatos</string>
+<string name="pref_layout_adjustment_title">Išdėstymų koregavimas</string>
+<string name="pref_space_character_form_title">Naudoti pusės pločio vietą</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Nejautraus modifikatoriaus konversija</string>
+<string name="pref_typing_correction_title">Rašybos klaidų taisymas</string>
+<string name="pref_other_incognito_mode_title">Inkognito režimas</string>
+<string name="pref_emoji_provider_type_title">Pasirinkite jaustukų teikėją</string>
+<string name="pref_dictionry_category_title">Žodyno nuostatos</string>
+<string name="pref_dictionary_personalization_title">Suasmeninimas</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Žodyno įrankis</string>
+<string name="pref_clear_category_title">Išvalyti istoriją</string>
+<string name="pref_clear_conversion_history_title">Konversijų istorija</string>
+<string name="pref_clear_symbol_history_title">SImbolių istorija</string>
+<string name="pref_clear_user_dictionary_title">Naudotojo žodynas</string>
+<string name="pref_user_feedback_category_title">Naudotojų atsiliepimai</string>
+<string name="pref_other_usage_stats_title">Siųsti naudojimo statistiką</string>
+<string name="pref_about_about_this_software_title">Apie šią programinę įrangą</string>
+<string name="pref_about_version_title">Versija</string>
+<string name="pref_about_terms_of_service_title">Paslaugų teikimo sąlygos</string>
+<string name="pref_about_privacy_policy_title">Privatumo politika</string>
+<string name="pref_about_oss_credits_title">Atvirojo šaltinio programinė įranga</string>
+<string name="pref_launcher_icon_visibility_title">Rodyti programos piktogramą</string>
+<string name="pref_haptic_feedback_description">Vibruoti paspaudus klavišą.</string>
+<string name="pref_sound_feedback_description">Groti garsą paspaudus klavišą.</string>
+<string name="pref_popup_feedback_description">Rodyti iššokantįjį langą paspaudus klavišą.</string>
+<string name="pref_keyboard_layout_description">Perjungti klaviatūros išdėstymą.</string>
+<string name="pref_keyboard_layout_title_12keys">12 klavišų</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">GODAN klaviatūra</string>
+<string name="pref_keyboard_layout_description_12keys">Mobiliojo telefono išdėstymas.</string>
+<string name="pref_keyboard_layout_description_qwerty">Asmeninio kompiuterio klaviatūros išdėstymas.</string>
+<string name="pref_keyboard_layout_description_godan">Romaji skirtas išdėstymas. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;Naudojimas&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Pasirinkite įvesties stilių.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Jei pažymėta, QWERTY išdėstymas bus naudojamas abėcėlės įvesties režimu, neatsižvelgiant į pagrindinį išdėstymą.</string>
+<string name="pref_fullscreen_description">Jei pažymėta, tikslinis teksto langelis bus rodomas viso ekrano režimu.</string>
+<string name="pref_flick_sensitivity_description">Reguliuoti brūkštelėjimo jautrumą.</string>
+<string name="pref_layout_adjustment_description">Perjungti klaviatūros koregavimą.</string>
+<string name="pref_keyboard_height_ratio_description">Keisti klaviatūros aukštį.</string>
+<string name="pref_space_character_form_description">Neatsižvelgiant į įvesties režimą, visada naudokite pusės pločio vietą.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Naudoti kana modifikatoriaus nejautrumo konversiją. Pritaikyta 12 klavišų ir Godano klaviatūrai, pvz., かつこう→学校</string>
+<string name="pref_typing_correction_description">Aptikti rašybos klaidas ir rodyti pataisytus variantus, pvz., すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">Pasirinkti tinkamą jaustukų teikėją norint naudoti jaustukus.</string>
+<string name="pref_skin_type_description">Select the keyboard theme to customize the software keyboard look.</string>
+<string name="pref_voice_input_description">Show voice input button on the software keyboard.</string>
+<string name="pref_hardware_keymap_description">Pasirinkti pagrindinį aparatinių klaviatūrų atvaizdį.</string>
+<string name="pref_dictionary_personalization_description">Įjungti asmeninius pasiūlymus atsižvelgiant į ankstesnę įvestį.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">Redaguoti naudotojo žodynus.</string>
+<string name="pref_clear_category_description">Išvalyti suasmeninimo ar pasiūlymų duomenis.</string>
+<string name="pref_clear_conversion_history_description">Išvalyti konversijos istoriją.</string>
+<string name="pref_clear_symbol_history_description">Išvalyti simbolių įvesties istoriją.</string>
+<string name="pref_clear_user_dictionary_description">Išvalyti naudotojo žodyną.</string>
+<string name="pref_other_incognito_mode_description">Laikinai išjungti suasmeninimą, pasiūlymus ir naudotojo žodyną.</string>
+<string name="pref_other_usage_stats_description">Siųsti naudojimo statistiką %1$s. Tai bus naudojama tik siekiant pagerinti „%1$s“ produktus ir paslaugas.</string>
+<string name="pref_about_terms_of_service_description">Pateikti paslaugų teikimo sąlygas (tinklalapį).</string>
+<string name="pref_about_privacy_policy_description">Pateikti privatumo politiką (tinklalapį).</string>
+<string name="pref_about_oss_credits_description">Ši programinė įranga naudoja atviro šaltinio programinę įrangą: peržiūrėti licencijas.</string>
+<string name="pref_launcher_icon_visibility_description">Pateikti programos piktogramą paleidimo priemonėje</string>
+<string name="pref_input_style_setting_entry_toggle">Perjungti</string>
+<string name="pref_input_style_setting_entry_flick">Brūkštelėti</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Perjungti ir brūkštelėti</string>
+<string name="pref_fullscreen_portrait">Įgalinti portreto režimu</string>
+<string name="pref_fullscreen_landscape">Įgalinti gulsčiu režimu</string>
+<string name="pref_emoji_provider_type_unicode">Išjungti teikėjo jaustukus</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">Softbank</string>
+<string name="pref_skin_type_orange_lightgray">Oranžinis / šviesiai pilkas</string>
+<string name="pref_skin_type_blue_lightgray">Mėlynas / šviesiai pilkas</string>
+<string name="pref_skin_type_blue_darkgray">Mėlynas / tamsiai pilkas</string>
+<string name="pref_skin_type_material_design_light">Medžiagos dizainas (šviesus)</string>
+<string name="pref_skin_type_material_design_dark">Medžiagos dizainas (tamsus)</string>
+<string name="pref_hardware_keymap_default">Numatytieji sistemos nustatymai</string>
+<string name="pref_hardware_keymap_japanese109A">Japonų k. 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 klavišų</string>
+<string name="pref_dictionary_personalization_entry_enabled">Įgalinti</string>
+<string name="pref_dictionary_personalization_entry_readonly">Naudoti esamus suasmenintus duomenis</string>
+<string name="pref_dictionary_personalization_entry_disabled">Išjungti</string>
+<string name="pref_layout_adjustment_entry_fill">Užpildas</string>
+<string name="pref_layout_adjustment_entry_right">Dešinėje</string>
+<string name="pref_layout_adjustment_entry_left">Kairėje</string>
+<string name="firsttime_close_button">Kitas &gt;&gt;</string>
+<string name="firsttime_description_thank_you">Dėkojame, kad naudojate „%s“.</string>
+<string name="firsttime_description_usage_stats">Kad galėtume tobulinti „%s“ produktus ir paslaugas, maloniai prašome jūsų apsvarstyti galimybę įgalinti naudojimo statistiką.\n\nŠį nustatymą galima pakeisti nuostatų ekrane.</string>
+<string name="firsttime_send_usage_stats_devchannel">Naudojimo statistika įjungta, nes naudojate kuriamą versiją.</string>
+<string name="pref_ime_enable_alert_title">Teksto nustatymų sąranka</string>
+<string name="pref_ime_enable_alert_message">Įgalinkite %s.</string>
+<string name="pref_ime_switch_alert_title">Įvesties metodo sąranka</string>
+<string name="pref_ime_switch_alert_message">Pakeiskite įvesties metodą į %s.</string>
+<string name="pref_ime_alert_next">Kitas</string>
+<string name="pref_ime_alert_cancel">Atšaukti</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Žemas</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Vid.</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Aukštas</string>
+<string name="pref_haptic_feedback_duration_low_text">Trumpas</string>
+<string name="pref_haptic_feedback_duration_high_text">Ilgas</string>
+<string name="pref_sound_feedback_volume_low_text">Min.</string>
+<string name="pref_sound_feedback_volume_middle_text">Vid.</string>
+<string name="pref_sound_feedback_volume_high_text">Maks.</string>
+<string name="symbol_input_no_history">Nėra istorijos.\n\nPerbraukite ekraną,\nkad naršytumėte kategorijas.</string>
+<string name="symbol_emoji_disabled_message">Šis teksto laukas nepalaiko įvesties jaustukais.</string>
+<string name="menu_dialog_title">Įvesties parinktys</string>
+<string name="menu_item_input_method">Pasirinkti įvesties būdą</string>
+<string name="menu_item_preferences">%s nustatymai</string>
+<string name="menu_item_mushroom">Paleisti „Mushroom“</string>
+<string name="user_dictionary_tool_app_name">Žodyno įrankis</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Naujas žodis</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Ištrinti žodį</string>
+<string name="user_dictionary_tool_menu_undo_title">Anuliuoti</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Naujas žodynas</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Pervardyti dabartinį žodyną</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Ištrinti dabartinį žodyną</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Eksportuoti dabartinį žodyną</string>
+<string name="user_dictionary_tool_default_dictionary_name">1 naudotojo žodynas</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Kurti naują žodyną</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Redaguoti žodyno pavadinimą</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Pavadinti žodyną</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Pridėti naują žodį</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Redaguoti žodį</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Skaitymas</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Žodis</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Kategorija</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Pasirinkti importavimo šaltinį</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Pasirinkti importavimo paskirties vietą</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Importuoti kaip naują žodyną</string>
+<string name="user_dictionary_tool_delete_done_message">Ištrynimo operacija sėkminga.</string>
+<string name="user_dictionary_tool_undo_done_message">Anuliavimo operacija sėkminga.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Pasirinkite norimus ištrinti žodžius.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Duomenų importavimas veikia tik failuose.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Nepavyko nuskaityti failo.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ZIP failas tuščias.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Nėra programų (pvz., „Google“ dokumentai), skirtų eksportuoti naudotojo žodyną.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Nepavyko eksportuoti naudotojo žodyno.</string>
+<string name="user_dictionary_tool_status_error_general">Operacija nepavyko.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Nepavyko atidaryti failo.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Nepavyko nuskaityti failo.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Duomenų dydis viršija failo dydžio limitą.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Negalima sukurti daugiau žodynų.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Negalima sukurti daugiau įrašų šiame žodyne.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Įveskite žodyno pavadinimą.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Pavadinimas per ilgas.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Pavadinime yra netinkamų simbolių.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Pavadinimas jau yra.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Įveskite skaitymo tekstą.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Skaitymo tekstas per ilgas.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Skaitymo tekste yra netinkamų simbolių.</string>
+<string name="user_dictionary_tool_status_error_word_empty">Įveskite žodį.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Žodis per ilgas.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Žodyje yra netinkamų simbolių.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Importavimo šaltinyje per daug žodžių.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Nepavyko importuoti kai kurių žodžių.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Nebėra anuliuojamų operacijų.</string>
+<string name="japanese_pos_noun">Daiktavardis</string>
+<string name="japanese_pos_abbreviation">Santrumpa</string>
+<string name="japanese_pos_suggestion_only">Tik pasiūlymas</string>
+<string name="japanese_pos_proper_noun">Tikrinis daiktavardis</string>
+<string name="japanese_pos_personal_name">Asmenvardis</string>
+<string name="japanese_pos_family_name">Pavardė</string>
+<string name="japanese_pos_first_name">Vardas</string>
+<string name="japanese_pos_organization_name">Organizacijos pavadinimas</string>
+<string name="japanese_pos_place_name">Vietos pavadinimas</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA eilutės netaisyklingas asmenuojamas daiktavardis</string>
+<string name="japanese_pos_adjective_verbal_noun">Būdvardis / veiksmažodinis daiktavardis</string>
+<string name="japanese_pos_number">Skaičius</string>
+<string name="japanese_pos_alphabet">Abėcėlė</string>
+<string name="japanese_pos_symbol">Simbolis</string>
+<string name="japanese_pos_emoticon">Jaustukas</string>
+<string name="japanese_pos_adverb">Prieveiksmis</string>
+<string name="japanese_pos_prenoun_adjectival">Būdvardinis įvardis</string>
+<string name="japanese_pos_conjunction">Jungtukas</string>
+<string name="japanese_pos_interjection">Jaustukas</string>
+<string name="japanese_pos_prefix">Priešdėlis</string>
+<string name="japanese_pos_counter_suffix">Skaitinė priesaga</string>
+<string name="japanese_pos_generic_suffix">Bendroji priesaga</string>
+<string name="japanese_pos_person_name_suffix">Asmenvardžio priesaga</string>
+<string name="japanese_pos_place_name_suffix">Vietovardžio priesaga</string>
+<string name="japanese_pos_wa_group1_verb">WA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_ka_group1_verb">KA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_sa_group1_verb">SA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_ta_group1_verb">TA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_na_group1_verb">NP 1 grupės veiksmažodis</string>
+<string name="japanese_pos_ma_group1_verb">MA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_ra_group1_verb">RA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_ga_group1_verb">GA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_ba_group1_verb">BA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_ha_group1_verb">HA 1 grupės veiksmažodis</string>
+<string name="japanese_pos_group2_verb">2 grupės veiksmažodis</string>
+<string name="japanese_pos_kuru_group3_verb">Kuru 3 grupės veiksmažodis</string>
+<string name="japanese_pos_suru_group3_verb">Suru 3 grupės veiksmažodis</string>
+<string name="japanese_pos_zuru_group3_verb">Zuru 3 grupės veiksmažodis</string>
+<string name="japanese_pos_ru_group3_verb">Ru 3 grupės veiksmažodis</string>
+<string name="japanese_pos_adjective">Būdvardis</string>
+<string name="japanese_pos_sentence_ending_particle">Sakinio pabaigos dalelytė</string>
+<string name="japanese_pos_punctuation">Skyryba</string>
+<string name="japanese_pos_free_standing_word">Laisvas žodis</string>
+<string name="japanese_pos_suppression_word">Paslėptas žodis</string>
+<string name="yes">Taip</string>
+<string name="no">Ne</string>
+</resources>

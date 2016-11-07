@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">Japanisch</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Bildschirmtastatur</string>
+<string name="pref_software_keyboard_advanced_settings_title">Erweiterte Einstellungen der Bildschirmtastatur</string>
+<string name="pref_fragment_software_keyboard_title">Software keyboard</string>
+<string name="pref_fragment_input_support_title">Input support</string>
+<string name="pref_fragment_conversion_title">Conversion</string>
+<string name="pref_fragment_dictionary_title">Dictionary</string>
+<string name="pref_fragment_user_feedback_title">User feedback</string>
+<string name="pref_fragment_about_title">About</string>
+<string name="pref_fragment_development_title">Development</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Bildschirmtastatureinstellungen für Hochformat</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Bildschirmtastatureinstellungen für Querformat</string>
+<string name="pref_keyboard_layout_title">Tastaturlayout</string>
+<string name="pref_input_style_title">Eingabestil</string>
+<string name="pref_qwerty_layout_for_alphabet_title">QWERTY-Modus</string>
+<string name="pref_flick_sensitivity_title">Empfindlichkeit beim Wischen</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Hochformateinstellungen verwenden</string>
+<string name="pref_keyboard_height_ratio_title">Tastaturhöhe</string>
+<string name="pref_input_feedback_category_title">Einstellungen für Eingabefeedback</string>
+<string name="pref_haptic_feedback_title">Haptisches Feedback</string>
+<string name="pref_haptic_feedback_duration_title">Dauer des haptischen Feedbacks</string>
+<string name="pref_sound_feedback_title">Audiofeedback</string>
+<string name="pref_sound_feedback_volume_title">Lautstärke des Audiofeedbacks</string>
+<string name="pref_popup_feedback_title">Pop-up-Feedback</string>
+<string name="pref_other_input_support_preference_category_title">Andere Einstellungen der Eingabeunterstützung</string>
+<string name="pref_fullscreen_title">Vollbildmodus</string>
+<string name="pref_skin_type_title">Keyboard theme</string>
+<string name="pref_hardware_title">Einstellungen für die Hardwaretastaturen</string>
+<string name="pref_voice_input_title">Show voice input button</string>
+<string name="pref_conversion_category_title">Umwandlungseinstellungen</string>
+<string name="pref_layout_adjustment_title">Layoutanpassung</string>
+<string name="pref_space_character_form_title">Leerzeichen mit halber Breite verwenden</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Von Modifikator unabhängige Umwandlung</string>
+<string name="pref_typing_correction_title">Tippkorrektur</string>
+<string name="pref_other_incognito_mode_title">Inkognito-Modus</string>
+<string name="pref_emoji_provider_type_title">Emoji-Anbieter auswählen</string>
+<string name="pref_dictionry_category_title">Wörterbucheinstellungen</string>
+<string name="pref_dictionary_personalization_title">Personalisierung</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Wörterbuchtool</string>
+<string name="pref_clear_category_title">Verlauf löschen</string>
+<string name="pref_clear_conversion_history_title">Umwandlungsverlauf</string>
+<string name="pref_clear_symbol_history_title">Symbolverlauf</string>
+<string name="pref_clear_user_dictionary_title">Mein Wörterbuch</string>
+<string name="pref_user_feedback_category_title">Nutzerfeedback</string>
+<string name="pref_other_usage_stats_title">Nutzungsstatistiken senden</string>
+<string name="pref_about_about_this_software_title">Über diese Software</string>
+<string name="pref_about_version_title">Version</string>
+<string name="pref_about_terms_of_service_title">Nutzungsbedingungen</string>
+<string name="pref_about_privacy_policy_title">Datenschutzerklärung</string>
+<string name="pref_about_oss_credits_title">Open-Source-Software</string>
+<string name="pref_launcher_icon_visibility_title">App-Symbol anzeigen</string>
+<string name="pref_haptic_feedback_description">Bei Tastendruck vibrieren</string>
+<string name="pref_sound_feedback_description">Ton bei Tastendruck</string>
+<string name="pref_popup_feedback_description">Pop-up bei Tastendruck</string>
+<string name="pref_keyboard_layout_description">Tastaturlayout wechseln</string>
+<string name="pref_keyboard_layout_title_12keys">12 Tasten</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">Godan-Tastatur</string>
+<string name="pref_keyboard_layout_description_12keys">Mobiltelefonlayout</string>
+<string name="pref_keyboard_layout_description_qwerty">PC-Tastatur-Layout</string>
+<string name="pref_keyboard_layout_description_godan">Romaji-dediziertes Layout, &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=de&amp;topic=25606&amp;answer=2700298\'&gt;Nutzung&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Eingabestil auswählen</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Bei einer Aktivierung wird das QWERTY-Layout für den alphabetischen Eingabemodus verwendet, unabhängig vom Layout.</string>
+<string name="pref_fullscreen_description">Bei einer Aktivierung erscheint das Zieltextfeld im Vollbildmodus.</string>
+<string name="pref_flick_sensitivity_description">Empfindlichkeit beim Wischen feinabstimmen</string>
+<string name="pref_layout_adjustment_description">Tastaturanpassung wechseln</string>
+<string name="pref_keyboard_height_ratio_description">Tastaturhöhe ändern</string>
+<string name="pref_space_character_form_description">Unabhängig vom Eingabemodus immer Leerzeichen mit halber Breite verwenden</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Von Kana-Modifikator unabhängige Umwandlung verwenden. Anwendung auf 12 Tasten und Godan-Tastatur. Beispiel: かつこう→学校.</string>
+<string name="pref_typing_correction_description">Tippfehler erkennen und Verbesserungsvorschläge anzeigen. Beispiel: すんかい→深海.</string>
+<string name="pref_emoji_provider_type_description">Zum Verwenden von Emojis Emoji-Anbieter richtig auswählen</string>
+<string name="pref_skin_type_description">Select the keyboard theme to customize the software keyboard look.</string>
+<string name="pref_voice_input_description">Show voice input button on the software keyboard.</string>
+<string name="pref_hardware_keymap_description">Tastenzuordnung für Hardwaretastaturen auswählen</string>
+<string name="pref_dictionary_personalization_description">Persönliche Vorschläge auf Grundlage vorheriger Eingaben aktivieren</string>
+<string name="pref_dictionary_user_dictionary_tool_description">\"Mein Wörterbuch\" bearbeiten</string>
+<string name="pref_clear_category_description">Personalisierungs- und Vorschlagsdaten löschen</string>
+<string name="pref_clear_conversion_history_description">Umwandlungsverlauf löschen</string>
+<string name="pref_clear_symbol_history_description">Symboleingabeverlauf löschen</string>
+<string name="pref_clear_user_dictionary_description">\"Mein Wörterbuch\" löschen</string>
+<string name="pref_other_incognito_mode_description">Personalisierung, Vorschläge und \"Mein Wörterbuch\" vorübergehend deaktivieren</string>
+<string name="pref_other_usage_stats_description">Nutzungsstatistiken an %1$s senden. Diese werden nur zur Verbesserung der Produkte und Dienste von %1$s verwendet.</string>
+<string name="pref_about_terms_of_service_description">Nutzungsbedingungen anzeigen (Webseite)</string>
+<string name="pref_about_privacy_policy_description">Datenschutzerklärung anzeigen (Webseite)</string>
+<string name="pref_about_oss_credits_description">Diese Software verwendet Open-Source-Software: Lizenzen ansehen</string>
+<string name="pref_launcher_icon_visibility_description">App-Symbol in der Übersicht anzeigen</string>
+<string name="pref_input_style_setting_entry_toggle">Umschalten</string>
+<string name="pref_input_style_setting_entry_flick">Wischen</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Umschalten und wischen</string>
+<string name="pref_fullscreen_portrait">Für Hochformat aktivieren</string>
+<string name="pref_fullscreen_landscape">Für Querformat aktivieren</string>
+<string name="pref_emoji_provider_type_unicode">Mobilfunkanbieter-Emoji deaktivieren</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">Orange/hellgrau</string>
+<string name="pref_skin_type_blue_lightgray">Blau/hellgrau</string>
+<string name="pref_skin_type_blue_darkgray">Blau/dunkelgrau</string>
+<string name="pref_skin_type_material_design_light">Materialdesign (hell)</string>
+<string name="pref_skin_type_material_design_dark">Materialdesign (dunkel)</string>
+<string name="pref_hardware_keymap_default">Systemvorgabe</string>
+<string name="pref_hardware_keymap_japanese109A">Japanisch 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 Tasten</string>
+<string name="pref_dictionary_personalization_entry_enabled">Aktivieren</string>
+<string name="pref_dictionary_personalization_entry_readonly">Fixiert</string>
+<string name="pref_dictionary_personalization_entry_disabled">Deaktivieren</string>
+<string name="pref_layout_adjustment_entry_fill">Vollbild</string>
+<string name="pref_layout_adjustment_entry_right">Rechts</string>
+<string name="pref_layout_adjustment_entry_left">Links</string>
+<string name="firsttime_close_button">Weiter &gt;&gt;</string>
+<string name="firsttime_description_thank_you">Vielen Dank, dass Sie %s verwenden.</string>
+<string name="firsttime_description_usage_stats">Damit wir %s-Produkte und -Dienste verbessern können, möchten wir Sie darum bitten, die Nutzungsstatistiken zu aktivieren.\n\nDiese Einstellung kann auf dem Einstellungsbildschirm geändert werden.</string>
+<string name="firsttime_send_usage_stats_devchannel">Nutzungsstatistiken sind aktiviert, da Sie eine Entwicklerversion verwenden.</string>
+<string name="pref_ime_enable_alert_title">Einrichtung für Texteinstellungen</string>
+<string name="pref_ime_enable_alert_message">Aktivieren Sie %s.</string>
+<string name="pref_ime_switch_alert_title">Einrichtung für Eingabemethode</string>
+<string name="pref_ime_switch_alert_message">Ändern Sie die Eingabemethode zu \"%s\".</string>
+<string name="pref_ime_alert_next">Weiter</string>
+<string name="pref_ime_alert_cancel">Abbrechen</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Niedrig</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Mittel</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Hoch</string>
+<string name="pref_haptic_feedback_duration_low_text">Kurz</string>
+<string name="pref_haptic_feedback_duration_high_text">Lang</string>
+<string name="pref_sound_feedback_volume_low_text">Min.</string>
+<string name="pref_sound_feedback_volume_middle_text">Mittel</string>
+<string name="pref_sound_feedback_volume_high_text">Max.</string>
+<string name="symbol_input_no_history">Kein Verlauf\n\nWischen Sie über den Bildschirm,\num nach Kategorien zu suchen.</string>
+<string name="symbol_emoji_disabled_message">Dieses Textfeld unterstützt keine Emoji-Eingabe.</string>
+<string name="menu_dialog_title">Eingabeoptionen</string>
+<string name="menu_item_input_method">Eingabemethode auswählen</string>
+<string name="menu_item_preferences">%s-Einstellungen</string>
+<string name="menu_item_mushroom">Mushroom starten</string>
+<string name="user_dictionary_tool_app_name">Wörterbuchtool</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Neues Wort</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Wort löschen</string>
+<string name="user_dictionary_tool_menu_undo_title">Rückgängig</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Neues Wörterbuch</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Aktuelles Wörterbuch umbenennen</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Aktuelle Wörterbuch löschen</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Aktuelles Wörterbuch exportieren</string>
+<string name="user_dictionary_tool_default_dictionary_name">Mein Wörterbuch 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Neues Wörterbuch erstellen</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Namen des Wörterbuchs bearbeiten</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Name des Wörterbuchs</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Neues Wort hinzufügen</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Wort bearbeiten</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Lesung</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Wort</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Kategorie</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Importquelle auswählen</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Importziel auswählen</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Als neues Wörterbuch importieren</string>
+<string name="user_dictionary_tool_delete_done_message">Löschvorgang abgeschlossen</string>
+<string name="user_dictionary_tool_undo_done_message">Löschvorgang rückgängig gemacht</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Wählen Sie die Wörter aus, die Sie löschen möchten.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Datenimport funktioniert nur für Dateien.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Die Datei konnte nicht gelesen werden.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">Die ZIP-Datei ist leer.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Für den Export von \"Mein Wörterbuch\" ist keine Anwendung wie zum Beispiel Google Docs vorhanden.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Fehler beim Export von \"Mein Wörterbuch\"</string>
+<string name="user_dictionary_tool_status_error_general">Beim Vorgang ist ein Fehler aufgetreten.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Die Datei konnte nicht geöffnet werden.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Die Datei konnte nicht gelesen werden.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Die Datei überschreitet die maximal zulässige Dateigröße.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Es können keine weiteren Wörterbücher erstellt werden.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Zu diesem Wörterbuch können keine weiteren Einträge hinzugefügt werden.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Geben Sie einen Namen für das Wörterbuch ein.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Der Name ist zu lang.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Der Name enthält ungültige Zeichen.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Der Name ist bereits vorhanden.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Geben Sie die Lesung ein.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Die Lesung ist zu lang.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Die Lesung enthält ungültige Zeichen.</string>
+<string name="user_dictionary_tool_status_error_word_empty">Geben Sie das Wort ein.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Das Wort ist zu lang.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Das Wort enthält ungültige Zeichen.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Die Importquelle enthält zu viele Wörter.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Einige Wörter konnten nicht importiert werden.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Es ist kein weiterer Vorgang vorhanden, der rückgängig gemacht werden kann.</string>
+<string name="japanese_pos_noun">Substantiv</string>
+<string name="japanese_pos_abbreviation">Abkürzung</string>
+<string name="japanese_pos_suggestion_only">Nur Vorschlag</string>
+<string name="japanese_pos_proper_noun">Eigenname</string>
+<string name="japanese_pos_personal_name">Personenname</string>
+<string name="japanese_pos_family_name">Nachname</string>
+<string name="japanese_pos_first_name">Vorname</string>
+<string name="japanese_pos_organization_name">Name der Organisation</string>
+<string name="japanese_pos_place_name">Ortsname</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">Unregelmäßige Konjugation der SA-Reihe, Substantiv</string>
+<string name="japanese_pos_adjective_verbal_noun">Adjektiv, Verbalsubstantiv</string>
+<string name="japanese_pos_number">Zahl</string>
+<string name="japanese_pos_alphabet">Alphabet</string>
+<string name="japanese_pos_symbol">Symbol</string>
+<string name="japanese_pos_emoticon">Emoticon</string>
+<string name="japanese_pos_adverb">Adverb</string>
+<string name="japanese_pos_prenoun_adjectival">Präfix vor Nomen, adjektivisch</string>
+<string name="japanese_pos_conjunction">Konjunktion</string>
+<string name="japanese_pos_interjection">Interjektion</string>
+<string name="japanese_pos_prefix">Präfix</string>
+<string name="japanese_pos_counter_suffix">Zählsuffix</string>
+<string name="japanese_pos_generic_suffix">Generisches Suffix</string>
+<string name="japanese_pos_person_name_suffix">Personennamensuffix</string>
+<string name="japanese_pos_place_name_suffix">Ortsnamensuffix</string>
+<string name="japanese_pos_wa_group1_verb">Verb aus WA-Gruppe 1</string>
+<string name="japanese_pos_ka_group1_verb">Verb aus KA-Gruppe 1</string>
+<string name="japanese_pos_sa_group1_verb">Verb aus SA-Gruppe 1</string>
+<string name="japanese_pos_ta_group1_verb">Verb aus TA-Gruppe 1</string>
+<string name="japanese_pos_na_group1_verb">Verb aus NA-Gruppe 1</string>
+<string name="japanese_pos_ma_group1_verb">Verb aus MA-Gruppe 1</string>
+<string name="japanese_pos_ra_group1_verb">Verb aus RA-Gruppe 1</string>
+<string name="japanese_pos_ga_group1_verb">Verb aus GA-Gruppe 1</string>
+<string name="japanese_pos_ba_group1_verb">Verb aus BA-Gruppe 1</string>
+<string name="japanese_pos_ha_group1_verb">Verb aus HA-Gruppe 1</string>
+<string name="japanese_pos_group2_verb">Verb aus Gruppe 2</string>
+<string name="japanese_pos_kuru_group3_verb">Verb aus Kuru-Gruppe 3</string>
+<string name="japanese_pos_suru_group3_verb">Verb aus Suru-Gruppe 3</string>
+<string name="japanese_pos_zuru_group3_verb">Verb aus Zuru-Gruppe 3</string>
+<string name="japanese_pos_ru_group3_verb">Verb aus Ru-Gruppe 3</string>
+<string name="japanese_pos_adjective">Adjektiv</string>
+<string name="japanese_pos_sentence_ending_particle">Satzbeendender Partikel</string>
+<string name="japanese_pos_punctuation">Satzzeichen</string>
+<string name="japanese_pos_free_standing_word">Frei stehendes Wort</string>
+<string name="japanese_pos_suppression_word">Suppressionswort</string>
+<string name="yes">Ja</string>
+<string name="no">Nein</string>
+</resources>

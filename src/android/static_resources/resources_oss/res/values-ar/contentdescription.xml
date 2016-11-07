@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="cd_keyboard_kana">لوحة مفاتيح كانا</string>
+<string name="cd_keyboard_alphabet">لوحة مفاتيح أبجدية</string>
+<string name="cd_keyboard_number">لوحة مفاتيح عددية</string>
+<string name="cd_key_shift">shift</string>
+<string name="cd_key_up">سهم لأعلى</string>
+<string name="cd_key_left">سهم لليسار</string>
+<string name="cd_key_right">سهم لليمين</string>
+<string name="cd_key_down">سهم لأسفل</string>
+<string name="cd_key_chartype_to_kana">التبديل إلى لوحة مفاتيح كانا</string>
+<string name="cd_key_chartype_to_abc">التبديل إلى لوحة المفاتيح الأبجدية</string>
+<string name="cd_key_chartype_to_abc_123">التبديل إلى لوحة المفاتيح الرمزية</string>
+<string name="cd_key_undo">تراجع</string>
+<string name="cd_key_symbol">شاشة الإدخال الرمزي</string>
+<string name="cd_key_alt">الرموز البديلة</string>
+<string name="cd_key_alt_unmodified">الرموز العادية</string>
+<string name="cd_key_capslock">caps lock</string>
+<string name="cd_key_capsunlock">caps unlock</string>
+<string name="cd_key_menu_dialog">قائمة مفتوحة</string>
+<string name="cd_key_globe">تبديل أسلوب الإدخال</string>
+<string name="cd_key_uchar_backspace">مسافة للخلف</string>
+<string name="cd_key_uchar_linefeed">linefeed</string>
+<string name="cd_key_uchar_space">space</string>
+<string name="cd_key_uchar_exclamation_mark">علامة تعجب</string>
+<string name="cd_key_uchar_quotation_mark" translation_description='When ["] key in the keyboard is pressed, this string is spoken up for accessibility'>علامة استفهام</string>
+<string name="cd_key_uchar_number_sign">علامة الرقم</string>
+<string name="cd_key_uchar_dollar_sign">علامة الدولار</string>
+<string name="cd_key_uchar_percent_sign">علامة النسبة المئوية</string>
+<string name="cd_key_uchar_ampersand">علامة العطف</string>
+<string name="cd_key_uchar_apostrophe">علامات اقتباس أحادية</string>
+<string name="cd_key_uchar_left_parenthesis">قوس أيسر</string>
+<string name="cd_key_uchar_right_parenthesis">قوس أيمن</string>
+<string name="cd_key_uchar_asterisk">نجمة</string>
+<string name="cd_key_uchar_plus_sign">علامة الإضافة</string>
+<string name="cd_key_uchar_comma">فاصلة</string>
+<string name="cd_key_uchar_hyphen_minus">واصلة</string>
+<string name="cd_key_uchar_full_stop">نقطة</string>
+<string name="cd_key_uchar_solidus">شرطة مائلة</string>
+<string name="cd_key_uchar_digit_zero">٠</string>
+<string name="cd_key_uchar_digit_one">١</string>
+<string name="cd_key_uchar_digit_two">٢</string>
+<string name="cd_key_uchar_digit_three">٣</string>
+<string name="cd_key_uchar_digit_four">٤</string>
+<string name="cd_key_uchar_digit_five">٥</string>
+<string name="cd_key_uchar_digit_six">٦</string>
+<string name="cd_key_uchar_digit_seven">٧</string>
+<string name="cd_key_uchar_digit_eight">٨</string>
+<string name="cd_key_uchar_digit_nine">٩</string>
+<string name="cd_key_uchar_colon">نقطتان</string>
+<string name="cd_key_uchar_semicolon">فاصلة منقوطة</string>
+<string name="cd_key_uchar_less_than_sign">علامة أقل من</string>
+<string name="cd_key_uchar_equals_sign">علامة التساوي</string>
+<string name="cd_key_uchar_greater_than_sign">علامة أكبر من</string>
+<string name="cd_key_uchar_question_mark">علامة استفهام</string>
+<string name="cd_key_uchar_commercial_at">علامة آت</string>
+<string name="cd_key_uchar_latin_capital_letter_a">A</string>
+<string name="cd_key_uchar_latin_capital_letter_b">B</string>
+<string name="cd_key_uchar_latin_capital_letter_c">C</string>
+<string name="cd_key_uchar_latin_capital_letter_d">D</string>
+<string name="cd_key_uchar_latin_capital_letter_e">E</string>
+<string name="cd_key_uchar_latin_capital_letter_f">F</string>
+<string name="cd_key_uchar_latin_capital_letter_g">G</string>
+<string name="cd_key_uchar_latin_capital_letter_h">H</string>
+<string name="cd_key_uchar_latin_capital_letter_i">I</string>
+<string name="cd_key_uchar_latin_capital_letter_j">J</string>
+<string name="cd_key_uchar_latin_capital_letter_k">K</string>
+<string name="cd_key_uchar_latin_capital_letter_l">L</string>
+<string name="cd_key_uchar_latin_capital_letter_m">M</string>
+<string name="cd_key_uchar_latin_capital_letter_n">N</string>
+<string name="cd_key_uchar_latin_capital_letter_o">O</string>
+<string name="cd_key_uchar_latin_capital_letter_p">P</string>
+<string name="cd_key_uchar_latin_capital_letter_q">Q</string>
+<string name="cd_key_uchar_latin_capital_letter_r">R</string>
+<string name="cd_key_uchar_latin_capital_letter_s">S</string>
+<string name="cd_key_uchar_latin_capital_letter_t">T</string>
+<string name="cd_key_uchar_latin_capital_letter_u">U</string>
+<string name="cd_key_uchar_latin_capital_letter_v">V</string>
+<string name="cd_key_uchar_latin_capital_letter_w">W</string>
+<string name="cd_key_uchar_latin_capital_letter_x">X</string>
+<string name="cd_key_uchar_latin_capital_letter_y">Y</string>
+<string name="cd_key_uchar_latin_capital_letter_z">Z</string>
+<string name="cd_key_uchar_left_square_bracket">قوس مربع أيسر</string>
+<string name="cd_key_uchar_reverse_solidus">شرطة مائلة للخلف</string>
+<string name="cd_key_uchar_right_square_bracket">قوس مربع أيمن</string>
+<string name="cd_key_uchar_circumflex_accent">علامة الإقحام</string>
+<string name="cd_key_uchar_low_line">شرطة سفلية</string>
+<string name="cd_key_uchar_grave_accent">علامة نقطية</string>
+<string name="cd_key_uchar_latin_small_letter_a">a</string>
+<string name="cd_key_uchar_latin_small_letter_b">b</string>
+<string name="cd_key_uchar_latin_small_letter_c">c</string>
+<string name="cd_key_uchar_latin_small_letter_d">d</string>
+<string name="cd_key_uchar_latin_small_letter_e">e</string>
+<string name="cd_key_uchar_latin_small_letter_f">f</string>
+<string name="cd_key_uchar_latin_small_letter_g">g</string>
+<string name="cd_key_uchar_latin_small_letter_h">h</string>
+<string name="cd_key_uchar_latin_small_letter_i">i</string>
+<string name="cd_key_uchar_latin_small_letter_j">j</string>
+<string name="cd_key_uchar_latin_small_letter_k">k</string>
+<string name="cd_key_uchar_latin_small_letter_l">l</string>
+<string name="cd_key_uchar_latin_small_letter_m">m</string>
+<string name="cd_key_uchar_latin_small_letter_n">n</string>
+<string name="cd_key_uchar_latin_small_letter_o">o</string>
+<string name="cd_key_uchar_latin_small_letter_p">p</string>
+<string name="cd_key_uchar_latin_small_letter_q">q</string>
+<string name="cd_key_uchar_latin_small_letter_r">r</string>
+<string name="cd_key_uchar_latin_small_letter_s">s</string>
+<string name="cd_key_uchar_latin_small_letter_t">t</string>
+<string name="cd_key_uchar_latin_small_letter_u">u</string>
+<string name="cd_key_uchar_latin_small_letter_v">v</string>
+<string name="cd_key_uchar_latin_small_letter_w">w</string>
+<string name="cd_key_uchar_latin_small_letter_x">x</string>
+<string name="cd_key_uchar_latin_small_letter_y">y</string>
+<string name="cd_key_uchar_latin_small_letter_z">z</string>
+<string name="cd_key_uchar_left_curly_bracket">قوس متعرج أيسر</string>
+<string name="cd_key_uchar_vertical_line">خط عمودي</string>
+<string name="cd_key_uchar_right_curly_bracket">قوس متعرج أيمن</string>
+<string name="cd_key_uchar_tilde">علامة المد</string>
+<string name="cd_key_action_done">تم</string>
+<string name="cd_key_action_go">انتقال</string>
+<string name="cd_key_action_next">التالي</string>
+<string name="cd_key_action_previous">السابق</string>
+<string name="cd_key_action_search">بحث</string>
+<string name="cd_key_action_send">إرسال</string>
+<string name="cd_key_composing_done">إرسال</string>
+<string name="cd_key_kana_line_a">‏العمود A</string>
+<string name="cd_key_kana_line_ka">‏العمود KA</string>
+<string name="cd_key_kana_line_sa">‏العمود SA</string>
+<string name="cd_key_kana_line_ta">‏العمود TA</string>
+<string name="cd_key_kana_line_na">‏العمود NA</string>
+<string name="cd_key_kana_line_ha">‏العمود HA</string>
+<string name="cd_key_kana_line_ma">‏العمود MA</string>
+<string name="cd_key_kana_line_ya">‏العمود YA</string>
+<string name="cd_key_kana_line_ra">‏العمود RA</string>
+<string name="cd_key_kana_modifier">علامة الصوت المجهورة</string>
+<string name="cd_key_kana_line_wa">‏العمود WA</string>
+<string name="cd_key_kana_punctuation">الترقيم</string>
+<string name="cd_key_uchar_katakana_middle_dot">نقطة متوسطة</string>
+<string name="cd_key_uchar_ideographic_comma">فاصلة</string>
+<string name="cd_key_uchar_ideographic_full_stop">نقطة</string>
+<string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark">علامة صوتية طويلة</string>
+<string name="cd_key_alphabet_abc">ABC</string>
+<string name="cd_key_alphabet_def">DEF</string>
+<string name="cd_key_alphabet_ghi">GHI</string>
+<string name="cd_key_alphabet_jkl">JKL</string>
+<string name="cd_key_alphabet_mno">MNO</string>
+<string name="cd_key_alphabet_pqrs">PQRS</string>
+<string name="cd_key_alphabet_tuv">TUV</string>
+<string name="cd_key_alphabet_wxyz">WXYZ</string>
+<string name="cd_key_alphabet_capitalize">أحرف كبيرة</string>
+<string name="spoken_use_headphone_for_password">أدخل سماعة رأس لسماع نطق مفاتيح كلمة المرور بصوت مرتفع</string>
+<string name="cd_keyboard_fold_button">تغيير حجم النافذة المرشحة</string>
+<string name="cd_close_symbol_window">العودة إلى لوحة المفاتيح</string>
+<string name="cd_symbol_window_number">الرقم</string>
+<string name="cd_symbol_window_symbol">رمز</string>
+<string name="cd_symbol_window_emoticon">رمز معبّر</string>
+<string name="cd_symbol_window_emoji">الرموز التعبيرية</string>
+<string name="cd_symbol_window_enter">Linefeed</string>
+<string name="cd_symbol_window_backspace">مسافة للخلف</string>
+<string name="cd_symbol_window_minor_history">السجل</string>
+<string name="cd_symbol_window_minor_symbol_general">رمز عام</string>
+<string name="cd_symbol_window_minor_symbol_half">رمز بعرض كامل ومتوسط</string>
+<string name="cd_symbol_window_minor_symbol_parenthesis">رمز أقواس</string>
+<string name="cd_symbol_window_minor_symbol_arrow">رمز سهم</string>
+<string name="cd_symbol_window_minor_symbol_math">رمز رياضيات</string>
+<string name="cd_symbol_window_minor_emoticon_smile">رمز معبِّر لابتسامة</string>
+<string name="cd_symbol_window_minor_emoticon_sweat">رمز معبِّر يتصبب عرقًا</string>
+<string name="cd_symbol_window_minor_emoticon_surprise">رمز معبِّر لمفاجأة</string>
+<string name="cd_symbol_window_minor_emoticon_sadness">رمز معبِّر لحزن</string>
+<string name="cd_symbol_window_minor_emoticon_displeasure">رمز معبِّر لاستياء</string>
+<string name="cd_symbol_window_minor_emoji_face">رمز تعبيري للوجه</string>
+<string name="cd_symbol_window_minor_emoji_food">رمز تعبيري للطعام</string>
+<string name="cd_symbol_window_minor_emoji_activity">رمز تعبيري لنشاط</string>
+<string name="cd_symbol_window_minor_emoji_city">رمز تعبيري لمدينة</string>
+<string name="cd_symbol_window_minor_emoji_nature">رمز تعبيري للطبيعة</string>
+<string name="help_userdictionary_dictionary_name">اسم قاموس الإدخال</string>
+<string name="help_userdictionary_edit_word_value">إدخال كلمة</string>
+<string name="help_userdictionary_edit_word_key">إدخال قراءة</string>
+<string name="cd_voice_input">الإدخال الصوتي</string>
+<string name="cd_narrow_frame_widen_button">إظهار لوحة المفاتيح</string>
+</resources>

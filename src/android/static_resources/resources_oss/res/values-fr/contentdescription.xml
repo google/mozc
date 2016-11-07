@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="cd_keyboard_kana">Clavier kana</string>
+<string name="cd_keyboard_alphabet">Clavier alphabétique</string>
+<string name="cd_keyboard_number">Clavier numérique</string>
+<string name="cd_key_shift">maj</string>
+<string name="cd_key_up">haut</string>
+<string name="cd_key_left">gauche</string>
+<string name="cd_key_right">droite</string>
+<string name="cd_key_down">bas</string>
+<string name="cd_key_chartype_to_kana">passer au clavier kana</string>
+<string name="cd_key_chartype_to_abc">passer au clavier alphabétique</string>
+<string name="cd_key_chartype_to_abc_123">passer au clavier des symboles</string>
+<string name="cd_key_undo">annuler</string>
+<string name="cd_key_symbol">écran de saisie des symboles</string>
+<string name="cd_key_alt">autres symboles</string>
+<string name="cd_key_alt_unmodified">symboles normaux</string>
+<string name="cd_key_capslock">verrouillage des majuscules</string>
+<string name="cd_key_capsunlock">déverrouillage des majuscules</string>
+<string name="cd_key_menu_dialog">ouvrir le menu</string>
+<string name="cd_key_globe">changer le mode de saisie</string>
+<string name="cd_key_uchar_backspace">retour arrière</string>
+<string name="cd_key_uchar_linefeed">saut de ligne</string>
+<string name="cd_key_uchar_space">espace</string>
+<string name="cd_key_uchar_exclamation_mark">point d\'exclamation</string>
+<string name="cd_key_uchar_quotation_mark" translation_description='When ["] key in the keyboard is pressed, this string is spoken up for accessibility'>guillemet</string>
+<string name="cd_key_uchar_number_sign">dièse</string>
+<string name="cd_key_uchar_dollar_sign">symbole du dollar</string>
+<string name="cd_key_uchar_percent_sign">signe de pourcentage</string>
+<string name="cd_key_uchar_ampersand">esperluette</string>
+<string name="cd_key_uchar_apostrophe">apostrophe</string>
+<string name="cd_key_uchar_left_parenthesis">parenthèse gauche</string>
+<string name="cd_key_uchar_right_parenthesis">parenthèse droite</string>
+<string name="cd_key_uchar_asterisk">astérisque</string>
+<string name="cd_key_uchar_plus_sign">signe plus</string>
+<string name="cd_key_uchar_comma">virgule</string>
+<string name="cd_key_uchar_hyphen_minus">trait d\'union</string>
+<string name="cd_key_uchar_full_stop">point</string>
+<string name="cd_key_uchar_solidus">barre oblique</string>
+<string name="cd_key_uchar_digit_zero">0</string>
+<string name="cd_key_uchar_digit_one">1</string>
+<string name="cd_key_uchar_digit_two">2</string>
+<string name="cd_key_uchar_digit_three">3</string>
+<string name="cd_key_uchar_digit_four">4</string>
+<string name="cd_key_uchar_digit_five">5</string>
+<string name="cd_key_uchar_digit_six">6</string>
+<string name="cd_key_uchar_digit_seven">7</string>
+<string name="cd_key_uchar_digit_eight">8</string>
+<string name="cd_key_uchar_digit_nine">9</string>
+<string name="cd_key_uchar_colon">deux-points</string>
+<string name="cd_key_uchar_semicolon">point-virgule</string>
+<string name="cd_key_uchar_less_than_sign">signe inférieur à</string>
+<string name="cd_key_uchar_equals_sign">signe égal</string>
+<string name="cd_key_uchar_greater_than_sign">signe supérieur à</string>
+<string name="cd_key_uchar_question_mark">point d\'interrogation</string>
+<string name="cd_key_uchar_commercial_at">arobase</string>
+<string name="cd_key_uchar_latin_capital_letter_a">A</string>
+<string name="cd_key_uchar_latin_capital_letter_b">B</string>
+<string name="cd_key_uchar_latin_capital_letter_c">C</string>
+<string name="cd_key_uchar_latin_capital_letter_d">D</string>
+<string name="cd_key_uchar_latin_capital_letter_e">E</string>
+<string name="cd_key_uchar_latin_capital_letter_f">F</string>
+<string name="cd_key_uchar_latin_capital_letter_g">G</string>
+<string name="cd_key_uchar_latin_capital_letter_h">H</string>
+<string name="cd_key_uchar_latin_capital_letter_i">I</string>
+<string name="cd_key_uchar_latin_capital_letter_j">J</string>
+<string name="cd_key_uchar_latin_capital_letter_k">K</string>
+<string name="cd_key_uchar_latin_capital_letter_l">L</string>
+<string name="cd_key_uchar_latin_capital_letter_m">M</string>
+<string name="cd_key_uchar_latin_capital_letter_n">N</string>
+<string name="cd_key_uchar_latin_capital_letter_o">O</string>
+<string name="cd_key_uchar_latin_capital_letter_p">P</string>
+<string name="cd_key_uchar_latin_capital_letter_q">Q</string>
+<string name="cd_key_uchar_latin_capital_letter_r">R</string>
+<string name="cd_key_uchar_latin_capital_letter_s">S</string>
+<string name="cd_key_uchar_latin_capital_letter_t">T</string>
+<string name="cd_key_uchar_latin_capital_letter_u">U</string>
+<string name="cd_key_uchar_latin_capital_letter_v">V</string>
+<string name="cd_key_uchar_latin_capital_letter_w">W</string>
+<string name="cd_key_uchar_latin_capital_letter_x">X</string>
+<string name="cd_key_uchar_latin_capital_letter_y">Y</string>
+<string name="cd_key_uchar_latin_capital_letter_z">Z</string>
+<string name="cd_key_uchar_left_square_bracket">crochet gauche</string>
+<string name="cd_key_uchar_reverse_solidus">barre oblique inverse</string>
+<string name="cd_key_uchar_right_square_bracket">crochet droit</string>
+<string name="cd_key_uchar_circumflex_accent">accent circonflexe</string>
+<string name="cd_key_uchar_low_line">tiret de soulignement</string>
+<string name="cd_key_uchar_grave_accent">accent grave</string>
+<string name="cd_key_uchar_latin_small_letter_a">a</string>
+<string name="cd_key_uchar_latin_small_letter_b">b</string>
+<string name="cd_key_uchar_latin_small_letter_c">c</string>
+<string name="cd_key_uchar_latin_small_letter_d">d</string>
+<string name="cd_key_uchar_latin_small_letter_e">e</string>
+<string name="cd_key_uchar_latin_small_letter_f">f</string>
+<string name="cd_key_uchar_latin_small_letter_g">g</string>
+<string name="cd_key_uchar_latin_small_letter_h">h</string>
+<string name="cd_key_uchar_latin_small_letter_i">i</string>
+<string name="cd_key_uchar_latin_small_letter_j">j</string>
+<string name="cd_key_uchar_latin_small_letter_k">k</string>
+<string name="cd_key_uchar_latin_small_letter_l">l</string>
+<string name="cd_key_uchar_latin_small_letter_m">m</string>
+<string name="cd_key_uchar_latin_small_letter_n">n</string>
+<string name="cd_key_uchar_latin_small_letter_o">o</string>
+<string name="cd_key_uchar_latin_small_letter_p">p</string>
+<string name="cd_key_uchar_latin_small_letter_q">q</string>
+<string name="cd_key_uchar_latin_small_letter_r">r</string>
+<string name="cd_key_uchar_latin_small_letter_s">s</string>
+<string name="cd_key_uchar_latin_small_letter_t">t</string>
+<string name="cd_key_uchar_latin_small_letter_u">u</string>
+<string name="cd_key_uchar_latin_small_letter_v">v</string>
+<string name="cd_key_uchar_latin_small_letter_w">w</string>
+<string name="cd_key_uchar_latin_small_letter_x">x</string>
+<string name="cd_key_uchar_latin_small_letter_y">y</string>
+<string name="cd_key_uchar_latin_small_letter_z">z</string>
+<string name="cd_key_uchar_left_curly_bracket">accolade gauche</string>
+<string name="cd_key_uchar_vertical_line">ligne verticale</string>
+<string name="cd_key_uchar_right_curly_bracket">accolade droite</string>
+<string name="cd_key_uchar_tilde">tilde</string>
+<string name="cd_key_action_done">terminé</string>
+<string name="cd_key_action_go">accéder</string>
+<string name="cd_key_action_next">suivant</string>
+<string name="cd_key_action_previous">précédent</string>
+<string name="cd_key_action_search">rechercher</string>
+<string name="cd_key_action_send">envoyer</string>
+<string name="cd_key_composing_done">soumettre</string>
+<string name="cd_key_kana_line_a">Colonne A</string>
+<string name="cd_key_kana_line_ka">Colonne KA</string>
+<string name="cd_key_kana_line_sa">Colonne SA</string>
+<string name="cd_key_kana_line_ta">Colonne TA</string>
+<string name="cd_key_kana_line_na">Colonne NA</string>
+<string name="cd_key_kana_line_ha">Colonne HA</string>
+<string name="cd_key_kana_line_ma">Colonne MA</string>
+<string name="cd_key_kana_line_ya">Colonne YA</string>
+<string name="cd_key_kana_line_ra">Colonne RA</string>
+<string name="cd_key_kana_modifier">marque sonore vocalisée</string>
+<string name="cd_key_kana_line_wa">Colonne WA</string>
+<string name="cd_key_kana_punctuation">ponctuation</string>
+<string name="cd_key_uchar_katakana_middle_dot">point médian</string>
+<string name="cd_key_uchar_ideographic_comma">virgule</string>
+<string name="cd_key_uchar_ideographic_full_stop">point</string>
+<string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark">marque sonore prolongée</string>
+<string name="cd_key_alphabet_abc">ABC</string>
+<string name="cd_key_alphabet_def">DEF</string>
+<string name="cd_key_alphabet_ghi">GHI</string>
+<string name="cd_key_alphabet_jkl">JKL</string>
+<string name="cd_key_alphabet_mno">MNO</string>
+<string name="cd_key_alphabet_pqrs">PQRS</string>
+<string name="cd_key_alphabet_tuv">TUV</string>
+<string name="cd_key_alphabet_wxyz">WXYZ</string>
+<string name="cd_key_alphabet_capitalize">en majuscule</string>
+<string name="spoken_use_headphone_for_password">Branchez un casque pour entendre l\'énoncé à haute voix des touches lors de la saisie du mot de passe.</string>
+<string name="cd_keyboard_fold_button">Modifier la taille de la fenêtre du candidat</string>
+<string name="cd_close_symbol_window">Retour au clavier</string>
+<string name="cd_symbol_window_number">Nombre</string>
+<string name="cd_symbol_window_symbol">Symbole</string>
+<string name="cd_symbol_window_emoticon">Émoticône</string>
+<string name="cd_symbol_window_emoji">Emoji</string>
+<string name="cd_symbol_window_enter">Saut de ligne</string>
+<string name="cd_symbol_window_backspace">Retour arrière</string>
+<string name="cd_symbol_window_minor_history">Historique</string>
+<string name="cd_symbol_window_minor_symbol_general">Symbole général</string>
+<string name="cd_symbol_window_minor_symbol_half">Symbole pleine largeur et mi-largeur</string>
+<string name="cd_symbol_window_minor_symbol_parenthesis">Symbole de parenthèse</string>
+<string name="cd_symbol_window_minor_symbol_arrow">Symbole de flèche</string>
+<string name="cd_symbol_window_minor_symbol_math">Symbole mathématique</string>
+<string name="cd_symbol_window_minor_emoticon_smile">Émoticône qui sourit</string>
+<string name="cd_symbol_window_minor_emoticon_sweat">Émoticône qui transpire</string>
+<string name="cd_symbol_window_minor_emoticon_surprise">Émoticône surpris</string>
+<string name="cd_symbol_window_minor_emoticon_sadness">Émoticône triste</string>
+<string name="cd_symbol_window_minor_emoticon_displeasure">Émoticône mécontent</string>
+<string name="cd_symbol_window_minor_emoji_face">Emoji visage</string>
+<string name="cd_symbol_window_minor_emoji_food">Emoji nourriture</string>
+<string name="cd_symbol_window_minor_emoji_activity">Emoji activité</string>
+<string name="cd_symbol_window_minor_emoji_city">Emoji ville</string>
+<string name="cd_symbol_window_minor_emoji_nature">Emoji nature</string>
+<string name="help_userdictionary_dictionary_name">Saisir le nom du dictionnaire</string>
+<string name="help_userdictionary_edit_word_value">Saisir le mot</string>
+<string name="help_userdictionary_edit_word_key">Saisir la lecture</string>
+<string name="cd_voice_input">Saisie vocale</string>
+<string name="cd_narrow_frame_widen_button">Afficher le clavier</string>
+</resources>

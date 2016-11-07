@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">ژاپنی</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">صفحه‌کلید نرم‌افزاری</string>
+<string name="pref_software_keyboard_advanced_settings_title">تنظیمات پیشرفته صفحه‌کلید نرم‌افزاری</string>
+<string name="pref_fragment_software_keyboard_title">صفحه‌کلید نرم‌افزاری</string>
+<string name="pref_fragment_input_support_title">پشتیبانی از ورودی</string>
+<string name="pref_fragment_conversion_title">تبدیل</string>
+<string name="pref_fragment_dictionary_title">فرهنگ لغت</string>
+<string name="pref_fragment_user_feedback_title">بازخورد کاربر</string>
+<string name="pref_fragment_about_title">درباره</string>
+<string name="pref_fragment_development_title">برنامه‌نویسی</string>
+<string name="pref_software_keyboard_preferences_portrait_title">تنظیمات برگزیده صفحه‌کلید نرم‌افزاری برای حالت پرتره</string>
+<string name="pref_software_keyboard_preferences_landscape_title">تنظیمات برگزیده صفحه‌کلید نرم‌افزاری برای حالت منظره</string>
+<string name="pref_keyboard_layout_title">طرح‌بندی صفحه‌کلید</string>
+<string name="pref_input_style_title">سبک ورودی</string>
+<string name="pref_qwerty_layout_for_alphabet_title">حالت کورتی</string>
+<string name="pref_flick_sensitivity_title">حساسیت ضربه</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">استفاده از تنظیمات پرتره</string>
+<string name="pref_keyboard_height_ratio_title">ارتفاع صفحه‌کلید</string>
+<string name="pref_input_feedback_category_title">تنظیمات برگزیده وارد کردن بازخورد</string>
+<string name="pref_haptic_feedback_title">بازخورد لمسی</string>
+<string name="pref_haptic_feedback_duration_title">مدت بازخورد لمسی</string>
+<string name="pref_sound_feedback_title">بازخورد صوتی</string>
+<string name="pref_sound_feedback_volume_title">بلندی صدای بازخورد صوتی</string>
+<string name="pref_popup_feedback_title">بازخورد کشویی</string>
+<string name="pref_other_input_support_preference_category_title">سایر تنظیمات برگزیده پشتیبانی ورودی</string>
+<string name="pref_fullscreen_title">حالت تمام صفحه</string>
+<string name="pref_skin_type_title">طرح زمینه صفحه‌کلید</string>
+<string name="pref_hardware_title">تنظیمات برگزیده برای صفحه‌کلیدهای سخت‌افزاری</string>
+<string name="pref_voice_input_title">نمایش دکمه ورودی صدا</string>
+<string name="pref_conversion_category_title">تنظیمات برگزیده تبدیل</string>
+<string name="pref_layout_adjustment_title">تنظیم طرح‌بندی</string>
+<string name="pref_space_character_form_title">استفاده از نیم‌فاصله</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">تبدیل غیرحساس متعادل‌ساز</string>
+<string name="pref_typing_correction_title">تصحیح تایپ</string>
+<string name="pref_other_incognito_mode_title">حالت ناشناس</string>
+<string name="pref_emoji_provider_type_title">انتخاب ارائه‌کننده ایموجی</string>
+<string name="pref_dictionry_category_title">تنظیمات برگزیده فرهنگ‌لغت</string>
+<string name="pref_dictionary_personalization_title">شخصی‌سازی</string>
+<string name="pref_dictionary_user_dictionary_tool_title">ابزار فرهنگ‌لغت</string>
+<string name="pref_clear_category_title">پاک کردن سابقه</string>
+<string name="pref_clear_conversion_history_title">سابقه تبدیل</string>
+<string name="pref_clear_symbol_history_title">سابقه نماد</string>
+<string name="pref_clear_user_dictionary_title">فرهنگ‌‌لغت کاربر</string>
+<string name="pref_user_feedback_category_title">بازخورد کاربر</string>
+<string name="pref_other_usage_stats_title">ارسال آمار کاربرد</string>
+<string name="pref_about_about_this_software_title">درباره این نرم‌افزار</string>
+<string name="pref_about_version_title">نسخه</string>
+<string name="pref_about_terms_of_service_title">شرایط سرویس</string>
+<string name="pref_about_privacy_policy_title">خط‌مشی رازداری</string>
+<string name="pref_about_oss_credits_title">نرم‌افزار منبع آزاد</string>
+<string name="pref_launcher_icon_visibility_title">نمایش نماد برنامه</string>
+<string name="pref_haptic_feedback_description">هنگام فشار دادن کلید، بلرزد.</string>
+<string name="pref_sound_feedback_description">هنگام فشار دادن کلید، صدا ایجاد کند.</string>
+<string name="pref_popup_feedback_description">هنگام فشردن کلید باز شود.</string>
+<string name="pref_keyboard_layout_description">طرح‌بندی صفحه‌کلید را تغییر دهید.</string>
+<string name="pref_keyboard_layout_title_12keys">۱۲ کلیدی</string>
+<string name="pref_keyboard_layout_title_qwerty">کورتی</string>
+<string name="pref_keyboard_layout_title_godan">صفحه‌کلید گودان</string>
+<string name="pref_keyboard_layout_description_12keys">طرح‌بندی تلفن همراه.</string>
+<string name="pref_keyboard_layout_description_qwerty">طرح‌بندی صفحه‌کلید رایانه.</string>
+<string name="pref_keyboard_layout_description_godan">‏طرح‌بندی خاص روماجی. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;استفاده&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">سبک ورودی را انتخاب کنید.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">در صورتی که علامت داشته باشد، بدون توجه به طرح‌بندی اصلی، طرح‌بندی کورتی برای حالت ورودی الفبایی استفاده می‌شود.</string>
+<string name="pref_fullscreen_description">در صورتی که علامت داشته باشد، کادر نوشتاری مقصد در حالت تمام صفحه نمایش می‌دهد.</string>
+<string name="pref_flick_sensitivity_description">حساسیت ضربه را تنظیم کنید.</string>
+<string name="pref_layout_adjustment_description">تنظیم صفحه‌کلید را تغییر دهید.</string>
+<string name="pref_keyboard_height_ratio_description">ارتفاع صفحه‌کلید را تغییر دهید.</string>
+<string name="pref_space_character_form_description">بدون توجه به حالت ورودی، همیشه از نیم‌فاصله استفاده شود.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">‏از تبدیل غیرحساس متعادل‌ساز کانا استفاده کنید. برای صفحه‌کلید ۱۲ کلیدی و Godan اعمال می‌شود. مثلاً かつこう→学校</string>
+<string name="pref_typing_correction_description">‏کلماتی که اشتباه تایپی دارند، تشخیص داده شوند و نمونه‌های ممکن صحیح نمایش داده شود. مثلاً  すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">ارائه‌دهنده ایموجی را درست انتخاب کنید تا از ایموجی استفاده کنید.</string>
+<string name="pref_skin_type_description">با انتخاب طرح زمینه صفحه‌کلید، ظاهر صفحه‌کلید نرم‌افزار را سفارشی کنید.</string>
+<string name="pref_voice_input_description">دکمه ورودی صوتی را در صفحه‌کلید نرم‌افزار علامت می‌دهد.</string>
+<string name="pref_hardware_keymap_description">تطابق کلید را برای صفحه‌کلیدهای سخت‌افزاری انتخاب کنید.</string>
+<string name="pref_dictionary_personalization_description">پیشنهادات شخصی را بر اساس ورودی قبلی فعال کنید.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">فرهنگ‌لغت‌های کاربر را ویرایش کنید.</string>
+<string name="pref_clear_category_description">اطلاعات شخصی‌سازی یا پیشنهاد را پاک کنید.</string>
+<string name="pref_clear_conversion_history_description">سابقه تبدیل را پاک کنید.</string>
+<string name="pref_clear_symbol_history_description">سابقه ورود نماد را پاک کنید.</string>
+<string name="pref_clear_user_dictionary_description">فرهنگ‌لغت کاربر را پاک کنید.</string>
+<string name="pref_other_incognito_mode_description">موقتاً شخصی‌سازی، پیشنهادات و فرهنگ‌لغت کاربر را غیرفعال کنید.</string>
+<string name="pref_other_usage_stats_description">آمار کاربرد را به %1$s ارسال کنید. از این موارد فقط برای بهبود سرویس‌ها و محصولات %1$s استفاده می‌شود.</string>
+<string name="pref_about_terms_of_service_description">شرایط سرویس (صفحه وب) را نمایش دهید.</string>
+<string name="pref_about_privacy_policy_description">خط‌مشی رازداری (صفحه وب) را نمایش دهید.</string>
+<string name="pref_about_oss_credits_description">این نرم‌افزار از نرم‌افزار منبع آزاد استفاده می‌کند: مجوزها را مشاهده کنید.</string>
+<string name="pref_launcher_icon_visibility_description">نمایش نماد برنامه در راه‌انداز</string>
+<string name="pref_input_style_setting_entry_toggle">تغییر وضعیت</string>
+<string name="pref_input_style_setting_entry_flick">ضربه زدن</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">ضربه زدن و تغییر وضعیت</string>
+<string name="pref_fullscreen_portrait">فعال کردن در پرتره</string>
+<string name="pref_fullscreen_landscape">فعال کردن در منظره</string>
+<string name="pref_emoji_provider_type_unicode">غیرفعال کردن ایموجی شرکت مخابراتی</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">‏KDDI ‏(au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">نارنجی/خاکستری روشن</string>
+<string name="pref_skin_type_blue_lightgray">آبی/خاکستری روشن</string>
+<string name="pref_skin_type_blue_darkgray">آبی/ خاکستری تیره</string>
+<string name="pref_skin_type_material_design_light">طراحی ماده (روشن)</string>
+<string name="pref_skin_type_material_design_dark">طراحی ماده (تاریک)</string>
+<string name="pref_hardware_keymap_default">پیش‌فرض سیستم</string>
+<string name="pref_hardware_keymap_japanese109A">‏ژاپنی 109A</string>
+<string name="pref_hardware_keymap_twelvekey">۱۲ کلیدی</string>
+<string name="pref_dictionary_personalization_entry_enabled">فعال کردن</string>
+<string name="pref_dictionary_personalization_entry_readonly">ثابت</string>
+<string name="pref_dictionary_personalization_entry_disabled">غیرفعال کردن</string>
+<string name="pref_layout_adjustment_entry_fill">پر کردن</string>
+<string name="pref_layout_adjustment_entry_right">راست</string>
+<string name="pref_layout_adjustment_entry_left">چپ</string>
+<string name="firsttime_close_button">بعدی &gt;&gt;</string>
+<string name="firsttime_description_thank_you">از اینکه از %s استفاده می‌کنید، سپاسگزاریم.</string>
+<string name="firsttime_description_usage_stats">‏برای اینکه محصولات و سرویس‌های %s را بهبود بخشیم، از شما می‌خواهیم لطفاً آمار کاربرد را فعال کنید.\n\nاین تنظیم را می‌توان از صفحه تنظیمات برگزیده تغییر داد.</string>
+<string name="firsttime_send_usage_stats_devchannel">آمار کاربرد فعال شده است چون از نسخه توسعه استفاده می‌کنید.</string>
+<string name="pref_ime_enable_alert_title">تنظیم ویژه تنظیمات نوشتاری</string>
+<string name="pref_ime_enable_alert_message">لطفاً %s را فعال کنید.</string>
+<string name="pref_ime_switch_alert_title">تنظیم روش ورودی</string>
+<string name="pref_ime_switch_alert_message">لطفاً روش ورودی را به %s تغییر دهید.</string>
+<string name="pref_ime_alert_next">بعدی</string>
+<string name="pref_ime_alert_cancel">لغو</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">کم</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">متوسط</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">زیاد</string>
+<string name="pref_haptic_feedback_duration_low_text">کوتاه</string>
+<string name="pref_haptic_feedback_duration_high_text">طولانی</string>
+<string name="pref_sound_feedback_volume_low_text">حداقل</string>
+<string name="pref_sound_feedback_volume_middle_text">متوسط</string>
+<string name="pref_sound_feedback_volume_high_text">حداکثر</string>
+<string name="symbol_input_no_history">‏سابقه‌ای وجود ندارد.\n\nانگشتتان را تند روی صفحه بکشید\nتا دسته‌ها را مرور کنید.</string>
+<string name="symbol_emoji_disabled_message">این فیلد نوشتاری از ورود ایموجی پشتیبانی نمی‌کند.</string>
+<string name="menu_dialog_title">گزینه‌های ورودی</string>
+<string name="menu_item_input_method">انتخاب روش ورودی</string>
+<string name="menu_item_preferences">تنظیمات %s</string>
+<string name="menu_item_mushroom">‏راه‌اندازی Mushroom</string>
+<string name="user_dictionary_tool_app_name">ابزار فرهنگ‌لغت</string>
+<string name="user_dictionary_tool_menu_add_entry_title">کلمه جدید</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">حذف کلمه</string>
+<string name="user_dictionary_tool_menu_undo_title">واگرد</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">فرهنگ‌لغت جدید</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">تغییرنام فرهنگ‌لغت فعلی</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">حذف فرهنگ‌لغت فعلی</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">صادر کردن فرهنگ‌لغت فعلی</string>
+<string name="user_dictionary_tool_default_dictionary_name">فرهنگ‌لغت کاربر ۱</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">ایجاد فرهنگ‌لغت جدید</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">ویرایش نام فرهنگ‌لغت</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">نام فرهنگ‌لغت</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">افزودن کلمه جدید</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">ویرایش کلمه</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">خوانش</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">کلمه</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">دسته</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">انتخاب مبدأ وارد کردن</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">انتخاب مقصد وارد کردن</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">وارد کردن به عنوان فرهنگ‌لغت جدید</string>
+<string name="user_dictionary_tool_delete_done_message">عملیات حذف با موفقیت انجام شد.</string>
+<string name="user_dictionary_tool_undo_done_message">عملیات واگرد با موفقیت انجام شد.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">کلماتی را که می‌خواهید حذف کنید، انتخاب نمایید.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">وارد کردن اطلاعات فقط در فایل‌ها کار می‌کند.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">فایل خوانده نشد.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">فایل فشرده خالی است.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">‏هیچ برنامه‌ای (مانند سندنگار Google) برای صادر کردن فرهنگ‌لغت کاربر وجود ندارد.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">فرهنگ‌لغت کاربر صادر نشد.</string>
+<string name="user_dictionary_tool_status_error_general">عملیات ناموفق بود.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">فایل باز نشد.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">فایل خوانده نشد.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">اندازه اطلاعات بیش از اندازه مجاز فایل است.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">فرهنگ‌لغت دیگری ایجاد نمی‌شود.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">ورودی‌های دیگری در این فرهنگ‌لغت ایجاد نمی‌شود.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">لطفاً نام فرهنگ‌لغت را تایپ کنید.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">نام خیلی طولانی است.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">نام شامل نویسه(های) نامعتبر است.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">نام از قبل وجود دارد.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">لطفاً خوانش را تایپ کنید.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">خوانش خیلی طولانی است.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">خوانش شامل نویسه(های) نامعتبر است.</string>
+<string name="user_dictionary_tool_status_error_word_empty">لطفاً کلمه را تایپ کنید.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">کلمه خیلی طولانی است.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">‏کلمه Thw دارای نویسه‌(های) نامعتبر است.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">منبع ورودی شامل کلمات خیلی زیادی است.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">برخی از کلمات وارد نشدند.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">عملیات دیگری برای واگرد وجود ندارد.</string>
+<string name="japanese_pos_noun">اسم</string>
+<string name="japanese_pos_abbreviation">اختصار</string>
+<string name="japanese_pos_suggestion_only">فقط پیشنهاد</string>
+<string name="japanese_pos_proper_noun">اسم خاص</string>
+<string name="japanese_pos_personal_name">اسم شخص</string>
+<string name="japanese_pos_family_name">نام خانوادگی</string>
+<string name="japanese_pos_first_name">نام</string>
+<string name="japanese_pos_organization_name">نام سازمان</string>
+<string name="japanese_pos_place_name">نام مکان</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">‏SA-اسمی که بی‌قاعده صرف می‌شود</string>
+<string name="japanese_pos_adjective_verbal_noun">اسم فعل صفت</string>
+<string name="japanese_pos_number">عدد</string>
+<string name="japanese_pos_alphabet">الفبا</string>
+<string name="japanese_pos_symbol">نماد</string>
+<string name="japanese_pos_emoticon">شکلک</string>
+<string name="japanese_pos_adverb">قید</string>
+<string name="japanese_pos_prenoun_adjectival">صفت قبل از اسم</string>
+<string name="japanese_pos_conjunction">حرف ربط</string>
+<string name="japanese_pos_interjection">حرف ندا</string>
+<string name="japanese_pos_prefix">پیشوند</string>
+<string name="japanese_pos_counter_suffix">پسوند شمار</string>
+<string name="japanese_pos_generic_suffix">پسوند عمومی</string>
+<string name="japanese_pos_person_name_suffix">پسوند نام شخص</string>
+<string name="japanese_pos_place_name_suffix">پسوند نام مکان</string>
+<string name="japanese_pos_wa_group1_verb">‏WA-فعل گروه ۱</string>
+<string name="japanese_pos_ka_group1_verb">‏KA-فعل گروه ۱</string>
+<string name="japanese_pos_sa_group1_verb">‏SA-فعل گروه ۱</string>
+<string name="japanese_pos_ta_group1_verb">‏TA-فعل گروه ۱</string>
+<string name="japanese_pos_na_group1_verb">‏NA-فعل گروه ۱</string>
+<string name="japanese_pos_ma_group1_verb">‏MA-فعل گروه ۱</string>
+<string name="japanese_pos_ra_group1_verb">‏RA-فعل گروه ۱</string>
+<string name="japanese_pos_ga_group1_verb">‏GA-فعل گروه ۱</string>
+<string name="japanese_pos_ba_group1_verb">‏BA-فعل گروه ۱</string>
+<string name="japanese_pos_ha_group1_verb">‏HA-فعل گروه ۱</string>
+<string name="japanese_pos_group2_verb">فعل گروه ۲</string>
+<string name="japanese_pos_kuru_group3_verb">‏Kuru-فعل گروه ۳</string>
+<string name="japanese_pos_suru_group3_verb">‏Suru-فعل گروه ۳</string>
+<string name="japanese_pos_zuru_group3_verb">‏Zuru-فعل گروه ۳</string>
+<string name="japanese_pos_ru_group3_verb">‏Ru-فعل گروه ۳</string>
+<string name="japanese_pos_adjective">صفت</string>
+<string name="japanese_pos_sentence_ending_particle">پسوند جمله</string>
+<string name="japanese_pos_punctuation">نشانه گذاری</string>
+<string name="japanese_pos_free_standing_word">کلمه مستقل</string>
+<string name="japanese_pos_suppression_word">کلمه بازدارنده</string>
+<string name="yes">بله</string>
+<string name="no">خیر</string>
+</resources>

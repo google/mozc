@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">japončina</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Softvérová klávesnica</string>
+<string name="pref_software_keyboard_advanced_settings_title">Rozšírené nastavenia softvérovej klávesnice</string>
+<string name="pref_fragment_software_keyboard_title">Softvérová klávesnica</string>
+<string name="pref_fragment_input_support_title">Podpora vstupu</string>
+<string name="pref_fragment_conversion_title">Konverzia</string>
+<string name="pref_fragment_dictionary_title">Slovník</string>
+<string name="pref_fragment_user_feedback_title">Spätná väzba od používateľov</string>
+<string name="pref_fragment_about_title">Informácie</string>
+<string name="pref_fragment_development_title">Vývoj</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Predvoľby softvérovej klávesnice pre režim na výšku</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Predvoľby softvérovej klávesnice pre režim na šírku</string>
+<string name="pref_keyboard_layout_title">Rozloženie klávesnice</string>
+<string name="pref_input_style_title">Štýl vstupu</string>
+<string name="pref_qwerty_layout_for_alphabet_title">Režim QWERTY</string>
+<string name="pref_flick_sensitivity_title">Citlivosť posúvania rýchlym pohybom prsta</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Použiť nastavenia režimu na výšku</string>
+<string name="pref_keyboard_height_ratio_title">Výška klávesnice</string>
+<string name="pref_input_feedback_category_title">Predvoľby odozvy vstupu</string>
+<string name="pref_haptic_feedback_title">Hmatová odozva</string>
+<string name="pref_haptic_feedback_duration_title">Trvanie hmatovej odozvy</string>
+<string name="pref_sound_feedback_title">Zvuková odozva</string>
+<string name="pref_sound_feedback_volume_title">Hlasitosť zvukovej odozvy</string>
+<string name="pref_popup_feedback_title">Odozva kontextového okna</string>
+<string name="pref_other_input_support_preference_category_title">Ďalšie predvoľby podpory vstupu</string>
+<string name="pref_fullscreen_title">Režim celej obrazovky</string>
+<string name="pref_skin_type_title">Motív klávesnice</string>
+<string name="pref_hardware_title">Predvoľby pre hardvérové klávesnice</string>
+<string name="pref_voice_input_title">Zobraziť tlačidlo hlasového vstupu</string>
+<string name="pref_conversion_category_title">Predvoľby konverzie</string>
+<string name="pref_layout_adjustment_title">Úprava rozloženia</string>
+<string name="pref_space_character_form_title">Použiť polovičnú medzeru</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Necitlivá konverzia modifikátora</string>
+<string name="pref_typing_correction_title">Oprava písania</string>
+<string name="pref_other_incognito_mode_title">Režim inkognito</string>
+<string name="pref_emoji_provider_type_title">Vybrať poskytovateľa emodži</string>
+<string name="pref_dictionry_category_title">Predvoľby slovníka</string>
+<string name="pref_dictionary_personalization_title">Prispôsobenie</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Nástroj slovníka</string>
+<string name="pref_clear_category_title">Vymazať históriu</string>
+<string name="pref_clear_conversion_history_title">História konverzie</string>
+<string name="pref_clear_symbol_history_title">História symbolov</string>
+<string name="pref_clear_user_dictionary_title">Používateľský slovník</string>
+<string name="pref_user_feedback_category_title">Spätná väzba od používateľov</string>
+<string name="pref_other_usage_stats_title">Odosielať štatistiky používania</string>
+<string name="pref_about_about_this_software_title">Informácie o tomto softvéri</string>
+<string name="pref_about_version_title">Verzia</string>
+<string name="pref_about_terms_of_service_title">Zmluvné podmienky</string>
+<string name="pref_about_privacy_policy_title">Pravidlá ochrany osobných údajov</string>
+<string name="pref_about_oss_credits_title">Softvér s otvoreným zdrojom</string>
+<string name="pref_launcher_icon_visibility_title">Zobraziť ikonu aplikácie</string>
+<string name="pref_haptic_feedback_description">Vibrovať pri stlačení klávesov</string>
+<string name="pref_sound_feedback_description">Zvuk pri stlačení klávesov</string>
+<string name="pref_popup_feedback_description">Kontextové okno pri stlačení klávesov</string>
+<string name="pref_keyboard_layout_description">Prepnúť rozloženie klávesnice</string>
+<string name="pref_keyboard_layout_title_12keys">12 klávesov</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">Klávesnica Godan</string>
+<string name="pref_keyboard_layout_description_12keys">Rozloženie mobilného telefónu</string>
+<string name="pref_keyboard_layout_description_qwerty">Rozloženie počítačovej klávesnice</string>
+<string name="pref_keyboard_layout_description_godan">Rozloženie vyhradené pre Romadži. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=sk&amp;topic=25606&amp;answer=2700298\'&gt;Použitie&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Vybrať štýl vstupu</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Ak je táto možnosť začiarknutá, pre abecedný režim vstupu sa bez ohľadu na hlavné rozloženie použije rozloženie QWERTY.</string>
+<string name="pref_fullscreen_description">Ak je táto možnosť začiarknutá, cieľové textové pole sa zobrazí v režime celej obrazovky.</string>
+<string name="pref_flick_sensitivity_description">Upraviť citlivosť posúvania rýchlym pohybom prsta</string>
+<string name="pref_layout_adjustment_description">Prepnúť úpravu klávesnice</string>
+<string name="pref_keyboard_height_ratio_description">Zmeniť výšku klávesnice</string>
+<string name="pref_space_character_form_description">Vždy používať polovičnú medzeru bez ohľadu na režim vstupu</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Používať necitlivú konverziu modifikátora kana. Platí pre klávesnicu s 12 klávesami a klávesnicu Godan. Napr. かつこう→学校</string>
+<string name="pref_typing_correction_description">Zisťovať preklepy a zobrazovať opravené návrhy. Napr. すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">Ak chcete použiť emodži, vyberte poskytovateľa emodži.</string>
+<string name="pref_skin_type_description">Ak chcete prispôsobiť vzhľad softvérovej klávesnice, vyberte si motív klávesnice.</string>
+<string name="pref_voice_input_description">Zobraziť tlačidlo hlasového vstupu na softvérovej klávesnici.</string>
+<string name="pref_hardware_keymap_description">Vybrať mapovanie klávesov pre hardvérové klávesnice</string>
+<string name="pref_dictionary_personalization_description">Povoliť osobné návrhy na základe predchádzajúceho vstupu</string>
+<string name="pref_dictionary_user_dictionary_tool_description">Upraviť používateľské slovníky</string>
+<string name="pref_clear_category_description">Vymazať údaje prispôsobenia alebo návrhov</string>
+<string name="pref_clear_conversion_history_description">Vymazať históriu konverzií</string>
+<string name="pref_clear_symbol_history_description">Vymazať históriu vstupu symbolov</string>
+<string name="pref_clear_user_dictionary_description">Vymazať používateľský slovník</string>
+<string name="pref_other_incognito_mode_description">Dočasne zakázať prispôsobenie, návrhy a používateľský slovník</string>
+<string name="pref_other_usage_stats_description">Odosielať štatistiky využitia spoločnosti %1$s. Použijú sa iba na zlepšenie produktov a služieb spoločnosti %1$s.</string>
+<string name="pref_about_terms_of_service_description">Zobraziť zmluvné podmienky (webová stránka)</string>
+<string name="pref_about_privacy_policy_description">Zobraziť pravidlá ochrany osobných údajov (webová stránka)</string>
+<string name="pref_about_oss_credits_description">Tento softvér používa softvér s otvoreným zdrojom: zobraziť licencie</string>
+<string name="pref_launcher_icon_visibility_description">Zobraziť ikonu aplikácie v aplikácii Launcher</string>
+<string name="pref_input_style_setting_entry_toggle">Prepnúť</string>
+<string name="pref_input_style_setting_entry_flick">Posúvať rýchlym pohybom prsta</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Prepnúť a posúvať rýchlym pohybom prsta</string>
+<string name="pref_fullscreen_portrait">Povoliť v režime na výšku</string>
+<string name="pref_fullscreen_landscape">Povoliť v režime na šírku</string>
+<string name="pref_emoji_provider_type_unicode">Zakázať operátora emodži</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">oranžový/svetlosivý</string>
+<string name="pref_skin_type_blue_lightgray">modrý/svetlosivý</string>
+<string name="pref_skin_type_blue_darkgray">modrý/tmavosivý</string>
+<string name="pref_skin_type_material_design_light">Material Design (svetlý)</string>
+<string name="pref_skin_type_material_design_dark">Material Design (tmavý)</string>
+<string name="pref_hardware_keymap_default">Predvolené nastavenie systému</string>
+<string name="pref_hardware_keymap_japanese109A">japonská klávesnica 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 klávesov</string>
+<string name="pref_dictionary_personalization_entry_enabled">Povoliť</string>
+<string name="pref_dictionary_personalization_entry_readonly">Zamrznuté</string>
+<string name="pref_dictionary_personalization_entry_disabled">Zakázať</string>
+<string name="pref_layout_adjustment_entry_fill">Vyplniť</string>
+<string name="pref_layout_adjustment_entry_right">Vpravo</string>
+<string name="pref_layout_adjustment_entry_left">Vľavo</string>
+<string name="firsttime_close_button">Ďalej &gt;&gt;</string>
+<string name="firsttime_description_thank_you">Ďakujeme, že používate službu %s.</string>
+<string name="firsttime_description_usage_stats">Na to, aby sme mohli zlepšiť produkty a služby %s, vás žiadame o zváženie povolenia štatistík používania.\n\nToto nastavenie je možné zmeniť na obrazovke predvolieb.</string>
+<string name="firsttime_send_usage_stats_devchannel">Štatistiky používania sú povolené, pretože používate verziu vo vývoji.</string>
+<string name="pref_ime_enable_alert_title">Nastavenie pre textové nastavenia</string>
+<string name="pref_ime_enable_alert_message">Povoľte %s.</string>
+<string name="pref_ime_switch_alert_title">Nastavenie pre metódu vstupu</string>
+<string name="pref_ime_switch_alert_message">Zmeňte metódu vstupu na %s.</string>
+<string name="pref_ime_alert_next">Ďalej</string>
+<string name="pref_ime_alert_cancel">Zrušiť</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Nízka</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Stredná</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Vysoká</string>
+<string name="pref_haptic_feedback_duration_low_text">Krátka</string>
+<string name="pref_haptic_feedback_duration_high_text">Dlhá</string>
+<string name="pref_sound_feedback_volume_low_text">Min.</string>
+<string name="pref_sound_feedback_volume_middle_text">Stredná</string>
+<string name="pref_sound_feedback_volume_high_text">Max.</string>
+<string name="symbol_input_no_history">Žiadna história.\n\nAk chcete prehliadať kategórie,\nposúvajte prstom po obrazovke.</string>
+<string name="symbol_emoji_disabled_message">Toto textové pole nepodporuje vstup pre emodži.</string>
+<string name="menu_dialog_title">Možnosti vstupu</string>
+<string name="menu_item_input_method">Vybrať metódu vstupu</string>
+<string name="menu_item_preferences">Nastavenia – %s</string>
+<string name="menu_item_mushroom">Spustiť aplikáciu Mushroom</string>
+<string name="user_dictionary_tool_app_name">Nástroj slovníka</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Nové slovo</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Odstrániť slovo</string>
+<string name="user_dictionary_tool_menu_undo_title">Späť</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Nový slovník</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Premenovať aktuálny slovník</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Odstrániť aktuálny slovník</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Exportovať aktuálny slovník</string>
+<string name="user_dictionary_tool_default_dictionary_name">Používateľský slovník 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Vytvoriť nový slovník</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Upraviť názov slovníka</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Názov slovníka</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Pridať nové slovo</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Upraviť slovo</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Čítanie</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Slovo</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Kategória</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Vybrať zdroj importu</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Vybrať cieľ importu</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Importovať ako nový slovník</string>
+<string name="user_dictionary_tool_delete_done_message">Odstránenie bolo úspešné</string>
+<string name="user_dictionary_tool_undo_done_message">Vrátenie zmien bolo úspešné</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Vyberte slová, ktoré chcete odstrániť</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Import údajov funguje iba v prípade súborov</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Súbor sa nepodarilo prečítať</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">Súbor ZIP je prázdny</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Neexistujú žiadne aplikácie (napr. Dokumenty Google) na exportovanie používateľského slovníka</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Exportovanie používateľského slovníka zlyhalo</string>
+<string name="user_dictionary_tool_status_error_general">Operácia zlyhala</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Súbor sa nepodarilo otvoriť</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Súbor sa nepodarilo prečítať</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Veľkosť údajov prekročila limit veľkosti súboru</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Nie je možné vytvoriť viac slovníkov</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Nie je možné vytvoriť viac záznamov v slovníku</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Zadajte názov slovníka</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Názov je príliš dlhý</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Názov obsahuje neplatné znaky</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Názov už existuje</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Zadajte čítanie</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Čítanie je príliš dlhé</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Čítanie obsahuje neplatné znaky</string>
+<string name="user_dictionary_tool_status_error_word_empty">Zadajte slovo</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Slovo je príliš dlhé</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Slovo obsahuje neplatné znaky</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Zdroj importu obsahuje príliš veľa slov</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Niektoré slová sa nepodarilo importovať</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Neexistuje žiadna ďalšia operácia, ktorú by bolo možné vrátiť späť</string>
+<string name="japanese_pos_noun">Podstatné meno</string>
+<string name="japanese_pos_abbreviation">Skratka</string>
+<string name="japanese_pos_suggestion_only">Iba návrh</string>
+<string name="japanese_pos_proper_noun">Vlastné meno</string>
+<string name="japanese_pos_personal_name">Osobné meno</string>
+<string name="japanese_pos_family_name">Priezvisko</string>
+<string name="japanese_pos_first_name">Meno</string>
+<string name="japanese_pos_organization_name">Názov organizácie</string>
+<string name="japanese_pos_place_name">Názov miesta</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA – podstatné meno s nepravidelným skloňovaním</string>
+<string name="japanese_pos_adjective_verbal_noun">Prídavné slovesné podstatné meno</string>
+<string name="japanese_pos_number">Číslo</string>
+<string name="japanese_pos_alphabet">Abeceda</string>
+<string name="japanese_pos_symbol">Symbol</string>
+<string name="japanese_pos_emoticon">Emotikon</string>
+<string name="japanese_pos_adverb">Príslovka</string>
+<string name="japanese_pos_prenoun_adjectival">Prídavné zámeno</string>
+<string name="japanese_pos_conjunction">Spojka</string>
+<string name="japanese_pos_interjection">Citoslovce</string>
+<string name="japanese_pos_prefix">Predpona</string>
+<string name="japanese_pos_counter_suffix">Obrátená prípona</string>
+<string name="japanese_pos_generic_suffix">Generická prípona</string>
+<string name="japanese_pos_person_name_suffix">Prípona mena osoby</string>
+<string name="japanese_pos_place_name_suffix">Prípona názvu miesta</string>
+<string name="japanese_pos_wa_group1_verb">Sloveso WA – Skupina1</string>
+<string name="japanese_pos_ka_group1_verb">Sloveso KA – Skupina1</string>
+<string name="japanese_pos_sa_group1_verb">Sloveso SA – Skupina1</string>
+<string name="japanese_pos_ta_group1_verb">Sloveso TA – Skupina1</string>
+<string name="japanese_pos_na_group1_verb">Sloveso NA – Skupina1</string>
+<string name="japanese_pos_ma_group1_verb">Sloveso MA – Skupina1</string>
+<string name="japanese_pos_ra_group1_verb">Sloveso RA – Skupina1</string>
+<string name="japanese_pos_ga_group1_verb">Sloveso GA – Skupina1</string>
+<string name="japanese_pos_ba_group1_verb">Sloveso BA – Skupina1</string>
+<string name="japanese_pos_ha_group1_verb">Sloveso HA – Skupina1</string>
+<string name="japanese_pos_group2_verb">Sloveso – Skupina2</string>
+<string name="japanese_pos_kuru_group3_verb">Sloveso Kuru – Skupina3</string>
+<string name="japanese_pos_suru_group3_verb">Sloveso Suru – Skupina3</string>
+<string name="japanese_pos_zuru_group3_verb">Sloveso Zulu – Skupina3</string>
+<string name="japanese_pos_ru_group3_verb">Sloveso Ru – Skupina3</string>
+<string name="japanese_pos_adjective">Prídavné meno</string>
+<string name="japanese_pos_sentence_ending_particle">Častica ukončenia vety</string>
+<string name="japanese_pos_punctuation">Interpunkcia</string>
+<string name="japanese_pos_free_standing_word">Voľne stojace slovo</string>
+<string name="japanese_pos_suppression_word">Tlmiace slovo</string>
+<string name="yes">Áno</string>
+<string name="no">Nie</string>
+</resources>

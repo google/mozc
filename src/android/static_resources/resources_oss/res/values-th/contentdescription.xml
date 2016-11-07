@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="cd_keyboard_kana">แป้นพิมพ์แบบ Kana</string>
+<string name="cd_keyboard_alphabet">แป้นพิมพ์ตัวอักษร</string>
+<string name="cd_keyboard_number">แป้นพิมพ์หมายเลข</string>
+<string name="cd_key_shift">Shift</string>
+<string name="cd_key_up">ขึ้น</string>
+<string name="cd_key_left">ซ้าย</string>
+<string name="cd_key_right">ขวา</string>
+<string name="cd_key_down">ลง</string>
+<string name="cd_key_chartype_to_kana">สลับไปใช้แป้นพิมพ์แบบ Kana</string>
+<string name="cd_key_chartype_to_abc">สลับไปใช้แป้นพิมพ์ตัวอักษร</string>
+<string name="cd_key_chartype_to_abc_123">สลับไปใช้แป้นพิมพ์สัญลักษณ์</string>
+<string name="cd_key_undo">เลิกทำ</string>
+<string name="cd_key_symbol">หน้าจอการป้อนข้อมูลสัญลักษณ์</string>
+<string name="cd_key_alt">สัญลักษณ์ที่ใช้แทน</string>
+<string name="cd_key_alt_unmodified">สัญลักษณ์ตามปกติ</string>
+<string name="cd_key_capslock">Caps lock</string>
+<string name="cd_key_capsunlock">ปลดล็อก Caps Lock</string>
+<string name="cd_key_menu_dialog">เปิดเมนู</string>
+<string name="cd_key_globe">สลับวิธีการป้อนข้อมูล</string>
+<string name="cd_key_uchar_backspace">ลบถอยหลัง</string>
+<string name="cd_key_uchar_linefeed">ขึ้นบรรทัดใหม่</string>
+<string name="cd_key_uchar_space">วรรค</string>
+<string name="cd_key_uchar_exclamation_mark">เครื่องหมายอัศเจรีย์</string>
+<string name="cd_key_uchar_quotation_mark" translation_description='When ["] key in the keyboard is pressed, this string is spoken up for accessibility'>เครื่องหมายอัญประกาศ</string>
+<string name="cd_key_uchar_number_sign">สัญลักษณ์ตัวเลข</string>
+<string name="cd_key_uchar_dollar_sign">เครื่องหมายดอลลาร์</string>
+<string name="cd_key_uchar_percent_sign">เครื่องหมายเปอร์เซ็นต์</string>
+<string name="cd_key_uchar_ampersand">แอมเพอร์แซนด์</string>
+<string name="cd_key_uchar_apostrophe">อะพอสทรอฟี</string>
+<string name="cd_key_uchar_left_parenthesis">วงเล็บเปิด</string>
+<string name="cd_key_uchar_right_parenthesis">วงเล็บปิด</string>
+<string name="cd_key_uchar_asterisk">ดอกจัน</string>
+<string name="cd_key_uchar_plus_sign">เครื่องหมายบวก</string>
+<string name="cd_key_uchar_comma">จุลภาค</string>
+<string name="cd_key_uchar_hyphen_minus">ยัติภังค์</string>
+<string name="cd_key_uchar_full_stop">มหัพภาค</string>
+<string name="cd_key_uchar_solidus">เครื่องหมายทับ</string>
+<string name="cd_key_uchar_digit_zero">0</string>
+<string name="cd_key_uchar_digit_one">1</string>
+<string name="cd_key_uchar_digit_two">2</string>
+<string name="cd_key_uchar_digit_three">3</string>
+<string name="cd_key_uchar_digit_four">4</string>
+<string name="cd_key_uchar_digit_five">5</string>
+<string name="cd_key_uchar_digit_six">6</string>
+<string name="cd_key_uchar_digit_seven">7</string>
+<string name="cd_key_uchar_digit_eight">8</string>
+<string name="cd_key_uchar_digit_nine">9</string>
+<string name="cd_key_uchar_colon">ทวิภาค</string>
+<string name="cd_key_uchar_semicolon">อัฒภาค</string>
+<string name="cd_key_uchar_less_than_sign">เครื่องหมายน้อยกว่า</string>
+<string name="cd_key_uchar_equals_sign">เครื่องหมายเท่ากับ</string>
+<string name="cd_key_uchar_greater_than_sign">เครื่องหมายมากกว่า</string>
+<string name="cd_key_uchar_question_mark">เครื่องหมายคำถาม</string>
+<string name="cd_key_uchar_commercial_at">เครื่องหมายแอท</string>
+<string name="cd_key_uchar_latin_capital_letter_a">A</string>
+<string name="cd_key_uchar_latin_capital_letter_b">B</string>
+<string name="cd_key_uchar_latin_capital_letter_c">C</string>
+<string name="cd_key_uchar_latin_capital_letter_d">D</string>
+<string name="cd_key_uchar_latin_capital_letter_e">E</string>
+<string name="cd_key_uchar_latin_capital_letter_f">F</string>
+<string name="cd_key_uchar_latin_capital_letter_g">G</string>
+<string name="cd_key_uchar_latin_capital_letter_h">H</string>
+<string name="cd_key_uchar_latin_capital_letter_i">I</string>
+<string name="cd_key_uchar_latin_capital_letter_j">J</string>
+<string name="cd_key_uchar_latin_capital_letter_k">K</string>
+<string name="cd_key_uchar_latin_capital_letter_l">L</string>
+<string name="cd_key_uchar_latin_capital_letter_m">M</string>
+<string name="cd_key_uchar_latin_capital_letter_n">N</string>
+<string name="cd_key_uchar_latin_capital_letter_o">O</string>
+<string name="cd_key_uchar_latin_capital_letter_p">P</string>
+<string name="cd_key_uchar_latin_capital_letter_q">Q</string>
+<string name="cd_key_uchar_latin_capital_letter_r">R</string>
+<string name="cd_key_uchar_latin_capital_letter_s">S</string>
+<string name="cd_key_uchar_latin_capital_letter_t">T</string>
+<string name="cd_key_uchar_latin_capital_letter_u">U</string>
+<string name="cd_key_uchar_latin_capital_letter_v">V</string>
+<string name="cd_key_uchar_latin_capital_letter_w">W</string>
+<string name="cd_key_uchar_latin_capital_letter_x">X</string>
+<string name="cd_key_uchar_latin_capital_letter_y">Y</string>
+<string name="cd_key_uchar_latin_capital_letter_z">Z</string>
+<string name="cd_key_uchar_left_square_bracket">วงเล็บเหลี่ยมเปิด</string>
+<string name="cd_key_uchar_reverse_solidus">แบ็กสแลช</string>
+<string name="cd_key_uchar_right_square_bracket">วงเล็บเหลี่ยมปิด</string>
+<string name="cd_key_uchar_circumflex_accent">เครื่องหมายแคเรต</string>
+<string name="cd_key_uchar_low_line">อันเดอร์สกอร์</string>
+<string name="cd_key_uchar_grave_accent">เกรฟ</string>
+<string name="cd_key_uchar_latin_small_letter_a">a</string>
+<string name="cd_key_uchar_latin_small_letter_b">b</string>
+<string name="cd_key_uchar_latin_small_letter_c">c</string>
+<string name="cd_key_uchar_latin_small_letter_d">d</string>
+<string name="cd_key_uchar_latin_small_letter_e">e</string>
+<string name="cd_key_uchar_latin_small_letter_f">f</string>
+<string name="cd_key_uchar_latin_small_letter_g">g</string>
+<string name="cd_key_uchar_latin_small_letter_h">h</string>
+<string name="cd_key_uchar_latin_small_letter_i">i</string>
+<string name="cd_key_uchar_latin_small_letter_j">j</string>
+<string name="cd_key_uchar_latin_small_letter_k">k</string>
+<string name="cd_key_uchar_latin_small_letter_l">l</string>
+<string name="cd_key_uchar_latin_small_letter_m">m</string>
+<string name="cd_key_uchar_latin_small_letter_n">n</string>
+<string name="cd_key_uchar_latin_small_letter_o">o</string>
+<string name="cd_key_uchar_latin_small_letter_p">p</string>
+<string name="cd_key_uchar_latin_small_letter_q">q</string>
+<string name="cd_key_uchar_latin_small_letter_r">r</string>
+<string name="cd_key_uchar_latin_small_letter_s">s</string>
+<string name="cd_key_uchar_latin_small_letter_t">t</string>
+<string name="cd_key_uchar_latin_small_letter_u">u</string>
+<string name="cd_key_uchar_latin_small_letter_v">v</string>
+<string name="cd_key_uchar_latin_small_letter_w">w</string>
+<string name="cd_key_uchar_latin_small_letter_x">x</string>
+<string name="cd_key_uchar_latin_small_letter_y">y</string>
+<string name="cd_key_uchar_latin_small_letter_z">z</string>
+<string name="cd_key_uchar_left_curly_bracket">วงเล็บปีกกาเปิด</string>
+<string name="cd_key_uchar_vertical_line">ไปป์</string>
+<string name="cd_key_uchar_right_curly_bracket">วงเล็บปีกกาปิด</string>
+<string name="cd_key_uchar_tilde">ทิลเดอ</string>
+<string name="cd_key_action_done">เสร็จสิ้น</string>
+<string name="cd_key_action_go">ไป</string>
+<string name="cd_key_action_next">ถัดไป</string>
+<string name="cd_key_action_previous">ก่อนหน้า</string>
+<string name="cd_key_action_search">ค้นหา</string>
+<string name="cd_key_action_send">ส่ง</string>
+<string name="cd_key_composing_done">ส่ง</string>
+<string name="cd_key_kana_line_a">คอลัมน์ A</string>
+<string name="cd_key_kana_line_ka">คอลัมน์ KA</string>
+<string name="cd_key_kana_line_sa">คอลัมน์ SA</string>
+<string name="cd_key_kana_line_ta">คอลัมน์ TA</string>
+<string name="cd_key_kana_line_na">คอลัมน์ NA</string>
+<string name="cd_key_kana_line_ha">คอลัมน์ HA</string>
+<string name="cd_key_kana_line_ma">คอลัมน์ MA</string>
+<string name="cd_key_kana_line_ya">คอลัมน์ YA</string>
+<string name="cd_key_kana_line_ra">คอลัมน์ RA</string>
+<string name="cd_key_kana_modifier">เครื่องหมายออกเสียง</string>
+<string name="cd_key_kana_line_wa">คอลัมน์ WA</string>
+<string name="cd_key_kana_punctuation">เครื่องหมายวรรคตอน</string>
+<string name="cd_key_uchar_katakana_middle_dot">จุดกลาง</string>
+<string name="cd_key_uchar_ideographic_comma">จุลภาค</string>
+<string name="cd_key_uchar_ideographic_full_stop">มหัพภาค</string>
+<string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark">เครื่องหมายออกเสียงยาว</string>
+<string name="cd_key_alphabet_abc">ABC</string>
+<string name="cd_key_alphabet_def">DEF</string>
+<string name="cd_key_alphabet_ghi">GHI</string>
+<string name="cd_key_alphabet_jkl">JKL</string>
+<string name="cd_key_alphabet_mno">MNO</string>
+<string name="cd_key_alphabet_pqrs">PQRS</string>
+<string name="cd_key_alphabet_tuv">TUV</string>
+<string name="cd_key_alphabet_wxyz">WXYZ</string>
+<string name="cd_key_alphabet_capitalize">ตัวพิมพ์ใหญ่</string>
+<string name="spoken_use_headphone_for_password">เสียบชุดหูฟังเพื่อฟังเสียงเมื่อพิมพ์รหัสผ่าน</string>
+<string name="cd_keyboard_fold_button">เปลี่ยนขนาดของหน้าต่างคำใกล้เคียง</string>
+<string name="cd_close_symbol_window">กลับไปยังแป้นพิมพ์</string>
+<string name="cd_symbol_window_number">ตัวเลข</string>
+<string name="cd_symbol_window_symbol">สัญลักษณ์</string>
+<string name="cd_symbol_window_emoticon">ไอคอนสื่ออารมณ์</string>
+<string name="cd_symbol_window_emoji">อีโมจิ</string>
+<string name="cd_symbol_window_enter">ขึ้นบรรทัดใหม่</string>
+<string name="cd_symbol_window_backspace">ลบถอยหลัง</string>
+<string name="cd_symbol_window_minor_history">ประวัติ</string>
+<string name="cd_symbol_window_minor_symbol_general">สัญลักษณ์ทั่วไป</string>
+<string name="cd_symbol_window_minor_symbol_half">สัญลักษณ์ความกว้างเต็มและครึ่งหนึ่ง</string>
+<string name="cd_symbol_window_minor_symbol_parenthesis">สัญลักษณ์วงเล็บ</string>
+<string name="cd_symbol_window_minor_symbol_arrow">สัญลักษณ์ลูกศร</string>
+<string name="cd_symbol_window_minor_symbol_math">สัญลักษณ์ทางคณิตศาสตร์</string>
+<string name="cd_symbol_window_minor_emoticon_smile">ไอคอนสื่ออารมณ์ยิ้ม</string>
+<string name="cd_symbol_window_minor_emoticon_sweat">ไอคอนสื่ออารมณ์เหงื่อออก</string>
+<string name="cd_symbol_window_minor_emoticon_surprise">ไอคอนสื่ออารมณ์ประหลาดใจ</string>
+<string name="cd_symbol_window_minor_emoticon_sadness">ไอคอนสื่ออารมณ์เศร้า</string>
+<string name="cd_symbol_window_minor_emoticon_displeasure">ไอคอนสื่ออารมณ์ไม่พอใจ</string>
+<string name="cd_symbol_window_minor_emoji_face">อีโมจิใบหน้า</string>
+<string name="cd_symbol_window_minor_emoji_food">อีโมจิอาหาร</string>
+<string name="cd_symbol_window_minor_emoji_activity">อีโมจิกิจกรรม</string>
+<string name="cd_symbol_window_minor_emoji_city">อีโมจิเมือง</string>
+<string name="cd_symbol_window_minor_emoji_nature">อีโมจิธรรมชาติ</string>
+<string name="help_userdictionary_dictionary_name">ป้อนชื่อพจนานุกรม</string>
+<string name="help_userdictionary_edit_word_value">ป้อนคำ</string>
+<string name="help_userdictionary_edit_word_key">ป้อนการอ่าน</string>
+<string name="cd_voice_input">ป้อนข้อมูลด้วยเสียง</string>
+<string name="cd_narrow_frame_widen_button">แสดงแป้นพิมพ์</string>
+</resources>

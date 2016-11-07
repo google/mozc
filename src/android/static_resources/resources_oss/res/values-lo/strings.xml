@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">ຍີ່ປຸ່ນ</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">ຊອບ​ແວ​ແປ້ນ​ພິມ</string>
+<string name="pref_software_keyboard_advanced_settings_title">​ການ​ຕັ້ງ​ຄ່າ​ຊອບ​ແວ​ແປ້ນ​ພິມ​ລະ​ດັບ​ສູງ</string>
+<string name="pref_fragment_software_keyboard_title">ແປ້ນ​ພິມຊອບ​ແວ​</string>
+<string name="pref_fragment_input_support_title">ຮອງ​ຮັບ​ການ​ປ້ອນ​ເຂົ້າ</string>
+<string name="pref_fragment_conversion_title">ການ​ປ່ຽນ</string>
+<string name="pref_fragment_dictionary_title">ວັດຈະນານຸກົມ</string>
+<string name="pref_fragment_user_feedback_title">ຄຳ​ຕິ​ຊົມ​ຜູ່​ໃຊ້</string>
+<string name="pref_fragment_about_title">ກ່ຽວກັບ</string>
+<string name="pref_fragment_development_title">ການພັດທະນາ</string>
+<string name="pref_software_keyboard_preferences_portrait_title">​ການ​ຕັ້ງ​ຄ່າ​ຊອບ​ແວ​ແປ້ນ​ພິມ​ສຳ​ລັບ​ໂໝດ​ລວງ​ຕັ້ງ</string>
+<string name="pref_software_keyboard_preferences_landscape_title">​ການ​ຕັ້ງ​ຄ່າ​ຊອບ​ແວ​ແປ້ນ​ພິມ​ສຳ​ລັບ​ໂໝດ​ລວງ​​ນອນ</string>
+<string name="pref_keyboard_layout_title">​ຮູບ​ແບບ​ແປ້ນ​ພິມ</string>
+<string name="pref_input_style_title">​ຮູບ​ແບບ​ການ​ປ້ອນ​ຂໍ້​ມູນ</string>
+<string name="pref_qwerty_layout_for_alphabet_title">ໂໝດ QWERTY</string>
+<string name="pref_flick_sensitivity_title">ຄວາມ​ຖີ່ການ​ກະ​ພິບ</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">​ໃຊ້​ການ​ຕັ້ງ​ຄ່າ​ລວງ​ຕັ້ງ</string>
+<string name="pref_keyboard_height_ratio_title">​ຄວາມ​ສູງ​ແປ້ນ​ພິມ</string>
+<string name="pref_input_feedback_category_title">​ການ​ຕັ້ງ​ຄ່າ​​ຕອບ​ສະ​ໜອງ​ການ​ປ້ອນ​ຂໍ້​ມູນ</string>
+<string name="pref_haptic_feedback_title">​ການ​ຕອບ​ສະ​​ໜອງ​ຕໍ່​ສຳ​ຜັດ</string>
+<string name="pref_haptic_feedback_duration_title">​ໄລ​ຍະ​ເວ​ລາ​ການ​ຕອບ​ສະ​ໜອງຕໍ່​ສຳ​ຜັດ</string>
+<string name="pref_sound_feedback_title">​ການ​ຕອບ​ສະ​ໜອງ​ສຽງ</string>
+<string name="pref_sound_feedback_volume_title">​ລະ​ດັບ​ການ​ຕອບ​ສະ​ໜອງ​ສຽງ</string>
+<string name="pref_popup_feedback_title">​ການ​ຕອບ​ສະ​ໜອງ​ປັອບ​ອັບ</string>
+<string name="pref_other_input_support_preference_category_title">​​ການ​ຕັ້ງ​ຄ່າ​ການ​ຮອງ​ຮັບ​ການ​ປ້ອນ​ຂໍ້​ມູນ​ອື່ນໆ</string>
+<string name="pref_fullscreen_title">​ໂໝດ​ເຕັມ​ຈໍ</string>
+<string name="pref_skin_type_title">ສີສັນແປ້ນພິມ</string>
+<string name="pref_hardware_title">​ການ​ຕັ້ງ​ຄ່າ​ສຳ​ລັບ​ແປ້ນ​ພິມ​ພາຍນອກ</string>
+<string name="pref_voice_input_title">ສະ​ແດງ​ປຸ່ມ​ປ້ອນຂໍ້ມູນດ້ວຍສຽງ</string>
+<string name="pref_conversion_category_title">​ການ​ຕັ້ງ​ຄ່າ​ແປງ​ຂໍ້​ມູນ</string>
+<string name="pref_layout_adjustment_title">​ການ​ປັບ​ແຕ່ງ​ຮູບ​ແບບ</string>
+<string name="pref_space_character_form_title">​ໃຊ້​ຍະ​ຫວ່າງ​​ເຄິ່ງ​ຄວາມ​ຍາວ</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">​ໂຕ​ແກ້​ໄຂ​ການ​ແປງ​ຂໍ້​ມູນ​ແບບບໍ່​​ລະ​ອຽດ</string>
+<string name="pref_typing_correction_title">​ການ​ແກ້​ໄຂ​ການ​ພິມ</string>
+<string name="pref_other_incognito_mode_title">​ໂໝດ Incognito</string>
+<string name="pref_emoji_provider_type_title">ເລືອກ​ຜູ່​ໃຫ້​ບໍ​ລິ​ການ​ອີ​ໂມ​ຈິ</string>
+<string name="pref_dictionry_category_title">​ການ​ຕັ້ງ​ຄ່າ​ວັດ​ຈະ​ນາ​ນຸ​ກົມ</string>
+<string name="pref_dictionary_personalization_title">​ການ​ປັບ​ແຕ່ງ​ສ່ວນ​ບຸກ​ຄົນ</string>
+<string name="pref_dictionary_user_dictionary_tool_title">​ເຄື່ອງ​ມື​ວັດ​ຈະ​ນາ​ນຸ​ກົມ</string>
+<string name="pref_clear_category_title">ລຶບປະຫວັດ</string>
+<string name="pref_clear_conversion_history_title">​ປະ​ຫວັດ​ການ​ແປງ​ຂໍ້​ມູນ</string>
+<string name="pref_clear_symbol_history_title">​ປະ​ຫວັດ​ສັນ​ຍາ​ລັກ</string>
+<string name="pref_clear_user_dictionary_title">ວັດຈະ​ນານຸ​ກົມ​ຜູ່ໃຊ້</string>
+<string name="pref_user_feedback_category_title">ຄຳ​ຕິ​ຊົມ​ຜູ່​ໃຊ້</string>
+<string name="pref_other_usage_stats_title">ສົ່ງ​ສະຖິຕິການນຳໃຊ້</string>
+<string name="pref_about_about_this_software_title">​ກ່ຽວ​ກັບ​ຊອບ​ແວ​ນີ້</string>
+<string name="pref_about_version_title">ເວີຊັນ</string>
+<string name="pref_about_terms_of_service_title">​ເງື່ອນ​ໄຂ​ການ​ໃຫ້​ບໍ​ລິ​ການ</string>
+<string name="pref_about_privacy_policy_title">​ນະ​ໂຍ​ບາຍ​ຄວາມ​ເປັນ​ສ່ວນ​ໂຕ</string>
+<string name="pref_about_oss_credits_title">​ຊອບ​ແວ​ໂອ​ເພນ​ຊອດ</string>
+<string name="pref_launcher_icon_visibility_title">​ສະ​ແດງ​ໄອ​ຄອນ​ແອັບຯ</string>
+<string name="pref_haptic_feedback_description">ສັ່ນ​ເມື່ອ​ກົດ​ປຸ່ມ.</string>
+<string name="pref_sound_feedback_description">ເປີດ​ສຽງ​ເມື່ອ​ກົດ​ປຸ່ມ.</string>
+<string name="pref_popup_feedback_description">ສະ​ແດງ​ປ​ັອບ​ອັບ​ເມື່ອ​ກົດ​ປຸ່ມ.</string>
+<string name="pref_keyboard_layout_description">ສະ​ລັບ​ຮູບ​ແບບ​ແປ້​ນ​ພິມ.</string>
+<string name="pref_keyboard_layout_title_12keys">12 ​ປຸ່ມ</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">​ແປ້ນ​ພິມ​ໂກ​ແດນ</string>
+<string name="pref_keyboard_layout_description_12keys">ຮູບ​ແບບ​ໂທ​ລະ​ສັບ​ມື​ຖື.</string>
+<string name="pref_keyboard_layout_description_qwerty">ຮູບ​ແບບ​ແປ້ນ​ພິມ PC.</string>
+<string name="pref_keyboard_layout_description_godan">ແປ້ນ​ພິມ​ສະ​ເພາະ​ໂຣ​ມາ​ຈິ. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;ການ​ນຳ​ໃຊ້&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">ເລືອກ​ຮູບ​ແບບ​ການ​ປ້ອນ​ຂໍ້​ມູນ.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">ຫາກ​ເລືອກ​ແລ້ວ, ​ຮູບ​ແບບ QWERTY ຈະ​ຖືກ​ໃຊ້​ເພື່ອ​ໂໝດ​ການ​ປ້ອນ​ຂໍ້​ມູນ​ໂຕ​ອັກ​ສອນບໍ່​ວ່າ​ຮູບ​ແບບຫຼັກ​ຈະ​ເປັນ​ແນວ​ໃດ​ກໍ​ຕາມ.</string>
+<string name="pref_fullscreen_description">ຫາກ​ເລືອກ​ແລ້ວ, ​ປ່ອງ​ຂໍ້​ຄວາມ​ເປົ້າ​ໝາຍ​ຈະ​ສະ​ແດງ​ໃນ​ໂໝດ​ເຕັມ​ຈໍ.</string>
+<string name="pref_flick_sensitivity_description">ປັບ​​ຄວາມ​ຖີ່​ການ​ກະ​ພິບ.</string>
+<string name="pref_layout_adjustment_description">ສະ​ລັບ​ການ​ປັບ​ແຕ່ງ​ແປ້ນ​ພິມ.</string>
+<string name="pref_keyboard_height_ratio_description">ປ່ຽນ​ຄວາມ​ສູງ​ແປ້​ນ​ພິມ.</string>
+<string name="pref_space_character_form_description">ໃຊ້​ຍະ​ຫວ່າງ​ເຄິ່ງ​ຄວາ​ມ​ຍາວ​ສະ​ເໝີບໍ່​ວ່າ​ໂໝດ​ການ​ປ້ອນ​ຂໍ້​ມູນ​ຈະ​ເປັນ​ແບບ​ໃດ​ກໍ​ຕາມ.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">ໃຊ້​ການ​ແປງຂໍ້​ມູນ kana modifier insensitive. ມີ​ຜົນ​ກັບ​ແປ້ນ​ພິມ 12 ປຸ່ມ​ແລະ​ແປ້ນ​ພິມ​ໂກ​ແດນ. ເຊັ່ນ: かつこう→学校</string>
+<string name="pref_typing_correction_description">​ກວດ​ຫາ​ການ​ພິມ​ຜິດ​ແລະ​ສະ​ແດງ​ໂຕ​ເລືອກ​ທີ່​ຖືກ​ຕ້ອງ. ເຊັ່ນ: すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">ເລືອກ​ຜູ່​ໃຫ້​ບໍ​ລິ​ການ​ອີ​ໂມ​ຈິ​​ໃຫ້​ຖືກ​ຕ້ອງ​ເພື່ອ​ໃຊ້​ອີໂມ​ຈິ.</string>
+<string name="pref_skin_type_description">ເລືອກ​ສີ​ສັນ​ແປ້ນ​ພິມ​ເພື່ອ​ປັບ​ແຕ່ງ​ສີ​ສັນ​ຂອງ​ແປ້ນ​ພິມຊອບ​ແວ.</string>
+<string name="pref_voice_input_description">ສະ​ແດງ​ປຸ່ມ​ປ້ອນຂໍ້ມູນດ້ວຍສຽງຢູ່​ເທິງ​ແປ້ນ​ພິມ​ຊອບ​ແວ.</string>
+<string name="pref_hardware_keymap_description">ເລືອກ​ການ​ໝາຍ​ຕຳ​ແໜ່ງ​ປຸ່ມ​ສຳ​ລັບ​ແປ້ນ​ພິມ​ພາຍນອກ.</string>
+<string name="pref_dictionary_personalization_description">ເປີດ​ນຳ​ໃຊ້​ຄຳ​ແນະ​ນຳ​ສ່ວນ​ໂຕ​ໂດຍ​ອ້າງ​ອີງ​ຈາກ​ການ​ປ້ອນ​ຂໍ້​ມູນ​ທີ່​ຜ່ານ​ມາ.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">ແກ້​ໄຂວັດ​ຈະ​ນາ​ນຸ​ກົມ​ຜູ່​ໃຊ້.</string>
+<string name="pref_clear_category_description">ລຶບ​ຂໍ້​ມູນ​ການ​ປັບ​ແຕ່ງ​ສ່ວນ​ໂຕ ຫຼື​ຄຳ​ແນະ​ນຳ.</string>
+<string name="pref_clear_conversion_history_description">ລຶບ​ປະ​ຫວັດ​ການ​ສົນ​ທະ​ນາ.</string>
+<string name="pref_clear_symbol_history_description">ລຶບ​ປະ​ຫວັດ​ການ​ປ້ອນ​ຂໍ້​ມູນ​ສັນ​ຍາ​ລັກ.</string>
+<string name="pref_clear_user_dictionary_description">ລຶບວັດ​ຈະນາ​ນຸກົມ​ຜູ່ໃຊ້​.</string>
+<string name="pref_other_incognito_mode_description">ປິດ​ການ​ປັບ​ແຕ່ງ​ສ່ວນ​ໂຕ, ການ​ແນະ​ນຳ ແລະ​ວັດ​ຈະ​ນາ​ນຸ​ກົມ​ຜູ່​ໃຊ້​ຊົ່ວ​ຄາວ.</string>
+<string name="pref_other_usage_stats_description">ສົ່ງ​ສະ​ຖິ​ຕິ​ການ​ນຳ​ໃຊ້​ໄປ​ໃຫ້ %1$s. ຂໍ້​ມູນ​ເຫຼົ່າ​ນີ້​ຈະ​ຖືກ​ໃຊ້​ເພື່ອ​ປັບ​ປຸງ​ຜະ​ລິດ​ຕະ​ພັນ​ແລະ​ບໍ​ລິ​ການ %1$s ເທົ່າ​ນັ້ນ.</string>
+<string name="pref_about_terms_of_service_description">ສະ​ແດງ​ເງື່ອນ​ໄຂ​ການ​ໃຫ້​ບໍ​ລິ​ການ (ເວັບ​ໄຊ).</string>
+<string name="pref_about_privacy_policy_description">ສະ​ແດງ​ນະ​ໂຍ​ບາຍ​ຄວາມ​ເປັນ​ສ່ວນ​ໂຕ (ເວັບ​ໄຊ).</string>
+<string name="pref_about_oss_credits_description">ຊອບ​ແວ​ນີ້​ໃຊ້​ຊອບ​ແວ​ໂອ​ເພນ​ຊອດ: ເບິ່ງ​ລິ​ຂະ​ສິດ.</string>
+<string name="pref_launcher_icon_visibility_description">ສະ​ແດງ​ໄອ​ຄ​ອນ​ແອັບ​ພລິ​ເຄ​ຊັນ​ໃນ Launcher</string>
+<string name="pref_input_style_setting_entry_toggle">​ປິດ/ເປີດ</string>
+<string name="pref_input_style_setting_entry_flick">​ກະ​ພິບ</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">ປິດ/ເປີດ &amp; ກະ​ພິບ</string>
+<string name="pref_fullscreen_portrait">​ເປີດ​ໃຊ້​ໃນ​ລວງ​ຕັ້ງ</string>
+<string name="pref_fullscreen_landscape">​ເປີດ​ໃຊ້​ໃນ​ລວງນອນ</string>
+<string name="pref_emoji_provider_type_unicode">​ປິດ​ອີ​ໂມ​ຈິ​ເຄືອ​ຂ່າຍ</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">ສົ້ມ/ເທົາ​ແຈ້ງ</string>
+<string name="pref_skin_type_blue_lightgray">ຟ້າ/ເທົາ​ແຈ້ງ</string>
+<string name="pref_skin_type_blue_darkgray">ຟ້າ/ເທົາ​ມືດ</string>
+<string name="pref_skin_type_material_design_light">Material Design (ແຈ້ງ)</string>
+<string name="pref_skin_type_material_design_dark">Material Design (ມືດ)</string>
+<string name="pref_hardware_keymap_default">​ຄ່າ​ເລີ່ມ​ຕົ້ນ​ລະ​ບົບ</string>
+<string name="pref_hardware_keymap_japanese109A">Japanese 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 ປຸ່ມ​</string>
+<string name="pref_dictionary_personalization_entry_enabled">ເປີດນຳໃຊ້</string>
+<string name="pref_dictionary_personalization_entry_readonly">Frozen</string>
+<string name="pref_dictionary_personalization_entry_disabled">ປິດນຳໃຊ້</string>
+<string name="pref_layout_adjustment_entry_fill">ໃສ່​ສີ</string>
+<string name="pref_layout_adjustment_entry_right">​ຂວາ</string>
+<string name="pref_layout_adjustment_entry_left">​ຊ້າຍ</string>
+<string name="firsttime_close_button">ຖັດ​ໄປ &gt;&gt;</string>
+<string name="firsttime_description_thank_you">ຂໍ​ຂອບ​ໃຈ​ທີ່​ນຳ​ໃຊ້ %s.</string>
+<string name="firsttime_description_usage_stats">ເພື່ອ​ໃຫ້​ພວກ​ເຮົາ​ປັບ​ປຸງ​ຜະ​ລິດ​ຕະ​ພັນ​ແລະ​ບໍ​ລິ​ການ %s ​ໄດ້, ພວກ​ເຮົາ​ຂໍ​ໃຫ້​ທ່ານ​ເປີດ​ການ​ສົ່ງ​ຂໍ້​ມູນ​ສະ​ຕິ​ຖິການ​ນຳ​ໃຊ້.\n\nການ​ຕ​ັ້ງ​ຄ່າ​ນີ້​ສາ​ມາດ​ປ່ຽນ​ໄດ້​ໃນ​ໜ້າ​ຈໍ​ການ​ຕັ້ງ​ຄ່າ.</string>
+<string name="firsttime_send_usage_stats_devchannel">ສະ​ຖິ​ຕິ​ການ​ນຳ​ໃຊ້​ຖືກ​ເປີດ​ເນື່ອງ​ຈາກ​ທ່ານ​ກຳ​ລັງ​ໃຊ້​ເວີ​ຊັນ​ນັກ​ພັດ​ທະ​ນາ.</string>
+<string name="pref_ime_enable_alert_title">​ຕັ້ງ​ຄ່າ​ຂໍ້​ຄວາມ</string>
+<string name="pref_ime_enable_alert_message">ກະ​ລຸ​ນາ​ເປີດ​ນຳ​ໃຊ້ %s.</string>
+<string name="pref_ime_switch_alert_title">ຕັ້ງ​ຄ່າ​ຮູບ​ແບບ​ການ​ປ້ອນ​ຂໍ້​ມູນ</string>
+<string name="pref_ime_switch_alert_message">ກະ​ລຸ​ນາ​ປ່ຽນ​ຮູບ​ແບບ​ການ​ປ້ອນ​ຂໍ້​ມູນ​ເປັນ %s.</string>
+<string name="pref_ime_alert_next">​ຖັດ​ໄປ</string>
+<string name="pref_ime_alert_cancel">ຍົກ​ເລີກ​</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">​ຕ່ຳ</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">​ປານ​ກາງ</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">​ສູງ</string>
+<string name="pref_haptic_feedback_duration_low_text">​ສັ້ນ</string>
+<string name="pref_haptic_feedback_duration_high_text">ຍາວ</string>
+<string name="pref_sound_feedback_volume_low_text">​ນ້ອຍ</string>
+<string name="pref_sound_feedback_volume_middle_text">​ປານ​ກາງ</string>
+<string name="pref_sound_feedback_volume_high_text">​ສູງ​ສຸດ</string>
+<string name="symbol_input_no_history">ບໍ່​ມີ​ປະ​ຫວັດ.\n\nປັດ​ໜ້າ​ຈໍອອກ​ຂ້າງ\nເພື່ອ​ເລືອກ​ໝວດ​ໝູ່.</string>
+<string name="symbol_emoji_disabled_message">ປ່ອງ​ຂໍ້​ຄວາມ​ນີ້ບໍ່​ຮອງ​ຮັບ​ການ​ປ້ອນ​ຂໍ້​ມູ​ນ​ເປັນ​ອີ​ໂມ​ຈິ.</string>
+<string name="menu_dialog_title">​ຕົວ​ເລືອກ​ການ​ປ້ອນ​ຂໍ້​ມູນ</string>
+<string name="menu_item_input_method">​ເລືອກວິ​ທີ​ການ​ປ້ອນ​ຂໍ້​ມູນ</string>
+<string name="menu_item_preferences">ຕັ້ງ​ຄ່າ %s</string>
+<string name="menu_item_mushroom">ເປີດ Mushroom</string>
+<string name="user_dictionary_tool_app_name">ເຄື່ອງ​ມື​ວັດ​ຈະ​ນາ​ນຸ​ກົມ</string>
+<string name="user_dictionary_tool_menu_add_entry_title">​ຄຳ​ສັບ​ໃໝ່</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">​ລຶບ​ຄຳ​ສັບ</string>
+<string name="user_dictionary_tool_menu_undo_title">​ຍົກ​ເລີກ</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">ວັດ​ຈະ​ນາ​ນຸ​ກົມ​ໃໝ່</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">​ປ່ຽນ​ຊື່​ວັດ​ຈະ​ນາ​ນຸ​ກົມ​ປັດ​ຈຸ​ບັນ</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">​ລຶບ​ວັດ​ຈະ​ນາ​ນຸ​ກົມ​ປັດ​ຈຸ​ບັນ</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">​ສົ່ງ​ອອກວັດ​ຈະ​ນາ​ນຸ​ກົມ​ປັດ​ຈຸ​ບັນ</string>
+<string name="user_dictionary_tool_default_dictionary_name">ວັດ​ຈະ​ນາ​ນຸ​ກົມ​ຜູ່​ໃຊ້ 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">​ສ້າງວັດ​ຈະ​ນາ​ນຸ​ກົມ​ໃໝ່</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">​ແກ້​ໄຂ​ຊື່​ວັດ​ຈະ​ນາ​ນຸ​ກົມ</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">​ຊື່​ວັດ​ຈະ​ນາ​ນຸ​ກົມ</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">​ເພີ່ມ​ຄຳ​ສັບ​ໃໝ່</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">​ແກ້​ໄຂ​ຄຳ​ສັບ</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">​ກຳ​ລັງ​ອ່ານ</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">​ຄຳ​ສັບ</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">ໝວດໝູ່</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">​ເລືອກ​ແຫລ່ງ​ຂໍ້​ມູນ​ນຳ​ເຂົ້າ</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">​ເລືອກ​ປາຍ​ທາງ​ການ​ນຳ​ເຂົ້າ</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">​ນຳ​ເຂົ້າ​ເປັນ​ວັດ​ຈະ​ນານ​ຸ​ກົມ​ໃໝ່</string>
+<string name="user_dictionary_tool_delete_done_message">​ລຶ​ບ​ສຳ​ເລັດ​ແລ້ວ.</string>
+<string name="user_dictionary_tool_undo_done_message">ຍົກ​ເລີກ​​ຄຳ​ສັ່ງ​ສຳ​ເລັດ​ແລ້ວ.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">ເລືອກ​ຄຳ​ສັບ​ທີ່​ທ່າ​ນ​ຕ້ອງ​ການ​ລຶບ.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">ການ​ນຳ​ເຂົ້າ​ຂໍ້​ມູນ​ໃຊ້​ໄດ້​ກັບ​ໄຟລ໌​ເທົ່າ​ນັ້ນ.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">ບໍ່​ສາ​ມາດ​ອ່ານ​ໄຟລ໌​ໄດ້.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ໄຟລ໌ ZIP ຫວ່າງ​ເປົ່າ.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">ບໍ່​ມີ​ແອັບ​ພລິ​ເຄ​ຊັນ (​ເຊັ່ນ: Google Docs) ເພື່ອ​ໃຊ້​ສົ່ງ​ອອກວັດ​ຈະ​ນາ​ນຸ​ກົມ​ຜູ່​ໃຊ້.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">ລົ້ມ​ເຫລວ​ໃນ​ການ​ສົ່ງ​ອອກວັດ​ຈະ​ນາ​ນຸ​ກົມ​ຜູ່​ໃຊ້.</string>
+<string name="user_dictionary_tool_status_error_general">​​ຄຳ​ສັ່ງ​ລົ້ມ​ເຫລວ.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">ບໍ່​ສາ​ມາດ​ເປີດ​ໄຟລ໌​ໄດ້.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">ບໍ່​ສາ​ມາດ​ອ່ານ​ໄຟລ໌​ໄດ້.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">ຂະ​ໜາດ​ຂໍ້​ມູນ​ໃຫຍ່​ເກີນ​ຂະ​ໜາດ​ໄຟລ໌​ທີ່​ຈຳ​ກັດ​ໄວ້.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">ບໍ່​ສາ​ມາດ​ສ້າງວັດ​ຈະ​ນາ​ນຸ​ກົມ​ເພີ່ມ​ເຕ​ີມ​ໄດ້​ອີກ​ແລ້ວ.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">ບໍ່​ສາ​ມາດ​ເພີ່ມ​ລາຍ​ການ​ໃນ​ວັດ​ຈະ​ນາ​ນຸ​ກົມ​ນີ້​ໄດ້​ອີກ​ແລ້ວ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">ກະ​ລຸ​ນາ​ພິມ​ຊື່​ວັດ​ຈະ​ນາ​ນຸ​ກົມ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">ຊື່​ຍາວ​ເກີນ​ໄປ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">ຊື່​ມີ​ໂຕ​ອັກ​ສອນ​ທີ່ບໍ່​ສາ​ມາດ​ນຳ​ໃຊ້​ໄດ້.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">ມີ​ຊື່​ດັ່ງ​ກ່າວ​ຢູ່​ແລ້ວ.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">ກະ​ລຸ​ນາ​ພິມ​ການ​ອ່ານ.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">​ການ​ອ່ານ​ຍາວເກີນ​ໄປ.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">ການ​ອ່ານ​ມີ​​ໂຕ​ອັກ​ສອນ​ທີ່ບໍ່​ຖືກ​ຕ້ອງ.</string>
+<string name="user_dictionary_tool_status_error_word_empty">ກະ​ລຸ​ນາ​ພິມ​ຄຳ​ສັບ.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">ຄຳ​ສັບ​ຍາວ​ເກີນ​ໄປ.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">ຄຳ​ສັບ​ມີ​ໂຕ​ອັກ​ສອນ​ທີ່ບໍ່​ຖືກ​ຕ້ອງ.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">ແຫລ່ງ​ຂໍ້​ມູນ​ການ​ນຳ​ເຂົ້າ​ມີ​ຄຳ​ສັບ​ຫຼາຍ​ເກີນ​ໄປ.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">ບໍ່​ສາ​ມາດ​ນຳ​ເຂົ້າບາງ​ຄຳ​ສັບ​ໄດ້.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">ບໍ່​​ສາ​ມາດຍົກ​ເລີກ​ໄດ້​ອີກ​ແລ້ວ.</string>
+<string name="japanese_pos_noun">ຄຳນາມ</string>
+<string name="japanese_pos_abbreviation">​ຄຳ​ຫຍໍ້</string>
+<string name="japanese_pos_suggestion_only">​ແນະ​ນຳ​ເທົ່າ​ນັ້ນ</string>
+<string name="japanese_pos_proper_noun">ວິ​ສາ​ມັນ​ນາມ</string>
+<string name="japanese_pos_personal_name">​ຊື່​ຄົນ</string>
+<string name="japanese_pos_family_name">ນາມສະກຸນ</string>
+<string name="japanese_pos_first_name">ຊື່</string>
+<string name="japanese_pos_organization_name">ຊື່ອົງກອນ</string>
+<string name="japanese_pos_place_name">ຊື່ສະຖານທີ່</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA-irregular conjugation noun</string>
+<string name="japanese_pos_adjective_verbal_noun">Adjective verbal noun</string>
+<string name="japanese_pos_number">ໂຕ​ເລກ</string>
+<string name="japanese_pos_alphabet">​ໂຕ​ອັກ​ສອນ</string>
+<string name="japanese_pos_symbol">ສັນຍາລັກ</string>
+<string name="japanese_pos_emoticon">​ອີ​ໂມ​ຕິ​ຄອນ</string>
+<string name="japanese_pos_adverb">ຄຳວິເສດ</string>
+<string name="japanese_pos_prenoun_adjectival">Prenoun adjectival</string>
+<string name="japanese_pos_conjunction">ຄຳສັນທານ</string>
+<string name="japanese_pos_interjection">ຄຳອຸທານ</string>
+<string name="japanese_pos_prefix">ຄຳຕື່ມທາງໜ້າ</string>
+<string name="japanese_pos_counter_suffix">Counter suffix</string>
+<string name="japanese_pos_generic_suffix">ຄຳ​ຕື່ມ​ທາງຫຼັງ​ທົ່ວ​ໄປ</string>
+<string name="japanese_pos_person_name_suffix">​ຄຳ​ຕື່ມ​ທາງຫຼັງ​ຊື່​ຄົນ</string>
+<string name="japanese_pos_place_name_suffix">​ຄຳ​ຕື່ມ​ທາງຫຼັງ​ຊື່​​ສະ​ຖານ​ທີ່</string>
+<string name="japanese_pos_wa_group1_verb">WA-Group1 verb</string>
+<string name="japanese_pos_ka_group1_verb">KA-Group1 verb</string>
+<string name="japanese_pos_sa_group1_verb">SA-Group1 verb</string>
+<string name="japanese_pos_ta_group1_verb">TA-Group1 verb</string>
+<string name="japanese_pos_na_group1_verb">NA-Group1 verb</string>
+<string name="japanese_pos_ma_group1_verb">MA-Group1 verb</string>
+<string name="japanese_pos_ra_group1_verb">RA-Group1 verb</string>
+<string name="japanese_pos_ga_group1_verb">GA-Group1 verb</string>
+<string name="japanese_pos_ba_group1_verb">BA-Group1 verb</string>
+<string name="japanese_pos_ha_group1_verb">HA-Group1 verb</string>
+<string name="japanese_pos_group2_verb">Group2 verb</string>
+<string name="japanese_pos_kuru_group3_verb">Kuru-Group3 verb</string>
+<string name="japanese_pos_suru_group3_verb">Suru-Group3 verb</string>
+<string name="japanese_pos_zuru_group3_verb">Zuru-Group3 verb</string>
+<string name="japanese_pos_ru_group3_verb">Ru-Group3 verb</string>
+<string name="japanese_pos_adjective">​ຄຳ​ຄຸນ​ສັບ</string>
+<string name="japanese_pos_sentence_ending_particle">Sentence ending particle</string>
+<string name="japanese_pos_punctuation">​ເຄື່ອງ​ໝາຍ​ວັກ​ຕອນ</string>
+<string name="japanese_pos_free_standing_word">Free standing word</string>
+<string name="japanese_pos_suppression_word">Suppression word</string>
+<string name="yes">​ຕົກ​ລົງ</string>
+<string name="no">ບໍ່</string>
+</resources>
