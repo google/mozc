@@ -30,7 +30,7 @@
 
 MAJOR=2
 MINOR=19
-BUILD=2661
+BUILD=2662
 REVISION=102
 # This version represents the version of Mozc IME engine (converter, predictor,
 # etc.).  This version info is included both in the Mozc server and in the Mozc

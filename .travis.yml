@@ -64,6 +64,7 @@ install:
   - if [ $TRAVIS_OS_NAME == linux ]; then unset CXX; fi
   - if [ $TARGET_PLATFORM == Mac ]; then git -C src/third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git; fi
   - if [ $TARGET_PLATFORM == Mac ]; then export PATH="$PATH":`pwd`/src/third_party/depot_tools; fi
+  - if [ $TARGET_PLATFORM == Mac ]; then brew update && brew install qt5; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then cd src/third_party && curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip && cd nacl_sdk && ./naclsdk install pepper_49 && cd ../../../; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then jdk_switcher use openjdk7; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then cd src/third_party && curl -LO http://dl.google.com/android/repository/android-ndk-r12b-linux-x86_64.zip && unzip -q android-ndk-r12b-linux-x86_64.zip && rm android-ndk-r12b-linux-x86_64.zip && curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx && cd ../../; fi
@@ -84,7 +85,7 @@ script:
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py runtests -c Release; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then python build_mozc.py gyp --target_platform=NaCl --nacl_sdk_root=`pwd`/third_party/nacl_sdk/pepper_49; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then python build_mozc.py build -c Release package; fi
-  - if [ $TARGET_PLATFORM == Mac ]; then GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.9" python build_mozc.py gyp --noqt; fi
+  - if [ $TARGET_PLATFORM == Mac ]; then GYP_DEFINES="mac_sdk=10.9 mac_deployment_target=10.9" python build_mozc.py gyp --qtdir=/usr/local/opt/qt5; fi
   - if [ $TARGET_PLATFORM == Mac ]; then python build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gyp:gen_launchd_confs; fi
   - if [ $TARGET_PLATFORM == Mac ]; then python build_mozc.py runtests -c Release; fi
 

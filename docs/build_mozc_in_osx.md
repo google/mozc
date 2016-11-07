@@ -11,7 +11,7 @@ Building on Mac requires the following software.
 
   * Xcode
   * [Ninja](https://github.com/ninja-build/ninja)
-  * [Qt4](https://download.qt.io/official_releases/qt/4.8/)
+  * [Qt 5](https://download.qt.io/official_releases/qt/)
 
 If you don't need to run gui tools like about dialog, config dialog, or dictionary tool, you can omit installing Qt.  Candidate window still shows without Qt.  See below for the detailed information.
 
