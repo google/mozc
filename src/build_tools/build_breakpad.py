@@ -61,7 +61,7 @@ def ProcessCall(command):
 def Xcodebuild(projdir, target, arch, outdir):
   ProcessCall([
       'xcodebuild', '-project', projdir, '-configuration', 'Release',
-      '-target', target, '-arch', arch, '-sdk', 'macosx10.9',
+      '-target', target, '-arch', arch, '-sdk', 'macosx10.11',
       'GCC_VERSION=com.apple.compilers.llvm.clang.1_0',
       'CONFIGURATION_BUILD_DIR=%s' % outdir,
   ])
