@@ -105,7 +105,7 @@ You can use `--noqt` option to build Mozc without depending on Qt 4 library.
 You can use `--server_dir` option to specify the directory name where `mozc_server` will be installed.
 
 ## Compile options
-In `build_mozc.py build` step, you can specify build types (`Release`` or `Debug`) and one or more build targets.  Please find each GYP file to see what build targets are defined.
+In `build_mozc.py build` step, you can specify build types (`Release` or `Debug`) and one or more build targets.  Please find each GYP file to see what build targets are defined.
 
 ```
 python build_mozc.py build -c {Release, Debug} [gyp_path_1.gyp:gyp_target_name1] [gyp_path_2.gyp:gyp_target_name2] 
