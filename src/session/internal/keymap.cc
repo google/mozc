@@ -129,7 +129,7 @@ bool KeyMapManager::ReloadConfig(const config::Config &config) {
   }
 #endif
 
-  istringstream ifs(custom_keymap_table);
+  std::istringstream ifs(custom_keymap_table);
   return LoadStream(&ifs);
 }
 
@@ -168,7 +168,7 @@ const char *KeyMapManager::GetKeyMapFileName(
 }
 
 bool KeyMapManager::LoadFile(const char *filename) {
-  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
+  std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs.get() == NULL) {
     LOG(WARNING) << "cannot load keymap table: " << filename;
     return false;
@@ -176,12 +176,12 @@ bool KeyMapManager::LoadFile(const char *filename) {
   return LoadStream(ifs.get());
 }
 
-bool KeyMapManager::LoadStream(istream *ifs) {
+bool KeyMapManager::LoadStream(std::istream *ifs) {
   std::vector<string> errors;
   return LoadStreamWithErrors(ifs, &errors);
 }
 
-bool KeyMapManager::LoadStreamWithErrors(istream *ifs,
+bool KeyMapManager::LoadStreamWithErrors(std::istream *ifs,
                                          std::vector<string> *errors) {
   string line;
   getline(*ifs, line);  // Skip the first line.

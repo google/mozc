@@ -75,8 +75,8 @@ class KeyMapManager {
   bool ReloadConfig(const config::Config &config);
 
   bool LoadFile(const char *filename);
-  bool LoadStream(istream *is);
-  bool LoadStreamWithErrors(istream *ifs, std::vector<string> *errors);
+  bool LoadStream(std::istream *is);
+  bool LoadStreamWithErrors(std::istream *ifs, std::vector<string> *errors);
 
   // Add a command bound with state and key_event.
   bool AddCommand(const string &state_name,

@@ -52,8 +52,7 @@ TEST(MmapTest, MmapTest) {
     memset(buf.get(), 0, kFileNameSize[i]);
 
     {
-      OutputFileStream ofs(filename.c_str(),
-                           ios::out | ios::binary);
+      OutputFileStream ofs(filename.c_str(), std::ios::out | std::ios::binary);
       EXPECT_TRUE(ofs.good());
       ofs.write(buf.get(), kFileNameSize[i]);
     }

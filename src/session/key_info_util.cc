@@ -53,7 +53,7 @@ namespace {
 using config::Config;
 
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
-    istream *ifs) {
+    std::istream *ifs) {
   const char kModeDirect[] = "Direct";
   const char kModeDirectInput[] = "DirectInput";
 
@@ -92,7 +92,7 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
 
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
       const string &filename) {
-  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
+  std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs.get() == NULL) {
     DLOG(FATAL) << "could not open file: " << filename;
     return std::vector<KeyInformation>();
@@ -113,7 +113,7 @@ std::vector<KeyInformation> KeyInfoUtil::ExtractSortedDirectModeKeys(
           config::ConfigHandler::GetDefaultKeyMap());
       return ExtractSortedDirectModeKeysFromFile(default_keymapfile);
     }
-    istringstream ifs(custom_keymap_table);
+    std::istringstream ifs(custom_keymap_table);
     return ExtractSortedDirectModeKeysFromStream(&ifs);
   }
   const char *keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);

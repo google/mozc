@@ -333,7 +333,7 @@ class UserDictionaryTest : public ::testing::Test {
 
   static void LoadFromString(const string &contents,
                              UserDictionaryStorage *storage) {
-    istringstream is(contents);
+    std::istringstream is(contents);
     CHECK(is.good());
 
     storage->Clear();

@@ -63,7 +63,7 @@ const config::Config::SessionKeymap kKeyMaps[] = {
   config::Config::KOTOERI,
 };
 
-void ExtractActivationKeys(istream *ifs, std::set<string> *keys) {
+void ExtractActivationKeys(std::istream *ifs, std::set<string> *keys) {
   DCHECK(keys);
   string line;
   getline(*ifs, line);  // first line is comment.
@@ -88,13 +88,14 @@ bool IMEActivationKeyCustomized(const config::Config &config) {
     return false;
   }
   const string &custom_keymap_table = config.custom_keymap_table();
-  istringstream ifs_custom(custom_keymap_table);
+  std::istringstream ifs_custom(custom_keymap_table);
   std::set<string> customized;
   ExtractActivationKeys(&ifs_custom, &customized);
   for (size_t i = 0; i < arraysize(kKeyMaps); ++i) {
     const char *keymap_file =
         keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[i]);
-    std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(keymap_file));
+    std::unique_ptr<std::istream> ifs(
+        ConfigFileStream::LegacyOpen(keymap_file));
     if (ifs.get() == NULL) {
       LOG(ERROR) << "can not open default keymap table " << i;
       continue;

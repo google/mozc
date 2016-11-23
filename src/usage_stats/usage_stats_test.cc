@@ -214,7 +214,7 @@ TEST_F(UsageStatsTest, StoreTouchEventStats) {
                                          &stats_str));
   EXPECT_FALSE(storage::Registry::Lookup("usage_stats.VirtualKeyboardMissStats",
                                          &stats_str));
-  std::map<string, map<uint32, Stats::TouchEventStats> > touch_stats;
+  std::map<string, std::map<uint32, Stats::TouchEventStats> > touch_stats;
 
   Stats::TouchEventStats &event_stats1 = touch_stats["KEYBOARD_01"][10];
   SetEventStats(10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
@@ -252,7 +252,7 @@ TEST_F(UsageStatsTest, StoreTouchEventStats) {
       stats.virtual_keyboard_stats(1).touch_event_stats(0).DebugString());
 
 
-  std::map<string, map<uint32, Stats::TouchEventStats> > touch_stats2;
+  std::map<string, std::map<uint32, Stats::TouchEventStats> > touch_stats2;
   Stats::TouchEventStats &event_stats4 = touch_stats2["KEYBOARD_01"][20];
   SetEventStats(20, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313,
                 314, 315, 316, &event_stats4);

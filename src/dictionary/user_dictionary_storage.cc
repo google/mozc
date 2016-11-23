@@ -93,7 +93,7 @@ bool UserDictionaryStorage::Exists() const {
 }
 
 bool UserDictionaryStorage::LoadInternal() {
-  InputFileStream ifs(file_name_.c_str(), ios::binary);
+  InputFileStream ifs(file_name_.c_str(), std::ios::binary);
   if (!ifs) {
     if (Exists()) {
       LOG(ERROR) << file_name_ << " exists but cannot be opened.";
@@ -169,7 +169,7 @@ bool UserDictionaryStorage::Save() {
   const string tmp_file_name = file_name_ + ".tmp";
   {
     OutputFileStream ofs(tmp_file_name.c_str(),
-                         ios::out|ios::binary|ios::trunc);
+                         std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs) {
       LOG(ERROR) << "cannot open file: " << tmp_file_name;
       last_error_type_ = SYNC_FAILURE;

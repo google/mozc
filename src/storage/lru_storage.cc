@@ -225,7 +225,7 @@ bool LRUStorage::CreateStorageFile(const char *filename,
     return false;
   }
 
-  OutputFileStream ofs(filename, ios::binary|ios::out);
+  OutputFileStream ofs(filename, std::ios::binary | std::ios::out);
   if (!ofs) {
     LOG(ERROR) << "cannot open " << filename;
     return false;

@@ -43,7 +43,7 @@ class DictionaryFileCodecInterface {
  public:
   // Writes sections to an output file stream.
   virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
-                             ostream *ofs) const = 0;
+                             std::ostream *ofs) const = 0;
 
   // Reads sections from memory image.
   virtual bool ReadSections(

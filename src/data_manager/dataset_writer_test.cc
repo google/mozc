@@ -74,7 +74,7 @@ TEST(DatasetWriterTest, Write) {
     w.AddFile("file32", 32, in);
     w.AddFile("file64", 64, in);
 
-    stringstream out;
+    std::stringstream out;
     w.Finish(&out);
     actual = out.str();
   }

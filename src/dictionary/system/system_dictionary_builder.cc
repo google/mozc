@@ -81,7 +81,7 @@ struct TokenGreaterThan {
 
 void WriteSectionToFile(const DictionaryFileSection &section,
                         const string &filename) {
-  OutputFileStream ofs(filename.c_str(), ios::binary | ios::out);
+  OutputFileStream ofs(filename.c_str(), std::ios::binary | std::ios::out);
   ofs.write(section.ptr, section.len);
 }
 
@@ -126,13 +126,13 @@ void SystemDictionaryBuilder::BuildFromTokens(
 }
 
 void SystemDictionaryBuilder::WriteToFile(const string &output_file) const {
-  OutputFileStream ofs(output_file.c_str(), ios::binary | ios::out);
+  OutputFileStream ofs(output_file.c_str(), std::ios::binary | std::ios::out);
   WriteToStream(output_file, &ofs);
 }
 
 void SystemDictionaryBuilder::WriteToStream(
     const string &intermediate_output_file_base_path,
-    ostream *output_stream) const {
+    std::ostream *output_stream) const {
   // Memory images of each section
   std::vector<DictionaryFileSection> sections;
   DictionaryFileSection value_trie_section(

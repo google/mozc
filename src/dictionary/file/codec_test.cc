@@ -100,7 +100,7 @@ class CodecTest : public ::testing::Test {
 class CodecMock : public DictionaryFileCodecInterface {
  public:
   virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
-                             ostream *ofs) const {
+                             std::ostream *ofs) const {
     const string value = "dummy value";
     ofs->write(value.data(), value.size());
   }
@@ -133,9 +133,9 @@ TEST_F(CodecTest, FactoryTest) {
     EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
     ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
-    ifs.seekg(0, ios::end);
+    ifs.seekg(0, std::ios::end);
     const int len = ifs.tellg();
-    ifs.seekg(0, ios::beg);
+    ifs.seekg(0, std::ios::beg);
     char buf[64];
     ifs.read(buf, len);
     EXPECT_EQ("dummy value", string(buf, len));

@@ -73,7 +73,7 @@ class SystemDictionaryBuilder {
 
   void WriteToFile(const string &output_file) const;
   void WriteToStream(const string &intermediate_output_file_base_path,
-                     ostream *output_stream) const;
+                     std::ostream *output_stream) const;
 
  private:
   typedef std::deque<KeyInfo> KeyInfoList;

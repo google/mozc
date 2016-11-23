@@ -248,7 +248,7 @@ int main(int argc, char* argv[]) {
     scores[source].push_back(score);
   }
 
-  ostream* ofs = &std::cout;
+  std::ostream* ofs = &std::cout;
   if (!FLAGS_log_path.empty()) {
     ofs = new mozc::OutputFileStream(FLAGS_log_path.c_str());
   }

@@ -964,7 +964,7 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
 #else  // !OS_WIN && !OS_NACL
   // Use non blocking interface on Linux.
   // Mac also have /dev/urandom (although it's identical with /dev/random)
-  ifstream ifs("/dev/urandom", ios::binary);
+  std::ifstream ifs("/dev/urandom", std::ios::binary);
   if (!ifs) {
     return false;
   }

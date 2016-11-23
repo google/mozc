@@ -59,12 +59,12 @@ namespace mozc {
 class ConfigFileStream {
  public:
   // Open |filename| as a text file with read permission.
-  static istream *OpenReadText(const string &filename) {
+  static std::istream *OpenReadText(const string &filename) {
     return Open(filename, ios_base::in);
   }
 
   // Open |filename| as a binary file with read permission.
-  static istream *OpenReadBinary(const string &filename) {
+  static std::istream *OpenReadBinary(const string &filename) {
     return Open(filename, ios_base::in | ios_base::binary);
   }
 
@@ -82,7 +82,7 @@ class ConfigFileStream {
   // You should not use this method in new code.
   // TODO(yukawa): Add unit tests and replace |LegacyOpen| with |OpenReadText|
   //     or |OpenReadBinary| where this method is used.
-  static istream *LegacyOpen(const string &filename) {
+  static std::istream *LegacyOpen(const string &filename) {
     return Open(filename, ios_base::in);
   }
 
@@ -104,7 +104,7 @@ class ConfigFileStream {
   // This function was deplicated. Use OpenReadText or OpenReadBinary instead.
   // TODO(yukawa): Move this function to anonymous namespace in
   //     config_file_stream.cc.
-  static istream *Open(const string &filename, ios_base::openmode mode);
+  static std::istream *Open(const string &filename, ios_base::openmode mode);
 };
 }  // namespace mozc
 

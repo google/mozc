@@ -379,12 +379,12 @@ void Table::DeleteRule(const string &input) {
 }
 
 bool Table::LoadFromString(const string &str) {
-  istringstream is(str);
+  std::istringstream is(str);
   return LoadFromStream(&is);
 }
 
 bool Table::LoadFromFile(const char *filepath) {
-  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filepath));
+  std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filepath));
   if (ifs.get() == NULL) {
     return false;
   }
@@ -419,7 +419,7 @@ TableAttributes ParseAttributes(const string &input) {
 }
 }  // namespace
 
-bool Table::LoadFromStream(istream *is) {
+bool Table::LoadFromStream(std::istream *is) {
   DCHECK(is);
   string line;
   const string empty_pending("");

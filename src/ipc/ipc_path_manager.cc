@@ -516,7 +516,7 @@ bool IPCPathManager::LoadPathNameInternal() {
 
 #else
 
-  InputFileStream is(filename.c_str(), ios::binary|ios::in);
+  InputFileStream is(filename.c_str(), std::ios::binary | std::ios::in);
   if (!is) {
     LOG(ERROR) << "cannot open: " << filename;
     return false;

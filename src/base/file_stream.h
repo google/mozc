@@ -99,7 +99,7 @@ class OutputFileStream : public ostream {
 // Since these classes assume an input file is encoded in UTF-8, we have to
 // change the open() function and convert its encoding for platforms which use
 // encodings except UTF-8 for internationalized file names.
-class InputFileStream : public ifstream {
+class InputFileStream : public std::ifstream {
  public:
   InputFileStream();
   explicit InputFileStream(const char* filename,
@@ -116,7 +116,7 @@ class InputFileStream : public ifstream {
   string Read();
 };
 
-class OutputFileStream : public ofstream {
+class OutputFileStream : public std::ofstream {
  public:
   OutputFileStream();
   explicit OutputFileStream(const char* filename,

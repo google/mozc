@@ -116,7 +116,7 @@ uint32 GetPlatfromFromString(StringPiece str) {
 }   // namespace
 
 string QualityRegressionUtil::TestItem::OutputAsTSV() const {
-  ostringstream os;
+  std::ostringstream os;
   os << label << '\t' << key << '\t' << expected_value << '\t'
      << command << '\t' << expected_rank << '\t' << accuracy
      << '\t' << platform;

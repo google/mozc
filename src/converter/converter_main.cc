@@ -191,7 +191,7 @@ string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
 }
 
 void PrintCandidate(const Segment &parent, int num,
-                    const Segment::Candidate &cand, ostream *os) {
+                    const Segment::Candidate &cand, std::ostream *os) {
   std::vector<string> lines;
   if (parent.key() != cand.key) {
     lines.push_back("key: " + cand.key);
@@ -218,8 +218,8 @@ void PrintCandidate(const Segment &parent, int num,
   }
 }
 
-void PrintSegment(size_t num, size_t segments_size,
-                  const Segment &segment, ostream *os) {
+void PrintSegment(size_t num, size_t segments_size, const Segment &segment,
+                  std::ostream *os) {
   (*os) << "---------- Segment " << num << "/" << segments_size << " ["
         << SegmentTypeToString(segment.segment_type()) << "] ----------"
         << std::endl
@@ -234,7 +234,7 @@ void PrintSegment(size_t num, size_t segments_size,
   }
 }
 
-void PrintSegments(const Segments &segments, ostream *os) {
+void PrintSegments(const Segments &segments, std::ostream *os) {
   for (size_t i = 0; i < segments.segments_size(); ++i) {
     PrintSegment(i, segments.segments_size(), segments.segment(i), os);
   }

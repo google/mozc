@@ -163,7 +163,7 @@ const char kAsciiNine = '9';
 
 template <typename T>
 string SimpleItoaImpl(T number) {
-  stringstream ss;
+  std::stringstream ss;
   ss << number;
   return ss.str();
 }
@@ -187,7 +187,7 @@ string NumberUtil::SimpleItoa(uint64 number) {
 }
 
 int NumberUtil::SimpleAtoi(StringPiece str) {
-  stringstream ss;
+  std::stringstream ss;
   ss << str;
   int i = 0;
   ss >> i;

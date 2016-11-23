@@ -1095,7 +1095,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(
   // Note that, the average number of lid/rid variation is less than 30 in
   // most cases. So, in order to avoid too many allocations for internal
   // nodes of std::map, we use vector of key-value pairs.
-  typedef std::vector<std::pair<int, pair<int, Node*>>> BestMap;
+  typedef std::vector<std::pair<int, std::pair<int, Node*>>> BestMap;
   typedef OrderBy<FirstKey, Less> OrderByFirst;
   BestMap lbest, rbest;
   lbest.reserve(128);

@@ -255,7 +255,7 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
   StripWritePreventingAttributesIfExists(to);
 #endif  // OS_WIN
 
-  OutputFileStream ofs(to.c_str(), ios::binary | ios::trunc);
+  OutputFileStream ofs(to.c_str(), std::ios::binary | std::ios::trunc);
   if (!ofs) {
     LOG(ERROR) << "Can't open output file. " << to;
     return false;

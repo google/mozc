@@ -136,7 +136,7 @@ bool Segment::Candidate::PushBackInnerSegmentBoundary(
 }
 
 string Segment::Candidate::DebugString() const {
-  stringstream os;
+  std::stringstream os;
   os << "(key=" << key
      << " ckey=" << content_key
      << " val=" << value
@@ -438,7 +438,7 @@ void Segment::CopyFrom(const Segment &src) {
 }
 
 string Segment::DebugString() const {
-  stringstream os;
+  std::stringstream os;
   os << "[segtype=" << segment_type() << " key=" << key() << std::endl;
   const int size =
       static_cast<int>(candidates_size() + meta_candidates_size());
@@ -712,7 +712,7 @@ Lattice *Segments::mutable_cached_lattice() {
 }
 
 string Segments::DebugString() const {
-  stringstream os;
+  std::stringstream os;
   os << "{" << std::endl;
   for (size_t i = 0; i < segments_size(); ++i) {
     os << "  seg " << i << " " << segment(i).DebugString();

@@ -111,8 +111,9 @@ int main(int argc, char **argv) {
     codegen_stream.write(buf, size);
     codegen_stream.CloseVarDef();
   } else {
-    mozc::OutputFileStream ofs(FLAGS_output.c_str(),
-                               ios::out | ios::trunc | ios::binary);
+    mozc::OutputFileStream ofs(
+        FLAGS_output.c_str(),
+        std::ios::out | std::ios::trunc | std::ios::binary);
     ofs.write(buf, size);
   }
 

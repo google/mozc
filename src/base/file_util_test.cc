@@ -66,7 +66,7 @@ class FileUtilTest : public testing::Test {
 
 namespace {
 void CreateTestFile(const string &filename, const string &data) {
-  OutputFileStream ofs(filename.c_str(), ios::binary | ios::trunc);
+  OutputFileStream ofs(filename.c_str(), std::ios::binary | std::ios::trunc);
   ofs << data;
   EXPECT_TRUE(ofs.good());
 }

@@ -56,7 +56,7 @@ class DataSetWriter {
 
   // Writes the image to output.  If |output| is a file, it should be opened in
   // binary mode.
-  void Finish(ostream *output);
+  void Finish(std::ostream *output);
 
   const DataSetMetadata &metadata() const { return metadata_; }
 

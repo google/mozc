@@ -48,7 +48,7 @@ namespace {
 class CodeGenByteArrayStreamTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    result_stream_.reset(new ostringstream());
+    result_stream_.reset(new std::ostringstream());
     codegen_stream_.reset(
         new mozc::CodeGenByteArrayOutputStream(
             result_stream_.get(),
@@ -85,7 +85,7 @@ class CodeGenByteArrayStreamTest : public testing::Test {
   }
 
   std::unique_ptr<mozc::CodeGenByteArrayOutputStream> codegen_stream_;
-  std::unique_ptr<ostringstream> result_stream_;
+  std::unique_ptr<std::ostringstream> result_stream_;
 };
 
 TEST_F(CodeGenByteArrayStreamTest, NoInput) {

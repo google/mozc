@@ -65,7 +65,7 @@ struct JsonPathNode {
   }
 
   string DebugString() const {
-    ostringstream os;
+    std::ostringstream os;
     os << "{" << type << ":" << array_index << ":" << object_index
        << ":(" << slice_start << ":" << slice_end << ":" << slice_step << ")}";
     return os.str();
@@ -198,7 +198,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
   }
 
   string DebugString() const {
-    ostringstream os;
+    std::ostringstream os;
     for (size_t i = 0; i < size(); ++i) {
       os << "[";
       for (size_t j = 0; j < (*this)[i].size(); ++j) {

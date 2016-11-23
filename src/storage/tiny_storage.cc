@@ -230,7 +230,7 @@ bool TinyStorageImpl::Sync() {
   const string output_filename = filename_ + ".tmp";
 
   OutputFileStream ofs(output_filename.c_str(),
-                       ios::binary | ios::out);
+                       std::ios::binary | std::ios::out);
   if (!ofs) {
     LOG(ERROR) << "cannot open " << output_filename;
     return false;

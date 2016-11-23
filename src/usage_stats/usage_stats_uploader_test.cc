@@ -477,8 +477,8 @@ TEST_F(UsageStatsUploaderTest, UploadTouchEventStats) {
 
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardStats");
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardMissStats");
-  std::map<string, map<uint32, Stats::TouchEventStats> > touch_stats;
-  std::map<string, map<uint32, Stats::TouchEventStats> > miss_touch_stats;
+  std::map<string, std::map<uint32, Stats::TouchEventStats> > touch_stats;
+  std::map<string, std::map<uint32, Stats::TouchEventStats> > miss_touch_stats;
 
   Stats::TouchEventStats &event_stats1 = touch_stats["KEYBOARD_01"][10];
   SetEventStats(10, 2, 3, 8, 2, 4, 10, 2, 5, 16, 2, 2, 2,

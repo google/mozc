@@ -60,14 +60,14 @@ bool DictionaryFileBuilder::AddSectionFromFile(
   }
   added_.insert(section_name);
 
-  InputFileStream ifs(file_name.c_str(), ios::binary);
+  InputFileStream ifs(file_name.c_str(), std::ios::binary);
   CHECK(ifs) << "Failed to read" << file_name;
 
-  ifs.seekg(0, ios::end);
+  ifs.seekg(0, std::ios::end);
   const int len = ifs.tellg();
 
   // Reads the file
-  ifs.seekg(0, ios::beg);
+  ifs.seekg(0, std::ios::beg);
   char *ptr = new char[len];
   ifs.read(ptr, len);
 
@@ -78,7 +78,7 @@ bool DictionaryFileBuilder::AddSectionFromFile(
 
 void DictionaryFileBuilder::WriteImageToFile(const string &file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
-  OutputFileStream ofs(file_name.c_str(), ios::binary);
+  OutputFileStream ofs(file_name.c_str(), std::ios::binary);
   file_codec_->WriteSections(sections_, &ofs);
   LOG(INFO) << "Generated";
 }

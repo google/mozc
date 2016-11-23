@@ -49,7 +49,7 @@ namespace internal {
 //            pos_id_printer.IdToString(-1));  // invalid id
 class PosIdPrinter {
  public:
-  explicit PosIdPrinter(istream *id_def);
+  explicit PosIdPrinter(std::istream *id_def);
 
   ~PosIdPrinter();
 

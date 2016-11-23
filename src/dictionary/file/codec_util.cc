@@ -37,7 +37,7 @@ namespace mozc {
 namespace dictionary {
 namespace filecodec_util {
 
-void WriteInt(int value, ostream *ofs) {
+void WriteInt(int value, std::ostream *ofs) {
   DCHECK(ofs);
   ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
 }

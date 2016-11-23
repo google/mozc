@@ -47,7 +47,7 @@ DictionaryFileCodec::~DictionaryFileCodec() {}
 
 void DictionaryFileCodec::WriteSections(
     const std::vector<DictionaryFileSection> &sections,
-    ostream *ofs) const {
+    std::ostream *ofs) const {
   DCHECK(ofs);
   WriteHeader(ofs);
   for (size_t i = 0; i < sections.size(); ++i) {
@@ -56,13 +56,13 @@ void DictionaryFileCodec::WriteSections(
   filecodec_util::WriteInt(0, ofs);
 }
 
-void DictionaryFileCodec::WriteHeader(ostream *ofs) const {
+void DictionaryFileCodec::WriteHeader(std::ostream *ofs) const {
   DCHECK(ofs);
   filecodec_util::WriteInt(filemagic_, ofs);
 }
 
-void DictionaryFileCodec::WriteSection(
-    const DictionaryFileSection &section, ostream *ofs) const {
+void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
+                                       std::ostream *ofs) const {
   DCHECK(ofs);
   const string &name = GetSectionName(section.name);
   VLOG(1) << "section=" << name << " length=" << section.len;
@@ -112,7 +112,7 @@ bool DictionaryFileCodec::ReadSections(
 }
 
 // Write padding
-void DictionaryFileCodec::Pad4(int length, ostream *ofs) {
+void DictionaryFileCodec::Pad4(int length, std::ostream *ofs) {
   DCHECK(ofs);
   for (int i = length; (i % 4) != 0; ++i) {
     (*ofs) << static_cast<char>(Util::Random(CHAR_MAX));

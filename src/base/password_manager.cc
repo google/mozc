@@ -116,7 +116,7 @@ bool SavePassword(const string &password) {
   ScopedReadWriteFile l(filename);
 
   {
-    OutputFileStream ofs(filename.c_str(), ios::out | ios::binary);
+    OutputFileStream ofs(filename.c_str(), std::ios::out | std::ios::binary);
     if (!ofs) {
       LOG(ERROR) << "cannot open: " << filename;
       return false;

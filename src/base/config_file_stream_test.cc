@@ -43,7 +43,7 @@ namespace mozc {
 namespace {
 // Returns all data of the filename.
 string GetFileData(const string &filename) {
-  InputFileStream ifs(filename.c_str(), ios::binary);
+  InputFileStream ifs(filename.c_str(), std::ios::binary);
   char c = '\0';
   string data;
   while (!ifs.get(c).fail()) {
@@ -57,7 +57,7 @@ string GetFileData(const string &filename) {
 // the end of the stream but |input_stream| instance has not observed it
 // yet. In other words, this method may change the internal state of
 // |input_stream| as a side effect.
-bool IsEof(istream *input_stream) {
+bool IsEof(std::istream *input_stream) {
   return (input_stream->peek() == istream::traits_type::eof() &&
           // On some enviroment (e.g. Mac OS 10.8 w/ Xcode 4.5),
           // peek() does not flip eofbit.  So calling get() is also
@@ -90,7 +90,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   ConfigFileStream::AtomicUpdate(kPath, kData);
 
   {
-    std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
+    std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     ASSERT_NE(nullptr, ifs.get());
     std::unique_ptr<char[]> buf(new char[kData.size() + 1]);
     ifs->read(buf.get(), kData.size());
@@ -102,7 +102,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   ConfigFileStream::ClearOnMemoryFiles();
 
   {
-    std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kPath));
+    std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     ASSERT_NE(nullptr, ifs.get());
     EXPECT_TRUE(IsEof(ifs.get()));
   }
@@ -145,15 +145,16 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   };
   const size_t kBinaryDataSize = sizeof(kBinaryData);
   {
-    OutputFileStream ofs(test_file_path.c_str(), ios::out | ios::binary);
+    OutputFileStream ofs(test_file_path.c_str(),
+                         std::ios::out | std::ios::binary);
     ofs.write(kBinaryData, kBinaryDataSize);
   }
 
   ASSERT_TRUE(FileUtil::FileExists(test_file_path));
 
   {
-    std::unique_ptr<istream> ifs(ConfigFileStream::OpenReadBinary(
-        "user://" + string(kTestFileName)));
+    std::unique_ptr<std::istream> ifs(
+        ConfigFileStream::OpenReadBinary("user://" + string(kTestFileName)));
     ASSERT_NE(nullptr, ifs.get());
     std::unique_ptr<char[]> buf(new char[kBinaryDataSize]);
     ifs->read(buf.get(), kBinaryDataSize);
@@ -181,7 +182,8 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   };
   {
     // Use |ios::binary| to preserve the line-end character.
-    OutputFileStream ofs(test_file_path.c_str(), ios::out | ios::binary);
+    OutputFileStream ofs(test_file_path.c_str(),
+                         std::ios::out | std::ios::binary);
     ofs.write(kSourceTextData, sizeof(kSourceTextData));
   }
 
@@ -198,8 +200,8 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
 #undef TRAILING_CARRIAGE_RETURN
 
   {
-    std::unique_ptr<istream> ifs(ConfigFileStream::OpenReadText(
-        "user://" + string(kTestFileName)));
+    std::unique_ptr<std::istream> ifs(
+        ConfigFileStream::OpenReadText("user://" + string(kTestFileName)));
     ASSERT_NE(nullptr, ifs.get());
     string line;
     int line_number = 0;  // note that this is 1-origin.

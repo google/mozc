@@ -151,7 +151,7 @@ class Table {
   friend class TypingCorrectorTest;
   friend class TypingCorrectionTest;
 
-  bool LoadFromStream(istream *is);
+  bool LoadFromStream(std::istream *is);
   void DeleteEntry(const Entry *entry);
   void ResetEntrySet();
 

@@ -90,7 +90,7 @@ bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
 
 string GetDebugStringForNode(const Node *node, const Node *prev_node) {
   CHECK(node);
-  stringstream os;
+  std::stringstream os;
   os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) -
       node->wcost << "]";
   os << "[lid:" << node->lid << "]";
@@ -103,7 +103,7 @@ string GetDebugStringForNode(const Node *node, const Node *prev_node) {
 
 string GetDebugStringForPath(const Node *end_node) {
   CHECK(end_node);
-  stringstream os;
+  std::stringstream os;
   std::vector<const Node *> node_vector;
 
   for (const Node *node = end_node; node; node = node->prev) {
@@ -423,7 +423,7 @@ void Lattice::ResetNodeCost() {
 }
 
 string Lattice::DebugString() const {
-  stringstream os;
+  std::stringstream os;
   if (!has_lattice()) {
     return "";
   }

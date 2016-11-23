@@ -93,7 +93,7 @@ class StateTable {
 
   size_t compressed_size() const { return compressed_size_; }
 
-  void Output(ostream *os) {
+  void Output(std::ostream *os) {
     const char* data = reinterpret_cast<const char*>(compressed_table_.data());
     const size_t bytelen = compressed_table_.size() * sizeof(uint16);
     os->write(data, bytelen);

@@ -49,16 +49,17 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
   virtual ~DictionaryFileCodec();
 
   virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
-                             ostream *ofs) const;
+                             std::ostream *ofs) const;
   virtual bool ReadSections(const char *image, int length,
                             std::vector<DictionaryFileSection> *sections) const;
   virtual string GetSectionName(const string &name) const;
 
  private:
-  void WriteHeader(ostream *ofs) const;
-  void WriteSection(const DictionaryFileSection &section, ostream *ofs) const;
+  void WriteHeader(std::ostream *ofs) const;
+  void WriteSection(const DictionaryFileSection &section,
+                    std::ostream *ofs) const;
 
-  static void Pad4(int length, ostream *ofs);
+  static void Pad4(int length, std::ostream *ofs);
 
   // Magic value for simple file validation
   const int filemagic_;

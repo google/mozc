@@ -51,7 +51,7 @@ DEFINE_string(profile_dir, "", "Profile dir");
 
 namespace mozc {
 
-void Loop(istream *input, ostream *output) {
+void Loop(std::istream *input, std::ostream *output) {
   std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   std::unique_ptr<session::Session> session(new session::Session(engine.get()));
 
@@ -92,8 +92,8 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
   std::unique_ptr<mozc::InputFileStream> input_file;
   std::unique_ptr<mozc::OutputFileStream> output_file;
-  istream *input = NULL;
-  ostream *output = NULL;
+  std::istream *input = NULL;
+  std::ostream *output = NULL;
 
   if (!FLAGS_profile_dir.empty()) {
     // TODO(komatsu): Make a tmp dir and use it.

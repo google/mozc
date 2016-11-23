@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     } else {
       LOG(FATAL) << "unknown mode. set --encrypt or --decrypt";
     }
-    mozc::OutputFileStream ofs(FLAGS_output_file.c_str(), ios::binary);
+    mozc::OutputFileStream ofs(FLAGS_output_file.c_str(), std::ios::binary);
     CHECK(ofs);
     ofs.write(buf.data(), buf.size());
   } else if (!FLAGS_test_input.empty()) {
