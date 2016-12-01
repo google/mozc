@@ -46,6 +46,7 @@ using mozc::config::StatsConfigUtil;
 AdministrationDialog::AdministrationDialog() {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint |
+                 Qt::WindowCloseButtonHint |
                  Qt::MSWindowsFixedSizeDialogHint |
                  Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);

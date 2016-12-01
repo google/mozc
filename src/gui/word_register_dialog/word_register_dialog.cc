@@ -112,7 +112,9 @@ WordRegisterDialog::WordRegisterDialog()
       window_title_(tr("Mozc")),
       pos_list_provider_(new POSListProvider()) {
   setupUi(this);
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
+  setWindowFlags(Qt::WindowSystemMenuHint |
+                 Qt::WindowCloseButtonHint |
+                 Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
 
   ReadinglineEdit->setMaxLength(kMaxEditLength);

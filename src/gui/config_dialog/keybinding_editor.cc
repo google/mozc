@@ -516,14 +516,15 @@ bool KeyBindingFilter::eventFilter(QObject *obj, QEvent *event) {
 KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
     : QDialog(parent), trigger_parent_(trigger_parent) {
   setupUi(this);
-#ifdef OS_LINUX
+#if defined(OS_LINUX)
   // Workaround for the issue https://github.com/google/mozc/issues/9
   // Seems that even after clicking the button for the keybinding dialog,
   // the edit is not raised. This might be a bug of setFocusProxy.
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::Tool |
-                 Qt::WindowStaysOnTopHint);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::Tool | Qt::WindowStaysOnTopHint);
 #else
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::Tool);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::Tool);
 #endif
 
   QPushButton *ok_button =

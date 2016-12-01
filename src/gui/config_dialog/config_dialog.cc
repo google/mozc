@@ -95,7 +95,7 @@ ConfigDialog::ConfigDialog()
       initial_use_keyboard_to_change_preedit_method_(false),
       initial_use_mode_indicator_(true) {
   setupUi(this);
-  setWindowFlags(Qt::WindowSystemMenuHint);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
   setWindowModality(Qt::NonModal);
 
 #ifdef OS_WIN

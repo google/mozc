@@ -83,7 +83,7 @@ int RunCharacterPad(int argc, char *argv[],
   mozc::gui::WindowsSelectionHandler callback;
   mozc::gui::SelectionHandler::SetSelectionCallback(&callback);
 
-  window->setWindowFlags(Qt::WindowSystemMenuHint);
+  window->setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
 
   // Set Top-Most bit:
   //   Use SWP_NOACTIVATE so that the GUI window will not get focus from the

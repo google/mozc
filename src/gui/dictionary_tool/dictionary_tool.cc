@@ -104,7 +104,9 @@ QProgressDialog *CreateProgressDialog(
   QProgressDialog *progress =
       new QProgressDialog(message, "", 0, size, parent);
   CHECK(progress);
-  progress->setWindowFlags(Qt::Window | Qt::CustomizeWindowHint);
+  progress->setWindowFlags(Qt::Window |
+                           Qt::CustomizeWindowHint |
+                           Qt::WindowCloseButtonHint);
   progress->setWindowModality(Qt::WindowModal);
   // This cancel button is invisible to users.
   // We don't accept any cancel operation

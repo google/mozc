@@ -52,6 +52,7 @@ PostInstallDialog::PostInstallDialog()
     : setuputil_(new SetupUtil()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint |
+                 Qt::WindowCloseButtonHint |
                  Qt::MSWindowsFixedSizeDialogHint |
                  Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);

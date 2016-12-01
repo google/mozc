@@ -80,7 +80,8 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
       column_size_(column_size) {
   setupUi(this);
   editorTableWidget->setAlternatingRowColors(true);
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::Tool);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::Tool);
   editorTableWidget->setColumnCount(column_size_);
 
   CHECK_GT(column_size_, 0);

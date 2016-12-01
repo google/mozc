@@ -79,7 +79,7 @@ AboutDialog::AboutDialog(QWidget *parent)
     : QDialog(parent),
       callback_(NULL) {
   setupUi(this);
-  setWindowFlags(Qt::WindowSystemMenuHint);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
   setWindowModality(Qt::NonModal);
   QPalette window_palette;
   window_palette.setColor(QPalette::Window, QColor(255, 255, 255));
