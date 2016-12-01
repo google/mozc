@@ -66,9 +66,6 @@ class KeyBindingEditorDelegate : public QItemDelegate {
  private slots:
   void CommitAndCloseEditor();
   void CloseEditor();
-
- private:
-  QWidget *modal_parent_;
 };
 }  // gui
 }  // mozc

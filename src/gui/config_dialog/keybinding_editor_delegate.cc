@@ -46,10 +46,9 @@ namespace gui {
 
 class KeyBindingEditorTriggerButton : public QPushButton {
  public:
-  KeyBindingEditorTriggerButton(QWidget *parent,
-                                QWidget *modal_parent) :
+  KeyBindingEditorTriggerButton(QWidget *parent) :
       QPushButton(parent),
-      editor_(new KeyBindingEditor(modal_parent, this)) {
+      editor_(new KeyBindingEditor(parent, this)) {
     editor_->setModal(true);   // create a modal dialog
     setFocusProxy(editor_.get());
     connect(this, SIGNAL(clicked()),
@@ -65,8 +64,7 @@ class KeyBindingEditorTriggerButton : public QPushButton {
 };
 
 KeyBindingEditorDelegate::KeyBindingEditorDelegate(QObject *parent)
-    : QItemDelegate(parent),
-      modal_parent_(static_cast<QWidget *>(parent)) {}
+    : QItemDelegate(parent) {}
 
 KeyBindingEditorDelegate::~KeyBindingEditorDelegate() {}
 
@@ -75,7 +73,7 @@ QWidget *KeyBindingEditorDelegate::createEditor(
     const QStyleOptionViewItem &option,
     const QModelIndex &index) const {
   KeyBindingEditorTriggerButton *button
-      = new KeyBindingEditorTriggerButton(parent, modal_parent_);
+      = new KeyBindingEditorTriggerButton(parent);
   CHECK(button);
   connect(button->mutable_editor(), SIGNAL(accepted()),
           this, SLOT(CommitAndCloseEditor()));
