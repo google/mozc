@@ -221,10 +221,11 @@ void SymbolRewriter::InsertCandidates(
       candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     }
 
-    // they have two characters and the one of characters doesn't have
-    // alternative character.
+    // The first two consist of two characters but the one of characters doesn't
+    // have alternative character.
     if (candidate->value == "\xE2\x80\x9C\xE2\x80\x9D" ||  // "“”"
-        candidate->value == "\xE2\x80\x98\xE2\x80\x99") {  // "‘’"
+        candidate->value == "\xE2\x80\x98\xE2\x80\x99" ||  // "‘’"
+        candidate->value == "w" || candidate->value == "www") {
       candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
 
@@ -362,4 +363,5 @@ bool SymbolRewriter::Rewrite(const ConversionRequest &request,
   return (RewriteEntireCandidate(request, segments) ||
           RewriteEachCandidate(segments));
 }
+
 }  // namespace mozc
