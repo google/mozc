@@ -95,43 +95,6 @@ TranslationDataImpl::TranslationDataImpl() {
   // qApplication must be loaded first
   CHECK(qApp);
 
-#ifdef OS_WIN
-  // Get the font from MessageFont
-  NONCLIENTMETRICSW ncm = { 0 };
-
-  // We don't use |sizeof(NONCLIENTMETRICSW)| because it is fragile when the
-  // code is copied-and-pasted without caring about WINVER.
-  // http://blogs.msdn.com/b/oldnewthing/archive/2003/12/12/56061.aspx
-  const size_t kSizeOfNonClientMetricsWForVistaOrLater =
-      CCSIZEOF_STRUCT(NONCLIENTMETRICSW, iPaddedBorderWidth);
-  ncm.cbSize = kSizeOfNonClientMetricsWForVistaOrLater;
-  if (::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &ncm, 0)) {
-    // Windows font scale is 0..100 while Qt's scale is 0..99.
-    // If lfWeight is 0 (default weight), we don't set the Qt's font weight.
-    if (ncm.lfMessageFont.lfWeight > 0) {
-      font_.setWeight(static_cast<int>(
-          99.0 * ncm.lfMessageFont.lfWeight / 1000.0));
-    }
-    font_.setItalic(static_cast<bool>(ncm.lfMessageFont.lfItalic));
-    font_.setUnderline(static_cast<bool>(ncm.lfMessageFont.lfUnderline));
-    font_.setStrikeOut(static_cast<bool>(ncm.lfMessageFont.lfStrikeOut));
-    string face_name;
-    Util::WideToUTF8(ncm.lfMessageFont.lfFaceName, &face_name);
-    font_.setFamily(QString::fromUtf8(face_name.c_str()));
-    HDC hdc = ::GetDC(NULL);
-    if (hdc != NULL) {
-      // Get point size from height:
-      // http://msdn.microsoft.com/ja-jp/library/cc428368.aspx
-      const int KPointToHeightFactor= 72;
-      font_.setPointSize(abs(::MulDiv(ncm.lfMessageFont.lfHeight,
-                                      KPointToHeightFactor,
-                                      ::GetDeviceCaps(hdc, LOGPIXELSY))));
-      ::ReleaseDC(NULL, hdc);
-    }
-    qApp->setFont(font_);
-  }
-#endif
-
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
   // Install WindowTilteModifier for official dev channel
   // append a special footer (Dev x.x.x) to the all Windows.
