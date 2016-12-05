@@ -556,7 +556,9 @@
             ],
             'action': [
               'python', '../build_tools/build_breakpad.py',
-              '--pbdir', '<(pbdir)', '--outdir', '<(mac_breakpad_dir)',
+              '--pbdir', '<(pbdir)',
+              '--outdir', '<(mac_breakpad_dir)',
+              '--sdk', 'macosx<(mac_sdk)',
             ],
           }],
           'direct_dependent_settings': {
