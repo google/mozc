@@ -59,8 +59,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
         source, 6, &characters_in_utf16));
   }
   {
-    // "𠮟咤"
-    const char kSource[] = "\xF0\xA0\xAE\x9F\xE5\x92\xA4";
+    const char kSource[] = "𠮟咤";
     wstring source;
     Util::UTF8ToWide(kSource, &source);
     size_t characters_in_utf16 = 0;
