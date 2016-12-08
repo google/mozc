@@ -30,10 +30,8 @@
 #include "gui/dictionary_tool/find_dialog.h"
 
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QMessageBox>
-#endif
 
 #include "base/logging.h"
 

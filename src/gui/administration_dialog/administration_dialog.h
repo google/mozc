@@ -31,11 +31,8 @@
 #define MOZC_GUI_ADMINISTRATION_DIALOG_H_
 
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QDialog>
-#else
-#include <QtGui/QDialog>
-#endif
+
 #include <string>
 #include "gui/administration_dialog/ui_administration_dialog.h"
 

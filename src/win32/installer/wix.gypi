@@ -74,26 +74,6 @@
               '-dReleaseCrtMergeModulePath=<(release_crt_merge_module_path)',
             ],
           }],
-          ['qtcore4_dll_path!=""', {
-            'additional_args': [
-              '-dQtCore4DllPath=<(qtcore4_dll_path)',
-            ],
-          }],
-          ['qtcored4_dll_path!=""', {
-            'additional_args': [
-              '-dQtCored4DllPath=<(qtcored4_dll_path)',
-            ],
-          }],
-          ['qtgui4_dll_path!=""', {
-            'additional_args': [
-              '-dQtGui4DllPath=<(qtgui4_dll_path)',
-            ],
-          }],
-          ['qtguid4_dll_path!=""', {
-            'additional_args': [
-              '-dQtGuid4DllPath=<(qtguid4_dll_path)',
-            ],
-          }],
           ['qt5core_dll_path!=""', {
             'additional_args': [
               '-dQt5CoreDllPath=<(qt5core_dll_path)',

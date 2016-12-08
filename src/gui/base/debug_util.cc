@@ -36,7 +36,6 @@
 namespace mozc {
 namespace gui {
 
-#ifdef MOZC_USE_QT5
 void DebugUtil::MessageHandler(QtMsgType type,
                                const QMessageLogContext &context,
                                const QString &q_msg) {
@@ -57,24 +56,6 @@ void DebugUtil::MessageHandler(QtMsgType type,
       break;
   }
 }
-#else  // ! MOZC_USE_QT5
-void DebugUtil::MessageHandler(QtMsgType type, const char *msg) {
-  switch (type) {
-    case QtDebugMsg:
-      LOG(INFO) << msg;
-      break;
-    case QtWarningMsg:
-      LOG(WARNING) << msg;
-      break;
-    case QtCriticalMsg:
-      LOG(ERROR) << msg;
-      break;
-    case QtFatalMsg:
-      LOG(FATAL) << msg;
-      break;
-  }
-}
-#endif  // ! MOZC_USE_QT5
 
 }  // namespace gui
 }  // namespace mozc

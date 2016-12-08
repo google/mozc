@@ -34,13 +34,7 @@
   'variables': {
     'conditions': [
       ['target_platform=="Linux"', {
-        'conditions': [
-          ['qt_ver==5', {
-            'moc_path': '<!(pkg-config --variable=host_bins Qt5Core)/moc',
-          }, {
-            'moc_path': '<!(pkg-config --variable=moc_location QtGui)',
-          }],
-        ],
+        'moc_path': '<!(pkg-config --variable=host_bins Qt5Core)/moc',
       }, 'qt_dir', {
         'moc_path': '<(qt_dir)/bin/moc<(EXECUTABLE_SUFFIX)',
       }, {

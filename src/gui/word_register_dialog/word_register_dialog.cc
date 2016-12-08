@@ -39,9 +39,7 @@
 #endif  // OS_WIN
 
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMessageBox>
-#endif
 #include <cstdlib>
 #ifdef OS_WIN
 #include <memory>  // for std::unique_ptr
@@ -88,11 +86,7 @@ QString GetEnv(const char *envname) {
   const DWORD num_copied =
       ::GetEnvironmentVariable(wenvname.c_str(), buffer.get(), buffer_size);
   if (num_copied > 0) {
-#ifdef MOZC_USE_QT5
     return QString::fromUtf16(buffer.get());
-#else
-    return QString::fromWCharArray(buffer.get());
-#endif
   }
   return "";
 #endif  // OS_WIN

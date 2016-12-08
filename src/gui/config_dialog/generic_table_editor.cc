@@ -30,15 +30,10 @@
 #include "gui/config_dialog/generic_table_editor.h"
 
 #include <QtCore/QFile>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QtGui>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
-#else
-#include <QtGui/QFileDialog>
-#include <QtGui/QtGui>
-#endif
 
 #include <algorithm>  // for unique
 #include <cctype>
@@ -121,11 +116,7 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
                                      QAbstractItemView::SelectedClicked);
   editorTableWidget->setSortingEnabled(true);
 
-#ifdef MOZC_USE_QT5
   editorTableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-#else
-  editorTableWidget->verticalHeader()->setResizeMode(QHeaderView::Fixed);
-#endif
   editorTableWidget->verticalHeader()->setDefaultSectionSize(
       GetTableHeight(editorTableWidget));
 

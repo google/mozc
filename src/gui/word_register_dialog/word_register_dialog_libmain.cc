@@ -27,14 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/QDialog>
-#else
-#include <QtGui/QApplication>
-#include <QtGui/QDialog>
-#endif
 #include <QtGui/QtGui>
+
 #include "base/system_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"

@@ -31,11 +31,7 @@
 #include <windows.h>
 #endif
 
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QApplication>
-#endif
 #include <QtCore/QFile>
 
 #include <memory>

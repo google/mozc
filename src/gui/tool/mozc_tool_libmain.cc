@@ -144,11 +144,7 @@ int RunMozcTool(int argc, char *argv[]) {
   }
 
   // install Qt debug handler
-#ifdef MOZC_USE_QT5
   qInstallMessageHandler(mozc::gui::DebugUtil::MessageHandler);
-#else
-  qInstallMsgHandler(mozc::gui::DebugUtil::MessageHandler);
-#endif
 
 #ifdef OS_WIN
   // Update JumpList if available.

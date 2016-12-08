@@ -30,11 +30,7 @@
 #include "gui/character_pad/character_palette.h"
 
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMessageBox>
-#else
-#include <QtGui/QMessageBox>
-#endif
 
 #ifdef OS_WIN
 #include <Windows.h>

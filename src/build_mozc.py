@@ -272,7 +272,6 @@ def ParseGypOptions(args):
   parser.add_option('--gypdir', dest='gypdir',
                     help='Specifies the location of GYP to be used.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
-  parser.add_option('--qtver', dest='qtver', choices=('4', '5'), default='5')
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='data/version/mozc_version_template.bzl')
@@ -505,7 +504,7 @@ def GypMain(options, unused_args):
   if options.noqt or options.target_platform in ['Android', 'NaCl']:
     qt_version = ''
   else:
-    qt_version = options.qtver
+    qt_version = '5'
   GenerateVersionFile(template_path, version_path, options.target_platform,
                       options.android_application_id,
                       options.android_arch, qt_version)
@@ -591,12 +590,7 @@ def GypMain(options, unused_args):
     gyp_options.extend(['-D', 'qt_dir='])
 
     # Check if Qt libraries are installed.
-    if options.qtver == '5':
-      system_qt_found = PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets')
-    else:
-      system_qt_found = PkgExists('QtCore >= 4.0', 'QtCore < 5.0',
-                                  'QtGui >= 4.0', 'QtGui < 5.0')
-    if not system_qt_found:
+    if not PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets'):
       PrintErrorAndExit('Qt is required to build GUI Tool. '
                         'Specify --noqt to skip building GUI Tool.')
 
@@ -606,7 +600,6 @@ def GypMain(options, unused_args):
       gyp_options.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
     else:
       gyp_options.extend(['-D', 'qt_dir='])
-  gyp_options.extend(['-D', 'qt_ver=%s' % options.qtver])
 
   if target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
@@ -773,18 +766,7 @@ def GypMain(options, unused_args):
     copy_script = os.path.join(
         ABS_SCRIPT_DIR, 'build_tools', 'copy_dll_and_symbol.py')
     copy_params = []
-    if qt_version == '4':
-      copy_params.append({
-          'basenames': 'QtCored4;QtGuid4',
-          'dll_paths': abs_qt_bin_dir,
-          'pdb_paths': abs_qt_lib_dir,
-          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic')})
-      copy_params.append({
-          'basenames': 'QtCore4;QtGui4',
-          'dll_paths': abs_qt_bin_dir,
-          'pdb_paths': abs_qt_lib_dir,
-          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic')})
-    elif qt_version == '5':
+    if qt_version == '5':
       copy_params.append({
           'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd',
           'dll_paths': abs_qt_bin_dir,

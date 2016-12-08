@@ -31,12 +31,9 @@
 #include <windows.h>
 #endif
 
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QApplication>
-#endif
 #include <QtGui/QtGui>
+
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"

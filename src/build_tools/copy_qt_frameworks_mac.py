@@ -49,7 +49,6 @@ from util import RunOrDie
 def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
-  parser.add_option('--qtver', dest='qtver', choices=('4', '5'), default='4')
   parser.add_option('--qtdir', dest='qtdir')
   parser.add_option('--target', dest='target')
 
@@ -113,43 +112,34 @@ def main():
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
-  qtver = opt.qtver
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
   ref_to = '@executable_path/../../../ConfigDialog.app/Contents/Frameworks'
-  if qtver == '5':
-    CopyQt(qtdir, 'QtCore', '5', target, copy_resources=True)
-    CopyQt(qtdir, 'QtGui', '5', target, copy_resources=True)
-    CopyQt(qtdir, 'QtWidgets', '5', target, copy_resources=True)
-    CopyQt(qtdir, 'QtPrintSupport', '5', target, copy_resources=True)
 
-    ChangeReferences(qtdir, GetFrameworkPath('QtCore', '5'),
-                     '5', target, ref_to)
-    ChangeReferences(qtdir, GetFrameworkPath('QtGui', '5'),
-                     '5', target, ref_to,
-                     references=['QtCore'])
-    ChangeReferences(qtdir, GetFrameworkPath('QtWidgets', '5'),
-                     '5', target, ref_to,
-                     references=['QtCore', 'QtGui'])
-    ChangeReferences(qtdir, GetFrameworkPath('QtPrintSupport', '5'),
-                     '5', target, ref_to,
-                     references=['QtCore', 'QtGui', 'QtWidgets'])
+  CopyQt(qtdir, 'QtCore', '5', target, copy_resources=True)
+  CopyQt(qtdir, 'QtGui', '5', target, copy_resources=True)
+  CopyQt(qtdir, 'QtWidgets', '5', target, copy_resources=True)
+  CopyQt(qtdir, 'QtPrintSupport', '5', target, copy_resources=True)
 
-    libqcocoa = 'QtCore.framework/Resources/plugins/platforms/libqcocoa.dylib'
-    CopyFiles(['%s/plugins/platforms/libqcocoa.dylib' % qtdir],
-              '%s/%s' % (target, libqcocoa))
-    ChangeReferences(qtdir, libqcocoa, '5', target, ref_to,
-                     references=['QtCore', 'QtGui',
-                                 'QtWidgets', 'QtPrintSupport'])
-  else:
-    CopyQt(qtdir, 'QtCore', '4', target)
-    CopyQt(qtdir, 'QtGui', '4', target, copy_resources=True)
+  ChangeReferences(qtdir, GetFrameworkPath('QtCore', '5'),
+                   '5', target, ref_to)
+  ChangeReferences(qtdir, GetFrameworkPath('QtGui', '5'),
+                   '5', target, ref_to,
+                   references=['QtCore'])
+  ChangeReferences(qtdir, GetFrameworkPath('QtWidgets', '5'),
+                   '5', target, ref_to,
+                   references=['QtCore', 'QtGui'])
+  ChangeReferences(qtdir, GetFrameworkPath('QtPrintSupport', '5'),
+                   '5', target, ref_to,
+                   references=['QtCore', 'QtGui', 'QtWidgets'])
 
-    ChangeReferences(qtdir, GetFrameworkPath('QtCore', '4'),
-                     '4', target, ref_to)
-    ChangeReferences(qtdir, GetFrameworkPath('QtGui', '4'),
-                     '4', target, ref_to, references=['QtCore'])
+  libqcocoa = 'QtCore.framework/Resources/plugins/platforms/libqcocoa.dylib'
+  CopyFiles(['%s/plugins/platforms/libqcocoa.dylib' % qtdir],
+            '%s/%s' % (target, libqcocoa))
+  ChangeReferences(qtdir, libqcocoa, '5', target, ref_to,
+                   references=['QtCore', 'QtGui',
+                               'QtWidgets', 'QtPrintSupport'])
 
 
 if __name__ == '__main__':

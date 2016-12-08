@@ -48,7 +48,6 @@ from util import RunOrDie
 def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
-  parser.add_option('--qtver', dest='qtver', choices=('4', '5'), default='4')
   parser.add_option('--qtdir', dest='qtdir')
   parser.add_option('--target', dest='target')
 
@@ -80,30 +79,28 @@ def main():
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
-  qtver = opt.qtver
   qtdir = os.path.abspath(opt.qtdir)
   target = os.path.abspath(opt.target)
 
   # Changes the reference to QtCore framework from the target application
-  # From: /path/to/qt/lib/QtCore.framework/Versions/4/QtCore
+  # From: /path/to/qt/lib/QtCore.framework/Versions/5/QtCore
   #   To: @executable_path/../../../MozcTool.app/Contents/Frameworks/...
-  qtcore_framework = GetFrameworkPath('QtCore', qtver)
+  qtcore_framework = GetFrameworkPath('QtCore', '5')
   InstallNameTool(target,
                   '%s/lib/%s' % (qtdir, qtcore_framework),
                   GetReferenceTo(qtcore_framework))
 
   # Changes the reference to QtGui framework from the target application
-  qtgui_framework = GetFrameworkPath('QtGui', qtver)
+  qtgui_framework = GetFrameworkPath('QtGui', '5')
   InstallNameTool(target,
                   '%s/lib/%s' % (qtdir, qtgui_framework),
                   GetReferenceTo(qtgui_framework))
 
-  if qtver == '5':
-    # Changes the reference to QtWidgets framework from the target application
-    qtwidgets_framework = GetFrameworkPath('QtWidgets', '5')
-    InstallNameTool(target,
-                    '%s/lib/%s' % (qtdir, qtwidgets_framework),
-                    GetReferenceTo(qtwidgets_framework))
+  # Changes the reference to QtWidgets framework from the target application
+  qtwidgets_framework = GetFrameworkPath('QtWidgets', '5')
+  InstallNameTool(target,
+                  '%s/lib/%s' % (qtdir, qtwidgets_framework),
+                  GetReferenceTo(qtwidgets_framework))
 
   # Change the reference to $(branding)Tool_lib from the target application
   # From: @executable_path/../Frameworks/MozcTool_lib.framework/...

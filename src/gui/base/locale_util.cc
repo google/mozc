@@ -44,12 +44,7 @@
 #include <CommCtrl.h>  // for CCSIZEOF_STRUCT
 #endif
 
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtCore/QTextCodec>
-#include <QtGui/QApplication>
-#endif
 
 #include <QtGui/QtGui>
 #include <map>
@@ -114,12 +109,6 @@ TranslationDataImpl::TranslationDataImpl() {
   if (loaded) {
     qApp->installTranslator(&default_translator_);
   }
-
-#ifndef MOZC_USE_QT5
-  // Set default encoding for multi-byte string to be UTF8
-  QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-  QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-#endif
 }
 
 void TranslationDataImpl::InstallTranslationMessageAndFont(

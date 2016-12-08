@@ -29,16 +29,10 @@
 
 #include "gui/character_pad/selection_handler.h"
 
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
-#else
-#include <QtGui/QApplication>
-#include <QtGui/QClipboard>
-#include <QtGui/QMessageBox>
-#endif
 
 #include "base/singleton.h"
 

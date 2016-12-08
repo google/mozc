@@ -32,11 +32,7 @@
 
 #include <QtCore/QString>
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QDialog>
-#else
-#include <QtGui/QDialog>
-#endif
 
 #include <memory>
 

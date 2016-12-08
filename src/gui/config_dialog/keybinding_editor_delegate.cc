@@ -30,11 +30,7 @@
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QPushButton>
-#else
-#include <QtGui/QPushButton>
-#endif
 
 #include <memory>
 

@@ -30,9 +30,7 @@
 #include "gui/config_dialog/character_form_editor.h"
 
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QHeaderView>
-#endif
 
 #include <memory>
 

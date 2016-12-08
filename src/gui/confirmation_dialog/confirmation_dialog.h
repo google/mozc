@@ -31,11 +31,7 @@
 #define MOZC_GUI_CONFIRMATION_DIALOG_H_
 
 #include <QtCore/QObject>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMessageBox>
-#else
-#include <QtGui/QMessageBox>
-#endif
 
 namespace mozc {
 namespace gui {

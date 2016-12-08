@@ -31,13 +31,8 @@
 #define MOZC_GUI_CHARACTER_PAD_RESULT_LIST_H_
 
 #include <QtCore/QStringList>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QListWidget>
-#else
-#include <QtGui/QWidget>
-#include <QtGui/QListWidget>
-#endif
 
 namespace mozc {
 namespace gui {

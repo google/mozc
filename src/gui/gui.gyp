@@ -1031,7 +1031,6 @@
                   'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
                     'python', '../build_tools/change_reference_mac.py',
-                    '--qtver', '<(qt_ver)',
                     '--qtdir', '<(qt_dir)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/GuiTool_lib.framework/Versions/A/GuiTool_lib',
@@ -1279,11 +1278,7 @@
           ],
           'conditions': [
             ['use_qt=="YES"', {
-              'conditions': [
-                ['qt_ver==5', {
-                  'mac_bundle_resources': ['../data/mac/qt.conf'],
-                }],
-              ],
+              'mac_bundle_resources': ['../data/mac/qt.conf'],
               'sources': [
                 'tool/mozc_tool_main.cc',
               ],
@@ -1298,7 +1293,6 @@
                   'postbuild_name': 'Change the reference to frameworks',
                   'action': [
                     'python', '../build_tools/change_reference_mac.py',
-                    '--qtver', '<(qt_ver)',
                     '--qtdir', '<(qt_dir)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
@@ -1308,7 +1302,6 @@
                   'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
                   'action': [
                     'python', '../build_tools/copy_qt_frameworks_mac.py',
-                    '--qtver', '<(qt_ver)',
                     '--qtdir', '<(qt_dir)',
                     '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
                   ],

@@ -30,11 +30,7 @@
 #ifndef MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
 #define MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
 
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QSplitter>
-#else
-#include <QtGui/QSplitter>
-#endif
 
 // Special QSplitter whose handle size is only 1px.
 // This line is drawed with a proper colour corresponding to

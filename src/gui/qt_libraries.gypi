@@ -47,19 +47,10 @@
               'AdditionalLibraryDirectories': [
                 '<(qt_dir)/lib',
               ],
-              'conditions': [
-                ['qt_ver==5', {
-                  'AdditionalDependencies': [
-                    'Qt5Cored.lib',
-                    'Qt5Guid.lib',
-                    'Qt5Widgetsd.lib',
-                  ],
-                }, {
-                  'AdditionalDependencies': [
-                    'QtCored4.lib',
-                    'QtGuid4.lib',
-                  ],
-                }],
+              'AdditionalDependencies': [
+                'Qt5Cored.lib',
+                'Qt5Guid.lib',
+                'Qt5Widgetsd.lib',
               ],
             },
           },
@@ -70,19 +61,10 @@
               'AdditionalLibraryDirectories': [
                 '<(qt_dir)/lib',
               ],
-              'conditions': [
-                ['qt_ver==5', {
-                  'AdditionalDependencies': [
-                    'Qt5Core.lib',
-                    'Qt5Gui.lib',
-                    'Qt5Widgets.lib',
-                  ],
-                }, {
-                  'AdditionalDependencies': [
-                    'QtCore4.lib',
-                    'QtGui4.lib',
-                  ],
-                }],
+              'AdditionalDependencies': [
+                'Qt5Core.lib',
+                'Qt5Gui.lib',
+                'Qt5Widgets.lib',
               ],
             },
           },
@@ -104,20 +86,11 @@
             'mac_framework_dirs': [
               '<(qt_dir)/lib',
             ],
-            'conditions': [
-              ['qt_ver==5', {
-                'libraries': [
-                  '<(qt_dir)/lib/QtCore.framework',
-                  '<(qt_dir)/lib/QtGui.framework',
-                  '<(qt_dir)/lib/QtWidgets.framework',
-                ]
-              }, {
-                'libraries': [
-                  '<(qt_dir)/lib/QtCore.framework',
-                  '<(qt_dir)/lib/QtGui.framework',
-                ]
-              }],
-            ],
+            'libraries': [
+              '<(qt_dir)/lib/QtCore.framework',
+              '<(qt_dir)/lib/QtGui.framework',
+              '<(qt_dir)/lib/QtWidgets.framework',
+            ]
           },
         }],
       ],
@@ -126,15 +99,8 @@
       ]
     }],
     ['target_platform=="Linux"', {
-      'conditions': [
-        ['qt_ver==5', {
-          'cflags': ['<!@(pkg-config --cflags Qt5Widgets Qt5Gui Qt5Core)'],
-          'libraries': ['<!@(pkg-config --libs Qt5Widgets Qt5Gui Qt5Core)'],
-        }, {
-          'cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
-          'libraries': ['<!@(pkg-config --libs QtGui QtCore)'],
-        }],
-      ],
+      'cflags': ['<!@(pkg-config --cflags Qt5Widgets Qt5Gui Qt5Core)'],
+      'libraries': ['<!@(pkg-config --libs Qt5Widgets Qt5Gui Qt5Core)'],
     }],
     # Workarounds related with clang.
     ['(_toolset=="target" and compiler_target=="clang") or '

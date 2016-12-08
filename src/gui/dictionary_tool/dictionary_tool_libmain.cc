@@ -29,11 +29,8 @@
 
 #include <QtCore/QTextCodec>
 #include <QtCore/QTranslator>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QApplication>
-#endif
+
 #include <string>
 #include "base/logging.h"
 #include "base/system_util.h"

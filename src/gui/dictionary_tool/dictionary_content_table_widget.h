@@ -30,11 +30,7 @@
 #ifndef MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_CONTENT_TABLE_WIDGET_H_
 #define MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_CONTENT_TABLE_WIDGET_H_
 
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QTableWidget>
-#else
-#include <QtGui/QTableWidget>
-#endif
 
 namespace mozc {
 namespace gui {

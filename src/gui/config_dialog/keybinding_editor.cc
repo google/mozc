@@ -43,14 +43,10 @@
 #endif
 
 #include <QtCore/QString>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTableWidget>
-#else
-#include <QtGui/QMessageBox>
-#endif
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -288,13 +284,8 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
     result_state = KeyBindingFilter::DENY_KEY;
   }
 
-#ifdef MOZC_USE_QT5
   const char key = modifier_required_key_.isEmpty() ?
       0 : modifier_required_key_[0].toLatin1();
-#else
-  const char key = modifier_required_key_.isEmpty() ?
-      0 : modifier_required_key_[0].toAscii();
-#endif
 
   // Alt or Ctrl or these combinations
   if ((alt_pressed_ || ctrl_pressed_) &&

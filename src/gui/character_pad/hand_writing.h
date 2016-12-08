@@ -30,11 +30,7 @@
 #ifndef MOZC_GUI_CHARACTER_PAD_HAND_WRITING_H_
 #define MOZC_GUI_CHARACTER_PAD_HAND_WRITING_H_
 
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMainWindow>
-#else
-#include <QtGui/QMainWindow>
-#endif
 
 #include <memory>
 
