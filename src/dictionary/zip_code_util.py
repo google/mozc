@@ -61,6 +61,7 @@ def MergeCSV(csv_lines):
       ret.append(entry)
     else:
       last_entry = ret[-1]
+      last_entry[5] += entry[5]  # reading of '町域'
       last_entry[8] += entry[8]  # '町域'
   return ret
 
