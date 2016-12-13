@@ -179,7 +179,6 @@
       '<(protobuf_cpp_root)/compiler/javanano/javanano_message_field.cc',
       '<(protobuf_cpp_root)/compiler/javanano/javanano_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/js/js_generator.cc',
-      '<(protobuf_cpp_root)/compiler/js/well_known_types_embed.cc',
       '<(protobuf_cpp_root)/compiler/main.cc',
       '<(protobuf_cpp_root)/compiler/objectivec/objectivec_enum.cc',
       '<(protobuf_cpp_root)/compiler/objectivec/objectivec_enum_field.cc',
