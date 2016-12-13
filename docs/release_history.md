@@ -1,6 +1,36 @@
 Release History
 ===============
 
+2.18.2613.102 - 2.19.2643.102 / *2016-09-15* - *2016-10-18*
+--------------------------------------------------
+You can check out Mozc [2.19.2643.102](https://github.com/google/mozc/commit/f5dcadf0dee0382612398965adc2c110ef027d9c) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout f5dcadf0dee0382612398965adc2c110ef027d9c
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.18.2613.102](https://github.com/google/mozc/commit/f76c304164e54414b5310010bc26e27b37764822) and [2.19.2643.102](https://github.com/google/mozc/commit/f5dcadf0dee0382612398965adc2c110ef027d9c) as follows.
+
+  * Third party libraries:
+    * protobuf: [e8ae137 -> c44ca26](https://github.com/google/protobuf/compare/e8ae137c96444ea313485ed1118c5e43b2099cf1...c44ca26fe89ed8a81d3ee475a2ccc1797141dbce)
+    * Dropped dependency on [fonttools](https://github.com/googlei18n/fonttools)
+  * Build related changes:
+    * `--qtver=5` GYP build option is implicitly assumed on macOS and Linux builds ([f76c304](https://github.com/google/mozc/commit/f76c304164e54414b5310010bc26e27b37764822)). On Windows, `--qtver=4` is still the default.
+  * Major changes:
+    * Mozc for macOS now supports 10.12 as a runtime environment.
+    * Mozc for Android now uses on-device font to render keytop icons ([f5dcad](https://github.com/google/mozc/commit/f5dcadf0dee0382612398965adc2c110ef027d9c)).
+  * Fixed issues:
+    * [#263](https://github.com/google/mozc/issues/263): Incorrect position in voiced sound marks on the key pad in Android
+    * [#384](https://github.com/google/mozc/issues/384): HUAWEI P9 lite does not show MozcView.
+    * [#388](https://github.com/google/mozc/issues/388): Having multiple abbreviation user dictionary entries with the same reading should be supported
+    * [#389](https://github.com/google/mozc/issues/389): Emoticon user dictionary entry should not be treated a content word
+  * Total commits:
+    * [39 commits](https://github.com/google/mozc/compare/f76c304164e54414b5310010bc26e27b37764822%5E...f5dcadf0dee0382612398965adc2c110ef027d9c).
+
+
 2.17.2532.102 - 2.18.2612.102 / *2016-03-15* - *2016-09-13*
 --------------------------------------------------
 You can check out Mozc [2.18.2612.102](https://github.com/google/mozc/commit/2315f957d1785130c2ed196e141a330b0857b065) as follows.
