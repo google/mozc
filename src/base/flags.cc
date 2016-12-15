@@ -183,7 +183,7 @@ namespace {
 #ifndef IGNORE_HELP_FLAG
 
 void PrintFlags(string *output) {
-  ostringstream os;
+  std::ostringstream os;
   for (map<string, Flag *>::const_iterator it = GetFlagMap()->begin();
        it != GetFlagMap()->end(); ++it) {
     os << "   --" << it->first << " (" << it->second->help << ")";
