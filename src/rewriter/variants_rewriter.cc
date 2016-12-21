@@ -186,22 +186,22 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
         Util::GetScriptTypeWithoutSymbols(candidate->value);
     switch (type) {
       case Util::HIRAGANA:
-        character_form_message.set(kHiragana);
+        character_form_message = StringPiece(kHiragana);
         // don't need to set full/half, because hiragana only has
         // full form
         description_type &= ~FULL_HALF_WIDTH;
         break;
       case Util::KATAKANA:
         // character_form_message = "カタカナ";
-        character_form_message.set(kKatakana);
+        character_form_message = StringPiece(kKatakana);
         break;
       case Util::NUMBER:
         // character_form_message = "数字";
-        character_form_message.set(kNumber);
+        character_form_message = StringPiece(kNumber);
         break;
       case Util::ALPHABET:
         // character_form_message = "アルファベット";
-        character_form_message.set(kAlphabet);
+        character_form_message = StringPiece(kAlphabet);
         break;
       case Util::KANJI:
       case Util::EMOJI:

@@ -496,14 +496,14 @@ TEST(StringPieceTest, CheckCustom) {
   ASSERT_EQ(c, e);
 
   // set
-  c.set("foobar", 6);
+  c = StringPiece("foobar", 6);
   ASSERT_EQ(c, a);
-  c.set("foobar", 0);
+  c = StringPiece("foobar", 0);
   ASSERT_EQ(c, e);
-  c.set("foobar", 7);
+  c = StringPiece("foobar", 7);
   ASSERT_NE(c, a);
 
-  c.set("foobar");
+  c = StringPiece("foobar");
   ASSERT_EQ(c, a);
 
   // as_string
@@ -520,7 +520,7 @@ TEST(StringPieceTest, CheckNULL) {
   ASSERT_EQ(static_cast<const char *>(NULL), s.data());
   ASSERT_SIZE_EQ(s.size(), 0);
 
-  s.set(NULL);
+  s = StringPiece(NULL);
   ASSERT_EQ(static_cast<const char *>(NULL), s.data());
   ASSERT_SIZE_EQ(s.size(), 0);
 }

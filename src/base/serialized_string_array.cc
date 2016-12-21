@@ -65,7 +65,7 @@ void SerializedStringArray::Set(StringPiece data_aligned_at_4byte_boundary) {
 }
 
 void SerializedStringArray::clear() {
-  data_.set(reinterpret_cast<const char *>(&kEmptyArrayData), 4);
+  data_ = StringPiece(reinterpret_cast<const char *>(&kEmptyArrayData), 4);
 }
 
 bool SerializedStringArray::VerifyData(StringPiece data) {

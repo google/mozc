@@ -126,10 +126,12 @@ bool CalculatorImpl::CalculateString(const string &key, string *result) const {
   StringPiece expression_body;
   if (normalized_key.front() == '=') {
     // Expression starts with '='.
-    expression_body.set(normalized_key.data() + 1, normalized_key.size() - 1);
+    expression_body =
+        StringPiece(normalized_key.data() + 1, normalized_key.size() - 1);
   } else if (normalized_key.back() == '=') {
     // Expression is ended with '='.
-    expression_body.set(normalized_key.data(), normalized_key.size() - 1);
+    expression_body =
+        StringPiece(normalized_key.data(), normalized_key.size() - 1);
   } else {
     // Expression does not start nor end with '='.
     result->clear();

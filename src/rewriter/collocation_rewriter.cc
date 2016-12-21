@@ -88,7 +88,8 @@ bool ParseCompound(const StringPiece value, const StringPiece pattern,
   if (pattern_begin == value.end()) {
     return false;
   }
-  first_content->set(value.data(), std::distance(value.begin(), pattern_begin));
+  *first_content =
+      StringPiece(value.data(), std::distance(value.begin(), pattern_begin));
   if (!Util::IsScriptType(*first_content, Util::KANJI)) {
     return false;
   }

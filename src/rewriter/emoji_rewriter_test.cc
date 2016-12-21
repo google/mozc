@@ -195,8 +195,9 @@ class TestDataManager : public testing::MockDataManager {
 
   void GetEmojiRewriterData(StringPiece *token_array_data,
                             StringPiece *string_array_data) const override {
-    token_array_data->set(reinterpret_cast<const char*>(token_array_.data()),
-                          token_array_.size() * sizeof(uint32));
+    *token_array_data =
+        StringPiece(reinterpret_cast<const char *>(token_array_.data()),
+                    token_array_.size() * sizeof(uint32));
     *string_array_data = string_array_data_;
   }
 
