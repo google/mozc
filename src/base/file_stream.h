@@ -45,7 +45,7 @@ namespace mozc {
 // This class reads all of the file using Pepper FileIO and sotres the data in
 // string_buffer_ when open() is called. This class can't be used in the NaCl
 // main thread.
-class InputFileStream : public istream {
+class InputFileStream : public std::istream {
  public:
   InputFileStream();
   explicit InputFileStream(const char* filename,
