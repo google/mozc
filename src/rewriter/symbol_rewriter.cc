@@ -80,7 +80,7 @@ const string SymbolRewriter::GetDescription(
   // Merge description
   if (!additional_description.empty()) {
     result.append(1, '(');
-    additional_description.AppendToString(&result);
+    result.append(additional_description.data(), additional_description.size());
     result.append(1, ')');
   }
   return result;

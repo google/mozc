@@ -138,7 +138,8 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
     } else {
       string description = kBaseEmoticonDescription;
       description.append(" ");
-      sorted_value[i].description().AppendToString(&description);
+      description.append(sorted_value[i].description().data(),
+                         sorted_value[i].description().size());
       c->description = description;
     }
   }

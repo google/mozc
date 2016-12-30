@@ -241,7 +241,7 @@ void GenerateDescription(StringPiece variant_token_array,
   // Format like "XXXのYYY"
   original.CopyToString(desc);
   desc->append("\xe3\x81\xae");  // "の"
-  variant_type[type_id].AppendToString(desc);
+  desc->append(variant_type[type_id].data(), variant_type[type_id].size());
 }
 
 // Add single kanji variants description to existing candidates,

@@ -51,7 +51,7 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
   candidate->description =
       // "もしかして"
       "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6: ";
-  item.correction.AppendToString(&candidate->description);
+  candidate->description.append(item.correction.data(), item.correction.size());
   candidate->description.append(1, '>');
 
   DCHECK(candidate->IsValid());

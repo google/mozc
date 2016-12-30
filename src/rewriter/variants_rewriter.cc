@@ -101,7 +101,7 @@ void AppendString(StringPiece src, string *dst) {
     if (!dst->empty()) {
       dst->append(1, ' ');
     }
-    src.AppendToString(dst);
+    dst->append(src.data(), src.size());
   }
 }
 

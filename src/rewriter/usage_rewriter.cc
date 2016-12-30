@@ -237,7 +237,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
         const StringPiece value_suffix = string_array_[
             base_conjugation_suffix_[2 * iter.conjugation_id()]];
         string_array_[iter.value_index()].CopyToString(&candidate->usage_title);
-        value_suffix.AppendToString(&candidate->usage_title);
+        candidate->usage_title.append(value_suffix.data(), value_suffix.size());
 
         string_array_[iter.meaning_index()].CopyToString(
             &candidate->usage_description);

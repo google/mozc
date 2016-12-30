@@ -107,7 +107,7 @@ class VersionRewriter::VersionDataImpl {
     string version_string = kVersionRewriterVersionPrefix;
     version_string.append(Version::GetMozcVersion());
     version_string.append(1, '+');
-    data_version.AppendToString(&version_string);
+    version_string.append(data_version.data(), data_version.size());
     for (int i = 0; i < arraysize(kKeyCandList); ++i) {
       entries_[kKeyCandList[i].key].reset(
           new VersionEntry(kKeyCandList[i].base_candidate,

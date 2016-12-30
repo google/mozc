@@ -175,13 +175,13 @@ string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
   for (Segment::Candidate::InnerSegmentIterator iter(&cand);
        !iter.Done(); iter.Next()) {
     string s = "<";
-    iter.GetKey().AppendToString(&s);
+    s.append(iter.GetKey().data(), iter.GetKey().size());
     s.append(", ");
-    iter.GetValue().AppendToString(&s);
+    s.append(iter.GetValue().data(), iter.GetValue().size());
     s.append(", ");
-    iter.GetContentKey().AppendToString(&s);
+    s.append(iter.GetContentKey().data(), iter.GetContentKey().size());
     s.append(", ");
-    iter.GetContentValue().AppendToString(&s);
+    s.append(iter.GetContentValue().data(), iter.GetContentValue().size());
     s.append(1, '>');
     pieces.push_back(s);
   }

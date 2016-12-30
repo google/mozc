@@ -373,7 +373,7 @@ void Util::JoinStringPieces(const std::vector<StringPiece> &pieces,
 
 void Util::ConcatStrings(StringPiece s1, StringPiece s2, string *output) {
   s1.CopyToString(output);
-  s2.AppendToString(output);
+  output->append(s2.data(), s2.size());
 }
 
 void Util::AppendStringWithDelimiter(StringPiece delimiter,
@@ -381,9 +381,9 @@ void Util::AppendStringWithDelimiter(StringPiece delimiter,
                                      string *output) {
   CHECK(output);
   if (!output->empty()) {
-    delimiter.AppendToString(output);
+    output->append(delimiter.data(), delimiter.size());
   }
-  append_string.AppendToString(output);
+  output->append(append_string.data(), append_string.size());
 }
 
 
@@ -391,7 +391,7 @@ void Util::StringReplace(StringPiece s, StringPiece oldsub,
                          StringPiece newsub, bool replace_all,
                          string *res) {
   if (oldsub.empty()) {
-    s.AppendToString(res);  // if empty, append the given string.
+    res->append(s.data(), s.size());  // if empty, append the given string.
     return;
   }
 
@@ -403,7 +403,7 @@ void Util::StringReplace(StringPiece s, StringPiece oldsub,
       break;
     }
     res->append(s.data() + start_pos, pos - start_pos);
-    newsub.AppendToString(res);
+    res->append(newsub.data(), newsub.size());
     start_pos = pos + oldsub.size();  // start searching again after the "old"
   } while (replace_all);
   res->append(s.data() + start_pos, s.length() - start_pos);
@@ -1025,7 +1025,7 @@ namespace {
 void EscapeInternal(char input, StringPiece prefix, string *output) {
   const int hi = ((static_cast<int>(input) & 0xF0) >> 4);
   const int lo = (static_cast<int>(input) & 0x0F);
-  prefix.AppendToString(output);
+  output->append(prefix.data(), prefix.size());
   *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }

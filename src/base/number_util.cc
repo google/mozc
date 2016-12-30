@@ -302,7 +302,7 @@ bool NumberUtil::ArabicToKanji(StringPiece input_num,
   const int filled_zero_num = (kDigitsInBigRank -
       (input_num.size() % kDigitsInBigRank)) % kDigitsInBigRank;
   string input(filled_zero_num, kAsciiZero);
-  input_num.AppendToString(&input);
+  input.append(input_num.data(), input_num.size());
 
   // Segment into kDigitsInBigRank-digits pieces
   std::vector<string> ranked_numbers;

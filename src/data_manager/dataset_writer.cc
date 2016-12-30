@@ -58,7 +58,7 @@ void DataSetWriter::Add(const string &name, int alignment, StringPiece data) {
   entry->set_name(name);
   entry->set_offset(image_.size());
   entry->set_size(data.size());
-  data.AppendToString(&image_);
+  image_.append(data.data(), data.size());
 }
 
 void DataSetWriter::AddFile(const string &name, int alignment,
