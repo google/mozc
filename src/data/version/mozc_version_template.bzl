@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2017, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 
 MAJOR=2
 MINOR=20
-BUILD=2681
+BUILD=2682
 REVISION=102
 # This version represents the version of Mozc IME engine (converter, predictor,
 # etc.).  This version info is included both in the Mozc server and in the Mozc
