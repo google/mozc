@@ -126,13 +126,13 @@ TEST_F(CodecTest, FactoryTest) {
   std::vector<DictionaryFileSection> sections;
   {
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str(), ios_base::out | ios_base::binary);
+    ofs.open(test_file_.c_str(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(sections, &ofs);
   }
   {
     EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
-    ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
+    ifs.open(test_file_.c_str(), std::ios_base::in | std::ios_base::binary);
     ifs.seekg(0, std::ios::end);
     const int len = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
@@ -164,7 +164,7 @@ TEST_F(CodecTest, DefaultTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str(), ios_base::out | ios_base::binary);
+    ofs.open(test_file_.c_str(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   char buf[1024] = {};  // sections will reference this buffer.
@@ -172,7 +172,7 @@ TEST_F(CodecTest, DefaultTest) {
   {
     EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
-    ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
+    ifs.open(test_file_.c_str(), std::ios_base::in | std::ios_base::binary);
     ifs.read(buf, 1024);
     EXPECT_TRUE(codec->ReadSections(buf, 1024, &sections));
   }
@@ -201,7 +201,7 @@ TEST_F(CodecTest, CodecTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str(), ios_base::out | ios_base::binary);
+    ofs.open(test_file_.c_str(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   char buf[1024] = {};  // sections will reference this buffer.
@@ -209,7 +209,7 @@ TEST_F(CodecTest, CodecTest) {
   {
     EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
-    ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
+    ifs.open(test_file_.c_str(), std::ios_base::in | std::ios_base::binary);
     ifs.read(buf, 1024);
     EXPECT_TRUE(codec->ReadSections(buf, 1024, &sections));
   }
