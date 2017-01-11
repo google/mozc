@@ -69,7 +69,7 @@ class InputFileStream : public std::istream {
 // This class writes all of the data to the file using Pepper FileIO in the
 // destructor or when close() is called. This class can't be used in the NaCl
 // main thread.
-class OutputFileStream : public ostream {
+class OutputFileStream : public std::ostream {
  public:
   OutputFileStream();
   explicit OutputFileStream(const char* filename,

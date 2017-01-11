@@ -93,7 +93,7 @@ class OnMemoryFileMap {
 }  // namespace
 
 std::istream *ConfigFileStream::Open(const string &filename,
-                                     ios_base::openmode mode) {
+                                     std::ios_base::openmode mode) {
   // system://foo.bar.txt
   if (Util::StartsWith(filename, kSystemPrefix)) {
     const string new_filename = RemovePrefix(kSystemPrefix, filename);

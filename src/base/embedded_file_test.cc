@@ -47,7 +47,7 @@ namespace {
 TEST(EmbeddedFileTest, Basic) {
   const string expected = InputFileStream(
       testing::GetSourceFileOrDie({"base", "embedded_file.h"}).c_str(),
-      ios_base::in | ios_base::binary).Read();
+      std::ios_base::in | std::ios_base::binary).Read();
   EXPECT_EQ(expected, LoadEmbeddedFile(kEmbeddedFileTestData));
 }
 #endif  // OS_NACL

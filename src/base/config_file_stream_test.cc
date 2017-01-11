@@ -58,11 +58,11 @@ string GetFileData(const string &filename) {
 // yet. In other words, this method may change the internal state of
 // |input_stream| as a side effect.
 bool IsEof(std::istream *input_stream) {
-  return (input_stream->peek() == istream::traits_type::eof() &&
+  return (input_stream->peek() == std::istream::traits_type::eof() &&
           // On some enviroment (e.g. Mac OS 10.8 w/ Xcode 4.5),
           // peek() does not flip eofbit.  So calling get() is also
           // required.
-          input_stream->get() == istream::traits_type::eof() &&
+          input_stream->get() == std::istream::traits_type::eof() &&
           input_stream->eof());
 }
 

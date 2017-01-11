@@ -146,7 +146,8 @@ void SerializedStringArray::SerializeToFile(
     const std::vector<StringPiece> &strs, const string &filepath) {
   std::unique_ptr<uint32[]> buffer;
   const StringPiece data = SerializeToBuffer(strs, &buffer);
-  OutputFileStream ofs(filepath.c_str(), ios_base::out | ios_base::binary);
+  OutputFileStream ofs(filepath.c_str(),
+                       std::ios_base::out | std::ios_base::binary);
   CHECK(ofs.write(data.data(), data.size()));
 }
 
