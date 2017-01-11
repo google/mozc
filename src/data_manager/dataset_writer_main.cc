@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
       writer.AddFile(input.name, input.alignment, input.filename);
     }
     mozc::OutputFileStream output(tmpfile.c_str(),
-                                  ios_base::out | ios_base::binary);
+                                  std::ios_base::out | std::ios_base::binary);
     writer.Finish(&output);
     output.close();
   }

@@ -63,7 +63,8 @@ void DataSetWriter::Add(const string &name, int alignment, StringPiece data) {
 
 void DataSetWriter::AddFile(const string &name, int alignment,
                             const string &filepath) {
-  mozc::InputFileStream ifs(filepath.c_str(), ios_base::in | ios_base::binary);
+  mozc::InputFileStream ifs(filepath.c_str(),
+                            std::ios_base::in | std::ios_base::binary);
   CHECK(ifs.good()) << "Failed to open " << name;
   Add(name, alignment, ifs.Read());
 }

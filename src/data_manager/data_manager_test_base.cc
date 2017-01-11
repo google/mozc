@@ -280,7 +280,7 @@ void DataManagerTestBase::TypingModelTest() {
   // Check if typing models are included in the data set.
   for (const auto &key_and_fname : typing_model_files_) {
     InputFileStream ifs(key_and_fname.second.c_str(),
-                        ios_base::in | ios_base::binary);
+                        std::ios_base::in | std::ios_base::binary);
     EXPECT_EQ(ifs.Read(), data_manager_->GetTypingModel(key_and_fname.first));
   }
 }
