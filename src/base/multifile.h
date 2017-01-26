@@ -45,8 +45,8 @@ namespace mozc {
 class InputMultiFile {
  public:
   // filenames must be separated by comma(s), e.g., "foo.txt,hoge.txt".
-  InputMultiFile(const string& filenames,
-                 std::ios_base::openmode mode = std::ios_base::in);
+  explicit InputMultiFile(const string& filenames,
+                          std::ios_base::openmode mode = std::ios_base::in);
   ~InputMultiFile();
 
   // Reads one line. Returns false after reading all the lines.

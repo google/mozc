@@ -89,7 +89,7 @@ class MockDataAndImmutableConverter {
   // is passed, the default mock dictionary is used. This class owns the first
   // argument dictionary but doesn't the second because the same dictionary may
   // be passed to the arguments.
-  MockDataAndImmutableConverter(
+  explicit MockDataAndImmutableConverter(
       const DictionaryInterface *dictionary = NULL,
       const DictionaryInterface *suffix_dictionary = NULL) {
     data_manager_.reset(new testing::MockDataManager);
