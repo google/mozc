@@ -162,7 +162,7 @@ string MockFileNode::DebugMessage() const {
 
   string path;
   {
-    vector<string> nodes;
+    std::vector<string> nodes;
     const MockFileNode *node = this;
     while (node != nullptr) {
       nodes.push_back(node->name_);
@@ -172,7 +172,7 @@ string MockFileNode::DebugMessage() const {
     Util::JoinStrings(nodes, "/", &path);
   }
 
-  vector<const MockFileNode*> sub_directories;
+  std::vector<const MockFileNode*> sub_directories;
   if (is_directory_) {
     message += Util::StringPrintf("directory: %s\n", path.c_str());
     for (const auto &elem : child_nodes_) {
@@ -267,7 +267,7 @@ bool PepperFileSystemMock::UnRegisterMmap(MmapSyncInterface *mmap) {
 
 bool PepperFileSystemMock::SyncMmapToFile() {
   scoped_lock l(&mutex_);
-  for (set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
+  for (std::set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
        it != mmap_set_.end(); ++it) {
     (*it)->SyncToFile();
   }

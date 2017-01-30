@@ -69,7 +69,7 @@ class MockFileNode {
  private:
   MockFileNode *parent_node_;  // nullptr if this is a root node.
   string name_;
-  map<string, std::unique_ptr<MockFileNode> > child_nodes_;
+  std::map<string, std::unique_ptr<MockFileNode> > child_nodes_;
   bool is_directory_;
   string content_;
 
@@ -97,7 +97,7 @@ class PepperFileSystemMock : public PepperFileSystemInterface {
   virtual bool Query(const string &filename, PP_FileInfo *file_info);
 
  private:
-  set<MmapSyncInterface*> mmap_set_;
+  std::set<MmapSyncInterface*> mmap_set_;
   internal::MockFileNode root_directory_;
   Mutex mutex_;
 
