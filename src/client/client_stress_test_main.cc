@@ -27,7 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/commandlineflags.h"
 #include "client/client.h"
 
 #ifdef OS_WIN
@@ -64,7 +63,7 @@ DEFINE_bool(test_testsendkey, true, "test TestSendKey");
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
 
-  base::SetFlag(&FLAGS_logtostderr, true);
+  mozc::SetFlag(&FLAGS_logtostderr, true);
 
   mozc::client::Client client;
   if (!FLAGS_server_path.empty()) {
