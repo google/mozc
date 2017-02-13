@@ -64,15 +64,15 @@ string GetDescription(const KeyList &key_list,
     return key_list[0];
   }
   KeyList sorted_key_list(key_list);
-  sort(sorted_key_list.begin(), sorted_key_list.end(),
-       [&key_count](const string &x, const string &y) {
-         const int x_count = LookupCount(key_count, x);
-         const int y_count = LookupCount(key_count, y);
-         if (x_count == y_count) {
-           return x < y;
-         }
-         return x_count < y_count;
-       });
+  std::sort(sorted_key_list.begin(), sorted_key_list.end(),
+            [&key_count](const string &x, const string &y) {
+              const int x_count = LookupCount(key_count, x);
+              const int y_count = LookupCount(key_count, y);
+              if (x_count == y_count) {
+                return x < y;
+              }
+              return x_count < y_count;
+            });
   return Util::StringPrintf("%s %s", sorted_key_list.back().c_str(),
                             sorted_key_list.front().c_str());
 }
