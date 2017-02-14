@@ -414,7 +414,7 @@
           'action_name': 'gen_embedded_file_test_data',
           'variables': {
             'input': 'embedded_file.h',
-            'gen_header_path': '<(gen_out_dir)/embedded_file_test_data.h',
+            'gen_header_path': '<(gen_out_dir)/embedded_file_test_data.inc',
           },
           'inputs': [
             '<(input)',

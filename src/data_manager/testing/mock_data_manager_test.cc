@@ -37,7 +37,7 @@ namespace mozc {
 namespace testing {
 namespace {
 
-#include "data_manager/testing/segmenter_inl.h"
+#include "data_manager/testing/segmenter_inl.inc"
 
 std::pair<string, string> GetTypingModelEntry(const string &fname) {
   return std::pair<string, string>(

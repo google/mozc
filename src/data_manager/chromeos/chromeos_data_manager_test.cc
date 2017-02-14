@@ -37,7 +37,7 @@ namespace mozc {
 namespace chromeos {
 namespace {
 
-#include "data_manager/chromeos/segmenter_inl.h"
+#include "data_manager/chromeos/segmenter_inl.inc"
 
 }  // namespace
 

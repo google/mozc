@@ -89,7 +89,7 @@ class OnMemoryFileMap {
   std::map<string, string> map_;
 };
 
-#include "base/config_file_stream_data.h"
+#include "base/config_file_stream_data.inc"
 }  // namespace
 
 std::istream *ConfigFileStream::Open(const string &filename,

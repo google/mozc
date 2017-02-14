@@ -37,7 +37,7 @@ namespace oss {
 namespace {
 
 // kOssMozcDataSet is embedded.
-#include "data_manager/oss/mozc_data.h"
+#include "data_manager/oss/mozc_data.inc"
 
 #ifndef MOZC_DATASET_MAGIC_NUMBER
 #error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"

@@ -32,7 +32,7 @@
 #include "converter/gen_segmenter_bitarray.h"
 
 namespace {
-#include "data_manager/testing/segmenter_inl.h"
+#include "data_manager/testing/segmenter_inl.inc"
 }
 
 DEFINE_string(output_size_info, "", "Serialized SegmenterDataSizeInfo");

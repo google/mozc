@@ -40,7 +40,7 @@ namespace mozc {
 namespace {
 
 // base/embedded_file.h is embedded as kEmbeddedFileTestData.
-#include "base/embedded_file_test_data.h"
+#include "base/embedded_file_test_data.inc"
 
 #ifndef OS_NACL
 // NaCl test doesn't support real file system, so currently disabled.

@@ -85,7 +85,7 @@ struct POSMap {
 };
 
 // Include actual POS mapping rules defined outside the file.
-#include "dictionary/pos_map.h"
+#include "dictionary/pos_map.inc"
 
 // A functor for searching an array of POSMap for the given POS. The class is
 // used with std::lower_bound().

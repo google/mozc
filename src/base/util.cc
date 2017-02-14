@@ -1729,7 +1729,7 @@ Util::FormType Util::GetFormType(const string &str) {
 }
 
 // Util::CharcterSet Util::GetCharacterSet(char32 ucs4);
-#include "base/character_set.h"
+#include "base/character_set.inc"
 
 Util::CharacterSet Util::GetCharacterSet(StringPiece str) {
   CharacterSet result = ASCII;

@@ -58,7 +58,7 @@
     'magic_number': "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A",
     'mozc_data_varname': 'kCrosMozcDataSet',
     'out_mozc_data': 'zipped_data_chromeos',
-    'out_mozc_data_header': 'cros_mozc_data.h',
+    'out_mozc_data_header': 'cros_mozc_data.inc',
   },
   # This 'includes' defines the following targets:
   #   - chromeos_data_manager  (type: static_library)
