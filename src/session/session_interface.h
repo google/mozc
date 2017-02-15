@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_INTERFACE_H_
 
 #include "base/port.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 

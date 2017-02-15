@@ -32,6 +32,8 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_WORDS_INFO_H_
 #define MOZC_DICTIONARY_SYSTEM_WORDS_INFO_H_
 
+#include <cstddef>
+
 namespace mozc {
 namespace dictionary {
 

@@ -33,6 +33,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 
@@ -46,7 +47,7 @@ static const int32 kKanaModifierInsensitivePenalty = 1700;
 // dictionary lookup.
 class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
  public:
-  BaseNodeListBuilder(NodeAllocator *allocator, int limit)
+  BaseNodeListBuilder(mozc::NodeAllocator *allocator, int limit)
       : allocator_(allocator), limit_(limit), penalty_(0), result_(NULL) {
     DCHECK(allocator_) << "Allocator must not be NULL";
   }
@@ -99,8 +100,8 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
 // This class is also defined inline.
 class NodeListBuilderForLookupPrefix : public BaseNodeListBuilder {
  public:
-  NodeListBuilderForLookupPrefix(NodeAllocator *allocator,
-                                 int limit, size_t min_key_length)
+  NodeListBuilderForLookupPrefix(mozc::NodeAllocator *allocator, int limit,
+                                 size_t min_key_length)
       : BaseNodeListBuilder(allocator, limit),
         min_key_length_(min_key_length) {}
 
