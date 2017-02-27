@@ -290,7 +290,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
 #ifndef IGNORE_HELP_FLAG
       string help;
       PrintFlags(&help);
-      cout << help;
+      std::cout << help;
       exit(0);
 #endif
     }
@@ -311,7 +311,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
 #endif
     if (!SetFlag(key, value)) {
 #ifndef IGNORE_INVALID_FLAG
-      cerr << "Unknown/Invalid flag " << key << std::endl;
+      std::cerr << "Unknown/Invalid flag " << key << std::endl;
       exit(1);
 #endif
     }
