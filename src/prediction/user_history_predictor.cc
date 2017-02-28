@@ -1975,7 +1975,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
     return LEFT_EMPTY_MATCH;
   }
 
-  const size_t size = min(lstr.size(), rstr.size());
+  const size_t size = std::min(lstr.size(), rstr.size());
   if (size == 0) {
     return NO_MATCH;
   }
@@ -2021,7 +2021,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
         return LEFT_PREFIX_MATCH;
       }
   } else {
-    const size_t size = min(key_base.size(), target.size());
+    const size_t size = std::min(key_base.size(), target.size());
     if (size == 0) {
       return NO_MATCH;
     }
@@ -2121,11 +2121,11 @@ bool UserHistoryPredictor::IsValidSuggestion(
   }
   // Handles suggestion_freq and conversion_freq differently.
   // conversion_freq is less aggressively affecting to the final decision.
-  const uint32 freq = max(entry.suggestion_freq(),
-                          entry.conversion_freq() / 4);
+  const uint32 freq =
+      std::max(entry.suggestion_freq(), entry.conversion_freq() / 4);
 
   // TODO(taku,komatsu): better to make it simpler and easier to be understood.
-  const uint32 base_prefix_len = 3 - min(static_cast<uint32>(2), freq);
+  const uint32 base_prefix_len = 3 - std::min(static_cast<uint32>(2), freq);
   return (prefix_len >= base_prefix_len);
 }
 

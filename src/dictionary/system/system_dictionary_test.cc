@@ -843,9 +843,9 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
       SystemDictionary::Builder(dic_fn_).Build());
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
-  const size_t test_size = min(
-      static_cast<size_t>(FLAGS_dictionary_reverse_lookup_test_size),
-      source_tokens.size());
+  const size_t test_size =
+      std::min(static_cast<size_t>(FLAGS_dictionary_reverse_lookup_test_size),
+               source_tokens.size());
   for (size_t source_index = 0; source_index < test_size; ++source_index) {
     const Token &source_token = *source_tokens[source_index];
     CollectTokenCallback callback;

@@ -254,9 +254,9 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #else
     static const char kHex[] = "0123456789ABCDEF";
     while (begin < end) {
-      size_t bucket_size = min(static_cast<size_t>(end - begin),
-                               kNumOfBytesOnOneLine
-                               - output_count_ % kNumOfBytesOnOneLine);
+      size_t bucket_size =
+          std::min(static_cast<size_t>(end - begin),
+                   kNumOfBytesOnOneLine - output_count_ % kNumOfBytesOnOneLine);
       if (output_count_ % kNumOfBytesOnOneLine == 0) {
         *output_stream_ << '\"';
       }

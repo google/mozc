@@ -653,8 +653,8 @@ size_t Segments::max_history_segments_size() const {
 
 void Segments::set_max_history_segments_size(size_t max_history_segments_size) {
   max_history_segments_size_ =
-      max(static_cast<size_t>(0),
-          min(max_history_segments_size, kMaxHistorySize));
+      std::max(static_cast<size_t>(0),
+               std::min(max_history_segments_size, kMaxHistorySize));
 }
 
 void Segments::set_resized(bool resized) {

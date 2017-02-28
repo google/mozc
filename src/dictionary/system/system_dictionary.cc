@@ -315,7 +315,7 @@ class SystemDictionary::ReverseLookupIndex {
     for (TokenScanIterator iter(codec, token_array);
          !iter.Done(); iter.Next()) {
       const TokenScanIterator::Result &result = iter.Get();
-      value_id_max = max(value_id_max, result.value_id);
+      value_id_max = std::max(value_id_max, result.value_id);
     }
 
     CHECK_GE(value_id_max, 0);

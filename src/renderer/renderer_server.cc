@@ -175,10 +175,11 @@ RendererServer::RendererServer()
           watch_dog_(new ParentApplicationWatchDog(this))),
       send_command_(new RendererServerSendCommand) {
   if (FLAGS_restricted) {
-    FLAGS_timeout = min(FLAGS_timeout, 60);   // set 60sec with restricted mode
+    FLAGS_timeout =
+        std::min(FLAGS_timeout, 60);  // set 60sec with restricted mode
   }
 
-  timeout_ = 1000 * max(3, min(24 * 60 * 60, FLAGS_timeout));
+  timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60, FLAGS_timeout));
   VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef NO_LOGGING

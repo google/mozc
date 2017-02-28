@@ -1734,7 +1734,7 @@ Util::FormType Util::GetFormType(const string &str) {
 Util::CharacterSet Util::GetCharacterSet(StringPiece str) {
   CharacterSet result = ASCII;
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    result = max(result, GetCharacterSet(iter.Get()));
+    result = std::max(result, GetCharacterSet(iter.Get()));
   }
   return result;
 }

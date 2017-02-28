@@ -480,7 +480,7 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
 
       // do -1 so that resegmented nodes are boosted
       // over compound node.
-      const int32 wcost = max(compound_node->wcost / 2 - 1, 0);
+      const int32 wcost = std::max(compound_node->wcost / 2 - 1, 0);
 
       Node *number_node = lattice->NewNode();
       CHECK(number_node);
@@ -557,7 +557,7 @@ bool ImmutableConverterImpl::ResegmentPrefixAndArabicNumber(
 
       // do -1 so that resegmented nodes are boosted
       // over compound node.
-      const int32 wcost = max(compound_node->wcost / 2 - 1, 0);
+      const int32 wcost = std::max(compound_node->wcost / 2 - 1, 0);
 
       Node *prefix_node = lattice->NewNode();
       CHECK(prefix_node);
@@ -1246,7 +1246,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
   {
     const size_t kMaxSuffixLookupKey = 6;
     const size_t max_sufffix_len =
-        min(kMaxSuffixLookupKey, conversion_key_chars.size());
+        std::min(kMaxSuffixLookupKey, conversion_key_chars.size());
     size_t pos = key.size();
 
     for (size_t suffix_len = 1; suffix_len <= max_sufffix_len; ++suffix_len) {
@@ -1271,7 +1271,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     const size_t kMinSystemLookupKey = 5;
     const size_t kMaxSystemLookupKey = 8;
     const size_t max_suffix_len =
-        min(kMaxSystemLookupKey, conversion_key_chars.size());
+        std::min(kMaxSystemLookupKey, conversion_key_chars.size());
     size_t pos = key.size();
     for (size_t suffix_len = 1; suffix_len <= max_suffix_len; ++suffix_len) {
       pos -= conversion_key_chars[
@@ -1689,14 +1689,12 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
   // To merge these two categories of results, we will add the
   // cost penalty based on the cost diff.
   const Segment &first_segment = segments->conversion_segment(0);
-  const int base_cost_diff =
-      max(0,
-          (first_segment.candidate(0).cost -
-           first_segment.candidate(only_first_segment_candidate_pos).cost));
-  const int base_wcost_diff =
-      max(0,
-          (first_segment.candidate(0).wcost -
-           first_segment.candidate(only_first_segment_candidate_pos).wcost));
+  const int base_cost_diff = std::max(
+      0, (first_segment.candidate(0).cost -
+          first_segment.candidate(only_first_segment_candidate_pos).cost));
+  const int base_wcost_diff = std::max(
+      0, (first_segment.candidate(0).wcost -
+          first_segment.candidate(only_first_segment_candidate_pos).wcost));
   for (size_t i = only_first_segment_candidate_pos;
        i < first_segment.candidates_size();) {
     static const int kOnlyFirstSegmentOffset = 300;
@@ -1809,8 +1807,8 @@ void ImmutableConverterImpl::InsertCandidates(
   }
 
   const size_t expand_size =
-      max(static_cast<size_t>(1),
-          min(static_cast<size_t>(512), max_candidates_size));
+      std::max(static_cast<size_t>(1),
+               std::min(static_cast<size_t>(512), max_candidates_size));
 
   const bool is_single_segment = (type == SINGLE_SEGMENT);
   NBestGenerator nbest_generator(
@@ -1909,8 +1907,8 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
       // skip calling InsertFirstSegmentToCandidates, as we want to add
       // two candidates.
       const size_t only_first_segment_candidates_size =
-          min(max_candidates_size,
-              single_segment_candidates_size + kOnlyFirstSegmentCandidateSize);
+          std::min(max_candidates_size, single_segment_candidates_size +
+                                            kOnlyFirstSegmentCandidateSize);
       InsertFirstSegmentToCandidates(
           segments, lattice, group, only_first_segment_candidates_size,
           filter_type);

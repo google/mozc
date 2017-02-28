@@ -124,7 +124,7 @@ string GetCommonPrefix(const string &str1, const string &str2) {
   Util::SplitStringToUtf8Chars(str1, &split1);
   Util::SplitStringToUtf8Chars(str2, &split2);
   string common_prefix = "";
-  for (int i = 0; i < min(split1.size(), split2.size()); ++i) {
+  for (int i = 0; i < std::min(split1.size(), split2.size()); ++i) {
     if (split1[i] == split2[i]) {
       common_prefix += split1[i];
     } else {
@@ -191,7 +191,7 @@ Node *Lattice::eos_nodes() const {
 
 void Lattice::Insert(size_t pos, Node *node) {
   for (Node *rnode = node; rnode != NULL; rnode = rnode->bnext) {
-    const size_t end_pos = min(rnode->key.size() + pos, key_.size());
+    const size_t end_pos = std::min(rnode->key.size() + pos, key_.size());
     rnode->begin_pos = static_cast<uint16>(pos);
     rnode->end_pos = static_cast<uint16>(end_pos);
     rnode->prev = NULL;
@@ -344,7 +344,7 @@ void Lattice::ShrinkKey(const size_t new_len) {
 
   // update cache_info
   for (size_t i = 0; i < new_len; ++i) {
-    cache_info_[i] = min(cache_info_[i], new_len - i);
+    cache_info_[i] = std::min(cache_info_[i], new_len - i);
   }
   std::fill(cache_info_.begin() + new_len, cache_info_.end(), 0);
 

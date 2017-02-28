@@ -470,8 +470,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   // we can pop as many results as we need efficiently.
   std::make_heap(results->begin(), results->end(), ResultCostLess());
 
-  const size_t size = min(segments->max_prediction_candidates_size(),
-                          results->size());
+  const size_t size =
+      std::min(segments->max_prediction_candidates_size(), results->size());
 
   int added = 0;
   std::set<string> seen;
@@ -651,7 +651,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
   // Here, taking the minimum of |cost1| and |cost2| has a similar effect.
   const int cost1 = connector_->GetTransitionCost(rid, result.lid);
   const int cost2 = connector_->GetTransitionCost(0, result.lid);
-  int lm_cost = min(cost1, cost2) + result.wcost;
+  int lm_cost = std::min(cost1, cost2) + result.wcost;
   if (!(result.types & REALTIME)) {
     // Relatime conversion already adds perfix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
@@ -874,8 +874,10 @@ void DictionaryPredictor::SetPredictionCost(
     //
     // TODO(team): want find the best parameter instread of kCostFactor.
     const int kCostFactor = 500;
-    results->at(i).cost = cost -
-        kCostFactor * log(1.0 + max(0, static_cast<int>(key_len - query_len)));
+    results->at(i).cost =
+        cost -
+        kCostFactor *
+            log(1.0 + std::max(0, static_cast<int>(key_len - query_len)));
 
     // Update the minimum cost for REALTIME candidates that have the same key
     // length as input_key.
@@ -889,7 +891,7 @@ void DictionaryPredictor::SetPredictionCost(
   // Ensure that the REALTIME_TOP candidate has relatively smaller cost than
   // those of REALTIME candidates.
   if (realtime_top_result != NULL) {
-    realtime_top_result->cost = max(0, realtime_cost_min - 10);
+    realtime_top_result->cost = std::max(0, realtime_cost_min - 10);
   }
 }
 
@@ -964,12 +966,12 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       // adjust).
       const int kUserDictionaryPromotionFactor = 804;  // 804 = 500 * log(5)
       const int kUserDictionaryCostUpperLimit = 1000;
-      cost = min(cost - kUserDictionaryPromotionFactor,
-                 kUserDictionaryCostUpperLimit);
+      cost = std::min(cost - kUserDictionaryPromotionFactor,
+                      kUserDictionaryCostUpperLimit);
     }
     // Note that the cost is defined as -500 * log(prob).
     // Even after the ad hoc manipulations, cost must remain larger than 0.
-    result.cost = max(1, cost);
+    result.cost = std::max(1, cost);
   }
 }
 
@@ -1117,7 +1119,7 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
       Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold) {
     // We don't make so many realtime conversion prediction
     // even if we have enough margin, as it's expected less useful.
-    max_size = min(max_size, static_cast<size_t>(8));
+    max_size = std::min(max_size, static_cast<size_t>(8));
     default_size = 5;
   }
   size_t size = 0;
@@ -1144,7 +1146,7 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
       size = 0;  // Never reach here
   }
 
-  return min(max_size, size);
+  return std::min(max_size, size);
 }
 
 bool DictionaryPredictor::PushBackTopConversionResult(
