@@ -67,7 +67,7 @@ SessionWatchDog::SessionWatchDog(int32 interval_sec)
     : interval_sec_(interval_sec),
       client_(NULL), cpu_stats_(NULL), event_(new UnnamedEvent) {
   // allow [1..600].
-  interval_sec_ = max(1, min(interval_sec_, 600));
+  interval_sec_ = std::max(1, std::min(interval_sec_, 600));
   DCHECK(event_->IsAvailable())
       << "Unnamed event is not available";
 }
@@ -128,13 +128,13 @@ void SessionWatchDog::Run() {
   DCHECK_GE(number_of_processors, 1);
 
   // the first (interval_sec_ - 60) sec: -> Do nothing
-  const int32 idle_interval_msec = max(0, (interval_sec_ - 60)) * 1000;
+  const int32 idle_interval_msec = std::max(0, (interval_sec_ - 60)) * 1000;
 
   // last 60 sec: -> check CPU usage
-  const int32 cpu_check_interval_msec = min(60, interval_sec_) * 1000;
+  const int32 cpu_check_interval_msec = std::min(60, interval_sec_) * 1000;
 
   // for every 5 second, get CPU load percentage
-  const int32 cpu_check_duration_msec = min(5, interval_sec_) * 1000;
+  const int32 cpu_check_duration_msec = std::min(5, interval_sec_) * 1000;
 
   std::fill(cpu_loads, cpu_loads + arraysize(cpu_loads), 0.0);
 
@@ -166,7 +166,7 @@ void SessionWatchDog::Run() {
       // This is required for running stress test.
       const float extracted_cpu_load =
           total_cpu_load - current_process_cpu_load / number_of_processors;
-      cpu_loads[cpu_loads_index++] = max(0.0f, extracted_cpu_load);
+      cpu_loads[cpu_loads_index++] = std::max(0.0f, extracted_cpu_load);
     }
 
     DCHECK_GT(cpu_loads_index, 0);
@@ -246,7 +246,7 @@ bool SessionWatchDog::CanSendCleanupCommand(
       std::accumulate(cpu_loads, cpu_loads + cpu_loads_index, 0.0)
       / cpu_loads_index;
 
-  const size_t latest_size = min(2, cpu_loads_index);
+  const size_t latest_size = std::min(2, cpu_loads_index);
   const float latest_avg =
       std::accumulate(cpu_loads, cpu_loads + latest_size, 0.0)
       / latest_size;

@@ -274,9 +274,9 @@ void SessionOutput::FillUsages(const Segment &segment,
 // static
 void SessionOutput::FillShortcuts(const string &shortcuts,
                                   commands::Candidates *candidates_proto) {
-  const size_t num_loop = min(
-      static_cast<size_t>(candidates_proto->candidate_size()),
-      shortcuts.size());
+  const size_t num_loop =
+      std::min(static_cast<size_t>(candidates_proto->candidate_size()),
+               shortcuts.size());
   for (size_t i = 0; i < num_loop; ++i) {
     const string shortcut = shortcuts.substr(i, 1);
     candidates_proto->mutable_candidate(i)->mutable_annotation()->

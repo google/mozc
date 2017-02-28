@@ -418,8 +418,8 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
                 UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
     }
 
-    const size_t size = min(UserDictionaryStorage::max_entry_size(),
-                            kSize[i]);
+    const size_t size =
+        std::min(UserDictionaryStorage::max_entry_size(), kSize[i]);
     ASSERT_EQ(size, user_dic.entries_size());
     for (size_t j = 0; j < size; ++j) {
       EXPECT_EQ(entries[j].key, user_dic.entries(j).key());

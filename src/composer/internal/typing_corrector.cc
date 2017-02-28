@@ -129,7 +129,8 @@ void TypingCorrector::InsertCharacter(
       }
     }
   }
-  const size_t cutoff_size = min(max_correction_query_candidates_, tmp.size());
+  const size_t cutoff_size =
+      std::min(max_correction_query_candidates_, tmp.size());
   std::partial_sort(tmp.begin(), tmp.begin() + cutoff_size, tmp.end(),
                     KeyAndPenaltyLess());
   tmp.resize(cutoff_size);
@@ -283,7 +284,7 @@ void TypingCorrector::GetQueriesForPrediction(
   }
   // If some queries are filtered, there are unused queries
   // at the tail of queries. Trim them.
-  queries->resize(min(result_count, max_correction_query_results_));
+  queries->resize(std::min(result_count, max_correction_query_results_));
 }
 
 }  // namespace composer

@@ -119,9 +119,8 @@ void InitIndex(
   for (int remaining_num_words = length / 4; remaining_num_words > 0;
        data += chunk_size, remaining_num_words -= chunk_size / 4) {
     index->push_back(num_bits);
-    num_bits += Count1Bits(
-        reinterpret_cast<const uint32 *>(data),
-        min(chunk_size / 4, remaining_num_words));
+    num_bits += Count1Bits(reinterpret_cast<const uint32 *>(data),
+                           std::min(chunk_size / 4, remaining_num_words));
   }
   index->push_back(num_bits);
 

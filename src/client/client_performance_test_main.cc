@@ -69,7 +69,7 @@ class TestSentenceGenerator {
     const char **sentences =
         session::RandomKeyEventsGenerator::GetTestSentences(&size);
     CHECK_GT(size, 0);
-    size = min(static_cast<size_t>(200), size);
+    size = std::min(static_cast<size_t>(200), size);
 
     for (size_t i = 0; i < size; ++i) {
       string output;
@@ -160,8 +160,8 @@ string GetBasicStats(const std::vector<uint32> times) {
   max_time = 0;
   for (size_t i = 0; i < times.size(); ++i) {
     total_time += times[i];
-    min_time = min(times[i], min_time);
-    max_time = max(times[i], max_time);
+    min_time = std::min(times[i], min_time);
+    max_time = std::max(times[i], max_time);
   }
 
   avg_time = static_cast<uint32>(1.0 * total_time / times.size());

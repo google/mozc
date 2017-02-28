@@ -500,7 +500,7 @@ UserDictionaryImporter::GuessFileEncodingType(const string &filename) {
     return NUM_ENCODINGS;
   }
   const size_t kMaxCheckSize = 1024;
-  const size_t size = min(kMaxCheckSize, static_cast<size_t>(mmap.size()));
+  const size_t size = std::min(kMaxCheckSize, static_cast<size_t>(mmap.size()));
   const StringPiece mapped_data(static_cast<const char *>(mmap.begin()), size);
   return GuessEncodingType(mapped_data);
 }

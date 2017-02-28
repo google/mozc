@@ -85,7 +85,7 @@ class MultiConnections: public mozc::Thread {
       con.SetMachPortManager(mach_port_manager_);
 #endif
       ASSERT_TRUE(con.Connected());
-      const int size = max(mozc::Util::Random(8000), 1);
+      const int size = std::max(mozc::Util::Random(8000), 1);
       string input = "test";
       input += GenRandomString(size);
       size_t length = sizeof(buf);

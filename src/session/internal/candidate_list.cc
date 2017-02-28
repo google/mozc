@@ -274,7 +274,7 @@ void CandidateList::GetPageRange(const size_t index,
                                  size_t *page_begin,
                                  size_t *page_end) const {
   *page_begin = index - (index % page_size_);
-  *page_end = min(last_index(), *page_begin + page_size_ - 1);
+  *page_end = std::min(last_index(), *page_begin + page_size_ - 1);
 }
 
 void CandidateList::MoveFirst() {
