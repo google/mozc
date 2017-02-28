@@ -129,7 +129,7 @@ class KeyTriggerValue {
   }
 
   void set_candidates_size(uint32 size) {
-    candidates_size_ = min(size, kMaxCandidatesSize);
+    candidates_size_ = std::min(size, kMaxCandidatesSize);
   }
 
  private:
@@ -155,8 +155,8 @@ class ScoreTypeCompare {
 inline int GetDefaultCandidateIndex(const Segment &segment) {
   // Check up to kMaxRerankSize + 1 candidates because candidate with
   // BEST_CANDIATE is highly possibly in that range (http://b/9992330).
-  const int size = static_cast<int>(min(segment.candidates_size(),
-                                        kMaxRerankSize + 1));
+  const int size =
+      static_cast<int>(std::min(segment.candidates_size(), kMaxRerankSize + 1));
   for (int i = 0; i < size; ++i) {
     if (segment.candidate(i).attributes &
         Segment::Candidate::BEST_CANDIDATE) {
@@ -443,7 +443,7 @@ bool IsT13NCandidate(const Segment::Candidate &cand) {
 bool UserSegmentHistoryRewriter::SortCandidates(
     const std::vector<ScoreType> &sorted_scores, Segment *segment) const {
   const uint32 top_score = sorted_scores[0].score;
-  const size_t size = min(sorted_scores.size(), kMaxRerankSize);
+  const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
   const uint32 kScoreGap = 20;   // TODO(taku): no justification
   std::set<string> seen;
 
@@ -545,18 +545,18 @@ do { \
   } \
 } while (0)
 
-#define FETCH_FEATURE(func, base_key, base_value, weight)        \
-do { \
-  if (func(segments, segment_index, base_key, base_value, &feature_key)) { \
-    const FeatureValue *v = \
-      reinterpret_cast<const FeatureValue *> \
-       (storage_->Lookup(feature_key, &last_access_time_result)); \
-    if (v != NULL && v->IsValid()) { \
-       *score = max(*score, weight);                                     \
-       *last_access_time = max(*last_access_time, last_access_time_result); \
-    } \
-  } \
-} while (0)
+#define FETCH_FEATURE(func, base_key, base_value, weight)                    \
+  do {                                                                       \
+    if (func(segments, segment_index, base_key, base_value, &feature_key)) { \
+      const FeatureValue *v = reinterpret_cast<const FeatureValue *>(        \
+          storage_->Lookup(feature_key, &last_access_time_result));          \
+      if (v != NULL && v->IsValid()) {                                       \
+        *score = std::max(*score, weight);                                   \
+        *last_access_time =                                                  \
+            std::max(*last_access_time, last_access_time_result);            \
+      }                                                                      \
+    }                                                                        \
+  } while (0)
 
 bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
                                           size_t segment_index,
@@ -869,7 +869,7 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
   const size_t v2_size = (v2 == NULL || !v2->IsValid()) ?
       0 : v2->candidates_size();
 
-  *max_candidates_size = max(v1_size, v2_size);
+  *max_candidates_size = std::max(v1_size, v2_size);
 
   return *max_candidates_size > 0;
 }

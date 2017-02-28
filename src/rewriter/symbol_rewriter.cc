@@ -144,7 +144,7 @@ bool SymbolRewriter::InSameSymbolGroup(
     return false;
   }
   const size_t cmp_len =
-      max(lhs.description().size(), rhs.description().size());
+      std::max(lhs.description().size(), rhs.description().size());
   return std::strncmp(lhs.description().data(),
                       rhs.description().data(), cmp_len) == 0;
 }
@@ -185,7 +185,7 @@ void SymbolRewriter::InsertCandidates(
     // Find the position wehere we start to insert the symbols
     // We want to skip the single-kanji we inserted by single-kanji rewriter.
     // We also skip transliterated key candidates.
-    offset = min(kOffsetSize, segment->candidates_size());
+    offset = std::min(kOffsetSize, segment->candidates_size());
     for (size_t i = offset; i < segment->candidates_size(); ++i) {
       const string &target_value = segment->candidate(i).value;
       if ((Util::CharsLen(target_value) == 1 &&

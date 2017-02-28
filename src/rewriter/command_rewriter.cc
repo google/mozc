@@ -163,8 +163,8 @@ bool FindString(const string &query, const char **values, size_t size) {
 Segment::Candidate *InsertCommandCandidate(
     Segment *segment, size_t reference_pos, size_t insert_pos) {
   DCHECK(segment);
-  Segment::Candidate *candidate =
-      segment->insert_candidate(min(segment->candidates_size(), insert_pos));
+  Segment::Candidate *candidate = segment->insert_candidate(
+      std::min(segment->candidates_size(), insert_pos));
   DCHECK(candidate);
   candidate->CopyFrom(segment->candidate(reference_pos));
   candidate->attributes |= Segment::Candidate::COMMAND_CANDIDATE;

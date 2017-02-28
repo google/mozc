@@ -332,10 +332,10 @@ void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
 int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
   if (type == ARABIC_FIRST) {
     // +2 for arabic half_width full_width expansion
-    return min(base_pos + 2, static_cast<int>(segment.candidates_size()));
+    return std::min(base_pos + 2, static_cast<int>(segment.candidates_size()));
   } else {
-    return min(base_pos + kArabicNumericOffset,
-               static_cast<int>(segment.candidates_size()));
+    return std::min(base_pos + kArabicNumericOffset,
+                    static_cast<int>(segment.candidates_size()));
   }
 }
 
@@ -391,8 +391,8 @@ bool RewriteOneSegment(
     if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
       if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
         // Rewrite for number suffix
-        const int insert_pos = min(info.position + 1,
-                                   static_cast<int>(seg->candidates_size()));
+        const int insert_pos = std::min(
+            info.position + 1, static_cast<int>(seg->candidates_size()));
         InsertCandidate(seg, insert_pos, info.candidate, info.candidate);
         modified = true;
         continue;

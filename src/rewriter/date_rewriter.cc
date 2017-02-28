@@ -2009,7 +2009,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
   }
 
   const size_t kMinSize = 10;
-  const size_t size = min(kMinSize, segment->candidates_size());
+  const size_t size = std::min(kMinSize, segment->candidates_size());
 
   for (size_t cand_idx = 0; cand_idx < size; ++cand_idx) {
     const Segment::Candidate &cand = segment->candidate(cand_idx);
@@ -2020,8 +2020,10 @@ bool DateRewriter::RewriteTime(Segment *segment,
     // 3rd.
     // TODO(nona): learn date candidate even if the date is changed.
     const size_t kMinimumDateCandidateIdx = 3;
-    const size_t insert_idx = (size < kMinimumDateCandidateIdx) ?
-        size : max(cand_idx + 1, kMinimumDateCandidateIdx);
+    const size_t insert_idx =
+        (size < kMinimumDateCandidateIdx)
+            ? size
+            : std::max(cand_idx + 1, kMinimumDateCandidateIdx);
 
     struct tm t_st;
     std::vector<string> era;
@@ -2262,9 +2264,8 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   }
 
   const int kInsertPosition = 2;
-  const int position
-      = min(kInsertPosition,
-            static_cast<int>(current_segment->candidates_size()));
+  const int position = std::min(
+      kInsertPosition, static_cast<int>(current_segment->candidates_size()));
 
   // "和暦"
   const char kDescription[] = "\xE5\x92\x8C\xE6\x9A\xA6";

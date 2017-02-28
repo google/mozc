@@ -191,7 +191,7 @@ bool InsertToken(StringPiece key,
   bool inserted = false;
 
   size_t insert_position =
-      min(segment->candidates_size(), kDefaultInsertPos);
+      std::min(segment->candidates_size(), kDefaultInsertPos);
   int cost = GetEmojiCost(*segment);
   for (; range.first != range.second; ++range.first) {
     inserted |= InsertEmojiData(

@@ -620,7 +620,7 @@ bool CollocationRewriter::RewriteFromPrevSegment(
   string prev;
   CollocationUtil::GetNormalizedScript(prev_cand.value, true, &prev);
 
-  const size_t i_max = min(seg->candidates_size(), kCandidateSize);
+  const size_t i_max = std::min(seg->candidates_size(), kCandidateSize);
 
   // Reuse |curs| and |cur| in the loop as this method is performance critical.
   std::vector<string> curs;
@@ -659,8 +659,8 @@ bool CollocationRewriter::RewriteFromPrevSegment(
 
 bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
                                                   Segment *seg) const {
-  const size_t i_max = min(seg->candidates_size(), kCandidateSize);
-  const size_t j_max = min(next_seg->candidates_size(), kCandidateSize);
+  const size_t i_max = std::min(seg->candidates_size(), kCandidateSize);
+  const size_t j_max = std::min(next_seg->candidates_size(), kCandidateSize);
 
   // Cache the results for the next segment
   std::vector<int> next_seg_ok(j_max);  // Avoiding vector<bool>

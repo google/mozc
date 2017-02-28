@@ -59,7 +59,7 @@ bool InsertCandidate(int top_face_number,
   }
 
   const Segment::Candidate& base_candidate = segment->candidate(0);
-  size_t offset = min(insert_pos, segment->candidates_size());
+  size_t offset = std::min(insert_pos, segment->candidates_size());
 
   Segment::Candidate *c = segment->insert_candidate(offset);
   if (c == NULL) {
@@ -108,7 +108,8 @@ bool DiceRewriter::Rewrite(const ConversionRequest &request,
   }
 
   // Insert position is the last of first page or the last of candidates
-  const size_t insert_pos = min(kLastCandidateIndex, segment.candidates_size());
+  const size_t insert_pos =
+      std::min(kLastCandidateIndex, segment.candidates_size());
 
   // Get a random number whose range is [1, kDiceFaces]
   // Insert the number at |insert_pos|

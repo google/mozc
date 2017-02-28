@@ -376,7 +376,8 @@ int FocusCandidateRewriter::FindMatchingCandidates(
 
   // Check only top 10 candidates because, when the top candidate is a number
   // candidate, other number compounds likely to appear near the top candidate.
-  const size_t max_size = min(seg.candidates_size(), static_cast<size_t>(10));
+  const size_t max_size =
+      std::min(seg.candidates_size(), static_cast<size_t>(10));
   for (size_t i = 1; i < max_size; ++i) {
     if (!ParseNumberCandidate(seg.candidate(i), &number, &suffix,
                               &script_type)) {

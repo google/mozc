@@ -139,7 +139,7 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
   // "ー", onbiki
   Util::StringReplace(temp2, "\xE3\x83\xBC", "-", true, &expression);
 
-  size_t offset = min(insert_pos, segment->candidates_size());
+  size_t offset = std::min(insert_pos, segment->candidates_size());
 
   for (int n = 0; n < 2; ++n) {
     int current_offset = offset + n;

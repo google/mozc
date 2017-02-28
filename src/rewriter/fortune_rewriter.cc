@@ -127,7 +127,7 @@ bool InsertCandidate(FortuneType fortune_type,
   }
 
   const Segment::Candidate& base_candidate = segment->candidate(0);
-  size_t offset = min(insert_pos, segment->candidates_size());
+  size_t offset = std::min(insert_pos, segment->candidates_size());
 
   Segment::Candidate *c = segment->insert_candidate(offset);
   if (c == NULL) {

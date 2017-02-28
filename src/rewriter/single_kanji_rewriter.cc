@@ -333,11 +333,12 @@ void InsertNounPrefix(const POSMatcher &pos_matcher,
                                  segment->key() :
                                  segment->candidate(0).key);
   for (auto iter = begin; iter != end; ++iter) {
-    const int insert_pos = min(
+    const int insert_pos = std::min(
         static_cast<int>(segment->candidates_size()),
-        static_cast<int>(iter.cost() +
-                         (segment->candidate(0).attributes &
-                          Segment::Candidate::CONTEXT_SENSITIVE) ? 1 : 0));
+        static_cast<int>(iter.cost() + (segment->candidate(0).attributes &
+                                        Segment::Candidate::CONTEXT_SENSITIVE)
+                             ? 1
+                             : 0));
     Segment::Candidate *c = segment->insert_candidate(insert_pos);
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();

@@ -260,7 +260,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
 
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
     const size_t kMaxKeysSize = 5;
-    const size_t keys_size = min(kMaxKeysSize, keys.size());
+    const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     string key;
     memset(length_array, 0, sizeof(length_array));
     for (size_t k = 0; k < keys_size; ++k) {
