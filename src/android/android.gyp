@@ -410,16 +410,15 @@
         {
           'action_name': 'copy_support_v13_library',
           'inputs': [
-            '<(dummy_input_file)',
+            '<(support_v13_jar_path)',
           ],
           'outputs': [
             'libs/android-support-v13.jar',
           ],
           'action': [
             '<@(copy_file)',
-            '--ignore_existence_check',
-            '<@(support_v13_jar_paths)',
-            'libs',
+            '<(_inputs)',
+            '<(_outputs)',
           ]
         },
       ],
