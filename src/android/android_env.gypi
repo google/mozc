@@ -46,11 +46,7 @@
     'sdk_gen_dir': 'gen',
     'sdk_test_gen_dir': 'tests/gen',
     'sdk_asset_dir': 'assets',
-    'support_v13_jar_paths': [
-      # Path of support-v13 has been changed for new SDK. Try both.
-      '<(android_home)/extras/android/compatibility/v13/android-support-v13.jar',
-      '<(android_home)/extras/android/support/v13/android-support-v13.jar',
-    ],
+    'support_v13_jar_path': '<(DEPTH)/third_party/android/android-support-v13.jar',
     'shared_intermediate_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/',
     'test_mozc_dataset': '<(shared_intermediate_mozc_dir)/data_manager/testing/mock_mozc.data',
     'test_connection_text_data': '<(shared_intermediate_mozc_dir)/data_manager/testing/connection_single_column.txt',
