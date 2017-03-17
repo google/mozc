@@ -775,7 +775,8 @@ TEST_F(TableTest, MobileMode) {
     size_t key_length = 0;
     bool fixed = false;
     entry = table.LookUpPrefix("2", &key_length, &fixed);
-    EXPECT_EQ("a", entry->pending());
+    // "{?}" is to be replaced by "\x0F?\x0E".
+    EXPECT_EQ("\x0F?\x0E" "a", entry->pending());
   }
 
   {
