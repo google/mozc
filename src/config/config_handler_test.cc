@@ -39,7 +39,6 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
@@ -226,8 +225,8 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
 }
 
 TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
-  const string config_file = string("config")
-      + NumberUtil::SimpleItoa(config::CONFIG_VERSION);
+  const string config_file =
+      string("config") + std::to_string(config::CONFIG_VERSION);
 
   const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, config_file);
   FileUtil::Unlink(filename);

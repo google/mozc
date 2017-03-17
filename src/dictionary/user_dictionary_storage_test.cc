@@ -36,7 +36,6 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/number_util.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
@@ -124,7 +123,7 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
     EXPECT_TRUE(storage.CreateDictionary(
-        "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)),
+        "test" + std::to_string(static_cast<uint32>(i)),
         &id[i]));
     EXPECT_EQ(i + 1 + dict_size, storage.dictionaries_size());
   }
@@ -180,7 +179,7 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
     std::vector<uint64> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
       EXPECT_TRUE(storage.CreateDictionary(
-          "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)),
+          "test" + std::to_string(static_cast<uint32>(i)),
           &ids[i]));
     }
 
@@ -212,7 +211,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
 
   for (size_t i = 0; i < 1000; ++i) {
     UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-    const string prefix = NumberUtil::SimpleItoa(static_cast<uint32>(i));
+    const string prefix = std::to_string(static_cast<uint32>(i));
     // set empty fields randomly
     entry->set_key(prefix + "key");
     entry->set_value(prefix + "value");
@@ -266,7 +265,7 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
         uint64 id = 0;
         EXPECT_TRUE(
             storage1.CreateDictionary(
-                "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)), &id));
+                "test" + std::to_string(static_cast<uint32>(i)), &id));
         const size_t entry_size = Util::Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =

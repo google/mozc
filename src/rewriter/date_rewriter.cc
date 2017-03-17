@@ -1634,9 +1634,9 @@ bool ExpandYear(const string &prefix, int year, std::vector<string> *result) {
     return true;
   }
 
-  result->push_back(prefix + NumberUtil::SimpleItoa(year));
+  result->push_back(prefix + std::to_string(year));
 
-  string arabic = NumberUtil::SimpleItoa(year);
+  string arabic = std::to_string(year);
 
   std::vector<NumberUtil::NumberString> output;
 
@@ -1778,7 +1778,7 @@ bool EraToAdForCourt(const YearData *data, size_t size, const string &key,
     // Get wide arabic numbers
     // e.g.) 1989 -> "１９８９", "一九八九"
     std::vector<NumberUtil::NumberString> output;
-    const string ad_year_str(NumberUtil::SimpleItoa(ad_year));
+    const string ad_year_str(std::to_string(ad_year));
     NumberUtil::ArabicToWideArabic(ad_year_str, &output);
     // add half-width arabic number to `output` (e.g. "1989")
     output.push_back(NumberUtil::NumberString(

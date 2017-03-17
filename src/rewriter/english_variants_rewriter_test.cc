@@ -32,7 +32,6 @@
 #include <cstddef>
 #include <string>
 
-#include "base/number_util.h"
 #include "base/system_util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -142,8 +141,8 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     for (int i = 0; i < 10; ++i) {
       Segment::Candidate *candidate1 = seg->add_candidate();
       candidate1->Init();
-      candidate1->value = NumberUtil::SimpleItoa(i);
-      candidate1->content_value = NumberUtil::SimpleItoa(i);
+      candidate1->value = std::to_string(i);
+      candidate1->content_value = std::to_string(i);
       Segment::Candidate *candidate2 = seg->add_candidate();
       candidate2->Init();
       // "ぐーぐる"
@@ -160,8 +159,8 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     EXPECT_EQ(40, seg->candidates_size());
 
     for (int i = 0; i < 10; ++i) {
-      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(4 * i).value);
-      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(4 * i).content_value);
+      EXPECT_EQ(std::to_string(i), seg->candidate(4 * i).value);
+      EXPECT_EQ(std::to_string(i), seg->candidate(4 * i).content_value);
       EXPECT_EQ("Google", seg->candidate(4 * i + 1).value);
       EXPECT_EQ("Google", seg->candidate(4 * i + 1).content_value);
       EXPECT_EQ("google", seg->candidate(4 * i + 2).value);

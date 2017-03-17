@@ -88,7 +88,7 @@ class PosIdPrintUtil {
   string IdToStringInternal(int id) const {
     const string &pos_string = pos_id_printer_->IdToString(id);
     if (pos_string.empty()) {
-      return NumberUtil::SimpleItoa(id);
+      return std::to_string(id);
     }
     return Util::StringPrintf("%s (%d)", pos_string.c_str(), id);
   }

@@ -38,10 +38,10 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/number_util.h"
 #include "base/pepper_scoped_obj.h"
 #include "base/util.h"
 
@@ -197,7 +197,7 @@ void PepperURLLoader::OnOpen(int32 result) {
 
   if (option_.include_header || type_ == HTTP_HEAD) {
     string headers;
-    string status_code = NumberUtil::SimpleItoa(response.GetStatusCode());
+    string status_code = std::to_string(response.GetStatusCode());
     string status_line = "OK";
 
     const pp::Var status_line_var = response.GetStatusLine();

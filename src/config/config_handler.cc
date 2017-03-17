@@ -33,12 +33,12 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -80,7 +80,7 @@ class ConfigHandlerImpl {
   ConfigHandlerImpl() {
     // <user_profile>/config1.db
     filename_ = kFileNamePrefix;
-    filename_ += NumberUtil::SimpleItoa(CONFIG_VERSION);
+    filename_ += std::to_string(CONFIG_VERSION);
     filename_ += ".db";
     Reload();
     ConfigHandler::GetDefaultConfig(&default_config_);

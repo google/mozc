@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/freelist.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -462,7 +461,7 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   // Insert many valid candidates
   for (int i = 0; i < 50; ++i) {
     Segment::Candidate *tmp = NewCandidate();
-    tmp->key = NumberUtil::SimpleItoa(i) + "test";
+    tmp->key = std::to_string(i) + "test";
     tmp->value = tmp->key;
     filter->FilterCandidate(tmp->key, tmp, n, Segments::CONVERSION);
   }

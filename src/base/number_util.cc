@@ -161,30 +161,7 @@ const char kAsciiZero = '0';
 const char kAsciiOne = '1';
 const char kAsciiNine = '9';
 
-template <typename T>
-string SimpleItoaImpl(T number) {
-  std::stringstream ss;
-  ss << number;
-  return ss.str();
-}
-
 }  // namespace
-
-string NumberUtil::SimpleItoa(int32 number) {
-  return SimpleItoaImpl(number);
-}
-
-string NumberUtil::SimpleItoa(uint32 number) {
-  return SimpleItoaImpl(number);
-}
-
-string NumberUtil::SimpleItoa(int64 number) {
-  return SimpleItoaImpl(number);
-}
-
-string NumberUtil::SimpleItoa(uint64 number) {
-  return SimpleItoaImpl(number);
-}
 
 int NumberUtil::SimpleAtoi(StringPiece str) {
   std::stringstream ss;

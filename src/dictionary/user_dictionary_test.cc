@@ -38,7 +38,6 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -309,8 +308,8 @@ class UserDictionaryTest : public ::testing::Test {
   static string EncodeEntry(const Entry &entry) {
     return entry.key + "\t" +
            entry.value + "\t" +
-           NumberUtil::SimpleItoa(entry.lid) + "\t" +
-           NumberUtil::SimpleItoa(entry.rid) + "\n";
+           std::to_string(entry.lid) + "\t" +
+           std::to_string(entry.rid) + "\n";
   }
 
   static string EncodeEntries(const Entry *array, size_t size) {
@@ -673,8 +672,8 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
     dic->SetUserDictionaryName(filename);
     for (int i = 0; i < 100; ++i) {
       EXPECT_TRUE(dic->AddToAutoRegisteredDictionary(
-                      "key" + NumberUtil::SimpleItoa(i),
-                      "value" + NumberUtil::SimpleItoa(i),
+                      "key" + std::to_string(i),
+                      "value" + std::to_string(i),
                       convreq_,
                       user_dictionary::UserDictionary::NOUN));
       dic->WaitForReloader();
@@ -689,9 +688,9 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
     EXPECT_EQ(1, storage.dictionaries_size());
     EXPECT_EQ(100, storage.dictionaries(index).entries_size());
     for (int i = 0; i < 100; ++i) {
-      EXPECT_EQ("key" + NumberUtil::SimpleItoa(i),
+      EXPECT_EQ("key" + std::to_string(i),
                 storage.dictionaries(index).entries(i).key());
-      EXPECT_EQ("value" + NumberUtil::SimpleItoa(i),
+      EXPECT_EQ("value" + std::to_string(i),
                 storage.dictionaries(index).entries(i).value());
       EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
                 storage.dictionaries(index).entries(i).pos());
@@ -756,9 +755,9 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
       entry->set_key("no_suppress_key" +
-                     NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+                     std::to_string(static_cast<uint32>(j)));
       entry->set_value("no_suppress_value" +
-                       NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+                       std::to_string(static_cast<uint32>(j)));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
@@ -766,9 +765,9 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
       entry->set_key(
-          "suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+          "suppress_key" + std::to_string(static_cast<uint32>(j)));
       entry->set_value(
-          "suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+          "suppress_value" + std::to_string(static_cast<uint32>(j)));
       // entry->set_pos("抑制単語");
       entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
     }
@@ -780,8 +779,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_TRUE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)),
-          "suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j))));
+          "suppress_key" + std::to_string(static_cast<uint32>(j)),
+          "suppress_value" + std::to_string(static_cast<uint32>(j))));
     }
   }
 
@@ -796,9 +795,9 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
       entry->set_key(
-          "no_suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+          "no_suppress_key" + std::to_string(static_cast<uint32>(j)));
       entry->set_value(
-          "no_suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+          "no_suppress_value" + std::to_string(static_cast<uint32>(j)));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
@@ -808,8 +807,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_FALSE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)),
-          "suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j))));
+          "suppress_key" + std::to_string(static_cast<uint32>(j)),
+          "suppress_value" + std::to_string(static_cast<uint32>(j))));
     }
   }
   FileUtil::Unlink(filename);
@@ -835,7 +834,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+      entry->set_key("key" + std::to_string(static_cast<uint32>(j)));
       entry->set_value("default");
       // "名詞"
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -844,7 +843,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+      entry->set_key("key" + std::to_string(static_cast<uint32>(j)));
       entry->set_value("suggest_only");
       // "サジェストのみ"
       entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);

@@ -36,20 +36,6 @@
 namespace mozc {
 namespace {
 
-TEST(NumberUtilTest, SimpleItoa) {
-  EXPECT_EQ("0",   NumberUtil::SimpleItoa(0));
-  EXPECT_EQ("123", NumberUtil::SimpleItoa(123));
-  EXPECT_EQ("-1",  NumberUtil::SimpleItoa(-1));
-
-  EXPECT_EQ("2147483647",  NumberUtil::SimpleItoa(kint32max));
-  EXPECT_EQ("-2147483648", NumberUtil::SimpleItoa(kint32min));
-  EXPECT_EQ("4294967295",  NumberUtil::SimpleItoa(kuint32max));
-
-  EXPECT_EQ("9223372036854775807",  NumberUtil::SimpleItoa(kint64max));
-  EXPECT_EQ("-9223372036854775808", NumberUtil::SimpleItoa(kint64min));
-  EXPECT_EQ("18446744073709551615", NumberUtil::SimpleItoa(kuint64max));
-}
-
 TEST(NumberUtilTest, SimpleAtoi) {
   EXPECT_EQ(0, NumberUtil::SimpleAtoi("0"));
   EXPECT_EQ(123, NumberUtil::SimpleAtoi("123"));

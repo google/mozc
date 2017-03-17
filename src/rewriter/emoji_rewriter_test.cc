@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/string_piece.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
@@ -481,7 +480,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
     Segment *segment = segments.push_back_segment();
     segment->set_key("Neko");
     for (int i = 0; i < kExpectPosition * 2; ++i) {
-      string value = "candidate" + NumberUtil::SimpleItoa(i);
+      string value = "candidate" + std::to_string(i);
       Segment::Candidate *candidate = segment->add_candidate();
       candidate->Init();
       candidate->value = value;

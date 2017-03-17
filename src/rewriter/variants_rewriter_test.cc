@@ -33,7 +33,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
@@ -255,8 +254,8 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
     for (int i = 0; i < 10; ++i) {
       Segment::Candidate *candidate1 = seg->add_candidate();
       candidate1->Init();
-      candidate1->value = NumberUtil::SimpleItoa(i);
-      candidate1->content_value = NumberUtil::SimpleItoa(i);
+      candidate1->value = std::to_string(i);
+      candidate1->content_value = std::to_string(i);
       Segment::Candidate *candidate2 = seg->add_candidate();
       candidate2->Init();
       // "ぐーぐる"
@@ -274,8 +273,8 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
     EXPECT_EQ(30, seg->candidates_size());
 
     for (int i = 0; i < 10; ++i) {
-      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(3 * i + 1).value);
-      EXPECT_EQ(NumberUtil::SimpleItoa(i),
+      EXPECT_EQ(std::to_string(i), seg->candidate(3 * i + 1).value);
+      EXPECT_EQ(std::to_string(i),
                 seg->candidate(3 * i + 1).content_value);
       string full_width;
       Util::HalfWidthToFullWidth(seg->candidate(3 * i + 1).value, &full_width);
@@ -306,17 +305,16 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
           "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
       Segment::Candidate *candidate2 = seg->add_candidate();
       candidate2->Init();
-      candidate2->value = NumberUtil::SimpleItoa(i);
-      candidate2->content_value = NumberUtil::SimpleItoa(i);
+      candidate2->value = std::to_string(i);
+      candidate2->content_value = std::to_string(i);
     }
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(30, seg->candidates_size());
 
     for (int i = 0; i < 10; ++i) {
-      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(3 * i + 2).value);
-      EXPECT_EQ(NumberUtil::SimpleItoa(i),
-                seg->candidate(3 * i + 2).content_value);
+      EXPECT_EQ(std::to_string(i), seg->candidate(3 * i + 2).value);
+      EXPECT_EQ(std::to_string(i), seg->candidate(3 * i + 2).content_value);
       string full_width;
       Util::HalfWidthToFullWidth(seg->candidate(3 * i + 2).value, &full_width);
       EXPECT_EQ(full_width, seg->candidate(3 * i + 1).value);

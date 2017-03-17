@@ -333,7 +333,7 @@ inline bool GetFeatureS(const Segments &segments, size_t i,
 // used for number rewrite
 inline bool GetFeatureN(uint16 type, string *value) {
   DCHECK(value);
-  JoinStringsWithTab2(StringPiece("N", 1), NumberUtil::SimpleItoa(type), value);
+  JoinStringsWithTab2("N", std::to_string(type), value);
   return true;
 }
 

@@ -1682,7 +1682,7 @@ void SessionConverter::UpdateCandidateStats(const string &base_name,
   }
 
   if (index <= 9) {
-    const string stats_name = prefix + NumberUtil::SimpleItoa(index);
+    const string stats_name = prefix + std::to_string(index);
     UsageStats::IncrementCount(stats_name);
   } else {
     const string stats_name = prefix + "GE10";

@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 
-#include "base/number_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_util.h"
@@ -397,9 +396,9 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const string key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+      const string key("key" + std::to_string(static_cast<uint32>(j)));
       const string value("value" +
-                         NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+                         std::to_string(static_cast<uint32>(j)));
       entry.key = key;
       entry.value = value;
       // entry.pos = "名詞";
@@ -439,9 +438,8 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const string key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
-      const string value("value" +
-                         NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+      const string key("key" + std::to_string(static_cast<uint32>(j)));
+      const string value("value" + std::to_string(static_cast<uint32>(j)));
       entry.key = key;
       entry.value = value;
       if (j % 2 == 0) {

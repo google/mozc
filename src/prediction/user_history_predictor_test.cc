@@ -35,7 +35,6 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/password_manager.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -2053,8 +2052,8 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
 
   std::vector<Command> commands(10000);
   for (size_t i = 0; i < commands.size(); ++i) {
-    commands[i].key = NumberUtil::SimpleItoa(static_cast<uint32>(i)) + "key";
-    commands[i].value = NumberUtil::SimpleItoa(static_cast<uint32>(i)) +
+    commands[i].key = std::to_string(static_cast<uint32>(i)) + "key";
+    commands[i].value = std::to_string(static_cast<uint32>(i)) +
                         "value";
     const int n = Util::Random(100);
     if (n == 0) {
@@ -2399,8 +2398,8 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
     std::vector<UserHistoryPredictor::Entry *> expected;
     for (int i = 0; i < kSize; ++i) {
       UserHistoryPredictor::Entry *entry = queue.NewEntry();
-      entry->set_key("test" + NumberUtil::SimpleItoa(i));
-      entry->set_value("test" + NumberUtil::SimpleItoa(i));
+      entry->set_key("test" + std::to_string(i));
+      entry->set_value("test" + std::to_string(i));
       entry->set_last_access_time(i + 1000);
       expected.push_back(entry);
       EXPECT_TRUE(queue.Push(entry));

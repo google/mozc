@@ -41,7 +41,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -1849,7 +1848,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   // Suggestion is counted as Prediction.
   EXPECT_COUNT_STATS("CommitFromPrediction", 1);
   EXPECT_COUNT_STATS("PredictionCandidates" +
-                     NumberUtil::SimpleItoa(kCandidateIndex),
+                     std::to_string(kCandidateIndex),
                      1);
 }
 

@@ -70,12 +70,12 @@ void InitSegments(Segments *segments, size_t size,
     Segment *segment = segments->add_segment();
     CHECK(segment);
     segment->set_key(string("segment") +
-                     NumberUtil::SimpleItoa(static_cast<uint32>(i)));
+                     std::to_string(static_cast<uint32>(i)));
     for (size_t j = 0; j < candidate_size; ++j) {
       Segment::Candidate *c = segment->add_candidate();
       c->content_key = segment->key();
-      c->content_value = string("candidate") +
-                         NumberUtil::SimpleItoa(static_cast<uint32>(j));
+      c->content_value =
+          string("candidate") + std::to_string(static_cast<uint32>(j));
       c->value = c->content_value;
       if (j == 0) {
         c->attributes |= Segment::Candidate::BEST_CANDIDATE;
