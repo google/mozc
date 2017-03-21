@@ -41,6 +41,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/port.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
@@ -1075,17 +1076,17 @@ TEST(UtilTest, StringPrintf) {
 
   // 64-bit integers
   EXPECT_EQ("-9223372036854775808",
-            Util::StringPrintf("%" GG_LL_FORMAT "d", kint64min));
+            Util::StringPrintf("%" MOZC_PRId64, kint64min));
   EXPECT_EQ("9223372036854775807",
-            Util::StringPrintf("%" GG_LL_FORMAT "d", kint64max));
+            Util::StringPrintf("%" MOZC_PRId64, kint64max));
   EXPECT_EQ("18446744073709551615",
-            Util::StringPrintf("%" GG_LL_FORMAT "u", kuint64max));
+            Util::StringPrintf("%" MOZC_PRIu64, kuint64max));
   EXPECT_EQ("8000000000000000",
-            Util::StringPrintf("%" GG_LL_FORMAT "x", kint64min));
+            Util::StringPrintf("%" MOZC_PRIx64, kint64min));
   EXPECT_EQ("7fffffffffffffff",
-            Util::StringPrintf("%" GG_LL_FORMAT "x", kint64max));
+            Util::StringPrintf("%" MOZC_PRIx64, kint64max));
   EXPECT_EQ("FFFFFFFFFFFFFFFF",
-            Util::StringPrintf("%" GG_LL_FORMAT "X", kuint64max));
+            Util::StringPrintf("%" MOZC_PRIX64, kuint64max));
 
   // Simple test for floating point numbers
   EXPECT_EQ("-1.75", Util::StringPrintf("%.2f", -1.75));

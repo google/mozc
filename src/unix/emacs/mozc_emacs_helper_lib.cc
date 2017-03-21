@@ -443,10 +443,10 @@ void PrintFieldValue(
     // integer values have never got over 28-bit yet.
     PRINT_FIELD_VALUE(INT32, Int32, int32, "%d");
     PRINT_FIELD_VALUE(INT64, Int64, int64,
-                      "\"%" GG_LL_FORMAT "d\"");  // as a string
+                      "\"%" MOZC_PRId64 "\"");  // as a string
     PRINT_FIELD_VALUE(UINT32, UInt32, uint32, "%u");
     PRINT_FIELD_VALUE(UINT64, UInt64, uint64,
-                      "\"%" GG_LL_FORMAT "u\"");  // as a string
+                      "\"%" MOZC_PRIu64 "\"");  // as a string
     PRINT_FIELD_VALUE(DOUBLE, Double, double, "%f");
     PRINT_FIELD_VALUE(FLOAT, Float, float, "%f");
 #undef PRINT_FIELD_VALUE

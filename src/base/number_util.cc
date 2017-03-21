@@ -42,6 +42,7 @@
 
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -574,7 +575,7 @@ bool NumberUtil::ArabicToOtherRadixes(
   if (n > 9) {
     // Keep
     char hex[kMaxInt64Size];
-    snprintf(hex, kMaxInt64Size, "0x%llx", n);
+    snprintf(hex, kMaxInt64Size, "0x%" MOZC_PRIx64, n);
     // "16進数"
     output->push_back(NumberString(hex, "16\xE9\x80\xB2\xE6\x95\xB0",
                                    NumberString::NUMBER_HEX));
@@ -583,7 +584,7 @@ bool NumberUtil::ArabicToOtherRadixes(
   // Octal
   if (n > 7) {
     char oct[kMaxInt64Size];
-    snprintf(oct, kMaxInt64Size, "0%llo", n);
+    snprintf(oct, kMaxInt64Size, "0%" MOZC_PRIo64, n);
     // "8進数"
     output->push_back(NumberString(oct, "8\xE9\x80\xB2\xE6\x95\xB0",
                                    NumberString::NUMBER_OCT));
@@ -1173,7 +1174,7 @@ bool NormalizeNumbersInternal(StringPiece input,
   }
 
   char buf[kMaxInt64Size];
-  snprintf(buf, sizeof(buf), "%llu", n);
+  snprintf(buf, sizeof(buf), "%" MOZC_PRIu64, n);
   *arabic_output += buf;
   return true;
 }
