@@ -35,9 +35,7 @@
 #include <pthread.h>
 #endif
 
-#ifdef OS_MACOSX
-#include <libkern/OSAtomic.h>
-#endif  // OS_MACOSX
+#include <atomic>
 
 #include "base/port.h"
 
@@ -50,41 +48,14 @@
 #endif
 
 namespace mozc {
-
-// Wrapper for Windows InterlockedCompareExchange
 namespace {
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
-// Linux doesn't provide InterlockedCompareExchange-like function.
-inline int InterlockedCompareExchange(volatile int *target,
-                                      int new_value,
-                                      int old_value) {
-  // TODO(yusukes): For now, we use the architecture-neutral implementation,
-  // but I believe it's definitely better to port Chromium's singleton to Mozc.
-  // The implementation should be much faster and supports ARM Linux.
-  // http://src.chromium.org/viewvc/chrome/trunk/src/base/singleton.h
 
-  static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_lock(&lock);
-  int result = *target;
-  if (result == old_value) {
-    *target = new_value;
-  }
-  pthread_mutex_unlock(&lock);
-  return result;
-}
-#endif  // OS_LINUX || OS_ANDROID || OS_NACL
-
-// Use OSAtomicCompareAndSwapInt on Mac OSX
-// https://developer.apple.com/library/prerelease/mac/documentation/Darwin/Reference/ManPages/man3/OSAtomicCompareAndSwapInt.3.html
-// TODO(taku): should we use OSAtomicCompareAndSwapIntBarrier?
-#ifdef OS_MACOSX
-inline int InterlockedCompareExchange(volatile int *target,
-                                      int new_value,
-                                      int old_value) {
-  return OSAtomicCompareAndSwapInt(old_value, new_value, target)
-      ? old_value : *target;
-}
-#endif  // OX_MACOSX
+// State for once_t.
+enum CallOnceState {
+  ONCE_INIT = 0,
+  ONCE_RUNNING = 1,
+  ONCE_DONE = 2,
+};
 
 }  // namespace
 
@@ -293,34 +264,33 @@ bool ReaderWriterMutex::MultipleReadersThreadsSupported() {
 #endif  // OS_WIN or pthread
 
 void CallOnce(once_t *once, void (*func)()) {
-  if (once == NULL || func == NULL) {
+  if (once == nullptr || func == nullptr) {
     return;
   }
-
-  if (once->state != ONCE_INIT) {
-    return;
-  }
-
-  // change the counter in atomic
-  if (0 == InterlockedCompareExchange(&(once->counter), 1, 0)) {
-    // call func
+  int expected_state = ONCE_INIT;
+  if (once->compare_exchange_strong(expected_state, ONCE_RUNNING)) {
     (*func)();
-    // change the status to be ONCE_DONE in atomic
-    // Maybe we won't use it, but in order to make memory barrier,
-    // we use InterlockedCompareExchange just in case.
-    InterlockedCompareExchange(&(once->state), ONCE_DONE, ONCE_INIT);
-  } else {
-    while (once->state == ONCE_INIT) {
-#ifdef OS_WIN
-      ::YieldProcessor();
-#endif  // OS_WIN
-    }  // busy loop
+    *once = ONCE_DONE;
+    return;
   }
+  // If the above compare_exchange_strong() returns false, it stores the value
+  // of once to expected_state, which is ONCE_RUNNING or ONCE_DONE.
+  if (expected_state == ONCE_DONE) {
+    return;
+  }
+  // Here's the case where expected_state == ONCE_RUNNING, indicating that
+  // another thread is calling func.  Wait for it to complete.
+  while (*once == ONCE_RUNNING) {
+#ifdef OS_WIN
+    ::YieldProcessor();
+#endif  // OS_WIN
+  }  // Busy loop
 }
 
 void ResetOnce(once_t *once) {
-  InterlockedCompareExchange(&(once->state), ONCE_INIT, ONCE_DONE);
-  InterlockedCompareExchange(&(once->counter), 0, 1);
+  if (once) {
+    *once = ONCE_INIT;
+  }
 }
 
 }  // namespace mozc

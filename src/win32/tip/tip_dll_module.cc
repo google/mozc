@@ -110,7 +110,7 @@ class ModuleImpl {
         // functions here.
         // - SingletonFinalizer::Finalize()               // see b/10233768
         // - google::protobuf::ShutdownProtobufLibrary()  // see b/2126375
-        CallOnce(&g_uninitialize_once, TipShutdownCrashReportHandler);
+        mozc::CallOnce(&g_uninitialize_once, TipShutdownCrashReportHandler);
       }
     }
     return ref_count_;

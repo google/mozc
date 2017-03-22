@@ -65,6 +65,31 @@ class Thread {
   DISALLOW_COPY_AND_ASSIGN(Thread);
 };
 
+class ThreadJoiner final {
+ public:
+  explicit ThreadJoiner(Thread *thread)
+      : joiner_(thread, &ThreadJoiner::JoinThread) {}
+
+  // Non-copyable
+  ThreadJoiner(const ThreadJoiner&) = delete;
+  ThreadJoiner& operator=(const ThreadJoiner&) = delete;
+
+  // Movable
+  ThreadJoiner(ThreadJoiner&&) = default;
+  ThreadJoiner& operator=(ThreadJoiner&&) = default;
+
+  ~ThreadJoiner() = default;
+
+  static void JoinThread(Thread *thread) {
+    if (thread) {
+      thread->Join();
+    }
+  }
+
+ private:
+  std::unique_ptr<Thread, void (*)(Thread *)> joiner_;
+};
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_THREAD_H_

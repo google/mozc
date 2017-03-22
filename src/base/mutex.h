@@ -34,6 +34,8 @@
 #include <pthread.h>
 #endif  // MOZC_USE_PEPPER_FILE_IO
 
+#include <atomic>
+
 #include "base/port.h"
 #include "base/thread_annotations.h"
 
@@ -189,30 +191,18 @@ class SCOPED_LOCKABLE scoped_reader_lock {
   DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_reader_lock);
 };
 
-typedef scoped_lock MutexLock;
-typedef scoped_reader_lock ReaderMutexLock;
-typedef scoped_writer_lock WriterMutexLock;
+using MutexLock = scoped_lock;
+using ReaderMutexLock = scoped_reader_lock;
+using WriterMutexLock = scoped_writer_lock;
 
-enum CallOnceState {
-  ONCE_INIT = 0,
-  ONCE_DONE = 1,
-};
-#define MOZC_ONCE_INIT { 0, 0 }
+using once_t = std::atomic<int>;
 
-struct once_t {
-#ifdef OS_WIN
-  volatile long state;    // NOLINT
-  volatile long counter;  // NOLINT
-#else
-  volatile int state;
-  volatile int counter;
-#endif
-};
+#define MOZC_ONCE_INIT ATOMIC_VAR_INIT(0)
 
-// portable re-implementation of pthread_once
+// Portable re-implementation of pthread_once.
 void CallOnce(once_t *once, void (*func)());
 
-// reset once_t
+// Resets once_t.
 void ResetOnce(once_t *once);
 
 }  // namespace mozc
