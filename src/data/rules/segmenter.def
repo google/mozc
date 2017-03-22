@@ -102,6 +102,8 @@
 # 接頭詞,名詞接続,*,*,*,*,*,(お|ご) ^接頭詞 false
 接頭詞,名詞接続 * false
 
+連体詞, ^名詞 true
+
 # functional word (無い|事) is isolated word
 * 助動詞,*,*,*,形容詞・イ段,*,無い true
 動詞 助動詞,*,*,*,形容詞・イ段,*,無い true
@@ -163,7 +165,7 @@
 # some special suffix can be grouped
 * ^名詞,接尾,(副詞可能|助動詞語幹|特殊) false
 
-# by default, suffix should be groupd
+# by default, suffix should not be groupd
 * ^名詞,接尾 true
 
 # ～なのだ
