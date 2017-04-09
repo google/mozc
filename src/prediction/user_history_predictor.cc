@@ -841,6 +841,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
       // swap.
       if (i + 1 < prefix.size()) {
         string swapped_prefix = prefix;
+        using std::swap;
         swap(swapped_prefix[i], swapped_prefix[i + 1]);
         if (Util::StartsWith(str, swapped_prefix)) {
           return true;
