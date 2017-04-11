@@ -13,6 +13,16 @@ _		{*}_	NoTransliteration
 {?}_{<}		{?}-
 {?}/{<}		{?}_
 {?}1{<}		{?}/
+{?}@+		{*}@
+{?}-+		{*}-
+{?}_+		{*}_
+{?}/+		{*}/
+{?}1+		{*}1
+{*}@+		{*}@
+{*}-+		{*}-
+{*}_+		{*}_
+{*}/+		{*}/
+{*}1+		{*}1
 2		{?}a	NewChunk NoTransliteration
 b		{*}b	NoTransliteration
 c		{*}c	NoTransliteration
@@ -43,6 +53,20 @@ c		{*}c	NoTransliteration
 {*}A*		{*}a
 {*}B*		{*}b
 {*}C*		{*}c
+{?}a+		{*}a
+{?}b+		{*}b
+{?}c+		{*}c
+{?}A+		{*}A
+{?}B+		{*}B
+{?}C+		{*}C
+{?}2+		{*}2
+{*}a+		{*}a
+{*}b+		{*}b
+{*}c+		{*}c
+{*}A+		{*}A
+{*}B+		{*}B
+{*}C+		{*}C
+{*}2+		{*}2
 3		{?}d	NewChunk NoTransliteration
 e		{*}e	NoTransliteration
 f		{*}f	NoTransliteration
@@ -73,6 +97,20 @@ f		{*}f	NoTransliteration
 {*}D*		{*}d
 {*}E*		{*}e
 {*}F*		{*}f
+{?}d+		{*}d
+{?}e+		{*}e
+{?}f+		{*}f
+{?}D+		{*}D
+{?}E+		{*}E
+{?}F+		{*}F
+{?}3+		{*}3
+{*}d+		{*}d
+{*}e+		{*}e
+{*}f+		{*}f
+{*}D+		{*}D
+{*}E+		{*}E
+{*}F+		{*}F
+{*}3+		{*}3
 4		{?}g	NewChunk NoTransliteration
 h		{*}h	NoTransliteration
 i		{*}i	NoTransliteration
@@ -103,6 +141,20 @@ $	4		NoTransliteration
 {*}G*		{*}g
 {*}H*		{*}h
 {*}I*		{*}i
+{?}g+		{*}g
+{?}h+		{*}h
+{?}i+		{*}i
+{?}G+		{*}G
+{?}H+		{*}H
+{?}I+		{*}I
+{?}4+		{*}4
+{*}g+		{*}g
+{*}h+		{*}h
+{*}i+		{*}i
+{*}G+		{*}G
+{*}H+		{*}H
+{*}I+		{*}I
+{*}4+		{*}4
 5		{?}j	NewChunk NoTransliteration
 k		{*}k	NoTransliteration
 l		{*}l	NoTransliteration
@@ -133,6 +185,20 @@ l		{*}l	NoTransliteration
 {*}J*		{*}j
 {*}K*		{*}k
 {*}L*		{*}l
+{?}j+		{*}j
+{?}k+		{*}k
+{?}l+		{*}l
+{?}J+		{*}J
+{?}K+		{*}K
+{?}L+		{*}L
+{?}5+		{*}5
+{*}j+		{*}j
+{*}k+		{*}k
+{*}l+		{*}l
+{*}J+		{*}J
+{*}K+		{*}K
+{*}L+		{*}L
+{*}5+		{*}5
 6		{?}m	NewChunk NoTransliteration
 n		{*}n	NoTransliteration
 o		{*}o	NoTransliteration
@@ -163,6 +229,20 @@ o		{*}o	NoTransliteration
 {*}M*		{*}m
 {*}N*		{*}n
 {*}O*		{*}o
+{?}m+		{*}m
+{?}n+		{*}n
+{?}o+		{*}o
+{?}M+		{*}M
+{?}N+		{*}N
+{?}O+		{*}O
+{?}6+		{*}6
+{*}m+		{*}m
+{*}n+		{*}n
+{*}o+		{*}o
+{*}M+		{*}M
+{*}N+		{*}N
+{*}O+		{*}O
+{*}6+		{*}6
 7		{?}p	NewChunk NoTransliteration
 q		{*}q	NoTransliteration
 r		{*}r	NoTransliteration
@@ -202,6 +282,24 @@ s		{*}s	NoTransliteration
 {*}Q*		{*}q
 {*}R*		{*}r
 {*}S*		{*}s
+{?}p+		{*}p
+{?}q+		{*}q
+{?}r+		{*}r
+{?}s+		{*}s
+{?}P+		{*}P
+{?}Q+		{*}Q
+{?}R+		{*}R
+{?}S+		{*}S
+{?}7+		{*}7
+{*}p+		{*}p
+{*}q+		{*}q
+{*}r+		{*}r
+{*}s+		{*}s
+{*}P+		{*}P
+{*}Q+		{*}Q
+{*}R+		{*}R
+{*}S+		{*}S
+{*}7+		{*}7
 8		{?}t	NewChunk NoTransliteration
 u		{*}u	NoTransliteration
 v		{*}v	NoTransliteration
@@ -232,6 +330,20 @@ v		{*}v	NoTransliteration
 {*}T*		{*}t
 {*}U*		{*}u
 {*}V*		{*}v
+{?}t+		{*}t
+{?}u+		{*}u
+{?}v+		{*}v
+{?}T+		{*}T
+{?}U+		{*}U
+{?}V+		{*}V
+{?}8+		{*}8
+{*}t+		{*}t
+{*}u+		{*}u
+{*}v+		{*}v
+{*}T+		{*}T
+{*}U+		{*}U
+{*}V+		{*}V
+{*}8+		{*}8
 9		{?}w	NewChunk NoTransliteration
 x		{*}x	NoTransliteration
 y		{*}y	NoTransliteration
@@ -271,6 +383,24 @@ z		{*}z	NoTransliteration
 {*}X*		{*}x
 {*}Y*		{*}y
 {*}Z*		{*}z
+{?}w+		{*}w
+{?}x+		{*}x
+{?}y+		{*}y
+{?}z+		{*}z
+{?}W+		{*}W
+{?}X+		{*}X
+{?}Y+		{*}Y
+{?}Z+		{*}Z
+{?}9+		{*}9
+{*}w+		{*}w
+{*}x+		{*}x
+{*}y+		{*}y
+{*}z+		{*}z
+{*}W+		{*}W
+{*}X+		{*}X
+{*}Y+		{*}Y
+{*}Z+		{*}Z
+{*}9+		{*}9
 *			NoTransliteration
 0		{?}'	NewChunk NoTransliteration
 "		{*}"	NoTransliteration
@@ -287,6 +417,16 @@ z		{*}z	NoTransliteration
 {?}:{<}		{?}"
 {?};{<}		{?}:
 {?}0{<}		{?};
+{?}'+		{*}'
+{?}"+		{*}"
+{?}:+		{*}:
+{?};+		{*};
+{?}0+		{*}0
+{*}'+		{*}'
+{*}"+		{*}"
+{*}:+		{*}:
+{*};+		{*};
+{*}0+		{*}0
 .		{?}.	NewChunk NoTransliteration
 ,		{*},	NoTransliteration
 ?		{*}?	NoTransliteration
@@ -299,4 +439,15 @@ z		{*}z	NoTransliteration
 {?},{<}		{?}.
 {?}?{<}		{?},
 {?}!{<}		{?}?
+{?}.+		{*}.
+{?},+		{*},
+{?}?+		{*}?
+{?}!+		{*}!
+{?}#+		{*}#
+{*}.+		{*}.
+{*},+		{*},
+{*}?+		{*}?
+{*}!+		{*}!
+{*}#+		{*}#
 {<}		
++		
