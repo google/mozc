@@ -1,0 +1,284 @@
+1		{?}1	NewChunk NoTransliteration
+☆		{?}☆	NewChunk NoTransliteration
+♪		{?}♪	NewChunk NoTransliteration
+➝		{?}➝	NewChunk NoTransliteration
++1		{?}1	NewChunk NoTransliteration
++☆		{?}☆	NewChunk NoTransliteration
++♪		{?}♪	NewChunk NoTransliteration
++➝		{?}➝	NewChunk NoTransliteration
+{?}11		{?}☆
+{?}☆1		{?}♪
+{?}♪1		{?}➝
+{?}➝1		{?}1
+{?}1{<}		{?}➝
+{?}☆{<}		{?}1
+{?}♪{<}		{?}☆
+{?}➝{<}		{?}♪
+{?}1+		{*}1
+{?}☆+		{*}☆
+{?}♪+		{*}♪
+{?}➝+		{*}➝
+{*}1+		{*}1
+{*}☆+		{*}☆
+{*}♪+		{*}♪
+{*}➝+		{*}➝
+2		{?}2	NewChunk NoTransliteration
+¥		{?}¥	NewChunk NoTransliteration
+$		{?}$	NewChunk NoTransliteration
+€		{?}€	NewChunk NoTransliteration
++2		{?}2	NewChunk NoTransliteration
++¥		{?}¥	NewChunk NoTransliteration
++$		{?}$	NewChunk NoTransliteration
++€		{?}€	NewChunk NoTransliteration
+{?}22		{?}¥
+{?}¥2		{?}$
+{?}$2		{?}€
+{?}€2		{?}2
+{?}2{<}		{?}€
+{?}¥{<}		{?}2
+{?}${<}		{?}¥
+{?}€{<}		{?}$
+{?}2+		{*}2
+{?}¥+		{*}¥
+{?}$+		{*}$
+{?}€+		{*}€
+{*}2+		{*}2
+{*}¥+		{*}¥
+{*}$+		{*}$
+{*}€+		{*}€
+3		{?}3	NewChunk NoTransliteration
+%		{?}%	NewChunk NoTransliteration
+°		{?}°	NewChunk NoTransliteration
+#		{?}#	NewChunk NoTransliteration
++3		{?}3	NewChunk NoTransliteration
++%		{?}%	NewChunk NoTransliteration
++°		{?}°	NewChunk NoTransliteration
++#		{?}#	NewChunk NoTransliteration
+{?}33		{?}%
+{?}%3		{?}°
+{?}°3		{?}#
+{?}#3		{?}3
+{?}3{<}		{?}#
+{?}%{<}		{?}3
+{?}°{<}		{?}%
+{?}#{<}		{?}°
+{?}3+		{*}3
+{?}%+		{*}%
+{?}°+		{*}°
+{?}#+		{*}#
+{*}3+		{*}3
+{*}%+		{*}%
+{*}°+		{*}°
+{*}#+		{*}#
+4		{?}4	NewChunk NoTransliteration
+○		{?}○	NewChunk NoTransliteration
+*		{?}*	NewChunk NoTransliteration
+・		{?}・	NewChunk NoTransliteration
++4		{?}4	NewChunk NoTransliteration
++○		{?}○	NewChunk NoTransliteration
++*		{?}*	NewChunk NoTransliteration
++・		{?}・	NewChunk NoTransliteration
+{?}44		{?}○
+{?}○4		{?}*
+{?}*4		{?}・
+{?}・4		{?}4
+{?}4{<}		{?}・
+{?}○{<}		{?}4
+{?}*{<}		{?}○
+{?}・{<}		{?}*
+{?}4+		{*}4
+{?}○+		{*}○
+{?}*+		{*}*
+{?}・+		{*}・
+{*}4+		{*}4
+{*}○+		{*}○
+{*}*+		{*}*
+{*}・+		{*}・
+5		{?}5	NewChunk NoTransliteration
+p		{?}+	NewChunk NoTransliteration
+×		{?}×	NewChunk NoTransliteration
+÷		{?}÷	NewChunk NoTransliteration
++5		{?}5	NewChunk NoTransliteration
++p		{?}+	NewChunk NoTransliteration
++×		{?}×	NewChunk NoTransliteration
++÷		{?}÷	NewChunk NoTransliteration
+{?}55		{?}+
+{?}+5		{?}×
+{?}×5		{?}÷
+{?}÷5		{?}5
+{?}5{<}		{?}÷
+{?}+{<}		{?}5
+{?}×{<}		{?}+
+{?}÷{<}		{?}×
+{?}5+		{*}5
+{?}++		{*}+
+{?}×+		{*}×
+{?}÷+		{*}÷
+{*}5+		{*}5
+{*}++		{*}+
+{*}×+		{*}×
+{*}÷+		{*}÷
+6		{?}6	NewChunk NoTransliteration
+<		{?}<	NewChunk NoTransliteration
+=		{?}=	NewChunk NoTransliteration
+>		{?}>	NewChunk NoTransliteration
++6		{?}6	NewChunk NoTransliteration
++<		{?}<	NewChunk NoTransliteration
++=		{?}=	NewChunk NoTransliteration
++>		{?}>	NewChunk NoTransliteration
+{?}66		{?}<
+{?}<6		{?}=
+{?}=6		{?}>
+{?}>6		{?}6
+{?}6{<}		{?}>
+{?}<{<}		{?}6
+{?}={<}		{?}<
+{?}>{<}		{?}=
+{?}6+		{*}6
+{?}<+		{*}<
+{?}=+		{*}=
+{?}>+		{*}>
+{*}6+		{*}6
+{*}<+		{*}<
+{*}=+		{*}=
+{*}>+		{*}>
+7		{?}7	NewChunk NoTransliteration
+「		{?}「	NewChunk NoTransliteration
+」		{?}」	NewChunk NoTransliteration
+:		{?}:	NewChunk NoTransliteration
++7		{?}7	NewChunk NoTransliteration
++「		{?}「	NewChunk NoTransliteration
++」		{?}」	NewChunk NoTransliteration
++:		{?}:	NewChunk NoTransliteration
+{?}77		{?}「
+{?}「7		{?}」
+{?}」7		{?}:
+{?}:7		{?}7
+{?}7{<}		{?}:
+{?}「{<}		{?}7
+{?}」{<}		{?}「
+{?}:{<}		{?}」
+{?}7+		{*}7
+{?}「+		{*}「
+{?}」+		{*}」
+{?}:+		{*}:
+{*}7+		{*}7
+{*}「+		{*}「
+{*}」+		{*}」
+{*}:+		{*}:
+8		{?}8	NewChunk NoTransliteration
+〒		{?}〒	NewChunk NoTransliteration
+々		{?}々	NewChunk NoTransliteration
+〆		{?}〆	NewChunk NoTransliteration
++8		{?}8	NewChunk NoTransliteration
++〒		{?}〒	NewChunk NoTransliteration
++々		{?}々	NewChunk NoTransliteration
++〆		{?}〆	NewChunk NoTransliteration
+{?}88		{?}〒
+{?}〒8		{?}々
+{?}々8		{?}〆
+{?}〆8		{?}8
+{?}8{<}		{?}〆
+{?}〒{<}		{?}8
+{?}々{<}		{?}〒
+{?}〆{<}		{?}々
+{?}8+		{*}8
+{?}〒+		{*}〒
+{?}々+		{*}々
+{?}〆+		{*}〆
+{*}8+		{*}8
+{*}〒+		{*}〒
+{*}々+		{*}々
+{*}〆+		{*}〆
+9		{?}9	NewChunk NoTransliteration
+^		{?}^	NewChunk NoTransliteration
+|		{?}|	NewChunk NoTransliteration
+\		{?}\	NewChunk NoTransliteration
++9		{?}9	NewChunk NoTransliteration
++^		{?}^	NewChunk NoTransliteration
++|		{?}|	NewChunk NoTransliteration
++\		{?}\	NewChunk NoTransliteration
+{?}99		{?}^
+{?}^9		{?}|
+{?}|9		{?}\
+{?}\9		{?}9
+{?}9{<}		{?}\
+{?}^{<}		{?}9
+{?}|{<}		{?}^
+{?}\{<}		{?}|
+{?}9+		{*}9
+{?}^+		{*}^
+{?}|+		{*}|
+{?}\+		{*}\
+{*}9+		{*}9
+{*}^+		{*}^
+{*}|+		{*}|
+{*}\+		{*}\
+0		{?}0	NewChunk NoTransliteration
+〜		{?}〜	NewChunk NoTransliteration
+…		{?}…	NewChunk NoTransliteration
++0		{?}0	NewChunk NoTransliteration
++〜		{?}〜	NewChunk NoTransliteration
++…		{?}…	NewChunk NoTransliteration
+{?}00		{?}〜
+{?}〜0		{?}…
+{?}…0		{?}0
+{?}0{<}		{?}…
+{?}〜{<}		{?}0
+{?}…{<}		{?}〜
+{?}0+		{*}0
+{?}〜+		{*}〜
+{?}…+		{*}…
+{*}0+		{*}0
+{*}〜+		{*}〜
+{*}…+		{*}…
+(		{?}(	NewChunk NoTransliteration
+)		{?})	NewChunk NoTransliteration
+[		{?}[	NewChunk NoTransliteration
+]		{?}]	NewChunk NoTransliteration
++(		{?}(	NewChunk NoTransliteration
++)		{?})	NewChunk NoTransliteration
++[		{?}[	NewChunk NoTransliteration
++]		{?}]	NewChunk NoTransliteration
+{?}((		{?})
+{?})(		{?}[
+{?}[(		{?}]
+{?}](		{?}(
+{?}({<}		{?}]
+{?}){<}		{?}(
+{?}[{<}		{?})
+{?}]{<}		{?}[
+{?}(+		{*}(
+{?})+		{*})
+{?}[+		{*}[
+{?}]+		{*}]
+{*}(+		{*}(
+{*})+		{*})
+{*}[+		{*}[
+{*}]+		{*}]
+.		{?}.	NewChunk NoTransliteration
+,		{?},	NewChunk NoTransliteration
+-		{?}-	NewChunk NoTransliteration
+/		{?}/	NewChunk NoTransliteration
++.		{?}.	NewChunk NoTransliteration
++,		{?},	NewChunk NoTransliteration
++-		{?}-	NewChunk NoTransliteration
++/		{?}/	NewChunk NoTransliteration
+{?}..		{?},
+{?},.		{?}-
+{?}-.		{?}/
+{?}/.		{?}.
+{?}.{<}		{?}/
+{?},{<}		{?}.
+{?}-{<}		{?},
+{?}/{<}		{?}-
+{?}.+		{*}.
+{?},+		{*},
+{?}-+		{*}-
+{?}/+		{*}/
+{*}.+		{*}.
+{*},+		{*},
+{*}-+		{*}-
+{*}/+		{*}/
+{<}		
++		
