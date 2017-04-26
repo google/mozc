@@ -503,6 +503,16 @@ TEST(StringPieceTest, CheckCustom) {
   ASSERT_EQ(c, s3);
   string s4(e.as_string());
   ASSERT_TRUE(s4.empty());
+
+  // cast to string
+  c = StringPiece("foobar");
+  ASSERT_EQ(string("foobar"), string(c));
+  c = StringPiece("foobar", 6);
+  ASSERT_EQ(string("foobar"), string(c));
+  c = StringPiece("foobarfoobar", 6);
+  ASSERT_EQ(string("foobar"), string(c));
+  string s5 = string(e);
+  ASSERT_TRUE(s5.empty());
 }
 
 TEST(StringPieceTest, CheckNULL) {

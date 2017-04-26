@@ -116,6 +116,10 @@ class StringPiece {
     return string(!empty() ? data() : "", size());
   }
 
+  explicit operator string() const {
+    return string(!empty() ? data() : "", size());
+  }
+
   void CopyToString(string *target) const;
   void AppendToString(string *target) const;
 
