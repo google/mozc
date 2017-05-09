@@ -738,7 +738,7 @@ void SystemDictionary::LookupPredictive(
 
     // decoded_key = "くーぐる" (= key + prediction suffix)
     decoded_key.clear();
-    key.CopyToString(&decoded_key);
+    decoded_key.assign(key.data(), key.size());
     codec_->DecodeKey(encoded_actual_key_prediction_suffix, &decoded_key);
     switch (callback->OnKey(decoded_key)) {
       case Callback::TRAVERSE_DONE:

@@ -364,7 +364,7 @@ void Util::JoinStringPieces(const std::vector<StringPiece> &pieces,
     len += pieces[i].size();
   }
   output->reserve(len);
-  pieces[0].CopyToString(output);
+  output->assign(pieces[0].data(), pieces[0].size());
   for (size_t i = 1; i < pieces.size(); ++i) {
     output->append(delim, delim_len);
     output->append(pieces[i].data(), pieces[i].size());
@@ -372,7 +372,7 @@ void Util::JoinStringPieces(const std::vector<StringPiece> &pieces,
 }
 
 void Util::ConcatStrings(StringPiece s1, StringPiece s2, string *output) {
-  s1.CopyToString(output);
+  output->assign(s1.data(), s1.size());
   output->append(s2.data(), s2.size());
 }
 
@@ -869,7 +869,7 @@ void Util::SubString(StringPiece src, size_t start, size_t length,
                      string *result) {
   DCHECK(result);
   const StringPiece substr = SubStringPiece(src, start, length);
-  substr.CopyToString(result);
+  result->assign(substr.data(), substr.size());
 }
 
 void Util::StripUTF8BOM(string *line) {
@@ -1286,7 +1286,7 @@ bool Util::IsOpenBracket(StringPiece key, string *close_bracket) {
   if (iter == end || iter->GetOpenBracket() != key) {
     return false;
   }
-  iter->GetCloseBracket().CopyToString(close_bracket);
+  *close_bracket = string(iter->GetCloseBracket());
   return true;
 }
 
@@ -1302,7 +1302,7 @@ bool Util::IsCloseBracket(StringPiece key, string *open_bracket) {
   if (iter == end || iter->GetCloseBracket() != key) {
     return false;
   }
-  iter->GetOpenBracket().CopyToString(open_bracket);
+  *open_bracket = string(iter->GetOpenBracket());
   return true;
 }
 

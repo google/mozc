@@ -106,8 +106,7 @@ class Util {
   // String utils
   template <typename StringContainer>
   static void PushBackStringPiece(StringPiece s, StringContainer *container) {
-    container->push_back(string());
-    s.CopyToString(&container->back());
+    container->push_back(string(s));
   }
 
   static void SplitStringUsing(StringPiece str,

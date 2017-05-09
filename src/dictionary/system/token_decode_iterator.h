@@ -104,7 +104,7 @@ inline TokenDecodeIterator::TokenDecodeIterator(
       state_(HAS_NEXT),
       ptr_(ptr),
       token_info_(nullptr) {
-  key.CopyToString(&token_.key);
+  token_.key.assign(key.data(), key.size());
   NextInternal();
 }
 
