@@ -239,7 +239,7 @@ void GenerateDescription(StringPiece variant_token_array,
   const uint32 type_id = iter[2];
   DCHECK_LT(type_id, variant_type.size());
   // Format like "XXXのYYY"
-  original.CopyToString(desc);
+  desc->assign(original.data(), original.size());
   desc->append("\xe3\x81\xae");  // "の"
   desc->append(variant_type[type_id].data(), variant_type[type_id].size());
 }
@@ -343,10 +343,10 @@ void InsertNounPrefix(const POSMatcher &pos_matcher,
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();
     c->cost = 5000;
-    iter.value().CopyToString(&c->content_value);
+    c->content_value = string(iter.value());
     c->key = candidate_key;
     c->content_key = candidate_key;
-    iter.value().CopyToString(&c->value);
+    c->value = string(iter.value());
     c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   }

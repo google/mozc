@@ -251,7 +251,7 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
   for (size_t i = position_; i < data_.length(); ++i) {
     if (data_[i] == '\n' || data_[i] == '\r') {
       const StringPiece next_line = data_.substr(position_, i - position_);
-      next_line.CopyToString(line);
+      line->assign(next_line.data(), next_line.size());
       // Handles CR/LF issue.
       const StringPiece possible_crlf = data_.substr(i, 2);
       position_ = possible_crlf.compare(crlf) == 0 ? (i + 2) : (i + 1);
@@ -261,7 +261,7 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
 
   const StringPiece next_line =
       data_.substr(position_, data_.size() - position_);
-  next_line.CopyToString(line);
+  line->assign(next_line.data(), next_line.size());
   position_ = data_.length();
   return true;
 }

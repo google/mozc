@@ -73,7 +73,7 @@ void TextNormalizer::NormalizeText(StringPiece input, string *output) {
     Util::UCS4ToUTF8Append(NormalizeCharForWindows(iter.Get()), output);
   }
 #else
-  input.CopyToString(output);
+  output->assign(input.data(), input.size());
 #endif
 }
 

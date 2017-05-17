@@ -82,10 +82,10 @@ bool InsertCandidate(StringPiece key,
   candidate->lid = 0;
   candidate->rid = 0;
   candidate->cost = cost;
-  value.CopyToString(&candidate->value);
-  value.CopyToString(&candidate->content_value);
-  key.CopyToString(&candidate->key);
-  key.CopyToString(&candidate->content_key);
+  candidate->value.assign(value.data(), value.size());
+  candidate->content_value.assign(value.data(), value.size());
+  candidate->key.assign(key.data(), key.size());
+  candidate->content_key.assign(key.data(), key.size());
   candidate->description.assign(kEmoji);
   if (!description.empty()) {
     Util::AppendStringWithDelimiter(

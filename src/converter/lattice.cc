@@ -164,7 +164,7 @@ Node *Lattice::end_nodes(size_t pos) const {
 
 void Lattice::SetKey(StringPiece key) {
   Clear();
-  key.CopyToString(&key_);
+  key_.assign(key.data(), key.size());
   const size_t size = key.size();
   begin_nodes_.resize(size + 4);
   end_nodes_.resize(size + 4);

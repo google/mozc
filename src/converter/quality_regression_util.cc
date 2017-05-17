@@ -93,7 +93,7 @@ int GetRank(const string &value, const Segments *segments,
 
 uint32 GetPlatfromFromString(StringPiece str) {
   string lower;
-  str.CopyToString(&lower);
+  lower.assign(str.data(), str.size());
   Util::LowerString(&lower);
   if (str == "desktop") {
     return QualityRegressionUtil::DESKTOP;
@@ -130,10 +130,10 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
   if (tokens.size() < 6) {
     return false;
   }
-  tokens[0].CopyToString(&label);
-  tokens[1].CopyToString(&key);
+  label.assign(tokens[0].data(), tokens[0].size());
+  key.assign(tokens[1].data(), tokens[1].size());
   TextNormalizer::NormalizeText(tokens[2], &expected_value);
-  tokens[3].CopyToString(&command);
+  command.assign(tokens[3].data(), tokens[3].size());
   expected_rank  = NumberUtil::SimpleAtoi(tokens[4]);
   NumberUtil::SafeStrToDouble(tokens[5], &accuracy);
   platform = 0;

@@ -80,7 +80,7 @@ namespace {
 // A version of the above function for Token.
 inline void FillToken(const uint16 suggestion_only_word_id,
                       StringPiece key, Token *token) {
-  key.CopyToString(&token->key);
+  token->key.assign(key.data(), key.size());
   token->value = token->key;
   token->cost = 10000;
   token->lid = token->rid = suggestion_only_word_id;
