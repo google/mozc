@@ -549,7 +549,7 @@ TEST(SegmentTest, MetaCandidateTest) {
   const int kCandidatesSize = 5;
   std::vector<string> values;
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    values.push_back(string('a' + i, 1));
+    values.push_back(string(1, 'a' + i));
   }
 
   // add_meta_candidate()
