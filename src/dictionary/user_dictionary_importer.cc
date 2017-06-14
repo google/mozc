@@ -250,17 +250,18 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
   const StringPiece crlf("\r\n");
   for (size_t i = position_; i < data_.length(); ++i) {
     if (data_[i] == '\n' || data_[i] == '\r') {
-      const StringPiece next_line = data_.substr(position_, i - position_);
+      const StringPiece next_line =
+          ClippedSubstr(data_, position_, i - position_);
       line->assign(next_line.data(), next_line.size());
       // Handles CR/LF issue.
-      const StringPiece possible_crlf = data_.substr(i, 2);
+      const StringPiece possible_crlf = ClippedSubstr(data_, i, 2);
       position_ = possible_crlf.compare(crlf) == 0 ? (i + 2) : (i + 1);
       return true;
     }
   }
 
   const StringPiece next_line =
-      data_.substr(position_, data_.size() - position_);
+      ClippedSubstr(data_, position_, data_.size() - position_);
   line->assign(next_line.data(), next_line.size());
   position_ = data_.length();
   return true;

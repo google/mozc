@@ -733,8 +733,8 @@ void SystemDictionary::LookupPredictive(
     const StringPiece encoded_actual_key =
         key_trie_.RestoreKeyString(state.node, encoded_actual_key_buffer);
     const StringPiece encoded_actual_key_prediction_suffix =
-        encoded_actual_key.substr(
-            encoded_key.size(), encoded_actual_key.size() - encoded_key.size());
+        ClippedSubstr(encoded_actual_key, encoded_key.size(),
+                      encoded_actual_key.size() - encoded_key.size());
 
     // decoded_key = "くーぐる" (= key + prediction suffix)
     decoded_key.clear();
@@ -1096,7 +1096,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
   string lookup_key;
   lookup_key.reserve(str.size());
   while (pos < str.size()) {
-    const StringPiece suffix = str.substr(pos);
+    const StringPiece suffix = ClippedSubstr(str, pos);
     lookup_key.clear();
     codec_->EncodeValue(suffix, &lookup_key);
     AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);

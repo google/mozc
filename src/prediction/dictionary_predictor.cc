@@ -171,7 +171,7 @@ class DictionaryPredictor::PredictiveLookupCallback
     // to get more performance but it's overkill here.
     // TODO(noriyukit): vector<string> would be better than set<string>.  To
     // this end, we need to fix Comopser as well.
-    const StringPiece rest = key.substr(original_key_len_);
+    const StringPiece rest = ClippedSubstr(key, original_key_len_);
     for (const string &chr : *subsequent_chars_) {
       if (Util::StartsWith(rest, chr)) {
         return TRAVERSE_CONTINUE;

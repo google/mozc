@@ -199,7 +199,7 @@ void RandomKeyEventsGenerator::GenerateMobileSequence(
     // To simulate mobile key events, split given sentence into smaller parts.
     // Average 5, Min 1, Max 15
     const size_t len = Util::Random(5) + Util::Random(5) + Util::Random(5);
-    GenerateMobileSequenceInternal(sentence.substr(i, len),
+    GenerateMobileSequenceInternal(ClippedSubstr(sentence, i, len),
                                    create_probable_key_events, keys);
     i += len;
   }

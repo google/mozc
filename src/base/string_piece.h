@@ -32,6 +32,7 @@
 #ifndef MOZC_BASE_STRING_PIECE_H_
 #define MOZC_BASE_STRING_PIECE_H_
 
+#include <algorithm>
 #include <cstddef>
 #include <cstring>
 #include <iosfwd>
@@ -210,6 +211,14 @@ class StringPiece {
 
 // allow StringPiece to be logged (needed for unit testing).
 extern ostream &operator<<(ostream &o, const StringPiece &piece);
+
+inline StringPiece ClippedSubstr(StringPiece sp, size_t pos,
+                                 size_t n = StringPiece::npos) {
+  size_t sp_size = sp.size();
+  pos = std::min(pos, sp_size);
+  n = std::min(n, sp_size - pos);
+  return sp.substr(pos, n);
+}
 
 
 }  // namespace mozc

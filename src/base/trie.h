@@ -215,7 +215,7 @@ class Trie {
   }
 
   StringPiece GetKeyTail(StringPiece key) const {
-    return key.substr(Util::OneCharLen(key.data()));
+    return ClippedSubstr(key, Util::OneCharLen(key.data()));
   }
 
   Trie<T> *GetSubTrie(StringPiece key) const {

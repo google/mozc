@@ -31,9 +31,9 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#include <WinCrypt.h>
-#include <time.h>
+#include <WinCrypt.h>  // WinCrypt.h must be included after Windows.h
 #include <stdio.h>  // MSVC requires this for _vsnprintf
+#include <time.h>
 #else  // OS_WIN
 
 #ifdef OS_MACOSX
@@ -504,7 +504,7 @@ bool Util::IsCapitalizedAscii(StringPiece s) {
     return true;
   }
   if (isupper(*s.begin())) {
-    return IsLowerAscii(s.substr(1));
+    return IsLowerAscii(ClippedSubstr(s, 1));
   }
   return false;
 }
@@ -514,10 +514,10 @@ bool Util::IsLowerOrUpperAscii(StringPiece s) {
     return true;
   }
   if (islower(*s.begin())) {
-    return IsLowerAscii(s.substr(1));
+    return IsLowerAscii(ClippedSubstr(s, 1));
   }
   if (isupper(*s.begin())) {
-    return IsUpperAscii(s.substr(1));
+    return IsUpperAscii(ClippedSubstr(s, 1));
   }
   return false;
 }
@@ -527,7 +527,7 @@ bool Util::IsUpperOrCapitalizedAscii(StringPiece s) {
     return true;
   }
   if (isupper(*s.begin())) {
-    return IsLowerOrUpperAscii(s.substr(1));
+    return IsLowerOrUpperAscii(ClippedSubstr(s, 1));
   }
   return false;
 }
@@ -628,7 +628,7 @@ bool Util::SplitFirstChar32(StringPiece s,
       const uint8 leading_byte = static_cast<uint8>(s[0]);
       if (leading_byte < 0x80) {
         *first_char32 = leading_byte;
-        *rest = s.substr(1);
+        *rest = ClippedSubstr(s, 1);
         return true;
       }
 
@@ -688,7 +688,7 @@ bool Util::SplitFirstChar32(StringPiece s,
       return false;
     }
     *first_char32 = result;
-    *rest = s.substr(len);
+    *rest = ClippedSubstr(s, len);
     return true;
   }
 }
@@ -717,7 +717,7 @@ bool Util::SplitLastChar32(StringPiece s,
     return false;
   }
   const StringPiece::difference_type len = std::distance(s.rbegin(), it) + 1;
-  const StringPiece last_piece = s.substr(s.size() - len);
+  const StringPiece last_piece = ClippedSubstr(s, s.size() - len);
   StringPiece result_piece;
   if (!SplitFirstChar32(last_piece, last_char32, &result_piece)) {
     return false;

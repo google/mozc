@@ -95,13 +95,14 @@ bool ParseCompound(const StringPiece value, const StringPiece pattern,
   }
 
   // Check if the middle part matches |pattern|.
-  const StringPiece remaining_value = value.substr(first_content->size());
+  const StringPiece remaining_value =
+      ClippedSubstr(value, first_content->size());
   if (!Util::StartsWith(remaining_value, pattern)) {
     return false;
   }
 
   // Check if the last substring is eligible for |second|.
-  *second = remaining_value.substr(pattern.size());
+  *second = ClippedSubstr(remaining_value, pattern.size());
   if (second->empty() || !Util::ContainsScriptType(*second, Util::KANJI)) {
     return false;
   }
