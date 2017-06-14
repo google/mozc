@@ -3,6 +3,7 @@
 _		{*}_	NoTransliteration
 /		{*}/	NoTransliteration
 @	1		NoTransliteration
+＠	@		NoTransliteration
 {?}@1		{?}-
 {?}-1		{?}_
 {?}_1		{?}/
@@ -27,6 +28,7 @@ _		{*}_	NoTransliteration
 b		{*}b	NoTransliteration
 c		{*}c	NoTransliteration
 |	2		NoTransliteration
+a		{*}a	NoTransliteration
 {?}a2		{?}b
 {?}b2		{?}c
 {?}c2		{?}A
@@ -71,6 +73,7 @@ c		{*}c	NoTransliteration
 e		{*}e	NoTransliteration
 f		{*}f	NoTransliteration
 ~	3		NoTransliteration
+d		{*}d	NoTransliteration
 {?}d3		{?}e
 {?}e3		{?}f
 {?}f3		{?}D
@@ -115,6 +118,7 @@ f		{*}f	NoTransliteration
 h		{*}h	NoTransliteration
 i		{*}i	NoTransliteration
 $	4		NoTransliteration
+g		{*}g	NoTransliteration
 {?}g4		{?}h
 {?}h4		{?}i
 {?}i4		{?}G
@@ -159,6 +163,7 @@ $	4		NoTransliteration
 k		{*}k	NoTransliteration
 l		{*}l	NoTransliteration
 %	5		NoTransliteration
+j		{*}j	NoTransliteration
 {?}j5		{?}k
 {?}k5		{?}l
 {?}l5		{?}J
@@ -203,6 +208,7 @@ l		{*}l	NoTransliteration
 n		{*}n	NoTransliteration
 o		{*}o	NoTransliteration
 &	6		NoTransliteration
+m		{*}m	NoTransliteration
 {?}m6		{?}n
 {?}n6		{?}o
 {?}o6		{?}M
@@ -248,6 +254,7 @@ q		{*}q	NoTransliteration
 r		{*}r	NoTransliteration
 s		{*}s	NoTransliteration
 <	7		NoTransliteration
+p		{*}p	NoTransliteration
 {?}p7		{?}q
 {?}q7		{?}r
 {?}r7		{?}s
@@ -304,6 +311,7 @@ s		{*}s	NoTransliteration
 u		{*}u	NoTransliteration
 v		{*}v	NoTransliteration
 ^	8		NoTransliteration
+t		{*}t	NoTransliteration
 {?}t8		{?}u
 {?}u8		{?}v
 {?}v8		{?}T
@@ -349,6 +357,7 @@ x		{*}x	NoTransliteration
 y		{*}y	NoTransliteration
 z		{*}z	NoTransliteration
 >	9		NoTransliteration
+w		{*}w	NoTransliteration
 {?}w9		{?}x
 {?}x9		{?}y
 {?}y9		{?}z
@@ -407,6 +416,7 @@ z		{*}z	NoTransliteration
 :		{*}:	NoTransliteration
 ;		{*};	NoTransliteration
 #	0		NoTransliteration
+'		{*}'	NoTransliteration
 {?}'0		{?}"
 {?}"0		{?}:
 {?}:0		{?};
@@ -431,6 +441,7 @@ z		{*}z	NoTransliteration
 ,		{*},	NoTransliteration
 ?		{*}?	NoTransliteration
 !		{*}!	NoTransliteration
+。	.		NoTransliteration
 {?}..		{?},
 {?},.		{?}?
 {?}?.		{?}!

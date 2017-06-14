@@ -6,6 +6,7 @@
 +☆		{?}☆	NewChunk NoTransliteration
 +♪		{?}♪	NewChunk NoTransliteration
 +➝		{?}➝	NewChunk NoTransliteration
+１	1		NewChunk NoTransliteration
 {?}11		{?}☆
 {?}☆1		{?}♪
 {?}♪1		{?}➝
@@ -30,6 +31,7 @@ $		{?}$	NewChunk NoTransliteration
 +¥		{?}¥	NewChunk NoTransliteration
 +$		{?}$	NewChunk NoTransliteration
 +€		{?}€	NewChunk NoTransliteration
+２	2		NewChunk NoTransliteration
 {?}22		{?}¥
 {?}¥2		{?}$
 {?}$2		{?}€
@@ -54,6 +56,7 @@ $		{?}$	NewChunk NoTransliteration
 +%		{?}%	NewChunk NoTransliteration
 +°		{?}°	NewChunk NoTransliteration
 +#		{?}#	NewChunk NoTransliteration
+３	3		NewChunk NoTransliteration
 {?}33		{?}%
 {?}%3		{?}°
 {?}°3		{?}#
@@ -78,6 +81,7 @@ $		{?}$	NewChunk NoTransliteration
 +○		{?}○	NewChunk NoTransliteration
 +*		{?}*	NewChunk NoTransliteration
 +・		{?}・	NewChunk NoTransliteration
+４	4		NewChunk NoTransliteration
 {?}44		{?}○
 {?}○4		{?}*
 {?}*4		{?}・
@@ -102,6 +106,7 @@ p		{?}+	NewChunk NoTransliteration
 +p		{?}+	NewChunk NoTransliteration
 +×		{?}×	NewChunk NoTransliteration
 +÷		{?}÷	NewChunk NoTransliteration
+５	5		NewChunk NoTransliteration
 {?}55		{?}+
 {?}+5		{?}×
 {?}×5		{?}÷
@@ -126,6 +131,7 @@ p		{?}+	NewChunk NoTransliteration
 +<		{?}<	NewChunk NoTransliteration
 +=		{?}=	NewChunk NoTransliteration
 +>		{?}>	NewChunk NoTransliteration
+６	6		NewChunk NoTransliteration
 {?}66		{?}<
 {?}<6		{?}=
 {?}=6		{?}>
@@ -150,6 +156,7 @@ p		{?}+	NewChunk NoTransliteration
 +「		{?}「	NewChunk NoTransliteration
 +」		{?}」	NewChunk NoTransliteration
 +:		{?}:	NewChunk NoTransliteration
+７	7		NewChunk NoTransliteration
 {?}77		{?}「
 {?}「7		{?}」
 {?}」7		{?}:
@@ -174,6 +181,7 @@ p		{?}+	NewChunk NoTransliteration
 +〒		{?}〒	NewChunk NoTransliteration
 +々		{?}々	NewChunk NoTransliteration
 +〆		{?}〆	NewChunk NoTransliteration
+８	8		NewChunk NoTransliteration
 {?}88		{?}〒
 {?}〒8		{?}々
 {?}々8		{?}〆
@@ -198,6 +206,7 @@ p		{?}+	NewChunk NoTransliteration
 +^		{?}^	NewChunk NoTransliteration
 +|		{?}|	NewChunk NoTransliteration
 +\		{?}\	NewChunk NoTransliteration
+９	9		NewChunk NoTransliteration
 {?}99		{?}^
 {?}^9		{?}|
 {?}|9		{?}\
@@ -220,6 +229,7 @@ p		{?}+	NewChunk NoTransliteration
 +0		{?}0	NewChunk NoTransliteration
 +〜		{?}〜	NewChunk NoTransliteration
 +…		{?}…	NewChunk NoTransliteration
+０	0		NewChunk NoTransliteration
 {?}00		{?}〜
 {?}〜0		{?}…
 {?}…0		{?}0
@@ -240,6 +250,7 @@ p		{?}+	NewChunk NoTransliteration
 +)		{?})	NewChunk NoTransliteration
 +[		{?}[	NewChunk NoTransliteration
 +]		{?}]	NewChunk NoTransliteration
+（	(		NewChunk NoTransliteration
 {?}((		{?})
 {?})(		{?}[
 {?}[(		{?}]
@@ -264,6 +275,7 @@ p		{?}+	NewChunk NoTransliteration
 +,		{?},	NewChunk NoTransliteration
 +-		{?}-	NewChunk NoTransliteration
 +/		{?}/	NewChunk NoTransliteration
+。	.		NewChunk NoTransliteration
 {?}..		{?},
 {?},.		{?}-
 {?}-.		{?}/
