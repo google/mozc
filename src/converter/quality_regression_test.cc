@@ -40,16 +40,13 @@
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/quality_regression_util.h"
-#include "engine/chromeos_engine_factory.h"
-#include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
+#include "data_manager/data_manager.h"
+#include "engine/engine.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
-
-using mozc::quality_regression::QualityRegressionUtil;
 
 namespace mozc {
 
@@ -61,6 +58,8 @@ struct TestCase {
 extern TestCase kTestData[];
 
 namespace {
+
+using quality_regression::QualityRegressionUtil;
 
 class QualityRegressionTest : public ::testing::Test {
  protected:
@@ -158,19 +157,26 @@ class QualityRegressionTest : public ::testing::Test {
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
-
-TEST_F(QualityRegressionTest, ChromeOSTest) {
-  std::unique_ptr<EngineInterface> engine(ChromeOsEngineFactory::Create());
-  QualityRegressionUtil util(engine->GetConverter());
-  RunTestForPlatform(QualityRegressionUtil::CHROMEOS, &util);
+std::unique_ptr<EngineInterface> CreateEngine(const string &data_file_path,
+                                              const string &magic_number,
+                                              const string &engine_type) {
+  std::unique_ptr<DataManager> data_manager(new DataManager);
+  const auto status = data_manager->InitFromFile(data_file_path, magic_number);
+  if (status != DataManager::Status::OK) {
+    LOG(ERROR) << "Failed to load " << data_file_path
+               << ": " << DataManager::StatusCodeToString(status);
+    return nullptr;
+  }
+  if (engine_type == "desktop") {
+    return Engine::CreateDesktopEngine(std::move(data_manager));
+  }
+  if (engine_type == "mobile") {
+    return Engine::CreateMobileEngine(std::move(data_manager));
+  }
+  LOG(ERROR) << "Invalid engine type: " << engine_type;
+  return nullptr;
 }
 
-// Test for desktop
-TEST_F(QualityRegressionTest, BasicTest) {
-  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
-  QualityRegressionUtil util(engine->GetConverter());
-  RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
-}
 
 }  // namespace
 }  // namespace mozc
