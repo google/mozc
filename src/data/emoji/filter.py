@@ -35,6 +35,7 @@ $ python filter.py [conditions...] --print FIELD < emoji_data.tsv > output.tsv
 
 Conditions are a combination of:
 * --has FIELD: requies the emoji to have FIELD.
+* --not_have FIELD: requires the emoji not to have FIELD.
 * --category CATEGORY: requies the emoji to be in CATEGORY.
 """
 
@@ -80,6 +81,11 @@ def _CreateOptionParser():
       help='specify field that must exist. '
       'Repeat this option to set multiple constraints.',
       metavar='FIELD')
+  parser.add_option(
+      '--not_have', action='append', dest='forbidden_fields', default=[],
+      help='specify field that must NOT exist. '
+      'Repeat this option to set multiple constraints.',
+      metavar='FIELD')
   parser.add_option('--category', dest='category', default=[],
                     help='specify category that emojis must have',
                     metavar='CATEGORY')
@@ -105,6 +111,9 @@ def _ToIndex(field):
 def _ShouldPrint(entry, options):
   for field in options.required_fields:
     if not entry[_ToIndex(field)]:
+      return False
+  for field in options.forbidden_fields:
+    if entry[_ToIndex(field)]:
       return False
   if options.category:
     if entry[_CATEGORY_FIELD_INDEX].split('-')[0] != options.category:
