@@ -30,7 +30,7 @@
 
 MAJOR=2
 MINOR=21
-BUILD=2721
+BUILD=2722
 REVISION=102
 # This version represents the version of Mozc IME engine (converter, predictor,
 # etc.).  This version info is included both in the Mozc server and in the Mozc
@@ -43,4 +43,4 @@ ENGINE_VERSION=24
 # This version is used to manage the data version and is included only in the
 # data set file.  DATA_VERSION can be incremented without updating
 # ENGINE_VERSION as long as it's compatible with the engine.
-DATA_VERSION=1
+DATA_VERSION=2
