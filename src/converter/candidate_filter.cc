@@ -418,8 +418,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     }
   }
 
-  const int top_cost = std::max(kMinCost, top_candidate_->cost);
-  const int top_structure_cost =
+  const int64 top_cost = std::max(kMinCost, top_candidate_->cost);
+  const int64 top_structure_cost =
       std::max(kMinCost, top_candidate_->structure_cost);
 
   // If candidate size < 3, don't filter candidate aggressively
@@ -471,7 +471,9 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Filters out candidates with higher cost structure.
-  if (std::max(top_structure_cost, kMinStructureCostOffset) +
+  if (top_structure_cost + kStructureCostOffset > INT_MAX ||
+      std::max(top_structure_cost,
+               static_cast<int64>(kMinStructureCostOffset)) +
           kStructureCostOffset <
       candidate->structure_cost) {
     // We don't stop enumeration here. Just drops high cost structure
