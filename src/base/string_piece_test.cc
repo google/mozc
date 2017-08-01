@@ -417,9 +417,9 @@ TEST(StringPieceTest, CheckSTL) {
   ASSERT_EQ(a.substr(0), a);
   ASSERT_EQ(a.substr(3, 2), "de");
   // empty string nonsense
+  ASSERT_EQ(d.substr(0, 99), e);
   ASSERT_EQ(a.substr(99, 2), e);
   ASSERT_EQ(d.substr(99), e);
-  ASSERT_EQ(d.substr(0, 99), e);
   ASSERT_EQ(d.substr(99, 99), e);
 }
 
