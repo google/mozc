@@ -276,7 +276,7 @@ class Util {
   // C++ string version of sprintf.
   static string StringPrintf(const char *format, ...)
       // Tell the compiler to do printf format string checking.
-      PRINTF_ATTRIBUTE(1, 2);
+      ABSL_PRINTF_ATTRIBUTE(1, 2);
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.

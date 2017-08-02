@@ -159,13 +159,13 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 // N.B.: As the GCC manual states, "[s]ince non-static C++ methods
 // have an implicit 'this' argument, the arguments of such methods
 // should be counted from two, not one."
-#define PRINTF_ATTRIBUTE(string_index, first_to_check) \
-    __attribute__((__format__ (__printf__, string_index, first_to_check)))
-#define SCANF_ATTRIBUTE(string_index, first_to_check) \
-    __attribute__((__format__ (__scanf__, string_index, first_to_check)))
+#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check) \
+  __attribute__((__format__(__printf__, string_index, first_to_check)))
+#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check) \
+  __attribute__((__format__(__scanf__, string_index, first_to_check)))
 #else
-#define PRINTF_ATTRIBUTE(string_index, first_to_check)
-#define SCANF_ATTRIBUTE(string_index, first_to_check)
+#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check)
+#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check)
 #endif  // __GNUC__ || __clang__
 
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
