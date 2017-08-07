@@ -918,6 +918,13 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
   const size_t input_key_len = Util::CharsLen(
       segments.conversion_segment(0).key());
   for (Result &result : *results) {
+    // TODO(noriyukit): Workaround for a noisy suggestion when "ー" is typed.
+    // Currently it's filtered here but this hack should be removed after fixing
+    // the issue at dictionary level.
+    if (result.value == "ーチャン") {
+      result.cost = kInfinity;
+      continue;
+    }
     int cost = GetLMCost(result, rid);
     // Demote filtered word here, because they are not filtered for exact match.
     // Even for exact match, we don't want to show aggressive words
