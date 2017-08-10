@@ -283,7 +283,9 @@ class NullLogFinalizer {
 DECLARE_bool(logtostderr);
 
 
+#ifndef DVLOG_IF
 #define DVLOG_IF(verboselevel, condition) \
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
+#endif
 
 #endif  // MOZC_BASE_LOGGING_H_
