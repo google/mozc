@@ -212,8 +212,8 @@ void SymbolRewriter::InsertCandidates(
     candidate->rid = iter.rid();
     candidate->cost = base_candidate.cost;
     candidate->structure_cost = base_candidate.structure_cost;
-    iter.value().CopyToString(&candidate->value);
-    iter.value().CopyToString(&candidate->content_value);
+    candidate->value.assign(iter.value().data(), iter.value().size());
+    candidate->content_value.assign(iter.value().data(), iter.value().size());
     candidate->key = candidate_key;
     candidate->content_key = candidate_key;
 

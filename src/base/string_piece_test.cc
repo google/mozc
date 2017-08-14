@@ -432,16 +432,6 @@ TEST(StringPieceTest, CheckCustom) {
   StringPiece e;
   string s2;
 
-  // CopyToString
-  a.CopyToString(&s2);
-  ASSERT_SIZE_EQ(s2.size(), 6);
-  ASSERT_EQ(s2, "foobar");
-  b.CopyToString(&s2);
-  ASSERT_SIZE_EQ(s2.size(), 7);
-  ASSERT_EQ(s1, s2);
-  e.CopyToString(&s2);
-  ASSERT_TRUE(s2.empty());
-
   // starts_with
   ASSERT_TRUE(a.starts_with(a));
   ASSERT_TRUE(a.starts_with("foo"));

@@ -201,7 +201,7 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
   const Segment &conversion_segment = segments->conversion_segment(0);
   const string &segment_key = conversion_segment.key();
 
-  // The top candidate, which is about to be commited.
+  // The top candidate, which is about to be committed.
   const Segment::Candidate &candidate = conversion_segment.candidate(0);
   const string &candidate_value = candidate.value;
 
@@ -1823,10 +1823,13 @@ void UserHistoryPredictor::MakeLearningSegments(
       SegmentForLearning learning_segment;
       for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
            !iter.Done(); iter.Next()) {
-        iter.GetKey().CopyToString(&learning_segment.key);
-        iter.GetValue().CopyToString(&learning_segment.value);
-        iter.GetContentKey().CopyToString(&learning_segment.content_key);
-        iter.GetContentValue().CopyToString(&learning_segment.content_value);
+        learning_segment.key.assign(iter.GetKey().data(), iter.GetKey().size());
+        learning_segment.value.assign(iter.GetValue().data(),
+                                      iter.GetValue().size());
+        learning_segment.content_key.assign(iter.GetContentKey().data(),
+                                            iter.GetContentKey().size());
+        learning_segment.content_value.assign(iter.GetContentValue().data(),
+                                              iter.GetContentValue().size());
         learning_segments->push_back_conversion_segment(learning_segment);
       }
     }

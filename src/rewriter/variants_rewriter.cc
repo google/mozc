@@ -281,7 +281,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     AppendString(kPlatformDependent, &description);
   }
 
-  // The follwoing description tries to overwrite exisiting description.
+  // The follwoing description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Zipcode description
   if ((description_type & ZIPCODE) &&
@@ -292,7 +292,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     AppendString(candidate->description, &description);
   }
 
-  // The follwoing description tries to overwrite exisiting description.
+  // The follwoing description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Spelling Correction description
   if ((description_type & SPELLING_CORRECTION) &&
@@ -482,20 +482,22 @@ bool VariantsRewriter::GenerateAlternatives(
   string inner_default_content_value, inner_alternative_content_value;
   for (Segment::Candidate::InnerSegmentIterator iter(&original);
        !iter.Done(); iter.Next()) {
-    iter.GetValue().CopyToString(&tmp);
+    tmp.assign(iter.GetValue().data(), iter.GetValue().size());
     inner_default_value.clear();
     inner_alternative_value.clear();
     if (!manager->ConvertConversionStringWithAlternative(
             tmp, &inner_default_value, &inner_alternative_value)) {
-      iter.GetValue().CopyToString(&inner_default_value);
-      iter.GetValue().CopyToString(&inner_alternative_value);
+      inner_default_value.assign(iter.GetValue().data(),
+                                 iter.GetValue().size());
+      inner_alternative_value.assign(iter.GetValue().data(),
+                                     iter.GetValue().size());
     } else {
       at_least_one_modified = true;
     }
     if (iter.GetValue() != iter.GetContentValue()) {
       inner_default_content_value.clear();
       inner_alternative_content_value.clear();
-      iter.GetContentValue().CopyToString(&tmp);
+      tmp.assign(iter.GetContentValue().data(), iter.GetContentValue().size());
       manager->ConvertConversionStringWithAlternative(
           tmp, &inner_default_content_value,
           &inner_alternative_content_value);

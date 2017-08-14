@@ -97,7 +97,7 @@ void SuffixDictionary::LookupPredictive(
   Token token;
   token.attributes = Token::NONE;  // Common for all suffix tokens.
   for (; range.first != range.second; ++range.first) {
-    (*range.first).CopyToString(&token.key);
+    token.key.assign((*range.first).data(), (*range.first).size());
     switch (callback->OnKey(token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -113,7 +113,8 @@ void SuffixDictionary::LookupPredictive(
     if (value_array_[index].empty()) {
       token.value = token.key;
     } else {
-      value_array_[index].CopyToString(&token.value);
+      token.value.assign(value_array_[index].data(),
+                         value_array_[index].size());
     }
     token.lid = token_array_[3 * index];
     token.rid = token_array_[3 * index + 1];

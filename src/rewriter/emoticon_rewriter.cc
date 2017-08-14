@@ -117,7 +117,8 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
     c->lid = sorted_value[i].lid();
     c->rid = sorted_value[i].rid();
     c->cost = base_candidate.cost;
-    sorted_value[i].value().CopyToString(&c->value);
+    c->value.assign(sorted_value[i].value().data(),
+                    sorted_value[i].value().size());
     c->content_value = c->value;
     c->key = base_candidate.key;
     c->content_key = base_candidate.content_key;
