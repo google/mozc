@@ -33,13 +33,8 @@
 #include <QtCore/QModelIndex>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QItemDelegate>
-#else
-#include <QtGui/QComboBox>
-#include <QtGui/QItemDelegate>
-#endif
 
 class QMouseEvent;
 

@@ -157,7 +157,7 @@ TEST_F(TableTest, LookUpPredictiveAll) {
   Table table;
   InitTable(&table);
 
-  vector<const Entry *> results;
+  std::vector<const Entry *> results;
   table.LookUpPredictiveAll("k", &results);
 
   EXPECT_EQ(6, results.size());
@@ -1027,7 +1027,7 @@ TEST_F(TableTest, SpecialKeys) {
 
 TEST_F(TableTest, TableManager) {
   TableManager table_manager;
-  set<const Table*> table_set;
+  std::set<const Table*> table_set;
   static const commands::Request::SpecialRomanjiTable
       special_romanji_table[] = {
     commands::Request::DEFAULT_TABLE,

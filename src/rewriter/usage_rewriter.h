@@ -104,7 +104,7 @@ class UsageRewriter : public RewriterInterface  {
     const char *ptr_;
   };
 
-  using StrPair = pair<string, string>;
+  using StrPair = std::pair<string, string>;
   static string GetKanjiPrefixAndOneHiragana(const string &word);
 
   UsageDictItemIterator LookupUnmatchedUsageHeuristically(
@@ -112,7 +112,7 @@ class UsageRewriter : public RewriterInterface  {
   UsageDictItemIterator LookupUsage(
       const Segment::Candidate &candidate) const;
 
-  map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
+  std::map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
   const dictionary::POSMatcher pos_matcher_;
   const dictionary::DictionaryInterface *dictionary_;
   const uint32 *base_conjugation_suffix_;

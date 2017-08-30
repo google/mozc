@@ -46,7 +46,7 @@ class KeyParser {
  public:
   static bool ParseKey(const string &key_string,
                        commands::KeyEvent *key_event);
-  static bool ParseKeyVector(const vector<string> &keys,
+  static bool ParseKeyVector(const std::vector<string> &keys,
                              commands::KeyEvent *key_event);
 
  private:

@@ -61,7 +61,7 @@ TEST(ConnectorTest, CompareWithRawData) {
 
   const string connection_text_path = testing::GetSourceFileOrDie({
       "data_manager", "testing", "connection_single_column.txt"});
-  vector<ConnectionDataEntry> data;
+  std::vector<ConnectionDataEntry> data;
   for (ConnectionFileReader reader(connection_text_path);
        !reader.done(); reader.Next()) {
     ConnectionDataEntry entry;

@@ -35,7 +35,7 @@
 namespace mozc {
 namespace session {
 
-typedef vector<SessionObserverInterface *>::iterator ItObservers;
+typedef std::vector<SessionObserverInterface *>::iterator ItObservers;
 
 SessionObserverHandler::SessionObserverHandler() {}
 SessionObserverHandler::~SessionObserverHandler() {

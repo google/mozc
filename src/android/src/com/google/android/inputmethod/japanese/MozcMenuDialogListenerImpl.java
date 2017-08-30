@@ -48,7 +48,7 @@ class MozcMenuDialogListenerImpl implements MenuDialogListener {
   private boolean showInputMethodPicker = false;
 
   MozcMenuDialogListenerImpl(
-    InputMethodService inputMethodService, ViewEventListener eventListener) {
+      InputMethodService inputMethodService, ViewEventListener eventListener) {
     this.inputMethodService = Preconditions.checkNotNull(inputMethodService);
     this.eventListener = Preconditions.checkNotNull(eventListener);
   }

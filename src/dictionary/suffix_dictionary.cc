@@ -91,7 +91,7 @@ void SuffixDictionary::LookupPredictive(
     const ConversionRequest &conversion_request,
     Callback *callback) const {
   using Iter = SerializedStringArray::const_iterator;
-  pair<Iter, Iter> range = std::equal_range(key_array_.begin(),
+  std::pair<Iter, Iter> range = std::equal_range(key_array_.begin(),
                                             key_array_.end(),
                                             key, ComparePrefix(key.size()));
   Token token;

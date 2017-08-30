@@ -70,7 +70,7 @@ class TestInputIterator
   }
 
   void set_entries(
-      const vector<UserDictionaryImporter::RawEntry> *entries) {
+      const std::vector<UserDictionaryImporter::RawEntry> *entries) {
     entries_ = entries;
   }
 
@@ -81,7 +81,7 @@ class TestInputIterator
  public:
   int index_;
   bool is_available_;
-  const vector<UserDictionaryImporter::RawEntry> *entries_;
+  const std::vector<UserDictionaryImporter::RawEntry> *entries_;
 };
 
 }  // namespace
@@ -360,7 +360,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
   iter.set_available(true);
   UserDictionaryStorage::UserDictionary user_dic;
 
-  vector<UserDictionaryImporter::RawEntry> entries;
+  std::vector<UserDictionaryImporter::RawEntry> entries;
   {
     UserDictionaryImporter::RawEntry entry;
     entry.key = "aa";
@@ -394,7 +394,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
 
   static const size_t kSize[] = { 10, 100, 1000, 5000, 12000 };
   for (size_t i = 0; i < arraysize(kSize); ++i) {
-    vector<UserDictionaryImporter::RawEntry> entries;
+    std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
       const string key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
@@ -436,7 +436,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
 
   static const size_t kSize[] = { 10, 100, 1000 };
   for (size_t i = 0; i < arraysize(kSize); ++i) {
-    vector<UserDictionaryImporter::RawEntry> entries;
+    std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
       const string key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
@@ -474,7 +474,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
 
-  vector<UserDictionaryImporter::RawEntry> entries;
+  std::vector<UserDictionaryImporter::RawEntry> entries;
 
   {
     UserDictionaryImporter::RawEntry entry;

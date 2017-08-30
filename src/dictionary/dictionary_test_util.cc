@@ -75,14 +75,14 @@ CheckTokenExistenceCallback::OnToken(StringPiece,  // key
 }
 
 CheckMultiTokensExistenceCallback::CheckMultiTokensExistenceCallback(
-    const vector<Token *> &tokens) : found_count_(0) {
+    const std::vector<Token *> &tokens) : found_count_(0) {
   for (size_t i = 0; i < tokens.size(); ++i) {
     result_[tokens[i]] = false;
   }
 }
 
 bool CheckMultiTokensExistenceCallback::IsFound(const Token *token) const {
-  map<const Token *, bool>::const_iterator iter = result_.find(token);
+  std::map<const Token *, bool>::const_iterator iter = result_.find(token);
   if (iter == result_.end()) {
     return false;
   }
@@ -90,7 +90,7 @@ bool CheckMultiTokensExistenceCallback::IsFound(const Token *token) const {
 }
 
 bool CheckMultiTokensExistenceCallback::AreAllFound() const {
-  for (map<const Token *, bool>::const_iterator iter = result_.begin();
+  for (std::map<const Token *, bool>::const_iterator iter = result_.begin();
        iter != result_.end(); ++iter) {
     if (!iter->second) {
       return false;
@@ -103,7 +103,7 @@ DictionaryInterface::Callback::ResultType
 CheckMultiTokensExistenceCallback::OnToken(StringPiece,  // key
                                            StringPiece,  // actual_key
                                            const Token &token) {
-  for (map<const Token *, bool>::iterator iter = result_.begin();
+  for (std::map<const Token *, bool>::iterator iter = result_.begin();
        iter != result_.end(); ++iter) {
     if (!iter->second && IsTokenEqualImpl(*iter->first, token)) {
       iter->second = true;
@@ -121,7 +121,7 @@ string PrintToken(const Token &token) {
       token.lid, token.rid, token.attributes);
 }
 
-string PrintTokens(const vector<Token> &tokens) {
+string PrintTokens(const std::vector<Token> &tokens) {
   string s = "[";
   for (size_t i = 0; i < tokens.size(); ++i) {
     s.append(PrintToken(tokens[i])).append(", ");
@@ -129,7 +129,7 @@ string PrintTokens(const vector<Token> &tokens) {
   return s.append(1, ']');
 }
 
-string PrintTokens(const vector<Token *> &token_ptrs) {
+string PrintTokens(const std::vector<Token *> &token_ptrs) {
   string s = "[";
   for (size_t i = 0; i < token_ptrs.size(); ++i) {
     s.append(PrintToken(*token_ptrs[i])).append(", ");
@@ -155,15 +155,15 @@ namespace internal {
 ::testing::AssertionResult AreTokensEqualUnordered(
      const char *,  // expected_expr
      const char *,  // actual_expr
-     const vector<Token *> &expected,
-     const vector<Token> &actual) {
+     const std::vector<Token *> &expected,
+     const std::vector<Token> &actual) {
   if (expected.size() != actual.size()) {
     return ::testing::AssertionFailure()
             << "Size are different\n"
             << "Expected: " << PrintTokens(expected) << "\n"
             << "Actual: " << PrintTokens(actual);
   }
-  set<string> encoded_actual;
+  std::set<string> encoded_actual;
   for (size_t i = 0; i < actual.size(); ++i) {
     encoded_actual.insert(PrintToken(actual[i]));
   }

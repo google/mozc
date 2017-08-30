@@ -33,11 +33,7 @@
 #define MOZC_GUI_BASE_DEBUG_UTIL_H_
 
 #include <string>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QApplication>
-#endif
 
 namespace mozc {
 namespace gui {
@@ -46,13 +42,9 @@ class DebugUtil {
  public:
   // Callback function used as a Qt message handler which is called when Qt
   // message functions (qDebug, qWarning, qCritical and qFatal) are called.
-#ifdef MOZC_USE_QT5
   static void MessageHandler(QtMsgType type,
                              const QMessageLogContext &context,
                              const QString &q_msg);
-#else
-  static void MessageHandler(QtMsgType type, const char *msg);
-#endif
 
  private:
   DebugUtil() {}

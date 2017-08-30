@@ -130,7 +130,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   {
     CollectTokenCallback callback;
     dictionary->LookupPredictive("w", convreq_, &callback);
-    vector<Token *> expected;
+    std::vector<Token *> expected;
     expected.push_back(&token_we);
     expected.push_back(&token_war);
     expected.push_back(&token_word);
@@ -140,7 +140,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   {
     CollectTokenCallback callback;
     dictionary->LookupPredictive("wo", convreq_, &callback);
-    vector<Token *> expected;
+    std::vector<Token *> expected;
     expected.push_back(&token_word);
     expected.push_back(&token_world);
     EXPECT_TOKENS_EQ_UNORDERED(expected, callback.tokens());

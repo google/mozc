@@ -60,7 +60,7 @@ TEST(DataSetReaderTest, ValidData) {
     DataSetWriter w(GetTestMagicNumber());
     w.Add("google", 16, kGoogle);
     w.Add("mozc", 64, kMozc);
-    stringstream out;
+    std::stringstream out;
     w.Finish(&out);
     image = out.str();
   }
@@ -132,7 +132,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     DataSetWriter w(magic);
     w.Add("google", 16, kGoogle);
     w.Add("mozc", 64, kMozc);
-    stringstream out;
+    std::stringstream out;
     w.Finish(&out);
 
     // Remove the metadata chunk at the bottom, which will be appended in each
@@ -188,7 +188,7 @@ TEST(DataSetReaderTest, OneBitError) {
             kAlignments[Util::Random(4)],
             GenerateRandomBytes(1 + Util::Random(1024)));
     }
-    stringstream out;
+    std::stringstream out;
     w.Finish(&out);
     image = out.str();
   }

@@ -369,10 +369,30 @@ class DirectWriteTextRenderer : public TextRenderer {
   virtual void RenderTextList(CDCHandle dc,
                               const vector<TextRenderingInfo> &display_list,
                               FONT_TYPE font_type) const {
-    CreateRenderTargetIfNecessary();
-    if (dc_render_target_ == nullptr) {
+    const size_t kMaxTrial = 3;
+    size_t trial = 0;
+    while (true) {
+      CreateRenderTargetIfNecessary();
+      if (dc_render_target_ == nullptr) {
+        // This is not a recoverable error.
+        return;
+      }
+      const HRESULT hr = RenderTextListImpl(dc, display_list, font_type);
+      if (hr == D2DERR_RECREATE_TARGET && trial < kMaxTrial) {
+        // This is a recoverable error just by recreating the render target.
+        dc_render_target_.Release();
+        ++trial;
+        continue;
+      }
+      // For other error codes (including S_OK and S_FALSE), or if we exceed the
+      // maximum number of trials, we simply accept the result here.
       return;
     }
+  }
+
+  HRESULT RenderTextListImpl(CDCHandle dc,
+                             const vector<TextRenderingInfo> &display_list,
+                             FONT_TYPE font_type) const {
     CRect total_rect;
     for (const auto &item : display_list) {
       const auto &item_rect = ToCRect(item.rect);
@@ -382,14 +402,14 @@ class DirectWriteTextRenderer : public TextRenderer {
     HRESULT hr = S_OK;
     hr = dc_render_target_->BindDC(dc, &total_rect);
     if (FAILED(hr)) {
-      return;
+      return hr;
     }
     CComPtr<ID2D1SolidColorBrush> brush;
     hr = dc_render_target_->CreateSolidColorBrush(
         ToD2DColor(render_info_[font_type].color),
         &brush);
     if (FAILED(hr)) {
-      return;
+      return hr;
     }
     D2D1_DRAW_TEXT_OPTIONS option = D2D1_DRAW_TEXT_OPTIONS_NONE;
     if (SystemUtil::IsWindows8_1OrLater()) {
@@ -412,10 +432,7 @@ class DirectWriteTextRenderer : public TextRenderer {
                                   brush,
                                   option);
     }
-    hr = dc_render_target_->EndDraw();
-    if (hr == D2DERR_RECREATE_TARGET) {
-      dc_render_target_.Release();
-    }
+    return dc_render_target_->EndDraw();
   }
 
   Size MeasureStringImpl(FONT_TYPE font_type, const wstring &str,

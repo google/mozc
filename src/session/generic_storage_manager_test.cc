@@ -90,7 +90,7 @@ TEST(GenericLruStorageTest, BasicOperations) {
   }
 
   // Check the list.
-  vector<string> values;
+  std::vector<string> values;
   storage.GetAllValues(&values);
   EXPECT_EQ(kSize, values.size());
   for (size_t i = 1; i < kSize + 1; ++i) {

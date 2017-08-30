@@ -78,7 +78,7 @@ class SchedulerStub : public Scheduler::SchedulerInterface {
         job(job), remaining_usec(job.delay_start()), backoff_count(0) {}
   };
 
-  map<string, JobForStub> jobs_;
+  std::map<string, JobForStub> jobs_;
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_SCHEDULER_STUB_H_

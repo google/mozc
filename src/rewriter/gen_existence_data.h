@@ -36,13 +36,11 @@
 
 namespace mozc {
 
-void OutputExistenceHeader(const vector<string> &entries,
-                           const string &data_namespace,
-                           ostream *ofs,
+void OutputExistenceHeader(const std::vector<string> &entries,
+                           const string &data_namespace, std::ostream *ofs,
                            double error_rate);
-void OutputExistenceBinary(const vector<string> &entries,
-                           ostream *ofs,
-                           double error_rate);
+void OutputExistenceBinary(const std::vector<string> &entries,
+                           std::ostream *ofs, double error_rate);
 
 }  // namespace mozc
 

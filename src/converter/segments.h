@@ -188,7 +188,7 @@ class Segment {
     // Boundary information for realtime conversion.  This will be set only for
     // realtime conversion result candidates.  Each element is the encoded
     // lengths of key, value, content key and content value.
-    vector<uint32> inner_segment_boundary;
+    std::vector<uint32> inner_segment_boundary;
 
     static bool EncodeLengths(size_t key_len, size_t value_len,
                               size_t content_key_len,
@@ -328,8 +328,8 @@ class Segment {
   // TODO(toshiyuki): Integrate meta candidates to candidate and delete these
   size_t meta_candidates_size() const;
   void clear_meta_candidates();
-  const vector<Candidate> &meta_candidates() const;
-  vector<Candidate> *mutable_meta_candidates();
+  const std::vector<Candidate> &meta_candidates() const;
+  std::vector<Candidate> *mutable_meta_candidates();
   const Candidate &meta_candidate(size_t i) const;
   Candidate *mutable_meta_candidate(size_t i);
   Candidate *add_meta_candidate();
@@ -355,8 +355,8 @@ class Segment {
   // for partial suggestion or not.
   // You should detect that by using both Composer and Segments.
   string key_;
-  deque<Candidate *> candidates_;
-  vector<Candidate>  meta_candidates_;
+  std::deque<Candidate *> candidates_;
+  std::vector<Candidate>  meta_candidates_;
   std::unique_ptr<ObjectPool<Candidate>> pool_;
   DISALLOW_COPY_AND_ASSIGN(Segment);
 };
@@ -499,8 +499,8 @@ class Segments {
 
   RequestType request_type_;
   std::unique_ptr<ObjectPool<Segment>> pool_;
-  deque<Segment *> segments_;
-  vector<RevertEntry> revert_entries_;
+  std::deque<Segment *> segments_;
+  std::vector<RevertEntry> revert_entries_;
   std::unique_ptr<Lattice> cached_lattice_;
 
   DISALLOW_COPY_AND_ASSIGN(Segments);

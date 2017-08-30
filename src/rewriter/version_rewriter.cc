@@ -116,7 +116,7 @@ class VersionRewriter::VersionDataImpl {
   }
 
  private:
-  map<string, std::unique_ptr<VersionEntry>> entries_;
+  std::map<string, std::unique_ptr<VersionEntry>> entries_;
 };
 
 VersionRewriter::VersionRewriter(StringPiece data_version)

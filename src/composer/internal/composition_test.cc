@@ -715,7 +715,7 @@ TEST_F(CompositionTest, GetExpandedStrings) {
 
   // a ky ki tta tty
   string base;
-  set<string> expanded;
+  std::set<string> expanded;
   composition_->GetExpandedStrings(&base, &expanded);
   // "あkyきったっ"
   EXPECT_EQ(

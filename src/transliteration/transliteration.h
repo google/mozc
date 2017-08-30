@@ -65,7 +65,7 @@ enum TransliterationType {
   HALF_KATAKANA,
   NUM_T13N_TYPES
 };
-typedef vector<string> Transliterations;
+typedef std::vector<string> Transliterations;
 
 static const TransliterationType TransliterationTypeArray[NUM_T13N_TYPES] = {
   HIRAGANA,

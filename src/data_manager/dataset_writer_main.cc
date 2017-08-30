@@ -73,13 +73,13 @@ int main(int argc, char **argv) {
     string filename;
   };
 
-  vector<Input> inputs;
+  std::vector<Input> inputs;
   for (int i = 1; i < argc; ++i) {
     // InitMozc doesn't remove flags from argv, so ignore flags here.
     if (mozc::Util::StartsWith(argv[i], "--")) {
       continue;
     }
-    vector<string> params;
+    std::vector<string> params;
     mozc::Util::SplitStringUsing(argv[i], ":", &params);
     CHECK_EQ(3, params.size()) << "Unexpected arg[" << i << "] = " << argv[i];
     inputs.emplace_back(params[0], mozc::NumberUtil::SimpleAtoi(params[1]),

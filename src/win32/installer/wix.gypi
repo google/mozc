@@ -74,24 +74,44 @@
               '-dReleaseCrtMergeModulePath=<(release_crt_merge_module_path)',
             ],
           }],
-          ['qtcore4_dll_path!=""', {
+          ['qt5core_dll_path!=""', {
             'additional_args': [
-              '-dQtCore4DllPath=<(qtcore4_dll_path)',
+              '-dQt5CoreDllPath=<(qt5core_dll_path)',
             ],
           }],
-          ['qtcored4_dll_path!=""', {
+          ['qt5cored_dll_path!=""', {
             'additional_args': [
-              '-dQtCored4DllPath=<(qtcored4_dll_path)',
+              '-dQt5CoredDllPath=<(qt5cored_dll_path)',
             ],
           }],
-          ['qtgui4_dll_path!=""', {
+          ['qt5gui_dll_path!=""', {
             'additional_args': [
-              '-dQtGui4DllPath=<(qtgui4_dll_path)',
+              '-dQt5GuiDllPath=<(qt5gui_dll_path)',
             ],
           }],
-          ['qtguid4_dll_path!=""', {
+          ['qt5guid_dll_path!=""', {
             'additional_args': [
-              '-dQtGuid4DllPath=<(qtguid4_dll_path)',
+              '-dQt5GuidDllPath=<(qt5guid_dll_path)',
+            ],
+          }],
+          ['qt5widgets_dll_path!=""', {
+            'additional_args': [
+              '-dQt5WidgetsDllPath=<(qt5widgets_dll_path)',
+            ],
+          }],
+          ['qt5widgetsd_dll_path!=""', {
+            'additional_args': [
+              '-dQt5WidgetsdDllPath=<(qt5widgetsd_dll_path)',
+            ],
+          }],
+          ['qwindows_dll_path!=""', {
+            'additional_args': [
+              '-dQWindowsDllPath=<(qwindows_dll_path)',
+            ],
+          }],
+          ['qwindowsd_dll_path!=""', {
+            'additional_args': [
+              '-dQWindowsdDllPath=<(qwindowsd_dll_path)',
             ],
           }],
           ['MSVS_VERSION=="2015" and use_qt=="YES"', {

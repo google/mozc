@@ -111,9 +111,9 @@ class CharacterFormManagerImpl {
   LRUStorage *storage_;
 
   // store the setting of a character
-  map<uint16, Config::CharacterForm> conversion_table_;
+  std::map<uint16, Config::CharacterForm> conversion_table_;
 
-  map<uint16, vector<uint16>> group_table_;
+  std::map<uint16, std::vector<uint16>> group_table_;
 
   // When this flag is true,
   // character form conversion requires that output has consistent forms.
@@ -256,7 +256,7 @@ Config::CharacterForm CharacterFormManagerImpl::GetCharacterForm(
     return Config::NO_CONVERSION;
   }
 
-  map<uint16, Config::CharacterForm>::const_iterator it =
+  std::map<uint16, Config::CharacterForm>::const_iterator it =
       conversion_table_.find(ucs2);
   if (it == conversion_table_.end()) {
     return Config::NO_CONVERSION;
@@ -296,7 +296,7 @@ void CharacterFormManagerImpl::SetCharacterForm(
     return;
   }
 
-  map<uint16, Config::CharacterForm>::const_iterator it =
+  std::map<uint16, Config::CharacterForm>::const_iterator it =
       conversion_table_.find(ucs2);
   if (it == conversion_table_.end()) {
     return;
@@ -341,12 +341,13 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
   // Do cast since CharacterForm may not be 32 bit
   const uint32 iform = static_cast<uint32>(form);
 
-  map<uint16, vector<uint16>>::iterator iter = group_table_.find(ucs2);
+  std::map<uint16, std::vector<uint16>>::iterator iter =
+      group_table_.find(ucs2);
   if (iter == group_table_.end()) {
     storage_->Insert(key, reinterpret_cast<const char *>(&iform));
   } else {
     // Update values in the same group.
-    const vector<uint16> &group = iter->second;
+    const std::vector<uint16> &group = iter->second;
     for (size_t i = 0; i < group.size(); ++i) {
       const uint16 group_ucs2 = group[i];
       const string group_key(reinterpret_cast<const char *>(&group_ucs2),
@@ -496,7 +497,7 @@ void CharacterFormManagerImpl::AddRule(
   const char *begin = key.c_str();
   const char *end = key.c_str() + key.size();
 
-  vector<uint16> group;
+  std::vector<uint16> group;
   while (begin < end) {
     const size_t mblen = Util::OneCharLen(begin);
     const string tmp(begin, mblen);
@@ -531,7 +532,7 @@ void CharacterFormManagerImpl::AddRule(
   // group table is used in SaveCharacterFormToStorage and this will be called
   // everytime user submits conversion.
   std::sort(group.begin(), group.end());
-  vector<uint16>::iterator last = std::unique(group.begin(), group.end());
+  std::vector<uint16>::iterator last = std::unique(group.begin(), group.end());
   group.erase(last, group.end());
 
   for (size_t i = 0; i < group.size(); ++i) {

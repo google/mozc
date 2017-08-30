@@ -159,7 +159,7 @@ class TestDataManager : public testing::MockDataManager {
  public:
   TestDataManager() {
     // Collect all the strings and temporarily assing 0 as index.
-    map<string, size_t> string_index;
+    std::map<string, size_t> string_index;
     for (const EmojiData &data : kTestEmojiList) {
       string_index[data.key] = 0;
       string_index[data.unicode] = 0;
@@ -170,7 +170,7 @@ class TestDataManager : public testing::MockDataManager {
     }
 
     // Set index.
-    vector<StringPiece> strings;
+    std::vector<StringPiece> strings;
     size_t index = 0;
     for (auto &iter : string_index) {
       strings.push_back(iter.first);
@@ -201,7 +201,7 @@ class TestDataManager : public testing::MockDataManager {
   }
 
  private:
-  vector<uint32> token_array_;
+  std::vector<uint32> token_array_;
   StringPiece string_array_data_;
   std::unique_ptr<uint32[]> string_array_buf_;
 };

@@ -1,5 +1,6 @@
 EXPORTS
-    RefreshPolicy
+    EnsureAllApplicationPackagesPermisssions
+    CallIERefreshElevationPolicy
     InstallIME
     InstallIMERollback
     UninstallIME

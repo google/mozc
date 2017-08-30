@@ -34,15 +34,10 @@
 #endif  // OS_ANDROID || OS_NACL
 
 #include <QtCore/QFile>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QtGui>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
-#else
-#include <QtGui/QFileDialog>
-#include <QtGui/QtGui>
-#endif
 
 #include <algorithm>  // for unique
 #include <cctype>

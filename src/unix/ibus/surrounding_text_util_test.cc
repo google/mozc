@@ -141,33 +141,23 @@ TEST(SurroundingTextUtilTest, GetAnchorPosFromSelection) {
   EXPECT_EQ(2, anchor_pos);
 
   EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "\343\201\202\343\201\204\343\201\206",  // "あいう"
-      "\343\201\202\343\201\204\343\201\206",  // "あいう"
-      0, &anchor_pos));
+      "あいう", "あいう", 0, &anchor_pos));
   EXPECT_EQ(3, anchor_pos);
 
   EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "\343\201\202\343\201\204\343\201\206",  // "あいう"
-      "\343\201\202\343\201\204\343\201\206",  // "あいう"
-      3, &anchor_pos));
+      "あいう", "あいう", 3, &anchor_pos));
   EXPECT_EQ(0, anchor_pos);
 
   EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "\343\201\202\343\201\204\343\201\206",  // "あいう"
-      "\343\201\204\343\201\206",              // "いう"
-      1, &anchor_pos));
+      "あいう", "いう", 1, &anchor_pos));
   EXPECT_EQ(3, anchor_pos);
 
   EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "\343\201\202\343\201\204\343\201\206",  // "あいう"
-      "\343\201\204\343\201\206",              // "いう"
-      3, &anchor_pos));
+      "あいう", "いう", 3, &anchor_pos));
   EXPECT_EQ(1, anchor_pos);
 
   EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "\343\201\202\343\201\204\343\201\206",  // "あいう"
-      "\343\201\202\343\201\204",              // "あい"
-      2, &anchor_pos));
+      "あいう", "あい", 2, &anchor_pos));
   EXPECT_EQ(0, anchor_pos);
 }
 

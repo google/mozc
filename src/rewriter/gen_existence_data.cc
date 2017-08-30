@@ -47,7 +47,7 @@ using mozc::storage::ExistenceFilter;
 namespace mozc {
 namespace {
 
-void GenExistenceData(const vector<string> &entries,
+void GenExistenceData(const std::vector<string> &entries,
                       double error_rate,
                       char **existence_data,
                       size_t *existence_data_size) {
@@ -68,9 +68,8 @@ void GenExistenceData(const vector<string> &entries,
 
 }  // namespace
 
-void OutputExistenceHeader(const vector<string> &entries,
-                           const string &data_namespace,
-                           ostream *ofs,
+void OutputExistenceHeader(const std::vector<string> &entries,
+                           const string &data_namespace, std::ostream *ofs,
                            double error_rate) {
   char *existence_data = NULL;
   size_t existence_data_size = 0;
@@ -89,9 +88,8 @@ void OutputExistenceHeader(const vector<string> &entries,
   *ofs << "}  // namespace " << data_namespace << std::endl;
 }
 
-void OutputExistenceBinary(const vector<string> &entries,
-                           ostream *ofs,
-                           double error_rate) {
+void OutputExistenceBinary(const std::vector<string> &entries,
+                           std::ostream *ofs, double error_rate) {
   char *existence_data = NULL;
   size_t existence_data_size = 0;
   GenExistenceData(entries, error_rate, &existence_data, &existence_data_size);

@@ -86,7 +86,7 @@ class CorrectionRewriter : public RewriterInterface  {
   bool LookupCorrection(
       const string &key,
       const string &value,
-      vector<ReadingCorrectionItem> *results) const;
+      std::vector<ReadingCorrectionItem> *results) const;
 
   SerializedStringArray value_array_;
   SerializedStringArray error_array_;

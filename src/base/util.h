@@ -112,24 +112,24 @@ class Util {
 
   static void SplitStringUsing(StringPiece str,
                                const char *delm,
-                               vector<string> *output);
+                               std::vector<string> *output);
   static void SplitStringUsing(StringPiece str,
                                const char *delm,
-                               vector<StringPiece> *output);
+                               std::vector<StringPiece> *output);
 
   static void SplitStringAllowEmpty(StringPiece str,
                                     const char *delm,
-                                    vector<string> *output);
+                                    std::vector<string> *output);
 
   static void SplitStringToUtf8Chars(StringPiece str,
-                                     vector<string> *output);
+                                     std::vector<string> *output);
 
-  static void SplitCSV(const string &str, vector<string> *output);
+  static void SplitCSV(const string &str, std::vector<string> *output);
 
-  static void JoinStrings(const vector<string> &str,
+  static void JoinStrings(const std::vector<string> &str,
                           const char *delm,
                           string *output);
-  static void JoinStringPieces(const vector<StringPiece> &str,
+  static void JoinStringPieces(const std::vector<StringPiece> &str,
                                const char *delm,
                                string *output);
   static void ConcatStrings(StringPiece s1, StringPiece s2, string *output);
@@ -354,8 +354,8 @@ class Util {
   // base.  The result looks like:
   //   <base><key1>=<encoded val1>&<key2>=<encoded val2>
   // The base is supposed to end "?" or "&".
-  static void AppendCGIParams(const vector<pair<string, string> > &params,
-                              string *base);
+  static void AppendCGIParams(
+      const std::vector<std::pair<string, string> > &params, string *base);
 
   // Escape any characters into \x prefixed hex digits.
   // ex.  "ABC" => "\x41\x42\x43".
@@ -459,6 +459,9 @@ class Util {
   // Deserializes a string serialized by SerializeUint64.  Returns false if the
   // length of s is not eight or s is in an invalid format.
   static bool DeserializeUint64(StringPiece s, uint64 *x);
+
+  // Checks endian-ness at runtime.
+  static bool IsLittleEndian();
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(Util);

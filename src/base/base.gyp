@@ -70,7 +70,6 @@
         }],
         ['target_platform=="NaCl" and _toolset=="target"', {
           'sources!': [
-            'crash_report_handler.cc',
             'process.cc',
           ],
           # TODO(hsumita): Move this link settings to more suitable position.
@@ -428,12 +427,16 @@
           ],
         }],
         ['OS=="mac"', {
+          'hard_dependency': 1,
           'sources': [
             'crash_report_handler_mac.mm',
           ],
           'sources!': [
             'crash_report_handler.cc',
-          ]
+          ],
+          'dependencies': [
+            'breakpad',
+          ],
         }],
       ],
     },
@@ -450,6 +453,9 @@
       'toolsets': ['host', 'target'],
       'sources': [
         'serialized_string_array.cc',
+      ],
+      'dependencies': [
+        'base_core',
       ],
     },
   ],
@@ -531,6 +537,36 @@
     ],
     ['OS=="mac"', {
       'targets': [
+        {
+          'target_name': 'breakpad',
+          'type': 'none',
+          'variables': {
+            'pbdir': '<(third_party_dir)/breakpad',
+          },
+          'actions': [{
+            'action_name': 'build_breakpad',
+            'inputs': [
+              '<(pbdir)/src/client/mac/Breakpad.xcodeproj/project.pbxproj',
+            ],
+            'outputs': [
+              '<(mac_breakpad_dir)/Breakpad.framework',
+              '<(mac_breakpad_dir)/Inspector',
+              '<(mac_breakpad_dir)/dump_syms',
+              '<(mac_breakpad_dir)/symupload',
+            ],
+            'action': [
+              'python', '../build_tools/build_breakpad.py',
+              '--pbdir', '<(pbdir)',
+              '--outdir', '<(mac_breakpad_dir)',
+              '--sdk', 'macosx<(mac_sdk)',
+            ],
+          }],
+          'direct_dependent_settings': {
+            'mac_framework_dirs': [
+              '<(mac_breakpad_dir)',
+            ],
+          },
+        },
         {
           'target_name': 'mac_util_main',
           'type': 'executable',

@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
   while (getline(std::cin, command)) {
     char initial = command[0];
     if (initial == '-' || (initial >= '0' && initial <= '9')) {
-      stringstream ss;
+      std::stringstream ss;
       int delta;
       ss << command;
       ss >> delta;

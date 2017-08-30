@@ -38,9 +38,9 @@
   <!-- Original size: 105 x 87 -->
   <g transform="matrix(1.42,0,0,1.42,-18.55,-5.77)">
     <polyline id="style-keyicon-bound_1_" style="fill:none;stroke:#CCCBCB;stroke-miterlimit:10;" points="32.499,24.998 27.499,24.998 27.499,41.998 44.499,41.998 44.499,33.498 "/>
-    <text id="style-keyicon-main_1_" x="32.5" y="40" style="font-size:48px;text-anchor:middle;dominant-baseline:central;fill:#272727;">゛</text>
+    <path id="style-keyicon-main_1_" d="m37.278,22.835c1.3312,1.8432,3.8912,6.2464,5.0176,8.2432l-3.072,1.3312c-1.127-2.15-3.482-6.502-4.864-8.345zm6.5024-2.5088c1.28,1.8944,3.84,6.1952,5.0176,8.2432l-3.0208,1.28c-1.2288-2.2016-3.5328-6.4-4.9664-8.2432z"/>
     <polyline id="style-keyicon-bound_2_" style="fill:none;stroke:#CCCBCB;stroke-miterlimit:10;" points="65,25 60,25 60,42 77,42 77,33.5 "/>
-    <text id="style-keyicon-main_2_" x="62.5" y="40" style="font-size:48px;text-anchor:middle;dominant-baseline:central;fill:#272727;">゜</text>
+    <path id="style-keyicon-main_2_" d="m67.759,26.368c0-3.2256,2.6112-5.888,5.8368-5.888,3.2768,0,5.8368,2.6624,5.8368,5.888s-2.56,5.888-5.8368,5.888c-3.2256,0-5.8368-2.6624-5.8368-5.888zm2.2016,0c0,1.8944,1.7408,3.6352,3.6352,3.6352,1.9456,0,3.584-1.7408,3.584-3.6352s-1.6384-3.5328-3.584-3.5328c-1.8944,0-3.6352,1.6384-3.6352,3.5328z"/>
     <text id="style-keyicon-main_3_" x="35" y="57.5" style="font-size:16px;text-anchor:middle;dominant-baseline:central;fill:#272727;">大</text>
     <text id="style-keyicon-main_4_" x="52.5" y="57.5" style="font-size:16px;text-anchor:middle;dominant-baseline:central;fill:#272727;">⇔</text>
     <text id="style-keyicon-main_5_" x="70" y="57.5" style="font-size:16px;text-anchor:middle;dominant-baseline:central;fill:#272727;">小</text>

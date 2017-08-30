@@ -46,6 +46,7 @@
 #include "rewriter/english_variants_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
+#include "rewriter/katakana_promotion_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/merger_rewriter.h"
 #include "rewriter/normalization_rewriter.h"
@@ -119,6 +120,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
 #endif  // NO_USAGE_REWRITER
   AddRewriter(new VersionRewriter(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
+  AddRewriter(new KatakanaPromotionRewriter);
   AddRewriter(new NormalizationRewriter);
   AddRewriter(new RemoveRedundantCandidateRewriter);
 }

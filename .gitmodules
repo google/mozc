@@ -1,9 +1,6 @@
 [submodule "src/third_party/breakpad"]
 	path = src/third_party/breakpad
 	url = https://chromium.googlesource.com/breakpad/breakpad
-[submodule "src/third_party/fontTools"]
-	path = src/third_party/fontTools
-	url = https://github.com/googlei18n/fonttools.git
 [submodule "src/third_party/gtest"]
 	path = src/third_party/gtest
 	url = https://github.com/google/googletest.git

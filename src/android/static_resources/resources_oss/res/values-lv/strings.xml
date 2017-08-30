@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">Japāņu</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Programmatūras tastatūra</string>
+<string name="pref_software_keyboard_advanced_settings_title">Programmatūras tastatūras papildu iestatījumi</string>
+<string name="pref_fragment_software_keyboard_title">Software keyboard</string>
+<string name="pref_fragment_input_support_title">Input support</string>
+<string name="pref_fragment_conversion_title">Conversion</string>
+<string name="pref_fragment_dictionary_title">Dictionary</string>
+<string name="pref_fragment_user_feedback_title">User feedback</string>
+<string name="pref_fragment_about_title">About</string>
+<string name="pref_fragment_development_title">Development</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Programmatūras tastatūras portreta režīma preferences</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Programmatūras tastatūras ainavas režīma preferences</string>
+<string name="pref_keyboard_layout_title">Tastatūras izkārtojums</string>
+<string name="pref_input_style_title">Ievades stils</string>
+<string name="pref_qwerty_layout_for_alphabet_title">Režīms QWERTY</string>
+<string name="pref_flick_sensitivity_title">Švīkas žesta jutīgums</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Izmantot portreta režīma iestatījumus</string>
+<string name="pref_keyboard_height_ratio_title">Tastatūras augstums</string>
+<string name="pref_input_feedback_category_title">Ievades reakcijas preferences</string>
+<string name="pref_haptic_feedback_title">Vibrācija</string>
+<string name="pref_haptic_feedback_duration_title">Vibrācijas ilgums</string>
+<string name="pref_sound_feedback_title">Audio atbilde</string>
+<string name="pref_sound_feedback_volume_title">Audio atbildes skaļums</string>
+<string name="pref_popup_feedback_title">Uznirstošās atbildes</string>
+<string name="pref_other_input_support_preference_category_title">Citas ievades atbalsta preferences</string>
+<string name="pref_fullscreen_title">Pilnekrāna režīms</string>
+<string name="pref_skin_type_title">Keyboard theme</string>
+<string name="pref_hardware_title">Aparatūras tastatūru preferences</string>
+<string name="pref_voice_input_title">Show voice input button</string>
+<string name="pref_conversion_category_title">Pārvēršanas preferences</string>
+<string name="pref_layout_adjustment_title">Izkārtojuma korekcija</string>
+<string name="pref_space_character_form_title">Izmantot pusplatuma vietu</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Modificētājtaustiņa nejutīga pārvēršana</string>
+<string name="pref_typing_correction_title">Rakstīzīmju labošana</string>
+<string name="pref_other_incognito_mode_title">Inkognito režīms</string>
+<string name="pref_emoji_provider_type_title">Izvēlēties japāņu emocijzīmju nodrošinātāju</string>
+<string name="pref_dictionry_category_title">Vārdnīcas preferences</string>
+<string name="pref_dictionary_personalization_title">Personalizēšana</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Vārdnīcu rīks</string>
+<string name="pref_clear_category_title">Notīrīt vēsturi</string>
+<string name="pref_clear_conversion_history_title">Pārvēršanas vēsture</string>
+<string name="pref_clear_symbol_history_title">Simbolu lietojuma vēsture</string>
+<string name="pref_clear_user_dictionary_title">Lietotāja vārdnīca</string>
+<string name="pref_user_feedback_category_title">Lietotāju atsauksmes</string>
+<string name="pref_other_usage_stats_title">Sūtīt lietojuma statistiku</string>
+<string name="pref_about_about_this_software_title">Par šo programmatūru</string>
+<string name="pref_about_version_title">Versija</string>
+<string name="pref_about_terms_of_service_title">Pakalpojumu sniegšanas noteikumi</string>
+<string name="pref_about_privacy_policy_title">Konfidencialitātes politika</string>
+<string name="pref_about_oss_credits_title">Atklātā pirmkoda programmatūra</string>
+<string name="pref_launcher_icon_visibility_title">Rādīt lietotnes ikonu</string>
+<string name="pref_haptic_feedback_description">Vibrācija, nospiežot taustiņu.</string>
+<string name="pref_sound_feedback_description">Signāls, nospiežot taustiņu.</string>
+<string name="pref_popup_feedback_description">Uznirstošs logs, nospiežot taustiņu.</string>
+<string name="pref_keyboard_layout_description">Mainiet tastatūras izkārtojumu.</string>
+<string name="pref_keyboard_layout_title_12keys">12 taustiņi</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">Godan tastatūra</string>
+<string name="pref_keyboard_layout_description_12keys">Izkārtojums mobilajā tālrunī.</string>
+<string name="pref_keyboard_layout_description_qwerty">Datora tastatūras izkārtojums.</string>
+<string name="pref_keyboard_layout_description_godan">Japāņu valodas latīņu burtu izkārtojums. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;Lietojums&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Izvēlieties ievades stilu.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Atzīmējot šo izvēles rūtiņu, alfabēta ievades režīmā tiks izmantots QWERTY izkārtojums neatkarīgi no galvenā izkārtojuma.</string>
+<string name="pref_fullscreen_description">Atzīmējot šo izvēles rūtiņu, mērķa tekstlodziņš tiks rādīts pilnekrāna režīmā.</string>
+<string name="pref_flick_sensitivity_description">Pielāgojiet švīkas žesta jutīgumu.</string>
+<string name="pref_layout_adjustment_description">Pielāgojiet tastatūru.</string>
+<string name="pref_keyboard_height_ratio_description">Mainiet tastatūras augstumu.</string>
+<string name="pref_space_character_form_description">Vienmēr izmantot pusplatuma vietu neatkarīgi no ievades režīma.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Izmantot kana modificētājtaustiņa nejutīgo pārvēršanu. Tiek lietota 12 taustiņu un Godan tastatūrai. Piemērs: かつこう → 学校.</string>
+<string name="pref_typing_correction_description">Atklāt pareizrakstības kļūdas un parādīt izlabotus kandidātus. Piemērs: すんかい → 深海.</string>
+<string name="pref_emoji_provider_type_description">Atlasiet atbilstošu japāņu emocijzīmju nodrošinātāju, lai izmantotu japāņu emocijzīmes.</string>
+<string name="pref_skin_type_description">Select the keyboard theme to customize the software keyboard look.</string>
+<string name="pref_voice_input_description">Show voice input button on the software keyboard.</string>
+<string name="pref_hardware_keymap_description">Izvēlieties taustiņu kartēšanu aparatūras tastatūrām.</string>
+<string name="pref_dictionary_personalization_description">Iespējojiet personalizētus ieteikumus, kuru pamatā ir iepriekš ievadīti vienumi.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">Labojiet lietotāja vārdnīcas.</string>
+<string name="pref_clear_category_description">Notīriet personalizēšanas vai ieteikumu datus.</string>
+<string name="pref_clear_conversion_history_description">Notīriet pārvēršanas vēsturi.</string>
+<string name="pref_clear_symbol_history_description">Notīriet simbolu ievades vēsturi.</string>
+<string name="pref_clear_user_dictionary_description">Notīriet lietotāja vārdnīcu.</string>
+<string name="pref_other_incognito_mode_description">Īslaicīgi atspējojiet personalizēšanu, ieteikumus un lietotāja vārdnīcu.</string>
+<string name="pref_other_usage_stats_description">Sūtiet lietojuma statistikas datus uz: %1$s. Šie dati tiks izmantoti tikai %1$s produktu un pakalpojumu uzlabošanai.</string>
+<string name="pref_about_terms_of_service_description">Parādīt pakalpojumu sniegšanas noteikumus (tīmekļa lapa).</string>
+<string name="pref_about_privacy_policy_description">Parādīt konfidencialitātes politiku (tīmekļa lapa).</string>
+<string name="pref_about_oss_credits_description">Šai programmatūrai tiek izmantota atklātā pirmkoda programmatūra: skatiet licences.</string>
+<string name="pref_launcher_icon_visibility_description">Rādīt lietojumprogrammas ikonu palaišanas programmā</string>
+<string name="pref_input_style_setting_entry_toggle">Pārslēgtaustiņš</string>
+<string name="pref_input_style_setting_entry_flick">Švīkas žests</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Pārslēgtaustiņš un švīkas žests</string>
+<string name="pref_fullscreen_portrait">Ieslēgt portreta režīmā</string>
+<string name="pref_fullscreen_landscape">Ieslēgt ainavas režīmā</string>
+<string name="pref_emoji_provider_type_unicode">Atspējot mobilo sakaru operatora nodrošinātās emocijzīmes</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">Oranžs/gaiši pelēks</string>
+<string name="pref_skin_type_blue_lightgray">Zils/gaiši pelēks</string>
+<string name="pref_skin_type_blue_darkgray">Zils/tumši pelēks</string>
+<string name="pref_skin_type_material_design_light">Materiāls (gaišs)</string>
+<string name="pref_skin_type_material_design_dark">Materiāls (tumšs)</string>
+<string name="pref_hardware_keymap_default">Sistēmas noklusējums</string>
+<string name="pref_hardware_keymap_japanese109A">Japāņu 109a</string>
+<string name="pref_hardware_keymap_twelvekey">12 taustiņi</string>
+<string name="pref_dictionary_personalization_entry_enabled">Iespējot</string>
+<string name="pref_dictionary_personalization_entry_readonly">Nemainīt</string>
+<string name="pref_dictionary_personalization_entry_disabled">Atspējot</string>
+<string name="pref_layout_adjustment_entry_fill">Aizpildīts</string>
+<string name="pref_layout_adjustment_entry_right">Pa labi</string>
+<string name="pref_layout_adjustment_entry_left">Pa kreisi</string>
+<string name="firsttime_close_button">Tālāk &gt;&gt;</string>
+<string name="firsttime_description_thank_you">Paldies, ka izmantojat %s!</string>
+<string name="firsttime_description_usage_stats">Lai mēs varētu uzlabot %s produktus un pakalpojumus, lūdzu, iespējojiet lietojuma statistiku.\n\nŠo iestatījumu var mainīt preferenču ekrānā.</string>
+<string name="firsttime_send_usage_stats_devchannel">Lietojuma statistika ir iespēja, jo jūs izmantojat izstrādes versiju.</string>
+<string name="pref_ime_enable_alert_title">Teksta iestatījumu atlasīšana</string>
+<string name="pref_ime_enable_alert_message">Lūdzu, iespējojiet %s.</string>
+<string name="pref_ime_switch_alert_title">Ievades metodes iestatīšana</string>
+<string name="pref_ime_switch_alert_message">Lūdzu, mainiet ievades metodi uz: %s.</string>
+<string name="pref_ime_alert_next">Tālāk</string>
+<string name="pref_ime_alert_cancel">Atcelt</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Zems</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Vidējs</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Augsts</string>
+<string name="pref_haptic_feedback_duration_low_text">Īsa</string>
+<string name="pref_haptic_feedback_duration_high_text">Ilga</string>
+<string name="pref_sound_feedback_volume_low_text">Min.</string>
+<string name="pref_sound_feedback_volume_middle_text">Vidēja</string>
+<string name="pref_sound_feedback_volume_high_text">Maks.</string>
+<string name="symbol_input_no_history">Nav vēstures.\n\nLai skatītu kategorijas,\nvelciet ekrānu.</string>
+<string name="symbol_emoji_disabled_message">Šajā teksta laukā netiek atbalstītas emocijzīmes.</string>
+<string name="menu_dialog_title">Ievades iespējas</string>
+<string name="menu_item_input_method">Atlasiet ievades metodi</string>
+<string name="menu_item_preferences">%s iestatījumi</string>
+<string name="menu_item_mushroom">Palaist Mushroom</string>
+<string name="user_dictionary_tool_app_name">Vārdnīcu rīks</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Jauns vārds</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Dzēst vārdu</string>
+<string name="user_dictionary_tool_menu_undo_title">Atsaukt</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Jauna vārdnīca</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Pārdēvēt esošo vārdnīcu</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Dzēst pašreizējo vārdnīcu</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Eksportēt pašreizējo vārdnīcu</string>
+<string name="user_dictionary_tool_default_dictionary_name">Lietotāja 1. vārdnīca</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Izveidot jaunu vārdnīcu</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Rediģēt vārdnīcas nosaukumu</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Vārdnīcas nosaukums</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Pievienot jaunu vārdu</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Rediģēt vārdu</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Lasīšana</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Vārds</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Kategorija</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Atlasiet importēšanas avotu</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Atlasiet importēšanas galamērķi</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Importēt kā jaunu vārdnīcu</string>
+<string name="user_dictionary_tool_delete_done_message">Tika veiksmīgi dzēsts.</string>
+<string name="user_dictionary_tool_undo_done_message">Tika veiksmīgi atsaukts.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Atlasiet dzēšamos vārdus.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Datu importēšanu var izmantot tikai failiem.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Nevarēja nolasīt failu.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ZIP fails ir tukšs.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Nav nevienas lietojumprogrammas (piem., Google dokumenti), ko eksportēt lietotāja vārdnīcā.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Neizdevās eksportēt lietotāja vārdnīcu.</string>
+<string name="user_dictionary_tool_status_error_general">Darbība neizdevās.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Nevarēja atvērt failu.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Nevarēja nolasīt failu.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Datu apjoms pārsniedz faila lieluma ierobežojumu.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Nevar izveidot citas vārdnīcas.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Šajā vārdnīcā vairs nevar izveidot jaunus ierakstus.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Lūdzu, ierakstiet vārdnīcas nosaukumu.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Nosaukums ir pārāk garš.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Nosaukumā ir nederīga(-as) rakstzīme(-es).</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Šāds nosaukums jau pastāv.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Lūdzu, ierakstiet lasāmo tekstu.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Lasāmais teksts ir pārāk garš.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Lasāmajā tekstā ir nederīga(-as) rakstzīme(-es).</string>
+<string name="user_dictionary_tool_status_error_word_empty">Lūdzu, ierakstiet vārdu.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Vārds ir pārāk garš.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Vārdā ir nederīga(-as) rakstzīme(-es).</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Importēšanas avotā ir pārāk daudz vārdu.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Dažus vārdus nevarēja importēt.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Vairs nav nevienas atsaucamas darbības.</string>
+<string name="japanese_pos_noun">Lietvārds</string>
+<string name="japanese_pos_abbreviation">Abreviatūra</string>
+<string name="japanese_pos_suggestion_only">Tikai ieteikums</string>
+<string name="japanese_pos_proper_noun">Īpašvārds</string>
+<string name="japanese_pos_personal_name">Personvārds</string>
+<string name="japanese_pos_family_name">Uzvārds</string>
+<string name="japanese_pos_first_name">Vārds</string>
+<string name="japanese_pos_organization_name">Organizācijas nosaukums</string>
+<string name="japanese_pos_place_name">Vietas nosaukums</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">Neregulāras SA locīšanas lietvārds</string>
+<string name="japanese_pos_adjective_verbal_noun">Īpašības vārds, verbālais lietvārds</string>
+<string name="japanese_pos_number">Skaitlis</string>
+<string name="japanese_pos_alphabet">Alfabēts</string>
+<string name="japanese_pos_symbol">Simbols</string>
+<string name="japanese_pos_emoticon">Emocijzīme</string>
+<string name="japanese_pos_adverb">Apstākļa vārds</string>
+<string name="japanese_pos_prenoun_adjectival">Apzīmētājs</string>
+<string name="japanese_pos_conjunction">Saiklis</string>
+<string name="japanese_pos_interjection">Izsauksmes vārds</string>
+<string name="japanese_pos_prefix">Priedēklis</string>
+<string name="japanese_pos_counter_suffix">Skaitļa piedēklis</string>
+<string name="japanese_pos_generic_suffix">Vispārīgais piedēklis</string>
+<string name="japanese_pos_person_name_suffix">Personvārda piedēklis</string>
+<string name="japanese_pos_place_name_suffix">Vietas nosaukuma piedēklis</string>
+<string name="japanese_pos_wa_group1_verb">WA-Group1 darbības vārds</string>
+<string name="japanese_pos_ka_group1_verb">KA-Group1 darbības vārds</string>
+<string name="japanese_pos_sa_group1_verb">SA-Group1 darbības vārds</string>
+<string name="japanese_pos_ta_group1_verb">TA-Group1 darbības vārds</string>
+<string name="japanese_pos_na_group1_verb">NA-Group1 darbības vārds</string>
+<string name="japanese_pos_ma_group1_verb">MA-Group1 darbības vārds</string>
+<string name="japanese_pos_ra_group1_verb">RA-group1 darbības vārds</string>
+<string name="japanese_pos_ga_group1_verb">GA-group1 darbības vārds</string>
+<string name="japanese_pos_ba_group1_verb">BA-group1 darbības vārds</string>
+<string name="japanese_pos_ha_group1_verb">HA-group1 darbības vārds</string>
+<string name="japanese_pos_group2_verb">Group2 darbības vārds</string>
+<string name="japanese_pos_kuru_group3_verb">Kuru-Group3 darbības vārds</string>
+<string name="japanese_pos_suru_group3_verb">Suru-Group3 darbības vārds</string>
+<string name="japanese_pos_zuru_group3_verb">Zuru-Group3 darbības vārds</string>
+<string name="japanese_pos_ru_group3_verb">Ru-Group3 darbības vārds</string>
+<string name="japanese_pos_adjective">Īpašības vārds</string>
+<string name="japanese_pos_sentence_ending_particle">Partikula teikuma beigās</string>
+<string name="japanese_pos_punctuation">Interpunkcija</string>
+<string name="japanese_pos_free_standing_word">Patstāvīgs vārds</string>
+<string name="japanese_pos_suppression_word">Izlaistais vārds</string>
+<string name="yes">Jā</string>
+<string name="no">Nē</string>
+</resources>

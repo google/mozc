@@ -1475,7 +1475,7 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
 }
 
 namespace {
-bool HasResult(const set<string> &results, const string &value) {
+bool HasResult(const std::set<string> &results, const string &value) {
   return (results.find(value) != results.end());
 }
 }  // namespace
@@ -1515,7 +1515,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     // "か"
     EXPECT_EQ("\xe3\x81\x8b", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(0, results.size());  // no ambiguity
   }
@@ -1528,7 +1528,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(12, results.size());
     EXPECT_TRUE(HasResult(results, "k"));
@@ -1564,7 +1564,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(6, results.size());
     EXPECT_TRUE(HasResult(results, "ky"));
@@ -1589,7 +1589,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     // "っ"
     EXPECT_EQ("\xe3\x81\xa3", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(11, results.size());
     // "か"
@@ -1637,7 +1637,7 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     // "か"
@@ -1655,7 +1655,7 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
     // "は"
@@ -1682,7 +1682,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     // "あ"
@@ -1699,7 +1699,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     // "や"
@@ -1717,7 +1717,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     // "ゆ"
@@ -1734,7 +1734,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
     // "は"
@@ -1761,7 +1761,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     // "あ"
@@ -1778,7 +1778,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     // "や"
@@ -1795,7 +1795,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     // "ゆ"
@@ -1812,7 +1812,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    set<string> results;
+    std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
     // "は"

@@ -60,8 +60,8 @@ string GenRandomString(int size) {
 
 void RunTest(LRUStorage *storage, uint32 size) {
   mozc::storage::LRUCache<string, uint32> cache(size);
-  set<string> used;
-  vector<pair<string, uint32> > values;
+  std::set<string> used;
+  std::vector<std::pair<string, uint32> > values;
   for (int i = 0; i < size * 2; ++i) {
     const string key = GenRandomString(20);
     const uint32 value = static_cast<uint32>(Util::Random(10000000));
@@ -76,7 +76,7 @@ void RunTest(LRUStorage *storage, uint32 size) {
 
   std::reverse(values.begin(), values.end());
 
-  vector<string> value_list;
+  std::vector<string> value_list;
   EXPECT_TRUE(storage->GetAllValues(&value_list));
 
   uint32 last_access_time;
@@ -164,7 +164,7 @@ TEST_F(LRUStorageTest, ReadWriteTest) {
     EXPECT_EQ(4, storage.value_size());
     EXPECT_EQ(0x76fef, storage.seed());
 
-    vector<Entry> entries;
+    std::vector<Entry> entries;
 
     const size_t size = kSize[i];
     for (int j = 0; j < size; ++j) {

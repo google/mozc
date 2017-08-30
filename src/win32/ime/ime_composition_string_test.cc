@@ -41,19 +41,18 @@ namespace {
 const size_t kNumCandidates = 13;
 const char* kValueList[kNumCandidates] = {
     "Beta",
-    "\343\203\231\343\203\274\343\202\277",  // "ベータ"
+    "ベータ",
     "BETA",
     "beta",
-    "\316\262",                              // "β"
-    "\316\222",                              // "Β"
-    "\343\214\274",                          // "㌼"
+    "β",
+    "Β",
+    "㌼",
     "Beta",
-    "\343\201\271\343\203\274\343\201\237",  // "べーた"
-    "\343\203\231\343\203\274\343\202\277",  // "ベータ"
+    "べーた",
+    "ベータ",
     "be-ta",
-    // "ｂｅ－ｔａ"
-    "\357\275\202\357\275\205\357\274\215\357\275\224\357\275\201",
-    "\357\276\215\357\276\236\357\275\260\357\276\200",  // "ﾍﾞｰﾀ"
+    "ｂｅ－ｔａ",
+    "ﾍﾞｰﾀ",
 };
 const int32 kValueLengths[kNumCandidates] = {
     4, 3, 4, 4, 1, 1, 1, 4, 3, 3, 5, 5, 4,
@@ -105,11 +104,9 @@ void FillOutputForSuggestion(commands::Output *output) {
     {
       commands::Preedit::Segment *segment = preedit->add_segment();
       segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
-      // "あるふぁ"
-      segment->set_value("\343\201\202\343\202\213\343\201\265\343\201\201");
+      segment->set_value("あるふぁ");
       segment->set_value_length(4);
-      // "あるふぁ"
-      segment->set_key("\343\201\202\343\202\213\343\201\265\343\201\201");
+      segment->set_key("あるふぁ");
     }
   }
   {
@@ -124,8 +121,7 @@ void FillOutputForSuggestion(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(1);
-      // "アルファ"
-      candidate->set_value("\343\202\242\343\203\253\343\203\225\343\202\241");
+      candidate->set_value("アルファ");
       candidate->set_id(1);
     }
     candidates->set_position(0);
@@ -149,17 +145,14 @@ void FillOutputForSuggestion(commands::Output *output) {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(0);
       candidate->set_index(0);
-      // "あるふぁべーた"
-      candidate->set_key("\343\201\202\343\202\213\343\201\265\343\201\201"
-                         "\343\201\271\343\203\274\343\201\237");
+      candidate->set_key("あるふぁべーた");
       candidate->set_value("AlphaBeta");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(1);
       candidate->set_index(1);
-      // "アルファ"
-      candidate->set_value("\343\202\242\343\203\253\343\203\225\343\202\241");
+      candidate->set_value("アルファ");
     }
     candidate_list->set_category(commands::SUGGESTION);
   }
@@ -180,8 +173,7 @@ void FillOutputForPrediction(commands::Output *output) {
       segment->set_annotation(commands::Preedit::Segment::HIGHLIGHT);
       segment->set_value("AlphaBeta");
       segment->set_value_length(9);
-      // "あるふぁ"
-      segment->set_key("\343\201\202\343\202\213\343\201\265\343\201\201");
+      segment->set_key("あるふぁ");
     }
   }
   {
@@ -201,8 +193,7 @@ void FillOutputForPrediction(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(1);
-      // "アルファ"
-      candidate->set_value("\343\202\242\343\203\253\343\203\225\343\202\241");
+      candidate->set_value("アルファ");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
         annotation->set_shortcut("2");
@@ -232,17 +223,14 @@ void FillOutputForPrediction(commands::Output *output) {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(0);
       candidate->set_index(0);
-      // "あるふぁべーた"
-      candidate->set_key("\343\201\202\343\202\213\343\201\265\343\201\201"
-                         "\343\201\271\343\203\274\343\201\237");
+      candidate->set_key("あるふぁべーた");
       candidate->set_value("AlphaBeta");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(1);
       candidate->set_index(1);
-      // "アルファ"
-      candidate->set_value("\343\202\242\343\203\253\343\203\225\343\202\241");
+      candidate->set_value("アルファ");
     }
     candidate_list->set_category(commands::PREDICTION);
   }
@@ -271,16 +259,14 @@ void FillOutputForConversion(
       segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
       segment->set_value("Alpha");
       segment->set_value_length(alpha_length);
-      // "あるふぁ"
-      segment->set_key("\343\201\202\343\202\213\343\201\265\343\201\201");
+      segment->set_key("あるふぁ");
     }
     {
       commands::Preedit::Segment *segment = preedit->add_segment();
       segment->set_annotation(commands::Preedit::Segment::HIGHLIGHT);
       segment->set_value(focused_value);
       segment->set_value_length(focused_value_length);
-      // "べーた"
-      segment->set_key("\343\201\271\343\203\274\343\201\237");
+      segment->set_key("べーた");
     }
     preedit->set_highlighted_position(alpha_length);
   }
@@ -296,10 +282,7 @@ void FillOutputForConversion(
       candidate->set_value("BETA");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[半] アルファベット"
-        annotation->set_description(
-            "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241"
-            "\343\203\231\343\203\203\343\203\210");
+        annotation->set_description("[半] アルファベット");
         annotation->set_shortcut("1");
       }
       candidate->set_id(0);
@@ -307,12 +290,10 @@ void FillOutputForConversion(
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(1);
-      candidate->set_value("\343\203\231\343\203\274\343\202\277");
+      candidate->set_value("ベータ");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[全] カタカナ"
-        annotation->set_description(
-            "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212");
+        annotation->set_description("[全] カタカナ");
         annotation->set_shortcut("2");
       }
       candidate->set_id(1);
@@ -323,10 +304,7 @@ void FillOutputForConversion(
       candidate->set_value("beta");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[半] アルファベット"
-        annotation->set_description(
-            "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241"
-            "\343\203\231\343\203\203\343\203\210");
+        annotation->set_description("[半] アルファベット");
         annotation->set_shortcut("3");
       }
       candidate->set_id(2);
@@ -334,14 +312,10 @@ void FillOutputForConversion(
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(3);
-      // "β"
-      candidate->set_value("\316\262");
+      candidate->set_value("β");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "ギリシャ文字(小文字)"
-        annotation->set_description(
-            "\343\202\256\343\203\252\343\202\267\343\203\243\346\226\207"
-            "\345\255\227(\345\260\217\346\226\207\345\255\227)");
+        annotation->set_description("ギリシャ文字(小文字)");
         annotation->set_shortcut("4");
       }
       candidate->set_id(3);
@@ -349,14 +323,10 @@ void FillOutputForConversion(
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(4);
-      // "Β"
-      candidate->set_value("\316\222");
+      candidate->set_value("Β");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "ギリシャ文字(大文字)"
-        annotation->set_description(
-            "\343\202\256\343\203\252\343\202\267\343\203\243\346\226\207"
-            "\345\255\227(\345\244\247\346\226\207\345\255\227)");
+        annotation->set_description("ギリシャ文字(大文字)");
         annotation->set_shortcut("5");
       }
       candidate->set_id(4);
@@ -364,13 +334,10 @@ void FillOutputForConversion(
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(5);
-      // "㌼"
-      candidate->set_value("\343\214\274");
+      candidate->set_value("㌼");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "<機種依存文字>"
-        annotation->set_description("<\346\251\237\347\250\256\344\276\235"
-                                    "\345\255\230\346\226\207\345\255\227>");
+        annotation->set_description("<機種依存文字>");
         annotation->set_shortcut("6");
       }
       candidate->set_id(5);
@@ -381,10 +348,7 @@ void FillOutputForConversion(
       candidate->set_value("Beta");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[半] アルファベット"
-        annotation->set_description(
-            "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241"
-            "\343\203\231\343\203\203\343\203\210");
+        annotation->set_description("[半] アルファベット");
         annotation->set_shortcut("7");
       }
       candidate->set_id(6);
@@ -392,13 +356,10 @@ void FillOutputForConversion(
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(7);
-      // "べーた"
-      candidate->set_value("\343\201\271\343\203\274\343\201\237");
+      candidate->set_value("べーた");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "ひらがな"
-        annotation->set_description(
-            "\343\201\262\343\202\211\343\201\214\343\201\252");
+        annotation->set_description("ひらがな");
         annotation->set_shortcut("8");
       }
       candidate->set_id(7);
@@ -406,9 +367,7 @@ void FillOutputForConversion(
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(8);
-      // "そのほかの文字種"
-      candidate->set_value("\343\201\235\343\201\256\343\201\273\343\201\213"
-                           "\343\201\256\346\226\207\345\255\227\347\250\256");
+      candidate->set_value("そのほかの文字種");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
         annotation->set_shortcut("9");
@@ -426,13 +385,10 @@ void FillOutputForConversion(
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(0);
-          // "べーた"
-          candidate->set_value("\343\201\271\343\203\274\343\201\237");
+          candidate->set_value("べーた");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "ひらがな"
-            annotation->set_description(
-                "\343\201\262\343\202\211\343\201\214\343\201\252");
+            annotation->set_description("ひらがな");
           }
           candidate->set_id(-1);
         }
@@ -440,14 +396,10 @@ void FillOutputForConversion(
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(1);
-          // "ベータ"
-          candidate->set_value("\343\203\231\343\203\274\343\202\277");
+          candidate->set_value("ベータ");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[全] カタカナ"
-            annotation->set_description(
-                "[\345\215\212] "
-                "\343\202\253\343\202\277\343\202\253\343\203\212");
+            annotation->set_description("[全] カタカナ");
           }
           candidate->set_id(-2);
         }
@@ -458,8 +410,7 @@ void FillOutputForConversion(
           candidate->set_value("be-ta");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[半]"
-            annotation->set_description("[\345\215\212]");
+            annotation->set_description("[半]");
           }
           candidate->set_id(-3);
         }
@@ -467,13 +418,10 @@ void FillOutputForConversion(
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(3);
-          // "ｂｅ－ｔａ"
-          candidate->set_value(
-              "\357\275\202\357\275\205\357\274\215\357\275\224\357\275\201");
+          candidate->set_value("ｂｅ－ｔａ");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[全]"
-            annotation->set_description("[\345\205\250]");
+            annotation->set_description("[全]");
           }
           candidate->set_id(-7);
         }
@@ -481,15 +429,10 @@ void FillOutputForConversion(
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(4);
-          // "ﾍﾞｰﾀ"
-          candidate->set_value(
-              "\357\276\215\357\276\236\357\275\260\357\276\200");
+          candidate->set_value("ﾍﾞｰﾀ");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[半] カタカナ"
-            annotation->set_description(
-                "[\345\215\212] "
-                "\343\202\253\343\202\277\343\202\253\343\203\212");
+            annotation->set_description("[半] カタカナ");
           }
           candidate->set_id(-11);
         }
@@ -540,10 +483,8 @@ TEST(ImeCompositionStringTest, StartCompositionTest) {
   preedit->set_cursor(1);
 
   segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
-  // "が"
-  segment->set_key("\xE3\x81\x8C");
-  // "が"
-  segment->set_value("\xE3\x81\x8C");
+  segment->set_key("が");
+  segment->set_value("が");
   segment->set_value_length(1);
 
   vector<UIMessage> messages;
@@ -578,10 +519,7 @@ TEST(ImeCompositionStringTest, StartCompositionTest) {
   EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
   EXPECT_EQ(0, compstr.info.dwResultClauseLen);
   EXPECT_EQ(0, compstr.info.dwResultStrLen);
-
-  // "ｶﾞ"
-  EXPECT_EQ("\xEF\xBD\xB6\xEF\xBE\x9E", GET_STRING(compstr, CompReadStr));
-
+  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, CompReadStr));
   EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
   EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
 
@@ -646,11 +584,8 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommited) {
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
 
   commands::Result *result = output.mutable_result();
-
-  // "が"
-  result->set_key("\xE3\x81\x8C");
-  // "が"
-  result->set_value("\xE3\x81\x8C");
+  result->set_key("が");
+  result->set_value("が");
   result->set_type(mozc::commands::Result::STRING);
 
   vector<UIMessage> messages;
@@ -684,9 +619,7 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommited) {
   EXPECT_EQ(2, compstr.info.dwResultReadStrLen);
   EXPECT_EQ(8, compstr.info.dwResultClauseLen);
   EXPECT_EQ(1, compstr.info.dwResultStrLen);
-
-  // "ｶﾞ"
-  EXPECT_EQ("\xEF\xBD\xB6\xEF\xBE\x9E", GET_STRING(compstr, ResultReadStr));
+  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, ResultReadStr));
 }
 
 TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
@@ -705,7 +638,7 @@ TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
   output.set_mode(mozc::commands::HIRAGANA);
   output.set_consumed(true);
   output.mutable_result()->set_key(" ");
-  output.mutable_result()->set_value("\343\200\200");  // Full-width space
+  output.mutable_result()->set_value("　");
   output.mutable_result()->set_type(mozc::commands::Result::STRING);
   output.mutable_status()->set_activated(true);
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
@@ -741,10 +674,7 @@ TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
   EXPECT_EQ(1, compstr.info.dwResultReadStrLen);
   EXPECT_EQ(8, compstr.info.dwResultClauseLen);
   EXPECT_EQ(1, compstr.info.dwResultStrLen);
-
-  // "　"
-  EXPECT_EQ("\343\200\200", GET_STRING(compstr, ResultStr));
-  // " "
+  EXPECT_EQ("　", GET_STRING(compstr, ResultStr));
   EXPECT_EQ(" ", GET_STRING(compstr, ResultReadStr));
 }
 
@@ -765,11 +695,8 @@ TEST(ImeCompositionStringTest,
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
 
   commands::Result *result = output.mutable_result();
-
-  // "が"
-  result->set_key("\xE3\x81\x8C");
-  // "が"
-  result->set_value("\xE3\x81\x8C");
+  result->set_key("が");
+  result->set_value("が");
   result->set_type(mozc::commands::Result::STRING);
 
   commands::Preedit *preedit = output.mutable_preedit();
@@ -777,10 +704,8 @@ TEST(ImeCompositionStringTest,
 
   commands::Preedit::Segment *segment = preedit->add_segment();
   segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
-  // "が"
-  segment->set_key("\xE3\x81\x8C");
-  // "が"
-  segment->set_value("\xE3\x81\x8C");
+  segment->set_key("が");
+  segment->set_value("が");
   segment->set_value_length(1);
 
   vector<UIMessage> messages;
@@ -813,11 +738,8 @@ TEST(ImeCompositionStringTest,
   EXPECT_EQ(2, compstr.info.dwResultReadStrLen);
   EXPECT_EQ(8, compstr.info.dwResultClauseLen);
   EXPECT_EQ(1, compstr.info.dwResultStrLen);
-
-  // "ｶﾞ"
-  EXPECT_EQ("\xEF\xBD\xB6\xEF\xBE\x9E", GET_STRING(compstr, CompReadStr));
-  // "ｶﾞ"
-  EXPECT_EQ("\xEF\xBD\xB6\xEF\xBE\x9E", GET_STRING(compstr, ResultReadStr));
+  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, CompReadStr));
+  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, ResultReadStr));
 
   EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
   EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
@@ -863,11 +785,8 @@ TEST(ImeCompositionStringTest, Suggest) {
   EXPECT_EQ(0, compstr.info.dwResultClauseLen);
   EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
-  // "ｱﾙﾌｧ"
-  EXPECT_EQ("\357\275\261\357\276\231\357\276\214\357\275\247",
-            GET_STRING(compstr, CompReadStr));
-  EXPECT_EQ("\343\201\202\343\202\213\343\201\265\343\201\201",
-            GET_STRING(compstr, CompStr));
+  EXPECT_EQ("ｱﾙﾌｧ", GET_STRING(compstr, CompReadStr));
+  EXPECT_EQ("あるふぁ", GET_STRING(compstr, CompStr));
 
   EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
   EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
@@ -920,9 +839,7 @@ TEST(ImeCompositionStringTest, Predict) {
   EXPECT_EQ(0, compstr.info.dwResultClauseLen);
   EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
-  // "ｱﾙﾌｧ"
-  EXPECT_EQ("\357\275\261\357\276\231\357\276\214\357\275\247",
-            GET_STRING(compstr, CompReadStr));
+  EXPECT_EQ("ｱﾙﾌｧ", GET_STRING(compstr, CompReadStr));
   EXPECT_EQ("AlphaBeta",  GET_STRING(compstr, CompStr));
 
   EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
@@ -988,10 +905,7 @@ TEST(ImeCompositionStringTest, Convert) {
     EXPECT_EQ(0, compstr.info.dwResultClauseLen);
     EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
-    // "ｱﾙﾌｧﾍﾞｰﾀ"
-    EXPECT_EQ("\357\275\261\357\276\231\357\276\214\357\275\247"
-              "\357\276\215\357\276\236\357\275\260\357\276\200",
-              GET_STRING(compstr, CompReadStr));
+    EXPECT_EQ("ｱﾙﾌｧﾍﾞｰﾀ", GET_STRING(compstr, CompReadStr));
     EXPECT_EQ("AlphaBeta",  GET_STRING(compstr, CompStr));
 
     EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
@@ -1046,13 +960,8 @@ TEST(ImeCompositionStringTest, Convert) {
     EXPECT_EQ(0, compstr.info.dwResultClauseLen);
     EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
-    // "ｱﾙﾌｧﾍﾞｰﾀ"
-    EXPECT_EQ("\357\275\261\357\276\231\357\276\214\357\275\247"
-              "\357\276\215\357\276\236\357\275\260\357\276\200",
-              GET_STRING(compstr, CompReadStr));
-    // "Alphaベータ"
-    EXPECT_EQ("Alpha\343\203\231\343\203\274\343\202\277",
-              GET_STRING(compstr, CompStr));
+    EXPECT_EQ("ｱﾙﾌｧﾍﾞｰﾀ", GET_STRING(compstr, CompReadStr));
+    EXPECT_EQ("Alphaベータ", GET_STRING(compstr, CompStr));
 
     EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
     EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
@@ -1089,29 +998,23 @@ TEST(ImeCompositionStringTest, SurrogatePairSupport) {
     {
       commands::Preedit::Segment *segment = preedit->add_segment();
       segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
-      // "𠮟る" (U+20B9F)
-      segment->set_value("\360\240\256\237\343\202\213");
+      segment->set_value("𠮟る");
       segment->set_value_length(2);
-      // "しかる"
-      segment->set_key("\343\201\227\343\201\213\343\202\213");
+      segment->set_key("しかる");
     }
     {
       commands::Preedit::Segment *segment = preedit->add_segment();
       segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
-      // "と"
-      segment->set_value("\343\201\250");
+      segment->set_value("と");
       segment->set_value_length(1);
-      // "と"
-      segment->set_key("\343\201\250");
+      segment->set_key("と");
     }
     {
       commands::Preedit::Segment *segment = preedit->add_segment();
       segment->set_annotation(commands::Preedit::Segment::HIGHLIGHT);
-      // "叱る" (U+53F1)
-      segment->set_value("\345\217\261\343\202\213");
+      segment->set_value("叱る");
       segment->set_value_length(2);
-      // "しかる"
-      segment->set_key("\343\201\227\343\201\213\343\202\213");
+      segment->set_key("しかる");
     }
     preedit->set_highlighted_position(3);
   }
@@ -1140,10 +1043,7 @@ TEST(ImeCompositionStringTest, SurrogatePairSupport) {
   EXPECT_EQ(0, compstr.info.dwResultClauseLen);
   EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
-  // "ｼｶﾙﾄｼｶﾙ"
-  EXPECT_EQ("\357\275\274\357\275\266\357\276\231"
-            "\357\276\204"
-            "\357\275\274\357\275\266\357\276\231",
+  EXPECT_EQ("ｼｶﾙﾄｼｶﾙ",
             GET_STRING(compstr, CompReadStr));
 
   EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));

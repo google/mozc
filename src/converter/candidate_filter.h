@@ -64,7 +64,7 @@ class CandidateFilter {
   // Checks if the candidate should be filtered out.
   ResultType FilterCandidate(const string &original_key,
                              const Segment::Candidate *candidate,
-                             const vector<const Node *> &nodes,
+                             const std::vector<const Node *> &nodes,
                              Segments::RequestType request_type);
 
   // Resets the internal state.
@@ -73,14 +73,14 @@ class CandidateFilter {
  private:
   ResultType FilterCandidateInternal(const string &original_key,
                                      const Segment::Candidate *candidate,
-                                     const vector<const Node *> &nodes,
+                                     const std::vector<const Node *> &nodes,
                                      Segments::RequestType request_type);
 
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const dictionary::POSMatcher *pos_matcher_;
   const SuggestionFilter *suggestion_filter_;
 
-  set<string> seen_;
+  std::set<string> seen_;
   const Segment::Candidate *top_candidate_;
   bool apply_suggestion_filter_for_exact_match_;
 

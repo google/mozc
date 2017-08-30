@@ -121,7 +121,7 @@ void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
 
 }  // namespace
 
-class UserDictionary::TokensIndex : public vector<UserPOS::Token *> {
+class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
  public:
   TokensIndex(const UserPOSInterface *user_pos,
               SuppressionDictionary *suppression_dictionary)
@@ -139,8 +139,8 @@ class UserDictionary::TokensIndex : public vector<UserPOS::Token *> {
 
   void Load(const user_dictionary::UserDictionaryStorage &storage) {
     Clear();
-    set<uint64> seen;
-    vector<UserPOS::Token> tokens;
+    std::set<uint64> seen;
+    std::vector<UserPOS::Token> tokens;
 
     if (!suppression_dictionary_->IsLocked()) {
       LOG(ERROR) << "SuppressionDictionary must be locked first";

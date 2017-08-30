@@ -105,7 +105,7 @@ const char *GetCandidateShortcuts(
 }  // namespace
 
 const size_t SessionConverter::kConsumedAllCharacters =
-    numeric_limits<size_t>::max();
+    std::numeric_limits<size_t>::max();
 
 SessionConverter::SessionConverter(const ConverterInterface *converter,
                                    const Request *request,
@@ -814,7 +814,7 @@ void SessionConverter::CommitSegmentsInternal(
     return;
   }
 
-  vector<size_t> candidate_ids;
+  std::vector<size_t> candidate_ids;
   for (size_t i = 0; i < segments_to_commit; ++i) {
     // Get the i-th (0 origin) conversion segment and the selected candidate.
     Segment *segment = segments_->mutable_conversion_segment(i);
@@ -1755,7 +1755,7 @@ void SessionConverter::CommitUsageStatsWithSegmentsSize(
     }
   }
 
-  const vector<int>::iterator it = selected_candidate_indices_.begin();
+  const std::vector<int>::iterator it = selected_candidate_indices_.begin();
   selected_candidate_indices_.erase(it, it + commit_segments_size);
 }
 

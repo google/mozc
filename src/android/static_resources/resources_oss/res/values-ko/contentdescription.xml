@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="cd_keyboard_kana">가나 키보드</string>
+<string name="cd_keyboard_alphabet">알파벳 키보드</string>
+<string name="cd_keyboard_number">숫자 키보드</string>
+<string name="cd_key_shift">시프트</string>
+<string name="cd_key_up">위로</string>
+<string name="cd_key_left">왼쪽</string>
+<string name="cd_key_right">오른쪽</string>
+<string name="cd_key_down">아래로</string>
+<string name="cd_key_chartype_to_kana">가나 키보드로 전환</string>
+<string name="cd_key_chartype_to_abc">알파벳 키보드로 전환</string>
+<string name="cd_key_chartype_to_abc_123">기호 키보드로 전환</string>
+<string name="cd_key_undo">실행취소</string>
+<string name="cd_key_symbol">기호 입력 화면</string>
+<string name="cd_key_alt">대체 기호</string>
+<string name="cd_key_alt_unmodified">일반 기호</string>
+<string name="cd_key_capslock">캡스 락</string>
+<string name="cd_key_capsunlock">캡스 락 해제</string>
+<string name="cd_key_menu_dialog">메뉴 열기</string>
+<string name="cd_key_globe">입력 방법 전환</string>
+<string name="cd_key_uchar_backspace">백스페이스 키</string>
+<string name="cd_key_uchar_linefeed">라인피드</string>
+<string name="cd_key_uchar_space">스페이스</string>
+<string name="cd_key_uchar_exclamation_mark">느낌표</string>
+<string name="cd_key_uchar_quotation_mark" translation_description='When ["] key in the keyboard is pressed, this string is spoken up for accessibility'>따옴표</string>
+<string name="cd_key_uchar_number_sign">숫자 기호</string>
+<string name="cd_key_uchar_dollar_sign">달러 기호</string>
+<string name="cd_key_uchar_percent_sign">퍼센트 기호</string>
+<string name="cd_key_uchar_ampersand">앰퍼샌드</string>
+<string name="cd_key_uchar_apostrophe">아포스트로피</string>
+<string name="cd_key_uchar_left_parenthesis">왼쪽 괄호</string>
+<string name="cd_key_uchar_right_parenthesis">오른쪽 괄호</string>
+<string name="cd_key_uchar_asterisk">별표</string>
+<string name="cd_key_uchar_plus_sign">덧셈 기호</string>
+<string name="cd_key_uchar_comma">쉼표</string>
+<string name="cd_key_uchar_hyphen_minus">하이픈</string>
+<string name="cd_key_uchar_full_stop">마침표</string>
+<string name="cd_key_uchar_solidus">슬래시</string>
+<string name="cd_key_uchar_digit_zero">영</string>
+<string name="cd_key_uchar_digit_one">일</string>
+<string name="cd_key_uchar_digit_two">이</string>
+<string name="cd_key_uchar_digit_three">삼</string>
+<string name="cd_key_uchar_digit_four">사</string>
+<string name="cd_key_uchar_digit_five">오</string>
+<string name="cd_key_uchar_digit_six">육</string>
+<string name="cd_key_uchar_digit_seven">칠</string>
+<string name="cd_key_uchar_digit_eight">팔</string>
+<string name="cd_key_uchar_digit_nine">구</string>
+<string name="cd_key_uchar_colon">콜론</string>
+<string name="cd_key_uchar_semicolon">세미콜론</string>
+<string name="cd_key_uchar_less_than_sign">미만 기호</string>
+<string name="cd_key_uchar_equals_sign">등호</string>
+<string name="cd_key_uchar_greater_than_sign">초과 기호</string>
+<string name="cd_key_uchar_question_mark">물음표</string>
+<string name="cd_key_uchar_commercial_at">골뱅이 기호</string>
+<string name="cd_key_uchar_latin_capital_letter_a">대문자 에이</string>
+<string name="cd_key_uchar_latin_capital_letter_b">대문자 비</string>
+<string name="cd_key_uchar_latin_capital_letter_c">대문자 씨</string>
+<string name="cd_key_uchar_latin_capital_letter_d">대문자 디</string>
+<string name="cd_key_uchar_latin_capital_letter_e">대문자 이</string>
+<string name="cd_key_uchar_latin_capital_letter_f">대문자 에프</string>
+<string name="cd_key_uchar_latin_capital_letter_g">대문자 쥐</string>
+<string name="cd_key_uchar_latin_capital_letter_h">대문자 에이치</string>
+<string name="cd_key_uchar_latin_capital_letter_i">대문자 아이</string>
+<string name="cd_key_uchar_latin_capital_letter_j">대문자 제이</string>
+<string name="cd_key_uchar_latin_capital_letter_k">대문자 케이</string>
+<string name="cd_key_uchar_latin_capital_letter_l">대문자 엘</string>
+<string name="cd_key_uchar_latin_capital_letter_m">대문자 엠</string>
+<string name="cd_key_uchar_latin_capital_letter_n">대문자 엔</string>
+<string name="cd_key_uchar_latin_capital_letter_o">대문자 오</string>
+<string name="cd_key_uchar_latin_capital_letter_p">대문자 피</string>
+<string name="cd_key_uchar_latin_capital_letter_q">대문자 큐</string>
+<string name="cd_key_uchar_latin_capital_letter_r">대문자 알</string>
+<string name="cd_key_uchar_latin_capital_letter_s">대문자 에스</string>
+<string name="cd_key_uchar_latin_capital_letter_t">대문자 티</string>
+<string name="cd_key_uchar_latin_capital_letter_u">대문자 유</string>
+<string name="cd_key_uchar_latin_capital_letter_v">대문자 브이</string>
+<string name="cd_key_uchar_latin_capital_letter_w">대문자 더블유</string>
+<string name="cd_key_uchar_latin_capital_letter_x">대문자 엑스</string>
+<string name="cd_key_uchar_latin_capital_letter_y">대문자 와이</string>
+<string name="cd_key_uchar_latin_capital_letter_z">대문자 제트</string>
+<string name="cd_key_uchar_left_square_bracket">왼쪽 대괄호</string>
+<string name="cd_key_uchar_reverse_solidus">백 슬래시</string>
+<string name="cd_key_uchar_right_square_bracket">오른쪽 대괄호</string>
+<string name="cd_key_uchar_circumflex_accent">탈자 기호</string>
+<string name="cd_key_uchar_low_line">언더바</string>
+<string name="cd_key_uchar_grave_accent">저 악센트 기호</string>
+<string name="cd_key_uchar_latin_small_letter_a">소문자 에이</string>
+<string name="cd_key_uchar_latin_small_letter_b">소문자 비</string>
+<string name="cd_key_uchar_latin_small_letter_c">소문자 씨</string>
+<string name="cd_key_uchar_latin_small_letter_d">소문자 디</string>
+<string name="cd_key_uchar_latin_small_letter_e">소문자 이</string>
+<string name="cd_key_uchar_latin_small_letter_f">소문자 에프</string>
+<string name="cd_key_uchar_latin_small_letter_g">소문자 쥐</string>
+<string name="cd_key_uchar_latin_small_letter_h">소문자 에이치</string>
+<string name="cd_key_uchar_latin_small_letter_i">소문자 아이</string>
+<string name="cd_key_uchar_latin_small_letter_j">소문자 제이</string>
+<string name="cd_key_uchar_latin_small_letter_k">소문자 케이</string>
+<string name="cd_key_uchar_latin_small_letter_l">소문자 엘</string>
+<string name="cd_key_uchar_latin_small_letter_m">소문자 엠</string>
+<string name="cd_key_uchar_latin_small_letter_n">소문자 엔</string>
+<string name="cd_key_uchar_latin_small_letter_o">소문자 오</string>
+<string name="cd_key_uchar_latin_small_letter_p">소문자 피</string>
+<string name="cd_key_uchar_latin_small_letter_q">소문자 큐</string>
+<string name="cd_key_uchar_latin_small_letter_r">소문자 알</string>
+<string name="cd_key_uchar_latin_small_letter_s">소문자 에스</string>
+<string name="cd_key_uchar_latin_small_letter_t">소문자 티</string>
+<string name="cd_key_uchar_latin_small_letter_u">소문자 유</string>
+<string name="cd_key_uchar_latin_small_letter_v">소문자 브이</string>
+<string name="cd_key_uchar_latin_small_letter_w">소문자 더블유</string>
+<string name="cd_key_uchar_latin_small_letter_x">소문자 엑스</string>
+<string name="cd_key_uchar_latin_small_letter_y">소문자 와이</string>
+<string name="cd_key_uchar_latin_small_letter_z">소문자 제트</string>
+<string name="cd_key_uchar_left_curly_bracket">왼쪽 중괄호</string>
+<string name="cd_key_uchar_vertical_line">파이프 기호</string>
+<string name="cd_key_uchar_right_curly_bracket">오른쪽 중괄호</string>
+<string name="cd_key_uchar_tilde">물결표시</string>
+<string name="cd_key_action_done">완료</string>
+<string name="cd_key_action_go">이동</string>
+<string name="cd_key_action_next">다음</string>
+<string name="cd_key_action_previous">이전</string>
+<string name="cd_key_action_search">검색</string>
+<string name="cd_key_action_send">전송</string>
+<string name="cd_key_composing_done">제출</string>
+<string name="cd_key_kana_line_a">A 열</string>
+<string name="cd_key_kana_line_ka">KA 열</string>
+<string name="cd_key_kana_line_sa">SA 열</string>
+<string name="cd_key_kana_line_ta">TA 열</string>
+<string name="cd_key_kana_line_na">NA 열</string>
+<string name="cd_key_kana_line_ha">HA 열</string>
+<string name="cd_key_kana_line_ma">MA 열</string>
+<string name="cd_key_kana_line_ya">YA 열</string>
+<string name="cd_key_kana_line_ra">RA 열</string>
+<string name="cd_key_kana_modifier">유성음 기호</string>
+<string name="cd_key_kana_line_wa">WA 열</string>
+<string name="cd_key_kana_punctuation">구두점</string>
+<string name="cd_key_uchar_katakana_middle_dot">가운뎃점</string>
+<string name="cd_key_uchar_ideographic_comma">쉼표</string>
+<string name="cd_key_uchar_ideographic_full_stop">마침표</string>
+<string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark">장음 표시</string>
+<string name="cd_key_alphabet_abc">ABC</string>
+<string name="cd_key_alphabet_def">DEF</string>
+<string name="cd_key_alphabet_ghi">GHI</string>
+<string name="cd_key_alphabet_jkl">JKL</string>
+<string name="cd_key_alphabet_mno">MNO</string>
+<string name="cd_key_alphabet_pqrs">PQRS</string>
+<string name="cd_key_alphabet_tuv">TUV</string>
+<string name="cd_key_alphabet_wxyz">WXYZ</string>
+<string name="cd_key_alphabet_capitalize">대문자화</string>
+<string name="spoken_use_headphone_for_password">비밀번호 키를 음성으로 들으려면 헤드셋을 연결하세요.</string>
+<string name="cd_keyboard_fold_button">후보 창 크기 변경</string>
+<string name="cd_close_symbol_window">키보드로 돌아가기</string>
+<string name="cd_symbol_window_number">숫자</string>
+<string name="cd_symbol_window_symbol">기호</string>
+<string name="cd_symbol_window_emoticon">이모티콘</string>
+<string name="cd_symbol_window_emoji">그림 이모티콘</string>
+<string name="cd_symbol_window_enter">라인피드</string>
+<string name="cd_symbol_window_backspace">백스페이스</string>
+<string name="cd_symbol_window_minor_history">기록</string>
+<string name="cd_symbol_window_minor_symbol_general">일반 기호</string>
+<string name="cd_symbol_window_minor_symbol_half">전각 및 반각 기호</string>
+<string name="cd_symbol_window_minor_symbol_parenthesis">괄호 기호</string>
+<string name="cd_symbol_window_minor_symbol_arrow">화살표 기호</string>
+<string name="cd_symbol_window_minor_symbol_math">수학 기호</string>
+<string name="cd_symbol_window_minor_emoticon_smile">스마일 이모티콘</string>
+<string name="cd_symbol_window_minor_emoticon_sweat">땀 이모티콘</string>
+<string name="cd_symbol_window_minor_emoticon_surprise">놀람 이모티콘</string>
+<string name="cd_symbol_window_minor_emoticon_sadness">슬픔 이모티콘</string>
+<string name="cd_symbol_window_minor_emoticon_displeasure">불만 이모티콘</string>
+<string name="cd_symbol_window_minor_emoji_face">얼굴 그림 이모티콘</string>
+<string name="cd_symbol_window_minor_emoji_food">음식 그림 이모티콘</string>
+<string name="cd_symbol_window_minor_emoji_activity">활동 그림 이모티콘</string>
+<string name="cd_symbol_window_minor_emoji_city">도시 그림 이모티콘</string>
+<string name="cd_symbol_window_minor_emoji_nature">자연 그림 이모티콘</string>
+<string name="help_userdictionary_dictionary_name">사전 이름 입력</string>
+<string name="help_userdictionary_edit_word_value">단어 입력</string>
+<string name="help_userdictionary_edit_word_key">발음 입력</string>
+<string name="cd_voice_input">음성 입력</string>
+<string name="cd_narrow_frame_widen_button">키보드 표시</string>
+</resources>

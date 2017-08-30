@@ -209,7 +209,7 @@ class EmojiRewriter : public RewriterInterface {
     const char *ptr_ = nullptr;
   };
 
-  using IteratorRange = pair<EmojiDataIterator, EmojiDataIterator>;
+  using IteratorRange = std::pair<EmojiDataIterator, EmojiDataIterator>;
 
   // This class does not take an ownership of |emoji_data_list|, |token_list|
   // and |value_list|.  If NULL pointer is passed to it, Mozc process

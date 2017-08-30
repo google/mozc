@@ -68,17 +68,18 @@ struct OrderByValueThenByKey {
 
 // Provides a view of Token iterator as a pair of value and key.  Used to look
 // up tokens from a sorted range of Token pointers using value and key.
-struct AsValueAndKey : public AdapterBase<pair<StringPiece, StringPiece> > {
-  value_type operator()(vector<Token *>::const_iterator iter) const {
+struct AsValueAndKey
+    : public AdapterBase<std::pair<StringPiece, StringPiece> > {
+  value_type operator()(std::vector<Token *>::const_iterator iter) const {
     const Token *token = *iter;
-    return pair<StringPiece, StringPiece>(token->value, token->key);
+    return std::pair<StringPiece, StringPiece>(token->value, token->key);
   }
 };
 
 // Provides a view of Token iterator as a value string.  Used to look up tokens
 // from a sorted range of Tokens using value.
 struct AsValue : public AdapterBase<StringPiece> {
-  value_type operator()(vector<Token *>::const_iterator iter) const {
+  value_type operator()(std::vector<Token *>::const_iterator iter) const {
     return StringPiece((*iter)->value);
   }
 };
@@ -86,7 +87,7 @@ struct AsValue : public AdapterBase<StringPiece> {
 // Parses one line of reading correction file.  Since the result is returned as
 // StringPieces, |line| needs to outlive |value_key|.
 void ParseReadingCorrectionTSV(const string &line,
-                               pair<StringPiece, StringPiece> *value_key) {
+                               std::pair<StringPiece, StringPiece> *value_key) {
   // Format: value\terror\tcorrect
   SplitIterator<SingleDelimiter> iter(line, "\t");
   CHECK(!iter.Done());
@@ -105,11 +106,13 @@ inline bool SafeStrToInt(StringPiece s, int *n) {
 }
 
 // Helper functions to get const iterators.
-inline vector<Token *>::const_iterator CBegin(const vector<Token *> &tokens) {
+inline std::vector<Token *>::const_iterator CBegin(
+    const std::vector<Token *> &tokens) {
   return tokens.begin();
 }
 
-inline vector<Token *>::const_iterator CEnd(const vector<Token *> &tokens) {
+inline std::vector<Token *>::const_iterator CEnd(
+    const std::vector<Token *> &tokens) {
   return tokens.end();
 }
 
@@ -166,7 +169,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
   // Roughly allocate buffers for Token pointers.
   if (limit < 0) {
     tokens_.reserve(FLAGS_tokens_reserve_size);
-    limit = numeric_limits<int>::max();
+    limit = std::numeric_limits<int>::max();
   } else {
     tokens_.reserve(limit);
   }
@@ -200,7 +203,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
   //      tokens that have the same value.
   std::sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
 
-  vector<Token *> reading_correction_tokens;
+  std::vector<Token *> reading_correction_tokens;
   LoadReadingCorrectionTokens(reading_correction_filename, tokens_,
                               &limit, &reading_correction_tokens);
   const size_t tokens_size = tokens_.size();
@@ -217,9 +220,9 @@ void TextDictionaryLoader::LoadWithLineLimit(
 // caller is responsible to delete them.
 void TextDictionaryLoader::LoadReadingCorrectionTokens(
     const string &reading_correction_filename,
-    const vector<Token *> &ref_sorted_tokens,
+    const std::vector<Token *> &ref_sorted_tokens,
     int *limit,
-    vector<Token *> *tokens) {
+    std::vector<Token *> *tokens) {
   // Load reading correction entries.
   int reading_correction_size = 0;
 
@@ -233,7 +236,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // Parse TSV line in a pair of value and key (Note: first element is value
     // and the second key).
     Util::ChopReturns(&line);
-    pair<StringPiece, StringPiece> value_key;
+    std::pair<StringPiece, StringPiece> value_key;
     ParseReadingCorrectionTSV(line, &value_key);
 
     // Filter the entry if this key value pair already exists in the system
@@ -250,9 +253,9 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // fields from a token in the system dictionary that has the same value.
     // Since multple tokens may have the same value, from such tokens, we
     // select the one that has the maximum cost.
-    typedef vector<Token *>::const_iterator TokenIterator;
+    typedef std::vector<Token *>::const_iterator TokenIterator;
     typedef IteratorAdapter<TokenIterator, AsValue> AsValueIterator;
-    typedef pair<AsValueIterator, AsValueIterator> Range;
+    typedef std::pair<AsValueIterator, AsValueIterator> Range;
     Range range = std::equal_range(
         MakeIteratorAdapter(CBegin(ref_sorted_tokens), AsValue()),
         MakeIteratorAdapter(CEnd(ref_sorted_tokens), AsValue()),
@@ -303,20 +306,20 @@ void TextDictionaryLoader::Clear() {
   STLDeleteElements(&tokens_);
 }
 
-void TextDictionaryLoader::CollectTokens(vector<Token *> *res) const {
+void TextDictionaryLoader::CollectTokens(std::vector<Token *> *res) const {
   DCHECK(res);
   res->reserve(res->size() + tokens_.size());
   res->insert(res->end(), tokens_.begin(), tokens_.end());
 }
 
 Token *TextDictionaryLoader::ParseTSVLine(StringPiece line) const {
-  vector<StringPiece> columns;
+  std::vector<StringPiece> columns;
   Util::SplitStringUsing(line, "\t", &columns);
   return ParseTSV(columns);
 }
 
 Token *TextDictionaryLoader::ParseTSV(
-    const vector<StringPiece> &columns) const {
+    const std::vector<StringPiece> &columns) const {
   CHECK_LE(5, columns.size()) << "Lack of columns: " << columns.size();
 
   std::unique_ptr<Token> token(new Token);

@@ -74,24 +74,24 @@ class TextDictionaryLoader {
     tokens_.push_back(token);
   }
 
-  const vector<Token *> &tokens() const {
+  const std::vector<Token *> &tokens() const {
     return tokens_;
   }
 
   // Appends the tokens owned by this instance to |res|.  Note that the appended
   // tokens are still owned by this instance and deleted on destruction of this
   // instance or when Clear() is called.
-  void CollectTokens(vector<Token *> *res) const;
+  void CollectTokens(std::vector<Token *> *res) const;
 
  protected:
   // Allows derived classes to implement custom filtering rules.
-  virtual Token *ParseTSV(const vector<StringPiece> &columns) const;
+  virtual Token *ParseTSV(const std::vector<StringPiece> &columns) const;
 
  private:
   static void LoadReadingCorrectionTokens(
       const string &reading_correction_filename,
-      const vector<Token *> &ref_sorted_tokens,
-      int *limit, vector<Token *> *tokens);
+      const std::vector<Token *> &ref_sorted_tokens,
+      int *limit, std::vector<Token *> *tokens);
 
   // Encodes special information into |token| with the |label|.
   // Currently, label must be:
@@ -106,7 +106,7 @@ class TextDictionaryLoader {
 
   const uint16 zipcode_id_;
   const uint16 isolated_word_id_;
-  vector<Token *> tokens_;
+  std::vector<Token *> tokens_;
 
   FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
 };

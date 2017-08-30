@@ -44,14 +44,14 @@ namespace dictionary {
 // Used to collect all the tokens looked up.
 class CollectTokenCallback : public DictionaryInterface::Callback {
  public:
-  const vector<Token> &tokens() const { return tokens_; }
+  const std::vector<Token> &tokens() const { return tokens_; }
   void Clear() { tokens_.clear(); }
 
   virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
                              const Token &token);
 
  private:
-  vector<Token> tokens_;
+  std::vector<Token> tokens_;
 };
 
 // Used to test if a given token is looked up.
@@ -70,7 +70,8 @@ class CheckTokenExistenceCallback : public DictionaryInterface::Callback {
 
 class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
  public:
-  explicit CheckMultiTokensExistenceCallback(const vector<Token *> &tokens);
+  explicit CheckMultiTokensExistenceCallback(
+      const std::vector<Token *> &tokens);
   bool IsFound(const Token *token) const;
   bool AreAllFound() const;
 
@@ -79,13 +80,13 @@ class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
 
  private:
   size_t found_count_;
-  map<const Token *, bool> result_;
+  std::map<const Token *, bool> result_;
 };
 
 // Generates a human redable string of token(s).
 string PrintToken(const Token &token);
-string PrintTokens(const vector<Token> &tokens);
-string PrintTokens(const vector<Token *> &token_ptrs);
+string PrintTokens(const std::vector<Token> &tokens);
+string PrintTokens(const std::vector<Token *> &token_ptrs);
 
 // Tests if two tokens are equal to each other.
 #define EXPECT_TOKEN_EQ(expected, actual)                         \
@@ -105,7 +106,7 @@ namespace internal {
 
 ::testing::AssertionResult AreTokensEqualUnordered(
      const char *expected_expr, const char *actual_expr,
-     const vector<Token *> &expected, const vector<Token> &actual);
+     const std::vector<Token *> &expected, const std::vector<Token> &actual);
 
 }  // namespace internal
 }  // namespace dictionary

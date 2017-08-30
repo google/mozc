@@ -342,7 +342,7 @@ bool UsageStatsUploader::Send(void *data) {
     return false;
   }
 
-  vector<pair<string, string> > params;
+  std::vector<std::pair<string, string> > params;
   params.push_back(std::make_pair("hl", "ja"));
   params.push_back(std::make_pair("v", Version::GetMozcVersion()));
   string client_id;
@@ -365,9 +365,12 @@ bool UsageStatsUploader::Send(void *data) {
 
   UploadUtil uploader;
   uploader.SetHeader("Daily", elapsed_sec, params);
-#ifdef OS_NACL
-  // In NaCl Mozc we use HTTPS to send usage stats to follow Chrome OS
-  // convention. https://code.google.com/p/chromium/issues/detail?id=255327
+#if defined(OS_NACL) || defined(OS_ANDROID)
+  // We use HTTPS to send usage stats in the following platforms:
+  // - NaCl: We use HTTPS to follow Chrome OS convention.
+  // https://code.google.com/p/chromium/issues/detail?id=255327
+  // - Android: We use HTTPS to follow Android recommendation.
+  // https://developer.android.com/guide/topics/manifest/application-element.html#usesCleartextTraffic
   uploader.SetUseHttps(true);
 #endif  // OS_NACL
   LoadStats(&uploader);

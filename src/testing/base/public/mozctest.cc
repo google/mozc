@@ -37,8 +37,8 @@
 namespace mozc {
 namespace testing {
 
-string GetSourcePath(const vector<StringPiece> &components) {
-  vector<StringPiece> abs_components = {
+string GetSourcePath(const std::vector<StringPiece> &components) {
+  std::vector<StringPiece> abs_components = {
     FLAGS_test_srcdir,
   };
   abs_components.insert(abs_components.end(),
@@ -46,23 +46,23 @@ string GetSourcePath(const vector<StringPiece> &components) {
   return FileUtil::JoinPath(abs_components);
 }
 
-string GetSourceFileOrDie(const vector<StringPiece> &components) {
+string GetSourceFileOrDie(const std::vector<StringPiece> &components) {
   const string path = GetSourcePath(components);
   CHECK(FileUtil::FileExists(path)) << "File doesn't exist: " << path;
   return path;
 }
 
-string GetSourceDirOrDie(const vector<StringPiece> &components) {
+string GetSourceDirOrDie(const std::vector<StringPiece> &components) {
   const string path = GetSourcePath(components);
   CHECK(FileUtil::DirectoryExists(path)) << "Directory doesn't exist: " << path;
   return path;
 }
 
-vector<string> GetSourceFilesInDirOrDie(
-    const vector<StringPiece> &dir_components,
-    const vector<StringPiece> &filenames) {
+std::vector<string> GetSourceFilesInDirOrDie(
+    const std::vector<StringPiece> &dir_components,
+    const std::vector<StringPiece> &filenames) {
   const string dir = GetSourceDirOrDie(dir_components);
-  vector<string> paths;
+  std::vector<string> paths;
   for (size_t i = 0; i < filenames.size(); ++i) {
     paths.push_back(FileUtil::JoinPath({dir, filenames[i]}));
     CHECK(FileUtil::FileExists(paths.back()))

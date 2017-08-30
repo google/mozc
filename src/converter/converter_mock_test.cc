@@ -212,7 +212,7 @@ TEST_F(ConverterMockTest, SetCommitSegments) {
   Segments output, expect;
   SetSegments(&expect, "CommitSegments");
   GetMock()->SetCommitSegments(&expect, true);
-  vector<size_t> singleton_vector;
+  std::vector<size_t> singleton_vector;
   singleton_vector.push_back(1);
   EXPECT_TRUE(converter->CommitSegments(&output, singleton_vector));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
@@ -463,13 +463,13 @@ TEST_F(ConverterMockTest, GetCommitSegments) {
   size_t input_idx2 = 2;
   SetSegments(&input, "CommitSegments");
   const string input_str = input.DebugString();
-  vector<size_t> index_list;
+  std::vector<size_t> index_list;
   index_list.push_back(input_idx1);
   index_list.push_back(input_idx2);
   converter->CommitSegments(&input, index_list);
 
   Segments last_segment;
-  vector<size_t> last_idx;
+  std::vector<size_t> last_idx;
   GetMock()->GetCommitSegments(&last_segment, &last_idx);
   const string last_segment_str = last_segment.DebugString();
 

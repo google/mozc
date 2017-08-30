@@ -262,7 +262,7 @@ class FileLockManager {
 
   void UnLock(const string &filename) {
     scoped_lock l(&mutex_);
-    map<string, int>::iterator it = fdmap_.find(filename);
+    std::map<string, int>::iterator it = fdmap_.find(filename);
     if (it == fdmap_.end()) {
       LOG(ERROR) << filename << " is not locked";
       return;
@@ -275,7 +275,7 @@ class FileLockManager {
   FileLockManager() {}
 
   ~FileLockManager() {
-    for (map<string, int>::const_iterator it = fdmap_.begin();
+    for (std::map<string, int>::const_iterator it = fdmap_.begin();
          it != fdmap_.end(); ++it) {
       ::close(it->second);
     }
@@ -284,7 +284,7 @@ class FileLockManager {
 
  private:
   Mutex mutex_;
-  map<string, int> fdmap_;
+  std::map<string, int> fdmap_;
 };
 
 }  // namespace

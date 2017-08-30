@@ -34,14 +34,7 @@
   'variables': {
     'conditions': [
       ['target_platform=="Linux"', {
-        'conditions': [
-          ['qt_ver==5', {
-            'rcc_path': '<!(pkg-config --variable=host_bins Qt5Core)/rcc',
-          }, {
-            # seems that --variable=rcc_location is not supported
-            'rcc_path': '<!(pkg-config --variable=exec_prefix QtGui)/bin/rcc',
-          }],
-        ],
+        'rcc_path': '<!(pkg-config --variable=host_bins Qt5Core)/rcc',
       }, 'qt_dir', {
         'rcc_path': '<(qt_dir)/bin/rcc<(EXECUTABLE_SUFFIX)',
       }, {
@@ -49,13 +42,12 @@
       }],
     ],
   },
+  # In order to specify file dependencies correctly (e.g. *.png), we need to use
+  # 'actions' instead of 'rules'.
   'actions': [
     {
-      # Need to use actions for qrc files to workaround a gyp issue.
       'action_name': 'qrc',
-      'inputs': [
-        '<(subdir)/<(qrc_base_name).qrc',
-      ],
+      'inputs': ['<@(qrc_inputs)'],
       'outputs': [
         '<(gen_out_dir)/<(subdir)/qrc_<(qrc_base_name).cc'
       ],

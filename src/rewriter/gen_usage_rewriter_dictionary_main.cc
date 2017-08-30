@@ -104,7 +104,6 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
-#include "base/system_util.h"
 #include "base/util.h"
 
 DEFINE_string(usage_data_file, "", "usage data file");
@@ -138,13 +137,13 @@ bool UsageItemKeynameCmp(const UsageItem& l, const UsageItem& r) {
 
 // Load cforms_file
 void LoadConjugation(const string &filename,
-                     map<string, vector<ConjugationType> > *output,
-                     map<string, ConjugationType> *baseform_map) {
+                     std::map<string, std::vector<ConjugationType> > *output,
+                     std::map<string, ConjugationType> *baseform_map) {
   InputFileStream ifs(filename.c_str());
   CHECK(ifs.good());
 
   string line;
-  vector<string> fields;
+  std::vector<string> fields;
   while (!getline(ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       continue;
@@ -167,8 +166,8 @@ void LoadConjugation(const string &filename,
 
 // Load usage_data_file
 void LoadUsage(const string &filename,
-               vector<UsageItem> *usage_entries,
-               vector<string> *conjugation_list) {
+               std::vector<UsageItem> *usage_entries,
+               std::vector<string> *conjugation_list) {
   InputFileStream ifs(filename.c_str());
 
   if (!ifs.good()) {
@@ -177,8 +176,8 @@ void LoadUsage(const string &filename,
   }
 
   string line;
-  vector<string> fields;
-  map<string, int> conjugation_id_map;
+  std::vector<string> fields;
+  std::map<string, int> conjugation_id_map;
 
   int conjugation_id = 0;
   while (!getline(ifs, line).fail()) {
@@ -197,10 +196,11 @@ void LoadUsage(const string &filename,
     string tmp = ((fields[3] == "*") ? "" : fields[3]);
     Util::StringReplace(tmp, "\\n", "\n", true, &item.meaning);
 
-    map<string, int>::iterator it = conjugation_id_map.find(item.conjugation);
+    std::map<string, int>::iterator it =
+        conjugation_id_map.find(item.conjugation);
     if (it == conjugation_id_map.end()) {
       conjugation_id_map.insert(
-        pair<string, int>(item.conjugation, conjugation_id));
+        std::pair<string, int>(item.conjugation, conjugation_id));
       item.conjugation_id = conjugation_id;
       conjugation_list->push_back(item.conjugation);
       ++conjugation_id;
@@ -213,11 +213,11 @@ void LoadUsage(const string &filename,
 
 // remove "基本形"'s conjugation suffix
 void RemoveBaseformConjugationSuffix(
-  const map<string, ConjugationType> &baseform_map,
-  vector<UsageItem> *usage_entries) {
-  for (vector<UsageItem>::iterator usage_itr = usage_entries->begin();
+  const std::map<string, ConjugationType> &baseform_map,
+  std::vector<UsageItem> *usage_entries) {
+  for (std::vector<UsageItem>::iterator usage_itr = usage_entries->begin();
       usage_itr != usage_entries->end(); ++usage_itr) {
-    const map<string, ConjugationType>::const_iterator baseform_itr =
+    const std::map<string, ConjugationType>::const_iterator baseform_itr =
       baseform_map.find(usage_itr->conjugation);
     if (baseform_itr == baseform_map.end()) {
       continue;
@@ -241,30 +241,30 @@ void RemoveBaseformConjugationSuffix(
   }
 }
 
-uint32 Lookup(const map<string, uint32> &m, const string &key) {
+uint32 Lookup(const std::map<string, uint32> &m, const string &key) {
   const auto iter = m.find(key);
   CHECK(iter != m.end()) << "Cannot find key=" << key;
   return iter->second;
 }
 
 void Convert() {
-  CHECK(SystemUtil::IsLittleEndian());
+  CHECK(Util::IsLittleEndian());
 
   // Load cforms_file
-  map<string, vector<ConjugationType>> inflection_map;
-  map<string, ConjugationType> baseform_map;
+  std::map<string, std::vector<ConjugationType>> inflection_map;
+  std::map<string, ConjugationType> baseform_map;
   LoadConjugation(FLAGS_cforms_file, &inflection_map, &baseform_map);
 
   // Load usage_data_file
-  vector<UsageItem> usage_entries;
-  vector<string> conjugation_list;
+  std::vector<UsageItem> usage_entries;
+  std::vector<string> conjugation_list;
   LoadUsage(FLAGS_usage_data_file, &usage_entries, &conjugation_list);
   RemoveBaseformConjugationSuffix(baseform_map, &usage_entries);
   std::sort(usage_entries.begin(), usage_entries.end(), UsageItemKeynameCmp);
 
   // Assign unique index to every string data.  The same string share the same
   // index, so the data is slightly compressed.
-  map<string, uint32> string_index;
+  std::map<string, uint32> string_index;
   {
     // Collect all the strings while assigning temporary index 0.
     string_index[""] = 0;
@@ -305,13 +305,13 @@ void Convert() {
   }
 
   // Output conjugation suffix data.
-  vector<int> conjugation_index(conjugation_list.size() + 1);
+  std::vector<int> conjugation_index(conjugation_list.size() + 1);
   {
     OutputFileStream ostream(FLAGS_output_conjugation_suffix.c_str(),
                              ios_base::out | ios_base::binary);
     int out_count = 0;
     for (size_t i = 0; i < conjugation_list.size(); ++i) {
-      const vector<ConjugationType> &conjugations =
+      const std::vector<ConjugationType> &conjugations =
           inflection_map[conjugation_list[i]];
       conjugation_index[i] = out_count;
       if (conjugations.empty()) {
@@ -320,8 +320,8 @@ void Convert() {
         ostream.write(reinterpret_cast<const char *>(&index), 4);
         ++out_count;
       } else {
-        using StrPair = pair<string, string>;
-        set<StrPair> key_and_value_suffix_set;
+        using StrPair = std::pair<string, string>;
+        std::set<StrPair> key_and_value_suffix_set;
         for (const ConjugationType &ctype : conjugations) {
           key_and_value_suffix_set.emplace(ctype.value_suffix,
                                            ctype.key_suffix);
@@ -366,7 +366,7 @@ void Convert() {
 
   // Output string array.
   {
-    vector<StringPiece> strs;
+    std::vector<StringPiece> strs;
     for (const auto &kv : string_index) {
       // Check if the string is placed at its index in the string array.
       CHECK_EQ(strs.size(), kv.second);

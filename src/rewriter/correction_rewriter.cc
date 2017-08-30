@@ -60,12 +60,12 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
 bool CorrectionRewriter::LookupCorrection(
     const string &key,
     const string &value,
-    vector<ReadingCorrectionItem> *results) const {
+    std::vector<ReadingCorrectionItem> *results) const {
   CHECK(results);
   results->clear();
 
   using Iter = SerializedStringArray::const_iterator;
-  pair<Iter, Iter> range = std::equal_range(error_array_.begin(),
+  std::pair<Iter, Iter> range = std::equal_range(error_array_.begin(),
                                             error_array_.end(),
                                             key);
   for (; range.first != range.second; ++range.first) {
@@ -111,7 +111,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
   }
 
   bool modified = false;
-  vector<ReadingCorrectionItem> results;
+  std::vector<ReadingCorrectionItem> results;
 
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);

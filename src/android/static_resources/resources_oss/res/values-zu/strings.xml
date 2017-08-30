@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">Isi-Japanese</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Ikhibhodi yekhibhodi</string>
+<string name="pref_software_keyboard_advanced_settings_title">Izilungiselelo ezithuthukile zekhibhodi yesofthiwe</string>
+<string name="pref_fragment_software_keyboard_title">Ikhibhodi yekhibhodi</string>
+<string name="pref_fragment_input_support_title">Usekelo lokokufaka</string>
+<string name="pref_fragment_conversion_title">Ukugulwa</string>
+<string name="pref_fragment_dictionary_title">Isichazamazwi</string>
+<string name="pref_fragment_user_feedback_title">Impendulo yomsebenzisi</string>
+<string name="pref_fragment_about_title">Mayelana</string>
+<string name="pref_fragment_development_title">Intuthuko</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Okuncamelayo kwekhibhodi yesofthiwe kwemodi yokuma ngobude</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Okuncamelayo kwekhibhodi yesofthiwe yomumo webubanzi</string>
+<string name="pref_keyboard_layout_title">Isakhiwho sekhibhodi</string>
+<string name="pref_input_style_title">Isitayela sokufaka</string>
+<string name="pref_qwerty_layout_for_alphabet_title">Imodi ye-QWERTY</string>
+<string name="pref_flick_sensitivity_title">Ukuzwela kwe-Flick</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Sebenzisa izilungiselo zokuma ngobude</string>
+<string name="pref_keyboard_height_ratio_title">Ubude bekhibhodi</string>
+<string name="pref_input_feedback_category_title">Izintandokazi zempendulo zokufaka</string>
+<string name="pref_haptic_feedback_title">Impendulo ye-Haptic</string>
+<string name="pref_haptic_feedback_duration_title">Ubude besikhathi bempendulo ye-Haptic</string>
+<string name="pref_sound_feedback_title">Impendulo yezwi</string>
+<string name="pref_sound_feedback_volume_title">Ivolomu yempendulo yomsindo</string>
+<string name="pref_popup_feedback_title">Impendulo yogaxekile</string>
+<string name="pref_other_input_support_preference_category_title">Okunye okuncamelayo kosekelo lokufaka</string>
+<string name="pref_fullscreen_title">Imodi yesikrini esiphelele</string>
+<string name="pref_skin_type_title">Itimu yekhibhodi</string>
+<string name="pref_hardware_title">Okuncamelayo kwamakhibhodi wehadiwe</string>
+<string name="pref_voice_input_title">Bonisa inkinobho yokuthayipha ngezwi</string>
+<string name="pref_conversion_category_title">Okuncamelayo kokuguqulela</string>
+<string name="pref_layout_adjustment_title">Ukulungiswa kwesakhiwo</string>
+<string name="pref_space_character_form_title">Sebenzisa isikhala esinobubanzi obuhafu</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Ukuguqulela kokuzwela kokushintsha</string>
+<string name="pref_typing_correction_title">Ukuthayipha izilungiso</string>
+<string name="pref_other_incognito_mode_title">Imodi ye-Incognito</string>
+<string name="pref_emoji_provider_type_title">Sebenzisa umhlinzeki we-Emoji</string>
+<string name="pref_dictionry_category_title">Okuncamelayo kwesichazamazwi</string>
+<string name="pref_dictionary_personalization_title">Ukwenza ngendlela ethandwa nguwe</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Ithuluzi lesichazamazwi</string>
+<string name="pref_clear_category_title">Sula umlando</string>
+<string name="pref_clear_conversion_history_title">Umlando wokuguqulela</string>
+<string name="pref_clear_symbol_history_title">Umlando wophawu</string>
+<string name="pref_clear_user_dictionary_title">Isichazamazwi somsebenzisi</string>
+<string name="pref_user_feedback_category_title">Impendulo yomsebenzisi</string>
+<string name="pref_other_usage_stats_title">Thumela izibalo zokusetshenziswa</string>
+<string name="pref_about_about_this_software_title">Mayelana nale softhiwe</string>
+<string name="pref_about_version_title">Inguqulo</string>
+<string name="pref_about_terms_of_service_title">Imigomo yesevisi</string>
+<string name="pref_about_privacy_policy_title">Inqubomgomo yemfihlo</string>
+<string name="pref_about_oss_credits_title">Isofthiwe yomthombo ovulekile</string>
+<string name="pref_launcher_icon_visibility_title">Bonisa isithonjana sohlelo lokusebenza</string>
+<string name="pref_haptic_feedback_description">Ukudlidliza uma kucindezelwa okhiye.</string>
+<string name="pref_sound_feedback_description">Umsindo uma kucindezelwa okhiye.</string>
+<string name="pref_popup_feedback_description">Ugaxekile uma kucindezelwa okhiye.</string>
+<string name="pref_keyboard_layout_description">Shintsha isakhiwo sekhibhodi</string>
+<string name="pref_keyboard_layout_title_12keys">12 okhiye</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">Ikhibhodi ye-Godan</string>
+<string name="pref_keyboard_layout_description_12keys">Isakhiwo sefoni yeselula</string>
+<string name="pref_keyboard_layout_description_qwerty">Isakhiwo sekhibhodi se-PC.</string>
+<string name="pref_keyboard_layout_description_godan">Romaji-dedicated layout. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;Usage&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Khetha isitayela sokufaka</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Uma kumakiwe, isakhiwo se-QWERTY sizosetshenziselwa imodi yokufaka yezinhlamvu ngaphandle kwesakhwi esikhulu.</string>
+<string name="pref_fullscreen_description">Uma kumakiwe, ibhokisi lombhalo oqondisiwe libonisa ngemodi yesikrini esigcwele.</string>
+<string name="pref_flick_sensitivity_description">Shintsha ukuzwela kwe-flick.</string>
+<string name="pref_layout_adjustment_description">Shintsha ukulungisa kwekhibhodi.</string>
+<string name="pref_keyboard_height_ratio_description">Shintsha ukuphakama kwekhibhodi.</string>
+<string name="pref_space_character_form_description">Njalo sebenzisa isikhala sobubanzi obuhafu, noma ngabe imodi yokufaka ingakanani.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Sebenzisa isiguquleli sokuzwela sokushintsha. Kufakwe kokhiye abangu-12 nekhibhodi ye-Godan. isb. かつこう→学校</string>
+<string name="pref_typing_correction_description">Thola ukuthayipha iphutha bese ubonise okulungile. isb. すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">Khetha imhlinzeki we-Emoji kahle ukuze usebenzise i-emoji.</string>
+<string name="pref_skin_type_description">Khetha itimu yekhibhodi ukwenza ngezifiso  ukubukeka kwekhibhodi yesofthiwe.</string>
+<string name="pref_voice_input_description">Bonisa inkinobho yokokufaka kukhibhodi yesofthiwe.</string>
+<string name="pref_hardware_keymap_description">Khetha umephu wokhiye wamakhibhodi wehadiwe.</string>
+<string name="pref_dictionary_personalization_description">Nika amandla iziphakamiso zomuntu siqu ezisuselwe kokufaka kwangaphambilini.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">Hlela izichazamazwi zomsebenzisi.</string>
+<string name="pref_clear_category_description">Sula ukwenza ngezifiso noma idatha yesiphakamiso.</string>
+<string name="pref_clear_conversion_history_description">Sula umlando wukuguqulela.</string>
+<string name="pref_clear_symbol_history_description">Sula umlando wokufaka wophawu.</string>
+<string name="pref_clear_user_dictionary_description">Sula isichazamazwi somsebenzisi.</string>
+<string name="pref_other_incognito_mode_description">Khubaza okwesikhashana ukwenza ngezifiso, iziphakamiso nesichazamazwi somsebenzisi.</string>
+<string name="pref_other_usage_stats_description">Thumela izibalo zokusebenzia ku-%1$s. Lezo zizosetshenziswa kuphela ukuthuthukisa imikhiqizo namasevisi we-%1$s.</string>
+<string name="pref_about_terms_of_service_description">Bonisa imigomo yesevisi (ikhasi lewebhu).</string>
+<string name="pref_about_privacy_policy_description">Bonisa inqubomgomo yobumfihlo (ikhasi lewebhu).</string>
+<string name="pref_about_oss_credits_description">Le softhiwe isebenzisa isofthiwe yomthombo ovulekile: buka amalayisensi.</string>
+<string name="pref_launcher_icon_visibility_description">Bonisa isithonjana sohlelo lokusebenza kusiqalisi</string>
+<string name="pref_input_style_setting_entry_toggle">Ukuguquguqula</string>
+<string name="pref_input_style_setting_entry_flick">I-Flick</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Ukuguquguqula ne-Flick</string>
+<string name="pref_fullscreen_portrait">Nika amandla ukuma ngobude</string>
+<string name="pref_fullscreen_landscape">Nika amandla ukwakheka kwezwe</string>
+<string name="pref_emoji_provider_type_unicode">Khubaza i-Emoji yenkampani yenethiwekhi</string>
+<string name="pref_emoji_provider_type_docomo">I-NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">I-SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">Uwolintshi/Okumpunga okukhanyayo</string>
+<string name="pref_skin_type_blue_lightgray">Okuluhlaza/Okumpunga okukhanyayo</string>
+<string name="pref_skin_type_blue_darkgray">Okuluhlaza/Okumpunga okumnyama</string>
+<string name="pref_skin_type_material_design_light">Ukwakheka komsebenzi (Okukhanyayo)</string>
+<string name="pref_skin_type_material_design_dark">Ukwakheka komsebenzi (Kumnyama)</string>
+<string name="pref_hardware_keymap_default">Okuzenzakalelayo kwesistimu</string>
+<string name="pref_hardware_keymap_japanese109A">Japanese 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 okhiye</string>
+<string name="pref_dictionary_personalization_entry_enabled">Nika amandla</string>
+<string name="pref_dictionary_personalization_entry_readonly">Eqandisiwe</string>
+<string name="pref_dictionary_personalization_entry_disabled">Khubaza</string>
+<string name="pref_layout_adjustment_entry_fill">Gcwalisa</string>
+<string name="pref_layout_adjustment_entry_right">Kwesokudla</string>
+<string name="pref_layout_adjustment_entry_left">Kwesobunxele</string>
+<string name="firsttime_close_button">Okulandelayo &gt;&gt;</string>
+<string name="firsttime_description_thank_you">Siyabonga ngokusebenzisa i-%s.</string>
+<string name="firsttime_description_usage_stats">Ukuze skwazi ukuthuthukisa imikhiqizo namasevisi we-%s, sicela ukuthi unake ukunika amandla izibalo zokusebenzisa.\n\nLesi silungiselelo singashintshwa kusuka kusikrini sokuncamelayo.</string>
+<string name="firsttime_send_usage_stats_devchannel">Izibalo zokusebenzia zinikwe amandla ngoba usebenzisa inguqulo yokuthuthukisa.</string>
+<string name="pref_ime_enable_alert_title">Ukusetha kwezilungiselelo zombhalo</string>
+<string name="pref_ime_enable_alert_message">Sicela unike amandla i-%s.</string>
+<string name="pref_ime_switch_alert_title">Ukusetha kwendlela yokufaka</string>
+<string name="pref_ime_switch_alert_message">Sicela ushintshele indlela yokufaka ku-%s.</string>
+<string name="pref_ime_alert_next">Okulandelayo</string>
+<string name="pref_ime_alert_cancel">Khansela</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Phansi</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Maphakathi</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Phezulu</string>
+<string name="pref_haptic_feedback_duration_low_text">Kafushane</string>
+<string name="pref_haptic_feedback_duration_high_text">Kude</string>
+<string name="pref_sound_feedback_volume_low_text">Amaminithi</string>
+<string name="pref_sound_feedback_volume_middle_text">Maphakathi</string>
+<string name="pref_sound_feedback_volume_high_text">Khulu</string>
+<string name="symbol_input_no_history">Awukho umlando.\n\nSwayipha isikrini\kuzigaba zesiphequluli.</string>
+<string name="symbol_emoji_disabled_message">Le nkambu yombhalo ayisekeli kokufaka kwe-Emoji.</string>
+<string name="menu_dialog_title">Okukhethwa kukho kokungenayo</string>
+<string name="menu_item_input_method">Khetha indlela yokufaka</string>
+<string name="menu_item_preferences">%s izilungiselelo</string>
+<string name="menu_item_mushroom">Vula i-Mushroom</string>
+<string name="user_dictionary_tool_app_name">Ithuluzi lesichazamazwi</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Igama elisha</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Sula igama</string>
+<string name="user_dictionary_tool_menu_undo_title">Hlehlisa</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Isichazamazwi esisha</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Qamba kabusha isichazamazwi samanje</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Sula isichazamazwi samanje</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Khipha isichazamazwi samanje</string>
+<string name="user_dictionary_tool_default_dictionary_name">Isichazamazwi somsebenzisi 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Dala isichazamazwi esisha</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Hlela igama lesichazamazwi</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Igama lesichazamazwi</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Engeza igama elisha</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Hlela igama</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Ukufunda</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Igama</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Isigaba</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Khetha ukungenisa umthombo</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Khetha ukungenisa indawo</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Ngenisa njengesichazamazwi esisha</string>
+<string name="user_dictionary_tool_delete_done_message">Umsebenzi wokusula uphumelele.</string>
+<string name="user_dictionary_tool_undo_done_message">Ukuhlehlisa umsebenzi kuphumelele.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Khetha amagama ongathanda ukuwasusa.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Ukungenisa idatha kusebenza kuphela kumafayela.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Ayikwazanga ukufunda ifayela.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">Ifayela le-ZIP alinalutho.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Azikho izinhlelo zokusebenza (isib. Google Amadokhumenti) zokukhipha isichazamazwi somsebenzisi.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Yehlulekile ukukhipha isichazamazwi somsebenzisi.</string>
+<string name="user_dictionary_tool_status_error_general">Umsebenzi wehlulekile.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Ayikwazanga ukuvula ifayela.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Ayikwazanga ukufunda ifayela.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Usayizi wedatha wedlula umkhawulo wosayizi wefayela.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Ayikwazi ukudala ezinye izichazamazwi eziningi.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Ayikwazi ukudala okunye okungenayo kulesi sichazamazwi.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Sicela uthayiphe igama lesichazamazwi.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Igama lide kakhulu.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Igama liqukethe izinhlamvu ezingavumelekile.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Igama selivele likhona.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Sicela uthayiphe ukufunda.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Ukufunda kude kakhulu.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Ukufunda kuqukethe izinhlamvu ezingavumelekile.</string>
+<string name="user_dictionary_tool_status_error_word_empty">Sicela uthayiphe igama.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Igama lide kakhulu.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Igama liqukethe izinhlambu ezingavumelekile.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Umthombo wokungenisa uqukethe amagama amaningi kakhulu.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Amanye amagama awakwazanga ukungeniswa.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Awusekho umsebenzi ongahlehliswa.</string>
+<string name="japanese_pos_noun">Ibizo</string>
+<string name="japanese_pos_abbreviation">Isifinyezo</string>
+<string name="japanese_pos_suggestion_only">Isiphakamiso kuphela</string>
+<string name="japanese_pos_proper_noun">Ibizo loqobo</string>
+<string name="japanese_pos_personal_name">Igama lomuntu siqu</string>
+<string name="japanese_pos_family_name">Igama lomndeni</string>
+<string name="japanese_pos_first_name">Igama lokuqala</string>
+<string name="japanese_pos_organization_name">Igama lenhlangano</string>
+<string name="japanese_pos_place_name">Igama lendawo</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">Ibizo lokuhlanganisa elingavamile le-SA</string>
+<string name="japanese_pos_adjective_verbal_noun">Ibizo lokwenza lesiphawulo</string>
+<string name="japanese_pos_number">Inombolo</string>
+<string name="japanese_pos_alphabet">Izinhlamvu</string>
+<string name="japanese_pos_symbol">Isimbuli</string>
+<string name="japanese_pos_emoticon">isithombe-mzwelo</string>
+<string name="japanese_pos_adverb">Isandiso</string>
+<string name="japanese_pos_prenoun_adjectival">Isandiso sebizo</string>
+<string name="japanese_pos_conjunction">Isihlanganiso</string>
+<string name="japanese_pos_interjection">Isibalazo</string>
+<string name="japanese_pos_prefix">Isiqalo</string>
+<string name="japanese_pos_counter_suffix">Isijobelelo esiphikisayo</string>
+<string name="japanese_pos_generic_suffix">Isijobelelo esenziwe</string>
+<string name="japanese_pos_person_name_suffix">Isijobelelo segama lomuntu</string>
+<string name="japanese_pos_place_name_suffix">Isijobelelo segama lendawo</string>
+<string name="japanese_pos_wa_group1_verb">Ibizo le-WA-Group1</string>
+<string name="japanese_pos_ka_group1_verb">Ibizo le-KA-Group1</string>
+<string name="japanese_pos_sa_group1_verb">Ibizo le-SA-Group1</string>
+<string name="japanese_pos_ta_group1_verb">Ibizo le-TA-Group1</string>
+<string name="japanese_pos_na_group1_verb">Ibizo le-NA-Group1</string>
+<string name="japanese_pos_ma_group1_verb">Ibizo le-MA-Group1</string>
+<string name="japanese_pos_ra_group1_verb">Ibizo le-RA-Group1</string>
+<string name="japanese_pos_ga_group1_verb">Ibizo le-GA-Group1</string>
+<string name="japanese_pos_ba_group1_verb">Ibizo le-BA-Group1</string>
+<string name="japanese_pos_ha_group1_verb">Ibizo le-HA-Group1</string>
+<string name="japanese_pos_group2_verb">Ibizo le-Group2</string>
+<string name="japanese_pos_kuru_group3_verb">Ibizo le-Kuru-Group3</string>
+<string name="japanese_pos_suru_group3_verb">Ibizo le-Suru-Group3</string>
+<string name="japanese_pos_zuru_group3_verb">Ibizo le-Zuru-Group3</string>
+<string name="japanese_pos_ru_group3_verb">Ibizo le-Ru-Group3</string>
+<string name="japanese_pos_adjective">Isiphawulo</string>
+<string name="japanese_pos_sentence_ending_particle">Uhlamvu lokuphelisa umusho</string>
+<string name="japanese_pos_punctuation">Izimpawu zolimi</string>
+<string name="japanese_pos_free_standing_word">Igama elizimele</string>
+<string name="japanese_pos_suppression_word">Igama lokucindezela</string>
+<string name="yes">Yebo</string>
+<string name="no">Cha</string>
+</resources>

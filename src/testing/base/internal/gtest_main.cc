@@ -36,7 +36,7 @@
 #ifdef OS_NACL
 #include "base/pepper_file_system_mock.h"
 #include "base/pepper_file_util.h"
-#include "base/public/nacl_mock_module.h"
+#include "testing/base/public/nacl_mock_module.h"
 #endif  // OS_NACL
 
 int main(int argc, char **argv) {

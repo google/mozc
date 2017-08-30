@@ -361,7 +361,7 @@ TEST_F(ConfigHandlerTest, DefaultConfig) {
 
 class SetConfigThread final : public Thread {
  public:
-  explicit SetConfigThread(const vector<Config> &configs)
+  explicit SetConfigThread(const std::vector<Config> &configs)
       : quitting_(false),
         configs_(configs) {
   }
@@ -381,7 +381,7 @@ class SetConfigThread final : public Thread {
 
  private:
   std::atomic<bool> quitting_;
-  vector<Config> configs_;
+  std::vector<Config> configs_;
 };
 
 // Returns concatenated serialized data of |Config::character_form_rules|.
@@ -424,7 +424,7 @@ class GetConfigThread final : public Thread {
 
 
 TEST_F(ConfigHandlerTest, ConcurrentAccess) {
-  vector<Config> configs;
+  std::vector<Config> configs;
 
   {
     Config config;
@@ -499,12 +499,12 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   const size_t kNumGetThread = 4;
   {
     // Set up background threads for concurrent access.
-    vector<std::unique_ptr<SetConfigThread>> set_threads;
+    std::vector<std::unique_ptr<SetConfigThread>> set_threads;
     for (size_t i = 0; i < kNumSetThread; ++i) {
       set_threads.emplace_back(std::unique_ptr<SetConfigThread>(
           new SetConfigThread(configs)));
     }
-    vector<std::unique_ptr<GetConfigThread>> get_threads;
+    std::vector<std::unique_ptr<GetConfigThread>> get_threads;
     for (size_t i = 0; i < kNumGetThread; ++i) {
       get_threads.emplace_back(std::unique_ptr<GetConfigThread>(
           new GetConfigThread(character_form_rules_set)));

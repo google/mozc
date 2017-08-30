@@ -39,18 +39,6 @@ namespace mozc {
 
 using size_type = StringPiece::size_type;
 
-StringPiece::StringPiece(const StringPiece str, size_type pos)
-    : ptr_(str.data() + pos),
-      length_(str.size() - pos) {
-  assert(pos <= str.size());
-}
-
-StringPiece::StringPiece(const StringPiece str, size_type pos, size_type len)
-    : ptr_(str.data() + pos),
-      length_(min(len, str.size() - pos)) {
-  assert(pos <= str.size());
-}
-
 ostream &operator<<(ostream &o, const StringPiece &piece) {
   o.write(piece.data(), static_cast<std::streamsize>(piece.size()));
   return o;

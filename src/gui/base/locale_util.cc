@@ -33,46 +33,27 @@
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_NACL
 
-#ifdef OS_WIN
-#include <windows.h>
-#include <CommCtrl.h>  // for CCSIZEOF_STRUCT
-#endif
-
-#ifdef OS_MACOSX
-// To fix http://b/2495747, undef qDebug if defined.
-// TODO(yukawa): Investigate more appropriate solution.
-#ifdef qDebug
-#define qDebugBackup qDebug
-#undef qDebug
-#endif  // qDebug
-#include <CoreServices/CoreServices.h>
-#include <CoreFoundation/CoreFoundation.h>
-#ifdef qDebugBackup
-#define qDebug qDebugBackup
-#undef qDebugBackup
-#endif  // qDebugBackup
-#endif
-
 // Show the build number on the title for debugging when the build
 // configuration is official dev channel.
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #define MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
-#include <QtCore/QTextCodec>
-#ifdef MOZC_USE_QT5
-#include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QApplication>
+#ifdef OS_WIN
+#include <windows.h>
+#include <CommCtrl.h>  // for CCSIZEOF_STRUCT
 #endif
+
+#include <QtGui/QGuiApplication>
+
 #include <QtGui/QtGui>
 #include <map>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_cftyperef.h"
 #include "base/singleton.h"
 #include "base/util.h"
+
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
 #endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
@@ -81,65 +62,11 @@ namespace mozc {
 namespace gui {
 namespace {
 
-QString GetUILocaleName() {
-  // On Windows/Mac, QLocale::system().name() returns an invalid
-  // value. For instance, QLocale::system().name() returns
-  // system locale instead of user locale on Windows.
-#if defined(OS_WIN)
-  // Check UI locale instead of system locale on Windows
-  const LANGID kJapaneseLangId = MAKELANGID(LANG_JAPANESE,
-                                            SUBLANG_JAPANESE_JAPAN);
-  if (kJapaneseLangId == ::GetUserDefaultUILanguage()) {
-    return QString("ja");
-  }
-  return QString("en");   // by default, use English locale
-#elif defined(OS_MACOSX)
-  // by default, use English locale
-  QString result("en");
-
-  scoped_cftyperef<CFArrayRef> aref(
-      reinterpret_cast<CFArrayRef>(
-          CFPreferencesCopyAppValue(
-              CFSTR("AppleLanguages"),
-              kCFPreferencesCurrentApplication)));
-
-  if (aref.get() == NULL) {
-    return result;
-  }
-
-  char locale[128];
-  const int locale_size = sizeof(locale);
-  if (aref.Verify(CFArrayGetTypeID()) && CFArrayGetCount(aref.get()) > 0) {
-    CFStringRef sref = reinterpret_cast<CFStringRef>(
-        CFArrayGetValueAtIndex(aref.get(), 0));
-    if (sref != NULL && CFGetTypeID(sref) == CFStringGetTypeID()) {
-      scoped_cftyperef<CFStringRef> locale_name_ref(
-          CFLocaleCreateCanonicalLocaleIdentifierFromString(
-              kCFAllocatorDefault, sref));
-      if (locale_name_ref.get() != NULL &&
-          locale_name_ref.Verify(CFStringGetTypeID()) &&
-          CFStringGetCString(locale_name_ref.get(),
-                             locale,
-                             locale_size,
-                             kCFStringEncodingASCII)) {
-        result = QString::fromUtf8(locale);
-      }
-    }
-  }
-
-  return result;
-#else  // OS_MACOSX
-  // return system locale on Linux
-  return QLocale::system().name();
-#endif  // OS_LINUX
-}
-
 // sicnce Qtranslator and QFont must be available until
 // application exits, allocate the data with Singleton.
 class TranslationDataImpl {
  public:
   void InstallTranslationMessageAndFont(const char *resource_name);
-  void InstallTranslationMessagesAndFont(const QStringList &resource_names);
 
   TranslationDataImpl();
   ~TranslationDataImpl() {
@@ -153,54 +80,15 @@ class TranslationDataImpl {
  private:
   map<string, QTranslator *> translators_;
   QTranslator default_translator_;
-  QString locale_name_;
   QFont font_;
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
   WindowTitleModifier window_title_modifier_;
 #endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 };
 
-TranslationDataImpl::TranslationDataImpl()
-    : locale_name_(GetUILocaleName()) {
+TranslationDataImpl::TranslationDataImpl() {
   // qApplication must be loaded first
   CHECK(qApp);
-
-#ifdef OS_WIN
-  // Get the font from MessageFont
-  NONCLIENTMETRICSW ncm = { 0 };
-
-  // We don't use |sizeof(NONCLIENTMETRICSW)| because it is fragile when the
-  // code is copied-and-pasted without caring about WINVER.
-  // http://blogs.msdn.com/b/oldnewthing/archive/2003/12/12/56061.aspx
-  const size_t kSizeOfNonClientMetricsWForVistaOrLater =
-      CCSIZEOF_STRUCT(NONCLIENTMETRICSW, iPaddedBorderWidth);
-  ncm.cbSize = kSizeOfNonClientMetricsWForVistaOrLater;
-  if (::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &ncm, 0)) {
-    // Windows font scale is 0..100 while Qt's scale is 0..99.
-    // If lfWeight is 0 (default weight), we don't set the Qt's font weight.
-    if (ncm.lfMessageFont.lfWeight > 0) {
-      font_.setWeight(static_cast<int>(
-          99.0 * ncm.lfMessageFont.lfWeight / 1000.0));
-    }
-    font_.setItalic(static_cast<bool>(ncm.lfMessageFont.lfItalic));
-    font_.setUnderline(static_cast<bool>(ncm.lfMessageFont.lfUnderline));
-    font_.setStrikeOut(static_cast<bool>(ncm.lfMessageFont.lfStrikeOut));
-    string face_name;
-    Util::WideToUTF8(ncm.lfMessageFont.lfFaceName, &face_name);
-    font_.setFamily(QString::fromUtf8(face_name.c_str()));
-    HDC hdc = ::GetDC(NULL);
-    if (hdc != NULL) {
-      // Get point size from height:
-      // http://msdn.microsoft.com/ja-jp/library/cc428368.aspx
-      const int KPointToHeightFactor= 72;
-      font_.setPointSize(abs(::MulDiv(ncm.lfMessageFont.lfHeight,
-                                      KPointToHeightFactor,
-                                      ::GetDeviceCaps(hdc, LOGPIXELSY))));
-      ::ReleaseDC(NULL, hdc);
-    }
-    qApp->setFont(font_);
-  }
-#endif
 
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
   // Install WindowTilteModifier for official dev channel
@@ -208,61 +96,37 @@ TranslationDataImpl::TranslationDataImpl()
   qApp->installEventFilter(&window_title_modifier_);
 #endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 
-#ifdef OS_LINUX
-  // Use system default messages.
-  // Even if the locale is not English nor Japanese, load translation
-  // file to translate common messages like "OK" and "Cancel".
-  default_translator_.load(
-      QString("qt_") + QLocale::system().name(),
-      QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-  qApp->installTranslator(&default_translator_);
-#else
-  // Load Qt's default translation for Japanese, which
-  // is embedded into binary with Qt resource
-  if (locale_name_.startsWith("ja") &&   // "ja" or "ja_JP"
-      default_translator_.load(":/qt_ja_JP")) {
-    qApp->installTranslator(&default_translator_);
+  // Load "<translation_path>/qt_<lang>.qm" from a qrc file.
+  bool loaded = default_translator_.load(
+      QLocale::system(), "qt", "_",
+      QLibraryInfo::location(QLibraryInfo::TranslationsPath), ".qm");
+  if (!loaded) {
+    // Load ":/qt_<lang>.qm" from a qrc file.
+    loaded = default_translator_.load(
+        QLocale::system(), "qt", "_", ":/", ".qm");
   }
-#endif
 
-#ifndef MOZC_USE_QT5
-  // Set default encoding for multi-byte string to be UTF8
-  QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-  QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-#endif
-}
-
-void TranslationDataImpl::InstallTranslationMessagesAndFont(
-    const QStringList &resource_names) {
-  for (int i = 0; i < resource_names.count(); ++i) {
-    InstallTranslationMessageAndFont(
-        resource_names[i].toStdString().c_str());
+  if (loaded) {
+    qApp->installTranslator(&default_translator_);
   }
 }
 
 void TranslationDataImpl::InstallTranslationMessageAndFont(
     const char *resource_name) {
-  map<string, QTranslator *>::const_iterator it = translators_.find(
-      resource_name);
-  if (it != translators_.end()) {
+  if (translators_.find(resource_name) != translators_.end()) {
     return;
   }
-  const QString file_name = QString(":/%1_%2").
-      arg(resource_name).arg(locale_name_);
   QTranslator *translator = new QTranslator;
   CHECK(translator);
   translators_.insert(make_pair(resource_name, translator));
-  if (translator->load(file_name)) {
+
+  // Load ":/<resource_name>_<lang>.qm" from a qrc file.
+  if (translator->load(QLocale::system(), resource_name, "_", ":/", ".qm")) {
     qApp->installTranslator(translator);
   }
 }
-}  // namespace
 
-void LocaleUtil::InstallTranslationMessagesAndFont(
-    const QStringList &resource_names) {
-  Singleton<TranslationDataImpl>::get()->InstallTranslationMessagesAndFont
-      (resource_names);
-}
+}  // namespace
 
 void LocaleUtil::InstallTranslationMessageAndFont(
     const char *resource_name) {

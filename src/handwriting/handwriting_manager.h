@@ -49,9 +49,9 @@ enum HandwritingStatus {
 
 // A coordinate of a stroke.  If the canvas is a square, the point
 // range is supporsed from 0.0 to 1.0.
-typedef pair<float, float> Point;
-typedef vector<Point> Stroke;
-typedef vector<Stroke> Strokes;
+typedef std::pair<float, float> Point;
+typedef std::vector<Point> Stroke;
+typedef std::vector<Stroke> Strokes;
 
 class HandwritingInterface {
  public:
@@ -59,7 +59,7 @@ class HandwritingInterface {
   virtual ~HandwritingInterface() {}
 
   virtual HandwritingStatus Recognize(
-      const Strokes &strokes, vector<string> *candidates) const = 0;
+      const Strokes &strokes, std::vector<string> *candidates) const = 0;
 
   virtual HandwritingStatus Commit(const Strokes &strokes,
                                    const string &result) = 0;
@@ -75,7 +75,7 @@ class HandwritingManager {
   static void SetHandwritingModule(HandwritingInterface *module);
 
   static HandwritingStatus Recognize(const Strokes &strokes,
-                                     vector<string> *candidates);
+                                     std::vector<string> *candidates);
   static HandwritingStatus Commit(const Strokes &strokes, const string &result);
 
  private:

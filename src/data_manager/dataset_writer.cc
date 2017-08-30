@@ -68,7 +68,7 @@ void DataSetWriter::AddFile(const string &name, int alignment,
   Add(name, alignment, ifs.Read());
 }
 
-void DataSetWriter::Finish(ostream *output) {
+void DataSetWriter::Finish(std::ostream *output) {
   const string s = metadata_.SerializeAsString();
   image_.append(s);  // Metadata
   image_.append(Util::SerializeUint64(s.size()));  // Metadata size

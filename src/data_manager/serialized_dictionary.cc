@@ -43,7 +43,6 @@
 #include "base/port.h"
 #include "base/serialized_string_array.h"
 #include "base/string_piece.h"
-#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -59,10 +58,10 @@ struct CompareByCost {
   }
 };
 
-void LoadTokens(std::istream *ifs, map<string, TokenList> *dic) {
+void LoadTokens(std::istream *ifs, std::map<string, TokenList> *dic) {
   dic->clear();
   string line;
-  vector<string> fields;
+  std::vector<string> fields;
   while (!getline(*ifs, line).fail()) {
     fields.clear();
     Util::SplitStringUsing(line, "\t", &fields);
@@ -101,25 +100,25 @@ SerializedDictionary::IterRange SerializedDictionary::equal_range(
   return std::equal_range(begin(), end(), key);
 }
 
-pair<StringPiece, StringPiece> SerializedDictionary::Compile(
+std::pair<StringPiece, StringPiece> SerializedDictionary::Compile(
     std::istream *input,
     std::unique_ptr<uint32[]> *output_token_array_buf,
     std::unique_ptr<uint32[]> *output_string_array_buf) {
-  map<string, TokenList> dic;
+  std::map<string, TokenList> dic;
   LoadTokens(input, &dic);
   return Compile(dic, output_token_array_buf, output_string_array_buf);
 }
 
-pair<StringPiece, StringPiece> SerializedDictionary::Compile(
-    const map<string, TokenList> &dic,
+std::pair<StringPiece, StringPiece> SerializedDictionary::Compile(
+    const std::map<string, TokenList> &dic,
     std::unique_ptr<uint32[]> *output_token_array_buf,
     std::unique_ptr<uint32[]> *output_string_array_buf) {
-  CHECK(SystemUtil::IsLittleEndian());
+  CHECK(Util::IsLittleEndian());
 
   // Build a mapping from string to its index in a serialized string array.
   // Note that duplicate keys share the same index, so data is slightly
   // compressed.
-  map<string, uint32> string_index;
+  std::map<string, uint32> string_index;
   for (const auto &kv : dic) {
     // This phase just collects all the strings and temporarily assigns 0 as
     // index.
@@ -171,7 +170,7 @@ pair<StringPiece, StringPiece> SerializedDictionary::Compile(
   {
     // Copy the map keys to vector.  Note: since map's iteration is ordered,
     // each string is placed at the desired index.
-    vector<StringPiece> strings;
+    std::vector<StringPiece> strings;
     for (const auto &kv : string_index) {
       // Guarantee that the string is inserted at its indexed position.
       CHECK_EQ(strings.size(), kv.second);
@@ -181,7 +180,7 @@ pair<StringPiece, StringPiece> SerializedDictionary::Compile(
         strings, output_string_array_buf);
   }
 
-  return pair<StringPiece, StringPiece>(token_array, string_array);
+  return std::pair<StringPiece, StringPiece>(token_array, string_array);
 }
 
 void SerializedDictionary::CompileToFiles(const string &input,
@@ -189,16 +188,16 @@ void SerializedDictionary::CompileToFiles(const string &input,
                                           const string &output_string_array) {
   InputFileStream ifs(input.c_str());
   CHECK(ifs.good());
-  map<string, TokenList> dic;
+  std::map<string, TokenList> dic;
   LoadTokens(&ifs, &dic);
   CompileToFiles(dic, output_token_array, output_string_array);
 }
 
-void SerializedDictionary::CompileToFiles(const map<string, TokenList> &dic,
-                                          const string &output_token_array,
-                                          const string &output_string_array) {
+void SerializedDictionary::CompileToFiles(
+    const std::map<string, TokenList> &dic, const string &output_token_array,
+    const string &output_string_array) {
   std::unique_ptr<uint32[]> buf1, buf2;
-  const pair<StringPiece, StringPiece> data = Compile(dic, &buf1, &buf2);
+  const std::pair<StringPiece, StringPiece> data = Compile(dic, &buf1, &buf2);
   CHECK(VerifyData(data.first, data.second));
 
   OutputFileStream token_ofs(output_token_array.c_str(),

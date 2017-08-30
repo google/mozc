@@ -58,7 +58,7 @@ class UserDataManagerMock : public UserDataManagerInterface {
   int GetFunctionCallCount(const string &name);
 
  private:
-  map<string, int> function_counters_;
+  std::map<string, int> function_counters_;
   DISALLOW_COPY_AND_ASSIGN(UserDataManagerMock);
 };
 

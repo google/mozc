@@ -47,19 +47,17 @@ class DataManagerTestBase : public ::testing::Test {
  protected:
   typedef bool (*IsBoundaryFunc)(uint16, uint16);
 
-  DataManagerTestBase(DataManagerInterface *data_manager,
-                      // The following three are used in segmenter test.
-                      const size_t lsize,
-                      const size_t rsize,
-                      IsBoundaryFunc is_boundary,
-                      // The following two are used in connector test.
-                      const string &connection_txt_file,
-                      const int expected_resolution,
-                      // The following two are used in suggestion filter test.
-                      const vector<string> &dictionary_files,
-                      const vector<string> &suggestion_filter_files,
-                      // The following is used in typing model test.
-                      const vector<pair<string, string>> &typing_model_files);
+  DataManagerTestBase(
+      DataManagerInterface *data_manager,
+      // The following three are used in segmenter test.
+      const size_t lsize, const size_t rsize, IsBoundaryFunc is_boundary,
+      // The following two are used in connector test.
+      const string &connection_txt_file, const int expected_resolution,
+      // The following two are used in suggestion filter test.
+      const std::vector<string> &dictionary_files,
+      const std::vector<string> &suggestion_filter_files,
+      // The following is used in typing model test.
+      const std::vector<std::pair<string, string>> &typing_model_files);
   ~DataManagerTestBase() override;
 
   void RunAllTests();
@@ -81,9 +79,9 @@ class DataManagerTestBase : public ::testing::Test {
   IsBoundaryFunc is_boundary_;
   const string connection_txt_file_;
   const int expected_resolution_;
-  const vector<string> dictionary_files_;
-  const vector<string> suggestion_filter_files_;
-  const vector<pair<string, string>> typing_model_files_;
+  const std::vector<string> dictionary_files_;
+  const std::vector<string> suggestion_filter_files_;
+  const std::vector<std::pair<string, string>> typing_model_files_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManagerTestBase);
 };

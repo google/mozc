@@ -38,7 +38,7 @@
     # GYP's 'copies' rule cannot copy a whole directory recursively, so we use
     # our own script to copy files.
     'copy_file': ['python', '../../build_tools/copy_file.py'],
-    'shared_intermediate_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)',
+    'shared_intermediate_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/',
     'static_resources_dir': '<(abs_depth)/android/static_resources',
     'sdk_resources_dir': '<(shared_intermediate_mozc_dir)/android/resources',
   },

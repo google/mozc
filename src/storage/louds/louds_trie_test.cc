@@ -49,7 +49,8 @@ class RecordCallbackArgs {
     LoudsTrie::Node node;
   };
 
-  explicit RecordCallbackArgs(vector<CallbackArgs> *output) : output_(output) {}
+  explicit RecordCallbackArgs(std::vector<CallbackArgs> *output)
+      : output_(output) {}
 
   void operator()(StringPiece key, size_t prefix_len,
                   const LoudsTrie &trie, LoudsTrie::Node node) {
@@ -62,7 +63,7 @@ class RecordCallbackArgs {
   }
 
  private:
-  vector<CallbackArgs> *output_;
+  std::vector<CallbackArgs> *output_;
 };
 
 LoudsTrie::Node Traverse(const LoudsTrie &trie, StringPiece key) {
@@ -454,7 +455,7 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
             param.termvec_lb1_cache_size);
   {
     const StringPiece kKey = "abc";
-    vector<RecordCallbackArgs::CallbackArgs> actual;
+    std::vector<RecordCallbackArgs::CallbackArgs> actual;
     trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
     ASSERT_EQ(2, actual.size());
@@ -473,7 +474,7 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
   }
   {
     const StringPiece kKey = "abxxxxxxx";
-    vector<RecordCallbackArgs::CallbackArgs> actual;
+    std::vector<RecordCallbackArgs::CallbackArgs> actual;
     trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
     ASSERT_EQ(1, actual.size());
@@ -487,7 +488,7 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
   {
     // Make sure that it works for non-ascii characters too.
     const StringPiece kKey = "\x01\xFF\xFF";
-    vector<RecordCallbackArgs::CallbackArgs> actual;
+    std::vector<RecordCallbackArgs::CallbackArgs> actual;
     trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
     ASSERT_EQ(2, actual.size());
@@ -505,7 +506,7 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
     EXPECT_EQ(Traverse(trie, "\x01\xFF\xFF"), actual[1].node);
   }
   {
-    vector<RecordCallbackArgs::CallbackArgs> actual;
+    std::vector<RecordCallbackArgs::CallbackArgs> actual;
     trie.PrefixSearch("xyz", RecordCallbackArgs(&actual));
     EXPECT_TRUE(actual.empty());
   }

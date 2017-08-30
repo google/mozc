@@ -91,7 +91,7 @@ class DateRewriter : public RewriterInterface  {
   bool RewriteConsecutiveDigits(const composer::Composer &composer,
                                 Segments *segments) const;
 
-  bool AdToEra(int year, vector<string> *results) const;
+  bool AdToEra(int year, std::vector<string> *results) const;
 
   // Converts AD to Japanese ERA.
   // If given string is invalid, this function does not nothing and
@@ -106,8 +106,8 @@ class DateRewriter : public RewriterInterface  {
   //                        "1313年", "１３１３年", "一三一三年" },
   //                       {"昭和2年", "昭和2年", "昭和2年",
   //                        "正和2年", "正和2年", "正和2年"}
-  bool EraToAd(const string &key,
-               vector<string> *results, vector<string> *descriptions) const;
+  bool EraToAd(const string &key, std::vector<string> *results,
+               std::vector<string> *descriptions) const;
 
   // Converts given time to string expression.
   // If given time information is invalid, this function does nothing and
@@ -120,7 +120,7 @@ class DateRewriter : public RewriterInterface  {
   //    1   :   1 -> "1時1分、午前1時1分、午前1時1分"
   //    1   :  30 -> "1時30分、午前1時30分、午前1時半、1時半、1:30"
   //   25   :  30 -> "25時30分、25時半、午前1時30分、午前1時半、25:30"
-  bool ConvertTime(uint32 hour, uint32 min, vector<string> *results) const;
+  bool ConvertTime(uint32 hour, uint32 min, std::vector<string> *results) const;
 
   // Converts given date to string expression.
   // If given date information is invalid, this function does nothing and
@@ -135,7 +135,7 @@ class DateRewriter : public RewriterInterface  {
   //   2011:  5  : 18 -> "平成23年5月18日,2011年5月18日,2011-05-18,2011/05/18"
   //   2000:  2  : 29 -> "平成12年2月29日,2000年2月29日,2000-02-29,2000/02/29"
   bool ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
-                           vector<string> *results) const;
+                           std::vector<string> *results) const;
 
   // Converts given date to string expression without year information.
   // This function validate month/day information with current year.
@@ -149,7 +149,7 @@ class DateRewriter : public RewriterInterface  {
   //     1   :   1 -> "1月1日、01/01"
   //     2   :  28 -> "2月28日、02/28"
   bool ConvertDateWithoutYear(uint32 month, uint32 day,
-                              vector<string> *results) const;
+                              std::vector<string> *results) const;
 };
 
 }  // namespace mozc

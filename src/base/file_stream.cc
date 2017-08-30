@@ -132,7 +132,7 @@ InputFileStream::InputFileStream(const char* filename,
 }
 
 void InputFileStream::open(const char* filename, ios_base::openmode mode) {
-  ifstream::open(ToPlatformString(filename), mode);
+  std::ifstream::open(ToPlatformString(filename), mode);
 }
 
 OutputFileStream::OutputFileStream() {}
@@ -143,7 +143,7 @@ OutputFileStream::OutputFileStream(const char* filename,
 }
 
 void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
-  ofstream::open(ToPlatformString(filename), mode);
+  std::ofstream::open(ToPlatformString(filename), mode);
 }
 #endif  // MOZC_USE_PEPPER_FILE_IO
 

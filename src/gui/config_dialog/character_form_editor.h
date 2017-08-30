@@ -30,11 +30,7 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QTableWidget>
-#else
-#include <QtGui/QTableWidget>
-#endif
 
 #include <memory>
 

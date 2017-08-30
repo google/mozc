@@ -61,7 +61,7 @@ class CalculatorMock : public CalculatorInterface {
   virtual bool CalculateString(const string &key, string *result) const;
 
  private:
-  typedef map<string, pair<string, bool> > CalculationMap;
+  typedef std::map<string, std::pair<string, bool> > CalculationMap;
 
   CalculationMap calculation_map_;
   mutable int calculation_counter_;

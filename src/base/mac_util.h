@@ -40,8 +40,11 @@ class MacUtil {
   // Returns the label commonly used in the project for specified suffix.
   static string GetLabelForSuffix(const string &suffix);
 
-  // Returns (basicaly) "~/Library/Application Support".
+  // Returns (basically) "~/Library/Application Support".
   static string GetApplicationSupportDirectory();
+
+  // Returns (basically) "~/Library/Caches".
+  static string GetCachesDirectory();
 
   // Returns (basically) ~/Library/Logs
   static string GetLoggingDirectory();

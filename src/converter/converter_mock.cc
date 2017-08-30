@@ -297,7 +297,7 @@ void ConverterMock::GetFreeSegmentValue(Segments *segments,
 }
 
 void ConverterMock::GetCommitSegments(Segments *segments,
-                                      vector<size_t> *candidate_index) {
+                                      std::vector<size_t> *candidate_index) {
   segments->CopyFrom(submitsegments_input_.segments);
   *candidate_index = submitsegments_input_.candidate_index_list;
 }
@@ -609,7 +609,7 @@ bool ConverterMock::FreeSegmentValue(Segments *segments,
 
 bool ConverterMock::CommitSegments(
     Segments *segments,
-    const vector<size_t> &candidate_index) const {
+    const std::vector<size_t> &candidate_index) const {
   VLOG(2) << "mock function: CommitSegments";
   submitsegments_input_.segments.CopyFrom(*segments);
   submitsegments_input_.candidate_index_list = candidate_index;
@@ -649,7 +649,7 @@ bool ConverterMock::ResizeSegment(Segments *segments,
   resizesegment2_input_.segments.CopyFrom(*segments);
   resizesegment2_input_.start_segment_index = start_segment_index;
   resizesegment2_input_.segments_size = segments_size;
-  vector<uint8> size_array(new_size_array,
+  std::vector<uint8> size_array(new_size_array,
                            new_size_array + array_size);
   resizesegment2_input_.new_size_array = size_array;
 

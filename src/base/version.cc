@@ -85,9 +85,9 @@ bool Version::CompareVersion(const string &lhs, const string &rhs) {
     LOG(WARNING) << "Unknown is given as version";
     return false;
   }
-  vector<string> vlhs;
+  std::vector<string> vlhs;
   Util::SplitStringUsing(lhs, ".", &vlhs);
-  vector<string> vrhs;
+  std::vector<string> vrhs;
   Util::SplitStringUsing(rhs, ".", &vrhs);
   return std::lexicographical_compare(vlhs.begin(), vlhs.end(), vrhs.begin(),
                                       vrhs.end(), StringAsIntegerComparator);

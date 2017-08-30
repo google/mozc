@@ -201,7 +201,7 @@ string GetBooleanError(const string &name, const string &expected_string,
   uint32 actual_num = 0;
   uint32 actual_min = 0;
   uint32 actual_max = 0;
-  vector<string> errors;
+  std::vector<string> errors;
   if (!UsageStats::GetTimingForTest(name, &actual_total, &actual_num, NULL,
                                     &actual_min, &actual_max)) {
     if (expected_num == 0) {

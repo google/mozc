@@ -149,7 +149,8 @@ class IPCPathManagerMap {
  public:
   IPCPathManager *GetIPCPathManager(const string &name) {
     scoped_lock l(&mutex_);
-    map<string, IPCPathManager *>::const_iterator it = manager_map_.find(name);
+    std::map<string, IPCPathManager *>::const_iterator it =
+        manager_map_.find(name);
     if (it != manager_map_.end()) {
       return it->second;
     }
@@ -162,7 +163,7 @@ class IPCPathManagerMap {
 
   ~IPCPathManagerMap() {
     scoped_lock l(&mutex_);
-    for (map<string, IPCPathManager *>::iterator it = manager_map_.begin();
+    for (std::map<string, IPCPathManager *>::iterator it = manager_map_.begin();
          it != manager_map_.end(); ++it) {
       delete it->second;
     }
@@ -170,7 +171,7 @@ class IPCPathManagerMap {
   }
 
  private:
-  map<string, IPCPathManager *> manager_map_;
+  std::map<string, IPCPathManager *> manager_map_;
   Mutex mutex_;
 };
 
@@ -515,7 +516,7 @@ bool IPCPathManager::LoadPathNameInternal() {
 
 #else
 
-  InputFileStream is(filename.c_str(), ios::binary|ios::in);
+  InputFileStream is(filename.c_str(), std::ios::binary | std::ios::in);
   if (!is) {
     LOG(ERROR) << "cannot open: " << filename;
     return false;

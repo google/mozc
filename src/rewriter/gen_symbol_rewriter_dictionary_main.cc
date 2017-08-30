@@ -65,7 +65,7 @@ namespace {
 
 void GetSortingMap(const string &auto_file,
                    const string &rule_file,
-                   map<string, uint16> *sorting_map) {
+                   std::map<string, uint16> *sorting_map) {
   CHECK(sorting_map);
   sorting_map->clear();
   string line;
@@ -87,7 +87,7 @@ void GetSortingMap(const string &auto_file,
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    vector<string> fields;
+    std::vector<string> fields;
     Util::SplitStringUsing(line, "\t ", &fields);
     CHECK_GE(fields.size(), 2);
     const char32 ucs4 = strtol(fields[1].c_str(), NULL, 16);
@@ -104,14 +104,14 @@ void GetSortingMap(const string &auto_file,
 
 void AddSymbolToDictionary(const string &pos,
                            const string &value,
-                           const vector<string> &keys,
+                           const std::vector<string> &keys,
                            const string &description,
                            const string &additional_description,
-                           const map<string, uint16> &sorting_map,
+                           const std::map<string, uint16> &sorting_map,
                            rewriter::DictionaryGenerator *dictionary) {
   // use first char of value as sorting key.
   const string first_value = Util::SubString(value, 0, 1);
-  map<string, uint16>::const_iterator itr = sorting_map.find(first_value);
+  std::map<string, uint16>::const_iterator itr = sorting_map.find(first_value);
   uint16 sorting_key = 0;
   if (itr == sorting_map.end()) {
     DLOG(WARNING) << first_value << " is not defined in sorting map.";
@@ -150,8 +150,8 @@ void MakeDictionary(const string &symbol_dictionary_file,
                     const string &sorting_map_file,
                     const string &ordering_rule_file,
                     rewriter::DictionaryGenerator *dictionary) {
-  set<string> seen;
-  map<string, uint16> sorting_map;
+  std::set<string> seen;
+  std::map<string, uint16> sorting_map;
   GetSortingMap(sorting_map_file, ordering_rule_file, &sorting_map);
 
   InputFileStream ifs(symbol_dictionary_file.c_str());
@@ -160,7 +160,7 @@ void MakeDictionary(const string &symbol_dictionary_file,
   string line;
   CHECK(!getline(ifs, line).fail());  // get first line
 
-  vector<string> fields;
+  std::vector<string> fields;
   while (!getline(ifs, line).fail()) {
     fields.clear();
     // Format:
@@ -184,7 +184,7 @@ void MakeDictionary(const string &symbol_dictionary_file,
     string keys_str;
     // \xE3\x80\x80 is full width space
     Util::StringReplace(fields[2], "\xE3\x80\x80", " ", true, &keys_str);
-    vector<string> keys;
+    std::vector<string> keys;
     Util::SplitStringUsing(keys_str, " ", &keys);
     const string &description = (fields.size()) > 3 ? fields[3] : "";
     const string &additional_description = (fields.size()) > 4 ? fields[4] : "";
@@ -193,7 +193,7 @@ void MakeDictionary(const string &symbol_dictionary_file,
                           sorting_map, dictionary);
   }
   // Add space as a symbol
-  vector<string> keys_space;
+  std::vector<string> keys_space;
   keys_space.push_back(" ");
   // "記号", "空白"
   AddSymbolToDictionary("\xe8\xa8\x98\xe5\x8f\xb7", " ", keys_space,

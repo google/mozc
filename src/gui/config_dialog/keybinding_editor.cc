@@ -43,14 +43,10 @@
 #endif
 
 #include <QtCore/QString>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTableWidget>
-#else
-#include <QtGui/QMessageBox>
-#endif
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -288,13 +284,8 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
     result_state = KeyBindingFilter::DENY_KEY;
   }
 
-#ifdef MOZC_USE_QT5
   const char key = modifier_required_key_.isEmpty() ?
       0 : modifier_required_key_[0].toLatin1();
-#else
-  const char key = modifier_required_key_.isEmpty() ?
-      0 : modifier_required_key_[0].toAscii();
-#endif
 
   // Alt or Ctrl or these combinations
   if ((alt_pressed_ || ctrl_pressed_) &&
@@ -516,14 +507,15 @@ bool KeyBindingFilter::eventFilter(QObject *obj, QEvent *event) {
 KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
     : QDialog(parent), trigger_parent_(trigger_parent) {
   setupUi(this);
-#ifdef OS_LINUX
+#if defined(OS_LINUX)
   // Workaround for the issue https://github.com/google/mozc/issues/9
   // Seems that even after clicking the button for the keybinding dialog,
   // the edit is not raised. This might be a bug of setFocusProxy.
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::Tool |
-                 Qt::WindowStaysOnTopHint);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::Tool | Qt::WindowStaysOnTopHint);
 #else
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::Tool);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::Tool);
 #endif
 
   QPushButton *ok_button =

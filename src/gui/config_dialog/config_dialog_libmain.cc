@@ -31,15 +31,10 @@
 
 #include <QtCore/QStringList>
 #include <QtCore/QTextCodec>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QtGui>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDialog>
-#else
-#include <QtGui/QApplication>
-#include <QtGui/QDialog>
-#include <QtGui/QtGui>
-#endif
+
 #include "base/system_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
@@ -58,9 +53,8 @@ int RunConfigDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  QStringList resource_names;
-  resource_names << "config_dialog" << "keymap";
-  mozc::gui::LocaleUtil::InstallTranslationMessagesAndFont(resource_names);
+  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("config_dialog");
+  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("keymap");
   mozc::gui::ConfigDialog mozc_config;
 
   mozc_config.show();

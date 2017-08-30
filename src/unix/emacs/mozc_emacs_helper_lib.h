@@ -80,7 +80,7 @@ void ParseInputLine(
 //
 // This function never outputs newlines except for ones in strings.
 void PrintMessage(const mozc::protobuf::Message &message,
-                  vector<string>* output);
+                  std::vector<string>* output);
 
 
 // Utilities
@@ -106,7 +106,7 @@ bool UnquoteString(const string &input, string *output);
 // This function implements very simple tokenization and is NOT conforming to
 // the definition of S expression.  For example, this function does not return
 // an error for the input "\'".
-bool TokenizeSExpr(const string &input, vector<string> *output);
+bool TokenizeSExpr(const string &input, std::vector<string> *output);
 
 // Prints an error message in S-expression and terminates with status code 1.
 void ErrorExit(const string &error, const string &message);

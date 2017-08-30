@@ -45,7 +45,7 @@ bool SchedulerStub::AddJob(const Scheduler::JobSetting &job_setting) {
     return false;
   }
 
-  jobs_.insert(pair<string, JobForStub>(
+  jobs_.insert(std::pair<string, JobForStub>(
       job_setting.name(), JobForStub(job_setting)));
   return true;
 }
@@ -63,7 +63,7 @@ bool SchedulerStub::HasJob(const string &name) const {
 }
 
 void SchedulerStub::PutClockForward(uint64 delta_usec) {
-  for (map<string, JobForStub>::iterator itr = jobs_.begin();
+  for (std::map<string, JobForStub>::iterator itr = jobs_.begin();
        itr != jobs_.end(); ++itr) {
     JobForStub *job_for_stub = &itr->second;
     uint64 time_usec = delta_usec;

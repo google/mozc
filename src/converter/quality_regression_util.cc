@@ -116,7 +116,7 @@ uint32 GetPlatfromFromString(StringPiece str) {
 }   // namespace
 
 string QualityRegressionUtil::TestItem::OutputAsTSV() const {
-  ostringstream os;
+  std::ostringstream os;
   os << label << '\t' << key << '\t' << expected_value << '\t'
      << command << '\t' << expected_rank << '\t' << accuracy
      << '\t' << platform;
@@ -125,7 +125,7 @@ string QualityRegressionUtil::TestItem::OutputAsTSV() const {
 }
 
 bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
-  vector<StringPiece> tokens;
+  std::vector<StringPiece> tokens;
   Util::SplitStringUsing(line, "\t", &tokens);
   if (tokens.size() < 6) {
     return false;
@@ -138,7 +138,7 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
   NumberUtil::SafeStrToDouble(tokens[5], &accuracy);
   platform = 0;
   if (tokens.size() >= 7) {
-    vector<StringPiece> platforms;
+    std::vector<StringPiece> platforms;
     Util::SplitStringUsing(tokens[6], ",", &platforms);
     for (size_t i = 0; i < platforms.size(); ++i) {
       platform |= GetPlatfromFromString(platforms[i]);
@@ -162,7 +162,7 @@ QualityRegressionUtil::~QualityRegressionUtil() {
 
 // static
 bool QualityRegressionUtil::ParseFile(const string &filename,
-                                      vector<TestItem> *outputs) {
+                                      std::vector<TestItem> *outputs) {
   // TODO(taku): support an XML file of Mozcsu.
   outputs->clear();
   InputFileStream ifs(filename.c_str());
@@ -262,7 +262,7 @@ void QualityRegressionUtil::SetConfig(const config::Config &config) {
 }
 
 string QualityRegressionUtil::GetPlatformString(uint32 platform_bitfiled) {
-  vector<string> v;
+  std::vector<string> v;
   if (platform_bitfiled & DESKTOP) {
     v.push_back("DESKTOP");
   }

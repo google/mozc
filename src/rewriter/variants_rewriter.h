@@ -109,8 +109,8 @@ class VariantsRewriter : public RewriterInterface {
       string *alternative_value,
       string *default_content_value,
       string *alternative_content_value,
-      vector<uint32> *default_inner_segment_boundary,
-      vector<uint32> *alternative_inner_segment_boundary) const;
+      std::vector<uint32> *default_inner_segment_boundary,
+      std::vector<uint32> *alternative_inner_segment_boundary) const;
 
   const dictionary::POSMatcher pos_matcher_;
 };

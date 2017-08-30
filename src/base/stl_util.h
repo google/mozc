@@ -113,12 +113,12 @@ struct FunctionalComparator {
     return Comparator<T>()(lhs, rhs);
   }
 };
-typedef FunctionalComparator<equal_to> EqualTo;
-typedef FunctionalComparator<not_equal_to> NotEqualTo;
-typedef FunctionalComparator<less> Less;
-typedef FunctionalComparator<greater> Greater;
-typedef FunctionalComparator<less_equal> LessEqual;
-typedef FunctionalComparator<greater_equal> GreaterEqual;
+typedef FunctionalComparator<std::equal_to> EqualTo;
+typedef FunctionalComparator<std::not_equal_to> NotEqualTo;
+typedef FunctionalComparator<std::less> Less;
+typedef FunctionalComparator<std::greater> Greater;
+typedef FunctionalComparator<std::less_equal> LessEqual;
+typedef FunctionalComparator<std::greater_equal> GreaterEqual;
 
 }  // namespace mozc
 

@@ -113,7 +113,7 @@ bool ParseCompound(const StringPiece value, const StringPiece pattern,
 }
 
 // Fast way of pushing back a string piece to a vector.
-inline void PushBackStringPiece(const StringPiece s, vector<string> *v) {
+inline void PushBackStringPiece(const StringPiece s, std::vector<string> *v) {
   v->push_back(string());
   v->back().assign(s.data(), s.size());
 }
@@ -121,7 +121,7 @@ inline void PushBackStringPiece(const StringPiece s, vector<string> *v) {
 // Fast way of pushing back the concatenated string of two string pieces to a
 // vector.
 inline void PushBackJoinedStringPieces(
-    const StringPiece s1, const StringPiece s2, vector<string> *v) {
+    const StringPiece s1, const StringPiece s2, std::vector<string> *v) {
   v->push_back(string());
   v->back().reserve(s1.size() + s2.size());
   v->back().assign(s1.data(), s1.size()).append(s2.data(), s2.size());
@@ -132,7 +132,7 @@ inline void PushBackJoinedStringPieces(
 // so that we can use collocation data like "厚い本"
 void ResolveCompoundSegment(const string &top_value, const string &value,
                             SegmentLookupType type,
-                            vector<string> *output) {
+                            std::vector<string> *output) {
   // "格助詞"
   // see "http://ja.wikipedia.org/wiki/助詞"
   static const char kPat1[] = "\xE3\x81\x8C";  // "が"
@@ -183,7 +183,7 @@ void ResolveCompoundSegment(const string &top_value, const string &value,
 bool IsNaturalContent(const Segment::Candidate &cand,
                       const Segment::Candidate &top_cand,
                       SegmentLookupType type,
-                      vector<string> *output) {
+                      std::vector<string> *output) {
   const string &content = cand.content_value;
   const string &value = cand.value;
   const string &top_content = top_cand.content_value;
@@ -451,7 +451,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 bool VerifyNaturalContent(const Segment::Candidate &cand,
                           const Segment::Candidate &top_cand,
                           SegmentLookupType type) {
-  vector<string> nexts;
+  std::vector<string> nexts;
   return IsNaturalContent(cand, top_cand, RIGHT, &nexts);
 }
 
@@ -470,7 +470,7 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
     }
   }
 
-  vector<bool> segs_changed(segments->segments_size(), false);
+  std::vector<bool> segs_changed(segments->segments_size(), false);
   bool changed = false;
 
   for (size_t i = segments->history_segments_size();
@@ -622,7 +622,7 @@ bool CollocationRewriter::RewriteFromPrevSegment(
   const size_t i_max = min(seg->candidates_size(), kCandidateSize);
 
   // Reuse |curs| and |cur| in the loop as this method is performance critical.
-  vector<string> curs;
+  std::vector<string> curs;
   string cur;
   for (size_t i = 0; i < i_max; ++i) {
     if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {
@@ -662,11 +662,11 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
   const size_t j_max = min(next_seg->candidates_size(), kCandidateSize);
 
   // Cache the results for the next segment
-  vector<int> next_seg_ok(j_max);  // Avoiding vector<bool>
-  vector<vector<string> > normalized_string(j_max);
+  std::vector<int> next_seg_ok(j_max);  // Avoiding vector<bool>
+  std::vector<std::vector<string> > normalized_string(j_max);
 
   // Reuse |nexts| in the loop as this method is performance critical.
-  vector<string> nexts;
+  std::vector<string> nexts;
   for (size_t j = 0; j < j_max; ++j) {
     next_seg_ok[j] = 0;
 
@@ -683,7 +683,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
     }
 
     next_seg_ok[j] = 1;
-    for (vector<string>::const_iterator it = nexts.begin();
+    for (std::vector<string>::const_iterator it = nexts.begin();
          it != nexts.end(); ++it) {
       normalized_string[j].push_back(string());
       CollocationUtil::GetNormalizedScript(
@@ -692,7 +692,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
   }
 
   // Reuse |curs| and |cur| in the loop as this method is performance critical.
-  vector<string> curs;
+  std::vector<string> curs;
   string cur;
   for (size_t i = 0; i < i_max; ++i) {
     if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {

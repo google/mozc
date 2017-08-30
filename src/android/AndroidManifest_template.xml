@@ -43,7 +43,6 @@
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-
   <application android:icon="@drawable/application_icon"
                android:label="@string/app_full_name"
                android:allowBackup="false"

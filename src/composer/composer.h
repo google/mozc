@@ -124,11 +124,11 @@ class Composer {
   void GetQueryForPrediction(string *output) const;
 
   // Returns a expanded prediction query.
-  void GetQueriesForPrediction(string *base, set<string> *expanded) const;
+  void GetQueriesForPrediction(string *base, std::set<string> *expanded) const;
 
   // Returns a type-corrected prediction queries.
   void GetTypeCorrectedQueriesForPrediction(
-      vector<TypeCorrectedQuery> *queries) const;
+      std::vector<TypeCorrectedQuery> *queries) const;
 
   size_t GetLength() const;
   size_t GetCursor() const;

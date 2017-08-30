@@ -51,7 +51,7 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace {
 
-void Expect2Results(const vector<string> &src,
+void Expect2Results(const std::vector<string> &src,
                     const string &exp1,
                     const string &exp2) {
   EXPECT_EQ(2, src.size());
@@ -61,7 +61,7 @@ void Expect2Results(const vector<string> &src,
   }
 }
 
-void Expect3Results(const vector<string> &src,
+void Expect3Results(const std::vector<string> &src,
                     const string &exp1,
                     const string &exp2,
                     const string &exp3) {
@@ -74,7 +74,7 @@ void Expect3Results(const vector<string> &src,
   }
 }
 
-void Expect4Results(const vector<string> &src,
+void Expect4Results(const std::vector<string> &src,
                     const string &exp1,
                     const string &exp2,
                     const string &exp3,
@@ -92,7 +92,7 @@ void Expect4Results(const vector<string> &src,
   }
 }
 
-void Expect5Results(const vector<string> &src,
+void Expect5Results(const std::vector<string> &src,
                     const string &exp1,
                     const string &exp2,
                     const string &exp3,
@@ -179,7 +179,8 @@ string GetNthCandidateValue(const Segments &segments, const int n) {
   return segment.candidate(n).value;
 }
 
-bool IsStringContained(const string &key, const vector<string> &container) {
+bool IsStringContained(const string &key,
+                       const std::vector<string> &container) {
   for (size_t i = 0; i < container.size(); ++i) {
     if (key == container[i]) {
       return true;
@@ -188,7 +189,8 @@ bool IsStringContained(const string &key, const vector<string> &container) {
   return false;
 }
 
-bool AllElementsAreSame(const string &key, const vector<string> &container) {
+bool AllElementsAreSame(const string &key,
+                        const std::vector<string> &container) {
   for (size_t i = 0; i < container.size(); ++i) {
     if (key != container[i]) {
       return false;
@@ -468,7 +470,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
 
 TEST_F(DateRewriterTest, ADToERA) {
   DateRewriter rewriter;
-  vector<string> results;
+  std::vector<string> results;
   const ConversionRequest request;
 
   results.clear();
@@ -612,7 +614,7 @@ TEST_F(DateRewriterTest, ADToERA) {
 
 TEST_F(DateRewriterTest, ERAToAD) {
   DateRewriter rewriter;
-  vector<string> results, descriptions;
+  std::vector<string> results, descriptions;
   const ConversionRequest request;
   // "1234", "１２３４", "一二三四"
   const int kNumYearRepresentation = 3;
@@ -675,9 +677,9 @@ TEST_F(DateRewriterTest, ERAToAD) {
     EXPECT_EQ("\xE6\x98\xAD\xE5\x92\x8C" "2" "\xE5\xB9\xB4",
               descriptions[i + kNumYearRepresentation]);
   }
-  vector<string> first(results.begin(),
+  std::vector<string> first(results.begin(),
                        results.begin() + kNumYearRepresentation);
-  vector<string> second(results.begin() + kNumYearRepresentation,
+  std::vector<string> second(results.begin() + kNumYearRepresentation,
                         results.end());
   EXPECT_TRUE(IsStringContained("1313" "\xE5\xB9\xB4", first));
   EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x93\xEF\xBC\x91"
@@ -826,7 +828,7 @@ TEST_F(DateRewriterTest, ERAToAD) {
 
 TEST_F(DateRewriterTest, ConvertTime) {
   DateRewriter rewriter;
-  vector<string> results;
+  std::vector<string> results;
   const ConversionRequest request;
 
   results.clear();
@@ -964,7 +966,7 @@ TEST_F(DateRewriterTest, ConvertTime) {
 
 TEST_F(DateRewriterTest, ConvertDateTest) {
   DateRewriter rewriter;
-  vector<string> results;
+  std::vector<string> results;
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertDateWithYear(2011, 4, 17, &results));

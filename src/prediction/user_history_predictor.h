@@ -200,8 +200,8 @@ class UserHistoryPredictor : public PredictorInterface {
     }
 
    private:
-    vector<SegmentForLearning> history_segments_;
-    vector<SegmentForLearning> conversion_segments_;
+    std::vector<SegmentForLearning> history_segments_;
+    std::vector<SegmentForLearning> conversion_segments_;
   };
 
   friend class UserHistoryPredictorSyncer;
@@ -374,11 +374,11 @@ class UserHistoryPredictor : public PredictorInterface {
 
    private:
     friend class UserHistoryPredictor;
-    typedef pair<uint32, Entry *> QueueElement;
-    typedef priority_queue<QueueElement> Agenda;
+    typedef std::pair<uint32, Entry *> QueueElement;
+    typedef std::priority_queue<QueueElement> Agenda;
     Agenda agenda_;
     FreeList<Entry> pool_;
-    set<uint32> seen_;
+    std::set<uint32> seen_;
   };
 
   typedef mozc::storage::LRUCache<uint32, Entry> DicCache;
@@ -515,13 +515,10 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Recursively removes a chain of Entries in |dic_|. See the comment in
   // implemenetation for details.
-  RemoveNgramChainResult RemoveNgramChain(const string &target_key,
-                                          const string &target_value,
-                                          Entry *entry,
-                                          vector<StringPiece> *key_ngrams,
-                                          size_t key_ngrams_len,
-                                          vector<StringPiece> *value_ngrams,
-                                          size_t value_ngrams_len);
+  RemoveNgramChainResult RemoveNgramChain(
+      const string &target_key, const string &target_value, Entry *entry,
+      std::vector<StringPiece> *key_ngrams, size_t key_ngrams_len,
+      std::vector<StringPiece> *value_ngrams, size_t value_ngrams_len);
 
   // Returns true if the input first candidate seems to be a privacy sensitive
   // such like password.

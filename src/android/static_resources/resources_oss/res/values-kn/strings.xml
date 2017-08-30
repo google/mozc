@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">ಜಾಪನೀಸ್</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">ಸಾಫ್ಟ್‌ವೇರ್‌ ಕೀಬೋರ್ಡ್‌</string>
+<string name="pref_software_keyboard_advanced_settings_title">ಸಾಫ್ಟ್‌‌ವೇರ್ ಕೀಬೋರ್ಡ್ ಸುಧಾರಿತ ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
+<string name="pref_fragment_software_keyboard_title">ಸಾಫ್ಟ್‌ವೇರ್‌ ಕೀಬೋರ್ಡ್‌</string>
+<string name="pref_fragment_input_support_title">ಇನ್‌ಪುಟ್ ಬೆಂಬಲ</string>
+<string name="pref_fragment_conversion_title">ಪರಿವರ್ತನೆ</string>
+<string name="pref_fragment_dictionary_title">ನಿಘಂಟು</string>
+<string name="pref_fragment_user_feedback_title">ಬಳಕೆದಾರರ ಪ್ರತಿಕ್ರಿಯೆ</string>
+<string name="pref_fragment_about_title">ಬಗ್ಗೆ</string>
+<string name="pref_fragment_development_title">ಅಭಿವೃದ್ಧಿ</string>
+<string name="pref_software_keyboard_preferences_portrait_title">ಪೋಟ್ರೇಟ್ ಮೋಡ್‌ಗಾಗಿ ಸಾಫ್ಟ್‌ವೇರ್‌ ಕೀಬೋರ್ಡ್‌ ಪ್ರಾಶಸ್ತ್ಯಗಳು</string>
+<string name="pref_software_keyboard_preferences_landscape_title">ಲ್ಯಾಂಡ್‌ಸ್ಕೇಪ್‌ ಮೋಡ್‌ಗಾಗಿ ಸಾಫ್ಟ್‌ವೇರ್‌ ಕೀಬೋರ್ಡ್‌ ಪ್ರಾಶಸ್ತ್ಯಗಳು</string>
+<string name="pref_keyboard_layout_title">ಕೀಬೋರ್ಡ್ ವಿನ್ಯಾಸ</string>
+<string name="pref_input_style_title">ಇನ್‌ಪುಟ್‌ ಶೈಲಿ</string>
+<string name="pref_qwerty_layout_for_alphabet_title">QWERTY ಮೋಡ್</string>
+<string name="pref_flick_sensitivity_title">ಫ್ಲಿಕ್ ಸೂಕ್ಷ್ಮತೆ</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">ಪ್ರೋಟ್ರೇಟ್‌ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಬಳಸಿ</string>
+<string name="pref_keyboard_height_ratio_title">ಕೀಬೋರ್ಡ್ ಎತ್ತರ</string>
+<string name="pref_input_feedback_category_title">ಇನ್‌ಪುಟ್‌ ಪ್ರತಿಕ್ರಿಯೆ ಪ್ರಾಶಸ್ತ್ಯಗಳು</string>
+<string name="pref_haptic_feedback_title">ಸ್ಪರ್ಶ ಪ್ರತಿಕ್ರಿಯೆ</string>
+<string name="pref_haptic_feedback_duration_title">ಸ್ಪರ್ಶ ಪ್ರತಿಕ್ರಿಯೆ ಅವಧಿ</string>
+<string name="pref_sound_feedback_title">ಆಡಿಯೋ ಪ್ರತಿಕ್ರಿಯೆ</string>
+<string name="pref_sound_feedback_volume_title">ಆಡಿಯೋ ಪ್ರತಿಕ್ರಿಯೆ ವಾಲ್ಯೂಮ್‌</string>
+<string name="pref_popup_feedback_title">ಪಾಪ್ಅಪ್ ಪ್ರತಿಕ್ರಿಯೆ</string>
+<string name="pref_other_input_support_preference_category_title">ಇತರ ಇನ್‌ಪುಟ್ ಬೆಂಬಲ ಪ್ರಾಶಸ್ತ್ಯಗಳು</string>
+<string name="pref_fullscreen_title">ಪೂರ್ಣಪರದೆ ಮೋಡ್‌</string>
+<string name="pref_skin_type_title">ಕೀಬೋರ್ಡ್ ಥೀಮ್</string>
+<string name="pref_hardware_title">ಹಾರ್ಡ್‌ವೇರ್‌ ಕೀಬೋರ್ಡ್‌ಗಳಿಗೆ ಪ್ರಾಶಸ್ತ್ಯಗಳು</string>
+<string name="pref_voice_input_title">ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಬಟನ್ ತೋರಿಸು</string>
+<string name="pref_conversion_category_title">ಪರಿವರ್ತನೆ ಪ್ರಾಶಸ್ತ್ಯಗಳು</string>
+<string name="pref_layout_adjustment_title">ಲೇಔಟ್‌ ಹೊಂದಾಣಿಕೆ</string>
+<string name="pref_space_character_form_title">ಅರ್ಧ ಅಗಲ ಜಾಗವನ್ನು ಬಳಸಿ</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">ಮಾರ್ಪಡಿಸುವ ಸೂಕ್ಷ್ಮವಲ್ಲದ ಪರಿವರ್ತನೆ</string>
+<string name="pref_typing_correction_title">ತಿದ್ದುಪಡಿಯನ್ನು ಟೈಪ್ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
+<string name="pref_other_incognito_mode_title">ಅಜ್ಞಾತ ಮೋಡ್</string>
+<string name="pref_emoji_provider_type_title">ಎಮೊಜಿಯನ್ನು ಪೂರೈಕೆದಾರರನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+<string name="pref_dictionry_category_title">ನಿಘಂಟು ಪ್ರಾಶಸ್ತ್ಯಗಳು</string>
+<string name="pref_dictionary_personalization_title">ವೈಯಕ್ತೀಕರಣ</string>
+<string name="pref_dictionary_user_dictionary_tool_title">ನಿಘಂಟು ಉಪಕರಣ</string>
+<string name="pref_clear_category_title">ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಿ</string>
+<string name="pref_clear_conversion_history_title">ಪರಿವರ್ತನೆಯ ಇತಿಹಾಸ</string>
+<string name="pref_clear_symbol_history_title">ಸಂಕೇತ ಇತಿಹಾಸ</string>
+<string name="pref_clear_user_dictionary_title">ಬಳಕೆದಾರರ ನಿಘಂಟು</string>
+<string name="pref_user_feedback_category_title">ಬಳಕೆದಾರರ ಪ್ರತಿಕ್ರಿಯೆ</string>
+<string name="pref_other_usage_stats_title">ಬಳಕೆಯ ಅಂಕಿಅಂಶಗಳನ್ನು ಕಳುಹಿಸಿ</string>
+<string name="pref_about_about_this_software_title">ಈ ಸಾಫ್ಟವೇರ್‌ ಕುರಿತು</string>
+<string name="pref_about_version_title">ಆವೃತ್ತಿ</string>
+<string name="pref_about_terms_of_service_title">ಸೇವಾ ನಿಯಮಗಳು</string>
+<string name="pref_about_privacy_policy_title">ಗೌಪ್ಯತೆ ನೀತಿ</string>
+<string name="pref_about_oss_credits_title">ಮುಕ್ತ ಮೂಲದ ಸಾಫ್ಟ್‌ವೇರ್‌</string>
+<string name="pref_launcher_icon_visibility_title">ಅಪ್ಲಿಕೇಶನ್ ಐಕಾನ್ ತೋರಿಸು</string>
+<string name="pref_haptic_feedback_description">ಕೀ ಒತ್ತಿದ ಮೇಲೆ ವೈಬ್ರೇಟ್‌.</string>
+<string name="pref_sound_feedback_description">ಕೀ ಒತ್ತಿದ ಮೇಲೆ ಧ್ವನಿ.</string>
+<string name="pref_popup_feedback_description">ಕೀ ಒತ್ತಿದ ಮೇಲೆ ಪಾಪ್‌ಅಪ್‌.</string>
+<string name="pref_keyboard_layout_description">ಕೀಬೋರ್ಡ್‌ ಲೇಔಟ್‌ ಅನ್ನು ಬದಲಾಯಿಸಿ.</string>
+<string name="pref_keyboard_layout_title_12keys">12 ಕೀಗಳು</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">ಗೋಡಾನ್‌ ಕೀಬೋರ್ಡ್</string>
+<string name="pref_keyboard_layout_description_12keys">ಮೊಬೈಲ್‌ ಫೋನ್‌ ಲೇಔಟ್‌.</string>
+<string name="pref_keyboard_layout_description_qwerty">PC ಕೀಬೋರ್ಡ್‌ ಲೇಔಟ್‌.</string>
+<string name="pref_keyboard_layout_description_godan">ರೊಮಾಜಿ ಮೀಸಲಾದ ಲೇಔಟ್. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;ಬಳಕೆ&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">ಇನ್‌ಪುಟ್‌ ಶೈಲಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">ಗುರುತಿಸಿದ್ದರೇ, ಮುಖ್ಯ ಲೇಔಟ್‌ ಅನ್ನು ಪರಿಗಣಿಸದೆ ವರ್ಣಮಾಲೆ ಇನ್‌ಪುಟ್‌ ಮೋಡ್‌ಗಾಗಿ QWERTY ಲೇಔಟ್‌ ಬಳಸಲಾಗುತ್ತದೆ.</string>
+<string name="pref_fullscreen_description">ಗುರುತಿಸಿದ್ದರೆ, ಗುರಿಯ ಟೆಕ್ಸ್ಟ್ ಬಾಕ್ಸ್‌ ಅನ್ನು ಪೂರ್ಣಪರದೆ ಮೋಡ್‌ನಲ್ಲಿ ತೋರಿಸುತ್ತದೆ.</string>
+<string name="pref_flick_sensitivity_description">ಫ್ಲಿಕ್ ಸೂಕ್ಷ್ಮತೆಯನ್ನು ಟ್ಯೂನ್‌ಮಾಡಿ.</string>
+<string name="pref_layout_adjustment_description">ಕೀಬೋರ್ಡ್ ಹೊಂದಾಣಿಕೆ ಬದಲಿಸಿ.</string>
+<string name="pref_keyboard_height_ratio_description">ಕೀಬೋರ್ಡ್ ಎತ್ತರ ಬದಲಾಯಿಸಿ.</string>
+<string name="pref_space_character_form_description">ಇನ್‌ಪುಟ್‌ ಮೋಡ್ ಅನ್ನು ಪರಿಗಣಿಸದೆ, ಯಾವಾಗಲೂ ಅರ್ಧ ಅಳತೆಯ ಸ್ಪೇಸ್ ಬಳಸಿ.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">ಕಾನಾ ಮಾರ್ಪಡಿಸುವಿಕೆಯ ಸೂಕ್ಷ್ಮವಲ್ಲದ ಪರಿವರ್ತನೆಯನ್ನು ಬಳಸಿ. 12 ಕೀಗಳು ಮತ್ತು ಗೋಡಾನ್‌ ಕೀಬೋರ್ಡ್‌ಗೆ ಅನ್ವಯಿಸಲಾಗಿದೆ. ಉದಾ. かつこう→学校</string>
+<string name="pref_typing_correction_description">ತಪ್ಪು ಟೈಪಿಂಗ್‌ ಅನ್ನು ಪತ್ತೆ ಮಾಡು ಮತ್ತು ಸರಿಯಾದ ಕ್ಯಾಂಡಿಡೇಟ್‌ಗಳನ್ನು ತೋರಿಸು. ಉದಾ. すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">ಎಮೊಜಿಯನ್ನು ಬಳಸಲು ಎಮೊಜಿಯನ್ನು ಒದಗಿಸುವವರನ್ನು ಸರಿಯಾಗಿ ಆಯ್ಕೆಮಾಡಿ.</string>
+<string name="pref_skin_type_description">ಸಾಫ್ಟ್‌ವೇರ್ ಕೀಬೋರ್ಡ್ ನೋಟವನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಲು ಕೀಬೋರ್ಡ್ ಥೀಮ್ ಆಯ್ಕೆಮಾಡಿ.</string>
+<string name="pref_voice_input_description">ಸಾಫ್ಟ್‌ವೇರ್ ಕೀಬೋರ್ಡ್‌ನಲ್ಲಿ ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಬಟನ್ ತೋರಿಸು.</string>
+<string name="pref_hardware_keymap_description">ಹಾರ್ಡ್‌ವೇರ್‌ ಕೀಬೋರ್ಡ್‌ಗಳಿಗಾಗಿ ಪ್ರಮುಖ ನಕ್ಷೆಮಾಡುವಿಕೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ.</string>
+<string name="pref_dictionary_personalization_description">ಹಿಂದಿನ ಇನ್‌ಪುಟ್‌ ಆಧರಿಸಿ ವೈಯಕ್ತಿಕ ಸಲಹೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">ಬಳಕೆದಾರ ನಿಘಂಟುಗಳನ್ನು ಸಂಪಾದಿಸಿ.</string>
+<string name="pref_clear_category_description">ವೈಯಕ್ತೀಕರಣ ಅಥವಾ ಸಲಹೆ ಡೇಟಾವನ್ನು ತೆರವುಗೊಳಿಸಿ.</string>
+<string name="pref_clear_conversion_history_description">ಪರಿವರ್ತನೆ ಇತಿಹಾಸ ತೆರವುಗೊಳಿಸಿ.</string>
+<string name="pref_clear_symbol_history_description">ಸಂಕೇತ ಇನ್‌ಪುಟ್‌ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಿ.</string>
+<string name="pref_clear_user_dictionary_description">ಬಳಕೆದಾರರ ನಿಘಂಟನ್ನು ತೆರವುಗೊಳಿಸಿ.</string>
+<string name="pref_other_incognito_mode_description">ತಾತ್ಕಾಲಿಕವಾಗಿ ವೈಯಕ್ತೀಕರಣ, ಸಲಹೆಗಳು ಮತ್ತು ಬಳಕೆದಾರರ ನಿಘಂಟನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ.</string>
+<string name="pref_other_usage_stats_description">%1$s ಗೆ ಬಳಕೆಯ ಅಂಕಿಅಂಶಗಳನ್ನು ಕಳುಹಿಸಿ. ಇವುಗಳನ್ನು ಕೇವಲ %1$s ಉತ್ಪನ್ನಗಳು ಮತ್ತು ಸೇವೆಗಳನ್ನು ಸುಧಾರಿಸಲು ಬಳಸಲಾಗುತ್ತದೆ.</string>
+<string name="pref_about_terms_of_service_description">ಸೇವಾ ನಿಯಮಗಳನ್ನು ಪ್ರದರ್ಶಿಸು (ವೆಬ್‌ಪುಟ).</string>
+<string name="pref_about_privacy_policy_description">ಗೌಪ್ಯತೆ ನೀತಿಯನ್ನು ಪ್ರದರ್ಶಿಸು (ವೆಬ್‌ಪುಟ).</string>
+<string name="pref_about_oss_credits_description">ಈ ಸಾಫ್ಟ್‌ವೇರ್‌ ಮುಕ್ತ ಮೂಲ ಸಾಫ್ಟ್‌ವೇರ್‌ ಅನ್ನು ಬಳಸುತ್ತದೆ: ಪರವಾನಗಿಗಳನ್ನು ವೀಕ್ಷಿಸಿ.</string>
+<string name="pref_launcher_icon_visibility_description">ಲಾಂಚರ್‌ನಲ್ಲಿ ಅಪ್ಲಿಕೇಶನ್ ಐಕಾನ್ ಪ್ರದರ್ಶಿಸು</string>
+<string name="pref_input_style_setting_entry_toggle">ಟಾಗಲ್‌</string>
+<string name="pref_input_style_setting_entry_flick">ಫ್ಲಿಕ್‌</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">ಟಾಗಲ್‌ &amp; ಫ್ಲಿಕ್‌</string>
+<string name="pref_fullscreen_portrait">ಪೋಟ್ರೇಟ್‌ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ</string>
+<string name="pref_fullscreen_landscape">ಲ್ಯಾಂಡ್‌ಸ್ಕೇಪ್‌ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ</string>
+<string name="pref_emoji_provider_type_unicode">ವಾಹಕ ಎಮೊಜಿಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">ಕಿತ್ತಳೆ/ತಿಳಿ ಬೂದು</string>
+<string name="pref_skin_type_blue_lightgray">ನೀಲಿ/ತಿಳಿ ಬೂದು</string>
+<string name="pref_skin_type_blue_darkgray">ನೀಲಿ/ಗಾಢ ಬೂದು</string>
+<string name="pref_skin_type_material_design_light">ವಸ್ತು ವಿನ್ಯಾಸ (ತಿಳಿ)</string>
+<string name="pref_skin_type_material_design_dark">ವಸ್ತು ವಿನ್ಯಾಸ (ಗಾಢ)</string>
+<string name="pref_hardware_keymap_default">ಸಿಸ್ಟಂ ಡೀಫಾಲ್ಟ್</string>
+<string name="pref_hardware_keymap_japanese109A">ಜಾಪನೀಸ್‌ 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 ಕೀಗಳು</string>
+<string name="pref_dictionary_personalization_entry_enabled">ಸಕ್ರಿಯಗೊಳಿಸು</string>
+<string name="pref_dictionary_personalization_entry_readonly">ಘನೀಕೃತ</string>
+<string name="pref_dictionary_personalization_entry_disabled">ನಿಷ್ಕ್ರಿಯಗೊಳಿಸು</string>
+<string name="pref_layout_adjustment_entry_fill">ತುಂಬುವಿಕೆ</string>
+<string name="pref_layout_adjustment_entry_right">ಬಲಕ್ಕೆ</string>
+<string name="pref_layout_adjustment_entry_left">ಎಡಕ್ಕೆ</string>
+<string name="firsttime_close_button">ಮುಂದಿನ &gt;&gt;</string>
+<string name="firsttime_description_thank_you">%s ಬಳಸಿದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು.</string>
+<string name="firsttime_description_usage_stats">%s ಉತ್ಪನ್ನಗಳು ಮತ್ತು ಸೇವೆಗಳನ್ನು ಸುಧಾರಿಸುವ ಸಲುವಾಗಿ, ಬಳಕೆಯ ಅಂಕಿಅಂಶಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುವುದನ್ನು ಪರಿಗಣಿಸಲು ನಾವು ಕೇಳುತ್ತೇವೆ.\n\nಪ್ರಾಶಸ್ತ್ಯಗಳ ಪರದೆಯಿಂದ ಈ ಸೆಟ್ಟಿಂಗ್‌ ಅನ್ನು ಬದಲಾಯಿಸಬಹುದಾಗಿದೆ.</string>
+<string name="firsttime_send_usage_stats_devchannel">ನೀವು ಸುಧಾರಿತ ಆವೃತ್ತಿಯನ್ನು ಬಳಸುತ್ತಿರುವುದರಿಂದ ಬಳಕೆಯ ಅಂಕಿಅಂಶಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.</string>
+<string name="pref_ime_enable_alert_title">ಪಠ್ಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಗೆ ಹೊಂದಿಸಿ</string>
+<string name="pref_ime_enable_alert_message">ದಯವಿಟ್ಟು %s ಸಕ್ರಿಯಗೊಳಿಸಿ.</string>
+<string name="pref_ime_switch_alert_title">ಇನ್‌ಪುಟ್‌ ವಿಧಾನಕ್ಕಾಗಿ ಹೊಂದಿಸಿ</string>
+<string name="pref_ime_switch_alert_message">ದಯವಿಟ್ಟು ಇನ್‌ಪುಟ್‌ ವಿಧಾನವನ್ನು%s ಗೆ ಬದಲಾಯಿಸಿ.</string>
+<string name="pref_ime_alert_next">ಮುಂದೆ</string>
+<string name="pref_ime_alert_cancel">ರದ್ದುಮಾಡು</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">ಕಡಿಮೆ</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">ಮಧ್ಯ</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">ಹೆಚ್ಚು</string>
+<string name="pref_haptic_feedback_duration_low_text">ಚಿಕ್ಕದು</string>
+<string name="pref_haptic_feedback_duration_high_text">ದೀರ್ಘ</string>
+<string name="pref_sound_feedback_volume_low_text">ಕನಿಷ್ಟ</string>
+<string name="pref_sound_feedback_volume_middle_text">ಮಧ್ಯ</string>
+<string name="pref_sound_feedback_volume_high_text">ಗರಿ</string>
+<string name="symbol_input_no_history">ಯಾವುದೇ ಇತಿಹಾಸವಿಲ್ಲ.\n\nವರ್ಗಗಳನ್ನು ಬ್ರೌಸ್‌ಮಾಡಲು\n ಪರದೆಯನ್ನು ಸ್ವೈಪ್‌ ಮಾಡಿ.</string>
+<string name="symbol_emoji_disabled_message">ಈ ಪಠ್ಯ ಕ್ಷೇತ್ರವು ಎಮೊಜಿ ಇನ್‌ಪುಟ್‌ ಅನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ.</string>
+<string name="menu_dialog_title">ಇನ್‌ಪುಟ್ ಆಯ್ಕೆಗಳು</string>
+<string name="menu_item_input_method">ಇನ್‌ಪುಟ್ ವಿಧಾನವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+<string name="menu_item_preferences">%s ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
+<string name="menu_item_mushroom">ಮಶ್ರೂಮ್ ಪ್ರಾರಂಭಿಸಿ</string>
+<string name="user_dictionary_tool_app_name">ನಿಘಂಟು ಉಪಕರಣ</string>
+<string name="user_dictionary_tool_menu_add_entry_title">ಹೊಸ ಪದ</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">ಪದವನ್ನು ಅಳಿಸಿ</string>
+<string name="user_dictionary_tool_menu_undo_title">ರದ್ದುಮಾಡು</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">ಹೊಸ ನಿಘಂಟು</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">ಪ್ರಸ್ತುತ ನಿಘಂಟನ್ನು ಮರುಹೆಸರಿಸಿ</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">ಪ್ರಸ್ತುತ ನಿಘಂಟನ್ನು ಅಳಿಸಿ</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">ಪ್ರಸ್ತುತ ನಿಘಂಟನ್ನು ರಫ್ತುಮಾಡಿ</string>
+<string name="user_dictionary_tool_default_dictionary_name">ಬಳಕೆದಾರರ ನಿಘಂಟು 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">ಹೊಸ ನಿಘಂಟು ರಚಿಸಿ</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">ನಿಘಂಟಿನ ಹೆಸರನ್ನು ಸಂಪಾದಿಸಿ</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">ನಿಘಂಟಿನ ಹೆಸರು</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">ಹೊಸ ಪದವನ್ನು ಸೇರಿಸಿ</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">ಪದವನ್ನು ಸಂಪಾದಿಸಿ</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">ಓದುವುದು</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">ಪದ</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">ವರ್ಗ</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">ಆಮದು ಮೂಲವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">ಆಮದು ಗಮ್ಯಸ್ಥಾನವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">ಹೊಸ ನಿಘಂಟಿನಂತೆ ಆಮದು ಮಾಡಿ</string>
+<string name="user_dictionary_tool_delete_done_message">ಅಳಿಸುವ ಕಾರ್ಯಾಚರಣೆ ಯಶಸ್ವಿಯಾಗಿದೆ.</string>
+<string name="user_dictionary_tool_undo_done_message">ರದ್ದುಮಾಡುವ ಕಾರ್ಯಾಚರಣೆ ಯಶಸ್ವಿಯಾಗಿದೆ.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">ನೀವು ಅಳಿಸಲು ಬಯಸುವ ಪದಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">ಡೇಟಾ ಆಮದು ಫೈಲ್‌ಗಳ ಮೇಲೆ ಮಾತ್ರ ಕಾರ್ಯ ನಿರ್ವಹಿಸುತ್ತದೆ.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">ಫೈಲ್ ರೀಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ZIP ಫೈಲ್‌‌ ಖಾಲಿಯಿದೆ.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">ಬಳಕೆದಾರರ ನಿಘಂಟನ್ನು ರಫ್ತುಮಾಡಲು (ಉದಾ. Google ಡಾಕ್ಸ್‌) ಯಾವುದೇ ಅಪ್ಲಿಕೇಶನ್‌ಗಳಿಲ್ಲ.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">ಬಳಕೆದಾರರ ನಿಘಂಟನ್ನು ರಫ್ತುಮಾಡಲು ವಿಫಲವಾಗಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_general">ಕಾರ್ಯಾಚರಣೆ ವಿಫಲವಾಗಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">ಫೈಲ್ ತೆರೆಯಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">ಫೈಲ್ ರೀಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">ಡೇಟಾ ಗಾತ್ರವು ಫೈಲ್ ಗಾತ್ರದ ಮಿತಿಯನ್ನು ಮೀರುತ್ತದೆ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">ಇನ್ಯಾವುದೇ ನಿಘಂಟುಗಳನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">ಈ ನಿಘಂಟಿನಲ್ಲಿ ಇನ್ನು ಹೆಚ್ಚಿನ ನಮೂದುಗಳನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">ನಿಘಂಟಿನ ಹೆಸರನ್ನು ನಮೂದಿಸಿ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">ಹೆಸರು ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">ಹೆಸರು ಅಮಾನ್ಯ ಅಕ್ಷರ(ಗಳು) ಹೊಂದಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">ಹೆಸರು ಈಗಾಗಲೇ ಅಸ್ತಿತ್ವದಲ್ಲಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">ಓದುವಿಕೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">ಓದುವಿಕೆ ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">ಓದುವಿಕೆಯು ಅಮಾನ್ಯ ಅಕ್ಷರ(ಗಳು) ಹೊಂದಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_word_empty">ಪದವನ್ನು ಟೈಪ್ ಮಾಡಿ.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">ಪದ ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">ಪದವು ಅಮಾನ್ಯ ಅಕ್ಷರ(ಗಳು) ಹೊಂದಿದೆ.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">ಆಮದು ಮಾಡಿಕೊಂಡಿರುವ ಮೂಲದಲ್ಲಿ ಹಲವಾರು ಪದಗಳಿವೆ.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">ಕೆಲವು ಪದಗಳನ್ನು ಆಮದು ಮಾಡಿಕೊಳ್ಳಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">ಇನ್ಯಾವುದೇ ರದ್ದು-ಸಾಧ್ಯತೆಯ ಕಾರ್ಯಾಚರಣೆಗಳಿಲ್ಲ.</string>
+<string name="japanese_pos_noun">ನಾಮಪದ</string>
+<string name="japanese_pos_abbreviation">ಸಂಕ್ಷೇಪಣ</string>
+<string name="japanese_pos_suggestion_only">ಸಲಹೆ ಮಾತ್ರ</string>
+<string name="japanese_pos_proper_noun">ನಾಮಪದ</string>
+<string name="japanese_pos_personal_name">ವೈಯಕ್ತಿಕ ಹೆಸರು</string>
+<string name="japanese_pos_family_name">ಕುಟುಂಬದ ಹೆಸರು</string>
+<string name="japanese_pos_first_name">ಮೊದಲ ಹೆಸರು</string>
+<string name="japanese_pos_organization_name">ಸಂಸ್ಥೆ ಹೆಸರು</string>
+<string name="japanese_pos_place_name">ಸ್ಥಳದ ಹೆಸರು</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA-ಅಸಮರೂಪದ ಆಖ್ಯಾತ ನಾಮಪದ</string>
+<string name="japanese_pos_adjective_verbal_noun">ಗುಣವಾಚಕ ಕ್ರಿಯಾಪದದ ನಾಮ</string>
+<string name="japanese_pos_number">ಸಂಖ್ಯೆ</string>
+<string name="japanese_pos_alphabet">ವರ್ಣಮಾಲೆ</string>
+<string name="japanese_pos_symbol">ಸಂಕೇತ</string>
+<string name="japanese_pos_emoticon">ಎಮೋಟಿಕಾನ್</string>
+<string name="japanese_pos_adverb">ಕ್ರಿಯಾವಿಶೇಷಣ</string>
+<string name="japanese_pos_prenoun_adjectival">ಪೂರ್ವನಾಮಪದ ಗುಣವಾಚಕ</string>
+<string name="japanese_pos_conjunction">ಸಂಯೋಗ</string>
+<string name="japanese_pos_interjection">ಭಾವಸೂಚಕಾವ್ಯಯ</string>
+<string name="japanese_pos_prefix">ಪೂರ್ವಪ್ರತ್ಯಯ</string>
+<string name="japanese_pos_counter_suffix">ಕೌಂಟರ್ ಉತ್ತರಪ್ರತ್ಯಯ</string>
+<string name="japanese_pos_generic_suffix">ಜೆನರಿಕ್ ಉತ್ತರಪ್ರತ್ಯಯ</string>
+<string name="japanese_pos_person_name_suffix">ವ್ಯಕ್ತಿ ಹೆಸರಿನ ಉತ್ತರ ಪ್ರತ್ಯಯ</string>
+<string name="japanese_pos_place_name_suffix">ಸ್ಥಳ ಹೆಸರಿನ ಉತ್ತರ ಪ್ರತ್ಯಯ</string>
+<string name="japanese_pos_wa_group1_verb">WA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ka_group1_verb">KA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_sa_group1_verb">SA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ta_group1_verb">TA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_na_group1_verb">NA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ma_group1_verb">MA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ra_group1_verb">RA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ga_group1_verb">GA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ba_group1_verb">BA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ha_group1_verb">HA-ಗುಂಪು1 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_group2_verb">ಗುಂಪು2 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_kuru_group3_verb">Kuru-ಗುಂಪು3 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_suru_group3_verb">Suru-ಗುಂಪು3 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_zuru_group3_verb">Zuru-ಗುಂಪು3 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_ru_group3_verb">Ru-ಗುಂಪು3 ಕ್ರಿಯಾಪದ</string>
+<string name="japanese_pos_adjective">ಗುಣವಾಚಕ</string>
+<string name="japanese_pos_sentence_ending_particle">ವಾಕ್ಯದ ಮುಕ್ತಾಯದ ಅವ್ಯಯ</string>
+<string name="japanese_pos_punctuation">ವಿರಾಮಚಿಹ್ನೆಗಳು</string>
+<string name="japanese_pos_free_standing_word">ಮುಕ್ತವಾದ ಪದ</string>
+<string name="japanese_pos_suppression_word">ತಡೆಹಿಡಿಯುವ ಪದ</string>
+<string name="yes">ಹೌದು</string>
+<string name="no">ಇಲ್ಲ</string>
+</resources>

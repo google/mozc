@@ -93,11 +93,11 @@ class CompositionInterface {
 
   // Get string with consideration for ambiguity from pending input
   virtual void GetExpandedStrings(string *base,
-                                  set<string> *expanded) const = 0;
+                                  std::set<string> *expanded) const = 0;
 
   virtual void GetExpandedStringsWithTransliterator(
       Transliterators::Transliterator transliterator, string *base,
-      set<string> *expanded) const = 0;
+      std::set<string> *expanded) const = 0;
 
   // Return string with the specified trim mode and the current display mode.
   virtual void GetStringWithTrimMode(TrimMode trim_mode,

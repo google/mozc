@@ -330,7 +330,8 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   // set meta candidates
   {
     EXPECT_EQ(0, seg[0]->meta_candidates_size());
-    vector<Segment::Candidate> *meta_cands = seg[0]->mutable_meta_candidates();
+    std::vector<Segment::Candidate> *meta_cands =
+        seg[0]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
       meta_cands->at(i).Init();
@@ -362,7 +363,8 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   // set meta candidates
   {
     EXPECT_EQ(0, seg[2]->meta_candidates_size());
-    vector<Segment::Candidate> *meta_cands = seg[2]->mutable_meta_candidates();
+    std::vector<Segment::Candidate> *meta_cands =
+        seg[2]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
       meta_cands->at(i).Init();

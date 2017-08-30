@@ -75,7 +75,7 @@ class CalculatorImpl : public CalculatorInterface {
   virtual bool CalculateString(const string &key, string *result) const;
 
  private:
-  typedef vector<pair<int, double> > TokenSequence;
+  typedef std::vector<std::pair<int, double> > TokenSequence;
 
   // Max byte length of operator character
   static const size_t kMaxLengthOfOperator = 3;
@@ -93,7 +93,7 @@ class CalculatorImpl : public CalculatorInterface {
 
   // Mapping from operator character such as '+' to the corresponding
   // token type such as PLUS.
-  map<string, int> operator_map_;
+  std::map<string, int> operator_map_;
 };
 
 CalculatorImpl::CalculatorImpl() {
@@ -195,7 +195,7 @@ bool CalculatorImpl::Tokenize(StringPiece expression_body,
         return false;
       }
       string window(current, length);
-      map<string, int>::const_iterator op_it = operator_map_.find(window);
+      std::map<string, int>::const_iterator op_it = operator_map_.find(window);
       if (op_it == operator_map_.end()) {
         continue;
       }

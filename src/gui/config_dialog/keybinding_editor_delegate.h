@@ -32,11 +32,7 @@
 
 #include <QtCore/QModelIndex>
 #include <QtCore/QObject>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QItemDelegate>
-#else
-#include <QtGui/QItemDelegate>
-#endif
 
 namespace mozc {
 namespace gui {
@@ -66,9 +62,6 @@ class KeyBindingEditorDelegate : public QItemDelegate {
  private slots:
   void CommitAndCloseEditor();
   void CloseEditor();
-
- private:
-  QWidget *modal_parent_;
 };
 }  // gui
 }  // mozc

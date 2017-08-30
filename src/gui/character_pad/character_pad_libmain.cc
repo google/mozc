@@ -31,11 +31,7 @@
 #include <windows.h>
 #endif
 
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QApplication>
-#endif
 #include <QtCore/QFile>
 
 #include <memory>
@@ -83,7 +79,7 @@ int RunCharacterPad(int argc, char *argv[],
   mozc::gui::WindowsSelectionHandler callback;
   mozc::gui::SelectionHandler::SetSelectionCallback(&callback);
 
-  window->setWindowFlags(Qt::WindowSystemMenuHint);
+  window->setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
 
   // Set Top-Most bit:
   //   Use SWP_NOACTIVATE so that the GUI window will not get focus from the

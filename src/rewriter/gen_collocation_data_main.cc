@@ -57,7 +57,7 @@ namespace {
 void Convert() {
   InputFileStream ifs(FLAGS_collocation_data.c_str());
   string line;
-  vector<string> entries;
+  std::vector<string> entries;
   while (!getline(ifs, line).fail()) {
     if (line.empty()) {
       continue;
@@ -65,10 +65,11 @@ void Convert() {
     entries.push_back(line);
   }
 
-  ostream *ofs = &std::cout;
+  std::ostream *ofs = &std::cout;
   if (!FLAGS_output.empty()) {
     if (FLAGS_binary_mode) {
-      ofs = new OutputFileStream(FLAGS_output.c_str(), ios::out | ios::binary);
+      ofs = new OutputFileStream(FLAGS_output.c_str(),
+                                 std::ios::out | std::ios::binary);
     } else {
       ofs = new OutputFileStream(FLAGS_output.c_str());
     }

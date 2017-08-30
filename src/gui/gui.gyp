@@ -85,17 +85,31 @@
       'type': 'none',
       'variables': {
         'subdir': 'about_dialog',
-        'qrc_base_name': 'about_dialog',
       },
       'sources': [
-        '<(subdir)/about_dialog.qrc',
         '<(subdir)/about_dialog.ui',
         '<(subdir)/about_dialog.h',
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_about_dialog',
+      'type': 'none',
+      'variables': {
+        'subdir': 'about_dialog',
+        'qrc_base_name': 'about_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+          '../data/images/product_icon_32bpp-128.png',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -110,6 +124,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         'gen_about_dialog_files',
+        'qrc_about_dialog',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -134,11 +149,9 @@
       'type': 'none',
       'variables': {
         'subdir': 'administration_dialog',
-        'qrc_base_name': 'administration_dialog',
       },
       'sources': [
         '<(subdir)/administration_dialog.h',
-        '<(subdir)/administration_dialog.qrc',
         '<(subdir)/administration_dialog.ui',
       ],
       'conditions': [
@@ -150,8 +163,23 @@
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_administration_dialog',
+      'type': 'none',
+      'variables': {
+        'subdir': 'administration_dialog',
+        'qrc_base_name': 'administration_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -167,6 +195,7 @@
         '../base/base.gyp:base',
         '../config/config.gyp:stats_config_util',
         'gen_administration_dialog_files',
+        'qrc_administration_dialog',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -191,10 +220,8 @@
       'type': 'none',
       'variables': {
         'subdir': 'character_pad',
-        'qrc_base_name': 'character_pad',
       },
       'sources': [
-        '<(subdir)/character_pad.qrc',
         '<(subdir)/character_palette.h',
         '<(subdir)/character_palette_table_widget.h',
         '<(subdir)/character_palette.ui',
@@ -206,8 +233,23 @@
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_character_pad',
+      'type': 'none',
+      'variables': {
+        'subdir': 'character_pad',
+        'qrc_base_name': 'character_pad',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -376,6 +418,7 @@
         'gen_character_pad_cp932_data',
         'gen_character_pad_data',
         'gen_dictionary_tool_files',
+        'qrc_character_pad',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -422,13 +465,11 @@
       'type': 'none',
       'variables': {
         'subdir': 'config_dialog',
-        'qrc_base_name': 'config_dialog',
       },
       'sources': [
         '<(subdir)/character_form_editor.h',
         '<(subdir)/combobox_delegate.h',
         '<(subdir)/config_dialog.h',
-        '<(subdir)/config_dialog.qrc',
         '<(subdir)/config_dialog.ui',
         '<(subdir)/generic_table_editor.h',
         '<(subdir)/generic_table_editor.ui',
@@ -440,8 +481,25 @@
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_config_dialog',
+      'type': 'none',
+      'variables': {
+        'subdir': 'config_dialog',
+        'qrc_base_name': 'config_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+          '<(subdir)/keymap_en.qm',
+          '<(subdir)/keymap_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -478,6 +536,7 @@
         '../protocol/protocol.gyp:config_proto',
         '../session/session_base.gyp:keymap',
         'gen_config_dialog_files',
+        'qrc_config_dialog',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -498,15 +557,17 @@
       ],
     },
     {
-      'target_name': 'gen_confirmation_dialog_files',
+      'target_name': 'qrc_confirmation_dialog',
       'type': 'none',
       'variables': {
         'subdir': 'confirmation_dialog',
         'qrc_base_name': 'confirmation_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
       },
-      'sources': [
-        '<(subdir)/confirmation_dialog.qrc',
-      ],
       'includes': [
         'qt_rcc.gypi',
       ],
@@ -521,7 +582,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'gen_confirmation_dialog_files',
+        'qrc_confirmation_dialog',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -546,12 +607,10 @@
       'type': 'none',
       'variables': {
         'subdir': 'dictionary_tool',
-        'qrc_base_name': 'dictionary_tool',
       },
       'sources': [
         '<(subdir)/dictionary_content_table_widget.h',
         '<(subdir)/dictionary_tool.h',
-        '<(subdir)/dictionary_tool.qrc',
         '<(subdir)/dictionary_tool.ui',
         '<(subdir)/find_dialog.h',
         '<(subdir)/find_dialog.ui',
@@ -561,8 +620,23 @@
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_dictionary_tool',
+      'type': 'none',
+      'variables': {
+        'subdir': 'dictionary_tool',
+        'qrc_base_name': 'dictionary_tool',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -596,6 +670,7 @@
         'encoding_util',
         'gen_config_dialog_files',
         'gen_dictionary_tool_files',
+        'qrc_dictionary_tool',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -620,17 +695,30 @@
       'type': 'none',
       'variables': {
         'subdir': 'word_register_dialog',
-        'qrc_base_name': 'word_register_dialog',
       },
       'sources': [
         '<(subdir)/word_register_dialog.ui',
         '<(subdir)/word_register_dialog.h',
-        '<(subdir)/word_register_dialog.qrc',
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_word_register_dialog',
+      'type': 'none',
+      'variables': {
+        'subdir': 'word_register_dialog',
+        'qrc_base_name': 'word_register_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -651,6 +739,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         'gen_word_register_dialog_files',
+        'qrc_word_register_dialog',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -675,14 +764,27 @@
       'type': 'none',
       'variables': {
         'subdir': 'error_message_dialog',
-        'qrc_base_name': 'error_message_dialog',
       },
       'sources': [
         '<(subdir)/error_message_dialog.h',
-        '<(subdir)/error_message_dialog.qrc',
       ],
       'includes': [
         'qt_moc.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_error_message_dialog',
+      'type': 'none',
+      'variables': {
+        'subdir': 'error_message_dialog',
+        'qrc_base_name': 'error_message_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
         'qt_rcc.gypi',
       ],
     },
@@ -698,6 +800,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         'gen_error_message_dialog_files',
+        'qrc_error_message_dialog',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -722,17 +825,30 @@
       'type': 'none',
       'variables': {
         'subdir': 'post_install_dialog',
-        'qrc_base_name': 'post_install_dialog',
       },
       'sources': [
         '<(subdir)/post_install_dialog.h',
-        '<(subdir)/post_install_dialog.qrc',
         '<(subdir)/post_install_dialog.ui',
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_post_install_dialog',
+      'type': 'none',
+      'variables': {
+        'subdir': 'post_install_dialog',
+        'qrc_base_name': 'post_install_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -750,6 +866,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_post_install_dialog_files',
+        'qrc_post_install_dialog',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -781,17 +898,30 @@
       'type': 'none',
       'variables': {
         'subdir': 'set_default_dialog',
-        'qrc_base_name': 'set_default_dialog',
       },
       'sources': [
         '<(subdir)/set_default_dialog.h',
-        '<(subdir)/set_default_dialog.qrc',
         '<(subdir)/set_default_dialog.ui',
       ],
       'includes': [
         'qt_moc.gypi',
-        'qt_rcc.gypi',
         'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_set_default_dialog',
+      'type': 'none',
+      'variables': {
+        'subdir': 'set_default_dialog',
+        'qrc_base_name': 'set_default_dialog',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -809,6 +939,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         'gen_set_default_dialog_files',
+        'qrc_set_default_dialog',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -836,20 +967,6 @@
       ],
     },
     {
-      'target_name': 'gen_mozc_tool_files',
-      'type': 'none',
-      'variables': {
-        'subdir': 'tool',
-        'qrc_base_name': 'mozc_tool',
-      },
-      'sources': [
-        '<(subdir)/mozc_tool.qrc',
-      ],
-      'includes': [
-        'qt_rcc.gypi',
-      ],
-    },
-    {
       'target_name': 'prelauncher_lib',
       'type': 'static_library',
       'sources': [
@@ -865,7 +982,6 @@
     {
       'target_name': 'mozc_tool_lib',
       'sources': [
-        '<(gen_out_dir)/tool/qrc_mozc_tool.cc',
         'tool/mozc_tool_libmain.cc',
       ],
       'dependencies': [
@@ -878,7 +994,6 @@
         'confirmation_dialog_lib',
         'dictionary_tool_lib',
         'error_message_dialog_lib',
-        'gen_mozc_tool_files',
         'gui_base',
         'post_install_dialog_lib',
         'set_default_dialog_lib',
@@ -899,25 +1014,23 @@
             'INSTALL_PATH': '@executable_path/../Frameworks',
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_lib_info',
           },
-          'dependencies+': [
+          'dependencies': [
             'gen_mozc_tool_lib_info_plist',
             'prelauncher_lib',
+            '../base/base.gyp:breakpad',
           ],
+          'link_settings': {
+            'libraries': [
+              '<(mac_breakpad_framework)',
+            ],
+          },
           'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'link_settings': {
-                'libraries': [
-                  '<(mac_breakpad_framework)',
-                ],
-              },
-            }],
             ['use_qt=="YES"', {
               'postbuilds': [
                 {
                   'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
                     'python', '../build_tools/change_reference_mac.py',
-                    '--qtver', '<(qt_ver)',
                     '--qtdir', '<(qt_dir)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/GuiTool_lib.framework/Versions/A/GuiTool_lib',
@@ -952,65 +1065,7 @@
             'tool/mozc_tool_main_noqt.cc',
           ],
         }],
-        ['OS=="mac"', {
-          'product_name': '<(product_name)',
-          'variables': {
-            'product_name': 'GuiTool',
-          },
-          'dependencies': [
-            'gen_mozc_tool_info_plist',
-          ],
-          'conditions': [
-            ['use_qt=="YES"', {
-              'variables': {
-                'copying_frameworks': [
-                  '<(PRODUCT_DIR)/GuiTool_lib.framework',
-                ],
-              },
-              'conditions': [
-                ['qt_ver==5', {
-                  'mac_bundle_resources': ['../data/mac/qt.conf'],
-                }],
-              ],
-              # We include this gypi file here because the variables
-              # in a condition cannot be refferred from the gypi file
-              # included outside from the condition.
-              'includes': [
-                '../gyp/postbuilds_mac.gypi',
-              ],
-              'postbuilds': [
-                {
-                  'postbuild_name': 'Change the reference to frameworks.',
-                  'action': [
-                    'python', '../build_tools/change_reference_mac.py',
-                    '--qtver', '<(qt_ver)',
-                    '--qtdir', '<(qt_dir)',
-                    '--target',
-                    '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
-                  ],
-                },
-                {
-                  'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
-                  'action': [
-                    'python', '../build_tools/copy_qt_frameworks_mac.py',
-                    '--qtver', '<(qt_ver)',
-                    '--qtdir', '<(qt_dir)',
-                    '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
-                  ],
-                },
-              ],
-            }, {
-              # So we include the same file explicitly here.
-              'includes': [
-                '../gyp/postbuilds_mac.gypi',
-              ],
-            }]
-          ],
-          'mac_bundle': 1,
-          'xcode_settings': {
-            'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
-          },
-        }],
+        # For Mac, ConfigDialog is the host app for necessary frameworks.
         ['OS=="win"', {
           'product_name': '<(tool_product_name_win)',
           'sources': [
@@ -1196,13 +1251,21 @@
           ],
         },
         {
+          # ConfigDialog.app is the host app of Frameworks (e.g. GuiTool_lib,
+          # QtCore, Breakpad, etc.). These Frameworks are refferred by other
+          # apps like AboutDialog.app.
           'target_name': 'config_dialog_mac',
+          'product_name': 'ConfigDialog',
           'type': 'executable',
           'mac_bundle': 1,
           'variables': {
             'product_name': 'ConfigDialog',
+            'copying_frameworks': [
+              '<(PRODUCT_DIR)/GuiTool_lib.framework',
+            ],
           },
           'dependencies': [
+            'gen_mozc_tool_info_plist',
             'gen_mozc_tool_info_strings',
           ],
           'xcode_settings': {
@@ -1213,8 +1276,42 @@
             '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
             '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
           ],
-          'includes': [
-            'mac_gui.gypi',
+          'conditions': [
+            ['use_qt=="YES"', {
+              'mac_bundle_resources': ['../data/mac/qt.conf'],
+              'sources': [
+                'tool/mozc_tool_main.cc',
+              ],
+              'dependencies': [
+                'mozc_tool_lib',
+              ],
+              'includes': [
+                '../gyp/postbuilds_mac.gypi',
+              ],
+              'postbuilds': [
+                {
+                  'postbuild_name': 'Change the reference to frameworks',
+                  'action': [
+                    'python', '../build_tools/change_reference_mac.py',
+                    '--qtdir', '<(qt_dir)',
+                    '--target',
+                    '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
+                  ],
+                },
+                {
+                  'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
+                  'action': [
+                    'python', '../build_tools/copy_qt_frameworks_mac.py',
+                    '--qtdir', '<(qt_dir)',
+                    '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
+                  ],
+                },
+              ],
+            }, {  # else
+              'sources': [
+                'tool/mozc_tool_main_noqt.cc',
+              ],
+            }],
           ],
         },
         {

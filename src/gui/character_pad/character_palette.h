@@ -31,11 +31,7 @@
 #define MOZC_GUI_CHARACTER_PAD_CHARACTER_PALETTE_H_
 
 #include <QtCore/QMap>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMainWindow>
-#else
-#include <QtGui/QMainWindow>
-#endif
 
 #include <memory>
 

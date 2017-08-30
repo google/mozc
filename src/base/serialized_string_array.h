@@ -109,7 +109,7 @@ class SerializedStringArray {
     using difference_type = ptrdiff_t;
     using pointer = const StringPiece *;
     using reference = const StringPiece &;
-    using iterator_category = random_access_iterator_tag;
+    using iterator_category = std::random_access_iterator_tag;
 
     iterator() : array_(nullptr), index_(0) {}
     iterator(const SerializedStringArray *array, size_t index)
@@ -256,10 +256,10 @@ class SerializedStringArray {
   // Creates a byte image of |strs| in |buffer| and returns the memory block in
   // |buffer| pointing to the image.  Note that uint32 array is used for buffer
   // to align data at 4 byte boundary.
-  static StringPiece SerializeToBuffer(const vector<StringPiece> &strs,
+  static StringPiece SerializeToBuffer(const std::vector<StringPiece> &strs,
                                        std::unique_ptr<uint32[]> *buffer);
 
-  static void SerializeToFile(const vector<StringPiece> &strs,
+  static void SerializeToFile(const std::vector<StringPiece> &strs,
                               const string &filepath);
 
  private:

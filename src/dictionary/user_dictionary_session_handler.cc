@@ -500,7 +500,7 @@ void UserDictionarySessionHandler::DeleteEntry(
     return;
   }
 
-  const vector<int> index_list(command.entry_index().begin(),
+  const std::vector<int> index_list(command.entry_index().begin(),
                                command.entry_index().end());
   status->set_status(
       session->DeleteEntry(command.dictionary_id(), index_list));

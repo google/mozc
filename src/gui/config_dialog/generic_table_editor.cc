@@ -30,15 +30,10 @@
 #include "gui/config_dialog/generic_table_editor.h"
 
 #include <QtCore/QFile>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QtGui>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
-#else
-#include <QtGui/QFileDialog>
-#include <QtGui/QtGui>
-#endif
 
 #include <algorithm>  // for unique
 #include <cctype>
@@ -80,7 +75,8 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
       column_size_(column_size) {
   setupUi(this);
   editorTableWidget->setAlternatingRowColors(true);
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::Tool);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::Tool);
   editorTableWidget->setColumnCount(column_size_);
 
   CHECK_GT(column_size_, 0);
@@ -120,11 +116,7 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
                                      QAbstractItemView::SelectedClicked);
   editorTableWidget->setSortingEnabled(true);
 
-#ifdef MOZC_USE_QT5
   editorTableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-#else
-  editorTableWidget->verticalHeader()->setResizeMode(QHeaderView::Fixed);
-#endif
   editorTableWidget->verticalHeader()->setDefaultSectionSize(
       GetTableHeight(editorTableWidget));
 

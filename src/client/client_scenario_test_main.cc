@@ -62,8 +62,7 @@ namespace mozc {
 namespace {
 
 // Parses key events.  If |input| gets EOF, returns false.
-bool ReadKeys(istream *input,
-              vector<commands::KeyEvent> *keys,
+bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
               string *answer) {
   keys->clear();
   answer->clear();
@@ -92,7 +91,7 @@ bool ReadKeys(istream *input,
   return false;
 }
 
-int Loop(istream *input) {
+int Loop(std::istream *input) {
   mozc::client::Client client;
   if (!FLAGS_server_path.empty()) {
     client.set_server_program(FLAGS_server_path);
@@ -126,7 +125,7 @@ int Loop(istream *input) {
 
   commands::Command command;
   commands::Output output;
-  vector<commands::KeyEvent> keys;
+  std::vector<commands::KeyEvent> keys;
   string answer;
 
   // TODO(tok): Stop the test if server is crashed.  Currently, we cannot
@@ -178,7 +177,7 @@ int main(int argc, char **argv) {
   }
 
   std::unique_ptr<mozc::InputFileStream> input_file;
-  istream *input = NULL;
+  std::istream *input = NULL;
 
   if (!FLAGS_input.empty()) {
     // Batch mode loading the input file.

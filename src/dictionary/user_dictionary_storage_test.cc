@@ -177,14 +177,14 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
   // repeat 10 times
   for (int i = 0; i < 10; ++i) {
     storage.Clear();
-    vector<uint64> ids(100);
+    std::vector<uint64> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
       EXPECT_TRUE(storage.CreateDictionary(
           "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)),
           &ids[i]));
     }
 
-    vector<uint64> alive;
+    std::vector<uint64> alive;
     for (size_t i = 0; i < ids.size(); ++i) {
       if (Util::Random(3) == 0) {   // 33%
         EXPECT_TRUE(storage.DeleteDictionary(ids[i]));

@@ -52,7 +52,7 @@ class EnglishVariantsRewriterTest : public testing::Test {
 
 TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
   EnglishVariantsRewriter rewriter;
-  vector<string> variants;
+  std::vector<string> variants;
 
   EXPECT_TRUE(
       rewriter.ExpandEnglishVariants(

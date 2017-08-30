@@ -576,7 +576,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
     // "かま"
     MakeSegmentsForSuggestion("\xE3\x81\x8B\xE3\x81\xBE", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    set<string> expected_candidates;
+    std::set<string> expected_candidates;
     // "火魔汰"
     expected_candidates.insert("\xE7\x81\xAB\xE9\xAD\x94\xE6\xB1\xB0");
     // "火魔汰摩"
@@ -2051,7 +2051,7 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
   predictor->WaitForSyncer();
 
-  vector<Command> commands(10000);
+  std::vector<Command> commands(10000);
   for (size_t i = 0; i < commands.size(); ++i) {
     commands[i].key = NumberUtil::SimpleItoa(static_cast<uint32>(i)) + "key";
     commands[i].value = NumberUtil::SimpleItoa(static_cast<uint32>(i)) +
@@ -2396,7 +2396,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
 
   {
     UserHistoryPredictor::EntryPriorityQueue queue;
-    vector<UserHistoryPredictor::Entry *> expected;
+    std::vector<UserHistoryPredictor::Entry *> expected;
     for (int i = 0; i < kSize; ++i) {
       UserHistoryPredictor::Entry *entry = queue.NewEntry();
       entry->set_key("test" + NumberUtil::SimpleItoa(i));
@@ -3806,7 +3806,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   UserHistoryPredictor::Entry *b = AppendEntry(predictor, "b", "B", a);
   UserHistoryPredictor::Entry *c = AppendEntry(predictor, "c", "C", b);
 
-  vector<UserHistoryPredictor::Entry *> entries;
+  std::vector<UserHistoryPredictor::Entry *> entries;
   entries.push_back(abc);
   entries.push_back(a);
   entries.push_back(b);
@@ -3814,7 +3814,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
 
   // The method should return NOT_FOUND for key-value pairs not in the chain.
   for (size_t i = 0; i < entries.size(); ++i) {
-    vector<StringPiece> dummy1, dummy2;
+    std::vector<StringPiece> dummy1, dummy2;
     EXPECT_EQ(UserHistoryPredictor::NOT_FOUND,
               predictor->RemoveNgramChain("hoge", "HOGE", entries[i],
                                           &dummy1, 0, &dummy2, 0));
@@ -3829,7 +3829,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   {
     // Try deleting the chain for "abc". Only the link from "b" to "c" should be
     // removed.
-    vector<StringPiece> dummy1, dummy2;
+    std::vector<StringPiece> dummy1, dummy2;
     EXPECT_EQ(UserHistoryPredictor::DONE,
               predictor->RemoveNgramChain("abc", "ABC", a,
                                           &dummy1, 0, &dummy2, 0));
@@ -3842,7 +3842,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   {
     // Try deleting the chain for "a". Since this is the head of the chain, the
     // function returns TAIL and nothing should be removed.
-    vector<StringPiece> dummy1, dummy2;
+    std::vector<StringPiece> dummy1, dummy2;
     EXPECT_EQ(UserHistoryPredictor::TAIL,
               predictor->RemoveNgramChain("a", "A", a,
                                           &dummy1, 0, &dummy2, 0));
@@ -3854,7 +3854,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   }
   {
     // Further delete the chain for "ab".  Now all the links should be removed.
-    vector<StringPiece> dummy1, dummy2;
+    std::vector<StringPiece> dummy1, dummy2;
     EXPECT_EQ(UserHistoryPredictor::DONE,
               predictor->RemoveNgramChain("ab", "AB", a,
                                           &dummy1, 0, &dummy2, 0));

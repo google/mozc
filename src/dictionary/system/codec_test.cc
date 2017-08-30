@@ -134,7 +134,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     ClearTokens(&decoded_tokens_);
   }
 
-  void ClearTokens(vector<TokenInfo> *tokens) const {
+  void ClearTokens(std::vector<TokenInfo> *tokens) const {
     for (size_t i = 0; i < tokens->size(); ++i) {
       delete tokens->at(i).token;
     }
@@ -309,8 +309,8 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     }
   }
 
-  vector<TokenInfo> source_tokens_;
-  vector<TokenInfo> decoded_tokens_;
+  std::vector<TokenInfo> source_tokens_;
+  std::vector<TokenInfo> decoded_tokens_;
 };
 
 class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
@@ -326,9 +326,9 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
   virtual void EncodeValue(const StringPiece src, string *dst) const {}
   virtual void DecodeValue(const StringPiece src, string *dst) const {}
   virtual void EncodeTokens(
-      const vector<TokenInfo> &tokens, string *output) const {}
+      const std::vector<TokenInfo> &tokens, string *output) const {}
   virtual void DecodeTokens(
-      const uint8 *ptr, vector<TokenInfo> *tokens) const {}
+      const uint8 *ptr, std::vector<TokenInfo> *tokens) const {}
   virtual bool DecodeToken(
       const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const {
     *read_bytes = 0;

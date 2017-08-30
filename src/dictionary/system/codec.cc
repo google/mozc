@@ -45,7 +45,7 @@ namespace {
 void EncodeDecodeKeyImpl(const StringPiece src, string *dst);
 size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src);
 
-uint8 GetFlagsForToken(const vector<TokenInfo> &tokens, int index);
+uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index);
 
 uint8 GetFlagForPos(const TokenInfo &token_info, const Token *token);
 
@@ -359,7 +359,7 @@ uint8 SystemDictionaryCodec::GetTokensTerminationFlag() const {
 }
 
 void SystemDictionaryCodec::EncodeTokens(
-    const vector<TokenInfo> &tokens, string *output) const {
+    const std::vector<TokenInfo> &tokens, string *output) const {
   DCHECK(output);
   output->clear();
 
@@ -384,7 +384,7 @@ void SystemDictionaryCodec::EncodeTokens(
 //  When kCrammedIDFlag is set, 2 bytes
 //  Othewise, 3 bytes
 void SystemDictionaryCodec::EncodeToken(
-    const vector<TokenInfo> &tokens, int index, string *output) const {
+    const std::vector<TokenInfo> &tokens, int index, string *output) const {
   CHECK_LT(index, tokens.size());
 
   // Determines the flags for this token.
@@ -405,7 +405,7 @@ void SystemDictionaryCodec::EncodeToken(
 }
 
 void SystemDictionaryCodec::DecodeTokens(
-    const uint8 *ptr, vector<TokenInfo> *tokens) const {
+    const uint8 *ptr, std::vector<TokenInfo> *tokens) const {
   DCHECK(tokens);
   int offset = 0;
   while (true) {
@@ -534,7 +534,7 @@ size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src) {
 }
 
 // Return flags for token
-uint8 GetFlagsForToken(const vector<TokenInfo> &tokens,
+uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens,
                        int index) {
   // Determines the flags for this token.
   uint8 flags = 0;

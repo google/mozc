@@ -159,8 +159,8 @@ class ConverterInterface {
   // |candidate_index| is a vector containing candidate index.
   // candidate_index[0] corresponds to the index of the candidate of
   // 1st segment.
-  virtual bool CommitSegments(Segments *segments,
-                              const vector<size_t> &candidate_index) const = 0;
+  virtual bool CommitSegments(
+      Segments *segments, const std::vector<size_t> &candidate_index) const = 0;
 
   // Resize segment_index-th segment by offset_length.
   // offset_lenth can be negative.

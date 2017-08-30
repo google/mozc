@@ -65,7 +65,7 @@ using session::testing::SessionHandlerTestBase;
 using session::testing::TestSessionClient;
 
 TEST(SessionHandlerStressTest, BasicStressTest) {
-  vector<commands::KeyEvent> keys;
+  std::vector<commands::KeyEvent> keys;
   commands::Output output;
   std::unique_ptr<Engine> engine(EngineFactory::Create());
   TestSessionClient client(std::move(engine));

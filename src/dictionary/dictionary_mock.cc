@@ -46,9 +46,11 @@ namespace {
 
 const int kDummyPosId = 1;
 
-bool HasKeyInternal(const map<string, vector<Token *>> &dic, StringPiece key) {
-  typedef vector<Token *> TokenPtrVector;
-  for (map<string, vector<Token *>>::const_iterator map_it = dic.begin();
+bool HasKeyInternal(const std::map<string, std::vector<Token *>> &dic,
+                    StringPiece key) {
+  typedef std::vector<Token *> TokenPtrVector;
+  for (std::map<string, std::vector<Token *>>::const_iterator map_it =
+           dic.begin();
        map_it != dic.end(); ++map_it) {
     const TokenPtrVector &v = map_it->second;
     for (TokenPtrVector::const_iterator it = v.begin(); it != v.end(); ++it) {
@@ -60,10 +62,11 @@ bool HasKeyInternal(const map<string, vector<Token *>> &dic, StringPiece key) {
   return false;
 }
 
-bool HasValueInternal(const map<string, vector<Token *>> &dic,
+bool HasValueInternal(const std::map<string, std::vector<Token *>> &dic,
                       StringPiece value) {
-  typedef vector<Token *> TokenPtrVector;
-  for (map<string, vector<Token *>>::const_iterator map_it = dic.begin();
+  typedef std::vector<Token *> TokenPtrVector;
+  for (std::map<string, std::vector<Token *>>::const_iterator map_it =
+           dic.begin();
        map_it != dic.end(); ++map_it) {
     const TokenPtrVector &v = map_it->second;
     for (TokenPtrVector::const_iterator it = v.begin(); it != v.end(); ++it) {
@@ -87,8 +90,8 @@ Token *CreateToken(const string &str, const string &key, const string &value,
   return token.release();
 }
 
-void DeletePtrs(map<string, vector<Token *>> *m) {
-  for (map<string, vector<Token *>>::iterator iter = m->begin();
+void DeletePtrs(std::map<string, std::vector<Token *>> *m) {
+  for (std::map<string, std::vector<Token *>>::iterator iter = m->begin();
        iter != m->end(); ++iter) {
     STLDeleteElements(&iter->second);
   }
@@ -125,7 +128,7 @@ void DictionaryMock::LookupPredictive(
     StringPiece key,
     const ConversionRequest &conversion_request,
     Callback *callback) const {
-  map<string, vector<Token *>>::const_iterator vector_iter =
+  std::map<string, std::vector<Token *>>::const_iterator vector_iter =
       predictive_dictionary_.find(key.as_string());
   if (vector_iter == predictive_dictionary_.end()) {
     return;
@@ -134,7 +137,7 @@ void DictionaryMock::LookupPredictive(
       callback->OnActualKey(key, key, false) != Callback::TRAVERSE_CONTINUE) {
     return;
   }
-  for (vector<Token *>::const_iterator iter = vector_iter->second.begin();
+  for (std::vector<Token *>::const_iterator iter = vector_iter->second.begin();
        iter != vector_iter->second.end(); ++iter) {
     if (callback->OnToken(key, key, **iter) != Callback::TRAVERSE_CONTINUE) {
       return;
@@ -151,7 +154,7 @@ void DictionaryMock::LookupPrefix(
   string prefix;
   for (size_t len = 1; len <= key.size(); ++len) {
     key.substr(0, len).CopyToString(&prefix);
-    map<string, vector<Token *>>::const_iterator iter =
+    std::map<string, std::vector<Token *>>::const_iterator iter =
         prefix_dictionary_.find(prefix);
     if (iter == prefix_dictionary_.end()) {
       continue;
@@ -174,7 +177,7 @@ void DictionaryMock::LookupPrefix(
       default:
         break;
     }
-    for (vector<Token *>::const_iterator token_iter = iter->second.begin();
+    for (std::vector<Token *>::const_iterator token_iter = iter->second.begin();
          token_iter != iter->second.end(); ++token_iter) {
       Callback::ResultType ret =
           callback->OnToken(prefix, prefix, **token_iter);
@@ -192,7 +195,7 @@ void DictionaryMock::LookupExact(
     StringPiece key,
     const ConversionRequest &conversion_request,
     Callback *callback) const {
-  map<string, vector<Token *>>::const_iterator iter =
+  std::map<string, std::vector<Token *>>::const_iterator iter =
       exact_dictionary_.find(key.as_string());
   if (iter == exact_dictionary_.end()) {
     return;
@@ -200,7 +203,7 @@ void DictionaryMock::LookupExact(
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
     return;
   }
-  for (vector<Token *>::const_iterator token_iter = iter->second.begin();
+  for (std::vector<Token *>::const_iterator token_iter = iter->second.begin();
        token_iter != iter->second.end(); ++token_iter) {
     if (callback->OnToken(key, key, **token_iter) !=
         Callback::TRAVERSE_CONTINUE) {
@@ -218,7 +221,7 @@ void DictionaryMock::LookupReverse(
   for (int i = 1; i <= str.size(); ++i) {
     StringPiece prefix = str.substr(0, i);
 
-    map<string, vector<Token *>>::const_iterator iter =
+    std::map<string, std::vector<Token *>>::const_iterator iter =
         reverse_dictionary_.find(prefix.as_string());
     if (iter == reverse_dictionary_.end()) {
       continue;
@@ -227,7 +230,7 @@ void DictionaryMock::LookupReverse(
     if (callback->OnKey(prefix) != Callback::TRAVERSE_CONTINUE) {
       return;
     }
-    for (vector<Token *>::const_iterator token_iter = iter->second.begin();
+    for (std::vector<Token *>::const_iterator token_iter = iter->second.begin();
          token_iter != iter->second.end(); ++token_iter) {
       if (callback->OnToken(prefix, prefix, **token_iter) !=
           Callback::TRAVERSE_CONTINUE) {

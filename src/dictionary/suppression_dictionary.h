@@ -75,7 +75,7 @@ class SuppressionDictionary {
   bool SuppressEntry(const string &key, const string &value) const;
 
  private:
-  set<string> dic_;
+  std::set<string> dic_;
   bool locked_;
   bool has_key_empty_;
   bool has_value_empty_;

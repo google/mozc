@@ -155,7 +155,6 @@
         'mozc',
         'guava_library',
         'userfeedback/userfeedback.gyp:userfeedback_project',
-        'subset_font',
         'resources/resources.gyp:resources_project',
         'support_libraries',
       ],
@@ -471,38 +470,6 @@
             '<(_inputs)',
             'libs/jsr305.jar',
           ]
-        },
-      ],
-    },
-    {
-      'target_name': 'subset_font',
-      'type': 'none',
-      'dependencies': [
-        'resources/resources.gyp:copy_asis_svg',
-        'resources/resources.gyp:transform_template_svg',
-      ],
-      'variables': {
-        'input_font': '<(font_dir)/Noto-Roboto2-Regular.otf',
-        'fonttools_path': '<(third_party_dir)/fontTools/Lib/fontTools',
-      },
-      'actions': [
-        {
-          'action_name': 'make_subset_font',
-          'inputs': [
-            '<(input_font)',
-            'gen_subset_font.py',
-          ],
-          'outputs': [
-            '<(sdk_asset_dir)/subset_font.otf',
-          ],
-          'action': [
-            'python',
-            'gen_subset_font.py',
-            '--svg_paths=<(shared_intermediate_mozc_dir)/data/images/android/svg/transformed.zip,<(shared_intermediate_mozc_dir)/data/images/android/svg/asis.zip',
-            '--input_font', '<(input_font)',
-            '--output_font', '<@(_outputs)',
-            '--fonttools_path', '<(fonttools_path)',
-          ],
         },
       ],
     },

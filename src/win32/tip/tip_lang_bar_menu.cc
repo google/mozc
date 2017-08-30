@@ -69,10 +69,7 @@ const int kTipLangBarMenuCookie = (('M' << 24) |
                                    ('z' << 8) |
                                    ('c' << 0));
 
-// "ＭＳ ゴシック"
-const char kTextIconFont[] =
-    "\xEF\xBC\xAD\xEF\xBC\xB3"
-    "\x20\xE3\x82\xB4\xE3\x82\xB7\xE3\x83\x83\xE3\x82\xAF";
+const char kTextIconFont[] = "ＭＳ ゴシック";
 
 // TODO(yukawa): Refactor LangBar code so that we can configure following
 // settings as a part of initialization.
@@ -81,19 +78,15 @@ string GetIconStringIfNecessary(UINT icon_id) {
     case IDI_DIRECT_NT:
       return "A";
     case IDI_HIRAGANA_NT:
-      // "あ"
-      return "\xE3\x81\x82";
+      return "あ";
     case IDI_FULL_KATAKANA_NT:
-      // "ア"
-      return "\xE3\x82\xA2";
+      return "ア";
     case IDI_HALF_ALPHANUMERIC_NT:
       return "_A";
     case IDI_FULL_ALPHANUMERIC_NT:
-      // "Ａ"
-      return "\xEF\xBC\xA1";
+      return "Ａ";
     case IDI_HALF_KATAKANA_NT:
-      // "_ｱ"
-      return "_" "\xEF\xBD\xB1";
+      return "_ｱ";
   }
   return string();
 }

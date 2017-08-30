@@ -1,6 +1,69 @@
 Release History
 ===============
 
+2.19.2644.102 - 2.20.2673.102 / *2016-10-20* - *2016-12-08*
+--------------------------------------------------
+You can check out Mozc [2.20.2673.102](https://github.com/google/mozc/commit/280e38fe3d9db4df52f0713acf2ca65898cd697a) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout 280e38fe3d9db4df52f0713acf2ca65898cd697a
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.19.2644.102](https://github.com/google/mozc/commit/c19cc87a399bae0863b76daece950b8bb1be8175) and [2.20.2673.102](https://github.com/google/mozc/commit/280e38fe3d9db4df52f0713acf2ca65898cd697a) as follows.
+
+  * Third party libraries:
+    * None.
+  * Build related changes:
+    * `--qtver` GYP build option was removed ([280e38f](https://github.com/google/mozc/commit/280e38fe3d9db4df52f0713acf2ca65898cd697a)).
+    * Mozc for macOS now uses macOS 10.11 SDK by default ([b2a74bb](https://github.com/google/mozc/commit/b2a74bb1bab6cc3de8611b7679b4c79f45d8ddb3)).
+  * Major changes:
+    * `src/data/installer/credits_ja.html` was removed ([2ec6c8f](https://github.com/google/mozc/commit/2ec6c8f9dc1478f4d47739ee2d017d02b954b75a)).
+    * Mozc for macOS now generates 64-bit executables.  32-bit machine is no longer supported on macOS.
+    * Mozc for Android now has more translations ([d914458](https://github.com/google/mozc/commit/d91445866b2b574a35ce1f79894403e26f4b5ae2)).
+  * Fixed issues:
+    * [#187](https://github.com/google/mozc/issues/187): build_mozc.py always generates 32 bit binaries on 64 bit OSX
+    * [#327](https://github.com/google/mozc/issues/327): Switch to Qt5 from Qt4
+    * [#348](https://github.com/google/mozc/issues/348): DirectWrite may fail to render text in certain enviromnents
+    * [#391](https://github.com/google/mozc/issues/391): ImportError: gen_zip_code_seed.py
+    * [#399](https://github.com/google/mozc/issues/399): OK/Cancel buttons on Mozc key binding editor dialog cannot be clicked on Windows
+    * [#400](https://github.com/google/mozc/issues/400): Close icon on GUI dialogs do not work on Windows
+  * Total commits:
+    * [30 commits](https://github.com/google/mozc/compare/c19cc87a399bae0863b76daece950b8bb1be8175%5E...280e38fe3d9db4df52f0713acf2ca65898cd697a).
+
+
+2.18.2613.102 - 2.19.2643.102 / *2016-09-15* - *2016-10-18*
+--------------------------------------------------
+You can check out Mozc [2.19.2643.102](https://github.com/google/mozc/commit/f5dcadf0dee0382612398965adc2c110ef027d9c) as follows.
+
+```
+git clone https://github.com/google/mozc.git -b master --single-branch
+cd mozc
+git checkout f5dcadf0dee0382612398965adc2c110ef027d9c
+git submodule update --init --recursive
+```
+
+Summary of changes between [2.18.2613.102](https://github.com/google/mozc/commit/f76c304164e54414b5310010bc26e27b37764822) and [2.19.2643.102](https://github.com/google/mozc/commit/f5dcadf0dee0382612398965adc2c110ef027d9c) as follows.
+
+  * Third party libraries:
+    * protobuf: [e8ae137 -> c44ca26](https://github.com/google/protobuf/compare/e8ae137c96444ea313485ed1118c5e43b2099cf1...c44ca26fe89ed8a81d3ee475a2ccc1797141dbce)
+    * Dropped dependency on [fonttools](https://github.com/googlei18n/fonttools)
+  * Build related changes:
+    * `--qtver=5` GYP build option is implicitly assumed on macOS and Linux builds ([f76c304](https://github.com/google/mozc/commit/f76c304164e54414b5310010bc26e27b37764822)). On Windows, `--qtver=4` is still the default.
+  * Major changes:
+    * Mozc for macOS now supports 10.12 as a runtime environment.
+    * Mozc for Android now uses on-device font to render keytop icons ([f5dcad](https://github.com/google/mozc/commit/f5dcadf0dee0382612398965adc2c110ef027d9c)).
+  * Fixed issues:
+    * [#263](https://github.com/google/mozc/issues/263): Incorrect position in voiced sound marks on the key pad in Android
+    * [#384](https://github.com/google/mozc/issues/384): HUAWEI P9 lite does not show MozcView.
+    * [#388](https://github.com/google/mozc/issues/388): Having multiple abbreviation user dictionary entries with the same reading should be supported
+    * [#389](https://github.com/google/mozc/issues/389): Emoticon user dictionary entry should not be treated a content word
+  * Total commits:
+    * [39 commits](https://github.com/google/mozc/compare/f76c304164e54414b5310010bc26e27b37764822%5E...f5dcadf0dee0382612398965adc2c110ef027d9c).
+
+
 2.17.2532.102 - 2.18.2612.102 / *2016-03-15* - *2016-09-13*
 --------------------------------------------------
 You can check out Mozc [2.18.2612.102](https://github.com/google/mozc/commit/2315f957d1785130c2ed196e141a330b0857b065) as follows.

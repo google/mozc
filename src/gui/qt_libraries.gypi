@@ -34,35 +34,12 @@
 {
   'conditions': [['use_qt=="YES"', {
 
-  'variables': {
-    'conditions': [
-      ['target_platform=="Linux"', {
-        'conditions': [
-          ['qt_ver==5', {
-            'qt_cflags': ['<!@(pkg-config --cflags Qt5Widgets Qt5Gui Qt5Core)'],
-            'qt_include_dirs': [],
-          }, {
-            'qt_cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
-            'qt_include_dirs': [],
-          }],
-        ],
-      }, 'qt_dir', {
-        'qt_cflags': [],
-        'qt_include_dirs': ['<(qt_dir)/include'],
-      }, {
-        'qt_cflags': [],
-        'qt_include_dirs': [],
-      }],
-    ],
-  },
-  # compilation settings
-  'cflags': ['<@(qt_cflags)'],
-  'include_dirs': ['<@(qt_include_dirs)'],
   # link settings
   # TODO(yukawa): Use 'link_settings' so that linker settings can be passed
   #     to executables and loadable modules.
   'conditions': [
     ['qt_dir and target_platform=="Windows"', {
+      'include_dirs': ['<(qt_dir)/include'],
       'configurations': {
         'Debug_Base': {
           'msvs_settings': {
@@ -70,19 +47,10 @@
               'AdditionalLibraryDirectories': [
                 '<(qt_dir)/lib',
               ],
-              'conditions': [
-                ['qt_ver==5', {
-                  'AdditionalDependencies': [
-                    'Qt5Cored.lib',
-                    'Qt5Guid.lib',
-                    'Qt5Widgetsd.lib',
-                  ],
-                }, {
-                  'AdditionalDependencies': [
-                    'QtCored4.lib',
-                    'QtGuid4.lib',
-                  ],
-                }],
+              'AdditionalDependencies': [
+                'Qt5Cored.lib',
+                'Qt5Guid.lib',
+                'Qt5Widgetsd.lib',
               ],
             },
           },
@@ -93,19 +61,10 @@
               'AdditionalLibraryDirectories': [
                 '<(qt_dir)/lib',
               ],
-              'conditions': [
-                ['qt_ver==5', {
-                  'AdditionalDependencies': [
-                    'Qt5Core.lib',
-                    'Qt5Gui.lib',
-                    'Qt5Widgets.lib',
-                  ],
-                }, {
-                  'AdditionalDependencies': [
-                    'QtCore4.lib',
-                    'QtGui4.lib',
-                  ],
-                }],
+              'AdditionalDependencies': [
+                'Qt5Core.lib',
+                'Qt5Gui.lib',
+                'Qt5Widgets.lib',
               ],
             },
           },
@@ -115,30 +74,23 @@
     ['target_platform=="Mac"', {
       'conditions': [
         ['qt_dir', {
+          'include_dirs': ['<(qt_dir)/include'],
+          'xcode_settings': {
+            'WARNING_CFLAGS': ['-Wno-inconsistent-missing-override'],
+          },
           # Supposing Qt libraries in qt_dir will be built as static libraries.
           'link_settings': {
             'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(qt_dir)/lib',
-              ],
+              'LIBRARY_SEARCH_PATHS': ['<(qt_dir)/lib'],
             },
             'mac_framework_dirs': [
               '<(qt_dir)/lib',
             ],
-            'conditions': [
-              ['qt_ver==5', {
-                'libraries': [
-                  '<(qt_dir)/lib/QtCore.framework',
-                  '<(qt_dir)/lib/QtGui.framework',
-                  '<(qt_dir)/lib/QtWidgets.framework',
-                ]
-              }, {
-                'libraries': [
-                  '<(qt_dir)/lib/QtCore.framework',
-                  '<(qt_dir)/lib/QtGui.framework',
-                ]
-              }],
-            ],
+            'libraries': [
+              '<(qt_dir)/lib/QtCore.framework',
+              '<(qt_dir)/lib/QtGui.framework',
+              '<(qt_dir)/lib/QtWidgets.framework',
+            ]
           },
         }],
       ],
@@ -147,17 +99,8 @@
       ]
     }],
     ['target_platform=="Linux"', {
-      'conditions': [
-        ['qt_ver==5', {
-          'libraries': [
-            '<!@(pkg-config --libs Qt5Widgets Qt5Gui Qt5Core)',
-          ],
-        }, {
-          'libraries': [
-            '<!@(pkg-config --libs QtGui QtCore)',
-          ],
-        }],
-      ],
+      'cflags': ['<!@(pkg-config --cflags Qt5Widgets Qt5Gui Qt5Core)'],
+      'libraries': ['<!@(pkg-config --libs Qt5Widgets Qt5Gui Qt5Core)'],
     }],
     # Workarounds related with clang.
     ['(_toolset=="target" and compiler_target=="clang") or '

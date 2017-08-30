@@ -67,7 +67,7 @@ class LRUStorage {
 
   // Returns all values.
   // The order is new to old (*values->begin() is the newest).
-  bool GetAllValues(vector<string> *values) const;
+  bool GetAllValues(std::vector<string> *values) const;
 
   // clear all LRU cache;
   // mapped file is also initialized
@@ -138,7 +138,7 @@ class LRUStorage {
   char *begin_;
   char *end_;
   string filename_;
-  map<uint64, Node *> map_;
+  std::map<uint64, Node *> map_;
   std::unique_ptr<LRUList> lru_list_;
   std::unique_ptr<Mmap> mmap_;
 

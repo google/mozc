@@ -441,11 +441,11 @@ bool IsT13NCandidate(const Segment::Candidate &cand) {
 }  // namespace
 
 bool UserSegmentHistoryRewriter::SortCandidates(
-    const vector<ScoreType> &sorted_scores, Segment *segment) const {
+    const std::vector<ScoreType> &sorted_scores, Segment *segment) const {
   const uint32 top_score = sorted_scores[0].score;
   const size_t size = min(sorted_scores.size(), kMaxRerankSize);
   const uint32 kScoreGap = 20;   // TODO(taku): no justification
-  set<string> seen;
+  std::set<string> seen;
 
   size_t next_pos = 0;
   for (size_t n = 0; n < size; ++n) {
@@ -904,7 +904,7 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
 }
 
 bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
-  vector<ScoreType> scores;
+  std::vector<ScoreType> scores;
   for (size_t l = 0;
        l < segment->candidates_size() + segment->meta_candidates_size(); ++l) {
     int j = static_cast<int>(l);
@@ -996,7 +996,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
         << "Cannot expand candidates. ignored. Rewrite may be failed";
 
     // for each all candidates expanded
-    vector<ScoreType> scores;
+    std::vector<ScoreType> scores;
     for (size_t l = 0;
          l < segment->candidates_size() + segment->meta_candidates_size();
          ++l) {

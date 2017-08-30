@@ -202,11 +202,7 @@ QString toJapaneseReading(const char *str) {
 }
 
 QString toHtmlEscaped(const QString &text) {
-#ifdef MOZC_USE_QT5
   return text.toHtmlEscaped();
-#else
-  return Qt::escape(text);
-#endif
 }
 }  // namespace
 

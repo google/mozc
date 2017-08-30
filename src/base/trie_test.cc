@@ -129,7 +129,7 @@ TEST(TrieTest, LookUpPrefix) {
 TEST(TrieTest, Empty) {
   Trie<string> trie;
   {
-    vector<string> values;
+    std::vector<string> values;
     trie.LookUpPredictiveAll("a", &values);
     EXPECT_EQ(0, values.size());
   }
@@ -224,7 +224,7 @@ TEST(TrieTest, UTF8LookUpPrefix) {
   }
 }
 
-bool HasData(const vector<string> &values, const string &value) {
+bool HasData(const std::vector<string> &values, const string &value) {
   for (size_t i = 0; i < values.size(); ++i) {
     if (values[i] == value) {
       return true;
@@ -240,7 +240,7 @@ TEST(TrieTest, LookUpPredictiveAll) {
   trie.AddEntry("a", "[A]");
 
   {
-    vector<string> values;
+    std::vector<string> values;
     trie.LookUpPredictiveAll("a", &values);
     EXPECT_EQ(3, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
@@ -249,7 +249,7 @@ TEST(TrieTest, LookUpPredictiveAll) {
   }
 
   {
-    vector<string> values;
+    std::vector<string> values;
     trie.LookUpPredictiveAll("ab", &values);
     EXPECT_EQ(2, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
@@ -257,14 +257,14 @@ TEST(TrieTest, LookUpPredictiveAll) {
   }
 
   {
-    vector<string> values;
+    std::vector<string> values;
     trie.LookUpPredictiveAll("abc", &values);
     EXPECT_EQ(1, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
   }
 
   {
-    vector<string> values;
+    std::vector<string> values;
     trie.LookUpPredictiveAll("", &values);
     EXPECT_EQ(3, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
@@ -273,7 +273,7 @@ TEST(TrieTest, LookUpPredictiveAll) {
   }
 
   {
-    vector<string> values;
+    std::vector<string> values;
     trie.LookUpPredictiveAll("x", &values);
     EXPECT_EQ(0, values.size());
   }

@@ -48,7 +48,7 @@ DEFINE_string(output_string_array, "", "Output string array");
 namespace mozc {
 namespace {
 
-using KeyList = vector<string>;
+using KeyList = std::vector<string>;
 using CompilerToken = SerializedDictionary::CompilerToken;
 using TokenList = SerializedDictionary::TokenList;
 
@@ -77,16 +77,16 @@ string GetDescription(const KeyList &key_list,
                             sorted_key_list.front().c_str());
 }
 
-map<string, TokenList> ReadEmoticonTsv(const string &path) {
+std::map<string, TokenList> ReadEmoticonTsv(const string &path) {
   InputFileStream ifs(path.c_str());
 
   string line;
   getline(ifs, line);  // Skip header
 
-  vector<pair<string, KeyList>> data;
+  std::vector<std::pair<string, KeyList>> data;
   std::unordered_map<string, int> key_count;
   while (getline(ifs, line)) {
-    vector<StringPiece> field_list;
+    std::vector<StringPiece> field_list;
     Util::SplitStringUsing(line, "\t", &field_list);
     CHECK_GE(field_list.size(), 2) << "Format error: " << line;
     LOG_IF(WARNING, field_list.size() > 3) << "Ignore extra columns: " << line;
@@ -102,7 +102,7 @@ map<string, TokenList> ReadEmoticonTsv(const string &path) {
     }
   }
 
-  map<string, TokenList> input_data;
+  std::map<string, TokenList> input_data;
   int16 cost = 10;
   for (const auto &kv : data) {
     const string &value = kv.first;

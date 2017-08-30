@@ -46,8 +46,8 @@
     'compiler_host_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
     # Versioning stuff for Mac.
-    'mac_sdk%': '10.9',
-    'mac_deployment_target%': '10.7',
+    'mac_sdk%': '10.11',
+    'mac_deployment_target%': '10.9',
 
 
     # 'conditions' is put inside of 'variables' so that we can use
@@ -123,7 +123,7 @@
       }],
       ['target_platform=="NaCl"', {
         'compiler_target': 'clang',
-        'compiler_target_version_int': 304,  # Clang 3.3 or higher
+        'compiler_target_version_int': 304,  # Clang 3.4 or higher
         'compiler_host': 'clang',
         'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
@@ -382,19 +382,14 @@
           ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
         ],
         'conditions': [
-          ['branding=="GoogleJapaneseInput"', {
-            'mac_framework_dirs': [
-              '<(mac_breakpad_dir)',
-            ],
-          }],
           ['target_platform=="Mac"', {
             'xcode_settings': {
+              'ARCHS': ['x86_64'],
               'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
             },
           }],
         ],
         'xcode_settings': {
-          'ARCHS': ['i386'],
           'SDKROOT': 'macosx<(mac_sdk)',
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
           'GCC_SYMBOLS_PRIVATE_EXTERN': 'NO',  # No -fvisibility=hidden

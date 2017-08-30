@@ -35,19 +35,11 @@
 #endif  // OS_ANDROID || OS_NACL
 
 #ifdef OS_WIN
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QApplication>
-#endif
 #include <windows.h>
 #endif
 
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QMessageBox>
-#else
-#include <QtGui/QMessageBox>
-#endif
 
 #include <algorithm>
 #include <cstdlib>
@@ -95,7 +87,7 @@ ConfigDialog::ConfigDialog()
       initial_use_keyboard_to_change_preedit_method_(false),
       initial_use_mode_indicator_(true) {
   setupUi(this);
-  setWindowFlags(Qt::WindowSystemMenuHint);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
   setWindowModality(Qt::NonModal);
 
 #ifdef OS_WIN
@@ -219,6 +211,12 @@ ConfigDialog::ConfigDialog()
   // Mode indicator is available only on Windows.
   useModeIndicator->hide();
 #endif  // !OS_WIN
+
+  // Reset texts explicitly for translations.
+  configDialogButtonBox->button(QDialogButtonBox::Ok)->setText(tr("  Ok  "));
+  configDialogButtonBox->button(QDialogButtonBox::Cancel)->setText(
+      tr("Cancel"));
+  configDialogButtonBox->button(QDialogButtonBox::Apply)->setText(tr("Apply"));
 
   // signal/slot
   QObject::connect(configDialogButtonBox,

@@ -130,7 +130,7 @@ void GetRewriteCandidateInfos(
     const SerializedStringArray &suffix_array,
     const Segment &seg,
     const POSMatcher &pos_matcher,
-    vector<RewriteCandidateInfo> *rewrite_candidate_info) {
+    std::vector<RewriteCandidateInfo> *rewrite_candidate_info) {
   DCHECK(rewrite_candidate_info);
   RewriteCandidateInfo info;
 
@@ -153,9 +153,9 @@ const int kArabicNumericOffset = 5;
 
 void PushBackCandidate(const string &value, const string &desc,
                        NumberUtil::NumberString::Style style,
-                       vector<Segment::Candidate> *results) {
+                       std::vector<Segment::Candidate> *results) {
   bool found = false;
-  for (vector<Segment::Candidate>::const_iterator it = results->begin();
+  for (std::vector<Segment::Candidate>::const_iterator it = results->begin();
        it != results->end(); ++it) {
     if (it->value == value) {
       found = true;
@@ -172,12 +172,12 @@ void PushBackCandidate(const string &value, const string &desc,
 }
 
 void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
-                       vector<Segment::Candidate> *candidates) {
+                       std::vector<Segment::Candidate> *candidates) {
   const string suffix(
       arabic_cand.value, arabic_cand.content_value.size(),
       arabic_cand.value.size() - arabic_cand.content_value.size());
 
-  for (vector<Segment::Candidate>::iterator it = candidates->begin();
+  for (std::vector<Segment::Candidate>::iterator it = candidates->begin();
        it != candidates->end(); ++it) {
     it->content_value.assign(it->value);
     it->value.append(suffix);
@@ -200,15 +200,15 @@ class CheckValueOperator {
 // TODO(toshiyuki): Delete candidates between base pos and insert pos
 // if necessary.
 void EraseExistingCandidates(
-    const vector<Segment::Candidate> &results,
+    const std::vector<Segment::Candidate> &results,
     int base_candidate_pos,
     Segment *seg,
-    vector<RewriteCandidateInfo> *rewrite_candidate_info_list) {
+    std::vector<RewriteCandidateInfo> *rewrite_candidate_info_list) {
   DCHECK(seg);
   // Remember base candidate value
   for (int pos = base_candidate_pos - 1; pos >= 0; --pos) {
     // Simple liner search. |results| size is small. (at most 10 or so)
-    const vector<Segment::Candidate>::const_iterator iter =
+    const std::vector<Segment::Candidate>::const_iterator iter =
         std::find_if(results.begin(), results.end(),
                      CheckValueOperator(seg->candidate(pos).value));
     if (iter == results.end()) {
@@ -289,7 +289,7 @@ void UpdateCandidate(Segment *segment,
   MergeCandidateInfoInternal(base_cand, result_cand, c);
 }
 
-void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
+void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
                                const Segment::Candidate &base_cand,
                                int base_candidate_pos,
                                int insert_pos, Segment *seg) {
@@ -309,7 +309,7 @@ void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
   // We don't want to rewrite "千万" to "一千万".
   {
     const string &base_value = seg->candidate(base_candidate_pos).value;
-    vector<Segment::Candidate>::const_iterator itr = std::find_if(
+    std::vector<Segment::Candidate>::const_iterator itr = std::find_if(
         results.begin(), results.end(), CheckValueOperator(base_value));
     if (itr != results.end() &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI &&
@@ -340,7 +340,7 @@ int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
 }
 
 void InsertHalfArabic(const string &half_arabic,
-                      vector<NumberUtil::NumberString> *output) {
+                      std::vector<NumberUtil::NumberString> *output) {
   output->push_back(
       NumberUtil::NumberString(half_arabic, "",
                                NumberUtil::NumberString::DEFAULT_STYLE));
@@ -348,7 +348,7 @@ void InsertHalfArabic(const string &half_arabic,
 
 void GetNumbers(RewriteType type, bool exec_radix_conversion,
                 const string &arabic_content_value,
-                vector<NumberUtil::NumberString> *output) {
+                std::vector<NumberUtil::NumberString> *output) {
   DCHECK(output);
   if (type == ARABIC_FIRST) {
     InsertHalfArabic(arabic_content_value, output);
@@ -374,7 +374,7 @@ bool RewriteOneSegment(
     const POSMatcher &pos_matcher, bool exec_radix_conversion, Segment *seg) {
   DCHECK(seg);
   bool modified = false;
-  vector<RewriteCandidateInfo> rewrite_candidate_infos;
+  std::vector<RewriteCandidateInfo> rewrite_candidate_infos;
   GetRewriteCandidateInfos(suffix_array, *seg, pos_matcher,
                            &rewrite_candidate_infos);
 
@@ -401,9 +401,9 @@ bool RewriteOneSegment(
                  << arabic_content_value;
       break;
     }
-    vector<NumberUtil::NumberString> output;
+    std::vector<NumberUtil::NumberString> output;
     GetNumbers(info.type, exec_radix_conversion, arabic_content_value, &output);
-    vector<Segment::Candidate> converted_numbers;
+    std::vector<Segment::Candidate> converted_numbers;
     for (int j = 0; j < output.size(); ++j) {
       PushBackCandidate(output[j].value, output[j].description,
                         output[j].style, &converted_numbers);

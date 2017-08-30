@@ -10,8 +10,9 @@ How to build Mozc in Windows
 Building Mozc on Windows requires the following software.
 
   * [Visual Studio 2015 Community Edition](http://visualstudio.com/free), or any greater edition.
-  * (optinal) [Qt libraries](http://download.qt.io/archive/qt/)
+  * (optinal) [Qt 5](https://download.qt.io/official_releases/qt/)
     * Commercial version and LGPL version are available.
+    * You must download msvs2015 32-bit version of Qt 5 since currently `mozc_tool.exe` needs to be built as a 32-bit executable.
 
 # Get dependent prebuilt binaries
 
@@ -44,10 +45,10 @@ First, you'll need to generate Visual C++ project files using a tool called [GYP
 
 ```
 cd c:\work\mozc\src
-python build_mozc.py gyp --qtdir=c:\Qt\4.8.0
+python build_mozc.py gyp --qtdir=c:\Qt\Qt5.6.2\5.6\msvc2015
 ```
 
-The directory of Qt (`C:\Qt\4.8.0` in this example) differs based on Qt version. If you specify `--noqt` option instead of `--qtdir=<dir to Qt>`, mozc\_tool will be built as a mock version, which does nothing.
+The directory of Qt (`c:\Qt\Qt5.6.2\5.6\msvc2015` in this example) differs based on Qt version. If you specify `--noqt` option instead of `--qtdir=<dir to Qt>`, mozc\_tool will be built as a mock version, which does nothing.
 
 You can also specify `--branding=GoogleJapaneseInput` option and `--wix_dir=<dir to WiX binaries>` option here to reproduce official Google Japanese Input binaries and installers.
 
@@ -94,10 +95,12 @@ Following files must be placed under %ProgramFiles%\Mozc.
   * `C:\work\mozc\src\out\Release\mozc_server.exe`
   * `C:\work\mozc\src\out\Release\mozc_tool.exe` (if you specified `--noqt` option)
   * `C:\work\mozc\src\out\ReleaseDynamic\mozc_tool.exe` (if you didn't specify `--noqt` option)
-  * `C:\work\mozc\src\out\ReleaseDynamic\QtCore4.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out\ReleaseDynamic\QtGui4.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\Qt5Core.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\Qt5Gui.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\Qt5Widgets.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\platforms\qwindows.dll` (not required if you specified `--noqt` option)
 
-`QtCore4.dll` and `QtGui4.dll` are not required if you specified `--noqt` option into the gyp command.
+`Qt5Core.dll`, `Qt5Gui.dll`, `Qt5Widgets.dll`, and `qwindows.dll` are not required if you specified `--noqt` option into the gyp command.
 
 ### Register Mozc for IMM32 into 32-bit environment
 
@@ -165,9 +168,13 @@ Following files must be placed under %ProgramFiles(x86)%\Mozc.
   * `C:\work\mozc\src\out\Release\mozc_server.exe`
   * `C:\work\mozc\src\out\Release\mozc_tool.exe` (if you specified `--noqt` option)
   * `C:\work\mozc\src\out\ReleaseDynamic\mozc\_tool.exe` (if you didn't specify `--noqt` option)
-  * `C:\work\mozc\src\out\ReleaseDynamic\QtCore4.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out\ReleaseDynamic\QtGui4.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\Qt5Core.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\Qt5Gui.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\Qt5Widgets.dll` (not required if you specified `--noqt` option)
+  * `C:\work\mozc\src\out\ReleaseDynamic\platforms\qwindows.dll` (not required if you specified `--noqt` option)
   * `C:\work\mozc\src\out\Release_x64\mozc_broker64.exe`
+
+`Qt5Core.dll`, `Qt5Gui.dll`, `Qt5Widgets.dll`, and `qwindows.dll` are not required if you specified `--noqt` option into the gyp command.
 
 ### Register Mozc for IMM32 into 64-bit environment
 

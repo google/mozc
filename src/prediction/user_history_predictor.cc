@@ -576,7 +576,7 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
     return false;
   }
 
-  vector<uint32> keys;
+  std::vector<uint32> keys;
   for (const DicElement *elm = head; elm != nullptr; elm = elm->next) {
     VLOG(3) << elm->key << " " << elm->value.suggestion_freq();
     if (elm->value.suggestion_freq() == 0) {
@@ -633,9 +633,9 @@ UserHistoryPredictor::RemoveNgramChainResult
 UserHistoryPredictor::RemoveNgramChain(const string &target_key,
                                        const string &target_value,
                                        Entry *entry,
-                                       vector<StringPiece> *key_ngrams,
+                                       std::vector<StringPiece> *key_ngrams,
                                        size_t key_ngrams_len,
-                                       vector<StringPiece> *value_ngrams,
+                                       std::vector<StringPiece> *value_ngrams,
                                        size_t value_ngrams_len) {
   DCHECK(entry);
   DCHECK(key_ngrams);
@@ -732,7 +732,7 @@ bool UserHistoryPredictor::ClearHistoryEntry(const string &key,
           !Util::StartsWith(value, entry->value())) {
         continue;
       }
-      vector<StringPiece> key_ngrams, value_ngrams;
+      std::vector<StringPiece> key_ngrams, value_ngrams;
       if (RemoveNgramChain(
               key, value, entry, &key_ngrams, 0, &value_ngrams, 0) == DONE) {
         deleted = true;
@@ -1375,11 +1375,11 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   }
 
   request.composer().GetStringForPreedit(input_key);
-  set<string> expanded_set;
+  std::set<string> expanded_set;
   request.composer().GetQueriesForPrediction(base, &expanded_set);
   if (expanded_set.size() > 0) {
     expanded->reset(new Trie<string>);
-    for (set<string>::const_iterator itr = expanded_set.begin();
+    for (std::set<string>::const_iterator itr = expanded_set.begin();
          itr != expanded_set.end(); ++itr) {
       // For getting matched key, insert values
       (*expanded)->AddEntry(*itr, *itr);

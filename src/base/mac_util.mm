@@ -116,6 +116,19 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
 
   return prelauncher_item;
 }
+
+string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory) {
+  string dir;
+  @autoreleasepool {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(
+        directory, NSUserDomainMask, YES);
+    if ([paths count] > 0) {
+      dir.assign([[paths objectAtIndex:0] fileSystemRepresentation]);
+    }
+  }
+  return dir;
+}
+
 }  // namespace
 
 string MacUtil::GetLabelForSuffix(const string &suffix) {
@@ -123,38 +136,34 @@ string MacUtil::GetLabelForSuffix(const string &suffix) {
 }
 
 string MacUtil::GetApplicationSupportDirectory() {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  string dir;
-  NSArray *paths = NSSearchPathForDirectoriesInDomains(
-      NSApplicationSupportDirectory, NSUserDomainMask, YES);
-  if ([paths count] > 0) {
-    dir.assign([[paths objectAtIndex:0] fileSystemRepresentation]);
-  }
-  [pool drain];
-  return dir;
+  return GetSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory);
+}
+
+string MacUtil::GetCachesDirectory() {
+  return GetSearchPathForDirectoriesInDomains(NSCachesDirectory);
 }
 
 string MacUtil::GetLoggingDirectory() {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   string dir;
-  NSArray *paths = NSSearchPathForDirectoriesInDomains(
-      NSLibraryDirectory, NSUserDomainMask, YES);
-  if ([paths count] > 0) {
-    dir.assign(
-        [[[[paths objectAtIndex:0] stringByAppendingPathComponent:@"Logs"]
-           stringByAppendingPathComponent:@kProductPrefix]
-          fileSystemRepresentation]);
+  @autoreleasepool {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(
+        NSLibraryDirectory, NSUserDomainMask, YES);
+    if ([paths count] > 0) {
+      dir.assign(
+          [[[[paths objectAtIndex:0] stringByAppendingPathComponent:@"Logs"]
+             stringByAppendingPathComponent:@kProductPrefix]
+            fileSystemRepresentation]);
+    }
   }
-  [pool drain];
   return dir;
 }
 
 string MacUtil::GetOSVersionString() {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   string version;
-  version.assign([[[NSProcessInfo processInfo] operatingSystemVersionString]
-                  cStringUsingEncoding : NSUTF8StringEncoding]);
-  [pool drain];
+  @autoreleasepool {
+    version.assign([[[NSProcessInfo processInfo] operatingSystemVersionString]
+                    cStringUsingEncoding:NSUTF8StringEncoding]);
+  }
   return version;
 }
 
@@ -163,17 +172,16 @@ string MacUtil::GetServerDirectory() {
 }
 
 string MacUtil::GetResourcesDirectory() {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   string result;
-
-  NSBundle *mainBundle = [NSBundle mainBundle];
-  if (mainBundle) {
-    NSString *resourcePath = [mainBundle resourcePath];
-    if (resourcePath) {
-      result.assign([resourcePath fileSystemRepresentation]);
+  @autoreleasepool {
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    if (mainBundle) {
+      NSString *resourcePath = [mainBundle resourcePath];
+      if (resourcePath) {
+        result.assign([resourcePath fileSystemRepresentation]);
+      }
     }
   }
-  [pool drain];
   return result;
 }
 

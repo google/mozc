@@ -272,14 +272,6 @@ def ParseGypOptions(args):
   parser.add_option('--gypdir', dest='gypdir',
                     help='Specifies the location of GYP to be used.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
-
-  default_qtver = '5'
-  # TODO(yukawa): Support Qt5 on Windows
-  if IsWindows():
-    default_qtver = '4'
-  parser.add_option('--qtver', dest='qtver', choices=('4', '5'),
-                    default=default_qtver)
-
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='data/version/mozc_version_template.bzl')
@@ -512,7 +504,7 @@ def GypMain(options, unused_args):
   if options.noqt or options.target_platform in ['Android', 'NaCl']:
     qt_version = ''
   else:
-    qt_version = options.qtver
+    qt_version = '5'
   GenerateVersionFile(template_path, version_path, options.target_platform,
                       options.android_application_id,
                       options.android_arch, qt_version)
@@ -598,12 +590,7 @@ def GypMain(options, unused_args):
     gyp_options.extend(['-D', 'qt_dir='])
 
     # Check if Qt libraries are installed.
-    if options.qtver == '5':
-      system_qt_found = PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets')
-    else:
-      system_qt_found = PkgExists('QtCore >= 4.0', 'QtCore < 5.0',
-                                  'QtGui >= 4.0', 'QtGui < 5.0')
-    if not system_qt_found:
+    if not PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets'):
       PrintErrorAndExit('Qt is required to build GUI Tool. '
                         'Specify --noqt to skip building GUI Tool.')
 
@@ -613,7 +600,6 @@ def GypMain(options, unused_args):
       gyp_options.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
     else:
       gyp_options.extend(['-D', 'qt_dir='])
-  gyp_options.extend(['-D', 'qt_ver=%s' % options.qtver])
 
   if target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
@@ -779,25 +765,37 @@ def GypMain(options, unused_args):
     abs_out_win_dir = GetBuildBaseName(target_platform)
     copy_script = os.path.join(
         ABS_SCRIPT_DIR, 'build_tools', 'copy_dll_and_symbol.py')
-    if qt_version == '4':
-      copy_modes = [
-          {'configuration': 'DebugDynamic', 'basenames': 'QtCored4;QtGuid4'},
-          {'configuration': 'ReleaseDynamic', 'basenames': 'QtCore4;QtGui4'}]
-    elif qt_version == '5':
-      copy_modes = [
-          {'configuration': 'DebugDynamic',
-           'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd'},
-          {'configuration': 'ReleaseDynamic',
-           'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets'}]
-    else:
-      copy_modes = []
-    for mode in copy_modes:
+    copy_params = []
+    if qt_version == '5':
+      copy_params.append({
+          'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd',
+          'dll_paths': abs_qt_bin_dir,
+          'pdb_paths': abs_qt_lib_dir,
+          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic')})
+      copy_params.append({
+          'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets',
+          'dll_paths': abs_qt_bin_dir,
+          'pdb_paths': abs_qt_lib_dir,
+          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic')})
+      copy_params.append({
+          'basenames': 'qwindowsd',
+          'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic',
+                                     'platforms')})
+      copy_params.append({
+          'basenames': 'qwindows',
+          'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic',
+                                     'platforms')})
+    for copy_param in copy_params:
       copy_commands = [
           copy_script,
-          '--basenames', mode['basenames'],
-          '--dll_paths', abs_qt_bin_dir,
-          '--pdb_paths', os.pathsep.join([abs_qt_bin_dir, abs_qt_lib_dir]),
-          '--target_dir', os.path.join(abs_out_win_dir, mode['configuration']),
+          '--basenames', copy_param['basenames'],
+          '--dll_paths', copy_param['dll_paths'],
+          '--pdb_paths', copy_param['pdb_paths'],
+          '--target_dir', copy_param['target_dir'],
       ]
       RunOrDie(copy_commands)
 
@@ -1156,7 +1154,6 @@ def CleanMain(options, unused_args):
     elif IsMac():
       directory_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                     '*.xcodeproj')))
-  file_names.append('%s/mozc_version.txt' % SRC_DIR)
 
   # mozc_version.txt does not always exist.
   version_file = '%s/mozc_version.txt' % SRC_DIR

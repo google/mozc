@@ -84,7 +84,7 @@ const int32 kStopEnmerationCacheSize = 15;
 
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
-inline bool IsNoisyWeakCompound(const vector<const Node *> &nodes,
+inline bool IsNoisyWeakCompound(const std::vector<const Node *> &nodes,
                                 const dictionary::POSMatcher *pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
@@ -116,7 +116,7 @@ inline bool IsNoisyWeakCompound(const vector<const Node *> &nodes,
 
 // Returns true if the given node sequence is connected weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
-inline bool IsConnectedWeakCompound(const vector<const Node *> &nodes,
+inline bool IsConnectedWeakCompound(const std::vector<const Node *> &nodes,
                                     const dictionary::POSMatcher *pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
@@ -147,7 +147,7 @@ bool IsIsolatedWordOrGeneralSymbol(const dictionary::POSMatcher &pos_matcher,
 
 bool ContainsIsolatedWordOrGeneralSymbol(
     const dictionary::POSMatcher &pos_matcher,
-    const vector<const Node *> &nodes) {
+    const std::vector<const Node *> &nodes) {
   for (const Node *node : nodes) {
     if (IsIsolatedWordOrGeneralSymbol(pos_matcher, node->lid)) {
       return true;
@@ -189,7 +189,7 @@ void CandidateFilter::Reset() {
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     const string &original_key,
     const Segment::Candidate *candidate,
-    const vector<const Node *> &nodes,
+    const std::vector<const Node *> &nodes,
     Segments::RequestType request_type) {
   DCHECK(candidate);
 
@@ -491,7 +491,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     const string &original_key,
     const Segment::Candidate *candidate,
-    const vector<const Node *> &nodes,
+    const std::vector<const Node *> &nodes,
     Segments::RequestType request_type) {
   if (request_type == Segments::REVERSE_CONVERSION) {
     // In reverse conversion, only remove duplicates because the filtering

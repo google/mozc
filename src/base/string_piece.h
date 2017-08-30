@@ -60,9 +60,6 @@ class StringPiece {
   // This method's 2nd argument is *length*.
   StringPiece(const char *offset, size_type len)
       : ptr_(offset), length_(len) {}
-  // Caution! This method's 2nd argument is *position*.
-  StringPiece(const StringPiece str, size_type pos);
-  StringPiece(const StringPiece str, size_type pos, size_type len);
 
   // data() may return a pointer to a buffer with embedded NULs, and the
   // returned buffer may or may not be null terminated.  Therefore it is
@@ -185,7 +182,7 @@ class StringPiece {
   }
 
   friend bool operator<(const StringPiece &x, const StringPiece &y) {
-    const int min_size = x.size() < y.size() ? x.size() : y.size();
+    const size_type min_size = x.size() < y.size() ? x.size() : y.size();
     const int r = memcmp(x.data(), y.data(), min_size);
     return (r < 0) || (r == 0 && x.size() < y.size());
   }

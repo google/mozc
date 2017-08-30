@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">ភាសា​ជប៉ុន</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">ក្តារ​ចុច​កម្មវិធី​កុំព្យូទ័រ</string>
+<string name="pref_software_keyboard_advanced_settings_title">ការ​កំណត់​​ក្តារ​ចុច​កម្មវិធី​កុំព្យូទ័រ​កម្រិត​ខ្ពស់​</string>
+<string name="pref_fragment_software_keyboard_title">ក្តារចុចកម្មវិធី</string>
+<string name="pref_fragment_input_support_title">ការគាំទ្រការបញ្ចូល</string>
+<string name="pref_fragment_conversion_title">ការបម្លែង</string>
+<string name="pref_fragment_dictionary_title">វចនានុក្រម</string>
+<string name="pref_fragment_user_feedback_title">មតិអ្នកប្រើ</string>
+<string name="pref_fragment_about_title">អំពី</string>
+<string name="pref_fragment_development_title">ការអភិវឌ្ឍន៍</string>
+<string name="pref_software_keyboard_preferences_portrait_title">ចំណង់​ចំណូល​ចិត្ត​ក្តារ​ចុច​កម្មវិធី​សម្រាប់​​បែប​​បញ្ឈរ</string>
+<string name="pref_software_keyboard_preferences_landscape_title">ចំណង់​ចំណូល​ចិត្ត​ក្តារ​ចុច​កម្មវិធី​សម្រាប់​បែប​ផ្ដេក</string>
+<string name="pref_keyboard_layout_title">ប្លង់​ក្តារ​ចុច</string>
+<string name="pref_input_style_title">រចនាបថ​បញ្ចូល</string>
+<string name="pref_qwerty_layout_for_alphabet_title">ប្រភេទ QWERTY</string>
+<string name="pref_flick_sensitivity_title">ភាព​ប្រែប្រួល Flick</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">ប្រើ​ការ​កំណត់​បញ្ឈរ</string>
+<string name="pref_keyboard_height_ratio_title">កម្ពស់​ក្ដារចុច</string>
+<string name="pref_input_feedback_category_title">ចំណង់​ចំណូល​ចិត្ត​ក្នុង​ការ​បញ្ចូល​មតិ</string>
+<string name="pref_haptic_feedback_title">មតិ​ត្រឡប់​ប៉ះពាល់​អារម្មណ៍</string>
+<string name="pref_haptic_feedback_duration_title">មតិ​រយៈពេល Haptic</string>
+<string name="pref_sound_feedback_title">មតិ​ជា​សំឡេង</string>
+<string name="pref_sound_feedback_volume_title">បរិមាណ​មតិ​ជា​សំឡេង</string>
+<string name="pref_popup_feedback_title">មតិ​លេចឡើង</string>
+<string name="pref_other_input_support_preference_category_title">ចំណង់​ចំណូល​ចិត្ត​ក្នុង​ការ​គាំទ្រ​ការ​បញ្ចូល​ផ្សេងទៀត</string>
+<string name="pref_fullscreen_title">បែប​​ពេញ​អេក្រង់</string>
+<string name="pref_skin_type_title">រូបរាង​ក្ដារចុច</string>
+<string name="pref_hardware_title">ចំណង់​ចំណូល​ចិត្ត​សម្រាប់​​​ក្ដារចុច​ផ្នែក​រឹង</string>
+<string name="pref_voice_input_title">បង្ហាញ​ប៊ូតុង​បញ្ចូល​សំឡេង</string>
+<string name="pref_conversion_category_title">ចំណង់​ចំណូល​ចិត្ត​ក្នុង​ការ​ប្ដូរ</string>
+<string name="pref_layout_adjustment_title">ការ​លៃ​តម្រូវ​ប្លង់</string>
+<string name="pref_space_character_form_title">ប្រើ​ចន្លោះ​​ពាក់​កណ្តាល​ទទឹង</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">អ្នក​កែ​ប្រែ​ការ​ប្ដូរ​​ដែល​មិន​ដឹង</string>
+<string name="pref_typing_correction_title">កែ​តម្រូវ​ការ​វាយ</string>
+<string name="pref_other_incognito_mode_title">បែប​​បិទបាំង</string>
+<string name="pref_emoji_provider_type_title">ជ្រើស​អ្នក​ផ្តល់ Emoji</string>
+<string name="pref_dictionry_category_title">ចំណង់​ចំណូល​ចិត្ត​វចនានុក្រម</string>
+<string name="pref_dictionary_personalization_title">សម្គាល់</string>
+<string name="pref_dictionary_user_dictionary_tool_title">ឧបករណ៍​វចនានុក្រម</string>
+<string name="pref_clear_category_title">សម្អាត​ប្រវត្តិ</string>
+<string name="pref_clear_conversion_history_title">ប្រវត្តិ​​ការ​ប្តូរ</string>
+<string name="pref_clear_symbol_history_title">ប្រវត្តិ​​និមិត្ត​សញ្ញា</string>
+<string name="pref_clear_user_dictionary_title">វចនានុក្រម​អ្នកប្រើ</string>
+<string name="pref_user_feedback_category_title">មតិ​អ្នក​ប្រើ</string>
+<string name="pref_other_usage_stats_title">ផ្ញើ​ស្ថិតិ​​​ប្រើប្រាស់</string>
+<string name="pref_about_about_this_software_title">អំពី​កម្មវិធី​នេះ</string>
+<string name="pref_about_version_title">កំណែ</string>
+<string name="pref_about_terms_of_service_title">លក្ខខណ្ឌ​ប្រើប្រាស់</string>
+<string name="pref_about_privacy_policy_title">គោលនយោបាយ​ភាព​​ឯកជន​</string>
+<string name="pref_about_oss_credits_title">កម្មវិធី​ប្រភព​បើក​ចំហ</string>
+<string name="pref_launcher_icon_visibility_title">បង្ហាញ​រូប​តំណាង​កម្មវិធី</string>
+<string name="pref_haptic_feedback_description">ញ័រ​នៅ​លើ​គន្លឹះ​ចុច​។</string>
+<string name="pref_sound_feedback_description">សំឡេង​នៅ​លើ​គន្លឹះ​ចុច​។</string>
+<string name="pref_popup_feedback_description">បង្អួច​លេចឡើង​នៅ​លើ​គន្លឹះ​ចុច​។</string>
+<string name="pref_keyboard_layout_description">ប្តូរ​ប្លង់​ក្តារ​ចុច​។</string>
+<string name="pref_keyboard_layout_title_12keys">កូនសោ១២</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">ក្តារ​ចុច Godan</string>
+<string name="pref_keyboard_layout_description_12keys">ប្លង់​ទូរស័ព្ទ​ចល័ត​។</string>
+<string name="pref_keyboard_layout_description_qwerty">ប្លង់​ក្តារ​ចុច​កុំព្យូទ័រ​។</string>
+<string name="pref_keyboard_layout_description_godan">Romaji-dedicated layout. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;Usage&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">ជ្រើស​រចនាបថ​បញ្ចូល​។</string>
+<string name="pref_qwerty_layout_for_alphabet_description">ប្រសិន​បើ​បាន​គូស​ធីក,​ QWERTY នឹង​ត្រូវ​បាន​ប្រើ​សម្រាប់​​បែប​បញ្ចូល​អក្ខរក្រម​ដោយ​មិន​គិត​ពី​ប្លង់​មេ​។</string>
+<string name="pref_fullscreen_description">ប្រសិន​បើ​បាន​ធីក​ប្រអប់​អត្ថបទ​គោលដៅ​បាន​បង្ហាញ​ក្នុង​​បែប​​ពេញ​អេក្រង់​។</string>
+<string name="pref_flick_sensitivity_description">បទភ្លេង​រសើប Flick នេះ​។</string>
+<string name="pref_layout_adjustment_description">ប្តូរ​ការ​លៃ​តម្រូវ​ក្តារ​ចុច​។</string>
+<string name="pref_keyboard_height_ratio_description">ប្តូរ​កម្ពស់​ក្តារ​ចុច​។</string>
+<string name="pref_space_character_form_description">ជានិច្ចកាល​ប្រើ​ចន្លោះ​ពាក់​កណ្តាល​ទទឹង​, មិន​ថា​របៀប​បញ្ចូល​។</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">ប្រើ​ការ​បម្លែង​ភាសា​កា​ណា​កែប្រែ​ដ៏​អាក្រក់​។ បាន​អនុវត្ត​ទៅ​គ្រាប់ចុច ១២ និង​ក្តារ​ចុច Godan ។ ឧទា. ​か​つ​こ​う​→​学校</string>
+<string name="pref_typing_correction_description">រក​ឃើញ​ការ​ភ្លេច​វាយ និង​កម្មវិធី​កែ​បេក្ខជន​។ ឧទា. ​す​ん​か​い​→​深海</string>
+<string name="pref_emoji_provider_type_description">ជ្រើស​អ្នក​ផ្តល់ Emoji បាន​ត្រឹមត្រូវ​ក្នុង​ការ​ប្រើ emoji ។</string>
+<string name="pref_skin_type_description">ជ្រើសរូបរាងក្តារចុចដើម្បីកែសម្រួលសោភ័ណភាពក្តារចុចកម្មវិធី។</string>
+<string name="pref_voice_input_description">បង្ហាញប៊ូតុងបញ្ចូលសម្លេងនៅលើក្តារចុចកម្មវិធី។</string>
+<string name="pref_hardware_keymap_description">ជ្រើស​​គ្រាប់​ចុច​ផែនទី​​សម្រាប់​ក្ដារចុច​ផ្នែក​រឹង​។</string>
+<string name="pref_dictionary_personalization_description">បើក​ការ​ស្នើ​ផ្ទាល់​ខ្លួន​ផ្អែក​លើ​ការ​បញ្ចូល​កន្លង​មក។</string>
+<string name="pref_dictionary_user_dictionary_tool_description">កែ​សម្រួល​វចនានុក្រម​​អ្នក​ប្រើ​។</string>
+<string name="pref_clear_category_description">ជម្រះ​​ទិន្នន័យ​ផ្ទាល់​ខ្លួន​ឬ​ការ​​ស្នើ។</string>
+<string name="pref_clear_conversion_history_description">ជម្រះ​ប្រវត្តិ​ការ​ប្ដូរ។</string>
+<string name="pref_clear_symbol_history_description">ជម្រះ​ប្រវត្តិ​ការ​បញ្ចូល​និមិត្តសញ្ញា។</string>
+<string name="pref_clear_user_dictionary_description">សម្អាត​វចនានុក្រម​អ្នក​ប្រើ</string>
+<string name="pref_other_incognito_mode_description">ជា​បណ្ដោះអាសន្ន​បិទ​ភាព​ផ្ទាល់​ខ្លួន, ការ​ស្នើ និង​វចនានុក្រម​អ្នក​ប្រើ​។</string>
+<string name="pref_other_usage_stats_description">ផ្ញើ​ស្ថិតិ​ការ​ប្រើ​ប្រាស់​ទៅ %1$s ។ ទាំង​នេះ​នឹង​ត្រូវ​បាន​ប្រើ​តែ​ដើម្បី​កែ​លម្អ​ផលិតផល​និង​សេវាកម្ម %1$s ​។</string>
+<string name="pref_about_terms_of_service_description">បង្ហាញ​លក្ខខណ្ឌ​នៃ​សេវាកម្ម (គេហទំព័រ​) ។</string>
+<string name="pref_about_privacy_policy_description">បង្ហាញ​គោល​នយោបាយ​ឯកជន​ភាព (គេហទំព័រ​) ។</string>
+<string name="pref_about_oss_credits_description">ផ្នែក​ទន់​នេះ​ប្រើ​កម្មវិធី​ប្រភព​បើក​ចំហ​​៖ មើល​អាជ្ញា​ប័ណ្ណ​។</string>
+<string name="pref_launcher_icon_visibility_description">បង្ហាញ​រូប​តំណាង​កម្មវិធី​នៅ​ក្នុង​កម្ម​​វិធី​ចាប់ផ្ដើម</string>
+<string name="pref_input_style_setting_entry_toggle">បិទ​បើក</string>
+<string name="pref_input_style_setting_entry_flick">Flick</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">បិទ​បើក &amp; Flick</string>
+<string name="pref_fullscreen_portrait">បើក​ពេល​​បញ្ឈរ</string>
+<string name="pref_fullscreen_landscape">បើក​ពេល​ផ្ដេក</string>
+<string name="pref_emoji_provider_type_unicode">បិទ​ក្រុមហ៊ុន Emoji</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">ពណ៌​ទឹកក្រូច / ពណ៌​ប្រផេះ​ស្រាល</string>
+<string name="pref_skin_type_blue_lightgray">ពណ៌ខៀវ / ពណ៌​ប្រផេះ​ស្រាល</string>
+<string name="pref_skin_type_blue_darkgray">ពណ៌ខៀវ / ​ពណ៌​ប្រផេះ​ក្រាស់</string>
+<string name="pref_skin_type_material_design_light">ការ​​រចនា​សម្ភារៈ (​ភ្លឺ)</string>
+<string name="pref_skin_type_material_design_dark">ការ​​រចនា​សម្ភារៈ​ (ងងឹត​)</string>
+<string name="pref_hardware_keymap_default">ប្រព័ន្ធ​លំនាំ​ដើម</string>
+<string name="pref_hardware_keymap_japanese109A">109A ប្រទេស​ជប៉ុន</string>
+<string name="pref_hardware_keymap_twelvekey">កូនសោ១២</string>
+<string name="pref_dictionary_personalization_entry_enabled">បើក​ដំណើរការ</string>
+<string name="pref_dictionary_personalization_entry_readonly">កក</string>
+<string name="pref_dictionary_personalization_entry_disabled">បិទ</string>
+<string name="pref_layout_adjustment_entry_fill">បំពេញ</string>
+<string name="pref_layout_adjustment_entry_right">ត្រឹមត្រូវ</string>
+<string name="pref_layout_adjustment_entry_left">ឆ្វេង</string>
+<string name="firsttime_close_button">បន្ទាប់ &gt;&gt;</string>
+<string name="firsttime_description_thank_you">សូម​អរគុណ​ចំពោះ​ការ​ប្រើ %s ។</string>
+<string name="firsttime_description_usage_stats">ដើម្បី​ឲ្យ​ពួក​យើង​កែ​លម្អ​ផលិតផល​និង​សេវាកម្ម %s  ​យើង​សូម​​ឱ្យ​អ្នក​​ពិចារណា​បើក​ស្ថិតិ​ការ​ប្រើប្រាស់​។ \n \n ការ​ការ​កំណត់​នេះ​អាច​ប្តូរ​ពី​ចំណង់​ចំណូល​ចិត្ត​អេក្រង់​។</string>
+<string name="firsttime_send_usage_stats_devchannel">ស្ថិតិ​ការ​ប្រើ​ប្រាស់​ត្រូវ​បាន​អនុញ្ញាត​ដោយ​សារ​តែ​អ្នក​កំពុង​ប្រើ​កំណែ​អភិវឌ្ឍន៍​។</string>
+<string name="pref_ime_enable_alert_title">ដំឡើង​សម្រាប់​ការ​កំណត់​អក្សរ</string>
+<string name="pref_ime_enable_alert_message">សូម​​បើក %s ។</string>
+<string name="pref_ime_switch_alert_title">​ដំឡើង​ចំ​សម្រាប់​វិធី​​បញ្ចូល</string>
+<string name="pref_ime_switch_alert_message">សូម​ផ្លាស់​ប្តូរ​វិធី​​ក្នុង​ការ​បញ្ចូល %s ។</string>
+<string name="pref_ime_alert_next">បន្ទាប់</string>
+<string name="pref_ime_alert_cancel">បោះបង់</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">ទាប</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">ពាក់​កណ្តាល</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">ខ្ពស់</string>
+<string name="pref_haptic_feedback_duration_low_text">ខ្លី</string>
+<string name="pref_haptic_feedback_duration_high_text">វែង</string>
+<string name="pref_sound_feedback_volume_low_text">នាទី</string>
+<string name="pref_sound_feedback_volume_middle_text">ពាក់​កណ្តាល</string>
+<string name="pref_sound_feedback_volume_high_text">អតិបរមា</string>
+<string name="symbol_input_no_history">គ្មាន​ប្រវត្តិ​។ \n\nSwipe អេក្រង់ \ ប្រភេទ​​កម្ម​វិធី​រុក​រក ។</string>
+<string name="symbol_emoji_disabled_message">វាល​អត្ថបទ​នេះ​មិន​គាំទ្រ​ការ​បញ្ចូល Emoji ។</string>
+<string name="menu_dialog_title">ជម្រើស​​បញ្ចូល</string>
+<string name="menu_item_input_method">ជ្រើស​វិធីសាស្ត្រ​បញ្ចូល</string>
+<string name="menu_item_preferences">%s ការ​កំណត់</string>
+<string name="menu_item_mushroom">បើក​ដំណើរ​ការ​ផ្សិត​</string>
+<string name="user_dictionary_tool_app_name">ឧបករណ៍​វចនានុក្រម</string>
+<string name="user_dictionary_tool_menu_add_entry_title">ពាក្យ​ថ្មី</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">លុប​ពាក្យ</string>
+<string name="user_dictionary_tool_menu_undo_title">មិនធ្វើវិញ</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">វចនានុក្រម​ថ្មី</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">ប្តូរ​ឈ្មោះ​វចនានុក្រម​បច្ចុប្បន្ន</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">លុប​វចនានុក្រម​បច្ចុប្បន្ន</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">​នាំ​ចេញ​វចនានុក្រម​បច្ចុប្បន្ន</string>
+<string name="user_dictionary_tool_default_dictionary_name">អ្នក​ប្រើ​វចនានុក្រម​ 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">បង្កើត​វចនានុក្រម​ថ្មី</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">កែសម្រួល​ឈ្មោះ​របស់​វចនានុក្រម​</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">ឈ្មោះ​នៃ​វចនានុក្រម</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">បន្ថែម​ពាក្យ​ថ្មី</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">កែសម្រួល​ពាក្យ</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">កំពុង​អាន</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">ពាក្យ</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">ប្រភេទ</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">ជ្រើស​ប្រភព​នាំ​ចូល</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">ជ្រើស​ទិស​ដៅ​នាំ​ចូល</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">នាំ​ចូល​​ជា​វចនានុក្រម​ថ្មី</string>
+<string name="user_dictionary_tool_delete_done_message">លុប​ប្រតិបត្តិការ​ជោគជ័យ។</string>
+<string name="user_dictionary_tool_undo_done_message">មិន​ធ្វើ​ប្រតិបត្តិការ​​វិញបាន​ជោគជ័យ​។</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">ជ្រើស​ពាក្យ​ដែល​អ្នក​ចង់​លុប​។</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">ការ​នាំ​ចូល​ទិន្នន័យ​ដែល​ធ្វើការ​តែ​នៅ​លើ​ឯកសារ​។</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">មិន​អាច​អាន​ឯកសារ​។</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ឯកសារ​ហ្ស៊ីប​នេះ​គឺ​ទទេ​។</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">គ្មាន​កម្មវិធី​ទេ (ឧទាហរណ៍​ក្រុមហ៊ុន Google ឯកសារ​) ដើម្បី​នាំ​ចេញ​វចនានុក្រម​អ្នក​ប្រើ​ដែល​មាន​។</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">បាន​បរាជ័យ​ក្នុង​ការ​នាំ​ចេញ​វចនានុក្រម​អ្នក​ប្រើ​។</string>
+<string name="user_dictionary_tool_status_error_general">ប្រតិបត្តិការ​​​បរាជ័យ​។</string>
+<string name="user_dictionary_tool_status_error_file_not_found">មិន​អាច​បើក​ឯកសារ​។</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">មិន​អាច​អាន​ឯកសារ​។</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">ទំហំ​ទិន្នន័យ​បាន​លើស​ពី​ដែន​កំណត់​ទំហំ​ឯកសារ​។</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">មិន​អាច​បង្កើត​វចនានុក្រម​បន្ថែម​ទៀត​ណា​មួយ​ទេ​។</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">មិន​អាច​បង្កើត​ធាតុ​បន្ថែម​ទៀត​ណា​មួយ​ក្នុង​វចនានុក្រម​នេះ​ទេ។</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">សូម​វាយ​បញ្ចូល​ឈ្មោះ​វចនានុក្រម​។</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">ឈ្មោះ​នេះ​គឺវែងខ្លាំងណាស់។</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">ឈ្មោះ​មាន​តួអក្សរ​មិន​ត្រឹមត្រូវ​ទេ។</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">ឈ្មោះ​មាន​រួច​ហើយ​។</string>
+<string name="user_dictionary_tool_status_error_reading_empty">សូម​វាយ​អំណាន​។</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">អំណាន​នេះ​គឺ​វែង​ពេក។</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">អំណាន​មាន​តួអក្សរ​មិន​ត្រឹមត្រូវ​ទេ​។</string>
+<string name="user_dictionary_tool_status_error_word_empty">សូម​វាយ​ពាក្យ​។</string>
+<string name="user_dictionary_tool_status_error_word_too_long">ពាក្យ​នេះ​គឺ​វែង​ពេក​។</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">ពាក្យ Thw មាន​តួអក្សរ​មិន​ត្រឹមត្រូវ​ទេ​។</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">ប្រភព​នាំ​ចូល​មាន​ពាក្យ​ជា​ច្រើន​ផង​ដែរ​។</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">ពាក្យ​មួយ​ចំនួន​មិន​អាច​ត្រូវ​បាន​នាំ​ចូល​។</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">គ្មាន​​ប្រតិបត្តិការ​ដែល​អាន​មិន​ធ្វើ​វិញ​ទៀត​ទេ។</string>
+<string name="japanese_pos_noun">នាម</string>
+<string name="japanese_pos_abbreviation">អក្សរកាត់</string>
+<string name="japanese_pos_suggestion_only">ការ​ស្នើ​តែ​ប៉ុណ្ណោះ</string>
+<string name="japanese_pos_proper_noun">នាម​ត្រឹមត្រូវ</string>
+<string name="japanese_pos_personal_name">ឈ្មោះ​ផ្ទាល់ខ្លួន</string>
+<string name="japanese_pos_family_name">នាមត្រកូល</string>
+<string name="japanese_pos_first_name">នាម​ខ្លួន</string>
+<string name="japanese_pos_organization_name">ឈ្មោះ​អង្គភាព</string>
+<string name="japanese_pos_place_name">ឈ្មោះ​ទីកន្លែង</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">នាម​គូ SA បាន​-មិន​ទៀងទាត់</string>
+<string name="japanese_pos_adjective_verbal_noun">គុណនាម​ពាក្យ​សំដី​នាម</string>
+<string name="japanese_pos_number">លេខ</string>
+<string name="japanese_pos_alphabet">អក្ខរក្រម</string>
+<string name="japanese_pos_symbol">និមិត្តសញ្ញា</string>
+<string name="japanese_pos_emoticon">សញ្ញា​អារម្មណ៍</string>
+<string name="japanese_pos_adverb">កិរិយា​វិសេស</string>
+<string name="japanese_pos_prenoun_adjectival">adjectival Prenoun</string>
+<string name="japanese_pos_conjunction">ការ​ភ្ជាប់</string>
+<string name="japanese_pos_interjection">ឧទានសព្ទ</string>
+<string name="japanese_pos_prefix">នៅមុខ</string>
+<string name="japanese_pos_counter_suffix">អ្នក​រាប់​នៅ​ក្រោយ</string>
+<string name="japanese_pos_generic_suffix">ទូទៅ​នៅ​ក្រោយ</string>
+<string name="japanese_pos_person_name_suffix">ឈ្មោះ​​នៅ​ក្រោយ​របស់​មនុស្ស​</string>
+<string name="japanese_pos_place_name_suffix">ឈ្មោះ​ទី​តាំង​នៅ​ក្រោយ</string>
+<string name="japanese_pos_wa_group1_verb">កិរិយាសព្ទ WA​-Group1</string>
+<string name="japanese_pos_ka_group1_verb">កិរិយាសព្ទ KA-Group1</string>
+<string name="japanese_pos_sa_group1_verb">កិរិយាសព្ទ SA-Group1</string>
+<string name="japanese_pos_ta_group1_verb">កិរិយាសព្ទ​ TA-Group1</string>
+<string name="japanese_pos_na_group1_verb">កិរិយាសព្ទ NA-Group1</string>
+<string name="japanese_pos_ma_group1_verb">កិរិយាសព្ទ​ MA​-Group1</string>
+<string name="japanese_pos_ra_group1_verb">កិរិយាសព្ទ RA​-Group1</string>
+<string name="japanese_pos_ga_group1_verb">កិរិយាសព្ទ GA-Group1</string>
+<string name="japanese_pos_ba_group1_verb">កិរិយាសព្ទ​ BA-Group1</string>
+<string name="japanese_pos_ha_group1_verb">កិរិយាសព្ទ HA​-Group1</string>
+<string name="japanese_pos_group2_verb">កិរិយាសព្ទ Group2</string>
+<string name="japanese_pos_kuru_group3_verb">កិរិយាសព្ទ Kuru​-Group3</string>
+<string name="japanese_pos_suru_group3_verb">កិរិយាសព្ទ Suru​-Group3</string>
+<string name="japanese_pos_zuru_group3_verb">កិរិយាសព្ទ Zuru​-Group3</string>
+<string name="japanese_pos_ru_group3_verb">កិរិយាសព្ទ Ru​-Group3</string>
+<string name="japanese_pos_adjective">គុណនាម</string>
+<string name="japanese_pos_sentence_ending_particle">ប្រយោគ​ដែល​បញ្ចប់​ដោយ​បរិវារស័ព្ទ</string>
+<string name="japanese_pos_punctuation">សញ្ញា​វណ្ណយុត្ត</string>
+<string name="japanese_pos_free_standing_word">ពាក្យ​ឈរ​​សេរី</string>
+<string name="japanese_pos_suppression_word">ពាក្យ​បង្ក្រាប</string>
+<string name="yes">បាទ/ចាស</string>
+<string name="no">ទេ</string>
+</resources>

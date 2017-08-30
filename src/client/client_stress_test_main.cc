@@ -59,7 +59,6 @@ DEFINE_int32(key_duration, 10, "key duration (msec)");
 DEFINE_bool(test_renderer, false, "test renderer");
 DEFINE_bool(test_testsendkey, true, "test TestSendKey");
 
-DECLARE_bool(logtostderr);
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
@@ -97,7 +96,7 @@ int main(int argc, char **argv) {
     CHECK(renderer_client->Activate());
   }
 
-  vector<mozc::commands::KeyEvent> keys;
+  std::vector<mozc::commands::KeyEvent> keys;
   mozc::commands::Output output;
   int32 keyevents_size = 0;
 

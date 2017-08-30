@@ -46,7 +46,7 @@ namespace session {
 
 class KeyEventTransformer {
  public:
-  typedef map<string, commands::KeyEvent> Table;
+  typedef std::map<string, commands::KeyEvent> Table;
 
   KeyEventTransformer();
   virtual ~KeyEventTransformer();

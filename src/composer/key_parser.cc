@@ -47,8 +47,8 @@ using commands::KeyEvent;
 
 namespace {
 
-typedef map<string, KeyEvent::SpecialKey> SpecialKeysMap;
-typedef multimap<string, KeyEvent::ModifierKey> ModifiersMap;
+typedef std::map<string, KeyEvent::SpecialKey> SpecialKeysMap;
+typedef std::multimap<string, KeyEvent::ModifierKey> ModifiersMap;
 
 class KeyParserData {
  public:
@@ -190,7 +190,7 @@ class KeyParserData {
 
 bool KeyParser::ParseKey(const string &key_string,
                          KeyEvent *key_event) {
-  vector<string> keys;
+  std::vector<string> keys;
   Util::SplitStringUsing(key_string, " ", &keys);
   if (keys.empty()) {
     LOG(ERROR) << "keys is empty";
@@ -199,7 +199,7 @@ bool KeyParser::ParseKey(const string &key_string,
   return KeyParser::ParseKeyVector(keys, key_event);
 }
 
-bool KeyParser::ParseKeyVector(const vector<string> &keys,
+bool KeyParser::ParseKeyVector(const std::vector<string> &keys,
                                KeyEvent *key_event) {
   CHECK(key_event);
 
@@ -209,7 +209,7 @@ bool KeyParser::ParseKeyVector(const vector<string> &keys,
     Singleton<KeyParserData>::get()->keycode_map();
 
   key_event->Clear();
-  set<commands::KeyEvent::ModifierKey> modifiers_set;
+  std::set<commands::KeyEvent::ModifierKey> modifiers_set;
 
   for (size_t i = 0; i < keys.size(); ++i) {
     if (Util::CharsLen(keys[i]) == 1) {
@@ -222,8 +222,8 @@ bool KeyParser::ParseKeyVector(const vector<string> &keys,
       Util::LowerString(&key);
 
       if (modifiers_map.count(key) > 0) {
-        pair<ModifiersMap::const_iterator, ModifiersMap::const_iterator> range =
-            modifiers_map.equal_range(key);
+        std::pair<ModifiersMap::const_iterator, ModifiersMap::const_iterator>
+            range = modifiers_map.equal_range(key);
         for (ModifiersMap::const_iterator iter = range.first;
              iter != range.second; ++iter) {
           modifiers_set.insert(iter->second);
@@ -237,7 +237,7 @@ bool KeyParser::ParseKeyVector(const vector<string> &keys,
     }
   }
 
-  for (set<commands::KeyEvent::ModifierKey>::iterator iter =
+  for (std::set<commands::KeyEvent::ModifierKey>::iterator iter =
            modifiers_set.begin(); iter != modifiers_set.end(); ++iter) {
     key_event->add_modifier_keys(*iter);
   }

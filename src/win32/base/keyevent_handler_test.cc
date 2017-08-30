@@ -1923,8 +1923,7 @@ TEST_F(KeyEventHandlerTest,
     EXPECT_TRUE(actual_input.key().has_key_code());
     EXPECT_EQ('a', actual_input.key().key_code());
     EXPECT_TRUE(actual_input.key().has_key_string());
-    // "あ"
-    EXPECT_EQ("\xE3\x81\xA1", actual_input.key().key_string());
+    EXPECT_EQ("ち", actual_input.key().key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
@@ -2213,8 +2212,7 @@ TEST_F(KeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
     EXPECT_TRUE(actual_input.key().has_key_code());
     EXPECT_EQ('0', actual_input.key().key_code());
     EXPECT_TRUE(actual_input.key().has_key_string());
-    // "を"
-    EXPECT_EQ("\343\202\222", actual_input.key().key_string());
+    EXPECT_EQ("を", actual_input.key().key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
@@ -2749,8 +2747,7 @@ TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_key_code());
     EXPECT_TRUE(actual_input.key().has_key_string());
-    // "あ"
-    EXPECT_EQ("\343\201\202", actual_input.key().key_string());
+    EXPECT_EQ("あ", actual_input.key().key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());

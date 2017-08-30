@@ -122,14 +122,14 @@ class Lattice {
   // TODO(team): Splitting the cache module may make this module simpler.
   string key_;
   size_t history_end_pos_;
-  vector<Node *> begin_nodes_;
-  vector<Node *> end_nodes_;
+  std::vector<Node *> begin_nodes_;
+  std::vector<Node *> end_nodes_;
   std::unique_ptr<NodeAllocator> node_allocator_;
 
   // cache_info_ holds cache information about lookup.
   // If cache_info_[pos] equals to len, it means key.substr(pos, k)
   // (1 <= k <= len) is already looked up.
-  vector<size_t> cache_info_;
+  std::vector<size_t> cache_info_;
 };
 
 }  // namespace mozc

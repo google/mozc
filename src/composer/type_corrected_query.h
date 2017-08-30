@@ -41,7 +41,7 @@ struct TypeCorrectedQuery {
   // |base| and |expanded| are the same as Composer::GetQueryForPrediction().
   // |cost| is a penalty for this query.
   string base;
-  set<string> expanded;
+  std::set<string> expanded;
   int cost;
 };
 

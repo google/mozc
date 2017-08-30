@@ -81,7 +81,7 @@ class TextDictionaryLoaderTest : public ::testing::Test {
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
     unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
-    vector<Token *> tokens;
+    std::vector<Token *> tokens;
     loader->CollectTokens(&tokens);
     EXPECT_TRUE(tokens.empty());
   }
@@ -95,7 +95,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
     unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->Load(filename, "");
-    const vector<Token *> &tokens = loader->tokens();
+    const std::vector<Token *> &tokens = loader->tokens();
 
     EXPECT_EQ(3, tokens.size());
 
@@ -124,7 +124,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
     unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->LoadWithLineLimit(filename, "", 2);
-    const vector<Token *> &tokens = loader->tokens();
+    const std::vector<Token *> &tokens = loader->tokens();
 
     EXPECT_EQ(2, tokens.size());
 
@@ -149,7 +149,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     // open twice -- tokens are cleared everytime
     loader->Load(filename, "");
     loader->Load(filename, "");
-    const vector<Token *> &tokens = loader->tokens();
+    const std::vector<Token *> &tokens = loader->tokens();
     EXPECT_EQ(3, tokens.size());
   }
 
@@ -251,7 +251,7 @@ TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   }
 
   loader->Load(dic_filename, reading_correction_filename);
-  const vector<Token *> &tokens = loader->tokens();
+  const std::vector<Token *> &tokens = loader->tokens();
   ASSERT_EQ(tokens.size(), 4);
   EXPECT_EQ("foobar_error", tokens[3]->key);
   EXPECT_EQ("foobar", tokens[3]->value);

@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
   if (!FLAGS_post_data_file.empty()) {
     char buffer[2048];
     mozc::InputFileStream ifs(FLAGS_post_data_file.c_str(),
-                              ios::in | ios::binary);
+                              std::ios::in | std::ios::binary);
     FLAGS_post_data = "";
     do {
       ifs.read(buffer, sizeof(buffer));
@@ -88,7 +88,8 @@ int main(int argc, char **argv) {
       std::cout << output << std::endl;
     }
   } else {
-    mozc::OutputFileStream ofs(FLAGS_output.c_str(), ios::out | ios::binary);
+    mozc::OutputFileStream ofs(FLAGS_output.c_str(),
+                               std::ios::out | std::ios::binary);
     // Output even if the request failed.
     ofs << output << std::endl;
   }

@@ -79,7 +79,7 @@ bool IsValidSourceSentence(const string &str) {
 }
 
 bool GenerateKeySequenceFrom(const string& hiragana_sentence,
-                             vector<commands::KeyEvent>* keys) {
+                             std::vector<commands::KeyEvent>* keys) {
   CHECK(keys);
   keys->clear();
 
@@ -144,7 +144,7 @@ bool CalculateBLEU(client::Client* client,
                    const string& hiragana_sentence,
                    const string& expected_result, double* score) {
   // Prepare key events
-  vector<commands::KeyEvent> keys;
+  std::vector<commands::KeyEvent> keys;
   if (!GenerateKeySequenceFrom(hiragana_sentence, &keys)) {
     LOG(WARNING) << "Failed to generated key events from: "
                << hiragana_sentence;
@@ -168,7 +168,7 @@ bool CalculateBLEU(client::Client* client,
   // Calculate score
   string expected_normalized;
   Scorer::NormalizeForEvaluate(expected_result, &expected_normalized);
-  vector<string> goldens;
+  std::vector<string> goldens;
   goldens.push_back(expected_normalized);
   string preedit, preedit_normalized;
   if (!GetPreedit(output, &preedit) || preedit.empty()) {
@@ -192,7 +192,7 @@ bool CalculateBLEU(client::Client* client,
   return true;
 }
 
-double CalculateMean(const vector<double>& scores) {
+double CalculateMean(const std::vector<double>& scores) {
   CHECK(!scores.empty());
   const double sum = accumulate(scores.begin(), scores.end(), 0.0);
   return sum / static_cast<double>(scores.size());
@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
   CHECK(client.EnsureSession()) << "EnsureSession failed";
   CHECK(client.NoOperation()) << "Server is not respoinding";
 
-  map<string, vector<double> > scores;    // Results to be averaged
+  std::map<string, std::vector<double> > scores;    // Results to be averaged
 
   for (mozc::TestCase* test_case = mozc::test_cases; test_case->source != NULL;
        ++test_case) {
@@ -221,7 +221,7 @@ int main(int argc, char* argv[]) {
     const string &expected_result = test_case->expected_result;
 
     if (scores.find(source) == scores.end()) {
-      scores[source] = vector<double>();
+      scores[source] = std::vector<double>();
     }
     if (scores[source].size() >= FLAGS_max_case_for_source) {
       continue;
@@ -248,13 +248,13 @@ int main(int argc, char* argv[]) {
     scores[source].push_back(score);
   }
 
-  ostream* ofs = &std::cout;
+  std::ostream* ofs = &std::cout;
   if (!FLAGS_log_path.empty()) {
     ofs = new mozc::OutputFileStream(FLAGS_log_path.c_str());
   }
 
   // Average the scores
-  for (map<string, vector<double> >::iterator it = scores.begin();
+  for (std::map<string, std::vector<double> >::iterator it = scores.begin();
        it != scores.end(); ++it) {
     const double mean = mozc::CalculateMean(it->second);
     (*ofs) << it->first << " : " << mean << std::endl;

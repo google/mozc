@@ -255,7 +255,7 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
   StripWritePreventingAttributesIfExists(to);
 #endif  // OS_WIN
 
-  OutputFileStream ofs(to.c_str(), ios::binary | ios::trunc);
+  OutputFileStream ofs(to.c_str(), std::ios::binary | std::ios::trunc);
   if (!ofs) {
     LOG(ERROR) << "Can't open output file. " << to;
     return false;
@@ -332,13 +332,14 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
 #endif  // OS_WIN
 }
 
-string FileUtil::JoinPath(const vector<StringPiece> &components) {
+string FileUtil::JoinPath(const std::vector<StringPiece> &components) {
   string output;
   JoinPath(components, &output);
   return output;
 }
 
-void FileUtil::JoinPath(const vector<StringPiece> &components, string *output) {
+void FileUtil::JoinPath(const std::vector<StringPiece> &components,
+                        string *output) {
   output->clear();
   for (size_t i = 0; i < components.size(); ++i) {
     if (components[i].empty()) {

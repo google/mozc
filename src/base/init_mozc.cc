@@ -39,7 +39,9 @@
 #include "base/file_util.h"
 #include "base/flags.h"
 #include "base/logging.h"
+#ifndef MOZC_BUILDTOOL_BUILD
 #include "base/system_util.h"
+#endif  // MOZC_BUILDTOOL_BUILD
 
 DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
@@ -50,6 +52,7 @@ DEFINE_string(log_dir,
               "",
               "If specified, logfiles are written into this directory "
               "instead of the default logging directory.");
+
 
 
 namespace mozc {
@@ -65,11 +68,15 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
 #endif  // OS_WIN
 
 string GetLogFilePathFromProgramName(const string &program_name) {
-  const string dirname = FLAGS_log_dir.empty()
-                         ? SystemUtil::GetLoggingDirectory()
-                         : FLAGS_log_dir;
   const string basename = FileUtil::Basename(program_name) + ".log";
-  return FileUtil::JoinPath(dirname, basename);
+  if (FLAGS_log_dir.empty()) {
+#ifdef MOZC_BUILDTOOL_BUILD
+    return basename;
+#else  // MOZC_BUILDTOOL_BUILD
+    return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
+#endif  // MOZC_BUILDTOOL_BUILD
+  }
+  return FileUtil::JoinPath(FLAGS_log_dir, basename);
 }
 
 }  // namespace

@@ -76,7 +76,7 @@ class QualityRegressionUtil {
 
   // Pase |filename| and save the all test items into |outputs|.
   static bool ParseFile(const string &filename,
-                        vector<TestItem> *outputs);
+                        std::vector<TestItem> *outputs);
 
   bool ConvertAndTest(const TestItem &item,
                       string *actual_value);

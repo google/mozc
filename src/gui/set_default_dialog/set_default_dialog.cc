@@ -53,6 +53,7 @@ namespace gui {
 SetDefaultDialog::SetDefaultDialog() {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint |
+                 Qt::WindowCloseButtonHint |
                  Qt::MSWindowsFixedSizeDialogHint |
                  Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);

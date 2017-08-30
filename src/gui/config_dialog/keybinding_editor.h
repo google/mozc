@@ -31,11 +31,7 @@
 #define MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_H_
 
 #include <QtGui/QtGui>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
-#else
-#include <QtGui/QDialog>
-#endif
 
 #include <memory>
 #include <string>

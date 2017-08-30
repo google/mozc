@@ -36,6 +36,8 @@
 #include <sddl.h>
 #include <strsafe.h>
 
+#include <atlsecurity.h>
+
 #include <memory>
 #include <string>
 
@@ -1426,6 +1428,45 @@ bool WinSandbox::GetRestrictedTokenHandleForImpersonation(
   }
   restricted_token->reset(restricted_token_ret);
   return true;
+}
+
+bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
+    const wstring &file_name) {
+  // Get "All Application Packages" group SID.
+  const ATL::CSid all_application_packages(
+      Sid(WinBuiltinAnyPackageSid).GetPSID());
+
+  // Get current DACL (Discretionary Access Control List) of |file_name|.
+  ATL::CDacl dacl;
+  if (!ATL::AtlGetDacl(file_name.c_str(), SE_FILE_OBJECT, &dacl)) {
+    return false;
+  }
+
+  // As of Windows 10 Anniversary Update, following access masks (==0x1200a9)
+  // are specified to files under Program Files by default.
+  const ACCESS_MASK kDesiredMask =
+      FILE_READ_DATA | FILE_READ_EA | FILE_EXECUTE | READ_CONTROL | SYNCHRONIZE;
+
+  // Check if the desired ACE is already specified or not.
+  for (UINT i = 0; i < dacl.GetAceCount(); ++i) {
+    CSid ace_sid;
+    ACCESS_MASK acess_mask = 0;
+    BYTE ace_type = 0;
+    dacl.GetAclEntry(i, &ace_sid, &acess_mask, &ace_type);
+    if (ace_sid == all_application_packages &&
+        ace_type == ACCESS_ALLOWED_ACE_TYPE &&
+        (acess_mask & kDesiredMask) == kDesiredMask) {
+      // This is the desired ACE.  There is nothing to do.
+      return true;
+    }
+  }
+
+  // We are here because there is no desired ACE.  Hence we do add it.
+  if (!dacl.AddAllowedAce(
+          all_application_packages, kDesiredMask, ACCESS_ALLOWED_ACE_TYPE)) {
+    return false;
+  }
+  return ATL::AtlSetDacl(file_name.c_str(), SE_FILE_OBJECT, dacl);
 }
 
 }   // namespace mozc

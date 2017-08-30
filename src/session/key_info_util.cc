@@ -52,11 +52,12 @@ namespace {
 
 using config::Config;
 
-vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(istream *ifs) {
+std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
+    std::istream *ifs) {
   const char kModeDirect[] = "Direct";
   const char kModeDirectInput[] = "DirectInput";
 
-  vector<KeyInformation> result;
+  std::vector<KeyInformation> result;
 
   string line;
   getline(*ifs, line);  // Skip the first line.
@@ -67,7 +68,7 @@ vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(istream *ifs) {
       // empty or comment
       continue;
     }
-    vector<string> rules;
+    std::vector<string> rules;
     Util::SplitStringUsing(line, "\t", &rules);
     if (rules.size() != 3) {
       LOG(ERROR) << "Invalid format: " << line;
@@ -89,19 +90,19 @@ vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(istream *ifs) {
   return result;
 }
 
-vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
+std::vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
       const string &filename) {
-  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(filename));
+  std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs.get() == NULL) {
     DLOG(FATAL) << "could not open file: " << filename;
-    return vector<KeyInformation>();
+    return std::vector<KeyInformation>();
   }
   return ExtractSortedDirectModeKeysFromStream(ifs.get());
 }
 
 }  // namespace
 
-vector<KeyInformation> KeyInfoUtil::ExtractSortedDirectModeKeys(
+std::vector<KeyInformation> KeyInfoUtil::ExtractSortedDirectModeKeys(
     const config::Config &config) {
   const config::Config::SessionKeymap &keymap = config.session_keymap();
   if (keymap == Config::CUSTOM) {
@@ -112,14 +113,14 @@ vector<KeyInformation> KeyInfoUtil::ExtractSortedDirectModeKeys(
           config::ConfigHandler::GetDefaultKeyMap());
       return ExtractSortedDirectModeKeysFromFile(default_keymapfile);
     }
-    istringstream ifs(custom_keymap_table);
+    std::istringstream ifs(custom_keymap_table);
     return ExtractSortedDirectModeKeysFromStream(&ifs);
   }
   const char *keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);
   return ExtractSortedDirectModeKeysFromFile(keymap_file);
 }
 
-bool KeyInfoUtil::ContainsKey(const vector<KeyInformation> &sorted_keys,
+bool KeyInfoUtil::ContainsKey(const std::vector<KeyInformation> &sorted_keys,
                               const commands::KeyEvent &key_event) {
   KeyInformation key_info;
   if (!KeyEventUtil::GetKeyInformation(key_event, &key_info)) {

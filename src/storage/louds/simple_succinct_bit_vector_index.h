@@ -103,11 +103,11 @@ class SimpleSuccinctBitVectorIndex {
   int length_;
   int chunk_size_;
 
-  vector<int> index_;
+  std::vector<int> index_;
   int lb0_cache_increment_;
-  vector<const int *> lb0_cache_;
+  std::vector<const int *> lb0_cache_;
   int lb1_cache_increment_;
-  vector<const int *> lb1_cache_;
+  std::vector<const int *> lb1_cache_;
 
   DISALLOW_COPY_AND_ASSIGN(SimpleSuccinctBitVectorIndex);
 };

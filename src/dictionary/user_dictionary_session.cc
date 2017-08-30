@@ -214,8 +214,8 @@ class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
 };
 
 struct DeleteEntryComparator {
-  bool operator()(const pair<int, UserDictionary::Entry*> &entry1,
-                  const pair<int, UserDictionary::Entry*> &entry2) {
+  bool operator()(const std::pair<int, UserDictionary::Entry*> &entry1,
+                  const std::pair<int, UserDictionary::Entry*> &entry2) {
     return entry1.first < entry2.first;
   }
 };
@@ -225,7 +225,8 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
   // This instance takes the ownership of the given entries.
   UndoDeleteEntryCommand(
       uint64 dictionary_id,
-      const vector<pair<int, UserDictionary::Entry*> > deleted_entries)
+      const std::vector<std::pair<int, UserDictionary::Entry *> >
+          deleted_entries)
       : dictionary_id_(dictionary_id), deleted_entries_(deleted_entries) {
     std::sort(deleted_entries_.begin(), deleted_entries_.end(),
               DeleteEntryComparator());
@@ -258,7 +259,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
         dictionary->mutable_entries();
 
     // Move instances to backup vector.
-    vector<UserDictionary::Entry*> backup(
+    std::vector<UserDictionary::Entry*> backup(
         entries->pointer_begin(), entries->pointer_end());
     while (entries->size() > 0) {
       entries->ReleaseLast();
@@ -290,7 +291,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
 
  private:
   uint64 dictionary_id_;
-  vector<pair<int, UserDictionary::Entry*> > deleted_entries_;
+  std::vector<std::pair<int, UserDictionary::Entry*> > deleted_entries_;
 
   DISALLOW_COPY_AND_ASSIGN(UndoDeleteEntryCommand);
 };
@@ -600,7 +601,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
-    uint64 dictionary_id, const vector<int> &index_list) {
+    uint64 dictionary_id, const std::vector<int> &index_list) {
   UserDictionary *dictionary =
       UserDictionaryUtil::GetMutableUserDictionaryById(
           storage_.get(), dictionary_id);
@@ -615,7 +616,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
     }
   }
 
-  vector<pair<int, UserDictionary::Entry*> > deleted_entries;
+  std::vector<std::pair<int, UserDictionary::Entry*> > deleted_entries;
   deleted_entries.reserve(index_list.size());
 
   RepeatedPtrField<UserDictionary::Entry> *entries =
@@ -734,7 +735,7 @@ bool UserDictionarySession::EnsureNonEmptyStorage() {
 }
 
 void UserDictionarySession::ClearUndoHistory() {
-  for (deque<UndoCommand *>::iterator iter = undo_history_.begin();
+  for (std::deque<UndoCommand *>::iterator iter = undo_history_.begin();
        iter != undo_history_.end(); ++iter) {
     delete *iter;
   }

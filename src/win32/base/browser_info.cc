@@ -119,17 +119,11 @@ bool BrowserInfo::IsInIncognitoMode(
   const char *sufix_en = nullptr;
   switch (GetBrowerType()) {
     case kBrowserTypeChrome:
-      // "（シークレット モード）"
-      sufix_ja = "\xEF\xBC\x88\xE3\x82\xB7\xE3\x83\xBC"
-                 "\xE3\x82\xAF\xE3\x83\xAC\xE3\x83\x83\xE3\x83\x88\x20"
-                 "\xE3\x83\xA2\xE3\x83\xBC\xE3\x83\x89\xEF\xBC\x89";
+      sufix_ja = "（シークレット モード）";
       sufix_en = "(Incognito)";
       break;
     case kBrowserTypeFirefox:
-      // " (プライベートブラウジング)"
-      sufix_ja = " (\xE3\x83\x97\xE3\x83\xA9\xE3\x82\xA4"
-                 "\xE3\x83\x99\xE3\x83\xBC\xE3\x83\x88\xE3\x83\x96\xE3\x83\xA9"
-                 "\xE3\x82\xA6\xE3\x82\xB8\xE3\x83\xB3\xE3\x82\xB0)";
+      sufix_ja = " (プライベートブラウジング)";
       sufix_en = "(Private Browsing)";
       break;
     case kBrowserTypeIE:
@@ -168,10 +162,7 @@ bool BrowserInfo::IsOnChromeOmnibox(
       current_ui_element.role != "ROLE_SYSTEM_TEXT") {
     return false;
   }
-  // "アドレス検索バー"
-  const char kOmniboxDescJa[] =
-      "\xE3\x82\xA2\xE3\x83\x89\xE3\x83\xAC\xE3\x82\xB9\xE6\xA4\x9C"
-      "\xE7\xB4\xA2\xE3\x83\x90\xE3\x83\xBC";
+  const char kOmniboxDescJa[] = "アドレス検索バー";
   if (current_ui_element.name == kOmniboxDescJa) {
     return true;
   }

@@ -70,7 +70,7 @@ void AddCandidate(const string &value,
 string GetCandidates(const Segments &segments) {
   CHECK_EQ(1, segments.segments_size());
   const Segment &seg = segments.segment(0);
-  vector<string> results;
+  std::vector<string> results;
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     results.push_back(seg.candidate(i).value);
   }

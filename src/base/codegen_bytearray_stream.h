@@ -98,7 +98,7 @@ enum StreamOwner {
 
 class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
  public:
-  typedef char_traits<char> traits_type;
+  typedef std::char_traits<char> traits_type;
 
   // Args:
   //   output_stream: The output stream to which generated code is written.

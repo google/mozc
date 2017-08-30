@@ -77,7 +77,7 @@ class ModeSwitchingHandler {
                const ModeSwitching input_mode);
 
   // map<key, pair<display_mode, input_mode> >.
-  map<string, pair<ModeSwitching, ModeSwitching>> patterns_;
+  std::map<string, std::pair<ModeSwitching, ModeSwitching>> patterns_;
 };
 
 }  // namespace composer

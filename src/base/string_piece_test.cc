@@ -516,7 +516,7 @@ TEST(StringPieceTest, CheckCustom) {
 
 TEST(StringPieceTest, CheckNULL) {
   // we used to crash here, but now we don't.
-  StringPiece s(NULL);
+  StringPiece s;
   ASSERT_EQ(static_cast<const char *>(NULL), s.data());
   ASSERT_SIZE_EQ(s.size(), 0);
 

@@ -584,7 +584,7 @@ class SessionTest : public ::testing::Test {
                              Session *session,
                              commands::Command *command) const {
     const uint32 kNoModifiers = 0;
-    vector<string> inputs;
+    std::vector<string> inputs;
     const char *begin = key_strings.data();
     const char *end = key_strings.data() + key_strings.size();
     while (begin < end) {
@@ -7643,7 +7643,7 @@ bool FindCandidateID(const commands::Candidates &candidates,
 }
 
 void FindCandidateIDs(const commands::Candidates &candidates,
-                      const string &value, vector<int> *ids) {
+                      const string &value, std::vector<int> *ids) {
   CHECK(ids);
   ids->clear();
   for (size_t i = 0; i < candidates.candidate_size(); ++i) {
@@ -8617,7 +8617,7 @@ TEST_F(SessionTest, DedupAfterUndo) {
 
     ASSERT_TRUE(command.output().has_candidates());
 
-    vector<int> ids;
+    std::vector<int> ids;
     // "！"
     FindCandidateIDs(
         command.output().candidates(), "\xef\xbc\x81", &ids);

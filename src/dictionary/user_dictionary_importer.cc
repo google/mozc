@@ -180,7 +180,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
 
   ErrorType ret = IMPORT_NO_ERROR;
 
-  set<uint64> existent_entries;
+  std::set<uint64> existent_entries;
   for (size_t i = 0; i < user_dic->entries_size(); ++i) {
     existent_entries.insert(EntryFingerprint(user_dic->entries(i)));
   }
@@ -331,7 +331,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
 
     VLOG(2) << line;
 
-    vector<string> values;
+    std::vector<string> values;
     switch (ime_type_) {
       case MSIME:
       case ATOK:

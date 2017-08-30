@@ -270,14 +270,14 @@ void Composition::GetStringWithModes(
 }
 
 void Composition::GetExpandedStrings(string *base,
-                                     set<string> *expanded) const {
+                                     std::set<string> *expanded) const {
   GetExpandedStringsWithTransliterator(Transliterators::LOCAL, base, expanded);
 }
 
 void Composition::GetExpandedStringsWithTransliterator(
     Transliterators::Transliterator transliterator,
     string *base,
-    set<string> *expanded) const {
+    std::set<string> *expanded) const {
   DCHECK(base);
   DCHECK(expanded);
   base->clear();

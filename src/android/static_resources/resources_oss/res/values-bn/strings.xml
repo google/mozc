@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">জাপানি</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">সফ্টওয়্যার কীবোর্ড</string>
+<string name="pref_software_keyboard_advanced_settings_title">সফ্টওয়্যার কীবোর্ডের উন্নত সেটিংস</string>
+<string name="pref_fragment_software_keyboard_title">সফ্টওয়্যার কীবোর্ড</string>
+<string name="pref_fragment_input_support_title">ইনপুট সমর্থন</string>
+<string name="pref_fragment_conversion_title">রূপান্তর</string>
+<string name="pref_fragment_dictionary_title">অভিধান</string>
+<string name="pref_fragment_user_feedback_title">ব্যবহারকারীর প্রতিক্রিয়া</string>
+<string name="pref_fragment_about_title">সম্বন্ধে</string>
+<string name="pref_fragment_development_title">বিকাশ</string>
+<string name="pref_software_keyboard_preferences_portrait_title">প্রতিকৃতি মোডের জন্য সফ্টওয়্যার কীবোর্ড বিষয়ক পছন্দগুলি</string>
+<string name="pref_software_keyboard_preferences_landscape_title">ভূদৃশ্য মোডের জন্য সফ্টওয়্যার কীবোর্ডের পছন্দগুলি</string>
+<string name="pref_keyboard_layout_title">কীবোর্ড লেআউট</string>
+<string name="pref_input_style_title">ইনপুট শৈলী</string>
+<string name="pref_qwerty_layout_for_alphabet_title">QWERTY মোড</string>
+<string name="pref_flick_sensitivity_title">ফ্লিক সংবেদনশীলতা</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">প্রতিকৃতি সেটিংস ব্যবহার করুন</string>
+<string name="pref_keyboard_height_ratio_title">কীবোর্ডের উচ্চতা</string>
+<string name="pref_input_feedback_category_title">প্রতিক্রিয়া জানানোর পছন্দগুলি</string>
+<string name="pref_haptic_feedback_title">হ্যাপটিক প্রতিক্রিয়া</string>
+<string name="pref_haptic_feedback_duration_title">হ্যাপটিক প্রতিক্রিয়ার সময়কাল</string>
+<string name="pref_sound_feedback_title">অডিও প্রতিক্রিয়া</string>
+<string name="pref_sound_feedback_volume_title">অডিও প্রতিক্রিয়ার ভলিউম</string>
+<string name="pref_popup_feedback_title">পপআপ প্রতিক্রিয়া</string>
+<string name="pref_other_input_support_preference_category_title">অন্যান্য ইনপুট সমর্থনের পছন্দগুলি</string>
+<string name="pref_fullscreen_title">পূর্ণ স্ক্রীন মোড</string>
+<string name="pref_skin_type_title">কীবোর্ডের থিম</string>
+<string name="pref_hardware_title">হার্ডওয়্যার কীবোর্ডের পছন্দগুলি</string>
+<string name="pref_voice_input_title">ভয়েস ইনপুট বোতাম দেখান</string>
+<string name="pref_conversion_category_title">রূপান্তরের পছন্দগুলি</string>
+<string name="pref_layout_adjustment_title">লেআউট সামঞ্জস্য</string>
+<string name="pref_space_character_form_title">অর্ধ-প্রস্থ স্পেস ব্যবহার করুন</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">অসংবেদী সংশোধক রূপান্তর</string>
+<string name="pref_typing_correction_title">টাইপিং সংশোধন</string>
+<string name="pref_other_incognito_mode_title">ছদ্মবেশী মোড</string>
+<string name="pref_emoji_provider_type_title">ইমোজি সরবরাহকারী নির্বাচন করুন</string>
+<string name="pref_dictionry_category_title">অভিধান পছন্দগুলি</string>
+<string name="pref_dictionary_personalization_title">ব্যক্তিগতকরণ</string>
+<string name="pref_dictionary_user_dictionary_tool_title">অভিধান সরঞ্জাম</string>
+<string name="pref_clear_category_title">ইতিহাস সাফ করুন</string>
+<string name="pref_clear_conversion_history_title">রূপান্তরের ইতিহাস:</string>
+<string name="pref_clear_symbol_history_title">চিহ্নের ইতিহাস</string>
+<string name="pref_clear_user_dictionary_title">ব্যবহারকারীর অভিধান</string>
+<string name="pref_user_feedback_category_title">ব্যবহারকারীর প্রতিক্রিয়া</string>
+<string name="pref_other_usage_stats_title">ব্যবহারের পরিসংখ্যান পাঠান</string>
+<string name="pref_about_about_this_software_title">এই সফ্টওয়্যার সম্পর্কে</string>
+<string name="pref_about_version_title">সংস্করণ</string>
+<string name="pref_about_terms_of_service_title">পরিষেবার শর্তাবলী</string>
+<string name="pref_about_privacy_policy_title">গোপনীয়তা নীতি</string>
+<string name="pref_about_oss_credits_title">মুক্ত উৎস সফ্টওয়্যার</string>
+<string name="pref_launcher_icon_visibility_title">অ্যাপ্লিকেশান আইকন দেখান</string>
+<string name="pref_haptic_feedback_description">কী টেপার সাথে কম্পন৷</string>
+<string name="pref_sound_feedback_description">কী টেপার সাথে শব্দ৷</string>
+<string name="pref_popup_feedback_description">কী টেপার সাথে পপআপ৷</string>
+<string name="pref_keyboard_layout_description">কীবোর্ড লেআউট পাল্টান৷</string>
+<string name="pref_keyboard_layout_title_12keys">১২টি কী</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">গোদান কীবোর্ড</string>
+<string name="pref_keyboard_layout_description_12keys">মোবাইল ফোন লেআউট৷</string>
+<string name="pref_keyboard_layout_description_qwerty">PC কীবোর্ড লেআউট৷</string>
+<string name="pref_keyboard_layout_description_godan">রোমাজি-ডেডিকেটেড লেআউট৷ &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;ব্যবহার&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">ইনপুট শৈলী নির্বাচন করুন৷</string>
+<string name="pref_qwerty_layout_for_alphabet_description">যদি টিক চিহ্ন দেওয়া হয়, তবে মূল লেআউট নির্বিশেষে বর্ণমালা ইনপুট মোডের জন্য QWERTY লেআউট ব্যবহার করা হবে৷</string>
+<string name="pref_fullscreen_description">যদি টিক চিহ্ন দেওয়া হয়, তবে উদ্দিষ্ট পাঠ্যবক্স পূর্ণ স্ক্রীন মোডে দেখাবে৷</string>
+<string name="pref_flick_sensitivity_description">ফ্লিক সংবেদনশীলতা ঠিকঠাক করুন৷</string>
+<string name="pref_layout_adjustment_description">কীবোর্ড সমন্বয় পাল্টান৷</string>
+<string name="pref_keyboard_height_ratio_description">কীবোর্ডের উচ্চতা পাল্টান৷</string>
+<string name="pref_space_character_form_description">ইনপুট মোড যাই হোক না কেন সর্বদা অর্ধ-প্রস্থ স্পেস ব্যবহার করুন৷</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">কানা অসংবেদী সংশোধক রূপান্তর ব্যবহার করুন৷ ১২টি কী এবং গোদান কীবোর্ডে প্রয়োগ করা হয়েছে৷ উদাঃ, かつこう→学校</string>
+<string name="pref_typing_correction_description">টাইপে ভুল থাকলে তা চিহ্নিত করুন এবং সংশোধনগুলি দেখান৷ উদাঃ, すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">ইমোজি ব্যবহার করতে সঠিক ইমোজি সরবরাহকারী নির্বাচন করুন৷</string>
+<string name="pref_skin_type_description">সফ্টওয়্যার কীবোর্ডের চেহারা নিজের ইচ্ছামতো সাজিয়ে নিতে কীবোর্ড থিম নির্বাচন করুন৷</string>
+<string name="pref_voice_input_description">সফ্টওয়্যার কীবোর্ডে ভয়েস ইনপুট বোতাম দেখান৷</string>
+<string name="pref_hardware_keymap_description">হার্ডওয়্যার কীবোর্ডের জন্য কী ম্যাপিং নির্বাচন করুন৷</string>
+<string name="pref_dictionary_personalization_description">পূর্ববর্তী ইনপুটের উপর ভিত্তি করে ব্যক্তিগত প্রস্তাবনাগুলি সক্ষম করুন৷</string>
+<string name="pref_dictionary_user_dictionary_tool_description">ব্যবহারকারীর অভিধানগুলি সম্পাদনা করুন৷</string>
+<string name="pref_clear_category_description">ব্যক্তিগতকরণ বা প্রস্তাবনা ডেটা সাফ করুন৷</string>
+<string name="pref_clear_conversion_history_description">রূপান্তরের ইতিহাস সাফ করুন৷</string>
+<string name="pref_clear_symbol_history_description">চিহ্ন ইনপুটের ইতিহাস সাফ করুন৷</string>
+<string name="pref_clear_user_dictionary_description">ব্যবহারকারীর অভিধান সাফ করুন৷</string>
+<string name="pref_other_incognito_mode_description">সাময়িকভাবে ব্যক্তিগতকরণ, প্রস্তাবনা এবং ব্যবহারকারীর অভিধান অক্ষম করুন৷</string>
+<string name="pref_other_usage_stats_description">%1$s এ ব্যবহারের পরিসংখ্যান পাঠান৷ এগুলি শুধুমাত্র %1$s পণ্য এবং পরিষেবাগুলির উন্নতির জন্য ব্যবহার করা হবে৷</string>
+<string name="pref_about_terms_of_service_description">পরিষেবার শর্তাবলী প্রদর্শন করুন (ওয়েবপৃষ্ঠা)৷</string>
+<string name="pref_about_privacy_policy_description">গোপনীয়তা নীতি প্রদর্শন করুন (ওয়েবপৃষ্ঠা)৷</string>
+<string name="pref_about_oss_credits_description">এই সফ্টওয়্যারটি মুক্ত উৎস সফ্টওয়্যার ব্যবহার করে: লাইসেন্সগুলি দেখুন৷</string>
+<string name="pref_launcher_icon_visibility_description">লঞ্চারে অ্যাপ্লিকেশান আইকন প্রদর্শন করুন</string>
+<string name="pref_input_style_setting_entry_toggle">টগল করুন</string>
+<string name="pref_input_style_setting_entry_flick">ফ্লিক করুন</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">টগল করুন ও ফ্লিক করুন</string>
+<string name="pref_fullscreen_portrait">প্রতিকৃতিতে সক্ষম করুন</string>
+<string name="pref_fullscreen_landscape">ভূদৃশ্যে সক্ষম করুন</string>
+<string name="pref_emoji_provider_type_unicode">ক্যারিয়ার ইমোজি অক্ষম করুন</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">কমলা/হালকা ধূসর</string>
+<string name="pref_skin_type_blue_lightgray">নীল/হালকা ধূসর</string>
+<string name="pref_skin_type_blue_darkgray">নীল/গাঢ় ধূসর</string>
+<string name="pref_skin_type_material_design_light">মেটিরিয়্যাল নকশা (হালকা)</string>
+<string name="pref_skin_type_material_design_dark">মেটিরিয়্যাল নকশা (গাঢ়)</string>
+<string name="pref_hardware_keymap_default">সিস্টেম ডিফল্ট</string>
+<string name="pref_hardware_keymap_japanese109A">জাপানি 109A</string>
+<string name="pref_hardware_keymap_twelvekey">১২টি কী</string>
+<string name="pref_dictionary_personalization_entry_enabled">সক্ষম করুন</string>
+<string name="pref_dictionary_personalization_entry_readonly">রদবদল করা যাবে না</string>
+<string name="pref_dictionary_personalization_entry_disabled">অক্ষম করুন</string>
+<string name="pref_layout_adjustment_entry_fill">পূরণ করুন</string>
+<string name="pref_layout_adjustment_entry_right">ডান</string>
+<string name="pref_layout_adjustment_entry_left">বাম</string>
+<string name="firsttime_close_button">পরবর্তী &gt;&gt;</string>
+<string name="firsttime_description_thank_you">%s ব্যবহারের জন্য ধন্যবাদ৷</string>
+<string name="firsttime_description_usage_stats">আমরা যাতে %s পণ্য এবং পরিষেবাগুলির উন্নতি করতে পারি সেজন্য, আমরা আপনাকে ব্যবহারের পরিসংখ্যান সক্ষম করার বিষয়টি বিবেচনার জন্য বিনীত অনুরোধ করছি৷\n\nপছন্দসইগুলির স্ক্রীন থেকে এই সেটিংস পরিবর্তন করতে পারবেন৷</string>
+<string name="firsttime_send_usage_stats_devchannel">আপনি একটি ডেভেলপমেন্ট সংস্করণ ব্যবহার করছেন বলে ব্যবহারের পরিসংখ্যান সক্ষম করা হয়েছে৷</string>
+<string name="pref_ime_enable_alert_title">পাঠ্য সেটিংসের জন্য সেটআপ</string>
+<string name="pref_ime_enable_alert_message">দয়া করে %s সক্ষম করুন৷</string>
+<string name="pref_ime_switch_alert_title">ইনপুট পদ্ধতির জন্য সেটআপ</string>
+<string name="pref_ime_switch_alert_message">দয়া করে ইনপুট পদ্ধতির পরিবর্তন করে %s করুন৷</string>
+<string name="pref_ime_alert_next">পরবর্তী</string>
+<string name="pref_ime_alert_cancel">বাতিল করুন</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">কম</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">মাঝারি</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">বেশি</string>
+<string name="pref_haptic_feedback_duration_low_text">সংক্ষিপ্ত</string>
+<string name="pref_haptic_feedback_duration_high_text">দীর্ঘ</string>
+<string name="pref_sound_feedback_volume_low_text">সর্বনিম্ন</string>
+<string name="pref_sound_feedback_volume_middle_text">মাঝারি</string>
+<string name="pref_sound_feedback_volume_high_text">সর্বোচ্চ</string>
+<string name="symbol_input_no_history">কোনো ইতিহাস নেই৷\n\nবিভাগগুলি ব্রাউজ করতে\nস্ক্রীন সোয়াইপ করুন৷</string>
+<string name="symbol_emoji_disabled_message">এই পাঠ্য ক্ষেত্রটি ইমোজি ইনপুট সমর্থন করে না৷</string>
+<string name="menu_dialog_title">ইনপুট বিকল্পগুলি</string>
+<string name="menu_item_input_method">ইনপুট পদ্ধতি নির্বাচন করুন</string>
+<string name="menu_item_preferences">%s সেটিংস</string>
+<string name="menu_item_mushroom">মাশরুম লঞ্চ করুন</string>
+<string name="user_dictionary_tool_app_name">অভিধান সরঞ্জাম</string>
+<string name="user_dictionary_tool_menu_add_entry_title">নতুন শব্দ</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">শব্দ মুছে দিন</string>
+<string name="user_dictionary_tool_menu_undo_title">পূর্বাবস্থায় ফিরুন</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">নতুন অভিধান</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">বর্তমান অভিধানের পুনরায় নাম দিন</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">বর্তমান অভিধান মুছে দিন</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">বর্তমান অভিধান রপ্তানি করুন</string>
+<string name="user_dictionary_tool_default_dictionary_name">ব্যবহারকারীর অভিধান ১</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">একটি নতুন অভিধান তৈরি করুন</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">অভিধানের নামটি সম্পাদনা করুন</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">অভিধানের নাম</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">একটি নতুন শব্দ যোগ করুন</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">একটি শব্দ সম্পাদনা করুন</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">পড়া</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">শব্দ</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">বিভাগ</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">কোথা থেকে আমদানি করবেন তা নির্বাচন করুন</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">আমদানি করে কোথায় রাখবেন তা নির্বাচন করুন</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">একটি নতুন অভিধান হিসাবে আমদানি করুন</string>
+<string name="user_dictionary_tool_delete_done_message">মুছে ফেলার প্রক্রিয়াটি সফল হয়েছে৷</string>
+<string name="user_dictionary_tool_undo_done_message">প্রক্রিয়াটিকে পূর্বাবস্থায় ফিরিয়ে আনা সফল হয়েছে৷</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">আপনি যে শব্দগুলি মুছে ফেলতে চান সেগুলি নির্বাচন করুন৷</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">ডেটা আমদানি শুধুমাত্র ফাইলগুলিতে কাজ করে৷</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">ফাইলটি পড়া যায়নি৷</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ZIP ফাইলটি খালি৷</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">ব্যবহারকারীর অভিধানটি রপ্তানি করার কোনো অ্যাপ্লিকেশান (উদাঃ, Google দস্তাবেজ) এখানে নেই৷</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">ব্যবহারকারীর অভিধানটি রপ্তানি করতে ব্যর্থ হয়েছে৷</string>
+<string name="user_dictionary_tool_status_error_general">প্রক্রিয়াটি ব্যর্থ হয়েছে৷</string>
+<string name="user_dictionary_tool_status_error_file_not_found">ফাইলটি খোলা যায়নি৷</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">ফাইলটি পড়া যায়নি৷</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">ডেটার আকার ফাইলের আকারের সীমা ছাড়িয়ে গেছে৷</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">আর কোনো অভিধান তৈরি করা যাবে না৷</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">এই অভিধানে আরো কোনো শব্দ যোগ করা যাবে না৷</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">দয়া করে অভিধানের একটি নাম দিন৷</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">নামটি অত্যন্ত দীর্ঘ৷</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">নামটিতে অবৈধ অক্ষর(গুলি) রয়েছে৷</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">নামটি ইতিমধ্যেই বিদ্যমান৷</string>
+<string name="user_dictionary_tool_status_error_reading_empty">দয়া করে উচ্চারণটি লিখুন৷</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">উচ্চারণটি অত্যন্ত দীর্ঘ৷</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">উচ্চারণটিতে অবৈধ অক্ষর(গুলি) রয়েছে৷</string>
+<string name="user_dictionary_tool_status_error_word_empty">দয়া করে শব্দটি লিখুন৷</string>
+<string name="user_dictionary_tool_status_error_word_too_long">শব্দটি অত্যন্ত দীর্ঘ৷</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">শব্দটিতে অবৈধ অক্ষর(গুলি) রয়েছে৷</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">যেখান থেকে আমদানি করছেন সেখানে অনেক বেশি শব্দ রয়েছে৷</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">কিছু শব্দ আমদানি করা যায়নি৷</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">পূর্বাবস্থায় ফেরানো সম্ভব এমন আরো কোনো প্রক্রিয়া নেই৷</string>
+<string name="japanese_pos_noun">বিশেষ্য</string>
+<string name="japanese_pos_abbreviation">সংক্ষিপ্তকরণ</string>
+<string name="japanese_pos_suggestion_only">শুধুমাত্র প্রস্তাবনা</string>
+<string name="japanese_pos_proper_noun">নাম বিশেষ্য</string>
+<string name="japanese_pos_personal_name">ব্যক্তিগত নাম</string>
+<string name="japanese_pos_family_name">পদবি</string>
+<string name="japanese_pos_first_name">প্রথম নাম</string>
+<string name="japanese_pos_organization_name">সংগঠনের নাম</string>
+<string name="japanese_pos_place_name">জায়গার নাম</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA-অনিয়মিত সংযোজক বিশেষ্য</string>
+<string name="japanese_pos_adjective_verbal_noun">বিশেষণ ক্রিয়া বিশেষ্য</string>
+<string name="japanese_pos_number">নম্বর</string>
+<string name="japanese_pos_alphabet">বর্ণমালা</string>
+<string name="japanese_pos_symbol">চিহ্ন</string>
+<string name="japanese_pos_emoticon">ইমোটিকন</string>
+<string name="japanese_pos_adverb">ক্রিয়া বিশেষণ</string>
+<string name="japanese_pos_prenoun_adjectival">সর্বনাম বিশেষণ</string>
+<string name="japanese_pos_conjunction">সংযোজক অব্যয়</string>
+<string name="japanese_pos_interjection">আবেগসূচক অব্যয়</string>
+<string name="japanese_pos_prefix">উপসর্গ</string>
+<string name="japanese_pos_counter_suffix">কাউন্টার প্রত্যয়</string>
+<string name="japanese_pos_generic_suffix">জাতিবাচক প্রত্যয়</string>
+<string name="japanese_pos_person_name_suffix">ব্যক্তির নামের প্রত্যয়</string>
+<string name="japanese_pos_place_name_suffix">জায়গার নামের প্রত্যয়</string>
+<string name="japanese_pos_wa_group1_verb">WA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_ka_group1_verb">KA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_sa_group1_verb">SA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_ta_group1_verb">TA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_na_group1_verb">NA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_ma_group1_verb">MA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_ra_group1_verb">RA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_ga_group1_verb">GA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_ba_group1_verb">BA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_ha_group1_verb">HA-গোষ্ঠী১ ক্রিয়া</string>
+<string name="japanese_pos_group2_verb">গোষ্ঠী২ ক্রিয়া</string>
+<string name="japanese_pos_kuru_group3_verb">Kuru-গোষ্ঠী৩ ক্রিয়া</string>
+<string name="japanese_pos_suru_group3_verb">Suru-গোষ্ঠী৩ ক্রিয়া</string>
+<string name="japanese_pos_zuru_group3_verb">Zuru-গোষ্ঠী৩ ক্রিয়া</string>
+<string name="japanese_pos_ru_group3_verb">Ru-গোষ্ঠী৩ ক্রিয়া</string>
+<string name="japanese_pos_adjective">বিশেষণ</string>
+<string name="japanese_pos_sentence_ending_particle">বাক্য সমাপ্তির অংশ</string>
+<string name="japanese_pos_punctuation">বিরাম চিহ্ন</string>
+<string name="japanese_pos_free_standing_word">মৌলিক শব্দ</string>
+<string name="japanese_pos_suppression_word">অনুচ্চারিত শব্দ</string>
+<string name="yes">হ্যাঁ</string>
+<string name="no">না</string>
+</resources>

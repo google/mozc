@@ -87,7 +87,7 @@ class CandidateFilterTest : public ::testing::Test {
     node_freelist_->Free();
   }
 
-  void GetDefaultNodes(vector<const Node *> *nodes) {
+  void GetDefaultNodes(std::vector<const Node *> *nodes) {
     nodes->clear();
     Node *n1 = NewNode();
     // "てすと"
@@ -142,7 +142,7 @@ class CandidateFilterTest : public ::testing::Test {
 
 TEST_F(CandidateFilterTest, FilterTest) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-  vector<const Node *> n;
+  std::vector<const Node *> n;
 
   GetDefaultNodes(&n);
   Segment::Candidate *c1 = NewCandidate();
@@ -220,7 +220,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
 TEST_F(CandidateFilterTest, KatakanaT13N) {
   {
     std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[0] is KatakanaT13N
     Segment::Candidate *c = NewCandidate();
@@ -242,7 +242,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
   }
   {
     std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is KatakanaT13N
     Segment::Candidate *c = NewCandidate();
@@ -262,7 +262,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
   }
   {
     std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is not a functional word
     Segment::Candidate *c = NewCandidate();
@@ -293,7 +293,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
 
 TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-  vector<const Node *> nodes;
+  std::vector<const Node *> nodes;
   Segment::Candidate *c = NewCandidate();
   c->key = "abc";
   c->value = "abc";
@@ -377,7 +377,7 @@ TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
   c->key = "abcisolatedxyz";
   c->value = "abcisolatedxyz";
 
-  vector<Node *> nodes = {NewNode(), NewNode(), NewNode()};
+  std::vector<Node *> nodes = {NewNode(), NewNode(), NewNode()};
 
   nodes[0]->prev = nullptr;
   nodes[0]->next = nodes[1];
@@ -400,7 +400,7 @@ TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
   nodes[2]->key = "xyz";
   nodes[2]->value = "xyz";
 
-  const vector<const Node *> const_nodes(nodes.begin(), nodes.end());
+  const std::vector<const Node *> const_nodes(nodes.begin(), nodes.end());
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
             filter->FilterCandidate("abcisolatedxyz", c, const_nodes,
                                     Segments::CONVERSION));
@@ -408,7 +408,7 @@ TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
 
 TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-  vector<const Node *> n;
+  std::vector<const Node *> n;
   GetDefaultNodes(&n);
 
   Segment::Candidate *c1 = NewCandidate();
@@ -489,7 +489,7 @@ TEST_F(CandidateFilterTest, Regression3437022) {
       new CandidateFilter(dic.get(), &pos_matcher_,
                           suggestion_filter_.get(), true));
 
-  vector<const Node *> n;
+  std::vector<const Node *> n;
   GetDefaultNodes(&n);
 
   Segment::Candidate *c1 = NewCandidate();
@@ -540,7 +540,7 @@ TEST_F(CandidateFilterTest, Regression3437022) {
 
 TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-  vector<const Node *> n;
+  std::vector<const Node *> n;
 
   n.clear();
   Node *n1 = NewNode();
@@ -575,7 +575,7 @@ TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
 
 TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-  vector<const Node *> nodes;
+  std::vector<const Node *> nodes;
 
   {
     Node *n1 = NewNode();
@@ -670,7 +670,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Conversion) {
     // "フィルター"
     n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n);
 
     Segment::Candidate *c = NewCandidate();
@@ -698,7 +698,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     // "フィルター"
     n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n);
 
     Segment::Candidate *c = NewCandidate();
@@ -733,7 +733,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     // "フィルター"
     n2->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n1);
     nodes.push_back(n2);
 
@@ -773,7 +773,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     n3->key = "\xE3\x81\x9F\xE3\x83\xBC";  // "たー"
     n3->value = "\xE3\x82\xBF\xE3\x83\xBC";  // "ター"
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n1);
     nodes.push_back(n2);
     nodes.push_back(n3);
@@ -811,7 +811,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion_Mobile) {
     // "フィルター"
     n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n);
 
     Segment::Candidate *c = NewCandidate();
@@ -846,7 +846,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     // "フィルター"
     n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n);
 
     Segment::Candidate *c = NewCandidate();
@@ -883,7 +883,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     // "フィルター"
     n2->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n1);
     nodes.push_back(n2);
 
@@ -925,7 +925,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     n3->key = "\xE3\x81\x9F\xE3\x83\xBC";  // "たー"
     n3->value = "\xE3\x82\xBF\xE3\x83\xBC";  // "ター"
 
-    vector<const Node *> nodes;
+    std::vector<const Node *> nodes;
     nodes.push_back(n1);
     nodes.push_back(n2);
     nodes.push_back(n3);
@@ -952,7 +952,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
 
 TEST_F(CandidateFilterTest, ReverseConversion) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
-  vector<const Node *> nodes;
+  std::vector<const Node *> nodes;
   GetDefaultNodes(&nodes);
 
   const char kHonKanji[] = "\xE6\x9C\xAC";  // "本"

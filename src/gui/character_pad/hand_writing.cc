@@ -29,19 +29,13 @@
 
 #include "gui/character_pad/hand_writing.h"
 
-#ifdef MOZC_USE_QT5
 #ifdef ENABLE_CLOUD_HANDWRITING
 #include <QtGui/QGuiApplication>
 #endif  // ENABLE_CLOUD_HANDWRITING
+
 #include <QtGui/QtGui>
 #include <QtWidgets/QMessageBox>
-#else  // ! MOZC_USE_QT5
-#ifdef ENABLE_CLOUD_HANDWRITING
-#include <QtGui/QApplication>
-#endif  // ENABLE_CLOUD_HANDWRITING
-#include <QtGui/QtGui>
-#include <QtGui/QMessageBox>
-#endif  // ! MOZC_USE_QT5
+
 #ifdef OS_WIN
 #include <windows.h>
 #include <windowsx.h>

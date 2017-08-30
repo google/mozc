@@ -74,7 +74,7 @@ bool DeleteEnd(const string &end, string *target) {
 // '{*}い' -> '', '{*}ぃ'
 // Here, we want to get '{*}あ' <-> '{*}ぁ' loop from the input, 'あ'
 bool GetFromPending(const Table *table, const string &key,
-                    int recursion_count, set<string> *result) {
+                    int recursion_count, std::set<string> *result) {
   DCHECK(result);
   if (recursion_count == 0) {
     // Don't find the loop within the |recursion_count|.
@@ -87,7 +87,7 @@ bool GetFromPending(const Table *table, const string &key,
   }
   result->insert(key);
 
-  vector<const Entry *> entries;
+  std::vector<const Entry *> entries;
   table->LookUpPredictiveAll(key, &entries);
   for (size_t i = 0; i < entries.size(); ++i) {
     if (!entries[i]->result().empty()) {
@@ -218,7 +218,7 @@ void CharChunk::AppendFixedResult(Transliterators::Transliterator t12r,
 //
 // What we want to append here is the 'looped rule' in |kMaxRecursion| lookup.
 // Here, '{*}ぁ' -> '{*}あ' -> '{*}ぁ' is the loop.
-void CharChunk::GetExpandedResults(set<string> *results) const {
+void CharChunk::GetExpandedResults(std::set<string> *results) const {
   DCHECK(results);
 
   if (pending_.empty()) {
@@ -228,7 +228,7 @@ void CharChunk::GetExpandedResults(set<string> *results) const {
   if (conversion_.empty()) {
     results->insert(Table::DeleteSpecialKey(pending_));
   }
-  vector<const Entry *> entries;
+  std::vector<const Entry *> entries;
   table_->LookUpPredictiveAll(pending_, &entries);
   for (size_t i = 0; i < entries.size(); ++i) {
     if (!entries[i]->result().empty()) {
@@ -237,12 +237,12 @@ void CharChunk::GetExpandedResults(set<string> *results) const {
     if (entries[i]->pending().empty()) {
       continue;
     }
-    set<string> loop_result;
+    std::set<string> loop_result;
     if (!GetFromPending(table_, entries[i]->pending(),
                         kMaxRecursion, &loop_result)) {
       continue;
     }
-    for (set<string>::const_iterator itr = loop_result.begin();
+    for (std::set<string>::const_iterator itr = loop_result.begin();
          itr != loop_result.end(); ++itr) {
       results->insert(Table::DeleteSpecialKey(*itr));
     }

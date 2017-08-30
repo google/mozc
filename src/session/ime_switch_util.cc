@@ -61,7 +61,7 @@ class ImeSwitchUtilImpl {
   }
 
  private:
-  vector<KeyInformation> direct_mode_keys_;
+  std::vector<KeyInformation> direct_mode_keys_;
 
   DISALLOW_COPY_AND_ASSIGN(ImeSwitchUtilImpl);
 };

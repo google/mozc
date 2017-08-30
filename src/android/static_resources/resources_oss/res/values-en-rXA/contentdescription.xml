@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="cd_keyboard_kana">[Ķåñå ķéýбöåŕð one two]</string>
+<string name="cd_keyboard_alphabet">[Åļþĥåбéţ ķéýбöåŕð one two three]</string>
+<string name="cd_keyboard_number">[Ñûmбéŕ ķéýбöåŕð one two]</string>
+<string name="cd_key_shift">[šĥîƒţ one]</string>
+<string name="cd_key_up">[ûþ one]</string>
+<string name="cd_key_left">[ļéƒţ one]</string>
+<string name="cd_key_right">[ŕîĝĥţ one]</string>
+<string name="cd_key_down">[ðöŵñ one]</string>
+<string name="cd_key_chartype_to_kana">[šŵîţçĥ ţö Ķåñå ķéýбöåŕð one two three four five]</string>
+<string name="cd_key_chartype_to_abc">[šŵîţçĥ ţö Åļþĥåбéţ ķéýбöåŕð one two three four five six]</string>
+<string name="cd_key_chartype_to_abc_123">[šŵîţçĥ ţö šýmбöļ ķéýбöåŕð one two three four five six]</string>
+<string name="cd_key_undo">[ûñðö one]</string>
+<string name="cd_key_symbol">[šýmбöļ îñþûţ šçŕééñ one two three]</string>
+<string name="cd_key_alt">[åļţéŕñåţîvé šýmбöļš one two three]</string>
+<string name="cd_key_alt_unmodified">[ñöŕmåļ šýmбöļš one two]</string>
+<string name="cd_key_capslock">[çåþš ļöçķ one two]</string>
+<string name="cd_key_capsunlock">[çåþš ûñļöçķ one two]</string>
+<string name="cd_key_menu_dialog">[öþéñ méñû one two]</string>
+<string name="cd_key_globe">[šŵîţçĥ îñþûţ méţĥöð one two three]</string>
+<string name="cd_key_uchar_backspace">[бåçķšþåçé one two]</string>
+<string name="cd_key_uchar_linefeed">[ļîñéƒééð one]</string>
+<string name="cd_key_uchar_space">[šþåçé one]</string>
+<string name="cd_key_uchar_exclamation_mark">[éxçļåmåţîöñ måŕķ one two]</string>
+<string name="cd_key_uchar_quotation_mark" translation_description='When ["] key in the keyboard is pressed, this string is spoken up for accessibility'>[qûöţåţîöñ måŕķ one two]</string>
+<string name="cd_key_uchar_number_sign">[ñûmбéŕ šîĝñ one two]</string>
+<string name="cd_key_uchar_dollar_sign">[ðöļļåŕ šîĝñ one two]</string>
+<string name="cd_key_uchar_percent_sign">[þéŕçéñţ šîĝñ one two]</string>
+<string name="cd_key_uchar_ampersand">[åmþéŕšåñð one two]</string>
+<string name="cd_key_uchar_apostrophe">[åþöšţŕöþĥé one two]</string>
+<string name="cd_key_uchar_left_parenthesis">[ļéƒţ þåŕéñţĥéšîš one two]</string>
+<string name="cd_key_uchar_right_parenthesis">[ŕîĝĥţ þåŕéñţĥéšîš one two three]</string>
+<string name="cd_key_uchar_asterisk">[åšţéŕîšķ one]</string>
+<string name="cd_key_uchar_plus_sign">[þļûš šîĝñ one two]</string>
+<string name="cd_key_uchar_comma">[çömmå one]</string>
+<string name="cd_key_uchar_hyphen_minus">[ĥýþĥéñ one]</string>
+<string name="cd_key_uchar_full_stop">[þéŕîöð one]</string>
+<string name="cd_key_uchar_solidus">[šļåšĥ one]</string>
+<string name="cd_key_uchar_digit_zero">[0 one]</string>
+<string name="cd_key_uchar_digit_one">[1 one]</string>
+<string name="cd_key_uchar_digit_two">[2 one]</string>
+<string name="cd_key_uchar_digit_three">[3 one]</string>
+<string name="cd_key_uchar_digit_four">[4 one]</string>
+<string name="cd_key_uchar_digit_five">[5 one]</string>
+<string name="cd_key_uchar_digit_six">[6 one]</string>
+<string name="cd_key_uchar_digit_seven">[7 one]</string>
+<string name="cd_key_uchar_digit_eight">[8 one]</string>
+<string name="cd_key_uchar_digit_nine">[9 one]</string>
+<string name="cd_key_uchar_colon">[çöļöñ one]</string>
+<string name="cd_key_uchar_semicolon">[šémîçöļöñ one two]</string>
+<string name="cd_key_uchar_less_than_sign">[ļéšš ţĥåñ šîĝñ one two]</string>
+<string name="cd_key_uchar_equals_sign">[éqûåļš šîĝñ one two]</string>
+<string name="cd_key_uchar_greater_than_sign">[ĝŕéåţéŕ ţĥåñ šîĝñ one two three]</string>
+<string name="cd_key_uchar_question_mark">[qûéšţîöñ måŕķ one two]</string>
+<string name="cd_key_uchar_commercial_at">[åţ måŕķ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_a">[Å one]</string>
+<string name="cd_key_uchar_latin_capital_letter_b">[Б one]</string>
+<string name="cd_key_uchar_latin_capital_letter_c">[Ç one]</string>
+<string name="cd_key_uchar_latin_capital_letter_d">[Ð one]</string>
+<string name="cd_key_uchar_latin_capital_letter_e">[É one]</string>
+<string name="cd_key_uchar_latin_capital_letter_f">[F one]</string>
+<string name="cd_key_uchar_latin_capital_letter_g">[Ĝ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_h">[Ĥ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_i">[Î one]</string>
+<string name="cd_key_uchar_latin_capital_letter_j">[Ĵ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_k">[Ķ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_l">[Ļ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_m">[M one]</string>
+<string name="cd_key_uchar_latin_capital_letter_n">[Ñ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_o">[Ö one]</string>
+<string name="cd_key_uchar_latin_capital_letter_p">[Þ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_q">[Q one]</string>
+<string name="cd_key_uchar_latin_capital_letter_r">[Ŕ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_s">[Š one]</string>
+<string name="cd_key_uchar_latin_capital_letter_t">[Ţ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_u">[Û one]</string>
+<string name="cd_key_uchar_latin_capital_letter_v">[V one]</string>
+<string name="cd_key_uchar_latin_capital_letter_w">[Ŵ one]</string>
+<string name="cd_key_uchar_latin_capital_letter_x">[X one]</string>
+<string name="cd_key_uchar_latin_capital_letter_y">[Ý one]</string>
+<string name="cd_key_uchar_latin_capital_letter_z">[Ž one]</string>
+<string name="cd_key_uchar_left_square_bracket">[ļéƒţ šqûåŕé бŕåçķéţ one two three]</string>
+<string name="cd_key_uchar_reverse_solidus">[бåçķ šļåšĥ one two]</string>
+<string name="cd_key_uchar_right_square_bracket">[ŕîĝĥţ šqûåŕé бŕåçķéţ one two three]</string>
+<string name="cd_key_uchar_circumflex_accent">[ĥåţ one]</string>
+<string name="cd_key_uchar_low_line">[ûñðéŕ šçöŕé one two]</string>
+<string name="cd_key_uchar_grave_accent">[ĝŕåvé one]</string>
+<string name="cd_key_uchar_latin_small_letter_a">[å one]</string>
+<string name="cd_key_uchar_latin_small_letter_b">[б one]</string>
+<string name="cd_key_uchar_latin_small_letter_c">[ç one]</string>
+<string name="cd_key_uchar_latin_small_letter_d">[ð one]</string>
+<string name="cd_key_uchar_latin_small_letter_e">[é one]</string>
+<string name="cd_key_uchar_latin_small_letter_f">[ƒ one]</string>
+<string name="cd_key_uchar_latin_small_letter_g">[ĝ one]</string>
+<string name="cd_key_uchar_latin_small_letter_h">[ĥ one]</string>
+<string name="cd_key_uchar_latin_small_letter_i">[î one]</string>
+<string name="cd_key_uchar_latin_small_letter_j">[ĵ one]</string>
+<string name="cd_key_uchar_latin_small_letter_k">[ķ one]</string>
+<string name="cd_key_uchar_latin_small_letter_l">[ļ one]</string>
+<string name="cd_key_uchar_latin_small_letter_m">[m one]</string>
+<string name="cd_key_uchar_latin_small_letter_n">[ñ one]</string>
+<string name="cd_key_uchar_latin_small_letter_o">[ö one]</string>
+<string name="cd_key_uchar_latin_small_letter_p">[þ one]</string>
+<string name="cd_key_uchar_latin_small_letter_q">[q one]</string>
+<string name="cd_key_uchar_latin_small_letter_r">[ŕ one]</string>
+<string name="cd_key_uchar_latin_small_letter_s">[š one]</string>
+<string name="cd_key_uchar_latin_small_letter_t">[ţ one]</string>
+<string name="cd_key_uchar_latin_small_letter_u">[û one]</string>
+<string name="cd_key_uchar_latin_small_letter_v">[v one]</string>
+<string name="cd_key_uchar_latin_small_letter_w">[ŵ one]</string>
+<string name="cd_key_uchar_latin_small_letter_x">[x one]</string>
+<string name="cd_key_uchar_latin_small_letter_y">[ý one]</string>
+<string name="cd_key_uchar_latin_small_letter_z">[ž one]</string>
+<string name="cd_key_uchar_left_curly_bracket">[ļéƒţ çûŕļý бŕåçķéţ one two three]</string>
+<string name="cd_key_uchar_vertical_line">[véŕţîçåļ ļîñé one two]</string>
+<string name="cd_key_uchar_right_curly_bracket">[ŕîĝĥţ çûŕļý бŕåçķéţ one two three]</string>
+<string name="cd_key_uchar_tilde">[ţîļðé one]</string>
+<string name="cd_key_action_done">[ðöñé one]</string>
+<string name="cd_key_action_go">[ĝö one]</string>
+<string name="cd_key_action_next">[ñéxţ one]</string>
+<string name="cd_key_action_previous">[þŕévîöûš one]</string>
+<string name="cd_key_action_search">[šéåŕçĥ one]</string>
+<string name="cd_key_action_send">[šéñð one]</string>
+<string name="cd_key_composing_done">[šûбmîţ one]</string>
+<string name="cd_key_kana_line_a">[Å çöļûmñ one]</string>
+<string name="cd_key_kana_line_ka">[ĶÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_line_sa">[ŠÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_line_ta">[ŢÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_line_na">[ÑÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_line_ha">[ĤÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_line_ma">[MÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_line_ya">[ÝÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_line_ra">[ŔÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_modifier">[vöîçéð šöûñð måŕķ one two three]</string>
+<string name="cd_key_kana_line_wa">[ŴÅ çöļûmñ one two]</string>
+<string name="cd_key_kana_punctuation">[þûñçţûåţîöñ one two]</string>
+<string name="cd_key_uchar_katakana_middle_dot">[mîððļé ðöţ one two]</string>
+<string name="cd_key_uchar_ideographic_comma">[çömmå one]</string>
+<string name="cd_key_uchar_ideographic_full_stop">[þéŕîöð one]</string>
+<string name="cd_key_uchar_katakana_hiragana_prolonged_sound_mark">[þŕöļöñĝéð šöûñð måŕķ one two three]</string>
+<string name="cd_key_alphabet_abc">[ÅБÇ one]</string>
+<string name="cd_key_alphabet_def">[ÐÉF one]</string>
+<string name="cd_key_alphabet_ghi">[ĜĤÎ one]</string>
+<string name="cd_key_alphabet_jkl">[ĴĶĻ one]</string>
+<string name="cd_key_alphabet_mno">[MÑÖ one]</string>
+<string name="cd_key_alphabet_pqrs">[ÞQŔŠ one]</string>
+<string name="cd_key_alphabet_tuv">[ŢÛV one]</string>
+<string name="cd_key_alphabet_wxyz">[ŴXÝŽ one]</string>
+<string name="cd_key_alphabet_capitalize">[çåþîţåļîžé one two]</string>
+<string name="spoken_use_headphone_for_password">[Þļûĝ îñ å ĥéåðšéţ ţö ĥéåŕ þåššŵöŕð ķéýš šþöķéñ åļöûð one two three four five six seven eight nine ten eleven]</string>
+<string name="cd_keyboard_fold_button">[Çĥåñĝé ţĥé šîžé öƒ çåñðîðåţé ŵîñðöŵ one two three four five six seven eight]</string>
+<string name="cd_close_symbol_window">[Бåçķ ţö ķéýбöåŕð one two]</string>
+<string name="cd_symbol_window_number">[Ñûmбéŕ one]</string>
+<string name="cd_symbol_window_symbol">[Šýmбöļ one]</string>
+<string name="cd_symbol_window_emoticon">[Émöţîçöñ one]</string>
+<string name="cd_symbol_window_emoji">[Émöĵî one]</string>
+<string name="cd_symbol_window_enter">[Ļîñéƒééð one]</string>
+<string name="cd_symbol_window_backspace">[Бåçķšþåçé one two]</string>
+<string name="cd_symbol_window_minor_history">[Ĥîšţöŕý one]</string>
+<string name="cd_symbol_window_minor_symbol_general">[Ĝéñéŕåļ šýmбöļ one two]</string>
+<string name="cd_symbol_window_minor_symbol_half">[Fûļļ åñð ĥåļƒ ŵîðţĥ šýmбöļ one two three four five six]</string>
+<string name="cd_symbol_window_minor_symbol_parenthesis">[Þåŕéñţĥéšîš šýmбöļ one two three]</string>
+<string name="cd_symbol_window_minor_symbol_arrow">[Åŕŕöŵ šýmбöļ one two]</string>
+<string name="cd_symbol_window_minor_symbol_math">[Måţĥ šýmбöļ one two]</string>
+<string name="cd_symbol_window_minor_emoticon_smile">[Šmîļé émöţîçöñ one two]</string>
+<string name="cd_symbol_window_minor_emoticon_sweat">[Šŵéåţ émöţîçöñ one two]</string>
+<string name="cd_symbol_window_minor_emoticon_surprise">[Šûŕþŕîšé émöţîçöñ one two three]</string>
+<string name="cd_symbol_window_minor_emoticon_sadness">[Šåðñéšš émöţîçöñ one two]</string>
+<string name="cd_symbol_window_minor_emoticon_displeasure">[Ðîšþļéåšûŕé émöţîçöñ one two three]</string>
+<string name="cd_symbol_window_minor_emoji_face">[Fåçé émöĵî one two]</string>
+<string name="cd_symbol_window_minor_emoji_food">[Fööð émöĵî one two]</string>
+<string name="cd_symbol_window_minor_emoji_activity">[Åçţîvîţý émöĵî one two]</string>
+<string name="cd_symbol_window_minor_emoji_city">[Çîţý émöĵî one two]</string>
+<string name="cd_symbol_window_minor_emoji_nature">[Ñåţûŕé émöĵî one two]</string>
+<string name="help_userdictionary_dictionary_name">[Îñþûţ ðîçţîöñåŕý ñåmé one two three]</string>
+<string name="help_userdictionary_edit_word_value">[Îñþûţ ŵöŕð one two]</string>
+<string name="help_userdictionary_edit_word_key">[Îñþûţ ŕéåðîñĝ one two]</string>
+<string name="cd_voice_input">[Vöîçé îñþûţ one two]</string>
+<string name="cd_narrow_frame_widen_button">[Šĥöŵ ţĥé ķéýбöåŕð one two three]</string>
+</resources>

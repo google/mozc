@@ -177,7 +177,7 @@ const char *GenericLruStorage::Lookup(const string &key) {
   return lru_storage_->Lookup(key);
 }
 
-bool GenericLruStorage::GetAllValues(vector<string> *values) {
+bool GenericLruStorage::GetAllValues(std::vector<string> *values) {
   if (!EnsureStorage()) {
     return false;
   }

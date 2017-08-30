@@ -371,7 +371,7 @@ int main(int argc, char *argv[]) {
     mozc::RPCClient client;
     CHECK(client.CreateSession());
     for (int n = 0; n < FLAGS_client_test_size; ++n) {
-      vector<mozc::commands::KeyEvent> keys;
+      std::vector<mozc::commands::KeyEvent> keys;
       mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
       for (size_t i = 0; i < keys.size(); ++i) {
         LOG(INFO) << "Sending to Server: " << keys[i].Utf8DebugString();

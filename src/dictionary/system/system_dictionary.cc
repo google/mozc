@@ -288,8 +288,8 @@ class SystemDictionary::ReverseLookupCache {
  public:
   ReverseLookupCache() {}
 
-  bool IsAvailable(const set<int> &id_set) const {
-    for (set<int>::const_iterator itr = id_set.begin();
+  bool IsAvailable(const std::set<int> &id_set) const {
+    for (std::set<int>::const_iterator itr = id_set.begin();
          itr != id_set.end();
          ++itr) {
       if (results.find(*itr) == results.end()) {
@@ -299,7 +299,7 @@ class SystemDictionary::ReverseLookupCache {
     return true;
   }
 
-  multimap<int, ReverseLookupResult> results;
+  std::multimap<int, ReverseLookupResult> results;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ReverseLookupCache);
@@ -369,9 +369,9 @@ class SystemDictionary::ReverseLookupIndex {
 
   ~ReverseLookupIndex() {}
 
-  void FillResultMap(const set<int> &id_set,
-                     multimap<int, ReverseLookupResult> *result_map) {
-    for (set<int>::const_iterator id_itr  = id_set.begin();
+  void FillResultMap(const std::set<int> &id_set,
+                     std::multimap<int, ReverseLookupResult> *result_map) {
+    for (std::set<int>::const_iterator id_itr  = id_set.begin();
          id_itr != id_set.end(); ++id_itr) {
       const ReverseLookupResultArray &result_array = index_[*id_itr];
       for (size_t i = 0; i < result_array.size; ++i) {
@@ -625,8 +625,8 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
     StringPiece encoded_key,
     const KeyExpansionTable &table,
     size_t limit,
-    vector<PredictiveLookupSearchState> *result) const {
-  queue<PredictiveLookupSearchState> queue;
+    std::vector<PredictiveLookupSearchState> *result) const {
+  std::queue<PredictiveLookupSearchState> queue;
   queue.push(PredictiveLookupSearchState(LoudsTrie::Node(), 0, false));
   do {
     PredictiveLookupSearchState state = queue.front();
@@ -714,7 +714,7 @@ void SystemDictionary::LookupPredictive(
   // of dictionary module.  CollectPredictiveNodesInBfsOrder() and the following
   // loop for callback should be integrated for this purpose.
   const size_t kLookupLimit = 64;
-  vector<PredictiveLookupSearchState> result;
+  std::vector<PredictiveLookupSearchState> result;
   result.reserve(kLookupLimit);
   CollectPredictiveNodesInBfsOrder(encoded_key, table, kLookupLimit, &result);
 
@@ -1063,7 +1063,7 @@ namespace {
 
 class AddKeyIdsToSet {
  public:
-  explicit AddKeyIdsToSet(set<int> *output) : output_(output) {}
+  explicit AddKeyIdsToSet(std::set<int> *output) : output_(output) {}
 
   void operator()(StringPiece key, size_t prefix_len,
                   const LoudsTrie &trie, LoudsTrie::Node node) {
@@ -1071,11 +1071,11 @@ class AddKeyIdsToSet {
   }
 
  private:
-  set<int> *output_;
+  std::set<int> *output_;
 };
 
 inline void AddKeyIdsOfAllPrefixes(const LoudsTrie &trie, StringPiece key,
-                                   set<int> *key_ids) {
+                                   std::set<int> *key_ids) {
   trie.PrefixSearch(key, AddKeyIdsToSet(key_ids));
 }
 
@@ -1091,7 +1091,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
   DCHECK(reverse_lookup_cache_.get());
 
   // Iterate each suffix and collect IDs of all substrings.
-  set<int> id_set;
+  std::set<int> id_set;
   int pos = 0;
   string lookup_key;
   lookup_key.reserve(str.size());
@@ -1157,7 +1157,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   string lookup_key;
   codec_->EncodeValue(value, &lookup_key);
 
-  set<int> id_set;
+  std::set<int> id_set;
   AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
 
   ReverseLookupCache *results = nullptr;
@@ -1179,7 +1179,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
 }
 
 void SystemDictionary::ScanTokens(
-    const set<int> &id_set, ReverseLookupCache *cache) const {
+    const std::set<int> &id_set, ReverseLookupCache *cache) const {
   for (TokenScanIterator iter(codec_, token_array_);
        !iter.Done(); iter.Next()) {
     const TokenScanIterator::Result &result = iter.Get();
@@ -1194,17 +1194,17 @@ void SystemDictionary::ScanTokens(
 }
 
 void SystemDictionary::RegisterReverseLookupResults(
-    const set<int> &id_set,
+    const std::set<int> &id_set,
     const ReverseLookupCache &cache,
     Callback *callback) const {
   const uint8 *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, 0);
   char buffer[LoudsTrie::kMaxDepth + 1];
-  for (set<int>::const_iterator set_itr = id_set.begin();
+  for (std::set<int>::const_iterator set_itr = id_set.begin();
        set_itr != id_set.end();
        ++set_itr) {
     const int value_id = *set_itr;
-    typedef multimap<int, ReverseLookupResult>::const_iterator ResultItr;
-    pair<ResultItr, ResultItr> range = cache.results.equal_range(*set_itr);
+    typedef std::multimap<int, ReverseLookupResult>::const_iterator ResultItr;
+    std::pair<ResultItr, ResultItr> range = cache.results.equal_range(*set_itr);
     for (ResultItr result_itr = range.first;
          result_itr != range.second;
          ++result_itr) {

@@ -173,7 +173,7 @@ class Uint32ArrayIterator
 // stored in |single_kanji_string_array| at its index.
 bool LookupKanjiList(StringPiece single_kanji_token_array,
                      const SerializedStringArray &single_kanji_string_array,
-                     const string &key, vector<string> *kanji_list) {
+                     const string &key, std::vector<string> *kanji_list) {
   DCHECK(kanji_list);
   const uint32* token_array =
       reinterpret_cast<const uint32*>(single_kanji_token_array.data());
@@ -288,7 +288,7 @@ void InsertCandidate(StringPiece variant_token_array,
                      const SerializedStringArray &variant_type,
                      bool is_single_segment,
                      uint16 single_kanji_id,
-                     const vector<string> &kanji_list,
+                     const std::vector<string> &kanji_list,
                      Segment *segment) {
   DCHECK(segment);
   if (segment->candidates_size() == 0) {
@@ -418,7 +418,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
         segments->mutable_conversion_segment(i));
 
     const string &key = segments->conversion_segment(i).key();
-    vector<string> kanji_list;
+    std::vector<string> kanji_list;
     if (!LookupKanjiList(single_kanji_token_array_, single_kanji_string_array_,
                          key, &kanji_list)) {
       continue;

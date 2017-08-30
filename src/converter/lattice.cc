@@ -90,7 +90,7 @@ bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
 
 string GetDebugStringForNode(const Node *node, const Node *prev_node) {
   CHECK(node);
-  stringstream os;
+  std::stringstream os;
   os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) -
       node->wcost << "]";
   os << "[lid:" << node->lid << "]";
@@ -103,8 +103,8 @@ string GetDebugStringForNode(const Node *node, const Node *prev_node) {
 
 string GetDebugStringForPath(const Node *end_node) {
   CHECK(end_node);
-  stringstream os;
-  vector<const Node *> node_vector;
+  std::stringstream os;
+  std::vector<const Node *> node_vector;
 
   for (const Node *node = end_node; node; node = node->prev) {
     node_vector.push_back(node);
@@ -120,7 +120,7 @@ string GetDebugStringForPath(const Node *end_node) {
 }
 
 string GetCommonPrefix(const string &str1, const string &str2) {
-  vector<string> split1, split2;
+  std::vector<string> split1, split2;
   Util::SplitStringToUtf8Chars(str1, &split1);
   Util::SplitStringToUtf8Chars(str2, &split2);
   string common_prefix = "";
@@ -423,12 +423,12 @@ void Lattice::ResetNodeCost() {
 }
 
 string Lattice::DebugString() const {
-  stringstream os;
+  std::stringstream os;
   if (!has_lattice()) {
     return "";
   }
 
-  vector<const Node *> best_path_nodes;
+  std::vector<const Node *> best_path_nodes;
 
   const Node *node = eos_nodes();
   // Print the best path
@@ -447,7 +447,7 @@ string Lattice::DebugString() const {
   }
 
   // Print tha path that contains the designated node
-  for (vector<const Node *>::const_iterator it = best_path_nodes.begin();
+  for (std::vector<const Node *>::const_iterator it = best_path_nodes.begin();
        it != best_path_nodes.end(); ++it) {
     const Node *best_path_node = *it;
     if (best_path_node->begin_pos < info->display_node_end_pos_) {

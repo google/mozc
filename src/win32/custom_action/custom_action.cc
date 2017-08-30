@@ -30,6 +30,7 @@
 #include "win32/custom_action/custom_action.h"
 
 #include <windows.h>
+#include <IEPMapi.h>
 #include <atlbase.h>
 #if !defined(NO_LOGGING)
 #include <atlstr.h>
@@ -46,6 +47,7 @@
 #include "base/url.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "base/win_sandbox.h"
 #include "base/win_util.h"
 #include "client/client_interface.h"
 #include "config/stats_config_util.h"
@@ -81,29 +83,6 @@ const char kIEFrameDll[] = "ieframe.dll";
 const wchar_t kSystemSharedKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 
 HMODULE g_module = nullptr;
-
-HRESULT CallSystemDllFunction(const char* dll_name,
-                              const char* function_name) {
-  HRESULT result = E_NOTIMPL;
-  wstring wdll_name;
-  mozc::Util::UTF8ToWide(dll_name, &wdll_name);
-  const HMODULE dll = mozc::WinUtil::LoadSystemLibrary(wdll_name);
-  if (dll != nullptr) {
-    typedef HRESULT (*DllFunction)();
-    DllFunction dll_function = reinterpret_cast<DllFunction>(
-        ::GetProcAddress(dll, function_name));
-    if (dll_function) {
-      result = dll_function();
-    } else {
-       const DWORD error = GetLastError();
-       result = HRESULT_FROM_WIN32(error);
-     }
-    FreeLibrary(dll);
-  } else {
-    result = E_FAIL;
-  }
-  return result;
-}
 
 wstring GetMozcComponentPath(const string &filename) {
   const string path = mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
@@ -259,10 +238,33 @@ BOOL APIENTRY DllMain(HMODULE module,
   return TRUE;
 }
 
-UINT __stdcall RefreshPolicy(MSIHANDLE msi_handle) {
+// [Return='ignore']
+UINT __stdcall EnsureAllApplicationPackagesPermisssions(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  HRESULT result = CallSystemDllFunction(kIEFrameDll,
-                                         "IERefreshElevationPolicy");
+  if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+          GetMozcComponentPath(mozc::kMozcServerName))) {
+    return ERROR_INSTALL_FAILURE;
+  }
+  if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+          GetMozcComponentPath(mozc::kMozcRenderer))) {
+    return ERROR_INSTALL_FAILURE;
+  }
+  if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+          GetMozcComponentPath(mozc::kMozcTIP32))) {
+    return ERROR_INSTALL_FAILURE;
+  }
+  if (mozc::SystemUtil::IsWindowsX64()) {
+    if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
+            GetMozcComponentPath(mozc::kMozcTIP64))) {
+      return ERROR_INSTALL_FAILURE;
+    }
+  }
+  return ERROR_SUCCESS;
+}
+
+UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle) {
+  DEBUG_BREAK_FOR_DEBUGGER();
+  HRESULT result = ::IERefreshElevationPolicy();
   if (FAILED(result)) {
     LOG_ERROR_FOR_OMAHA();
     return ERROR_INSTALL_FAILURE;

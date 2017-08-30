@@ -198,7 +198,7 @@ void Client::DumpHistorySnapshot(const string &filename,
   const string snapshot_file =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), filename);
   // open with append mode
-  OutputFileStream output(snapshot_file.c_str(), ios::app);
+  OutputFileStream output(snapshot_file.c_str(), std::ios::app);
 
   output << "---- Start history snapshot for " << label << std::endl;
   output << "Created at " << Logging::GetLogMessageHeader() << std::endl;
@@ -277,7 +277,7 @@ void Client::ResetHistory() {
 #endif
 }
 
-void Client::GetHistoryInputs(vector<commands::Input> *output) const {
+void Client::GetHistoryInputs(std::vector<commands::Input> *output) const {
   output->clear();
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     output->push_back(history_inputs_[i]);

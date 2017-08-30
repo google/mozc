@@ -211,7 +211,7 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 bool ConfigHandlerImpl::Reload() {
   scoped_lock lock(&mutex_);
   VLOG(1) << "Reloading config file: " << filename_;
-  std::unique_ptr<istream> is(ConfigFileStream::OpenReadBinary(filename_));
+  std::unique_ptr<std::istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
   bool ret_code = true;
 

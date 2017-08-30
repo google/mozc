@@ -42,7 +42,7 @@ namespace session {
 TEST(RandomKeyEventsGeneratorTest, BasicTest) {
   RandomKeyEventsGenerator::PrepareForMemoryLeakTest();
 
-  vector<mozc::commands::KeyEvent> keys;
+  std::vector<mozc::commands::KeyEvent> keys;
   for (int i = 0; i < 1000; ++i) {
     keys.clear();
     RandomKeyEventsGenerator::GenerateSequence(&keys);

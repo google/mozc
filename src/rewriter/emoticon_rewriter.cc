@@ -83,7 +83,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
   size_t offset = min(initial_insert_pos, segment->candidates_size());
 
   // Sort values by cost just in case
-  vector<SerializedDictionary::const_iterator> sorted_value;
+  std::vector<SerializedDictionary::const_iterator> sorted_value;
   for (auto iter = begin; iter != end; ++iter) {
     sorted_value.push_back(iter);
   }

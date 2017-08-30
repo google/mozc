@@ -42,7 +42,8 @@ class KeyMapManager;
 
 class KeyMapFactory {
  public:
-  typedef map<config::Config::SessionKeymap, KeyMapManager *> KeyMapManagerMap;
+  typedef std::map<config::Config::SessionKeymap, KeyMapManager *>
+      KeyMapManagerMap;
 
   // Returns KeyMapManager corresponding keymap and custom rule stored in
   // config.  Note, keymap might be different from config.session_keymap.

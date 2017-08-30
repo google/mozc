@@ -357,7 +357,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     return Status::DATA_MISSING;
   }
   {
-    vector<StringPiece> components;
+    std::vector<StringPiece> components;
     Util::SplitStringUsing(data_version_, ".", &components);
     if (components.size() != 3) {
       LOG(ERROR) << "Invalid version format: " << data_version_;
@@ -553,7 +553,7 @@ void DataManager::GetUsageRewriterData(
 StringPiece DataManager::GetTypingModel(const string &name) const {
   const auto iter = std::lower_bound(
       typing_model_data_.begin(), typing_model_data_.end(), name,
-      [](const pair<string, StringPiece> &elem, const string &key) {
+      [](const std::pair<string, StringPiece> &elem, const string &key) {
         return elem.first < key;
       });
   if (iter == typing_model_data_.end() || iter->first != name) {

@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2016, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources><string name="subtype_ja">Japanska</string>
+<string name="pref_skin_type_key">pref_skin_type_key</string>
+<string name="pref_software_keyboard_category_title">Hugbúnaðarlyklaborð</string>
+<string name="pref_software_keyboard_advanced_settings_title">Ítarlegar stillingar hugbúnaðarlyklaborðs</string>
+<string name="pref_fragment_software_keyboard_title">Software keyboard</string>
+<string name="pref_fragment_input_support_title">Input support</string>
+<string name="pref_fragment_conversion_title">Conversion</string>
+<string name="pref_fragment_dictionary_title">Dictionary</string>
+<string name="pref_fragment_user_feedback_title">User feedback</string>
+<string name="pref_fragment_about_title">About</string>
+<string name="pref_fragment_development_title">Development</string>
+<string name="pref_software_keyboard_preferences_portrait_title">Kjörstillingar hugbúnaðarlyklaborðs fyrir skammsnið</string>
+<string name="pref_software_keyboard_preferences_landscape_title">Kjörstillingar hugbúnaðarlyklaborðs fyrir langsnið</string>
+<string name="pref_keyboard_layout_title">Lyklaskipan</string>
+<string name="pref_input_style_title">Innsláttarstíll</string>
+<string name="pref_qwerty_layout_for_alphabet_title">QWERTY-stilling</string>
+<string name="pref_flick_sensitivity_title">Flettinæmi</string>
+<string name="pref_use_portrait_keyboard_settings_for_landscape_title">Nota stillingar skammsniðs</string>
+<string name="pref_keyboard_height_ratio_title">Hæð lyklaborðs</string>
+<string name="pref_input_feedback_category_title">Stillingar svörunar við innslátt</string>
+<string name="pref_haptic_feedback_title">Snertisvörun</string>
+<string name="pref_haptic_feedback_duration_title">Lengd snertisvörunar</string>
+<string name="pref_sound_feedback_title">Hljóðsvörun</string>
+<string name="pref_sound_feedback_volume_title">Styrkur hljóðsvörunar</string>
+<string name="pref_popup_feedback_title">Sprettisvörun</string>
+<string name="pref_other_input_support_preference_category_title">Aðrar stillingar fyrir stuðning við innslátt</string>
+<string name="pref_fullscreen_title">Allur skjárinn</string>
+<string name="pref_skin_type_title">Keyboard theme</string>
+<string name="pref_hardware_title">Stillingar vélbúnaðarlyklaborðs</string>
+<string name="pref_voice_input_title">Show voice input button</string>
+<string name="pref_conversion_category_title">Umbreytingarstillingar</string>
+<string name="pref_layout_adjustment_title">Aðlögun skipanar</string>
+<string name="pref_space_character_form_title">Nota bil í hálfri breidd</string>
+<string name="pref_kana_modifier_insensitive_conversion_title">Umbreyting án tillits til breytilykla</string>
+<string name="pref_typing_correction_title">Leiðrétting innsláttar</string>
+<string name="pref_other_incognito_mode_title">Huliðsstilling</string>
+<string name="pref_emoji_provider_type_title">Velja emoji-útgefanda</string>
+<string name="pref_dictionry_category_title">Kjörstillingar orðabókar</string>
+<string name="pref_dictionary_personalization_title">Sérsnið</string>
+<string name="pref_dictionary_user_dictionary_tool_title">Orðabókarverkfæri</string>
+<string name="pref_clear_category_title">Hreinsa feril</string>
+<string name="pref_clear_conversion_history_title">Umbreytingaferill</string>
+<string name="pref_clear_symbol_history_title">Táknaferill</string>
+<string name="pref_clear_user_dictionary_title">Orðabók notanda</string>
+<string name="pref_user_feedback_category_title">Ábendingar notanda</string>
+<string name="pref_other_usage_stats_title">Senda inn notkunarupplýsingar</string>
+<string name="pref_about_about_this_software_title">Um þennan hugbúnað</string>
+<string name="pref_about_version_title">Útgáfa</string>
+<string name="pref_about_terms_of_service_title">Þjónustuskilmálar</string>
+<string name="pref_about_privacy_policy_title">Persónuverndarstefna</string>
+<string name="pref_about_oss_credits_title">Opinn hugbúnaður</string>
+<string name="pref_launcher_icon_visibility_title">Sýna forritstákn</string>
+<string name="pref_haptic_feedback_description">Titringur þegar ýtt er á lykla.</string>
+<string name="pref_sound_feedback_description">Hljóð þegar ýtt er á lykla.</string>
+<string name="pref_popup_feedback_description">Sprettigluggi þegar ýtt er á lykla.</string>
+<string name="pref_keyboard_layout_description">Skipta um lyklaskipan.</string>
+<string name="pref_keyboard_layout_title_12keys">12 lyklar</string>
+<string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+<string name="pref_keyboard_layout_title_godan">Godan-lyklaborð</string>
+<string name="pref_keyboard_layout_description_12keys">Farsímaskipan.</string>
+<string name="pref_keyboard_layout_description_qwerty">Tölvulyklaskipan.</string>
+<string name="pref_keyboard_layout_description_godan">Romaji-skipan. &lt;a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&amp;topic=25606&amp;answer=2700298\'&gt;Notkun&lt;/a&gt;</string>
+<string name="pref_input_style_setting_description">Velja innsláttarstíl.</string>
+<string name="pref_qwerty_layout_for_alphabet_description">Ef hakað er við þetta verður QWERTY-skipan notuð fyrir stafainnslátt burtséð frá aðalskipan.</string>
+<string name="pref_fullscreen_description">Ef hakað er við þetta er marktextareitur birtur á öllum skjánum.</string>
+<string name="pref_flick_sensitivity_description">Breyta næmi flettingar.</string>
+<string name="pref_layout_adjustment_description">Skipta um lyklaborðsaðlögun.</string>
+<string name="pref_keyboard_height_ratio_description">Breyta hæð lyklaborðs.</string>
+<string name="pref_space_character_form_description">Nota alltaf bil í hálfri breidd, burtséð frá innsláttarstillingu.</string>
+<string name="pref_kana_modifier_insensitive_conversion_description">Nota umbreytingu sem tekur ekki tillit til kana-breytingalykla. Notað fyrir 12 lykla og Godan-lyklaborð, t.d. かつこう→学校</string>
+<string name="pref_typing_correction_description">Greina innsláttarvillur og birta leiðréttar tillögur, t.d. すんかい→深海</string>
+<string name="pref_emoji_provider_type_description">Velja emoji-útgefanda til að emoji-tákn virki rétt.</string>
+<string name="pref_skin_type_description">Select the keyboard theme to customize the software keyboard look.</string>
+<string name="pref_voice_input_description">Show voice input button on the software keyboard.</string>
+<string name="pref_hardware_keymap_description">Velja lyklaskipan fyrir vélbúnaðarlyklaborð.</string>
+<string name="pref_dictionary_personalization_description">Kveikja á sérsniðnum tillögum sem byggja á fyrri innslætti.</string>
+<string name="pref_dictionary_user_dictionary_tool_description">Breyta orðabókum notanda.</string>
+<string name="pref_clear_category_description">Hreinsa gögn sérsniðs eða tillagna.</string>
+<string name="pref_clear_conversion_history_description">Hreinsa umbreytingaferil.</string>
+<string name="pref_clear_symbol_history_description">Hreinsa innsláttarferil tákna.</string>
+<string name="pref_clear_user_dictionary_description">Hreinsa orðabók notanda.</string>
+<string name="pref_other_incognito_mode_description">Slökkva tímabundið á sérsniði, tillögum og orðabók notanda.</string>
+<string name="pref_other_usage_stats_description">Senda upplýsingar um notkun til %1$s. Þær verða eingöngu notaðar til að bæta vörur og þjónustu %1$s.</string>
+<string name="pref_about_terms_of_service_description">Birta þjónustuskilmálana (vefsíða).</string>
+<string name="pref_about_privacy_policy_description">Birta persónuverndarstefnuna (vefsíða).</string>
+<string name="pref_about_oss_credits_description">Þessi hugbúnaður notast við opinn hugbúnað: Skoðaðu leyfin.</string>
+<string name="pref_launcher_icon_visibility_description">Sýna tákn forritsins í ræsiforritinu</string>
+<string name="pref_input_style_setting_entry_toggle">Rofi</string>
+<string name="pref_input_style_setting_entry_flick">Fletting</string>
+<string name="pref_input_style_setting_entry_toggle_and_flick">Rofi og fletting</string>
+<string name="pref_fullscreen_portrait">Virkja í skammsniði</string>
+<string name="pref_fullscreen_landscape">Virkja í langsniði</string>
+<string name="pref_emoji_provider_type_unicode">Slökkva á emoji-táknum símafyrirtækis</string>
+<string name="pref_emoji_provider_type_docomo">NTT docomo</string>
+<string name="pref_emoji_provider_type_kddi">KDDI (au)</string>
+<string name="pref_emoji_provider_type_softbank">SoftBank</string>
+<string name="pref_skin_type_orange_lightgray">Appelsínugult/ljósgrátt</string>
+<string name="pref_skin_type_blue_lightgray">Blátt/ljósgrátt</string>
+<string name="pref_skin_type_blue_darkgray">Blátt/dökkgrátt</string>
+<string name="pref_skin_type_material_design_light">Áþreifanlegt (ljóst)</string>
+<string name="pref_skin_type_material_design_dark">Áþreifanlegt (dökkt)</string>
+<string name="pref_hardware_keymap_default">Sjálfgildi kerfis</string>
+<string name="pref_hardware_keymap_japanese109A">Japanskt 109A</string>
+<string name="pref_hardware_keymap_twelvekey">12 lyklar</string>
+<string name="pref_dictionary_personalization_entry_enabled">Kveikja</string>
+<string name="pref_dictionary_personalization_entry_readonly">Frosið</string>
+<string name="pref_dictionary_personalization_entry_disabled">Slökkva</string>
+<string name="pref_layout_adjustment_entry_fill">Fylla</string>
+<string name="pref_layout_adjustment_entry_right">Hægri</string>
+<string name="pref_layout_adjustment_entry_left">Vinstri</string>
+<string name="firsttime_close_button">Áfram &gt;&gt;</string>
+<string name="firsttime_description_thank_you">Takk fyrir að nota %s.</string>
+<string name="firsttime_description_usage_stats">Til að hjálpa okkur að bæta vörur og þjónustu %s biðjum við þig vinsamlegast um að íhuga að gera notkunarupplýsingar virkar.\n\nHægt er að breyta þessari stillingu á kjörstillingaskjánum.</string>
+<string name="firsttime_send_usage_stats_devchannel">Notkunarupplýsingar eru virkar vegna þess að þú ert að nota þróunarútgáfu.</string>
+<string name="pref_ime_enable_alert_title">Uppsetning textastillinga</string>
+<string name="pref_ime_enable_alert_message">Kveiktu á %s.</string>
+<string name="pref_ime_switch_alert_title">Uppsetning innsláttaraðferðar</string>
+<string name="pref_ime_switch_alert_message">Breyttu innsláttaraðferðinni í %s.</string>
+<string name="pref_ime_alert_next">Áfram</string>
+<string name="pref_ime_alert_cancel">Hætta við</string>
+<string name="pref_flick_sensitivity_seekbar_low_text">Lægst</string>
+<string name="pref_flick_sensitivity_seekbar_middle_text">Miðlungs</string>
+<string name="pref_flick_sensitivity_seekbar_high_text">Hæst</string>
+<string name="pref_haptic_feedback_duration_low_text">Stutt</string>
+<string name="pref_haptic_feedback_duration_high_text">Löng</string>
+<string name="pref_sound_feedback_volume_low_text">Lægstur</string>
+<string name="pref_sound_feedback_volume_middle_text">Miðlungs</string>
+<string name="pref_sound_feedback_volume_high_text">Hæstur</string>
+<string name="symbol_input_no_history">Enginn ferill.\n\nStrjúktu yfir skjáinn\ntil að skoða flokka.</string>
+<string name="symbol_emoji_disabled_message">Þessi textareitur styður ekki emoji-innslátt.</string>
+<string name="menu_dialog_title">Innsláttarkostir</string>
+<string name="menu_item_input_method">Velja innsláttaraðferð</string>
+<string name="menu_item_preferences">Stillingar %s</string>
+<string name="menu_item_mushroom">Ræsisveppur</string>
+<string name="user_dictionary_tool_app_name">Orðabókarverkfæri</string>
+<string name="user_dictionary_tool_menu_add_entry_title">Nýtt orð</string>
+<string name="user_dictionary_tool_menu_delete_entry_title">Eyða orði</string>
+<string name="user_dictionary_tool_menu_undo_title">Afturkalla</string>
+<string name="user_dictionary_tool_menu_create_dictionary_title">Ný orðabók</string>
+<string name="user_dictionary_tool_menu_rename_dictionary_title">Endurnefna núverandi orðabók</string>
+<string name="user_dictionary_tool_menu_delete_dictionary_title">Eyða núverandi orðabók</string>
+<string name="user_dictionary_tool_menu_export_dictionary_title">Flytja núverandi orðabók út</string>
+<string name="user_dictionary_tool_default_dictionary_name">Orðabók notanda 1</string>
+<string name="user_dictionary_tool_create_dictionary_dialog_title">Búa til nýja orðabók</string>
+<string name="user_dictionary_tool_rename_dictionary_dialog_title">Breyta heiti orðabókarinnar</string>
+<string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">Heiti orðabókarinnar</string>
+<string name="user_dictionary_tool_add_entry_dialog_title">Bæta nýju orði við</string>
+<string name="user_dictionary_tool_edit_entry_dialog_title">Breyta orði</string>
+<string name="user_dictionary_tool_word_register_dialog_reading_label">Lestur</string>
+<string name="user_dictionary_tool_word_register_dialog_word_label">Orð</string>
+<string name="user_dictionary_tool_word_register_dialog_pos_label">Flokkur</string>
+<string name="user_dictionary_tool_zip_file_selection_dialog_title">Velja upprunastað innflutnings</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_title">Velja áfangastað innflutnings</string>
+<string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">Flytja inn sem nýja orðabók</string>
+<string name="user_dictionary_tool_delete_done_message">Tókst að eyða.</string>
+<string name="user_dictionary_tool_undo_done_message">Tókst að afturkalla.</string>
+<string name="user_dictionary_tool_error_delete_entries_without_check">Veldu orðin sem þú vilt eyða.</string>
+<string name="user_dictionary_tool_error_import_source_invalid_scheme">Gagnainnflutningur virkar aðeins á skrár.</string>
+<string name="user_dictionary_tool_error_import_cannot_read_import_source">Ekki var hægt að lesa skrána.</string>
+<string name="user_dictionary_tool_error_import_no_zip_entry">ZIP-skráin er tóm.</string>
+<string name="user_dictionary_tool_error_export_no_exportable_applications">Engin forrit (t.d. Google skjöl) til staðar til að flytja út orðabók notanda.</string>
+<string name="user_dictionary_tool_error_export_failed_to_export">Mistókst að flytja orðabók notanda út.</string>
+<string name="user_dictionary_tool_status_error_general">Aðgerðin mistókst.</string>
+<string name="user_dictionary_tool_status_error_file_not_found">Ekki var hægt að opna skrána.</string>
+<string name="user_dictionary_tool_status_error_invalid_file_format">Ekki var hægt að lesa skrána.</string>
+<string name="user_dictionary_tool_status_error_file_size_limit_exceeded">Gögnin eru yfir hámarksstærð skráa.</string>
+<string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">Ekki er hægt að búa til fleiri orðabækur.</string>
+<string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">Ekki er hægt að búa til fleiri færslur í þessari orðabók.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_empty">Skrifaðu heiti fyrir orðabókina.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_too_long">Heitið er of langt.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">Heitið inniheldur ógilda stafi.</string>
+<string name="user_dictionary_tool_status_error_dictionary_name_duplicated">Heitið er þegar til staðar.</string>
+<string name="user_dictionary_tool_status_error_reading_empty">Sláðu inn lesturinn.</string>
+<string name="user_dictionary_tool_status_error_reading_too_long">Lesturinn er of langur.</string>
+<string name="user_dictionary_tool_status_error_reading_contains_invalid_character">Lesturinn inniheldur ógilda stafi.</string>
+<string name="user_dictionary_tool_status_error_word_empty">Sláðu inn orðið.</string>
+<string name="user_dictionary_tool_status_error_word_too_long">Orðið er of langt.</string>
+<string name="user_dictionary_tool_status_error_word_contains_invalid_character">Orðið inniheldur ógilda stafi.</string>
+<string name="user_dictionary_tool_status_error_import_too_many_words">Það sem flytja á inn inniheldur of mörg orð.</string>
+<string name="user_dictionary_tool_status_error_import_invalid_entries">Ekki var hægt að flytja sum orð inn.</string>
+<string name="user_dictionary_tool_status_error_no_undo_history">Engar fleiri aðgerðir sem hægt er að afturkalla.</string>
+<string name="japanese_pos_noun">Nafnorð</string>
+<string name="japanese_pos_abbreviation">Skammstöfun</string>
+<string name="japanese_pos_suggestion_only">Aðeins tillaga</string>
+<string name="japanese_pos_proper_noun">Sérnafn</string>
+<string name="japanese_pos_personal_name">Mannsnafn</string>
+<string name="japanese_pos_family_name">Eftirnafn</string>
+<string name="japanese_pos_first_name">Fornafn</string>
+<string name="japanese_pos_organization_name">Nafn fyrirtækis</string>
+<string name="japanese_pos_place_name">Staðarheiti</string>
+<string name="japanese_pos_sa_irregular_conjugation_noun">SA-óreglulegt samsett nafnorð</string>
+<string name="japanese_pos_adjective_verbal_noun">Lýsingarháttarmynd sagnar</string>
+<string name="japanese_pos_number">Tala</string>
+<string name="japanese_pos_alphabet">Stafur</string>
+<string name="japanese_pos_symbol">Tákn</string>
+<string name="japanese_pos_emoticon">Broskarl</string>
+<string name="japanese_pos_adverb">Atviksorð</string>
+<string name="japanese_pos_prenoun_adjectival">Lýsingarfornafn</string>
+<string name="japanese_pos_conjunction">Samtenging</string>
+<string name="japanese_pos_interjection">Upphrópun</string>
+<string name="japanese_pos_prefix">Forskeyti</string>
+<string name="japanese_pos_counter_suffix">Mótviðskeyti</string>
+<string name="japanese_pos_generic_suffix">Almennt viðskeyti</string>
+<string name="japanese_pos_person_name_suffix">Viðskeyti mannsnafns</string>
+<string name="japanese_pos_place_name_suffix">Viðskeyti staðarheitis</string>
+<string name="japanese_pos_wa_group1_verb">Sögn af WA-flokki1</string>
+<string name="japanese_pos_ka_group1_verb">Sögn af KA-flokki1</string>
+<string name="japanese_pos_sa_group1_verb">Sögn af SA-flokki1</string>
+<string name="japanese_pos_ta_group1_verb">Sögn af TA-flokki1</string>
+<string name="japanese_pos_na_group1_verb">Sögn af NA-flokki1</string>
+<string name="japanese_pos_ma_group1_verb">Sögn af MA-flokki1</string>
+<string name="japanese_pos_ra_group1_verb">Sögn af RA-flokki1</string>
+<string name="japanese_pos_ga_group1_verb">Sögn af GA-flokki1</string>
+<string name="japanese_pos_ba_group1_verb">Sögn af BA-flokki1</string>
+<string name="japanese_pos_ha_group1_verb">Sögn af HA-flokki1</string>
+<string name="japanese_pos_group2_verb">Sögn af flokki3</string>
+<string name="japanese_pos_kuru_group3_verb">Sögn af Kuru-flokki3</string>
+<string name="japanese_pos_suru_group3_verb">Sögn af Suru-flokki3</string>
+<string name="japanese_pos_zuru_group3_verb">Sögn af Zuru-flokki3</string>
+<string name="japanese_pos_ru_group3_verb">Sögn af Ru-flokki3</string>
+<string name="japanese_pos_adjective">Lýsingarorð</string>
+<string name="japanese_pos_sentence_ending_particle">Smáorð fyrir setningarlok</string>
+<string name="japanese_pos_punctuation">Greinarmerki</string>
+<string name="japanese_pos_free_standing_word">Frístandandi orð</string>
+<string name="japanese_pos_suppression_word">Neitun</string>
+<string name="yes">Já</string>
+<string name="no">Nei</string>
+</resources>

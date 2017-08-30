@@ -67,7 +67,7 @@ class DictionaryFile {
   const DictionaryFileCodecInterface *file_codec_;
   // This will be nullptr if the mapping source is given as a pointer.
   std::unique_ptr<Mmap> mapping_;
-  vector<DictionaryFileSection> sections_;
+  std::vector<DictionaryFileSection> sections_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryFile);
 };

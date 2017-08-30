@@ -99,7 +99,7 @@ bool InsertCandidate(StringPiece key,
 
 // Merges two descriptions.  Connects them if one is not a substring of the
 // other.
-void AddDescription(StringPiece adding, vector<string> *descriptions) {
+void AddDescription(StringPiece adding, std::vector<string> *descriptions) {
   DCHECK(descriptions);
   if (adding.empty()) {
     return;
@@ -133,7 +133,7 @@ bool InsertEmojiData(StringPiece key,
         cost, segment, insert_position);
   }
 
-  vector<string> descriptions;
+  std::vector<string> descriptions;
   if (available_carrier & Request::DOCOMO_EMOJI) {
     AddDescription(string_array[iter.description_docomo_index()],
                    &descriptions);
@@ -264,12 +264,12 @@ bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
   return candidate.description.find(kEmoji) != string::npos;
 }
 
-pair<EmojiRewriter::EmojiDataIterator, EmojiRewriter::EmojiDataIterator>
+std::pair<EmojiRewriter::EmojiDataIterator, EmojiRewriter::EmojiDataIterator>
 EmojiRewriter::LookUpToken(StringPiece key) const {
   // Search string array for key.
   auto iter = std::lower_bound(string_array_.begin(), string_array_.end(), key);
   if (iter == string_array_.end() || *iter != key) {
-    return pair<EmojiDataIterator, EmojiDataIterator>(end(), end());
+    return std::pair<EmojiDataIterator, EmojiDataIterator>(end(), end());
   }
   // Search token array for the string index.
   return std::equal_range(begin(), end(), iter.index());

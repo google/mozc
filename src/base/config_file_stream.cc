@@ -70,7 +70,7 @@ string RemovePrefix(const char *prefix, const string &filename) {
 class OnMemoryFileMap {
  public:
   string get(const string &key) const {
-    map<string, string>::const_iterator it = map_.find(key);
+    std::map<string, string>::const_iterator it = map_.find(key);
     if (it != map_.end()) {
       return it->second;
     }
@@ -86,20 +86,20 @@ class OnMemoryFileMap {
   }
 
  private:
-  map<string, string> map_;
+  std::map<string, string> map_;
 };
 
 #include "base/config_file_stream_data.h"
 }  // namespace
 
-istream *ConfigFileStream::Open(const string &filename,
-                                ios_base::openmode mode) {
+std::istream *ConfigFileStream::Open(const string &filename,
+                                     ios_base::openmode mode) {
   // system://foo.bar.txt
   if (Util::StartsWith(filename, kSystemPrefix)) {
     const string new_filename = RemovePrefix(kSystemPrefix, filename);
     for (size_t i = 0; i < arraysize(kFileData); ++i) {
       if (new_filename == kFileData[i].name) {
-        istringstream *ifs = new istringstream(
+        std::istringstream *ifs = new std::istringstream(
             string(kFileData[i].data, kFileData[i].size), mode);
         CHECK(ifs);
         if (ifs->good()) {
@@ -132,7 +132,7 @@ istream *ConfigFileStream::Open(const string &filename,
     delete ifs;
     return NULL;
   } else if (Util::StartsWith(filename, kMemoryPrefix)) {
-    istringstream *ifs = new istringstream(
+    std::istringstream *ifs = new std::istringstream(
         Singleton<OnMemoryFileMap>::get()->get(filename), mode);
     CHECK(ifs);
     if (ifs->good()) {
@@ -173,7 +173,8 @@ bool ConfigFileStream::AtomicUpdate(const string &filename,
 
   const string tmp_filename = real_filename + ".tmp";
   {
-    OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
+    OutputFileStream ofs(tmp_filename.c_str(),
+                         std::ios::out | std::ios::binary);
     if (!ofs.good()) {
       LOG(ERROR) << "cannot open " << tmp_filename;
       return false;

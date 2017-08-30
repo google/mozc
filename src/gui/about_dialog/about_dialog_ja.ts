@@ -21,7 +21,7 @@
     <message>
         <location filename="about_dialog.ui" line="95"/>
         <source>&lt;html&gt;&lt;body&gt;Mozc is made possible by &lt;a href=&quot;file://credits_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;open source software&lt;/span&gt;&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;body&gt;Mozcは&lt;a href=&quot;file://credits_ja.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;オープンソースソフトウェア&lt;/span&gt;&lt;/a&gt;を利用しています。&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;body&gt;Mozcは&lt;a href=&quot;file://credits_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;オープンソースソフトウェア&lt;/span&gt;&lt;/a&gt;を利用しています。&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="about_dialog.ui" line="133"/>

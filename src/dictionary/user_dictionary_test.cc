@@ -102,7 +102,7 @@ const char kUserDictionary1[] = "end\tend\tverb\n";
 void PushBackToken(const string &key,
                    const string &value,
                    uint16 id,
-                   vector<UserPOS::Token> *tokens) {
+                   std::vector<UserPOS::Token> *tokens) {
   tokens->resize(tokens->size() + 1);
   UserPOS::Token *t = &tokens->back();
   t->key = key;
@@ -143,7 +143,7 @@ class UserPOSMock : public UserPOSInterface {
   virtual bool GetTokens(const string &key,
                          const string &value,
                          const string &pos,
-                         vector<UserPOS::Token> *tokens) const {
+                         std::vector<UserPOS::Token> *tokens) const {
     if (key.empty() ||
         value.empty() ||
         pos.empty() ||
@@ -165,7 +165,7 @@ class UserPOSMock : public UserPOSInterface {
     }
   }
 
-  virtual void GetPOSList(vector<string> *pos_list) const {}
+  virtual void GetPOSList(std::vector<string> *pos_list) const {}
 
   virtual bool GetPOSIDs(const string &pos, uint16 *id) const {
     return false;
@@ -253,10 +253,10 @@ class UserDictionaryTest : public ::testing::Test {
       return TRAVERSE_CONTINUE;
     }
 
-    const vector<Entry> &entries() const { return entries_; }
+    const std::vector<Entry> &entries() const { return entries_; }
 
    private:
-    vector<Entry> entries_;
+    std::vector<Entry> entries_;
   };
 
   void TestLookupPredictiveHelper(const Entry *expected,
@@ -314,7 +314,7 @@ class UserDictionaryTest : public ::testing::Test {
   }
 
   static string EncodeEntries(const Entry *array, size_t size) {
-    vector<string> encoded_items;
+    std::vector<string> encoded_items;
     for (size_t i = 0; i < size; ++i) {
       encoded_items.push_back(EncodeEntry(array[i]));
     }
@@ -325,7 +325,7 @@ class UserDictionaryTest : public ::testing::Test {
   }
 
   static void CompareEntries(const Entry *expected, size_t expected_size,
-                             const vector<Entry> &actual) {
+                             const std::vector<Entry> &actual) {
     const string expected_encoded = EncodeEntries(expected, expected_size);
     const string actual_encoded = EncodeEntries(&actual[0], actual.size());
     EXPECT_EQ(expected_encoded, actual_encoded);
@@ -333,7 +333,7 @@ class UserDictionaryTest : public ::testing::Test {
 
   static void LoadFromString(const string &contents,
                              UserDictionaryStorage *storage) {
-    istringstream is(contents);
+    std::istringstream is(contents);
     CHECK(is.good());
 
     storage->Clear();
@@ -346,7 +346,7 @@ class UserDictionaryTest : public ::testing::Test {
       if (line.empty() || line[0] == '#') {
         continue;
       }
-      vector<string> fields;
+      std::vector<string> fields;
       Util::SplitStringAllowEmpty(line, "\t", &fields);
       EXPECT_GE(fields.size(), 3) << line;
       UserDictionaryStorage::UserDictionaryEntry *entry =
@@ -609,7 +609,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   FileUtil::Unlink(filename);
 
   // Create dictionary
-  vector<string> keys;
+  std::vector<string> keys;
   {
     UserDictionaryStorage storage(filename);
 
@@ -857,7 +857,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     const char kKey[] = "key0123";
     CollectTokenCallback callback;
     user_dic->LookupPrefix(kKey, convreq_, &callback);
-    const vector<Token> &tokens = callback.tokens();
+    const std::vector<Token> &tokens = callback.tokens();
     for (size_t i = 0; i < tokens.size(); ++i) {
       EXPECT_EQ("default", tokens[i].value);
     }
@@ -866,7 +866,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     const char kKey[] = "key";
     CollectTokenCallback callback;
     user_dic->LookupPredictive(kKey, convreq_, &callback);
-    const vector<Token> &tokens = callback.tokens();
+    const std::vector<Token> &tokens = callback.tokens();
     for (size_t i = 0; i < tokens.size(); ++i) {
       EXPECT_TRUE(tokens[i].value == "suggest_only" ||
                   tokens[i].value == "default");

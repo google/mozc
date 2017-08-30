@@ -95,7 +95,7 @@ template <class T> class FreeList {
   }
 
  private:
-  vector<T *> pool_;
+  std::vector<T *> pool_;
   size_t current_index_;
   size_t chunk_index_;
   size_t size_;
@@ -134,7 +134,7 @@ template <class T> class ObjectPool {
   }
 
  private:
-  vector<T *> released_;
+  std::vector<T *> released_;
   FreeList<T> freelist_;
 
   DISALLOW_COPY_AND_ASSIGN(ObjectPool);

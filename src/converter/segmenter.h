@@ -51,11 +51,8 @@ class Segmenter {
 
   bool IsBoundary(const Node &lnode, const Node &rnode,
                   bool is_single_segment) const;
-
   bool IsBoundary(uint16 rid, uint16 lid) const;
-
   int32 GetPrefixPenalty(uint16 lid) const;
-
   int32 GetSuffixPenalty(uint16 rid) const;
 
  private:

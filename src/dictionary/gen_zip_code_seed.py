@@ -35,8 +35,10 @@
  Output lines will be printed as utf-8.
 
  usage:
- ./gen_zip_code_seed.py --zip_code=zip_code.csv --jigyosyo=jigyosyo.csv
-  > zip_code_seed.tsv
+   PYTHONPATH="${PYTHONPATH}:<Mozc's src root dir>"  \
+     python ./gen_zip_code_seed.py  \
+     --zip_code=zip_code.csv --jigyosyo=jigyosyo.csv  \
+     > zip_code_seed.tsv
 
  Zip code sample input line:
  01101,"060  ","0600007","ﾎｯｶｲﾄﾞｳ",

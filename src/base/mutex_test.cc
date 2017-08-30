@@ -155,7 +155,7 @@ TEST(MutexTest, TryLockTest) NO_THREAD_SAFETY_ANALYSIS {
 TEST(MutexTest, MutexBatchTest) {
   const int kThreadsSize = 5;
   const int kLoopSize = 10;
-  vector<MutexTestThread *> threads(kThreadsSize);
+  std::vector<MutexTestThread *> threads(kThreadsSize);
 
   g_counter = 0;
 
@@ -217,7 +217,7 @@ TEST(MutexTest, ReaderWriterTest) {
   }
 
   const size_t kThreadsSize = 3;
-  vector<ReaderMutexTestThread *> threads(kThreadsSize);
+  std::vector<ReaderMutexTestThread *> threads(kThreadsSize);
 
   // shared variable
   g_counter = 1;

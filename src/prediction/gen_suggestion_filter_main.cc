@@ -48,7 +48,7 @@ DEFINE_string(name, "SuggestionFilterData",
               "name for variable name in the header file");
 
 namespace {
-void ReadWords(const string &name, vector<uint64> *words) {
+void ReadWords(const string &name, std::vector<uint64> *words) {
   string line;
   mozc::InputFileStream input(name.c_str());
   while (getline(input, line)) {
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     FLAGS_output = argv[2];
   }
 
-  vector<uint64> words;
+  std::vector<uint64> words;
 
   ReadWords(FLAGS_input, &words);
 
@@ -111,8 +111,9 @@ int main(int argc, char **argv) {
     codegen_stream.write(buf, size);
     codegen_stream.CloseVarDef();
   } else {
-    mozc::OutputFileStream ofs(FLAGS_output.c_str(),
-                               ios::out | ios::trunc | ios::binary);
+    mozc::OutputFileStream ofs(
+        FLAGS_output.c_str(),
+        std::ios::out | std::ios::trunc | std::ios::binary);
     ofs.write(buf, size);
   }
 

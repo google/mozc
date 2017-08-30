@@ -35,8 +35,12 @@
 #include <windows.h>
 #include <msi.h>
 
+// Ensures that "ALL APPLICATION PACKAGES" group has read/execute accesses
+// to server, renderer, and TIP DLL files.
+UINT __stdcall EnsureAllApplicationPackagesPermisssions(MSIHANDLE msi_handle);
+
 // Makes ieuser.exe update the cache of the elevation policies.
-UINT __stdcall RefreshPolicy(MSIHANDLE msi_handle);
+UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle);
 
 // Install Mozc as an IME.
 UINT __stdcall InstallIME(MSIHANDLE msi_handle);

@@ -48,7 +48,7 @@ TEST(UploadUtilTest, UploadTest) {
     client.set_result(result);
 
     UploadUtil uploader;
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(std::make_pair("hl", "ja"));
     params.push_back(std::make_pair("v", "test"));
     uploader.SetHeader("Test", 100, params);
@@ -71,7 +71,7 @@ TEST(UploadUtilTest, UploadTest) {
     client.set_result(result);
 
     UploadUtil uploader;
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(std::make_pair("hl", "ja"));
     params.push_back(std::make_pair("v", "test"));
     uploader.SetHeader("Test", 100, params);
@@ -86,7 +86,7 @@ TEST(UploadUtilTest, UploadTest) {
     client.set_result(result);
 
     UploadUtil uploader;
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(std::make_pair("hl", "ja"));
     params.push_back(std::make_pair("v", "test"));
     uploader.SetHeader("Test", 100, params);
@@ -101,7 +101,7 @@ TEST(UploadUtilTest, UploadTest) {
     client.set_result(result);
 
     UploadUtil uploader;
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(std::make_pair("hl", "ja"));
     params.push_back(std::make_pair("v", "test"));
     uploader.SetHeader("Test", 100, params);
@@ -116,7 +116,7 @@ TEST(UploadUtilTest, UploadTest) {
     client.set_result(result);
 
     UploadUtil uploader;
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(std::make_pair("hl", "ja"));
     params.push_back(std::make_pair("v", "test"));
     uploader.SetHeader("Test", 100, params);
@@ -139,7 +139,7 @@ TEST(UploadUtilTest, UploadSecureTest) {
     client.set_result(result);
 
     UploadUtil uploader;
-    vector<pair<string, string> > params;
+    std::vector<std::pair<string, string> > params;
     params.push_back(std::make_pair("hl", "ja"));
     params.push_back(std::make_pair("v", "test"));
     uploader.SetHeader("Test", 100, params);

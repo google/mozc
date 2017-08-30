@@ -139,7 +139,7 @@ class NBestGenerator {
     void Pop();
 
    private:
-    vector<const QueueElement*> priority_queue_;
+    std::vector<const QueueElement*> priority_queue_;
 
     DISALLOW_COPY_AND_ASSIGN(Agenda);
   };
@@ -150,7 +150,7 @@ class NBestGenerator {
 
   void MakeCandidate(Segment::Candidate *candidate,
                      int32 cost, int32 structure_cost, int32 wcost,
-                     const vector<const Node *> &nodes) const;
+                     const std::vector<const Node *> &nodes) const;
 
   // Helper functions for Next(). Checks node boundary conditions.
   BoundaryCheckResult CheckStrict(
@@ -182,7 +182,7 @@ class NBestGenerator {
 
   Agenda agenda_;
   FreeList<QueueElement> freelist_;
-  vector<const Node *> nodes_;
+  std::vector<const Node *> nodes_;
   std::unique_ptr<converter::CandidateFilter> filter_;
   bool viterbi_result_checked_;
   BoundaryCheckMode check_mode_;

@@ -187,7 +187,7 @@ class DataManager : public DataManagerInterface {
   StringPiece usage_conjugation_index_data_;
   StringPiece usage_items_data_;
   StringPiece usage_string_array_data_;
-  vector<pair<string, StringPiece>> typing_model_data_;
+  std::vector<std::pair<string, StringPiece>> typing_model_data_;
   StringPiece data_version_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);

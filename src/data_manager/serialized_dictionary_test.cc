@@ -47,8 +47,8 @@ const char *kTestInput =
 class SerializedDictionaryTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    stringstream ifs(kTestInput);
-    const pair<StringPiece, StringPiece> data =
+    std::stringstream ifs(kTestInput);
+    const std::pair<StringPiece, StringPiece> data =
         SerializedDictionary::Compile(&ifs, &buf1_, &buf2_);
     token_array_data_ = data.first;
     string_array_data_ = data.second;

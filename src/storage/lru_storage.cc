@@ -225,7 +225,7 @@ bool LRUStorage::CreateStorageFile(const char *filename,
     return false;
   }
 
-  OutputFileStream ofs(filename, ios::binary|ios::out);
+  OutputFileStream ofs(filename, std::ios::binary | std::ios::out);
   if (!ofs) {
     LOG(ERROR) << "cannot open " << filename;
     return false;
@@ -240,7 +240,7 @@ bool LRUStorage::CreateStorageFile(const char *filename,
             sizeof(size_uint32));
   ofs.write(reinterpret_cast<const char *>(&seed),
             sizeof(seed));
-  vector<char> ary(value_size, '\0');
+  std::vector<char> ary(value_size, '\0');
   const uint32 last_access_time = 0;
   const uint64 fp = 0;
 
@@ -291,7 +291,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
     return false;
   }
 
-  vector<const char *> ary;
+  std::vector<const char *> ary;
 
   // this file
   {
@@ -316,7 +316,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
   std::stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
   string buf;
-  set<uint64> seen;   // remove duplicated entries.
+  std::set<uint64> seen;   // remove duplicated entries.
   for (size_t i = 0; i < ary.size(); ++i) {
     if (!seen.insert(GetFP(ary[i])).second) {
       continue;
@@ -469,7 +469,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
     return false;
   }
 
-  vector<char *> ary;
+  std::vector<char *> ary;
   char *begin = begin_;
   char *end = end_;
   while (begin < end) {
@@ -508,7 +508,7 @@ const char* LRUStorage::Lookup(const string &key) const {
 const char* LRUStorage::Lookup(const string &key,
                                uint32 *last_access_time) const {
   const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
-  map<uint64, Node *>::const_iterator it = map_.find(fp);
+  std::map<uint64, Node *>::const_iterator it = map_.find(fp);
   if (it == map_.end()) {
     return NULL;
   }
@@ -516,7 +516,7 @@ const char* LRUStorage::Lookup(const string &key,
   return GetValue(it->second->value);
 }
 
-bool LRUStorage::GetAllValues(vector<string> *values) const {
+bool LRUStorage::GetAllValues(std::vector<string> *values) const {
   if (lru_list_.get() == NULL) {
     return false;
   }
@@ -540,7 +540,7 @@ bool LRUStorage::Touch(const string &key) {
   }
 
   const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
-  map<uint64, Node *>::iterator it = map_.find(fp);
+  std::map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value);
     lru_list_->MoveToTop(it->second);
@@ -555,7 +555,7 @@ bool LRUStorage::Insert(const string &key, const char *value) {
   }
 
   const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
-  map<uint64, Node *>::iterator it = map_.find(fp);
+  std::map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);
     lru_list_->MoveToTop(it->second);
@@ -563,7 +563,7 @@ bool LRUStorage::Insert(const string &key, const char *value) {
              last_item_ == NULL) {  // not found, but cache is FULL
     Node *node = lru_list_->GetLastNode();
     const uint64 old_fp = GetFP(node->value);  // remove oldest item
-    map<uint64, Node *>::iterator old_it = map_.find(old_fp);
+    std::map<uint64, Node *>::iterator old_it = map_.find(old_fp);
     if (old_it != map_.end()) {
       map_.erase(old_it);
     }
@@ -593,7 +593,7 @@ bool LRUStorage::TryInsert(const string &key, const char *value) {
   }
 
   const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
-  map<uint64, Node *>::iterator it = map_.find(fp);
+  std::map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);
     lru_list_->MoveToTop(it->second);

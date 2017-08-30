@@ -63,7 +63,7 @@ const config::Config::SessionKeymap kKeyMaps[] = {
   config::Config::KOTOERI,
 };
 
-void ExtractActivationKeys(istream *ifs, set<string> *keys) {
+void ExtractActivationKeys(std::istream *ifs, std::set<string> *keys) {
   DCHECK(keys);
   string line;
   getline(*ifs, line);  // first line is comment.
@@ -73,7 +73,7 @@ void ExtractActivationKeys(istream *ifs, set<string> *keys) {
       // empty or comment
       continue;
     }
-    vector<string> rules;
+    std::vector<string> rules;
     Util::SplitStringUsing(line, "\t", &rules);
     if (rules.size() == 3 &&
         (rules[2] == kIMEOnCommand || rules[2] == kIMEOffCommand)) {
@@ -88,18 +88,19 @@ bool IMEActivationKeyCustomized(const config::Config &config) {
     return false;
   }
   const string &custom_keymap_table = config.custom_keymap_table();
-  istringstream ifs_custom(custom_keymap_table);
-  set<string> customized;
+  std::istringstream ifs_custom(custom_keymap_table);
+  std::set<string> customized;
   ExtractActivationKeys(&ifs_custom, &customized);
   for (size_t i = 0; i < arraysize(kKeyMaps); ++i) {
     const char *keymap_file =
         keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[i]);
-    std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(keymap_file));
+    std::unique_ptr<std::istream> ifs(
+        ConfigFileStream::LegacyOpen(keymap_file));
     if (ifs.get() == NULL) {
       LOG(ERROR) << "can not open default keymap table " << i;
       continue;
     }
-    set<string> keymap_table;
+    std::set<string> keymap_table;
     ExtractActivationKeys(ifs.get(), &keymap_table);
     if (std::includes(keymap_table.begin(), keymap_table.end(),
                       customized.begin(), customized.end())) {

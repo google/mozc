@@ -29,14 +29,9 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#ifdef MOZC_USE_QT5
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
-#else
-#include <QtGui/QApplication>
-#include <QtGui/QWidget>
-#endif
 
 #include "base/version.h"
 #include "gui/base/window_title_modifier.h"
@@ -45,11 +40,7 @@ namespace mozc {
 namespace gui {
 bool WindowTitleModifier::eventFilter(QObject *obj,
                                       QEvent *event) {
-#ifdef MOZC_USE_QT5
   QWidget *w = QApplication::activeWindow();
-#else
-  QWidget *w = qApp->activeWindow();
-#endif
   if (w != NULL && obj != NULL && w == obj &&
       QEvent::WindowActivate == event->type() &&
       w->windowTitle().indexOf(prefix_) == -1) {

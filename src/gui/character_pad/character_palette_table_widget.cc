@@ -31,9 +31,7 @@
 
 #include <QtGui/QtGui>
 #include <QtCore/QTextCodec>
-#ifdef MOZC_USE_QT5
 #include <QtWidgets/QToolTip>
-#endif
 
 #include "gui/character_pad/selection_handler.h"
 #include "gui/character_pad/unicode_util.h"

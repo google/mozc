@@ -117,10 +117,10 @@ CandidateList::CandidateList(const bool rotate)
       focused_index_(0),
       focused_(false),
       candidate_pool_(new ObjectPool<Candidate>(kDefaultPageSize)),
-      candidates_(new vector<Candidate *>),
+      candidates_(new std::vector<Candidate *>),
       next_available_id_(0),
-      added_candidates_(new map<uint64, int>),
-      alternative_ids_(new map<int, int>) {
+      added_candidates_(new std::map<uint64, int>),
+      alternative_ids_(new std::map<int, int>) {
 }
 
 CandidateList::~CandidateList() {
@@ -128,7 +128,7 @@ CandidateList::~CandidateList() {
 }
 
 void CandidateList::Clear() {
-  vector<Candidate *>::iterator it;
+  std::vector<Candidate *>::iterator it;
   for (it = candidates_->begin(); it != candidates_->end(); ++it) {
     (*it)->Clear();
     candidate_pool_->Release(*it);
@@ -165,7 +165,7 @@ void CandidateList::AddCandidateWithAttributes(const int id,
   // update the alternative_ids_.
   const uint64 fp = Hash::Fingerprint(value);
 
-  const pair<map<uint64, int>::iterator, bool> result =
+  const std::pair<std::map<uint64, int>::iterator, bool> result =
       added_candidates_->insert(std::make_pair(fp, id));
   if (!result.second) {  // insertion was failed.
     const int alt_id = result.first->second;

@@ -110,7 +110,7 @@ class ConverterImpl : public ConverterInterface {
   virtual bool FreeSegmentValue(Segments *segments,
                                 size_t segment_index) const;
   virtual bool CommitSegments(Segments *segments,
-                              const vector<size_t> &candidate_index) const;
+                              const std::vector<size_t> &candidate_index) const;
   virtual bool ResizeSegment(Segments *segments,
                              const ConversionRequest &requset,
                              size_t segment_index,

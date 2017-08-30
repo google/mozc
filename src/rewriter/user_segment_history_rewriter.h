@@ -94,7 +94,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                     const string &base_key,
                     const string &base_value,
                     string *value) const;
-  bool SortCandidates(const vector<ScoreType> &sorted_scores,
+  bool SortCandidates(const std::vector<ScoreType> &sorted_scores,
                       Segment *segment) const;
 
 
