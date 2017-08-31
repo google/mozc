@@ -30,6 +30,7 @@
 
 {
   'variables': {
+    'use_fcitx5%': 'YES',
     'relative_dir': 'unix/fcitx5',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'fcitx_dependencies': [
@@ -40,6 +41,7 @@
         '../../protocol/protocol.gyp:commands_proto',
     ],
   },
+  'conditions': [['use_fcitx5=="YES"', {
   'targets': [
     {
       # Meta target to set up build environment for ibus. Required 'cflags'
@@ -127,4 +129,12 @@
       ],
     },
   ],
+  }, {
+  'targets': [
+    {
+      'target_name': 'no_fcitx5_dummy',
+      'type': 'none',
+    }
+  ]}
+  ]],
 }

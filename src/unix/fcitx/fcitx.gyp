@@ -30,6 +30,7 @@
 
 {
   'variables': {
+    'use_fcitx%': 'YES',
     'relative_dir': 'unix/fcitx',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'pkg_config_libs': [
@@ -46,10 +47,8 @@
         '../../session/session_base.gyp:ime_switch_util',
         '../../protocol/protocol.gyp:commands_proto',
     ],
-    'fcitx_defines': [
-      'LOCALEDIR="<!@(fcitx4-config --prefix)/share/locale/"',
-    ]
   },
+  'conditions': [['use_fcitx=="YES"', {
   'targets': [
     {
       'target_name': 'gen_fcitx_mozc_i18n',
@@ -97,8 +96,16 @@
         '<@(fcitx_dep_include_dirs)',
       ],
       'defines': [
-        '<@(fcitx_defines)',
+        'LOCALEDIR="<!@(fcitx4-config --prefix)/share/locale/"',
       ],
     },
   ],
+  }, {
+  'targets': [
+    {
+      'target_name': 'no_fcitx_dummy',
+      'type': 'none',
+    }
+  ]}
+  ]],
 }
