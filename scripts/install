@@ -3,30 +3,8 @@
 _bldtype=Debug
 pkgdir=
 
-for mofile in out_linux/Debug/gen/unix/fcitx/po/*.mo
-do
-    filename=`basename $mofile`
-    lang=${filename/.mo/}
-    install -D -m 644 "$mofile" "${pkgdir}/usr/share/locale/$lang/LC_MESSAGES/fcitx-mozc.mo"
-done
-
 install -D -m 755 out_linux/${_bldtype}/mozc_server "${pkgdir}/usr/lib/mozc/mozc_server"
 install    -m 755 out_linux/${_bldtype}/mozc_tool   "${pkgdir}/usr/lib/mozc/mozc_tool"
 install -d "${pkgdir}/usr/lib/mozc/documents/"
 install    -m 644 data/installer/*.html "${pkgdir}/usr/lib/mozc/documents/"
 
-install -m 755 out_linux/Debug/fcitx-mozc.so /usr/lib/fcitx/
-install -m 644 unix/fcitx/fcitx-mozc.conf /usr/share/fcitx/addon/
-install -m 644 unix/fcitx/mozc.conf /usr/share/fcitx/inputmethod/
-
-install -d "${pkgdir}/usr/share/fcitx/mozc/icon"
-install -m 644 data/images/product_icon_32bpp-128.png /usr/share/fcitx/mozc/icon/mozc.png
-install -m 644 data/images/unix/ui-alpha_full.png /usr/share/fcitx/mozc/icon/mozc-alpha_full.png
-install -m 644 data/images/unix/ui-alpha_half.png /usr/share/fcitx/mozc/icon/mozc-alpha_half.png
-install -m 644 data/images/unix/ui-direct.png /usr/share/fcitx/mozc/icon/mozc-direct.png
-install -m 644 data/images/unix/ui-hiragana.png /usr/share/fcitx/mozc/icon/mozc-hiragana.png
-install -m 644 data/images/unix/ui-katakana_full.png /usr/share/fcitx/mozc/icon/mozc-katakana_full.png
-install -m 644 data/images/unix/ui-katakana_half.png /usr/share/fcitx/mozc/icon/mozc-katakana_half.png
-install -m 644 data/images/unix/ui-dictionary.png /usr/share/fcitx/mozc/icon/mozc-dictionary.png
-install -m 644 data/images/unix/ui-properties.png /usr/share/fcitx/mozc/icon/mozc-properties.png
-install -m 644 data/images/unix/ui-tool.png /usr/share/fcitx/mozc/icon/mozc-tool.png

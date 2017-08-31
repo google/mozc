@@ -1,0 +1,14 @@
+#!/bin/sh
+
+_bldtype=Debug
+PREFIX="${PREFIX:-/usr}"
+
+for mofile in out_linux/Debug/gen/unix/fcitx5/po/*.mo
+do
+    filename=`basename $mofile`
+    lang=${filename/.mo/}
+    install -D -m 644 "$mofile" "${PREFIX}/share/locale/$lang/LC_MESSAGES/fcitx5-mozc.mo"
+done
+
+install -m 755 out_linux/Debug/fcitx5-mozc.so "${PREFIX}/lib/fcitx5/"
+install -m 644 unix/fcitx5/mozc.conf "${PREFIX}/share/fcitx5/addon/"
