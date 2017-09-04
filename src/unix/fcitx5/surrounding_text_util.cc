@@ -180,7 +180,7 @@ bool SurroundingTextUtil::GetAnchorPosFromSelection(
 
 bool GetSurroundingText(InputContext *ic, SurroundingTextInfo *info,
                         AddonInstance *clipboard) {
-  if (ic->capabilityFlags().test(CapabilityFlag::SurroundingText) ||
+  if (!ic->capabilityFlags().test(CapabilityFlag::SurroundingText) ||
       !ic->surroundingText().isValid()) {
     return false;
   }
