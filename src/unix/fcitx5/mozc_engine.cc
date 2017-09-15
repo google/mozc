@@ -74,7 +74,7 @@ void MozcEngine::keyEvent(const InputMethodEntry &entry, KeyEvent &event) {
   auto mozc_state = mozcState(event.inputContext());
 
   // TODO: check layout
-  if (mozc_state->ProcessKeyEvent(event.rawKey().sym(), event.keyCode(),
+  if (mozc_state->ProcessKeyEvent(event.rawKey().sym(), event.rawKey().code(),
                                   event.rawKey().states(), false,
                                   event.isRelease())) {
     event.filterAndAccept();
