@@ -498,6 +498,7 @@
         '../dictionary/dictionary.gyp:dictionary',
         '../engine/engine.gyp:engine',
         '../engine/engine.gyp:engine_builder',
+        '../engine/engine.gyp:minimal_engine',
         '../session/session.gyp:session',
         '../session/session.gyp:session_handler',
         '../session/session.gyp:session_usage_observer',
