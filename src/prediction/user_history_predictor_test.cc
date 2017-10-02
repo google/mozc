@@ -412,6 +412,40 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
                   Segment::Candidate::USER_HISTORY_PREDICTOR);
     }
 
+    // Insert without learning (nothing happen).
+    {
+      config::Config::HistoryLearningLevel no_learning_levels[] =
+          {config::Config::READ_ONLY, config::Config::NO_HISTORY};
+      for (config::Config::HistoryLearningLevel level : no_learning_levels) {
+        config_->set_history_learning_level(level);
+
+        Segments segments;
+        // "こんにちはさようなら"
+        MakeSegmentsForConversion(
+            "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\xAF"
+            "\xE3\x81\x95\xE3\x82\x88\xE3\x81\x86\xE3\x81\xAA\xE3\x82\x89",
+            &segments);
+        // "今日はさようなら"
+        AddCandidate(
+            "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAF\xE3\x81\x95\xE3\x82\x88"
+            "\xE3\x81\x86\xE3\x81\xAA\xE3\x82\x89", &segments);
+        predictor->Finish(*convreq_, &segments);
+
+        segments.Clear();
+        // "こんにちは"
+        MakeSegmentsForSuggestion(
+            "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\xAF",
+            &segments);
+        EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+        // "こんにちは"
+        MakeSegmentsForPrediction(
+            "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\xAF",
+            &segments);
+        EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+      }
+      config_->set_history_learning_level(config::Config::DEFAULT_HISTORY);
+    }
+
     // sync
     predictor->Sync();
     Util::Sleep(500);
@@ -435,6 +469,14 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
       config_->set_use_history_suggest(true);
       config_->set_incognito_mode(true);
+
+      // "わたしの"
+      MakeSegmentsForSuggestion(
+          "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
+      EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+
+      config_->set_incognito_mode(false);
+      config_->set_history_learning_level(config::Config::NO_HISTORY);
 
       // "わたしの"
       MakeSegmentsForSuggestion(
@@ -483,7 +525,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
     segments.Clear();
     // "わたしのなまえはなかのです"
-    MakeSegmentsForSuggestion(
+    MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
         "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF\xE3\x81\xAA"
         "\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99", &segments);
@@ -492,6 +534,47 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
               segments.segment(0).candidate(0).value);
+
+    // "今日はさようなら" should NOT be shown.
+    segments.Clear();
+    // "こんにちはさようなら"
+    MakeSegmentsForSuggestion(
+        "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\xAF"
+        "\xE3\x81\x95\xE3\x82\x88\xE3\x81\x86\xE3\x81\xAA\xE3\x82\x89",
+        &segments);
+    EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+
+    segments.Clear();
+    // "こんにちはさようなら"
+    MakeSegmentsForPrediction(
+        "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\xAF"
+        "\xE3\x81\x95\xE3\x82\x88\xE3\x81\x86\xE3\x81\xAA\xE3\x82\x89",
+        &segments);
+    EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+
+    // Read only mode should show suggestion.
+    {
+      config_->set_history_learning_level(config::Config::READ_ONLY);
+      // "わたしの"
+      MakeSegmentsForSuggestion(
+          "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
+      EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+      // "私の名前は中野です"
+      EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+                "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
+                segments.segment(0).candidate(0).value);
+
+      segments.Clear();
+      // "わたしの"
+      MakeSegmentsForPrediction(
+          "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
+      EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+      // "私の名前は中野です"
+      EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+                "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99",
+                segments.segment(0).candidate(0).value);
+      config_->set_history_learning_level(config::Config::DEFAULT_HISTORY);
+    }
 
     // clear
     predictor->ClearAllHistory();

@@ -1198,6 +1198,11 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
+  if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
+    VLOG(2) << "history learning level is NO_HISTORY";
+    return false;
+  }
+
   if (segments->request_type() == Segments::CONVERSION) {
     VLOG(2) << "request type is CONVERSION";
     return false;
@@ -1703,6 +1708,13 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
 
   if (request.config().incognito_mode()) {
     VLOG(2) << "incognito mode";
+    return;
+  }
+
+  if (request.config().history_learning_level() !=
+      config::Config::DEFAULT_HISTORY) {
+    VLOG(2) << "history learning level is not DEFAULT_HISTORY: "
+            << request.config().history_learning_level();
     return;
   }
 
