@@ -455,7 +455,7 @@ void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
       case mozc::commands::Preedit_Segment::NONE:
         break;
       case mozc::commands::Preedit_Segment::UNDERLINE:
-        format_flag = TextFormatFlag::UnderLine;
+        format_flag = TextFormatFlag::Underline;
         break;
       case mozc::commands::Preedit_Segment::HIGHLIGHT:
         format_flag = TextFormatFlag::HighLight;
