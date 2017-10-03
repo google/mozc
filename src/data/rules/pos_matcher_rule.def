@@ -51,12 +51,6 @@ FirstName  名詞,固有名詞,人名,名
 LastName   名詞,固有名詞,人名,姓
 
 Number      名詞,数,アラビア数字
-KanjiNumberDigitMan 名詞,数,漢数字,*,*,*,万
-KanjiNumberDigitKei 名詞,数,漢数字,*,*,*,京
-KanjiNumberDigitOku 名詞,数,漢数字,*,*,*,億
-KanjiNumberDigitChou 名詞,数,漢数字,*,*,*,兆
-KanjiNumberDigitSen 名詞,数,漢数字,*,*,*,千
-KanjiNumberDigitHyaku 名詞,数,漢数字,*,*,*,百
 KanjiNumber 名詞,数,漢数字
 
 # Used in CandidateFilter
