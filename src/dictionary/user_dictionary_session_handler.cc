@@ -533,6 +533,12 @@ void UserDictionarySessionHandler::ImportData(
         session->ImportToNewDictionaryFromString(
             command.dictionary_name(), command.data(), &dictionary_id);
   }
+  if (result_status == UserDictionaryCommandStatus::IMPORT_INVALID_ENTRIES &&
+      command.ignore_invalid_entries()) {
+    LOG(INFO) << "There are some invalid entries but ignored.";
+    result_status =
+        UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
+  }
 
   if (dictionary_id != 0) {
     status->set_dictionary_id(dictionary_id);

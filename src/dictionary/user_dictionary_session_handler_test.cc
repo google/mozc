@@ -43,15 +43,15 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
 
+namespace mozc {
+namespace {
+
 using ::mozc::protobuf::RepeatedPtrField;
 using ::mozc::user_dictionary::UserDictionary;
 using ::mozc::user_dictionary::UserDictionaryCommand;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySessionHandler;
 
-namespace mozc {
-
-namespace {
 // "きょうと\t京都\t名詞\n"
 // "!おおさか\t大阪\t地名\n"
 // "\n"
@@ -71,7 +71,6 @@ const char kDictionaryData[] =
 // 0 means invalid dictionary id.
 // c.f., UserDictionaryUtil::CreateNewDictionaryId()
 const uint64 kInvalidDictionaryId = 0;
-}  // namespace
 
 class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:
@@ -925,6 +924,33 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataFailure) {
   DeleteSession(session_id);
 }
 
+TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
+  const uint64 session_id = CreateSession();
+
+  string data = kDictionaryData;
+  // "☻\tEMOTICON\t名詞\n": Invalid symbol reading.
+  data.append("\xE2\x98\xBB\tEMOTICON\t\xE5\x90\x8D\xE8\xA9\x9E\n");
+  // "読み\tYOMI\t名詞\n": Invalid Kanji reading.
+  data.append("\xE8\xAA\xAD\xE3\x81\xBF\tYOMI\t\xE5\x90\x8D\xE8\xA9\x9E\n");
+
+  // Import data to a new dictionary.
+  Clear();
+  command_->set_type(UserDictionaryCommand::IMPORT_DATA);
+  command_->set_session_id(session_id);
+  command_->set_dictionary_name("user dictionary");
+  command_->set_data(data);
+  command_->set_ignore_invalid_entries(true);
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
+  ASSERT_TRUE(status_->has_dictionary_id());
+  const uint64 dictionary_id = status_->dictionary_id();
+
+  // Make sure the size of the data.
+  ASSERT_EQ(4, GetUserDictionaryEntrySize(session_id, dictionary_id));
+
+  DeleteSession(session_id);
+}
+
 TEST_F(UserDictionarySessionHandlerTest, GetStorage) {
   const uint64 session_id = CreateSession();
   const uint64 dictionary_id1 = CreateUserDictionary(session_id, "dictionary1");
@@ -975,4 +1001,6 @@ TEST_F(UserDictionarySessionHandlerTest, GetStorage) {
 
   DeleteSession(session_id);
 }
+
+}  // namespace
 }  // namespace mozc
