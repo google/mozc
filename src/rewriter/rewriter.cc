@@ -114,7 +114,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   // So we temporarily disable it.
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(new CommandRewriter);
-#endif  // OS_ANDROID
+#endif  // !OS_ANDROID
 #ifndef NO_USAGE_REWRITER
   AddRewriter(new UsageRewriter(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER
