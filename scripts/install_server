@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_bldtype=Debug
+PREFIX="${PREFIX:-/usr}"
+
+install -Dm 755 out_linux/Debug/mozc_server $PREFIX/lib/mozc/mozc_server
+install -Dm 755 out_linux/Debug/mozc_tool $PREFIX/lib/mozc/mozc_tool

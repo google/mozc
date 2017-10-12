@@ -107,8 +107,10 @@ class MozcCandidateList final : public CandidateList,
       layout_ = CandidateLayoutHint::Horizontal;
     }
 
+    int focused_index = -1;
+    cursor_ = -1;
     if (candidates.has_focused_index()) {
-      cursor_ = candidates.focused_index();
+      focused_index = candidates.focused_index();
     }
 
     labels_.reserve(candidates.candidate_size());
@@ -135,11 +137,13 @@ class MozcCandidateList final : public CandidateList,
         value += CreateDescriptionString(candidate.annotation().description());
       }
 
-      if (use_annotation && cursor_ != -1 && index == cursor_) {
+      if (use_annotation && candidates.has_focused_index() &&
+          index == focused_index) {
         if (candidate.has_information_id()) {
           value +=
               CreateDescriptionString(_("Press Ctrl+Alt+H to show usages."));
         }
+        cursor_ = i;
       }
 
       if (candidate.has_annotation() && candidate.annotation().has_shortcut()) {
