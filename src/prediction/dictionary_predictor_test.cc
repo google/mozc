@@ -2953,6 +2953,24 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
   }
 
   {
+    // Cost of general symbols should not be decreased.
+    const int kOrigianlWordCost = 10000;
+    std::vector<TestableDictionaryPredictor::Result> results;
+    AddTestableDictionaryPredictorResult(
+        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY,
+        &results);
+    ASSERT_EQ(1, results.size());
+    results[0].lid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
+    results[0].rid = results[0].lid;
+    predictor->SetLMCost(segments, &results);
+
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(kAikaKanji, results[0].value);
+    EXPECT_LE(kOrigianlWordCost, results[0].cost);
+  }
+
+  {
     // Cost of words not in user dictionary should not be decreased.
     const int kOrigianlWordCost = 10000;
     std::vector<TestableDictionaryPredictor::Result> results;

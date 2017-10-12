@@ -285,6 +285,7 @@ DictionaryPredictor::DictionaryPredictor(
       segmenter_(segmenter),
       suggestion_filter_(suggestion_filter),
       counter_suffix_word_id_(pos_matcher->GetCounterSuffixWordId()),
+      general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       predictor_name_("DictionaryPredictor") {
   StringPiece zero_query_token_array_data;
   StringPiece zero_query_string_array_data;
@@ -966,11 +967,13 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       const int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
     }
-    if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY) {
-      // Decrease cost for words from user dictionary in order to promote them.
-      // Currently user dictionary words are evaluated 5 times bigger in
-      // frequency, being capped by 1000 (this number is adhoc, so feel free to
-      // adjust).
+    if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY &&
+        result.lid != general_symbol_id_) {
+      // Decrease cost for words from user dictionary in order to promote them,
+      // provided that it is not a general symbol (Note: emoticons are mapped to
+      // general symbol).  Currently user dictionary words are evaluated 5 times
+      // bigger in frequency, being capped by 1000 (this number is adhoc, so
+      // feel free to adjust).
       const int kUserDictionaryPromotionFactor = 804;  // 804 = 500 * log(5)
       const int kUserDictionaryCostUpperLimit = 1000;
       cost = std::min(cost - kUserDictionaryPromotionFactor,
