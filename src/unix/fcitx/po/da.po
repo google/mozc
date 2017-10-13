@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# scootergrisen, 2017
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-07-15 14:02-0700\n"
-"PO-Revision-Date: 2012-03-06 06:51+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2017-10-13 15:03-0700\n"
+"PO-Revision-Date: 2017-10-13 21:56+0000\n"
+"Last-Translator: scootergrisen\n"
 "Language-Team: Danish (http://www.transifex.com/fcitx/fcitx/language/da/)\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -55,7 +56,7 @@ msgstr ""
 
 #: ../fcitx_mozc.cc:488
 msgid "Mozc Tool"
-msgstr ""
+msgstr "Mozc-værktøj"
 
 #: ../fcitx_mozc.cc:494
 msgid "Configuration Tool"
@@ -79,7 +80,7 @@ msgstr ""
 
 #: ../fcitx_mozc.cc:499
 msgid "About Mozc"
-msgstr ""
+msgstr "Om Mozc"
 
 #: ../mozc_response_parser.cc:366
 msgid "Press Ctrl+Alt+H to show usages."
