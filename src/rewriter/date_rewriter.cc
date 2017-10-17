@@ -1614,6 +1614,77 @@ const char *kWeekDayString[] = {
   "\xE5\x9C\x9F",   // "土"
 };
 
+const char kDateDescription[] = "\xE6\x97\xA5\xE4\xBB\x98";  // "日付"
+const char kTimeDescription[] = "\xE6\x99\x82\xE5\x88\xBB";  // "時刻"
+
+bool PrintUint32(const char *format, uint32 num, char *buf, size_t buf_size) {
+  const int ret = std::snprintf(buf, buf_size, format, num);
+  return 0 <= ret && ret < buf_size;
+}
+
+// Helper function to generate "H時M分" time formats.
+void GenerateKanjiTimeFormats(
+    const char *hour_format, const char *min_format, uint32 hour, uint32 min,
+    std::vector<std::pair<string, const char *>> *results) {
+  char hour_s[4], min_s[4];
+  if (!PrintUint32(hour_format, hour, hour_s, 4) ||
+      !PrintUint32(min_format, min, min_s, 4)) {
+    return;
+  }
+  // "H時M分"
+  results->emplace_back(
+      Util::StringPrintf("%s\xE6\x99\x82%s\xE5\x88\x86", hour_s, min_s),
+      kTimeDescription);
+  // "H時半".  Don't generate it when the printed hour starts with 0 because
+  // formats like "03時半" is rarely used (but "3時半" is ok).
+  if (hour_s[0] != '0' && min == 30) {
+    results->emplace_back(
+        Util::StringPrintf("%s\xE6\x99\x82\xE5\x8D\x8A", hour_s),
+        kTimeDescription);
+  }
+}
+
+// Helper function to generate "午前..." and "午後..." time formats.
+void GenerateGozenGogoTimeFormats(
+    const char *hour_format, const char *min_format, uint32 hour, uint32 min,
+    std::vector<std::pair<string, const char *>> *results) {
+  // "午前" and "午後" prefixes are only used for [0, 11].
+  if (hour >= 12) {
+    return;
+  }
+  char hour_s[4], min_s[4];
+  if (!PrintUint32(hour_format, hour, hour_s, 4) ||
+      !PrintUint32(min_format, min, min_s, 4)) {
+    return;
+  }
+  // "午前H時M分"
+  results->emplace_back(
+      Util::StringPrintf(
+          "\xE5\x8D\x88\xE5\x89\x8D%s\xE6\x99\x82%s\xE5\x88\x86", hour_s,
+          min_s),
+      kTimeDescription);
+  if (min == 30) {
+    // "午前H時半"
+    results->emplace_back(
+        Util::StringPrintf(
+            "\xE5\x8D\x88\xE5\x89\x8D%s\xE6\x99\x82\xE5\x8D\x8A", hour_s),
+        kTimeDescription);
+  }
+
+  // "午後H時M分"
+  results->emplace_back(
+      Util::StringPrintf("\xE5\x8D\x88\xE5\xBE\x8C%s\xE6\x99\x82%s\xE5\x88\x86",
+                         hour_s, min_s),
+      kTimeDescription);
+  if (min == 30) {
+    // "午後H時半"
+    results->emplace_back(
+        Util::StringPrintf("\xE5\x8D\x88\xE5\xBE\x8C%s\xE6\x99\x82\xE5\x8D\x8A",
+                           hour_s),
+        kTimeDescription);
+  }
+}
+
 // Converts a prefix and year number to Japanese Kanji Representation
 // arguments :
 //      - input "prefix" : a japanese style year counter prefix.
@@ -1861,20 +1932,28 @@ bool IsValidDate(uint32 year, uint32 month, uint32 day) {
   }
 }
 
-// Checks given date is valid or not in this year
-bool IsValidDateInThisYear(uint32 month, uint32 day) {
-  struct tm t_st;
-  if (!Clock::GetTmWithOffsetSecond(&t_st, 0)) {
-    LOG(ERROR) << "GetTmWithOffsetSecond() failed";
+// Checks if a pair of month and day is valid.
+bool IsValidMonthAndDay(uint32 month, uint32 day) {
+  if (day == 0) {
     return false;
   }
-  return IsValidDate(t_st.tm_year + 1900, month, day);
+  switch (month) {
+    case 2:
+      return day <= 29;
+    case 4: case 6: case 9: case 11:
+      return day <= 30;
+    case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+      return day <= 31;
+    default:
+      return false;
+  }
 }
+
 }  // namespace
 
 // convert AD to Japanese ERA.
 // The results will have multiple variants.
-bool DateRewriter::AdToEra(int year, std::vector<string> *results) const {
+bool DateRewriter::AdToEra(int year, std::vector<string> *results) {
   if (year < 645 || year > 2050) {    // TODO(taku) is it enough?
     return false;
   }
@@ -1904,18 +1983,18 @@ bool DateRewriter::AdToEra(int year, std::vector<string> *results) const {
 
 bool DateRewriter::EraToAd(const string &key,
                            std::vector<string> *results,
-                           std::vector<string> *descritions) const {
+                           std::vector<string> *descriptions) {
   bool ret = false;
   // The order is south to north, older to newer
   ret |= EraToAdForCourt(kEraData, arraysize(kEraData),
-                         key, results, descritions);
+                         key, results, descriptions);
   ret |= EraToAdForCourt(kNorthEraData, arraysize(kNorthEraData),
-                         key, results, descritions);
+                         key, results, descriptions);
   return ret;
 }
 
 bool DateRewriter::ConvertTime(uint32 hour, uint32 min,
-                               std::vector<string> *results) const {
+                               std::vector<string> *results) {
   DCHECK(results);
   if (!IsValidTime(hour, min)) {
     return false;
@@ -1962,48 +2041,31 @@ bool DateRewriter::ConvertTime(uint32 hour, uint32 min,
 }
 
 bool DateRewriter::ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
-                                       std::vector<string> *results) const {
-    DCHECK(results);
-    if (!IsValidDate(year, month, day)) {
-      return false;
-    }
+                                       std::vector<string> *results) {
+  DCHECK(results);
+  if (!IsValidDate(year, month, day)) {
+    return false;
+  }
 
-    // "Y/MM/DD"
-    results->push_back(Util::StringPrintf("%d/%2.2d/%2.2d", year, month, day));
+  // "Y/MM/DD"
+  results->push_back(Util::StringPrintf("%d/%2.2d/%2.2d", year, month, day));
 
-    // "Y-MM-DD"
-    results->push_back(Util::StringPrintf("%d-%2.2d-%2.2d", year, month, day));
+  // "Y-MM-DD"
+  results->push_back(Util::StringPrintf("%d-%2.2d-%2.2d", year, month, day));
 
-    // "Y年M月D日"
-    results->push_back(Util::StringPrintf(
-        "%d" "\xE5\xB9\xB4" "%d" "\xE6\x9C\x88" "%d" "\xE6\x97\xA5",
-        year, month, day));
+  // "Y年M月D日"
+  results->push_back(Util::StringPrintf(
+      "%d" "\xE5\xB9\xB4" "%d" "\xE6\x9C\x88" "%d" "\xE6\x97\xA5",
+      year, month, day));
 
-    return true;
-}
-
-bool DateRewriter::ConvertDateWithoutYear(uint32 month, uint32 day,
-                                          std::vector<string> *results) const {
-    DCHECK(results);
-    if (!IsValidDateInThisYear(month, day)) {
-      return false;
-    }
-
-    // "MM/DD"
-    results->push_back(Util::StringPrintf("%2.2d/%2.2d", month, day));
-
-    // "M月D日"
-    results->push_back(Util::StringPrintf("%d\xE6\x9C\x88%d\xE6\x97\xA5",
-                                          month, day));
-
-    return true;
+  return true;
 }
 
 bool DateRewriter::RewriteTime(Segment *segment,
                                const char *key,
                                const char *value,
                                const char *description,
-                               int type, int diff) const {
+                               int type, int diff) {
   if (segment->key() != key) {   // only exact match
     return false;
   }
@@ -2122,7 +2184,7 @@ bool DateRewriter::RewriteTime(Segment *segment,
   return false;
 }
 
-bool DateRewriter::RewriteDate(Segment *segment) const {
+bool DateRewriter::RewriteDate(Segment *segment) {
   for (size_t i = 0; i < arraysize(kDateData); ++i) {
     if (RewriteTime(segment,
                     kDateData[i].key, kDateData[i].value,
@@ -2137,7 +2199,7 @@ bool DateRewriter::RewriteDate(Segment *segment) const {
   return false;
 }
 
-bool DateRewriter::RewriteMonth(Segment *segment) const {
+bool DateRewriter::RewriteMonth(Segment *segment) {
   for (size_t i = 0; i < arraysize(kMonthData); ++i) {
     if (RewriteTime(segment,
                     kMonthData[i].key, kMonthData[i].value,
@@ -2152,7 +2214,7 @@ bool DateRewriter::RewriteMonth(Segment *segment) const {
   return false;
 }
 
-bool DateRewriter::RewriteYear(Segment *segment) const {
+bool DateRewriter::RewriteYear(Segment *segment) {
   for (size_t i = 0; i < arraysize(kYearData); ++i) {
     if (RewriteTime(segment,
                     kYearData[i].key, kYearData[i].value,
@@ -2167,7 +2229,7 @@ bool DateRewriter::RewriteYear(Segment *segment) const {
   return false;
 }
 
-bool DateRewriter::RewriteWeekday(Segment *segment) const {
+bool DateRewriter::RewriteWeekday(Segment *segment) {
   struct tm t_st;
   if (!Clock::GetCurrentTm(&t_st)) {
     LOG(ERROR) << "GetCurrentTm failed";
@@ -2191,7 +2253,7 @@ bool DateRewriter::RewriteWeekday(Segment *segment) const {
   return false;
 }
 
-bool DateRewriter::RewriteCurrentTime(Segment *segment) const {
+bool DateRewriter::RewriteCurrentTime(Segment *segment) {
   for (size_t i = 0; i < arraysize(kCurrentTimeData); ++i) {
     if (RewriteTime(segment,
                     kCurrentTimeData[i].key, kCurrentTimeData[i].value,
@@ -2207,7 +2269,7 @@ bool DateRewriter::RewriteCurrentTime(Segment *segment) const {
   return false;
 }
 
-bool DateRewriter::RewriteDateAndCurrentTime(Segment *segment) const {
+bool DateRewriter::RewriteDateAndCurrentTime(Segment *segment) {
   for (size_t i = 0; i < arraysize(kDateAndCurrentTimeData); ++i) {
     if (RewriteTime(segment,
                     kDateAndCurrentTimeData[i].key,
@@ -2225,7 +2287,7 @@ bool DateRewriter::RewriteDateAndCurrentTime(Segment *segment) const {
 }
 
 bool DateRewriter::RewriteEra(Segment *current_segment,
-                              const Segment &next_segment) const {
+                              const Segment &next_segment) {
   if (current_segment->candidates_size() <= 0 ||
       next_segment.candidates_size() <= 0) {
     LOG(ERROR) << "Candidate size is 0";
@@ -2282,7 +2344,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   return true;
 }
 
-bool DateRewriter::RewriteAd(Segment *segment) const {
+bool DateRewriter::RewriteAd(Segment *segment) {
   const string &key = segment->key();
   if (!Util::EndsWith(key, kNenKey)) {
     return false;
@@ -2334,14 +2396,15 @@ bool GetNDigits(const composer::Composer &composer,
 
   // 1. Segment's key
   if (IsNDigits(segment.key(), n)) {
-    *output = segment.key();
+    Util::FullWidthAsciiToHalfWidthAscii(segment.key(), output);
     return true;
   }
 
   // 2. Meta candidates
   for (size_t i = 0; i < segment.meta_candidates_size(); ++i) {
     if (IsNDigits(segment.meta_candidate(i).value, n)) {
-      *output = segment.meta_candidate(i).value;
+      Util::FullWidthAsciiToHalfWidthAscii(segment.meta_candidate(i).value,
+                                           output);
       return true;
     }
   }
@@ -2353,17 +2416,18 @@ bool GetNDigits(const composer::Composer &composer,
   // the whole composition.
   composer.GetRawSubString(0, Util::CharsLen(segment.key()), &raw);
   if (IsNDigits(raw, n)) {
-    *output = raw;
+    Util::FullWidthAsciiToHalfWidthAscii(raw, output);
     return true;
   }
 
   // No trials succeeded.
   return false;
 }
+
 }  // namespace
 
 bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
-                                            Segments *segments) const {
+                                            Segments *segments) {
   if (segments->conversion_segments_size() != 1) {
     // This method rewrites a segment only when the segments has only
     // one conversion segment.
@@ -2371,63 +2435,196 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
     // Rewriting multiple segments will not make users happier.
     return false;
   }
-
-  string key;
-  // Currently three and four consecutive digits are converted
-  if (!GetNDigits(composer, *segments, 3, &key) &&
-      !GetNDigits(composer, *segments, 4, &key)) {
-    // No three or four digit key is available.
-    return false;
-  }
-
   Segment *segment = segments->mutable_conversion_segment(0);
 
-  string number_str;
-  Util::FullWidthAsciiToHalfWidthAscii(key, &number_str);
-
-  uint32 number = 0;
-  if (!NumberUtil::SafeStrToUInt32(number_str, &number)) {
-    return false;
-  }
-  const uint32 upper_number = number / 100;
-  const uint32 lower_number = number % 100;
-
+  // segment->candidate(0) or segment->meta_candidate(0) is used as reference.
+  // Check the existence before generating candidates to save time.
   if (segment->candidates_size() == 0 &&
       segment->meta_candidates_size() == 0) {
     VLOG(2) << "No (meta) candidates are found";
     return false;
   }
 
-  const Segment::Candidate &cand = (segment->candidates_size() > 0) ?
-      segment->candidate(0) : segment->meta_candidate(0);
-
-  bool is_modified = false;
-  std::vector<string> result;
-  is_modified |= ConvertDateWithoutYear(upper_number, lower_number, &result);
-
-  for (size_t i = 0; i < result.size(); ++i) {
-    // Always insert after last candidate.
-    const int position = static_cast<int>(segment->candidates_size());
-    // "日付"
-    Insert(cand, position, result[i], "\xE6\x97\xA5\xE4\xBB\x98",
-           segment);
+  // Generate candidates.  The results contain <candidate, description> pairs.
+  string number_str;
+  std::vector<std::pair<string, const char *>> results;
+  if (GetNDigits(composer, *segments, 2, &number_str)) {
+    if (!RewriteConsecutiveTwoDigits(number_str, &results)) {
+      return false;
+    }
+  } else if (GetNDigits(composer, *segments, 3, &number_str)) {
+    if (!RewriteConsecutiveThreeDigits(number_str, &results)) {
+      return false;
+    }
+  } else if (GetNDigits(composer, *segments, 4, &number_str)) {
+    if (!RewriteConsecutiveFourDigits(number_str, &results)) {
+      return false;
+    }
+  }
+  if (results.empty()) {
+    return false;
   }
 
-  result.clear();
-  is_modified |= ConvertTime(upper_number, lower_number, &result);
-
-  for (size_t i = 0; i < result.size(); ++i) {
-    // Always insert after last candidate.
+  // The existence of segment->candidate(0) or segment->meta_candidate(0) is
+  // guaranteed at the above check.
+  const Segment::Candidate &top_cand = (segment->candidates_size() > 0)
+                                           ? segment->candidate(0)
+                                           : segment->meta_candidate(0);
+  for (const auto &result : results) {
+    // Always insert after the last candidate.
     const int position = static_cast<int>(segment->candidates_size());
-    // "時刻"
-    Insert(cand, position, result[i], "\xE6\x99\x82\xE5\x88\xBB",
-           segment);
+    Insert(top_cand, position, result.first, result.second, segment);
   }
-  return is_modified;
+
+  return true;
 }
 
-DateRewriter::DateRewriter() {}
-DateRewriter::~DateRewriter() {}
+bool DateRewriter::RewriteConsecutiveTwoDigits(
+    StringPiece str,
+    std::vector<std::pair<string, const char *>> *results) {
+  DCHECK_EQ(2, str.size());
+  const auto orig_size = results->size();
+  const uint32 high = static_cast<uint32>(str[0] - '0');
+  const uint32 low = static_cast<uint32>(str[1] - '0');
+  if (IsValidMonthAndDay(high, low)) {
+    // "M/D"
+    results->emplace_back(Util::StringPrintf("%c/%c", str[0], str[1]),
+                          kDateDescription);
+    // "M月D日"
+    results->emplace_back(Util::StringPrintf("%c\xE6\x9C\x88%c\xE6\x97\xA5",
+                                             str[0], str[1]),
+                          kDateDescription);
+  }
+  if (IsValidTime(high, low)) {
+    // "H時M分"
+    GenerateKanjiTimeFormats("%d", "%d", high, low, results);
+    // "午前H時M分".
+    GenerateGozenGogoTimeFormats("%d", "%d", high, low, results);
+  }
+  return results->size() > orig_size;
+}
+
+bool DateRewriter::RewriteConsecutiveThreeDigits(
+    StringPiece str,
+    std::vector<std::pair<string, const char *>> *results) {
+  DCHECK_EQ(3, str.size());
+  const auto orig_size = results->size();
+
+  const uint32 n[] = {static_cast<uint32>(str[0] - '0'),
+                      static_cast<uint32>(str[1] - '0'),
+                      static_cast<uint32>(str[2] - '0')};
+
+  // Split pattern 1: N|NN
+  const uint32 high1 = n[0];
+  const uint32 low1 = 10 * n[1] + n[2];
+  const bool is_valid_date1 = IsValidMonthAndDay(high1, low1) && str[1] != '0';
+  const bool is_valid_time1 = IsValidTime(high1, low1);
+
+  // Split pattern 2: NN|N
+  const uint32 high2 = 10 * n[0] + n[1];
+  const uint32 low2 = n[2];
+  const bool is_valid_date2 = IsValidMonthAndDay(high2, low2) && str[0] != '0';
+  const bool is_valid_time2 = IsValidTime(high2, low2) && str[0] != '0';
+
+  if (is_valid_date1) {
+    // "M/DD"
+    results->emplace_back(Util::StringPrintf("%c/%c%c", str[0], str[1], str[2]),
+                          kDateDescription);
+  }
+  if (is_valid_date2) {
+    // "MM/D"
+    results->emplace_back(Util::StringPrintf("%c%c/%c", str[0], str[1], str[2]),
+                          kDateDescription);
+  }
+  if (is_valid_time1) {
+    // "H:MM"
+    results->emplace_back(Util::StringPrintf("%c:%c%c", str[0], str[1], str[2]),
+                          kTimeDescription);
+  }
+  // Don't generate HH:M form as it is unusual.
+
+  if (is_valid_date1) {
+    // "M月DD日".
+    results->emplace_back(Util::StringPrintf("%c\xE6\x9C\x88%c%c\xE6\x97\xA5",
+                                             str[0], str[1], str[2]),
+                          kDateDescription);
+  }
+  if (is_valid_date2) {
+    // "MM月D日"
+    results->emplace_back(Util::StringPrintf("%c%c\xE6\x9C\x88%c\xE6\x97\xA5",
+                                             str[0], str[1], str[2]),
+                          kDateDescription);
+  }
+  if (is_valid_time1) {
+    // "M時DD分" etc.
+    GenerateKanjiTimeFormats("%d", "%02d", high1, low1, results);
+  }
+  if (is_valid_time2) {
+    // "MM時D分" etc.
+    GenerateKanjiTimeFormats("%d", "%d", high2, low2, results);
+  }
+  if (is_valid_time1) {
+    // "午前M時DD分" etc.
+    GenerateGozenGogoTimeFormats("%d", "%02d", high1, low1, results);
+  }
+  if (is_valid_time2) {
+    // "午前MM時D分" etc.
+    GenerateGozenGogoTimeFormats("%d", "%d", high2, low2, results);
+  }
+
+  return results->size() > orig_size;
+}
+
+bool DateRewriter::RewriteConsecutiveFourDigits(
+    StringPiece str,
+    std::vector<std::pair<string, const char *>> *results) {
+  DCHECK_EQ(4, str.size());
+  const auto orig_size = results->size();
+
+  const uint32 high = (10 * static_cast<uint32>(str[0] - '0') +
+                       static_cast<uint32>(str[1] - '0'));
+  const uint32 low = (10 * static_cast<uint32>(str[2] - '0') +
+                       static_cast<uint32>(str[3] - '0'));
+
+  const bool is_valid_date = IsValidMonthAndDay(high, low);
+  const bool is_valid_time = IsValidTime(high, low);
+
+  if (is_valid_date) {
+    // "MM/DD"
+    results->emplace_back(
+        Util::StringPrintf("%c%c/%c%c", str[0], str[1], str[2], str[3]),
+        kDateDescription);
+  }
+  if (is_valid_time) {
+    // "MM:DD"
+    results->emplace_back(
+        Util::StringPrintf("%c%c:%c%c", str[0], str[1], str[2], str[3]),
+        kTimeDescription);
+  }
+  if (is_valid_date && str[0] != '0' && str[2] != '0') {
+    // "MM月DD日".  Don't generate this form if there is a leading zero in
+    // month or day because it's rarely written like "01月01日".  Don't
+    // generate "1月1日" too, as we shouldn't remove the zero explicitly added
+    // by user.
+    results->emplace_back(
+        Util::StringPrintf("%c%c\xE6\x9C\x88%c%c\xE6\x97\xA5", str[0], str[1],
+                           str[2], str[3]),
+        kDateDescription);
+  }
+  if (is_valid_time) {
+    // "MM時DD分" etc.
+    GenerateKanjiTimeFormats("%02d", "%02d", high, low, results);
+    if (high >= 10) {
+      // "午前MM時DD分" etc.
+      GenerateGozenGogoTimeFormats("%d", "%02d", high, low, results);
+    }
+  }
+
+  return results->size() > orig_size;
+}
+
+DateRewriter::DateRewriter() = default;
+DateRewriter::~DateRewriter() = default;
 
 int DateRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
@@ -2479,4 +2676,5 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
 
   return modified;
 }
+
 }  // namespace mozc

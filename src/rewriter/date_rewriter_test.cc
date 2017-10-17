@@ -45,8 +45,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -206,11 +205,9 @@ const uint32 kTestMicroSeconds = 588377u;
 
 }  // namespace
 
-class DateRewriterTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  }
+class DateRewriterTest : public ::testing::Test {
+ private:
+  const mozc::testing::ScopedTmpUserProfileDirectory scoped_tmp_profile_dir_;
 };
 
 TEST_F(DateRewriterTest, DateRewriteTest) {
@@ -1010,14 +1007,6 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
         month_days_test_data[i].month,
         month_days_test_data[i].days+1,
         &results));
-    ASSERT_TRUE(rewriter.ConvertDateWithoutYear(
-        month_days_test_data[i].month,
-        month_days_test_data[i].days,
-        &results));
-    ASSERT_FALSE(rewriter.ConvertDateWithoutYear(
-        month_days_test_data[i].month,
-        month_days_test_data[i].days + 1,
-        &results));
   }
 
   // 4 dividable year is leap year.
@@ -1057,12 +1046,6 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
   EXPECT_FALSE(rewriter.ConvertDateWithYear(2000, 0, 1, &results));
   EXPECT_FALSE(rewriter.ConvertDateWithYear(2000, 1, 0, &results));
   EXPECT_FALSE(rewriter.ConvertDateWithYear(2000, 0, 0, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(13, 1, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(1, 41, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(13, 41, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(0, 1, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(1, 0, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(0, 0, &results));
 }
 
 TEST_F(DateRewriterTest, NumberRewriterTest) {
@@ -1073,135 +1056,371 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   const composer::Composer composer(nullptr, &request, &config);
   const ConversionRequest conversion_request(&composer, &request, &config);
 
-  // 0101 is expected 3 time candidate and 2 date candidates
-  InitSegment("0101", "0101", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments,
-                                "\xE6\x99\x82\xE5\x88\xBB"));
-  // "午前1時1分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8D\x88\xE5\x89\x8D\x31\xE6\x99\x82\x31\xE5\x88\x86"));
-  // "1時01分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\xE6\x99\x82\x30\x31\xE5\x88\x86"));
-  EXPECT_TRUE(ContainCandidate(segments, "1:01"));
+  // Not targets of rewrite.
+  const char *kNonTargetCases[] = {
+    "", "0", "1", "01234", "00000",  // Invalid number of digits.
+    "hello", "123xyz",  // Not numbers.
+    "660", "999", "3400"  // Neither date nor time.
+  };
+  for (const char *input : kNonTargetCases) {
+    InitSegment(input, input, &segments);
+    EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments))
+        << "Input: " << input
+        << "\nSegments: " << segments.DebugString();
+  }
 
-  // "日付"
-  EXPECT_EQ(2, CountDescription(
-      segments,
-      "\xE6\x97\xA5\xE4\xBB\x98"));
-  // "1月1日"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\xE6\x9C\x88\x31\xE6\x97\xA5"));
-  EXPECT_TRUE(ContainCandidate(segments, "01/01"));
+// Macro for {"M/D", "日付"}
+#define DATE(month, day) \
+  { #month "/" #day, "\xE6\x97\xA5\xE4\xBB\x98" }
 
-  // 1830 is expected 5 time candidate and 0 date candidates
-  InitSegment("1830", "1830", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(5, CountDescription(segments,
-                                "\xE6\x99\x82\xE5\x88\xBB"));
-  // "18時半"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\x38\xE6\x99\x82\xE5\x8D\x8A"));
-  // "午後6時30分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8D\x88\xE5\xBE\x8C\x36\xE6\x99\x82\x33\x30\xE5\x88\x86"));
-  // "18時30分"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\x38\xE6\x99\x82\x33\x30\xE5\x88\x86"));
-  // "午後6時半"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8D\x88\xE5\xBE\x8C\x36\xE6\x99\x82\xE5\x8D\x8A"));
-  EXPECT_TRUE(ContainCandidate(segments, "18:30"));
+// Macro for {"M月D日", "日付"}
+#define KANJI_DATE(month, day) \
+  { #month "\xE6\x9C\x88" #day "\xE6\x97\xA5", "\xE6\x97\xA5\xE4\xBB\x98" }
 
-  // "日付"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+// Macro for {"H:M", "時刻"}
+#define TIME(hour, minute) \
+  { #hour ":" #minute, "\xE6\x99\x82\xE5\x88\xBB" }
 
-  // 123 is expected 3 time candidates and 2 date candidates
-  InitSegment("123", "123", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
-  EXPECT_TRUE(ContainCandidate(segments, "1:23"));
-  // "1時23分"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
-  // "午前1時23分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xe5\x8d\x88\xe5\x89\x8d\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
+// Macro for {"H時M分", "時刻"}
+#define KANJI_TIME(hour, minute) \
+  { #hour "\xE6\x99\x82" #minute "\xE5\x88\x86", "\xE6\x99\x82\xE5\x88\xBB" }
 
-  // "日付"
-  EXPECT_EQ(2, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
-  EXPECT_TRUE(ContainCandidate(segments, "01/23"));
-  // "1月23日"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\xe6\x9c\x88\x32\x33\xe6\x97\xa5"));
+// Macro for {"H時半", "時刻"}
+#define KANJI_TIME_HAN(hour) \
+  { #hour "\xE6\x99\x82\xE5\x8D\x8A", "\xE6\x99\x82\xE5\x88\xBB" }
 
-  // 346 is expected 3 time candidates and 0 date candidate
-  InitSegment("346", "346", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
-  EXPECT_TRUE(ContainCandidate(segments, "3:46"));
-  // "3時46分"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
-  // "午前3時46分"
-  EXPECT_TRUE(ContainCandidate(
-        segments,
-        "\xe5\x8d\x88\xe5\x89\x8d\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
+// Macro for {"午前H時M分", "時刻"}
+#define GOZEN(hour, minute)                                                 \
+  {                                                                         \
+    "\xE5\x8D\x88\xE5\x89\x8D" #hour "\xE6\x99\x82" #minute "\xE5\x88\x86", \
+        "\xE6\x99\x82\xE5\x88\xBB"                                          \
+  }
 
-  // "日付"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+// Macro for {"午後H時M分", "時刻"}
+#define GOGO(hour, minute)                                                  \
+  {                                                                         \
+    "\xE5\x8D\x88\xE5\xBE\x8C" #hour "\xE6\x99\x82" #minute "\xE5\x88\x86", \
+        "\xE6\x99\x82\xE5\x88\xBB"                                          \
+  }
 
-  // 765 is expected 0 time candidate and 0 date candidate
-  InitSegment("765", "765", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+// Macro for {"午前H時半", "時刻"}
+#define GOZEN_HAN(hour)                                          \
+  {                                                              \
+    "\xE5\x8D\x88\xE5\x89\x8D" #hour "\xE6\x99\x82\xE5\x8D\x8A", \
+        "\xE6\x99\x82\xE5\x88\xBB"                               \
+  }
 
-  // "日付"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+// Macro for {"午後H時半", "時刻"}
+#define GOGO_HAN(hour)                                           \
+  {                                                              \
+    "\xE5\x8D\x88\xE5\xBE\x8C" #hour "\xE6\x99\x82\xE5\x8D\x8A", \
+        "\xE6\x99\x82\xE5\x88\xBB"                               \
+  }
 
-  // Especially for mobile, look at meta candidates' value, too.
-  // "あかあか" on 12keys layout will be transliterated to "1212".
-  InitMetaSegment(
-      "\xE3\x81\x82\xE3\x81\x8B\xE3\x81\x82\xE3\x81\x8B", "1212", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments,
-                                "\xE6\x99\x82\xE5\x88\xBB"));
-  // "午後0時12分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8d\x88\xE5\xBE\x8C\x30\xE6\x99\x82\x31\x32\xE5\x88\x86"));
-  // "12時12分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\x32\xE6\x99\x82\x31\x32\xE5\x88\x86"));
-  EXPECT_TRUE(ContainCandidate(segments, "12:12"));
+  // Targets of rewrite.
+  using ValueAndDescription = std::pair<const char *, const char *>;
+  const std::vector<ValueAndDescription> kTestCases[] = {
+      // Two digits.
+      {
+          {"00", ""},
+          KANJI_TIME(0, 0),
+          GOZEN(0, 0),
+          GOGO(0, 0),
+      },
+      {
+          {"01", ""},
+          KANJI_TIME(0, 1),
+          GOZEN(0, 1),
+          GOGO(0, 1),
+      },
+      {
+          {"10", ""},
+          KANJI_TIME(1, 0),
+          GOZEN(1, 0),
+          GOGO(1, 0),
+      },
+      {
+          {"11", ""},
+          DATE(1, 1),
+          KANJI_DATE(1, 1),
+          KANJI_TIME(1, 1),
+          GOZEN(1, 1),
+          GOGO(1, 1),
+      },
 
-  // "日付"
-  EXPECT_EQ(2, CountDescription(
-      segments,
-      "\xE6\x97\xA5\xE4\xBB\x98"));
-  // "12月12日"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\x32\xE6\x9C\x88\x31\x32\xE6\x97\xA5"));
-  EXPECT_TRUE(ContainCandidate(segments, "12/12"));
+      // Three digits.
+      {
+          {"000", ""},
+          TIME(0, 00),
+          KANJI_TIME(0, 00),
+          GOZEN(0, 00),
+          GOGO(0, 00),
+      },
+      {
+          {"001", ""},
+          TIME(0, 01),
+          KANJI_TIME(0, 01),
+          GOZEN(0, 01),
+          GOGO(0, 01),
+      },
+      {
+          {"010", ""},
+          TIME(0, 10),
+          KANJI_TIME(0, 10),
+          GOZEN(0, 10),
+          GOGO(0, 10),
+      },
+      {
+          {"011", ""},
+          TIME(0, 11),
+          KANJI_TIME(0, 11),
+          GOZEN(0, 11),
+          GOGO(0, 11),
+      },
+      {
+          {"100", ""},
+          TIME(1, 00),
+          KANJI_TIME(1, 00),
+          KANJI_TIME(10, 0),
+          GOZEN(1, 00),
+          GOGO(1, 00),
+          GOZEN(10, 0),
+          GOGO(10, 0),
+      },
+      {
+          {"101", ""},
+          DATE(10, 1),
+          TIME(1, 01),
+          KANJI_DATE(10, 1),
+          KANJI_TIME(1, 01),
+          KANJI_TIME(10, 1),
+          GOZEN(1, 01),
+          GOGO(1, 01),
+          GOZEN(10, 1),
+          GOGO(10, 1),
+      },
+      {
+          {"110", ""},
+          DATE(1, 10),
+          TIME(1, 10),
+          KANJI_DATE(1, 10),
+          KANJI_TIME(1, 10),
+          KANJI_TIME(11, 0),
+          GOZEN(1, 10),
+          GOGO(1, 10),
+          GOZEN(11, 0),
+          GOGO(11, 0),
+      },
+      {
+          {"111", ""},
+          DATE(1, 11),
+          DATE(11, 1),
+          TIME(1, 11),
+          KANJI_DATE(1, 11),
+          KANJI_DATE(11, 1),
+          KANJI_TIME(1, 11),
+          KANJI_TIME(11, 1),
+          GOZEN(1, 11),
+          GOGO(1, 11),
+          GOZEN(11, 1),
+          GOGO(11, 1),
+      },
+      {
+          {"130", ""},
+          DATE(1, 30),
+          TIME(1, 30),
+          KANJI_DATE(1, 30),
+          KANJI_TIME(1, 30),
+          KANJI_TIME_HAN(1),
+          KANJI_TIME(13, 0),
+          GOZEN(1, 30),
+          GOZEN_HAN(1),
+          GOGO(1, 30),
+          GOGO_HAN(1),
+      },
 
-  // Invalid date or time number expect false return
-  InitSegment("9999", "9999", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
+      // Four digits.
+      {
+          {"0000", ""},
+          TIME(00, 00),
+          KANJI_TIME(00, 00),
+      },
+      {
+          {"0010", ""},
+          TIME(00, 10),
+          KANJI_TIME(00, 10),
+      },
+      {
+          {"0100", ""},
+          TIME(01, 00),
+          KANJI_TIME(01, 00),
+      },
+      {
+          {"1000", ""},
+          TIME(10, 00),
+          KANJI_TIME(10, 00),
+          GOZEN(10, 00),
+          GOGO(10, 00),
+      },
+      {
+          {"0011", ""},
+          TIME(00, 11),
+          KANJI_TIME(00, 11),
+      },
+      {
+          {"0101", ""},
+          DATE(01, 01),
+          TIME(01, 01),
+          KANJI_TIME(01, 01),
+      },
+      {
+          {"1001", ""},
+          DATE(10, 01),
+          TIME(10, 01),
+          KANJI_TIME(10, 01),
+          GOZEN(10, 01),
+          GOGO(10, 01),
+      },
+      {
+          {"0110", ""},
+          DATE(01, 10),
+          TIME(01, 10),
+          KANJI_TIME(01, 10),
+      },
+      {
+          {"1010", ""},
+          DATE(10, 10),
+          TIME(10, 10),
+          KANJI_DATE(10, 10),
+          KANJI_TIME(10, 10),
+          GOZEN(10, 10),
+          GOGO(10, 10),
+      },
+      {
+          {"1100", ""},
+          TIME(11, 00),
+          KANJI_TIME(11, 00),
+          GOZEN(11, 00),
+          GOGO(11, 00),
+      },
+      {
+          {"0111", ""},
+          DATE(01, 11),
+          TIME(01, 11),
+          KANJI_TIME(01, 11),
+      },
+      {
+          {"1011", ""},
+          DATE(10, 11),
+          TIME(10, 11),
+          KANJI_DATE(10, 11),
+          KANJI_TIME(10, 11),
+          GOZEN(10, 11),
+          GOGO(10, 11),
+      },
+      {
+          {"1101", ""},
+          DATE(11, 01),
+          TIME(11, 01),
+          KANJI_TIME(11, 01),
+          GOZEN(11, 01),
+          GOGO(11, 01),
+      },
+      {
+          {"1110", ""},
+          DATE(11, 10),
+          TIME(11, 10),
+          KANJI_DATE(11, 10),
+          KANJI_TIME(11, 10),
+          GOZEN(11, 10),
+          GOGO(11, 10),
+      },
+      {
+          {"1111", ""},
+          DATE(11, 11),
+          TIME(11, 11),
+          KANJI_DATE(11, 11),
+          KANJI_TIME(11, 11),
+          GOZEN(11, 11),
+          GOGO(11, 11),
+      },
+      {
+          {"0030", ""},
+          TIME(00, 30),
+          KANJI_TIME(00, 30),
+      },
+      {
+          {"0130", ""},
+          DATE(01, 30),
+          TIME(01, 30),
+          KANJI_TIME(01, 30),
+      },
+      {
+          {"1030", ""},
+          DATE(10, 30),
+          TIME(10, 30),
+          KANJI_DATE(10, 30),
+          KANJI_TIME(10, 30),
+          KANJI_TIME_HAN(10),
+          GOZEN(10, 30),
+          GOZEN_HAN(10),
+          GOGO(10, 30),
+          GOGO_HAN(10),
+      },
+      {
+          {"1130", ""},
+          DATE(11, 30),
+          TIME(11, 30),
+          KANJI_DATE(11, 30),
+          KANJI_TIME(11, 30),
+          KANJI_TIME_HAN(11),
+          GOZEN(11, 30),
+          GOZEN_HAN(11),
+          GOGO(11, 30),
+          GOGO_HAN(11),
+      },
+      {
+          {"1745", ""},
+          TIME(17, 45),
+          KANJI_TIME(17, 45),
+      },
+      {
+          {"2730", ""},
+          TIME(27, 30),
+          KANJI_TIME(27, 30),
+          KANJI_TIME_HAN(27),
+      },
+  };
+
+#undef DATE
+#undef GOGO
+#undef GOGO_HAN
+#undef GOZEN
+#undef GOZEN_HAN
+#undef KANJI_DATE
+#undef KANJI_TIME
+#undef KANJI_TIME_HAN
+#undef TIME
+
+  for (const auto &test_case : kTestCases) {
+    InitSegment(test_case[0].first, test_case[0].first, &segments);
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    ASSERT_EQ(1, segments.segments_size());
+    const auto &segment = segments.segment(0);
+    EXPECT_EQ(test_case.size(), segment.candidates_size())
+        << segment.DebugString();
+    if (test_case.size() != segment.candidates_size()) {
+      continue;
+    }
+    for (std::size_t i = 0; i < test_case.size(); ++i) {
+      EXPECT_EQ(test_case[i].first, segment.candidate(i).value)
+          << "Value of " << i << "-th candidate is unexpected:\n"
+          << segment.DebugString();
+      EXPECT_EQ(test_case[i].second, segment.candidate(i).description)
+          << "Description of " << i << "-th candidate is unexpected:\n"
+          << segment.DebugString();
+    }
+  }
 }
 
 TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {

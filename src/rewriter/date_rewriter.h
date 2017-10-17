@@ -31,8 +31,11 @@
 #define MOZC_REWRITER_DATE_REWRITER_H_
 
 #include <string>
+#include <utility>
 #include <vector>
+
 #include "base/port.h"
+#include "base/string_piece.h"
 #include "rewriter/rewriter_interface.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
@@ -48,15 +51,15 @@ namespace composer {
 class Composer;
 }
 
-class DateRewriter : public RewriterInterface  {
+class DateRewriter : public RewriterInterface {
  public:
   DateRewriter();
-  virtual ~DateRewriter();
+  ~DateRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   FRIEND_TEST(DateRewriterTest, ADToERA);
@@ -64,20 +67,20 @@ class DateRewriter : public RewriterInterface  {
   FRIEND_TEST(DateRewriterTest, ConvertTime);
   FRIEND_TEST(DateRewriterTest, ConvertDateTest);
 
-  bool RewriteTime(Segment *segment,
-                   const char *key,
-                   const char *value,
-                   const char *description,
-                   int type, int diff) const;
-  bool RewriteDate(Segment *segment) const;
-  bool RewriteMonth(Segment *segment) const;
-  bool RewriteYear(Segment *segment) const;
-  bool RewriteCurrentTime(Segment *segment) const;
-  bool RewriteDateAndCurrentTime(Segment *segment) const;
-  bool RewriteEra(Segment *current_segment,
-                  const Segment &next_segment) const;
-  bool RewriteAd(Segment *segment) const;
-  bool RewriteWeekday(Segment *segment) const;
+  static bool RewriteTime(Segment *segment,
+                          const char *key,
+                          const char *value,
+                          const char *description,
+                          int type, int diff);
+  static bool RewriteDate(Segment *segment);
+  static bool RewriteMonth(Segment *segment);
+  static bool RewriteYear(Segment *segment);
+  static bool RewriteCurrentTime(Segment *segment);
+  static bool RewriteDateAndCurrentTime(Segment *segment);
+  static bool RewriteEra(Segment *current_segment,
+                         const Segment &next_segment);
+  static bool RewriteAd(Segment *segment);
+  static bool RewriteWeekday(Segment *segment);
 
   // When only one conversion segment has consecutive number characters,
   // this function adds date and time candidates.
@@ -88,10 +91,21 @@ class DateRewriter : public RewriterInterface  {
   //   2020 -> "20時20分、午後8時20分、20:20"
   //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
   //   123  -> "1月23日、01/23、1:23"
-  bool RewriteConsecutiveDigits(const composer::Composer &composer,
-                                Segments *segments) const;
+  static bool RewriteConsecutiveDigits(const composer::Composer &composer,
+                                       Segments *segments);
 
-  bool AdToEra(int year, std::vector<string> *results) const;
+  // Helper functions for RewriteConsecutiveDigits().
+  static bool RewriteConsecutiveTwoDigits(
+      StringPiece str,
+      std::vector<std::pair<string, const char *>> *results);
+  static bool RewriteConsecutiveThreeDigits(
+      StringPiece str,
+      std::vector<std::pair<string, const char *>> *results);
+  static bool RewriteConsecutiveFourDigits(
+      StringPiece str,
+      std::vector<std::pair<string, const char *>> *results);
+
+  static bool AdToEra(int year, std::vector<string> *results);
 
   // Converts AD to Japanese ERA.
   // If given string is invalid, this function does not nothing and
@@ -106,8 +120,8 @@ class DateRewriter : public RewriterInterface  {
   //                        "1313年", "１３１３年", "一三一三年" },
   //                       {"昭和2年", "昭和2年", "昭和2年",
   //                        "正和2年", "正和2年", "正和2年"}
-  bool EraToAd(const string &key, std::vector<string> *results,
-               std::vector<string> *descriptions) const;
+  static bool EraToAd(const string &key, std::vector<string> *results,
+                      std::vector<string> *descriptions);
 
   // Converts given time to string expression.
   // If given time information is invalid, this function does nothing and
@@ -120,7 +134,8 @@ class DateRewriter : public RewriterInterface  {
   //    1   :   1 -> "1時1分、午前1時1分、午前1時1分"
   //    1   :  30 -> "1時30分、午前1時30分、午前1時半、1時半、1:30"
   //   25   :  30 -> "25時30分、25時半、午前1時30分、午前1時半、25:30"
-  bool ConvertTime(uint32 hour, uint32 min, std::vector<string> *results) const;
+  static bool ConvertTime(uint32 hour, uint32 min,
+                          std::vector<string> *results);
 
   // Converts given date to string expression.
   // If given date information is invalid, this function does nothing and
@@ -134,22 +149,8 @@ class DateRewriter : public RewriterInterface  {
   //   2011:  1  :  1 -> "平成23年1月1日,2011年1月1日,2011-01-01,2011/01/01"
   //   2011:  5  : 18 -> "平成23年5月18日,2011年5月18日,2011-05-18,2011/05/18"
   //   2000:  2  : 29 -> "平成12年2月29日,2000年2月29日,2000-02-29,2000/02/29"
-  bool ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
-                           std::vector<string> *results) const;
-
-  // Converts given date to string expression without year information.
-  // This function validate month/day information with current year.
-  // If given date information is invalid, this function does nothing and
-  // retruns false.
-  // The "month" argument only accepts between 1 and 12.
-  // The "day" argument only accept valid day. This function deals with leap
-  // year.
-  // e.g.)
-  //   month : day -> strings will be pushed into vectors
-  //     1   :   1 -> "1月1日、01/01"
-  //     2   :  28 -> "2月28日、02/28"
-  bool ConvertDateWithoutYear(uint32 month, uint32 day,
-                              std::vector<string> *results) const;
+  static bool ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
+                                  std::vector<string> *results);
 };
 
 }  // namespace mozc
