@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-10-13 15:03-0700\n"
-"PO-Revision-Date: 2017-10-13 21:56+0000\n"
+"POT-Creation-Date: 2017-10-18 06:03-0700\n"
+"PO-Revision-Date: 2017-10-18 12:19+0000\n"
 "Last-Translator: scootergrisen\n"
 "Language-Team: Danish (http://www.transifex.com/fcitx/fcitx/language/da/)\n"
 "Language: da\n"
@@ -20,39 +20,39 @@ msgstr ""
 
 #: ../eim.cc:187
 msgid "Press Escape to go back"
-msgstr ""
+msgstr "Tryk på Escape for at gå tilbage"
 
 #: ../fcitx_mozc.cc:65
 msgid "Direct"
-msgstr ""
+msgstr "Direkte"
 
 #: ../fcitx_mozc.cc:70
 msgid "Hiragana"
-msgstr ""
+msgstr "Hiragana"
 
 #: ../fcitx_mozc.cc:75
 msgid "Full Katakana"
-msgstr ""
+msgstr "Fuld Katakana"
 
 #: ../fcitx_mozc.cc:80
 msgid "Half ASCII"
-msgstr ""
+msgstr "Halv ASCII"
 
 #: ../fcitx_mozc.cc:85
 msgid "Full ASCII"
-msgstr ""
+msgstr "Fuld ASCII"
 
 #: ../fcitx_mozc.cc:90
 msgid "Half Katakana"
-msgstr ""
+msgstr "Halv Katakana"
 
 #: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407 ../fcitx_mozc.cc:475
 msgid "Composition Mode"
-msgstr ""
+msgstr "Kompositionstilstand"
 
 #: ../fcitx_mozc.cc:417 ../fcitx_mozc.cc:418
 msgid "Tool"
-msgstr ""
+msgstr "Værktøj"
 
 #: ../fcitx_mozc.cc:488
 msgid "Mozc Tool"
@@ -60,23 +60,23 @@ msgstr "Mozc-værktøj"
 
 #: ../fcitx_mozc.cc:494
 msgid "Configuration Tool"
-msgstr ""
+msgstr "Konfigurationsværktøj"
 
 #: ../fcitx_mozc.cc:495
 msgid "Dictionary Tool"
-msgstr ""
+msgstr "Ordbogsværktøj"
 
 #: ../fcitx_mozc.cc:496
 msgid "Hand Writing"
-msgstr ""
+msgstr "Håndskrift"
 
 #: ../fcitx_mozc.cc:497
 msgid "Character Palette"
-msgstr ""
+msgstr "Tegnpalet"
 
 #: ../fcitx_mozc.cc:498
 msgid "Add Word"
-msgstr ""
+msgstr "Tilføj ord"
 
 #: ../fcitx_mozc.cc:499
 msgid "About Mozc"
@@ -84,4 +84,4 @@ msgstr "Om Mozc"
 
 #: ../mozc_response_parser.cc:366
 msgid "Press Ctrl+Alt+H to show usages."
-msgstr ""
+msgstr "Tryk på Ctrl+Alt+H for at vise anvendelser."
