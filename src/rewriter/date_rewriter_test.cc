@@ -134,14 +134,6 @@ void InitSegment(const string &key, const string &value,
   AppendSegment(key, value, segments);
 }
 
-void InitMetaSegment(const string &key, const string &value,
-                     Segments *segments) {
-  segments->Clear();
-  Segment *seg = segments->add_segment();
-  seg->set_key(key);
-  InitCandidate(key, value, seg->add_meta_candidate());
-}
-
 void InsertCandidate(const string &key,
                 const string &value,
                 const int position,
