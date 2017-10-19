@@ -69,8 +69,8 @@ bool IsValidSourceSentence(const string &str) {
 
   // Source should not contain katakana
   string tmp, tmp2;
-  Util::StringReplace(str, "\xE3\x83\xBC", "", true, &tmp);  // "ー" -> ""
-  Util::StringReplace(tmp, "\xE3\x83\xBB", "", true, &tmp2);  // "・" -> ""
+  Util::StringReplace(str, "ー", "", true, &tmp);
+  Util::StringReplace(tmp, "・", "", true, &tmp2);
   if (Util::ContainsScriptType(tmp2, Util::KATAKANA)) {
     LOG(WARNING) << "contain KATAKANA: " << str;
     return false;
