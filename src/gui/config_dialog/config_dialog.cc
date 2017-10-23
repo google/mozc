@@ -127,31 +127,15 @@ ConfigDialog::ConfigDialog()
 
   suggestionsSizeSpinBox->setRange(1, 9);
 
-  // punctuationsSettingComboBox->addItem(QString::fromUtf8("、。"));
-  // punctuationsSettingComboBox->addItem(QString::fromUtf8("，．"));
-  // punctuationsSettingComboBox->addItem(QString::fromUtf8("、．"));
-  // punctuationsSettingComboBox->addItem(QString::fromUtf8("，。"));
-  punctuationsSettingComboBox->addItem
-      (QString::fromUtf8("\xE3\x80\x81\xE3\x80\x82"));
-  punctuationsSettingComboBox->addItem
-      (QString::fromUtf8("\xEF\xBC\x8C\xEF\xBC\x8E"));
-  punctuationsSettingComboBox->addItem
-      (QString::fromUtf8("\xE3\x80\x81\xEF\xBC\x8E"));
-  punctuationsSettingComboBox->addItem
-      (QString::fromUtf8("\xEF\xBC\x8C\xE3\x80\x82"));
+  punctuationsSettingComboBox->addItem(QString::fromUtf8("、。"));
+  punctuationsSettingComboBox->addItem(QString::fromUtf8("，．"));
+  punctuationsSettingComboBox->addItem(QString::fromUtf8("、．"));
+  punctuationsSettingComboBox->addItem(QString::fromUtf8("，。"));
 
-  // symbolsSettingComboBox->addItem(QString::fromUtf8("「」・"));
-  // symbolsSettingComboBox->addItem(QString::fromUtf8("[]／"));
-  // symbolsSettingComboBox->addItem(QString::fromUtf8("「」／"));
-  // symbolsSettingComboBox->addItem(QString::fromUtf8("[]・"));
-  symbolsSettingComboBox->addItem(
-      QString::fromUtf8("\xE3\x80\x8C\xE3\x80\x8D\xE3\x83\xBB"));
-  symbolsSettingComboBox->addItem(
-      QString::fromUtf8("[]\xEF\xBC\x8F"));
-  symbolsSettingComboBox->addItem(
-      QString::fromUtf8("\xE3\x80\x8C\xE3\x80\x8D\xEF\xBC\x8F"));
-  symbolsSettingComboBox->addItem(
-      QString::fromUtf8("[]\xE3\x83\xBB"));
+  symbolsSettingComboBox->addItem(QString::fromUtf8("「」・"));
+  symbolsSettingComboBox->addItem(QString::fromUtf8("[]／"));
+  symbolsSettingComboBox->addItem(QString::fromUtf8("「」／"));
+  symbolsSettingComboBox->addItem(QString::fromUtf8("[]・"));
 
   keymapSettingComboBox->addItem(tr("Custom keymap"));
   keymapSettingComboBox->addItem(tr("ATOK"));
@@ -196,7 +180,7 @@ ConfigDialog::ConfigDialog()
   verboseLevelComboBox->addItem(tr("1"));
   verboseLevelComboBox->addItem(tr("2"));
 
-  yenSignComboBox->addItem(tr("Yen Sign \xC2\xA5"));
+  yenSignComboBox->addItem(tr("Yen Sign ¥"));
   yenSignComboBox->addItem(tr("Backslash \\"));
 
 #ifndef OS_MACOSX
