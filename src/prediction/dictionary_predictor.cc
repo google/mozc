@@ -599,18 +599,10 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
                                          uint32 attributes,
                                          string *description) {
   if (types & TYPING_CORRECTION) {
-    // "補正"
-    Util::AppendStringWithDelimiter(
-        " ",
-        "\xE8\xA3\x9C\xE6\xAD\xA3",
-        description);
+    Util::AppendStringWithDelimiter(" ", "補正", description);
   }
   if (attributes & Segment::Candidate::AUTO_PARTIAL_SUGGESTION) {
-    // "部分"
-    Util::AppendStringWithDelimiter(
-        " ",
-        "\xE9\x83\xA8\xE5\x88\x86",
-        description);
+    Util::AppendStringWithDelimiter(" ", "部分", description);
   }
 }
 

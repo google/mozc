@@ -59,15 +59,6 @@
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 
-using std::unique_ptr;
-using std::unordered_set;
-
-using mozc::commands::Request;
-using mozc::dictionary::SuppressionDictionary;
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-using mozc::usage_stats::UsageStats;
-
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.
 DEFINE_bool(enable_expansion_for_user_history_predictor,
@@ -76,6 +67,16 @@ DEFINE_bool(enable_expansion_for_user_history_predictor,
 
 namespace mozc {
 namespace {
+
+using std::unique_ptr;
+using std::unordered_set;
+
+using commands::Request;
+using dictionary::SuppressionDictionary;
+using dictionary::DictionaryInterface;
+using dictionary::POSMatcher;
+using usage_stats::UsageStats;
+
 // Finds suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event
 const size_t kMaxSuggestionTrial = 3000;
@@ -114,9 +115,7 @@ const char kFileName[] = "user://.history.db";
 
 // Uses '\t' as a key/value delimiter
 const char kDelimiter[] = "\t";
-
-// "絵文字"
-const char kEmojiDescription[] = "\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97";
+const char kEmojiDescription[] = "絵文字";
 
 // TODO(peria, hidehiko): Unify this checker and IsEmojiCandidate in
 //     EmojiRewriter.  If you make similar functions before the merging in
@@ -127,16 +126,11 @@ bool IsEmojiEntry(const UserHistoryPredictor::Entry &entry) {
 }
 
 bool IsPunctuation(const string &value) {
-  //  return (value == "。" || value == "." ||
-  //          value == "、" || value == "," ||
-  //          value == "？" || value == "?" ||
-  //          value == "！" || value == "!" ||
-  //          value == "，" || value == "．");
-  return (value == "\xE3\x80\x82" || value == "." ||
-          value == "\xE3\x80\x81" || value == "," ||
-          value == "\xEF\xBC\x9F" || value == "?" ||
-          value == "\xEF\xBC\x81" || value == "!" ||
-          value == "\xEF\xBC\x8C" || value == "\xEF\xBC\x8E");
+  return (value == "。" || value == "." ||
+          value == "、" || value == "," ||
+          value == "？" || value == "?" ||
+          value == "！" || value == "!" ||
+          value == "，" || value == "．");
 }
 
 bool IsSentenceLikeCandidate(const Segment::Candidate &candidate) {
