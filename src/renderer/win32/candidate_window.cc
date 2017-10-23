@@ -80,10 +80,7 @@ enum COLUMN_TYPE {
   NUMBER_OF_COLUMNS,    // number of columns. (this item should be last)
 };
 
-// "そのほかの文字種"
-const char kMinimumCandidateAndDescriptionWidthAsString[] =
-    "\xe3\x81\x9d\xe3\x81\xae\xe3\x81\xbb\xe3\x81\x8b\xe3\x81\xae\xe6\x96\x87"
-    "\xe5\xad\x97\xe7\xa8\xae";
+const char kMinimumCandidateAndDescriptionWidthAsString[] = "そのほかの文字種";
 
 // Color scheme
 const COLORREF kFrameColor = RGB(0x96, 0x96, 0x96);

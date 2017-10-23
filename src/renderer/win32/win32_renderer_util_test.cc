@@ -333,14 +333,7 @@ class Win32RendererUtilTest : public testing::Test {
 
   static wstring GetTestMessageForMonospaced() {
     wstring w_path;
-    // "熊本県阿蘇郡南阿蘇村大字中松南阿蘇水の生まれる里白水高原駅"
-    const char kMessage[] =
-        "\xe7\x86\x8a\xe6\x9c\xac\xe7\x9c\x8c\xe9\x98\xbf\xe8\x98\x87\xe9\x83"
-        "\xa1\xe5\x8d\x97\xe9\x98\xbf\xe8\x98\x87\xe6\x9d\x91\xe5\xa4\xa7\xe5"
-        "\xad\x97\xe4\xb8\xad\xe6\x9d\xbe\xe5\x8d\x97\xe9\x98\xbf\xe8\x98\x87"
-        "\xe6\xb0\xb4\xe3\x81\xae\xe7\x94\x9f\xe3\x81\xbe\xe3\x82\x8c\xe3\x82"
-        "\x8b\xe9\x87\x8c\xe7\x99\xbd\xe6\xb0\xb4\xe9\xab\x98\xe5\x8e\x9f\xe9"
-        "\xa7\x85";
+    const char kMessage[] = "熊本県阿蘇郡南阿蘇村大字中松南阿蘇水の生まれる里白水高原駅";
     wstring w_message;
     Util::UTF8ToWide(kMessage, &w_message);
     return w_message;
@@ -348,10 +341,8 @@ class Win32RendererUtilTest : public testing::Test {
 
   static wstring GetTestMessageForProportional() {
     wstring w_path;
-    // "This open-source project originates from Google 日本語入力."
     const char kMessage[] =
-        "This open-source project originates from Google "
-        "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\xe5\x85\xa5\xe5\x8a\x9b.";
+        "This open-source project originates from Google 日本語入力.";
     wstring w_message;
     Util::UTF8ToWide(kMessage, &w_message);
     return w_message;
@@ -376,52 +367,37 @@ class Win32RendererUtilTest : public testing::Test {
       {
         Segment *segment = preedit->add_segment();
         segment->set_annotation(Segment::UNDERLINE);
-        // "これは"
-        segment->set_value("\343\201\223\343\202\214\343\201\257");
+        segment->set_value("これは");
         segment->set_value_length(3);
-        // "これは"
-        segment->set_key(
-            "\343\201\223\343\202\214\343\201\257");
+        segment->set_key("これは");
       }
       {
         Segment *segment = preedit->add_segment();
         segment->set_annotation(Segment::UNDERLINE);
-        // "、"
-        segment->set_value("\343\200\201");
+        segment->set_value("、");
         segment->set_value_length(1);
-        // "、"
-        segment->set_key("\343\200\201");
+        segment->set_key("、");
       }
       {
         Segment *segment = preedit->add_segment();
         segment->set_annotation(Segment::HIGHLIGHT);
-        // "Google"
         segment->set_value("Google");
         segment->set_value_length(6);
-        // "Google"
         segment->set_key("Google");
       }
       {
         Segment *segment = preedit->add_segment();
         segment->set_annotation(Segment::UNDERLINE);
-        // "日本語入力の"
-        segment->set_value("\346\227\245\346\234\254\350\252\236"
-                           "\345\205\245\345\212\233\343\201\256");
+        segment->set_value("日本語入力の");
         segment->set_value_length(6);
-        // "にほんごにゅうりょくの"
-        segment->set_key(
-            "\343\201\253\343\201\273\343\202\223\343\201\224\343\201\253\343"
-            "\202\205\343\201\206\343\202\212\343\202\207\343\201\217\343\201"
-            "\256");
+        segment->set_key("にほんごにゅうりょくの");
       }
       {
         Segment *segment = preedit->add_segment();
         segment->set_annotation(Segment::UNDERLINE);
-        // "Testです"
-        segment->set_value("Test\343\201\247\343\201\231");
+        segment->set_value("Testです");
         segment->set_value_length(6);
-        // "Testです"
-        segment->set_key("Test\343\201\247\343\201\231");
+        segment->set_key("Testです");
       }
       preedit->set_highlighted_position(3);
 
@@ -432,25 +408,16 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(0);
-          // "Google"
-          candidate->set_value(
-              "Google");
+          candidate->set_value("Google");
           Annotation *annotation = candidate->mutable_annotation();
-          // "[半] アルファベット"
-          annotation->set_description(
-              "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241"
-              "\343\203\231\343\203\203\343\203\210\202\277\343\202\253\343"
-              "\203\212");
+          annotation->set_description("[半] アルファベット");
           annotation->set_shortcut("1");
           candidate->set_id(0);
         }
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(1);
-          // "そのほかの文字種"
-          candidate->set_value(
-              "\343\201\235\343\201\256\343\201\273\343\201\213"
-              "\343\201\256\346\226\207\345\255\227\347\250\256");
+          candidate->set_value("そのほかの文字種");
           Annotation *annotation = candidate->mutable_annotation();
           annotation->set_shortcut("2");
           candidate->set_id(-11);
@@ -488,17 +455,9 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Segment *segment = preedit->add_segment();
           segment->set_annotation(Segment::UNDERLINE);
-          // "ねこを"
-          // "かいたい"
-          segment->set_value(
-              "\343\201\255\343\201\223\343\202\222"
-              "\343\201\213\343\201\204\343\201\237\343\201\204");
+          segment->set_value("ねこをかいたい");
           segment->set_value_length(7);
-          // "ねこを"
-          // "かいたい"
-          segment->set_key(
-              "\343\201\255\343\201\223\343\202\222"
-              "\343\201\213\343\201\204\343\201\237\343\201\204");
+          segment->set_key("ねこをかいたい");
         }
       }
       {
@@ -507,11 +466,7 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(0);
-          // "猫を"
-          // "飼いたい"
-          candidate->set_value(
-              "\347\214\253\343\202\222"
-              "\351\243\274\343\201\204\343\201\237\343\201\204");
+          candidate->set_value("猫を飼いたい");
           {
             Annotation *annotation = candidate->mutable_annotation();
             annotation->set_description("Real-time Conversion");
@@ -554,8 +509,7 @@ class Win32RendererUtilTest : public testing::Test {
         segment->set_annotation(Segment::UNDERLINE);
         string value;
         for (size_t i = 0; i < num_characters; ++i) {
-          // "あ"
-          value.append("\343\201\202");
+          value.append("あ");
         }
         segment->set_value(value);
         segment->set_value_length(num_characters);
@@ -570,9 +524,10 @@ class Win32RendererUtilTest : public testing::Test {
   // Initializes |command| for unit tests of caret.  Parameters to be set are
   // based on an actual application which supports both horizontal and vertical
   // writing.
-  static void SetRenderereCommandForSurrogatePair(
-      bool use_proportional_font, bool is_vertical, int cursor_offset,
-      HWND hwnd, RendererCommand *command) {
+  static void SetRenderereCommandForSurrogatePair(bool use_proportional_font,
+                                                  bool is_vertical,
+                                                  int cursor_offset, HWND hwnd,
+                                                  RendererCommand *command) {
     command->Clear();
     command->set_type(RendererCommand::UPDATE);
     command->set_visible(true);
@@ -587,38 +542,30 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Segment *segment = preedit->add_segment();
           segment->set_annotation(Segment::UNDERLINE);
-          // "𠮟咤"
-          segment->set_value("\360\240\256\237\345\222\244");
+          segment->set_value("𠮟咤");
           segment->set_value_length(2);
-          // "しった"
-          segment->set_key("\343\201\227\343\201\243\343\201\237");
+          segment->set_key("しった");
         }
         {
           Segment *segment = preedit->add_segment();
           segment->set_annotation(Segment::UNDERLINE);
-          // "𠮟咤"
-          segment->set_value("\360\240\256\237\345\222\244");
+          segment->set_value("𠮟咤");
           segment->set_value_length(2);
-          // "しった"
-          segment->set_key("\343\201\227\343\201\243\343\201\237");
+          segment->set_key("しった");
         }
         {
           Segment *segment = preedit->add_segment();
           segment->set_annotation(Segment::HIGHLIGHT);
-          // "𠮟咤"
-          segment->set_value("\360\240\256\237\345\222\244");
+          segment->set_value("𠮟咤");
           segment->set_value_length(2);
-          // "しった"
-          segment->set_key("\343\201\227\343\201\243\343\201\237");
+          segment->set_key("しった");
         }
         {
           Segment *segment = preedit->add_segment();
           segment->set_annotation(Segment::UNDERLINE);
-          // "𠮟咤"
-          segment->set_value("\360\240\256\237\345\222\244");
+          segment->set_value("𠮟咤");
           segment->set_value_length(2);
-          // "しった"
-          segment->set_key("\343\201\227\343\201\243\343\201\237");
+          segment->set_key("しった");
         }
         preedit->set_highlighted_position(4);
       }
@@ -629,8 +576,7 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(0);
-          // "𠮟咤"
-          candidate->set_value("\360\240\256\237\345\222\244");
+          candidate->set_value("𠮟咤");
           {
             Annotation *annotation = candidate->mutable_annotation();
             annotation->set_shortcut("1");
@@ -640,8 +586,7 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(1);
-          // "知った"
-          candidate->set_value("\347\237\245\343\201\243\343\201\237");
+          candidate->set_value("知った");
           {
             Annotation *annotation = candidate->mutable_annotation();
             annotation->set_shortcut("2");
@@ -651,13 +596,10 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(2);
-          // "しった"
-          candidate->set_value("\347\237\245\343\201\243\343\201\237");
+          candidate->set_value("知った");
           {
             Annotation *annotation = candidate->mutable_annotation();
-            // "ひらがな"
-            annotation->set_description(
-                "\343\201\262\343\202\211\343\201\214\343\201\252");
+            annotation->set_description("ひらがな");
             annotation->set_shortcut("3");
           }
           candidate->set_id(2);
@@ -665,14 +607,10 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(3);
-          // "しった"
-          candidate->set_value("\347\237\245\343\201\243\343\201\237");
+          candidate->set_value("知った");
           {
             Annotation *annotation = candidate->mutable_annotation();
-            // "[全] カタカナ"
-            annotation->set_description(
-                "[\345\205\250] "
-                "\343\202\253\343\202\277\343\202\253\343\203\212");
+            annotation->set_description("[全] カタカナ");
             annotation->set_shortcut("4");
           }
           candidate->set_id(4);
@@ -680,10 +618,7 @@ class Win32RendererUtilTest : public testing::Test {
         {
           Candidate *candidate = candidates->add_candidate();
           candidate->set_index(4);
-          // "そのほかの文字種"
-          candidate->set_value(
-              "\343\201\235\343\201\256\343\201\273\343\201\213"
-              "\343\201\256\346\226\207\345\255\227\347\250\256");
+          candidate->set_value("そのほかの文字種");
           {
             Annotation *annotation = candidate->mutable_annotation();
             annotation->set_shortcut("5");
@@ -710,110 +645,83 @@ class Win32RendererUtilTest : public testing::Test {
             output->mutable_all_candidate_words();
         all_candidate_words->set_focused_index(0);
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(0);
           candidate_word->set_index(0);
-          // "𠮟咤"
-          candidate_word->set_value("\360\240\256\237\345\222\244");
+          candidate_word->set_value("𠮟咤");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(1);
           candidate_word->set_index(1);
-          // "知った"
-          candidate_word->set_value("\347\237\245\343\201\243\343\201\237");
+          candidate_word->set_value("知った");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(2);
           candidate_word->set_index(2);
-          // "しっ"
-          candidate_word->set_key("\343\201\227\343\201\243");
-          // "しった"
-          candidate_word->set_value("\343\201\227\343\201\243\343\201\237");
+          candidate_word->set_key("しっ");
+          candidate_word->set_value("しった");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(4);
           candidate_word->set_index(3);
-          // "シッタ"
-          candidate_word->set_value("\343\202\267\343\203\203\343\202\277");
+          candidate_word->set_value("シッタ");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-1);
           candidate_word->set_index(4);
-          // "しった"
-          candidate_word->set_value("\343\201\227\343\201\243\343\201\237");
+          candidate_word->set_value("しった");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-2);
           candidate_word->set_index(5);
-          // "シッタ"
-          candidate_word->set_value("\343\202\267\343\203\203\343\202\277");
+          candidate_word->set_value("シッタ");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-3);
           candidate_word->set_index(6);
           candidate_word->set_value("shitta");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-4);
           candidate_word->set_index(7);
           candidate_word->set_value("SHITTA");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-6);
           candidate_word->set_index(8);
           candidate_word->set_value("Shitta");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-7);
           candidate_word->set_index(9);
-          // "ｓｈｉｔｔａ"
-          candidate_word->set_value("\357\275\223\357\275\210\357\275\211"
-                                    "\357\275\224\357\275\224\357\275\201");
+          candidate_word->set_value("ｓｈｉｔｔａ");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-8);
           candidate_word->set_index(10);
-          // "ＳＨＩＴＴＡ"
-          candidate_word->set_value("\357\274\263\357\274\250\357\274\251"
-                                    "\357\274\264\357\274\264\357\274\241");
+          candidate_word->set_value("ＳＨＩＴＴＡ");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-10);
           candidate_word->set_index(11);
-          // "Ｓｈｉｔｔａ"
-          candidate_word->set_value("\357\274\263\357\275\210\357\275\211"
-                                    "\357\275\224\357\275\224\357\275\201");
+          candidate_word->set_value("Ｓｈｉｔｔａ");
         }
         {
-          CandidateWord *candidate_word =
-              all_candidate_words->add_candidates();
+          CandidateWord *candidate_word = all_candidate_words->add_candidates();
           candidate_word->set_id(-11);
           candidate_word->set_index(12);
-          // "ｼｯﾀ"
-          candidate_word->set_value("\357\275\274\357\275\257\357\276\200");
+          candidate_word->set_value("ｼｯﾀ");
         }
         all_candidate_words->set_category(commands::CONVERSION);
       }
@@ -1498,8 +1406,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 648, 0, 0, 135, 49,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは"
-      const char kMsg[] = "\343\201\223\343\202\214\343\201\257";
+      const char kMsg[] = "これは";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1517,10 +1424,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1840, 697, 0, 0, 646, 49,
                                      0, 0, 646, 0, 647, 49, logfont, layout);
     {
-      // "、Google日本語入力のTestです"
-      const char kMsg[] =
-          "\343\200\201Google\346\227\245\346\234\254\350\252\236\345\205\245"
-          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      const char kMsg[] = "、Google日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1622,9 +1526,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1778, 599, 2019, 648, 0, 0, 241, 49,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは、Go"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Go";
+      const char kMsg[] = "これは、Go";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1648,10 +1550,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1734, 697, 0, 0, 540, 49,
                                      0, 0, 540, 0, 541, 49, logfont, layout);
     {
-      // "ogle日本語入力のTestです"
-      const char kMsg[] =
-          "ogle\346\227\245\346\234\254\350\252\236\345\205\245"
-          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      const char kMsg[] = "ogle日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1753,8 +1652,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1983, 927, 2034, 1062, 0, 0, 51, 135,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは"
-      const char kMsg[] = "\343\201\223\343\202\214\343\201\257";
+      const char kMsg[] = "これは";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1772,9 +1670,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1932, 712, 1983, 1088, 0, 0, 51, 376,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "、Google日本語入"
-      const char kMsg[] = "\343\200\201Google\346\227\245\346"
-                          "\234\254\350\252\236\345\205\245";
+      const char kMsg[] = "、Google日本語入";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1798,9 +1694,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1881, 712, 1932, 983, 0, 0, 51, 270,
                                      51, 0, 0, 270, 51, 271, logfont, layout);
     {
-      // "力のTestです"
-      const char kMsg[] =
-          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      const char kMsg[] = "力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1899,9 +1793,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1983, 837, 2034, 1105, 0, 0, 51, 268,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは、Goo"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Goo";
+      const char kMsg[] = "これは、Goo";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1925,9 +1817,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1932, 712, 1983, 1098, 0, 0, 51, 386,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "gle日本語入力のTe"
-      const char kMsg[] = "gle\346\227\245\346\234\254\350\252\236"
-                          "\345\205\245\345\212\233\343\201\256Te";
+      const char kMsg[] = "gle日本語入力のTe";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1951,8 +1841,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1881, 712, 1932, 840, 0, 0, 51, 127,
                                      51, 0, 0, 127, 51, 128, logfont, layout);
     {
-      // "stです"
-      const char kMsg[] = "st\343\201\247\343\201\231";
+      const char kMsg[] = "stです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2046,8 +1935,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 653, 0, 0, 135, 54,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは"
-      const char kMsg[] = "\343\201\223\343\202\214\343\201\257";
+      const char kMsg[] = "これは";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2065,10 +1953,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 653, 1840, 707, 0, 0, 646, 54,
                                      0, 0, 646, 0, 647, 54, logfont, layout);
     {
-      // "、Google日本語入力のTestです"
-      const char kMsg[] =
-          "\343\200\201Google\346\227\245\346\234\254\350\252\236\345\205\245"
-          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      const char kMsg[] = "、Google日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2171,9 +2056,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1778, 599, 2020, 653, 0, 0, 242, 54,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは、Go"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Go";
+      const char kMsg[] = "これは、Go";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2197,10 +2080,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 653, 1733, 707, 0, 0, 539, 54,
                                      0, 0, 539, 0, 540, 54, logfont, layout);
     {
-      // "ogle日本語入力のTestです"
-      const char kMsg[] =
-          "ogle\346\227\245\346\234\254\350\252\236\345\205\245"
-          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      const char kMsg[] = "ogle日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2302,8 +2182,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1978, 927, 2034, 1062, 0, 0, 56, 135,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは"
-      const char kMsg[] = "\343\201\223\343\202\214\343\201\257";
+      const char kMsg[] = "これは";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2321,9 +2200,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1922, 712, 1978, 1089, 0, 0, 56, 377,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "、Google日本語入"
-      const char kMsg[] = "\343\200\201Google\346\227\245\346"
-                          "\234\254\350\252\236\345\205\245";
+      const char kMsg[] = "、Google日本語入";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2347,9 +2224,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1866, 712, 1922, 982, 0, 0, 56, 269,
                                      56, 0, 0, 269, 56, 270, logfont, layout);
     {
-      // "力のTestです"
-      const char kMsg[] =
-          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      const char kMsg[] = "力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2448,9 +2323,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1978, 837, 2034, 1079, 0, 0, 56, 242,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは、Go"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Go";
+      const char kMsg[] = "これは、Go";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2474,9 +2347,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1922, 712, 1978, 1100, 0, 0, 56, 388,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "ogle日本語入力のT"
-      const char kMsg[] = "ogle\346\227\245\346\234\254\350\252\236"
-                          "\345\205\245\345\212\233\343\201\256T";
+      const char kMsg[] = "ogle日本語入力のT";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2500,8 +2371,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1866, 712, 1922, 864, 0, 0, 56, 151,
                                      56, 0, 0, 151, 56, 152, logfont, layout);
     {
-      // "estです"
-      const char kMsg[] = "est\343\201\247\343\201\231";
+      const char kMsg[] = "estです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2595,11 +2465,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1975, 697, 0, 0, 781, 49,
                                      0, 0, 781, 0, 782, 49, logfont, layout);
     {
-      // "これは、Google日本語入力のTestです"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Google\346\227\245"
-          "\346\234\254\350\252\236\345\205\245\345\212\233\343\201\256Test"
-          "\343\201\247\343\201\231";
+      const char kMsg[] = "これは、Google日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2658,11 +2524,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 653, 1975, 707, 0, 0, 781, 54,
                                      0, 0, 781, 0, 782, 54, logfont, layout);
     {
-      // "これは、Google日本語入力のTestです"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Google\346\227\245"
-          "\346\234\254\350\252\236\345\205\245\345\212\233\343\201\256Test"
-          "\343\201\247\343\201\231";
+      const char kMsg[] = "これは、Google日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2723,9 +2585,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1932, 712, 1983, 1088, 0, 0, 51, 376,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは、Google日"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Google\346\227\245";
+      const char kMsg[] = "これは、Google日";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2752,10 +2612,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1881, 712, 1932, 1072, 0, 0, 51, 360,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "本語入力のTestで"
-      const char kMsg[] =
-          "\346\234\254\350\252\236\345\205\245\345\212\233\343\201\256Test"
-          "\343\201\247";
+      const char kMsg[] = "本語入力のTestで";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2776,8 +2633,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1830, 712, 1881, 758, 0, 0, 51, 45,
                                      51, 0, 0, 45, 51, 46, logfont, layout);
     {
-      // "す"
-      const char kMsg[] = "\343\201\231";
+      const char kMsg[] = "す";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2826,9 +2682,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1922, 712, 1978, 1089, 0, 0, 56, 377,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは、Google日"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Google\346\227\245";
+      const char kMsg[] = "これは、Google日";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2855,10 +2709,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1866, 712, 1922, 1071, 0, 0, 56, 359,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "本語入力のTestで"
-      const char kMsg[] =
-          "\346\234\254\350\252\236\345\205\245\345\212\233\343\201\256Test"
-          "\343\201\247";
+      const char kMsg[] = "本語入力のTestで";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2879,8 +2730,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1810, 712, 1866, 758, 0, 0, 56, 45,
                                      56, 0, 0, 45, 56, 46, logfont, layout);
     {
-      // "す"
-      const char kMsg[] = "\343\201\231";
+      const char kMsg[] = "す";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3382,8 +3232,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 648, 0, 0, 135, 49,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
-      // "これは"
-      const char kMsg[] = "\343\201\223\343\202\214\343\201\257";
+      const char kMsg[] = "これは";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3401,10 +3250,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1840, 697, 0, 0, 646, 49,
                                      0, 0, 646, 0, 647, 49, logfont, layout);
     {
-      // "、Google日本語入力のTestです"
-      const char kMsg[] =
-          "\343\200\201Google\346\227\245\346\234\254\350\252\236\345\205\245"
-          "\345\212\233\343\201\256Test\343\201\247\343\201\231";
+      const char kMsg[] = "、Google日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3532,10 +3378,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1548, 1416, 1777, 1434, 0, 0, 229, 18,
                                      0, 0, 0, 0, 0, 0, default_font, layout);
     {
-      // "これは、Google日本語入力のTest"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Google\346\227\245"
-          "\346\234\254\350\252\236\345\205\245\345\212\233\343\201\256Test";
+      const char kMsg[] = "これは、Google日本語入力のTest";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3565,8 +3408,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1548, 1434, 1579, 1452, 0, 0, 30, 18,
                                      0, 0, 30, 0, 31, 18, default_font, layout);
     {
-      // "です"
-      const char kMsg[] = "\343\201\247\343\201\231";
+      const char kMsg[] = "です";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3651,11 +3493,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(221, 194, 481, 212, 0, 0, 259, 18, 0, 0,
                                      259, 0, 260, 18, default_font, layout);
     {
-      // "これは、Google日本語入力のTestです"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Google\346\227\245"
-          "\346\234\254\350\252\236\345\205\245\345\212\233\343\201\256"
-          "Test\343\201\247\343\201\231";
+      const char kMsg[] = "これは、Google日本語入力のTestです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3770,9 +3608,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(955, 1074, 1065, 1092, 0, 0, 110, 18, 0, 0,
                                      0, 0, 0, 0, default_font, layout);
     {
-      // "これは、Google"
-      const char kMsg[] =
-          "\343\201\223\343\202\214\343\201\257\343\200\201Google";
+      const char kMsg[] = "これは、Google";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3796,10 +3632,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(953, 1092, 1067, 1110, 0, 0, 114, 18, 0, 0,
                                      0, 0, 0, 0, default_font, layout);
     {
-      // "日本語入力のTes"
-      const char kMsg[] =
-          "\346\227\245\346\234\254\350\252\236\345\205\245\345\212\233"
-          "\343\201\256Tes";
+      const char kMsg[] = "日本語入力のTes";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3820,8 +3653,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(953, 1110, 989, 1128, 0, 0, 35, 18, 0, 0,
                                      35, 0, 36, 18, default_font, layout);
     {
-      // "tです"
-      const char kMsg[] = "t\343\201\247\343\201\231";
+      const char kMsg[] = "tです";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3869,10 +3701,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 360, 0, 361, 49, logfont,
                                      layout);
     {
-      // "𠮟咤𠮟咤𠮟咤𠮟咤"
-      const char kMsg[] =
-          "\360\240\256\237\345\222\244\360\240\256\237\345\222\244"
-          "\360\240\256\237\345\222\244\360\240\256\237\345\222\244";
+      const char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3930,10 +3759,7 @@ TEST_F(Win32RendererUtilTest,
         1932, 712, 1983, 1073, 0, 0, 51, 360, 51, 0,
         0, 360, 51, 361, logfont, layout);
     {
-      // "𠮟咤𠮟咤𠮟咤𠮟咤"
-      const char kMsg[] =
-          "\360\240\256\237\345\222\244\360\240\256\237\345\222\244"
-          "\360\240\256\237\345\222\244\360\240\256\237\345\222\244";
+      const char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -4007,9 +3833,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Suggest) {
       &app_info, -15, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, FF_MODERN | FIXED_PITCH,
-      // "ＭＳゴシック"
-      "\357\274\255\357\274\263 "
-      "\343\202\264\343\202\267\343\203\203\343\202\257");
+      "ＭＳ ゴシック");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::RECT, 112, 25, 48, 0, 1408, 552);
@@ -4048,9 +3872,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Convert) {
       &app_info, -15, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, FF_MODERN | FIXED_PITCH,
-      // "ＭＳゴシック"
-      "\357\274\255\357\274\263 "
-      "\343\202\264\343\202\267\343\203\203\343\202\257");
+      "ＭＳ ゴシック");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::RECT, 112, 25, 48, 0, 1408, 552);
@@ -4090,9 +3912,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Suggest) {
       &app_info, -15, 0, 2700, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, FF_MODERN | FIXED_PITCH,
-      // "@ＭＳゴシック"
-      "@\357\274\255\357\274\263 "
-      "\343\202\264\343\202\267\343\203\203\343\202\257");
+      "@ＭＳ ゴシック");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::RECT, 660, 48, 0, 48, 688, 397);
@@ -4133,9 +3953,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Convert) {
       &app_info, -15, 0, 2700, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, FF_MODERN | FIXED_PITCH,
-      // "@ＭＳゴシック"
-      "@\357\274\255\357\274\263 "
-      "\343\202\264\343\202\267\343\203\203\343\202\257");
+      "@ＭＳ ゴシック");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::RECT, 660, 48, 0, 48, 668, 397);
@@ -4256,8 +4074,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Indicator) {
       &app_info, -16, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_STROKE_PRECIS, CLIP_STROKE_PRECIS,
       DRAFT_QUALITY, 50,
-      // "メイリオ"
-      "\343\203\241\343\202\244\343\203\252\343\202\252");
+      "メイリオ");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::POINT, 48, 589,
@@ -4299,8 +4116,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Suggest) {
       &app_info, -16, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_STROKE_PRECIS, CLIP_STROKE_PRECIS,
       DRAFT_QUALITY, 50,
-      // "メイリオ"
-      "\343\203\241\343\202\244\343\203\252\343\202\252");
+      "メイリオ");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::POINT, 48, 589,
@@ -4343,8 +4159,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Convert) {
       &app_info, -16, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_STROKE_PRECIS, CLIP_STROKE_PRECIS,
       DRAFT_QUALITY, 50,
-      // "メイリオ"
-      "\343\203\241\343\202\244\343\203\252\343\202\252");
+      "メイリオ");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::POINT, 48, 589,
@@ -4491,8 +4306,7 @@ TEST_F(Win32RendererUtilTest, Qt_Suggest) {
       &app_info, -12, 0, 0, 0, FW_DONTCARE, DEFAULT_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 0,
-      // "メイリオ"
-      "\343\203\241\343\202\244\343\203\252\343\202\252");
+      "メイリオ");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::FORCE_POSITION, 211, 68,
@@ -4536,8 +4350,7 @@ TEST_F(Win32RendererUtilTest, Qt_Convert) {
       &app_info, -12, 0, 0, 0, FW_DONTCARE, DEFAULT_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 0,
-      // "メイリオ"
-      "\343\203\241\343\202\244\343\203\252\343\202\252");
+      "メイリオ");
 
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::FORCE_POSITION, 187, 68,
@@ -4581,9 +4394,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Indicator) {
       &app_info, 10, 0, 0, 0, FW_DONTCARE, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 17,
-      // "ＭＳＰゴシック"
-      "\357\274\255\357\274\263 "
-      "\357\274\260\343\202\264\343\202\267\343\203\203\343\202\257");
+      "ＭＳ Ｐゴシック");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 62, 42, 62, 21, 64, 42);
@@ -4623,9 +4434,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Suggest) {
       &app_info, 10, 0, 0, 0, FW_DONTCARE, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 17,
-      // "ＭＳＰゴシック"
-      "\357\274\255\357\274\263 "
-      "\357\274\260\343\202\264\343\202\267\343\203\203\343\202\257");
+      "ＭＳ Ｐゴシック");
 
   AppInfoUtil::SetCompositionTarget(
       &app_info, 0, 681, 596, 17, 625, 579, 1317, 879);
@@ -4663,9 +4472,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Convert) {
       &app_info, 10, 0, 0, 0, FW_DONTCARE, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 17,
-      // "ＭＳＰゴシック"
-      "\357\274\255\357\274\263 "
-      "\357\274\260\343\202\264\343\202\267\343\203\203\343\202\257");
+      "ＭＳ Ｐゴシック");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 62, 42, 62, 21, 64, 42);
@@ -4706,8 +4513,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Suggest) {
       &app_info, -14, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_SCREEN_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 17,
-      // "ＭＳ 明朝"
-      "\357\274\255\357\274\263 \346\230\216\346\234\235");
+      "ＭＳ 明朝");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 234, 176,
@@ -4749,8 +4555,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Convert) {
       &app_info, -14, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_SCREEN_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 17,
-      // "ＭＳ 明朝"
-      "\357\274\255\357\274\263 \346\230\216\346\234\235");
+      "ＭＳ 明朝");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 206, 178,
@@ -4792,8 +4597,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Suggest) {
       &app_info, -14, 0, 2700, 2700, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_SCREEN_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 17,
-      // "@ＭＳ 明朝"
-      "@\357\274\255\357\274\263 \346\230\216\346\234\235");
+      "@ＭＳ 明朝");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 662, 228,
@@ -4835,8 +4639,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Convert) {
       &app_info, -14, 0, 2700, 2700, FW_NORMAL, SHIFTJIS_CHARSET,
       OUT_SCREEN_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 17,
-      // "@ＭＳ 明朝"
-      "@\357\274\255\357\274\263 \346\230\216\346\234\235");
+      "@ＭＳ 明朝");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 661, 200,
@@ -4948,8 +4751,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Suggest) {
       &app_info, 11, 0, 0, 0, FW_DONTCARE, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 0,
-      // "メイリオ"
-      "\343\203\241\343\202\244\343\203\252\343\202\252");
+      "メイリオ");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 84, 424, 84, 424, 85, 444);
@@ -4987,8 +4789,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Convert) {
       &app_info, 11, 0, 0, 0, FW_DONTCARE, SHIFTJIS_CHARSET,
       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       DEFAULT_QUALITY, 0,
-      // "メイリオ"
-      "\343\203\241\343\202\244\343\203\252\343\202\252");
+      "メイリオ");
 
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 58, 424, 58, 424, 59, 444);

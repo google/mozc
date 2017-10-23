@@ -296,23 +296,19 @@ class IndicatorWindow::WindowImpl
         info.label = "A";
         break;
       case commands::HIRAGANA:
-        // "あ"
-        info.label = "\xE3\x81\x82";
+        info.label = "あ";
         break;
       case commands::FULL_KATAKANA:
-        // "ア"
-        info.label = "\xE3\x82\xA2";
+        info.label = "ア";
         break;
       case commands::HALF_ASCII:
         info.label = "_A";
         break;
       case commands::FULL_ASCII:
-        // "Ａ"
-        info.label = "\xEF\xBC\xA1";
+        info.label = "Ａ";
         break;
       case commands::HALF_KATAKANA:
-        // "_ｱ"
-        info.label = "\x5F\xEF\xBD\xB1";
+        info.label = "_ｱ";
         break;
     }
     if (!info.label.empty()) {
