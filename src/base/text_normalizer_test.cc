@@ -38,50 +38,32 @@ namespace mozc {
 
 TEST(TextNormalizerTest, NormalizeText) {
   string output;
-  // "めかぶ"
-  TextNormalizer::NormalizeText("\xe3\x82\x81\xe3\x81\x8b\xe3\x81\xb6",
-                                &output);
-  // "めかぶ"
-  EXPECT_EQ("\xe3\x82\x81\xe3\x81\x8b\xe3\x81\xb6", output);
+  TextNormalizer::NormalizeText("めかぶ", &output);
+  EXPECT_EQ("めかぶ", output);
 
-  // "ゔぁいおりん"
-  TextNormalizer::NormalizeText("\xe3\x82\x94\xe3\x81\x81\xe3\x81\x84"
-                                "\xe3\x81\x8a\xe3\x82\x8a\xe3\x82\x93",
-                                &output);
-  // "ゔぁいおりん"
-  EXPECT_EQ("\xe3\x82\x94\xe3\x81\x81\xe3\x81\x84"
-            "\xe3\x81\x8a\xe3\x82\x8a\xe3\x82\x93",
-            output);
+  TextNormalizer::NormalizeText("ゔぁいおりん", &output);
+  EXPECT_EQ("ゔぁいおりん", output);
 
-  // "ぐ〜ぐる"
-  TextNormalizer::NormalizeText("\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90"
-                                "\xe3\x82\x8b", &output);
+  // "〜" is U+301C
+  TextNormalizer::NormalizeText("ぐ〜ぐる", &output);
 #ifdef OS_WIN
-  // "ぐ～ぐる"
-  EXPECT_EQ("\xe3\x81\x90\xef\xbd\x9e\xe3\x81\x90\xe3\x82\x8b", output);
+  EXPECT_EQ("ぐ～ぐる", output);  // "～" is U+FF5E
 #else
-  // "ぐ〜ぐる"
-  EXPECT_EQ("\xe3\x81\x90\xe3\x80\x9c\xe3\x81\x90\xe3\x82\x8b", output);
+  EXPECT_EQ("ぐ〜ぐる", output);  // "〜" is U+301C
 #endif
 
-  // "１−２−３": "−" is U+2212
-  TextNormalizer::NormalizeText(
-      "\xEF\xBC\x91\xE2\x88\x92\xEF\xBC\x92\xE2\x88\x92\xEF\xBC\x93",
-      &output);
+  // "−" is U+2212
+  TextNormalizer::NormalizeText("１−２−３", &output);
 #ifdef OS_WIN
-  // "１－２－３": "－" is U+FF0D
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8D\xEF\xBC\x92\xEF\xBC\x8D\xEF\xBC\x93",
-            output);
+  EXPECT_EQ("１－２－３", output);  // "－" is U+FF0D
 #else
-  // "１−２−３": "−" is U+2212
-  EXPECT_EQ("\xEF\xBC\x91\xE2\x88\x92\xEF\xBC\x92\xE2\x88\x92\xEF\xBC\x93",
-            output);
+  EXPECT_EQ("１−２−３", output);  // "−" is U+2212
 #endif
 
-  // "¥298": "¥" is U+00A5
-  TextNormalizer::NormalizeText("\xC2\xA5\x32\x39\x38", &output);
+  // "¥" is U+00A5
+  TextNormalizer::NormalizeText("¥298", &output);
   // U+00A5 is no longer normalized.
-  EXPECT_EQ("\xC2\xA5\x32\x39\x38", output);
+  EXPECT_EQ("¥298", output);
 }
 
 }  // namespace mozc
