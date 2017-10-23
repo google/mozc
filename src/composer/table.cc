@@ -109,17 +109,17 @@ Table::~Table() {
   ResetEntrySet();
 }
 
-static const char kKuten[]  = "\xE3\x80\x81";  // "、"
-static const char kTouten[] = "\xE3\x80\x82";  // "。"
-static const char kComma[]  = "\xEF\xBC\x8C";  // "，"
-static const char kPeriod[] = "\xEF\xBC\x8E";  // "．"
+static const char kKuten[]  = "、";
+static const char kTouten[] = "。";
+static const char kComma[]  = "，";
+static const char kPeriod[] = "．";
 
-static const char kCornerOpen[]  = "\xE3\x80\x8C";  // "「"
-static const char kCornerClose[] = "\xE3\x80\x8D";  // "」"
-static const char kSlash[]       = "\xEF\xBC\x8F";  // "／"
+static const char kCornerOpen[]  = "「";
+static const char kCornerClose[] = "」";
+static const char kSlash[]       = "／";
 static const char kSquareOpen[]  = "[";
 static const char kSquareClose[] = "]";
-static const char kMiddleDot[]   = "\xE3\x83\xBB";  // "・"
+static const char kMiddleDot[]   = "・";
 
 bool Table::InitializeWithRequestAndConfig(
     const commands::Request &request,

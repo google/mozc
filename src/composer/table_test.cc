@@ -48,30 +48,18 @@ using mozc::config::Config;
 using mozc::commands::Request;
 
 static void InitTable(Table* table) {
-  // "あ"
-  table->AddRule("a",  "\xe3\x81\x82", "");
-  // "い"
-  table->AddRule("i",  "\xe3\x81\x84", "");
-  // "か"
-  table->AddRule("ka", "\xe3\x81\x8b", "");
-  // "き"
-  table->AddRule("ki", "\xe3\x81\x8d", "");
-  // "く"
-  table->AddRule("ku", "\xe3\x81\x8f", "");
-  // "け"
-  table->AddRule("ke", "\xe3\x81\x91", "");
-  // "こ"
-  table->AddRule("ko", "\xe3\x81\x93", "");
-  // "っ"
-  table->AddRule("kk", "\xe3\x81\xa3", "k");
-  // "な"
-  table->AddRule("na", "\xe3\x81\xaa", "");
-  // "に"
-  table->AddRule("ni", "\xe3\x81\xab", "");
-  // "ん"
-  table->AddRule("n",  "\xe3\x82\x93", "");
-  // "ん"
-  table->AddRule("nn", "\xe3\x82\x93", "");
+  table->AddRule("a",  "あ", "");
+  table->AddRule("i",  "い", "");
+  table->AddRule("ka", "か", "");
+  table->AddRule("ki", "き", "");
+  table->AddRule("ku", "く", "");
+  table->AddRule("ke", "け", "");
+  table->AddRule("ko", "こ", "");
+  table->AddRule("kk", "っ", "k");
+  table->AddRule("na", "な", "");
+  table->AddRule("ni", "に", "");
+  table->AddRule("n",  "ん", "");
+  table->AddRule("nn", "ん", "");
 }
 
 string GetResult(const Table &table, const string &key) {
@@ -113,24 +101,16 @@ TEST_F(TableTest, LookUp) {
     const char* expected_output;
     const char* expected_pending;
   } test_cases[] = {
-    // "あ"
-    { "a", true, "\xe3\x81\x82", "" },
+    { "a", true, "あ", "" },
     { "k", false, "", "" },
-    // "か"
-    { "ka", true, "\xe3\x81\x8b", "" },
-    // "き"
-    { "ki", true, "\xe3\x81\x8d", "" },
-    // "く"
-    { "ku", true, "\xe3\x81\x8f", "" },
-    // "っ"
-    { "kk", true, "\xe3\x81\xa3", "k" },
+    { "ka", true, "か", "" },
+    { "ki", true, "き", "" },
+    { "ku", true, "く", "" },
+    { "kk", true, "っ", "k" },
     { "aka", false, "", "" },
-    // "な"
-    { "na", true, "\xe3\x81\xaa", "" },
-    // "ん"
-    { "n", true, "\xe3\x82\x93", "" },
-    // "ん"
-    { "nn", true, "\xe3\x82\x93", "" },
+    { "na", true, "な", "" },
+    { "n", true, "ん", "" },
+    { "nn", true, "ん", "" },
   };
   static const int size = arraysize(test_cases);
 
@@ -169,22 +149,14 @@ TEST_F(TableTest, Punctuations) {
     const char *input;
     const char *expected;
   } test_cases[] = {
-    // "、"
-    { config::Config::KUTEN_TOUTEN, ",",  "\xe3\x80\x81" },
-    // "。"
-    { config::Config::KUTEN_TOUTEN, ".",  "\xe3\x80\x82" },
-    // "，"
-    { config::Config::COMMA_PERIOD, ",",  "\xef\xbc\x8c" },
-    // "．"
-    { config::Config::COMMA_PERIOD, ".",  "\xef\xbc\x8e" },
-    // "、"
-    { config::Config::KUTEN_PERIOD, ",",  "\xe3\x80\x81" },
-    // "．"
-    { config::Config::KUTEN_PERIOD, ".",  "\xef\xbc\x8e" },
-    // "，"
-    { config::Config::COMMA_TOUTEN, ",",  "\xef\xbc\x8c" },
-    // "。"
-    { config::Config::COMMA_TOUTEN, ".",  "\xe3\x80\x82" },
+    { config::Config::KUTEN_TOUTEN, ",",  "、" },
+    { config::Config::KUTEN_TOUTEN, ".",  "。" },
+    { config::Config::COMMA_PERIOD, ",",  "，" },
+    { config::Config::COMMA_PERIOD, ".",  "．" },
+    { config::Config::KUTEN_PERIOD, ",",  "、" },
+    { config::Config::KUTEN_PERIOD, ".",  "．" },
+    { config::Config::COMMA_TOUTEN, ",",  "，" },
+    { config::Config::COMMA_TOUTEN, ".",  "。" },
   };
 
   commands::Request request;
@@ -209,26 +181,18 @@ TEST_F(TableTest, Symbols) {
     const char *input;
     const char *expected;
   } test_cases[] = {
-    // "「"
-    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "[",  "\xe3\x80\x8c" },
-    // "」"
-    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "]",  "\xe3\x80\x8d" },
-    // "・"
-    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "/",  "\xe3\x83\xbb" },
+    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "[",  "「" },
+    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "]",  "」" },
+    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "/",  "・" },
     { config::Config::SQUARE_BRACKET_SLASH, "[",  "["      },
     { config::Config::SQUARE_BRACKET_SLASH, "]",  "]"      },
-    // "／"
-    { config::Config::SQUARE_BRACKET_SLASH, "/",  "\xef\xbc\x8f"      },
-    // "「"
-    { config::Config::CORNER_BRACKET_SLASH, "[",  "\xe3\x80\x8c"      },
-    // "」"
-    { config::Config::CORNER_BRACKET_SLASH, "]",  "\xe3\x80\x8d"      },
-    // "／"
-    { config::Config::CORNER_BRACKET_SLASH, "/",  "\xef\xbc\x8f"      },
+    { config::Config::SQUARE_BRACKET_SLASH, "/",  "／"      },
+    { config::Config::CORNER_BRACKET_SLASH, "[",  "「"      },
+    { config::Config::CORNER_BRACKET_SLASH, "]",  "」"      },
+    { config::Config::CORNER_BRACKET_SLASH, "/",  "／"      },
     { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "[",  "[" },
     { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "]",  "]" },
-    // "・"
-    { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "/",  "\xe3\x83\xbb" },
+    { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "/",  "・" },
   };
 
   commands::Request request;
@@ -258,8 +222,7 @@ TEST_F(TableTest, KanaSuppressed) {
 
   const Entry *entry = table.LookUp("a");
   ASSERT_TRUE(entry != NULL);
-  // "あ"
-  EXPECT_EQ("\xE3\x81\x82", entry->result());
+  EXPECT_EQ("あ", entry->result());
   EXPECT_TRUE(entry->pending().empty());
 }
 
@@ -268,11 +231,9 @@ TEST_F(TableTest, KanaCombination) {
   commands::Request request;
   ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config_,
                                                    mock_data_manager_));
-  // "か゛"
-  const Entry *entry = table.LookUp("\xE3\x81\x8B\xE3\x82\x9B");
+  const Entry *entry = table.LookUp("か゛");
   ASSERT_TRUE(entry != NULL);
-  // "が"
-  EXPECT_EQ("\xE3\x81\x8C", entry->result());
+  EXPECT_EQ("が", entry->result());
   EXPECT_TRUE(entry->pending().empty());
 }
 
@@ -743,8 +704,7 @@ TEST_F(TableTest, MobileMode) {
       entry = table.LookUpPrefix("2", &key_length, &fixed);
       EXPECT_EQ("2", entry->input());
       EXPECT_EQ("", entry->result());
-      // "か"
-      EXPECT_EQ("\xE3\x81\x8B", entry->pending());
+      EXPECT_EQ("か", entry->pending());
       EXPECT_EQ(1, key_length);
       EXPECT_TRUE(fixed);
     }
@@ -752,14 +712,11 @@ TEST_F(TableTest, MobileMode) {
       const mozc::composer::Entry *entry = NULL;
       size_t key_length = 0;
       bool fixed = false;
-      // "し*"
-      entry = table.LookUpPrefix("\xE3\x81\x97*", &key_length, &fixed);
-      // "し*"
-      EXPECT_EQ("\xE3\x81\x97*", entry->input());
+      entry = table.LookUpPrefix("し*", &key_length, &fixed);
+      EXPECT_EQ("し*", entry->input());
       EXPECT_EQ("", entry->result());
-      // "\x0F*\x0Eじ"
       // 0F and 0E are shift in/out characters.
-      EXPECT_EQ("\x0F*\x0E\xE3\x81\x98", entry->pending());
+      EXPECT_EQ("\x0F*\x0Eじ", entry->pending());
       EXPECT_EQ(4, key_length);
       EXPECT_TRUE(fixed);
     }
@@ -789,11 +746,8 @@ TEST_F(TableTest, MobileMode) {
       const mozc::composer::Entry *entry = NULL;
       size_t key_length = 0;
       bool fixed = false;
-      // "しゃ*"
-      entry = table.LookUpPrefix("\xE3\x81\x97\xE3\x82\x83*", &key_length,
-                                 &fixed);
-      // "じゃ"
-      EXPECT_EQ("\xE3\x81\x98\xE3\x82\x83", entry->pending());
+      entry = table.LookUpPrefix("しゃ*", &key_length, &fixed);
+      EXPECT_EQ("じゃ", entry->pending());
     }
   }
 
@@ -808,8 +762,7 @@ TEST_F(TableTest, MobileMode) {
     bool fixed = false;
     const mozc::composer::Entry *entry = table.LookUpPrefix("a", &key_length,
                                                             &fixed);
-    // "き"
-    EXPECT_EQ("\xE3\x81\x8D", entry->pending());
+    EXPECT_EQ("き", entry->pending());
   }
 
   {
@@ -823,8 +776,7 @@ TEST_F(TableTest, MobileMode) {
     bool fixed = false;
     const mozc::composer::Entry *entry = table.LookUpPrefix("a", &key_length,
                                                             &fixed);
-    // "き"
-    EXPECT_EQ("\xE3\x81\x8D", entry->pending());
+    EXPECT_EQ("き", entry->pending());
   }
 }
 

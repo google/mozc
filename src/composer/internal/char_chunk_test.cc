@@ -42,12 +42,9 @@ namespace composer {
 TEST(CharChunkTest, AddInput_CharByChar) {
   // Test against http://b/1547858
   Table table;
-  // "い"
-  table.AddRule("i", "\xe3\x81\x84", "");
-  // "っ"
-  table.AddRule("tt", "\xe3\x81\xa3", "t");
-  // "た"
-  table.AddRule("ta", "\xe3\x81\x9f", "");
+  table.AddRule("i", "い", "");
+  table.AddRule("tt", "っ", "t");
+  table.AddRule("ta", "た", "");
 
   string input;
 
@@ -56,8 +53,7 @@ TEST(CharChunkTest, AddInput_CharByChar) {
   EXPECT_FALSE(chunk1.AddInputInternal(&input));
   EXPECT_TRUE(chunk1.IsFixed());
   EXPECT_EQ("i", chunk1.raw());
-  // "い"
-  EXPECT_EQ("\xe3\x81\x84", chunk1.conversion());
+  EXPECT_EQ("い", chunk1.conversion());
   EXPECT_EQ("", chunk1.pending());
   EXPECT_EQ("", input);
 
@@ -74,8 +70,7 @@ TEST(CharChunkTest, AddInput_CharByChar) {
   EXPECT_FALSE(chunk2.AddInputInternal(&input));
   EXPECT_FALSE(chunk2.IsFixed());
   EXPECT_EQ("tt", chunk2.raw());
-  // "っ"
-  EXPECT_EQ("\xe3\x81\xa3", chunk2.conversion());
+  EXPECT_EQ("っ", chunk2.conversion());
   EXPECT_EQ("t", chunk2.pending());
   EXPECT_EQ("", input);
 
@@ -83,8 +78,7 @@ TEST(CharChunkTest, AddInput_CharByChar) {
   EXPECT_FALSE(chunk2.AddInputInternal(&input));
   EXPECT_TRUE(chunk2.IsFixed());
   EXPECT_EQ("tta", chunk2.raw());
-  // "った"
-  EXPECT_EQ("\xe3\x81\xa3\xe3\x81\x9f", chunk2.conversion());
+  EXPECT_EQ("った", chunk2.conversion());
   EXPECT_EQ("", chunk2.pending());
   EXPECT_EQ("", input);
 }
@@ -166,12 +160,9 @@ TEST(CharChunkTest, AddInput_ForN) {
 TEST(CharChunkTest, AddInput_WithString) {
   // Test against http://b/1547858
   Table table;
-  // "い"
-  table.AddRule("i", "\xe3\x81\x84", "");
-  // "っ"
-  table.AddRule("tt", "\xe3\x81\xa3", "t");
-  // "た"
-  table.AddRule("ta", "\xe3\x81\x9f", "");
+  table.AddRule("i", "い", "");
+  table.AddRule("tt", "っ", "t");
+  table.AddRule("ta", "た", "");
 
   string input = "itta";
 
@@ -179,8 +170,7 @@ TEST(CharChunkTest, AddInput_WithString) {
   EXPECT_FALSE(chunk1.AddInputInternal(&input));
   EXPECT_TRUE(chunk1.IsFixed());
   EXPECT_EQ("i", chunk1.raw());
-  // "い"
-  EXPECT_EQ("\xe3\x81\x84", chunk1.conversion());
+  EXPECT_EQ("い", chunk1.conversion());
   EXPECT_EQ("", chunk1.pending());
   EXPECT_EQ("tta", input);
 
@@ -188,40 +178,35 @@ TEST(CharChunkTest, AddInput_WithString) {
   EXPECT_TRUE(chunk2.AddInputInternal(&input));
   EXPECT_FALSE(chunk2.IsFixed());
   EXPECT_EQ("tt", chunk2.raw());
-  // "っ"
-  EXPECT_EQ("\xe3\x81\xa3", chunk2.conversion());
+  EXPECT_EQ("っ", chunk2.conversion());
   EXPECT_EQ("t", chunk2.pending());
   EXPECT_EQ("a", input);
 
   EXPECT_FALSE(chunk2.AddInputInternal(&input));
   EXPECT_TRUE(chunk2.IsFixed());
   EXPECT_EQ("tta", chunk2.raw());
-  // "った"
-  EXPECT_EQ("\xe3\x81\xa3\xe3\x81\x9f", chunk2.conversion());
+  EXPECT_EQ("った", chunk2.conversion());
   EXPECT_EQ("", chunk2.pending());
   EXPECT_EQ("", input);
 }
 
 TEST(CharChunkTest, GetLength) {
   CharChunk chunk1(Transliterators::CONVERSION_STRING, NULL);
-  // "ね"
-  chunk1.set_conversion("\xe3\x81\xad");
+  chunk1.set_conversion("ね");
   chunk1.set_pending("");
   chunk1.set_raw("ne");
   EXPECT_EQ(1, chunk1.GetLength(Transliterators::CONVERSION_STRING));
   EXPECT_EQ(2, chunk1.GetLength(Transliterators::RAW_STRING));
 
   CharChunk chunk2(Transliterators::CONVERSION_STRING, NULL);
-  // "っと"
-  chunk2.set_conversion("\xe3\x81\xa3\xe3\x81\xa8");
+  chunk2.set_conversion("っと");
   chunk2.set_pending("");
   chunk2.set_raw("tto");
   EXPECT_EQ(2, chunk2.GetLength(Transliterators::CONVERSION_STRING));
   EXPECT_EQ(3, chunk2.GetLength(Transliterators::RAW_STRING));
 
   CharChunk chunk3(Transliterators::CONVERSION_STRING, NULL);
-  // "が"
-  chunk3.set_conversion("\xE3\x81\x8C");
+  chunk3.set_conversion("が");
   chunk3.set_pending("");
   chunk3.set_raw("ga");
   EXPECT_EQ(1, chunk3.GetLength(Transliterators::CONVERSION_STRING));
@@ -235,33 +220,27 @@ TEST(CharChunkTest, GetLength) {
 
 TEST(CharChunkTest, AddInputAndConvertedChar) {
   Table table;
-  // "す゛, ず"
-  table.AddRule("\xe3\x81\x99\xe3\x82\x9b", "\xe3\x81\x9a", "");
+  table.AddRule("す゛", "ず", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
   string key = "m";
-  // "も"
-  string value = "\xe3\x82\x82";
+  string value = "も";
   chunk1.AddInputAndConvertedChar(&key, &value);
   EXPECT_TRUE(key.empty());
   EXPECT_TRUE(value.empty());
   EXPECT_EQ("m", chunk1.raw());
-  // "も"
-  EXPECT_EQ("\xe3\x82\x82", chunk1.pending());
+  EXPECT_EQ("も", chunk1.pending());
   EXPECT_TRUE(chunk1.conversion().empty());
 
   key = "r";
-  // "す"
-  value = "\xe3\x81\x99";
+  value = "す";
   chunk1.AddInputAndConvertedChar(&key, &value);
   // The input values are not used.
   EXPECT_EQ("r", key);
-  // "す"
-  EXPECT_EQ("\xe3\x81\x99", value);
+  EXPECT_EQ("す", value);
   // The chunk remains the previous value.
   EXPECT_EQ("m", chunk1.raw());
-  // "も"
-  EXPECT_EQ("\xe3\x82\x82", chunk1.pending());
+  EXPECT_EQ("も", chunk1.pending());
   EXPECT_TRUE(chunk1.conversion().empty());
 
   CharChunk chunk2(Transliterators::CONVERSION_STRING, &table);
@@ -270,40 +249,33 @@ TEST(CharChunkTest, AddInputAndConvertedChar) {
   EXPECT_TRUE(key.empty());
   EXPECT_TRUE(value.empty());
   EXPECT_EQ("r", chunk2.raw());
-  // "す"
-  EXPECT_EQ("\xe3\x81\x99", chunk2.pending());
+  EXPECT_EQ("す", chunk2.pending());
   EXPECT_TRUE(chunk2.conversion().empty());
 
   key = "@";
-  // "゛"
-  value = "\xe3\x82\x9b";
+  value = "゛";
   chunk2.AddInputAndConvertedChar(&key, &value);
   EXPECT_TRUE(key.empty());
   EXPECT_TRUE(value.empty());
   EXPECT_EQ("r@", chunk2.raw());
   EXPECT_TRUE(chunk2.pending().empty());
-  // "ず"
-  EXPECT_EQ("\xe3\x81\x9a", chunk2.conversion());
+  EXPECT_EQ("ず", chunk2.conversion());
 
   key = "h";
-  // "く"
-  value = "\xe3\x81\x8f";
+  value = "く";
   chunk2.AddInputAndConvertedChar(&key, &value);
   // The input values are not used.
   EXPECT_EQ("h", key);
-  // "く"
-  EXPECT_EQ("\xe3\x81\x8f", value);
+  EXPECT_EQ("く", value);
   // The chunk remains the previous value.
   EXPECT_EQ("r@", chunk2.raw());
   EXPECT_TRUE(chunk2.pending().empty());
-  // "ず"
-  EXPECT_EQ("\xe3\x81\x9a", chunk2.conversion());
+  EXPECT_EQ("ず", chunk2.conversion());
 }
 
 TEST(CharChunkTest, AddInputAndConvertedCharWithHalfAscii) {
   Table table;
-  // "ー"
-  table.AddRule("-", "\xE3\x83\xBC", "");
+  table.AddRule("-", "ー", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
   string key = "-";
@@ -338,8 +310,7 @@ TEST(CharChunkTest, AddInputAndConvertedCharWithHalfAscii) {
 
 TEST(CharChunkTest, OutputMode) {
   Table table;
-  // "あ"
-  table.AddRule("a", "\xE3\x81\x82", "");
+  table.AddRule("a", "あ", "");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
   string input = "a";
@@ -347,14 +318,12 @@ TEST(CharChunkTest, OutputMode) {
 
   string result;
   chunk.AppendResult(Transliterators::LOCAL, &result);
-  // "あ"
-  EXPECT_EQ("\xE3\x81\x82", result);
+  EXPECT_EQ("あ", result);
 
   chunk.SetTransliterator(Transliterators::FULL_KATAKANA);
   result.clear();
   chunk.AppendResult(Transliterators::LOCAL, &result);
-  // "ア"
-  EXPECT_EQ("\xE3\x82\xA2", result);
+  EXPECT_EQ("ア", result);
 
   chunk.SetTransliterator(Transliterators::HALF_ASCII);
   result.clear();
@@ -363,14 +332,12 @@ TEST(CharChunkTest, OutputMode) {
 
   result.clear();
   chunk.AppendResult(Transliterators::HALF_KATAKANA, &result);
-  // "ｱ"
-  EXPECT_EQ("\xEF\xBD\xB1", result);
+  EXPECT_EQ("ｱ", result);
 }
 
 TEST(CharChunkTest, SplitChunk) {
   Table table;
-  // "も"
-  table.AddRule("mo", "\xE3\x82\x82", "");
+  table.AddRule("mo", "も", "");
 
   CharChunk chunk(Transliterators::HIRAGANA, &table);
 
@@ -380,8 +347,7 @@ TEST(CharChunkTest, SplitChunk) {
 
   string output;
   chunk.AppendResult(Transliterators::LOCAL, &output);
-  // "ｍ"
-  EXPECT_EQ("\xEF\xBD\x8D", output);
+  EXPECT_EQ("ｍ", output);
 
   input = "o";
   chunk.AddInputInternal(&input);
@@ -389,8 +355,7 @@ TEST(CharChunkTest, SplitChunk) {
 
   output.clear();
   chunk.AppendResult(Transliterators::LOCAL, &output);
-  // "も"
-  EXPECT_EQ("\xE3\x82\x82", output);
+  EXPECT_EQ("も", output);
 
   chunk.SetTransliterator(Transliterators::HALF_ASCII);
   output.clear();
@@ -410,8 +375,7 @@ TEST(CharChunkTest, SplitChunk) {
 
 TEST(CharChunkTest, IsAppendable) {
   Table table;
-  // "も"
-  table.AddRule("mo", "\xE3\x82\x82", "");
+  table.AddRule("mo", "も", "");
   Table table_another;
 
   CharChunk chunk(Transliterators::HIRAGANA, &table);
@@ -435,8 +399,7 @@ TEST(CharChunkTest, IsAppendable) {
 
 TEST(CharChunkTest, AddInputInternal) {
   Table table;
-  // "っ"
-  table.AddRule("tt", "\xE3\x81\xA3", "t");
+  table.AddRule("tt", "っ", "t");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
   {
@@ -452,8 +415,7 @@ TEST(CharChunkTest, AddInputInternal) {
     chunk.AddInputInternal(&key);
     EXPECT_TRUE(key.empty());
     EXPECT_EQ("tt", chunk.raw());
-    // "っ"
-    EXPECT_EQ("\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("っ", chunk.conversion());
     EXPECT_EQ("t", chunk.pending());
   }
   {
@@ -461,8 +423,7 @@ TEST(CharChunkTest, AddInputInternal) {
     chunk.AddInputInternal(&key);
     EXPECT_TRUE(key.empty());
     EXPECT_EQ("ttt", chunk.raw());
-    // "っっ"
-    EXPECT_EQ("\xE3\x81\xA3\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("っっ", chunk.conversion());
     EXPECT_EQ("t", chunk.pending());
   }
   {
@@ -470,8 +431,7 @@ TEST(CharChunkTest, AddInputInternal) {
     chunk.AddInputInternal(&key);
     EXPECT_EQ("!", key);
     EXPECT_EQ("ttt", chunk.raw());
-    // "っっ"
-    EXPECT_EQ("\xE3\x81\xA3\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("っっ", chunk.conversion());
     EXPECT_EQ("t", chunk.pending());
   }
 }
@@ -493,10 +453,8 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
   Table table;
-  // "っ"
-  table.AddRule("ss", "\xE3\x81\xA3", "s");
-  // "し"
-  table.AddRule("shi", "\xE3\x81\x97", "");
+  table.AddRule("ss", "っ", "s");
+  table.AddRule("shi", "し", "");
 
   CharChunk chunk(Transliterators::HIRAGANA, &table);
 
@@ -505,8 +463,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("ssh", chunk.raw());
-    // "っ"
-    EXPECT_EQ("\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("っ", chunk.conversion());
     EXPECT_EQ("sh", chunk.pending());
     // empty() is intentionaly not used due to check the actual value.
     EXPECT_EQ("", chunk.ambiguous());
@@ -514,8 +471,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
   {
     string result;
     chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-    // "っｓｈ"
-    EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", result);
+    EXPECT_EQ("っｓｈ", result);
   }
 
   // Break down of the internal procedures
@@ -536,8 +492,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("ss", chunk.raw());
-    // "っ"
-    EXPECT_EQ("\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("っ", chunk.conversion());
     EXPECT_EQ("s", chunk.pending());
     // empty() is intentionaly not used due to check the actual value.
     EXPECT_EQ("", chunk.ambiguous());
@@ -547,8 +502,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("ssh", chunk.raw());
-    // "っ"
-    EXPECT_EQ("\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("っ", chunk.conversion());
     EXPECT_EQ("sh", chunk.pending());
     // empty() is intentionaly not used due to check the actual value.
     EXPECT_EQ("", chunk.ambiguous());
@@ -844,13 +798,11 @@ TEST(CharChunkTest, AddCompositionInput) {
 TEST(CharChunkTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   Table table;
-  // "ち゛", "ぢ"
-  table.AddRule("\xE3\x81\xA1\xE3\x82\x9B", "\xE3\x81\xA2", "");
+  table.AddRule("ち゛", "ぢ", "");
 
   CharChunk chunk(Transliterators::FULL_ASCII, &table);
   string key = "a";
-  // "ち";
-  string converted_char = "\xE3\x81\xA1";
+  string converted_char = "ち";
   chunk.AddInputAndConvertedChar(&key, &converted_char);
 
   EXPECT_TRUE(key.empty());
@@ -861,8 +813,7 @@ TEST(CharChunkTest, Issue2190364) {
   {  // The output should be "ａ".
     string output;
     chunk.AppendResult(Transliterators::LOCAL, &output);
-    // "ａ"
-    EXPECT_EQ("\xEF\xBD\x81", output);
+    EXPECT_EQ("ａ", output);
   }
 
   // Space input makes the internal state of chunk, but it is not consumed.
@@ -874,8 +825,7 @@ TEST(CharChunkTest, Issue2190364) {
   {  // The output should be still "ａ".
     string output;
     chunk.AppendResult(Transliterators::LOCAL, &output);
-    // "ａ"
-    EXPECT_EQ("\xEF\xBD\x81", output);
+    EXPECT_EQ("ａ", output);
   }
 }
 
@@ -883,10 +833,8 @@ TEST(CharChunkTest, Issue2209634) {
   // This is a unittest against http://b/2209634
   // "q@" becomes "qた@".
   Table table;
-  // "た"
-  table.AddRule("q", "", "\xE3\x81\x9F");
-  // "た@", "だ"
-  table.AddRule("\xE3\x81\x9F\x40", "\xE3\x81\xA0", "");
+  table.AddRule("q", "", "た");
+  table.AddRule("た@", "だ", "");
 
   CharChunk chunk(Transliterators::HALF_ASCII, &table);
 
@@ -903,16 +851,11 @@ TEST(CharChunkTest, Issue2819580) {
   // This is an unittest against http://b/2819580.
   // 'y' after 'n' disappears.
   Table table;
-  // "ぽ"
-  table.AddRule("po", "\xe3\x81\xbd", "");
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table.AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  table.AddRule("po", "ぽ", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
+  table.AddRule("ya", "や", "");
+  table.AddRule("nya", "にゃ", "");
 
   // Test for reported situation ("ny").
   // AddInput ver.
@@ -930,8 +873,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      // "んｙ"
-      EXPECT_EQ("\xe3\x82\x93\xef\xbd\x99", result);
+      EXPECT_EQ("んｙ", result);
     }
 
     {
@@ -941,8 +883,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      // "にゃ"
-      EXPECT_EQ("\xe3\x81\xab\xe3\x82\x83", result);
+      EXPECT_EQ("にゃ", result);
     }
   }
 
@@ -967,8 +908,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      // "にゃ"
-      EXPECT_EQ("\xe3\x81\xab\xe3\x82\x83", result);
+      EXPECT_EQ("にゃ", result);
     }
   }
 
@@ -995,8 +935,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      // "ぽんｙ"
-      EXPECT_EQ("\xe3\x81\xbd\xe3\x82\x93\xef\xbd\x99", result);
+      EXPECT_EQ("ぽんｙ", result);
     }
 
     {
@@ -1007,7 +946,7 @@ TEST(CharChunkTest, Issue2819580) {
       string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
       // "ぽにゃ"
-      EXPECT_EQ("\xe3\x81\xbd\xe3\x81\xab\xe3\x82\x83", result);
+      EXPECT_EQ("ぽにゃ", result);
     }
   }
 
@@ -1030,8 +969,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      // "ｚんｙ"
-      EXPECT_EQ("\xef\xbd\x9a\xe3\x82\x93\xef\xbd\x99", result);
+      EXPECT_EQ("ｚんｙ", result);
     }
   }
 }
@@ -1041,14 +979,10 @@ TEST(CharChunkTest, Issue2990253) {
   // SplitChunk fails.
   // Ambiguous text is left in rhs CharChunk invalidly.
   Table table;
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table.AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
+  table.AddRule("ya", "や", "");
+  table.AddRule("nya", "にゃ", "");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
 
@@ -1067,8 +1001,7 @@ TEST(CharChunkTest, Issue2990253) {
   {
     string result;
     chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-    // "ｙ"
-    EXPECT_EQ("\xef\xbd\x99", result);
+    EXPECT_EQ("ｙ", result);
   }
 }
 
@@ -1138,10 +1071,8 @@ TEST(CharChunkTest, Combine) {
 
 TEST(CharChunkTest, IsConvertible) {
   Table table;
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
   {
@@ -1482,28 +1413,17 @@ bool HasResult(const std::set<string> &results, const string &value) {
 
 TEST(CharChunkTest, RomanGetExpandedResults) {
   Table table;
-  // "きゃ"
-  table.AddRule("kya", "\xe3\x81\x8d\xe3\x82\x83", "");
-  // "きぃ"
-  table.AddRule("kyi", "\xe3\x81\x8d\xe3\x81\x83", "");
-  // "きゅ"
-  table.AddRule("kyu", "\xe3\x81\x8d\xe3\x82\x85", "");
-  // "きぇ"
-  table.AddRule("kye", "\xe3\x81\x8d\xe3\x81\x87", "");
-  // "きょ"
-  table.AddRule("kyo", "\xe3\x81\x8d\xe3\x82\x87", "");
-  // "っ"
-  table.AddRule("kk", "\xe3\x81\xa3", "k");
-  // "か"
-  table.AddRule("ka", "\xe3\x81\x8b", "");
-  // "き"
-  table.AddRule("ki", "\xe3\x81\x8d", "");
-  // "く"
-  table.AddRule("ku", "\xe3\x81\x8f", "");
-  // "け"
-  table.AddRule("ke", "\xe3\x81\x91", "");
-  // "こ"
-  table.AddRule("ko", "\xe3\x81\x93", "");
+  table.AddRule("kya", "きゃ", "");
+  table.AddRule("kyi", "きぃ", "");
+  table.AddRule("kyu", "きゅ", "");
+  table.AddRule("kye", "きぇ", "");
+  table.AddRule("kyo", "きょ", "");
+  table.AddRule("kk", "っ", "k");
+  table.AddRule("ka", "か", "");
+  table.AddRule("ki", "き", "");
+  table.AddRule("ku", "く", "");
+  table.AddRule("ke", "け", "");
+  table.AddRule("ko", "こ", "");
 
   {
     string input = "ka";  // AddInputInternal requires non-const string
@@ -1512,8 +1432,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
 
     string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
-    // "か"
-    EXPECT_EQ("\xe3\x81\x8b", base);
+    EXPECT_EQ("か", base);
 
     std::set<string> results;
     chunk.GetExpandedResults(&results);
@@ -1532,28 +1451,17 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(12, results.size());
     EXPECT_TRUE(HasResult(results, "k"));
-    // "か"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8b"));  // ka
-    // "き"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d"));  // ki
-    // "きゃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x83"));  // kya
-    // "きぃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x83"));  // kyi
-    // "きゅ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x85"));  // kyu
-    // "きぇ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x87"));  // kye
-    // "きょ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x87"));  // kyo
-    // "く"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8f"));  // ku
-    // "け"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x91"));  // ke
-    // "こ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x93"));  // ko
-    // "っ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xa3"));  // kk
+    EXPECT_TRUE(HasResult(results, "か"));  // ka
+    EXPECT_TRUE(HasResult(results, "き"));  // ki
+    EXPECT_TRUE(HasResult(results, "きゃ"));  // kya
+    EXPECT_TRUE(HasResult(results, "きぃ"));  // kyi
+    EXPECT_TRUE(HasResult(results, "きゅ"));  // kyu
+    EXPECT_TRUE(HasResult(results, "きぇ"));  // kye
+    EXPECT_TRUE(HasResult(results, "きょ"));  // kyo
+    EXPECT_TRUE(HasResult(results, "く"));  // ku
+    EXPECT_TRUE(HasResult(results, "け"));  // ke
+    EXPECT_TRUE(HasResult(results, "こ"));  // ko
+    EXPECT_TRUE(HasResult(results, "っ"));  // kk
   }
   {
     string input = "ky";
@@ -1568,16 +1476,11 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(6, results.size());
     EXPECT_TRUE(HasResult(results, "ky"));
-    // "きゃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x83"));
-    // "きぃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x83"));
-    // "きゅ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x85"));
-    // "きぇ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x87"));
-    // "きょ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x87"));
+    EXPECT_TRUE(HasResult(results, "きゃ"));
+    EXPECT_TRUE(HasResult(results, "きぃ"));
+    EXPECT_TRUE(HasResult(results, "きゅ"));
+    EXPECT_TRUE(HasResult(results, "きぇ"));
+    EXPECT_TRUE(HasResult(results, "きょ"));
   }
   {
     string input = "kk";
@@ -1586,50 +1489,34 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
 
     string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
-    // "っ"
-    EXPECT_EQ("\xe3\x81\xa3", base);
+    EXPECT_EQ("っ", base);
 
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(11, results.size());
-    // "か"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8b"));  // ka
-    // "き"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d"));  // ki
-    // "きゃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x83"));  // kya
-    // "きぃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x83"));  // kyi
-    // "きゅ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x85"));  // kyu
-    // "きぇ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x87"));  // kye
-    // "きょ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x87"));  // kyo
-    // "く"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8f"));  // ku
-    // "け"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x91"));  // ke
-    // "こ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x93"));  // ko
-    // "っ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xa3"));  // kk
+    EXPECT_TRUE(HasResult(results, "か"));  // ka
+    EXPECT_TRUE(HasResult(results, "き"));  // ki
+    EXPECT_TRUE(HasResult(results, "きゃ"));  // kya
+    EXPECT_TRUE(HasResult(results, "きぃ"));  // kyi
+    EXPECT_TRUE(HasResult(results, "きゅ"));  // kyu
+    EXPECT_TRUE(HasResult(results, "きぇ"));  // kye
+    EXPECT_TRUE(HasResult(results, "きょ"));  // kyo
+    EXPECT_TRUE(HasResult(results, "く"));  // ku
+    EXPECT_TRUE(HasResult(results, "け"));  // ke
+    EXPECT_TRUE(HasResult(results, "こ"));  // ko
+    EXPECT_TRUE(HasResult(results, "っ"));  // kk
   }
 }
 
 TEST(CharChunkTest, KanaGetExpandedResults) {
   Table table;
-  // "か゛", "が"
-  table.AddRule("\xe3\x81\x8b\xe3\x82\x9b", "\xe3\x81\x8c", "");
-  // "は゛", "ば"
-  table.AddRule("\xe3\x81\xaf\xe3\x82\x9b", "\xe3\x81\xb0", "");
-  // "は゜", "ぱ"
-  table.AddRule("\xe3\x81\xaf\xe3\x82\x9c", "\xe3\x81\xb1", "");
+  table.AddRule("か゛", "が", "");
+  table.AddRule("は゛", "ば", "");
+  table.AddRule("は゜", "ぱ", "");
 
   {
     // AddInputInternal requires non-const string
-    // "か"
-    string input = "\xe3\x81\x8b";
+    string input = "か";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
@@ -1640,14 +1527,11 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
-    // "か"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8b"));
-    // "が"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8c"));
+    EXPECT_TRUE(HasResult(results, "か"));
+    EXPECT_TRUE(HasResult(results, "が"));
   }
   {
-    // "は"
-    string input = "\xe3\x81\xaf";
+    string input = "は";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
@@ -1658,12 +1542,9 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
-    // "は"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xaf"));
-    // "ば"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb0"));
-    // "ぱ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb1"));
+    EXPECT_TRUE(HasResult(results, "は"));
+    EXPECT_TRUE(HasResult(results, "ば"));
+    EXPECT_TRUE(HasResult(results, "ぱ"));
   }
 }
 
@@ -1685,10 +1566,8 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
-    // "あ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x82"));
-    // "ぁ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x81"));
+    EXPECT_TRUE(HasResult(results, "あ"));
+    EXPECT_TRUE(HasResult(results, "ぁ"));
   }
   {
     string input = "8";
@@ -1702,14 +1581,11 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
-    // "や"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x84"));
-    // "ゃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x83"));
+    EXPECT_TRUE(HasResult(results, "や"));
+    EXPECT_TRUE(HasResult(results, "ゃ"));
   }
   {
-    // "や8"
-    string input = "\xe3\x82\x84\x38";
+    string input = "や8";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
@@ -1720,10 +1596,8 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
-    // "ゆ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x86"));
-    // "ゅ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x85"));
+    EXPECT_TRUE(HasResult(results, "ゆ"));
+    EXPECT_TRUE(HasResult(results, "ゅ"));
   }
   {
     string input = "6";
@@ -1737,12 +1611,9 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
-    // "は"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xaf"));
-    // "ば"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb0"));
-    // "ぱ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb1"));
+    EXPECT_TRUE(HasResult(results, "は"));
+    EXPECT_TRUE(HasResult(results, "ば"));
+    EXPECT_TRUE(HasResult(results, "ぱ"));
   }
 }
 
@@ -1764,10 +1635,8 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
-    // "あ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x82"));
-    // "ぁ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\x81"));
+    EXPECT_TRUE(HasResult(results, "あ"));
+    EXPECT_TRUE(HasResult(results, "ぁ"));
   }
   {
     string input = "8";
@@ -1781,10 +1650,8 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
-    // "や"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x84"));
-    // "ゃ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x83"));
+    EXPECT_TRUE(HasResult(results, "や"));
+    EXPECT_TRUE(HasResult(results, "ゃ"));
   }
   {
     string input = "u";
@@ -1798,10 +1665,8 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
-    // "ゆ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x86"));
-    // "ゅ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x82\x85"));
+    EXPECT_TRUE(HasResult(results, "ゆ"));
+    EXPECT_TRUE(HasResult(results, "ゅ"));
   }
   {
     string input = "6";
@@ -1815,12 +1680,9 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     std::set<string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
-    // "は"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xaf"));
-    // "ば"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb0"));
-    // "ぱ"
-    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb1"));
+    EXPECT_TRUE(HasResult(results, "は"));
+    EXPECT_TRUE(HasResult(results, "ば"));
+    EXPECT_TRUE(HasResult(results, "ぱ"));
   }
 }
 
