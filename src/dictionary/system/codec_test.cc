@@ -41,11 +41,11 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace dictionary {
 namespace {
+
+using std::unique_ptr;
 
 ::testing::AssertionResult MakeAssertResult(
     bool success, char32 c, const char *message) {

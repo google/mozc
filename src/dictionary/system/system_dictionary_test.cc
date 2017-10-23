@@ -57,10 +57,6 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
-using std::unique_ptr;
-
-using mozc::dictionary::CollectTokenCallback;
-
 DEFINE_int32(dictionary_test_size, 100000,
              "Dictionary size for this test.");
 DEFINE_int32(dictionary_reverse_lookup_test_size, 1000,
@@ -69,6 +65,9 @@ DECLARE_int32(min_key_length_to_use_small_cost_encoding);
 
 namespace mozc {
 namespace dictionary {
+namespace {
+using std::unique_ptr;
+}  // namespace
 
 class SystemDictionaryTest : public ::testing::Test {
  protected:
@@ -177,11 +176,8 @@ TEST_F(SystemDictionaryTest, HasValue) {
   std::vector<Token *> tokens;
   for (int i = 0; i < 4; ++i) {
     Token *token = new Token;
-    // "きー%d"
-    token->key = Util::StringPrintf("\xE3\x81\x8D\xE3\x83\xBC%d", i);
-    // "バリュー%d"
-    token->value = Util::StringPrintf(
-        "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC%d", i);
+    token->key = Util::StringPrintf("きー%d", i);
+    token->value = Util::StringPrintf("バリュー%d", i);
     tokens.push_back(token);
   }
 
@@ -199,35 +195,29 @@ TEST_F(SystemDictionaryTest, HasValue) {
     tokens.push_back(token);
   }
 
-  // "ｆｕｌｌ"
-  const string kFull = "\xEF\xBD\x86\xEF\xBD\x95\xEF\xBD\x8C\xEF\xBD\x8C";
-  // "ひらがな"
-  const string kHiragana = "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
-  // "かたかな"
-  const string kKatakanaKey =
-      "\xE3\x81\x8B\xE3\x81\x9F\xE3\x81\x8B\xE3\x81\xAA";
-  // "カタカナ"
-  const string kKatakanaValue =
-      "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
+  const string kFull = "ｆｕｌｌ";
+  const string kHiragana = "ひらがな";
+  const string kKatakanaKey = "かたかな";
+  const string kKatakanaValue = "カタカナ";
 
   {  // Alphabet full width
     Token *token = new Token;
     token->key = "full";
-    token->value = kFull;  // "ｆｕｌｌ"
+    token->value = kFull;
     tokens.push_back(token);
   }
 
   {  // Hiragana
     Token *token = new Token;
-    token->key = kHiragana;  // "ひらがな"
-    token->value = kHiragana;  // "ひらがな"
+    token->key = kHiragana;
+    token->value = kHiragana;
     tokens.push_back(token);
   }
 
   {  // Katakana
     Token *token = new Token;
-    token->key = kKatakanaKey;  // "かたかな"
-    token->value = kKatakanaValue;  // "カタカナ"
+    token->key = kKatakanaKey;
+    token->value = kKatakanaValue;
     tokens.push_back(token);
   }
 
@@ -238,27 +228,13 @@ TEST_F(SystemDictionaryTest, HasValue) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  EXPECT_TRUE(system_dic->HasValue(
-      // "バリュー0"
-      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x30"));
-  EXPECT_TRUE(system_dic->HasValue(
-      // "バリュー1"
-      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x31"));
-  EXPECT_TRUE(system_dic->HasValue(
-      // "バリュー2"
-      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x32"));
-  EXPECT_TRUE(system_dic->HasValue(
-      // "バリュー3"
-      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x33"));
-  EXPECT_FALSE(system_dic->HasValue(
-      // "バリュー4"
-      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x34"));
-  EXPECT_FALSE(system_dic->HasValue(
-      // "バリュー5"
-      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x35"));
-  EXPECT_FALSE(system_dic->HasValue(
-      // "バリュー6"
-      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x36"));
+  EXPECT_TRUE(system_dic->HasValue("バリュー0"));
+  EXPECT_TRUE(system_dic->HasValue("バリュー1"));
+  EXPECT_TRUE(system_dic->HasValue("バリュー2"));
+  EXPECT_TRUE(system_dic->HasValue("バリュー3"));
+  EXPECT_FALSE(system_dic->HasValue("バリュー4"));
+  EXPECT_FALSE(system_dic->HasValue("バリュー5"));
+  EXPECT_FALSE(system_dic->HasValue("バリュー6"));
 
   EXPECT_TRUE(system_dic->HasValue("Mozc"));
   EXPECT_FALSE(system_dic->HasValue("mozc"));
@@ -266,15 +242,14 @@ TEST_F(SystemDictionaryTest, HasValue) {
   EXPECT_TRUE(system_dic->HasValue("UPPER"));
   EXPECT_FALSE(system_dic->HasValue("upper"));
 
-  EXPECT_TRUE(system_dic->HasValue(kFull));  // "ｆｕｌｌ"
+  EXPECT_TRUE(system_dic->HasValue(kFull));
   EXPECT_FALSE(system_dic->HasValue("full"));
 
-  EXPECT_TRUE(system_dic->HasValue(kHiragana));  //"ひらがな"
-  EXPECT_FALSE(system_dic->HasValue(
-      "\xE3\x83\x92\xE3\x83\xA9\xE3\x82\xAC\xE3\x83\x8A\x0A"));  // "ヒラガナ"
+  EXPECT_TRUE(system_dic->HasValue(kHiragana));
+  EXPECT_FALSE(system_dic->HasValue("ヒラガナ\n"));
 
-  EXPECT_TRUE(system_dic->HasValue(kKatakanaValue));  // "カタカナ"
-  EXPECT_FALSE(system_dic->HasValue(kKatakanaKey));  // "かたかな"
+  EXPECT_TRUE(system_dic->HasValue(kKatakanaValue));
+  EXPECT_FALSE(system_dic->HasValue(kKatakanaKey));
 
   STLDeleteElements(&tokens);
 }
@@ -282,10 +257,8 @@ TEST_F(SystemDictionaryTest, HasValue) {
 TEST_F(SystemDictionaryTest, NormalWord) {
   std::vector<Token *> source_tokens;
   unique_ptr<Token> t0(new Token);
-  // "あ"
-  t0->key = "\xe3\x81\x82";
-  // "亜"
-  t0->value = "\xe4\xba\x9c";
+  t0->key = "あ";
+  t0->value = "亜";
   t0->cost = 100;
   t0->lid = 50;
   t0->rid = 70;
@@ -306,43 +279,39 @@ TEST_F(SystemDictionaryTest, NormalWord) {
 
   // Look up by prefix.
   callback.Clear();
-  system_dic->LookupPrefix(
-      "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86",  // "あいう"
-      convreq_, &callback);
+  system_dic->LookupPrefix("あいう", convreq_, &callback);
   ASSERT_EQ(1, callback.tokens().size());
   EXPECT_TOKEN_EQ(*t0, callback.tokens().front());
 
   // Nothing should be looked up.
   callback.Clear();
-  system_dic->LookupPrefix(
-      "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F",  // "かきく"
-      convreq_, &callback);
+  system_dic->LookupPrefix("かきく", convreq_, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 }
 
 TEST_F(SystemDictionaryTest, SameWord) {
   std::vector<Token> tokens(4);
 
-  tokens[0].key = "\xe3\x81\x82";  // "あ"
-  tokens[0].value = "\xe4\xba\x9c";  // "亜"
+  tokens[0].key = "あ";
+  tokens[0].value = "亜";
   tokens[0].cost = 100;
   tokens[0].lid = 50;
   tokens[0].rid = 70;
 
-  tokens[1].key = "\xe3\x81\x82";  // "あ"
-  tokens[1].value = "\xe4\xba\x9c";  // "亜"
+  tokens[1].key = "あ";
+  tokens[1].value = "亜";
   tokens[1].cost = 150;
   tokens[1].lid = 100;
   tokens[1].rid = 200;
 
-  tokens[2].key = "\xe3\x81\x82";  // "あ"
-  tokens[2].value = "\xe3\x81\x82";  // "あ"
+  tokens[2].key = "あ";
+  tokens[2].value = "あ";
   tokens[2].cost = 100;
   tokens[2].lid = 1000;
   tokens[2].rid = 2000;
 
-  tokens[3].key = "\xe3\x81\x82";  // "あ"
-  tokens[3].value = "\xe4\xba\x9c";  // "亜"
+  tokens[3].key = "あ";
+  tokens[3].value = "亜";
   tokens[3].cost = 1000;
   tokens[3].lid = 2000;
   tokens[3].rid = 3000;
@@ -360,8 +329,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
 
   // All the tokens should be looked up.
   CollectTokenCallback callback;
-  system_dic->LookupPrefix("\xe3\x81\x82",  // "あ"
-                           convreq_, &callback);
+  system_dic->LookupPrefix("あ", convreq_, &callback);
   EXPECT_TOKENS_EQ_UNORDERED(source_tokens, callback.tokens());
 }
 
@@ -384,11 +352,8 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
 }
 
 TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
-  // "は"
-  const string k0 = "\xe3\x81\xaf";
-  // "はひふへほ"
-  const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
-                    "\xbb";
+  const string k0 = "は";
+  const string k1 = "はひふへほ";
   unique_ptr<Token> t0(CreateToken(k0, "aa"));
   unique_ptr<Token> t1(CreateToken(k1, "bb"));
 
@@ -414,11 +379,11 @@ namespace {
 class LookupPrefixTestCallback : public SystemDictionary::Callback {
  public:
   virtual ResultType OnKey(StringPiece key) {
-    if (key == "\xE3\x81\x8B\xE3\x81\x8D") {  // key == "かき"
+    if (key == "かき") {
       return TRAVERSE_CULL;
-    } else if (key == "\xE3\x81\x95") {  // key == "さ"
+    } else if (key == "さ") {
       return TRAVERSE_NEXT_KEY;
-    } else if (key == "\xE3\x81\x9F") {  // key == "た"
+    } else if (key == "た") {
       return TRAVERSE_DONE;
     }
     return TRAVERSE_CONTINUE;
@@ -446,56 +411,30 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     const char *key;
     const char *value;
   } kKeyValues[] = {
-    // "あ", "亜"
-    { "\xE3\x81\x82", "\xE4\xBA\x9C" },
-    // "あ", "安"
-    { "\xE3\x81\x82", "\xE5\xAE\x89" },
-    // "あ", "在"
-    { "\xE3\x81\x82", "\xE5\x9C\xA8" },
-    // "あい", "愛"
-    { "\xE3\x81\x82\xE3\x81\x84", "\xE6\x84\x9B" },
-    // "あい", "藍"
-    { "\xE3\x81\x82\xE3\x81\x84", "\xE8\x97\x8D" },
-    // "あいう", "藍雨"
-    { "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86", "\xE8\x97\x8D\xE9\x9B\xA8" },
-    // "か", "可"
-    { "\xE3\x81\x8B", "\xE5\x8F\xAF" },
-    // "かき", "牡蠣"
-    { "\xE3\x81\x8B\xE3\x81\x8D", "\xE7\x89\xA1\xE8\xA0\xA3" },
-    // "かき", "夏季"
-    { "\xE3\x81\x8B\xE3\x81\x8D", "\xE5\xA4\x8F\xE5\xAD\xA3" },
-    // "かきく", "柿久"
-    { "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F", "\xE6\x9F\xBF\xE4\xB9\x85" },
-    // "さ", "差"
-    { "\xE3\x81\x95", "\xE5\xB7\xAE" },
-    // "さ", "左"
-    { "\xE3\x81\x95", "\xE5\xB7\xA6" },
-    // "さし", "刺"
-    { "\xE3\x81\x95\xE3\x81\x97", "\xE5\x88\xBA" },
-    // "た", "田"
-    { "\xE3\x81\x9F", "\xE7\x94\xB0" },
-    // "た", "多"
-    { "\xE3\x81\x9F", "\xE5\xA4\x9A" },
-    // "たち", 多値"
-    { "\xE3\x81\x9F\xE3\x81\xA1", "\xE5\xA4\x9A\xE5\x80\xA4" },
-    // "たちつ", "タチツ"
-    { "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4",
-      "\xE3\x82\xBF\xE3\x83\x81\xE3\x83\x84" },
-    // "は", "葉"
-    { "\xE3\x81\xAF", "\xE8\x91\x89" },
-    // "は", "歯"
-    { "\xE3\x81\xAF", "\xE6\xAD\xAF" },
-    // "はひ", "ハヒ"
-    { "\xE3\x81\xAF\xE3\x81\xB2", "\xE3\x83\x8F\xE3\x83\x92" },
-    // "ば", "場"
-    { "\xE3\x81\xB0", "\xE5\xA0\xB4" },
-    // "はび", "波美"
-    { "\xE3\x81\xAF\xE3\x81\xB3", "\xE6\xB3\xA2\xE7\xBE\x8E" },
-    // "ばび", "馬尾"
-    { "\xE3\x81\xB0\xE3\x81\xB3", "\xE9\xA6\xAC\xE5\xB0\xBE" },
-    // "ばびぶ", "バビブ"
-    { "\xE3\x81\xB0\xE3\x81\xB3\xE3\x81\xB6",
-      "\xE3\x83\x90\xE3\x83\x93\xE3\x83\x96" },
+    { "あ", "亜" },
+    { "あ", "安" },
+    { "あ", "在" },
+    { "あい", "愛" },
+    { "あい", "藍" },
+    { "あいう", "藍雨" },
+    { "か", "可" },
+    { "かき", "牡蠣" },
+    { "かき", "夏季" },
+    { "かきく", "柿久" },
+    { "さ", "差" },
+    { "さ", "左" },
+    { "さし", "刺" },
+    { "た", "田" },
+    { "た", "多" },
+    { "たち", "多値" },
+    { "たちつ", "タチツ" },
+    { "は", "葉" },
+    { "は", "歯" },
+    { "はひ", "ハヒ" },
+    { "ば", "場" },
+    { "はび", "波美" },
+    { "ばび", "馬尾" },
+    { "ばびぶ", "バビブ" },
   };
   const size_t kKeyValuesSize = arraysize(kKeyValues);
   unique_ptr<Token> tokens[kKeyValuesSize];
@@ -514,7 +453,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   // Test for normal prefix lookup without key expansion.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefix("\xE3\x81\x82\xE3\x81\x84",  // "あい"
+    system_dic->LookupPrefix("あい",  // "あい"
                              convreq_, &callback);
     const std::set<std::pair<string, string>> &result = callback.result();
     // "あ" -- "あい" should be found.
@@ -535,46 +474,35 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   // feature.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefix(
-        "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F",  //"かきく"
-        convreq_,
-        &callback);
+    system_dic->LookupPrefix("かきく", convreq_, &callback);
     const std::set<std::pair<string, string>> &result = callback.result();
     // Only "か" should be found as the callback doesn't traverse the subtree of
     // "かき" due to culling request from LookupPrefixTestCallback::OnKey().
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
-      const std::pair<string, string> entry(
-          kKeyValues[i].key, kKeyValues[i].value);
-      EXPECT_EQ(entry.first == "\xE3\x81\x8B",  // "か"
-                result.find(entry) != result.end());
+      const std::pair<string, string> entry(kKeyValues[i].key,
+                                            kKeyValues[i].value);
+      EXPECT_EQ(entry.first == "か", result.find(entry) != result.end());
     }
   }
 
   // Test for TRAVERSE_NEXT_KEY.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefix(
-        "\xE3\x81\x95\xE3\x81\x97\xE3\x81\x99",  // "さしす"
-        convreq_,
-        &callback);
+    system_dic->LookupPrefix("さしす", convreq_, &callback);
     const std::set<std::pair<string, string>> &result = callback.result();
     // Only "さし" should be found as tokens for "さ" is skipped (see
     // LookupPrefixTestCallback::OnKey()).
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
-      const std::pair<string, string> entry(
-          kKeyValues[i].key, kKeyValues[i].value);
-      EXPECT_EQ(entry.first == "\xE3\x81\x95\xE3\x81\x97",  // "さし"
-                result.find(entry) != result.end());
+      const std::pair<string, string> entry(kKeyValues[i].key,
+                                            kKeyValues[i].value);
+      EXPECT_EQ(entry.first == "さし", result.find(entry) != result.end());
     }
   }
 
   // Test for TRAVERSE_DONE.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefix(
-        "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4",  // "たちつ"
-        convreq_,
-        &callback);
+    system_dic->LookupPrefix("たちつ", convreq_, &callback);
     const std::set<std::pair<string, string>> &result = callback.result();
     // Nothing should be found as the traversal is immediately done after seeing
     // "た"; see LookupPrefixTestCallback::OnKey().
@@ -587,26 +515,23 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     // Use kana modifier insensitive lookup
     request_.set_kana_modifier_insensitive_conversion(true);
     config_.set_use_kana_modifier_insensitive_conversion(true);
-    system_dic->LookupPrefix(
-        "\xE3\x81\xAF\xE3\x81\xB2",  // "はひ"
-        convreq_,
-        &callback);
+    system_dic->LookupPrefix("はひ", convreq_, &callback);
     const std::set<std::pair<string, string>> &result = callback.result();
     const char *kExpectedKeys[] = {
-      "\xE3\x81\xAF",  // "は"
-      "\xE3\x81\xB0",  // "ば"
-      "\xE3\x81\xAF\xE3\x81\xB2",  // "はひ"
-      "\xE3\x81\xB0\xE3\x81\xB2",  // "ばひ"
-      "\xE3\x81\xAF\xE3\x81\xB3",  // "はび"
-      "\xE3\x81\xB0\xE3\x81\xB3",  // "ばび"
+      "は",
+      "ば",
+      "はひ",
+      "ばひ",
+      "はび",
+      "ばび",
     };
     const std::set<string> expected(kExpectedKeys,
-                               kExpectedKeys + arraysize(kExpectedKeys));
+                                    kExpectedKeys + arraysize(kExpectedKeys));
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
       const bool to_be_found =
           expected.find(kKeyValues[i].key) != expected.end();
-      const std::pair<string, string> entry(
-          kKeyValues[i].key, kKeyValues[i].value);
+      const std::pair<string, string> entry(kKeyValues[i].key,
+                                            kKeyValues[i].value);
       EXPECT_EQ(to_be_found, result.find(entry) != result.end());
     }
   }
@@ -616,15 +541,8 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
   std::vector<Token *> tokens;
   ScopedElementsDeleter<std::vector<Token *>> deleter(&tokens);
 
-  // "まみむめもや" -> "value0"
-  tokens.push_back(CreateToken("\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
-                               "\xe3\x82\x81\xe3\x82\x82\xe3\x82\x84",
-                               "value0"));
-  // "まみむめもやゆよ" -> "value1"
-  tokens.push_back(CreateToken("\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
-                               "\xe3\x82\x81\xe3\x82\x82\xe3\x82\x84"
-                               "\xe3\x82\x86\xe3\x82\x88",
-                               "value1"));
+  tokens.push_back(CreateToken("まみむめもや", "value0"));
+  tokens.push_back(CreateToken("まみむめもやゆよ", "value1"));
   // Build a dictionary with the above two tokens plus those from test data.
   {
     std::vector<Token *> source_tokens = tokens;
@@ -637,8 +555,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
       << "Failed to open dictionary source: " << dic_fn_;
 
   // All the tokens in |tokens| should be looked up by "まみむめも".
-  const char *kMamimumemo =
-      "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80\xe3\x82\x81\xe3\x82\x82";
+  const char kMamimumemo[] = "まみむめも";
   CheckMultiTokensExistenceCallback callback(tokens);
   system_dic->LookupPredictive(kMamimumemo, convreq_, &callback);
   EXPECT_TRUE(callback.AreAllFound());
@@ -648,14 +565,8 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
   std::vector<Token *> tokens;
   ScopedElementsDeleter<std::vector<Token *>> deleter(&tokens);
 
-  // "がっこう" -> "学校"
-  tokens.push_back(CreateToken(
-      "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86",
-      "\xE5\xAD\xA6\xE6\xA0\xA1"));
-  // "かっこう" -> "格好"
-  tokens.push_back(CreateToken(
-      "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86",
-      "\xE6\xA0\xBC\xE5\xA5\xBD"));
+  tokens.push_back(CreateToken("がっこう", "学校"));
+  tokens.push_back(CreateToken("かっこう", "格好"));
 
   BuildSystemDictionary(tokens, 100);
   unique_ptr<SystemDictionary> system_dic(
@@ -663,8 +574,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
 
-  // "かつこう"
-  const string kKey = "\xE3\x81\x8B\xE3\x81\xA4\xE3\x81\x93\xE3\x81\x86";
+  const string kKey = "かつこう";
 
   // Without Kana modifier insensitive lookup flag, nothing is looked up.
   CollectTokenCallback callback;
@@ -685,12 +595,8 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
   std::vector<Token *> tokens;
   ScopedElementsDeleter<std::vector<Token *>> deleter(&tokens);
 
-  // "あい" -> "ai"
-  tokens.push_back(CreateToken("\xe3\x81\x82\xe3\x81\x84", "ai"));
-  // "あいうえお" -> "aiueo"
-  tokens.push_back(CreateToken(
-      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a",
-      "aiueo"));
+  tokens.push_back(CreateToken("あい", "ai"));
+  tokens.push_back(CreateToken("あいうえお", "aiueo"));
   // Build a dictionary with the above two tokens plus those from test data.
   {
     std::vector<Token *> source_tokens = tokens;
@@ -706,8 +612,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
   // expected that "あいうえお" is not looked up because of longer key cut-off
   // mechanism.  However, "あい" is looked up as it's short.
   CheckMultiTokensExistenceCallback callback(tokens);
-  system_dic->LookupPredictive("\xe3\x81\x82",  // "あ"
-                               convreq_, &callback);
+  system_dic->LookupPredictive("あ", convreq_, &callback);
   EXPECT_TRUE(callback.IsFound(tokens[0]));
   EXPECT_FALSE(callback.IsFound(tokens[1]));
 }
@@ -715,11 +620,8 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
 TEST_F(SystemDictionaryTest, LookupExact) {
   std::vector<Token *> source_tokens;
 
-  // "は"
-  const string k0 = "\xe3\x81\xaf";
-  // "はひふへほ"
-  const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
-                    "\xbb";
+  const string k0 = "は";
+  const string k1 = "はひふへほ";
 
   unique_ptr<Token> t0(CreateToken(k0, "aa"));
   unique_ptr<Token> t1(CreateToken(k1, "bb"));
@@ -750,36 +652,26 @@ TEST_F(SystemDictionaryTest, LookupExact) {
 
 TEST_F(SystemDictionaryTest, LookupReverse) {
   unique_ptr<Token> t0(new Token);
-  // "ど"
-  t0->key = "\xe3\x81\xa9";
-  // "ド"
-  t0->value = "\xe3\x83\x89";
+  t0->key = "ど";
+  t0->value = "ド";
   t0->cost = 1;
   t0->lid = 2;
   t0->rid = 3;
   unique_ptr<Token> t1(new Token);
-  // "どらえもん"
-  t1->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
-  // "ドラえもん"
-  t1->value = "\xe3\x83\x89\xe3\x83\xa9\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  t1->key = "どらえもん";
+  t1->value = "ドラえもん";
   t1->cost = 1;
   t1->lid = 2;
   t1->rid = 3;
   unique_ptr<Token> t2(new Token);
-  // "といざらす®"
-  t2->key = "\xe3\x81\xa8\xe3\x81\x84\xe3\x81\x96\xe3\x82\x89\xe3\x81\x99\xc2"
-            "\xae";
-  // "トイザらス®"
-  t2->value = "\xe3\x83\x88\xe3\x82\xa4\xe3\x82\xb6\xe3\x82\x89\xe3\x82\xb9\xc2"
-              "\xae";
+  t2->key = "といざらす®";
+  t2->value = "トイザらス®";
   t2->cost = 1;
   t2->lid = 2;
   t2->rid = 3;
   unique_ptr<Token> t3(new Token);
-  // "ああああああ"
   // Both t3 and t4 will be encoded into 3 bytes.
-  t3->key = "\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82"
-      "\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82";
+  t3->key = "ああああああ";
   t3->value = t3->key;
   t3->cost = 32000;
   t3->lid = 1;
@@ -789,38 +681,30 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t4->lid = 1;
   t4->rid = 2;
   unique_ptr<Token> t5(new Token);
-  // "いいいいいい"
   // t5 will be encoded into 3 bytes.
-  t5->key = "\xe3\x81\x84\xe3\x81\x84\xe3\x81\x84"
-      "\xe3\x81\x84\xe3\x81\x84\xe3\x81\x84";
+  t5->key = "いいいいいい";
   t5->value = t5->key;
   t5->cost = 32000;
   t5->lid = 1;
   t5->rid = 1;
   // spelling correction token should not be retrieved by reverse lookup.
   unique_ptr<Token> t6(new Token);
-  // "どらえもん"
-  t6->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
-  // "ドラえもん"
-  t6->value = "\xe3\x83\x89\xe3\x83\xa9\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  t6->key = "どらえもん";
+  t6->value = "ドラえもん";
   t6->cost = 1;
   t6->lid = 2;
   t6->rid = 3;
   t6->attributes = Token::SPELLING_CORRECTION;
   unique_ptr<Token> t7(new Token);
-  // "こんさーと"
-  t7->key = "\xe3\x81\x93\xe3\x82\x93\xe3\x81\x95\xe3\x83\xbc\xe3\x81\xa8";
-  // "コンサート"
-  t7->value = "\xe3\x82\xb3\xe3\x83\xb3\xe3\x82\xb5\xe3\x83\xbc\xe3\x83\x88";
+  t7->key = "こんさーと";
+  t7->value = "コンサート";
   t7->cost = 1;
   t7->lid = 1;
   t7->rid = 1;
   // "バージョン" should not return a result with the key "ヴァージョン".
   unique_ptr<Token> t8(new Token);
-  // "ばーじょん"
-  t8->key = "\xE3\x81\xB0\xE3\x83\xBC\xE3\x81\x98\xE3\x82\x87\xE3\x82\x93";
-  // "バージョン"
-  t8->value = "\xE3\x83\x90\xE3\x83\xBC\xE3\x82\xB8\xE3\x83\xA7\xE3\x83\xB3";
+  t8->key = "ばーじょん";
+  t8->value = "バージョン";
   t8->cost = 1;
   t8->lid = 1;
   t8->rid = 1;
@@ -886,7 +770,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   {
     // test for non exact transliterated index string.
     // append "が"
-    const string key = t7->value + "\xe3\x81\x8c";
+    const string key = t7->value + "が";
     CollectTokenCallback callback;
     system_dic->LookupReverse(key, convreq_, &callback);
     const std::vector<Token> &tokens = callback.tokens();
@@ -937,14 +821,10 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
 }
 
 TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
-  const string kDoraemon =
-      "\xe3\x83\x89\xe3\x83\xa9\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  const string kDoraemon = "ドラえもん";
 
   Token source_token;
-  // "どらえもん"
-  source_token.key =
-      "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
-  // "ドラえもん"
+  source_token.key = "どらえもん";
   source_token.value = kDoraemon;
   source_token.cost = 1;
   source_token.lid = 2;
@@ -972,33 +852,22 @@ TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
 TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
   std::vector<Token> tokens(3);
 
-  // "あぼがど"
-  tokens[0].key = "\xe3\x81\x82\xe3\x81\xbc\xe3\x81\x8c\xe3\x81\xa9";
-  // "アボカド"
-  tokens[0].value = "\xe3\x82\xa2\xe3\x83\x9c\xe3\x82\xab\xe3\x83\x89";
+  tokens[0].key = "あぼがど";
+  tokens[0].value = "アボカド";
   tokens[0].cost = 1;
   tokens[0].lid = 0;
   tokens[0].rid = 2;
   tokens[0].attributes = Token::SPELLING_CORRECTION;
 
-  // "しゅみれーしょん"
-  tokens[1].key =
-      "\xe3\x81\x97\xe3\x82\x85\xe3\x81\xbf\xe3\x82\x8c"
-      "\xe3\x83\xbc\xe3\x81\x97\xe3\x82\x87\xe3\x82\x93";
-  // "シミュレーション"
-  tokens[1].value =
-      "\xe3\x82\xb7\xe3\x83\x9f\xe3\x83\xa5\xe3\x83\xac"
-      "\xe3\x83\xbc\xe3\x82\xb7\xe3\x83\xa7\xe3\x83\xb3";
+  tokens[1].key = "しゅみれーしょん";
+  tokens[1].value = "シミュレーション";
   tokens[1].cost = 1;
   tokens[1].lid = 100;
   tokens[1].rid = 3;
   tokens[1].attributes = Token::SPELLING_CORRECTION;
 
-  // "あきはばら"
-  tokens[2].key =
-      "\xe3\x81\x82\xe3\x81\x8d\xe3\x81\xaf\xe3\x81\xb0\xe3\x82\x89";
-  // "秋葉原"
-  tokens[2].value = "\xe7\xa7\x8b\xe8\x91\x89\xe5\x8e\x9f";
+  tokens[2].key = "あきはばら";
+  tokens[2].value = "秋葉原";
   tokens[2].cost = 1000;
   tokens[2].lid = 1;
   tokens[2].rid = 2;
@@ -1023,16 +892,11 @@ TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
 }
 
 TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
-  // "かつ"
-  const string k0 = "\xE3\x81\x8B\xE3\x81\xA4";
-  // "かっこ"
-  const string k1 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93";
-  // "かつこう"
-  const string k2 = "\xE3\x81\x8B\xE3\x81\xA4\xE3\x81\x93\xE3\x81\x86";
-  // "かっこう"
-  const string k3 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
-  // "がっこう"
-  const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
+  const string k0 = "かつ";
+  const string k1 = "かっこ";
+  const string k2 = "かつこう";
+  const string k3 = "かっこう";
+  const string k4 = "がっこう";
 
   unique_ptr<Token> tokens[5];
   tokens[0].reset(CreateToken(k0, "aa"));
@@ -1089,16 +953,8 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
 }
 
 TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
-  // "ていすてぃんぐ", "テイスティング"
-  unique_ptr<Token> t0(CreateToken(
-      "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
-      "\xe3\x81\x83\xe3\x82\x93\xe3\x81\x90",
-      "\xe3\x83\x86\xe3\x82\xa4\xe3\x82\xb9\xe3\x83\x86"
-      "\xe3\x82\xa3\xe3\x83\xb3\xe3\x82\xb0"));
-  // "てすとです", "てすとです"
-  unique_ptr<Token> t1(CreateToken(
-      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99",
-      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99"));
+  unique_ptr<Token> t0(CreateToken("ていすてぃんぐ", "テイスティング"));
+  unique_ptr<Token> t1(CreateToken("てすとです", "てすとです"));
 
   std::vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -1113,8 +969,7 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
       << "Failed to open dictionary source:" << dic_fn_;
 
   // Lookup |t0| from "ていすていんぐ"
-  const string k = "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
-      "\xe3\x81\x84\xe3\x82\x93\xe3\x81\x90";
+  const string k = "ていすていんぐ";
   request_.set_kana_modifier_insensitive_conversion(true);
   config_.set_use_kana_modifier_insensitive_conversion(true);
   CheckTokenExistenceCallback callback(t0.get());
@@ -1123,16 +978,11 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
 }
 
 TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
-  // "かつ"
-  const string k0 = "\xE3\x81\x8B\xE3\x81\xA4";
-  // "かっこ"
-  const string k1 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93";
-  // "かつこう"
-  const string k2 = "\xE3\x81\x8B\xE3\x81\xA4\xE3\x81\x93\xE3\x81\x86";
-  // "かっこう"
-  const string k3 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
-  // "がっこう"
-  const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
+  const string k0 = "かつ";
+  const string k1 = "かっこ";
+  const string k2 = "かつこう";
+  const string k3 = "かっこう";
+  const string k4 = "がっこう";
 
   unique_ptr<Token> t0(CreateToken(k0, "aa"));
   unique_ptr<Token> t1(CreateToken(k1, "bb"));

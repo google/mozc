@@ -52,21 +52,11 @@ using ::mozc::user_dictionary::UserDictionaryCommand;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySessionHandler;
 
-// "きょうと\t京都\t名詞\n"
-// "!おおさか\t大阪\t地名\n"
-// "\n"
-// "#とうきょう\t東京\t地名\tコメント\n"
-// "すずき\t鈴木\t人名\n";
 const char kDictionaryData[] =
-    "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\t"
-    "\xE4\xBA\xAC\xE9\x83\xBD\t\xE5\x90\x8D\xE8\xA9\x9E\n"
-    "\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\t"
-    "\xE5\xA4\xA7\xE9\x98\xAA\t\xE5\x9C\xB0\xE5\x90\x8D\n"
-    "\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3"
-    "\x81\x86\t\xE6\x9D\xB1\xE4\xBA\xAC\t\xE5\x9C\xB0\xE5"
-    "\x90\x8D\t\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\n"
-    "\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\t\xE9\x88\xB4"
-    "\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
+    "きょうと\t京都\t名詞\n"
+    "おおさか\t大阪\t地名\n"
+    "とうきょう\t東京\t地名\tコメント\n"
+    "すずき\t鈴木\t人名\n";
 
 // 0 means invalid dictionary id.
 // c.f., UserDictionaryUtil::CreateNewDictionaryId()
@@ -74,7 +64,7 @@ const uint64 kInvalidDictionaryId = 0;
 
 class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     FileUtil::Unlink(GetUserDictionaryFile());
@@ -86,7 +76,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     handler_->set_dictionary_path(GetUserDictionaryFile());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     FileUtil::Unlink(GetUserDictionaryFile());
     SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
   }
@@ -928,10 +918,8 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
   const uint64 session_id = CreateSession();
 
   string data = kDictionaryData;
-  // "☻\tEMOTICON\t名詞\n": Invalid symbol reading.
-  data.append("\xE2\x98\xBB\tEMOTICON\t\xE5\x90\x8D\xE8\xA9\x9E\n");
-  // "読み\tYOMI\t名詞\n": Invalid Kanji reading.
-  data.append("\xE8\xAA\xAD\xE3\x81\xBF\tYOMI\t\xE5\x90\x8D\xE8\xA9\x9E\n");
+  data.append("☻\tEMOTICON\t名詞\n");  // Invalid symbol reading.
+  data.append("読み\tYOMI\t名詞\n");  // Invalid Kanji reading.
 
   // Import data to a new dictionary.
   Clear();

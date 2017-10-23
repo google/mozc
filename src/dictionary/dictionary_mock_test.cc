@@ -40,15 +40,15 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace dictionary {
 namespace {
 
+using std::unique_ptr;
+
 class DictionaryMockTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     mock_.reset(new DictionaryMock);
   }
 
@@ -127,13 +127,8 @@ TEST_F(DictionaryMockTest, HasValue) {
 TEST_F(DictionaryMockTest, LookupPrefix) {
   DictionaryMock *dic = GetMock();
 
-  unique_ptr<Token> t0(CreateToken(
-      "\xe3\x81\xaf",  // "は"
-      "v0", Token::NONE));
-  unique_ptr<Token> t1(CreateToken(
-      // "はひふへほ"
-      "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81\xbb",
-      "v1", Token::NONE));
+  unique_ptr<Token> t0(CreateToken("は", "v0", Token::NONE));
+  unique_ptr<Token> t1(CreateToken("はひふへほ", "v1", Token::NONE));
 
   dic->AddLookupPrefix(t0->key, t0->key, t0->value, Token::NONE);
   dic->AddLookupPrefix(t1->key, t1->key, t1->value, Token::NONE);
@@ -157,12 +152,10 @@ TEST_F(DictionaryMockTest, LookupPrefix) {
 TEST_F(DictionaryMockTest, LookupReverse) {
   DictionaryInterface *dic = GetMock();
 
-  // "今"/"いま"
-  const string k0 = "\xE4\xBB\x8A";
-  const string v0 = "\xE3\x81\x84\xE3\x81\xBE";
-  // "今日"/"きょう"
-  const string k1 = "\xE4\xBB\x8A\xE6\x97\xA5";
-  const string v1 = "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86";
+  const string k0 = "今";
+  const string v0 = "いま";
+  const string k1 = "今日";
+  const string v1 = "きょう";
 
   std::vector<Token> source_tokens;
   unique_ptr<Token> t0(CreateToken(k0, v0));
@@ -187,13 +180,10 @@ TEST_F(DictionaryMockTest, LookupReverse) {
 
 TEST_F(DictionaryMockTest, LookupPredictive) {
   DictionaryInterface *dic = GetMock();
-  // "は"
-  const string k0 = "\xe3\x81\xaf";
-  // "はひふ"
-  const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5";
-  // "はひふへほ"
-  const string k2 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
-                    "\xbb";
+
+  const string k0 = "は";
+  const string k1 = "はひふ";
+  const string k2 = "はひふへほ";
 
   std::vector<Token> tokens;
   unique_ptr<Token> t1(CreateToken(k1, "v0", Token::NONE));
@@ -216,7 +206,7 @@ TEST_F(DictionaryMockTest, LookupPredictive) {
 TEST_F(DictionaryMockTest, LookupExact) {
   DictionaryInterface *dic = GetMock();
 
-  const char *kKey = "\xE3\x81\xBB\xE3\x81\x92";  // "ほげ"
+  const char kKey[] = "ほげ";
 
   unique_ptr<Token> t0(CreateToken(kKey, "value1", Token::NONE));
   unique_ptr<Token> t1(CreateToken(kKey, "value2", Token::NONE));
@@ -235,9 +225,7 @@ TEST_F(DictionaryMockTest, LookupExact) {
   EXPECT_TRUE(callback.tokens().empty());
 
   callback.Clear();
-  dic->LookupExact("\xE3\x81\xBB",  // "ほ"
-                   convreq_,
-                   &callback);
+  dic->LookupExact("ほ", convreq_, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 }
 

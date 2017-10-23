@@ -58,11 +58,11 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace dictionary {
 namespace {
+
+using std::unique_ptr;
 
 const char kUserDictionary0[] =
     "start\tstart\tverb\n"
@@ -73,7 +73,7 @@ const char kUserDictionary0[] =
     "smile\tsmile\tverb\n"
     "smog\tsmog\tnoun\n"
     // invalid characters "水雲" in reading
-    "\xE6\xB0\xB4\xE9\x9B\xB2\tvalue\tnoun\n"
+    "水雲\tvalue\tnoun\n"
 
     // Empty key
     "\tvalue\tnoun\n"
@@ -146,7 +146,7 @@ class UserPOSMock : public UserPOSInterface {
     if (key.empty() ||
         value.empty() ||
         pos.empty() ||
-        tokens == NULL) {
+        tokens == nullptr) {
       return false;
     }
 
@@ -173,11 +173,9 @@ class UserPOSMock : public UserPOSInterface {
  private:
   DISALLOW_COPY_AND_ASSIGN(UserPOSMock);
 };
-// "名詞"
-const char *UserPOSMock::kNoun = "\xE5\x90\x8D\xE8\xA9\x9E";
-// "動詞ワ行五段"
-const char *UserPOSMock::kVerb =
-    "\xE5\x8B\x95\xE8\xA9\x9E\xE3\x83\xAF\xE8\xA1\x8C\xE4\xBA\x94\xE6\xAE\xB5";
+
+const char *UserPOSMock::kNoun = "名詞";
+const char *UserPOSMock::kVerb = "動詞ワ行五段";
 
 string GenRandomAlphabet(int size) {
   string result;
@@ -265,7 +263,7 @@ class UserDictionaryTest : public ::testing::Test {
     EntryCollector collector;
     dic.LookupPredictive(key, convreq_, &collector);
 
-    if (expected == NULL || expected_size == 0) {
+    if (expected == nullptr || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
     } else {
       ASSERT_FALSE(collector.entries().empty());
@@ -281,7 +279,7 @@ class UserDictionaryTest : public ::testing::Test {
     EntryCollector collector;
     dic.LookupPrefix(StringPiece(key, key_size), convreq_, &collector);
 
-    if (expected == NULL || expected_size == 0) {
+    if (expected == nullptr || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
     } else {
       ASSERT_FALSE(collector.entries().empty());
@@ -297,7 +295,7 @@ class UserDictionaryTest : public ::testing::Test {
     EntryCollector collector;
     dic.LookupExact(StringPiece(key, key_size), convreq_, &collector);
 
-    if (expected == NULL || expected_size == 0) {
+    if (expected == nullptr || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
     } else {
       ASSERT_FALSE(collector.entries().empty());
@@ -401,7 +399,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
     { "starting", "starting", 220, 220 },
   };
   TestLookupPredictiveHelper(kExpected0, arraysize(kExpected0),
-                             "start", *dic.get());
+                             "start", *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -416,13 +414,11 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
     { "starting", "starting", 220, 220 },
   };
   TestLookupPredictiveHelper(kExpected1, arraysize(kExpected1),
-                             "st", *dic.get());
+                             "st", *dic);
 
   // Invalid input values should be just ignored.
-  TestLookupPredictiveHelper(NULL, 0, "", *dic.get());
-  TestLookupPredictiveHelper(NULL, 0,
-                             "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
-                             *dic.get());
+  TestLookupPredictiveHelper(nullptr, 0, "", *dic);
+  TestLookupPredictiveHelper(nullptr, 0, "水雲", *dic);
 
   // Make a change to the dictionary file and load it again.
   {
@@ -438,11 +434,11 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
     { "ending", "ending", 220, 220 },
   };
   TestLookupPredictiveHelper(kExpected2, arraysize(kExpected2),
-                             "end", *dic.get());
+                             "end", *dic);
 
   // Entries in the dictionary before reloading cannot be looked up.
-  TestLookupPredictiveHelper(NULL, 0, "start", *dic.get());
-  TestLookupPredictiveHelper(NULL, 0, "st", *dic.get());
+  TestLookupPredictiveHelper(nullptr, 0, "start", *dic);
+  TestLookupPredictiveHelper(nullptr, 0, "st", *dic);
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefix) {
@@ -463,7 +459,7 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
     { "started", "started", 210, 210 },
   };
   TestLookupPrefixHelper(kExpected0, arraysize(kExpected0),
-                         "started", 7, *dic.get());
+                         "started", 7, *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -472,14 +468,12 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
     { "starting", "starting", 100, 100 },
     { "starting", "starting", 220, 220 },
   };
-  TestLookupPrefixHelper(kExpected1, arraysize(kExpected1),
-                         "starting", 8, *dic.get());
+  TestLookupPrefixHelper(kExpected1, arraysize(kExpected1), "starting", 8,
+                         *dic);
 
   // Invalid input values should be just ignored.
-  TestLookupPrefixHelper(NULL, 0, "", 0, *dic.get());
-  TestLookupPrefixHelper(
-      NULL, 0, "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
-      strlen("\xE6\xB0\xB4\xE9\x9B\xB2"), *dic.get());
+  TestLookupPrefixHelper(nullptr, 0, "", 0, *dic);
+  TestLookupPrefixHelper(nullptr, 0, "水雲", strlen("水雲"), *dic);
 
   // Make a change to the dictionary file and load it again.
   {
@@ -494,11 +488,11 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
     { "ending", "ending", 220, 220 },
   };
   TestLookupPrefixHelper(kExpected2, arraysize(kExpected2),
-                                     "ending", 6, *dic.get());
+                                     "ending", 6, *dic);
 
   // Lookup for entries which are gone should returns empty result.
-  TestLookupPrefixHelper(NULL, 0, "started", 7, *dic.get());
-  TestLookupPrefixHelper(NULL, 0, "starting", 8, *dic.get());
+  TestLookupPrefixHelper(nullptr, 0, "started", 7, *dic);
+  TestLookupPrefixHelper(nullptr, 0, "starting", 8, *dic);
 }
 
 TEST_F(UserDictionaryTest, TestLookupExact) {
@@ -517,7 +511,7 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
     { "start", "start", 200, 200 },
   };
   TestLookupExactHelper(kExpected0, arraysize(kExpected0),
-                        "start", 5, *dic.get());
+                        "start", 5, *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -525,12 +519,11 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
     { "starting", "starting", 220, 220 },
   };
   TestLookupExactHelper(kExpected1, arraysize(kExpected1),
-                        "starting", 8, *dic.get());
+                        "starting", 8, *dic);
 
   // Invalid input values should be just ignored.
-  TestLookupPrefixHelper(NULL, 0, "", 0, *dic.get());
-  TestLookupPrefixHelper(NULL, 0, "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
-                         strlen("\xE6\xB0\xB4\xE9\x9B\xB2"), *dic.get());
+  TestLookupPrefixHelper(nullptr, 0, "", 0, *dic);
+  TestLookupPrefixHelper(nullptr, 0, "水雲", strlen("水雲"), *dic);
 }
 
 TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
@@ -586,8 +579,8 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
     dic->Load(storage);
   }
 
-  TestLookupPrefixHelper(NULL, 0, "start", 4, *dic);
-  TestLookupPredictiveHelper(NULL, 0, "s", *dic);
+  TestLookupPrefixHelper(nullptr, 0, "start", 4, *dic);
+  TestLookupPredictiveHelper(nullptr, 0, "s", *dic);
 
   config_.set_incognito_mode(false);
   {

@@ -46,10 +46,9 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace {
 
 using user_dictionary::UserDictionary;
-
-namespace {
 
 string GenRandomString(int size) {
   string result;
@@ -374,9 +373,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
 
   ASSERT_TRUE(storage.ConvertSyncDictionariesToNormalDictionaries());
 
-  // "同期用辞書"
-  const char *kDictionaryNameConvertedFromSyncableDictionary =
-      "\xE5\x90\x8C\xE6\x9C\x9F\xE7\x94\xA8\xE8\xBE\x9E\xE6\x9B\xB8";
+  const char kDictionaryNameConvertedFromSyncableDictionary[] = "同期用辞書";
   const struct ExpectedData {
     bool has_normal_entry;
     string dictionary_name;
@@ -493,12 +490,11 @@ TEST_F(UserDictionaryStorageTest, Export) {
 
   // Make sure the exported format, especially that the pos is exported in
   // Japanese.
-  // "key value 名詞 comment" separted by a tab character.
 #ifdef OS_WIN
-  EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\r\n",
+  EXPECT_EQ("key\tvalue\t名詞\tcomment\r\n",
             string(mapped_data.begin(), mapped_data.size()));
 #else
-  EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\n",
+  EXPECT_EQ("key\tvalue\t名詞\tcomment\n",
             string(mapped_data.begin(), mapped_data.size()));
 #endif  // OS_WIN
 }

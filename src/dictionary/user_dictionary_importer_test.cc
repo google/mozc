@@ -86,151 +86,90 @@ class TestInputIterator
 }  // namespace
 
 TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
-  // "きょうと\t京都\t名詞\n"
-  // "おおさか\t大阪\t地名\n"
-  // "とうきょう\t東京\t地名\tコメント\n"
-  // "すずき\t鈴木\t人名\n"
   const char kInput[] =
-      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\t"
-      "\xE4\xBA\xAC\xE9\x83\xBD\t\xE5\x90\x8D\xE8\xA9\x9E\n"
-      "\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\t"
-      "\xE5\xA4\xA7\xE9\x98\xAA\t\xE5\x9C\xB0\xE5\x90\x8D\n"
-      "\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3"
-      "\x81\x86\t\xE6\x9D\xB1\xE4\xBA\xAC\t\xE5\x9C\xB0\xE5"
-      "\x90\x8D\t\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\n"
-      "\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\t\xE9\x88\xB4"
-      "\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
+      "きょうと\t京都\t名詞\n"
+      "おおさか\t大阪\t地名\n"
+      "とうきょう\t東京\t地名\tコメント\n"
+      "すずき\t鈴木\t人名\n";
 
   UserDictionaryImporter::StringTextLineIterator iter(kInput);
   UserDictionaryStorage::UserDictionary user_dic;
 
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
             UserDictionaryImporter::ImportFromTextLineIterator(
-                UserDictionaryImporter::MOZC,
-                &iter,
-                &user_dic));
+                UserDictionaryImporter::MOZC, &iter, &user_dic));
 
   ASSERT_EQ(4, user_dic.entries_size());
 
-  // EXPECT_EQ("きょうと", user_dic.entries(0).key());
-  // EXPECT_EQ("京都", user_dic.entries(0).value());
-  // EXPECT_EQ("名詞", user_dic.entries(0).pos());
-  // EXPECT_EQ("", user_dic.entries(0).comment());
-  EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
-            user_dic.entries(0).key());
-  EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
+  EXPECT_EQ("きょうと", user_dic.entries(0).key());
+  EXPECT_EQ("京都", user_dic.entries(0).value());
   EXPECT_EQ(user_dictionary::UserDictionary::NOUN, user_dic.entries(0).pos());
   EXPECT_EQ("", user_dic.entries(0).comment());
 
-  // EXPECT_EQ("おおさか", user_dic.entries(1).key());
-  // EXPECT_EQ("大阪", user_dic.entries(1).value());
-  // EXPECT_EQ("地名", user_dic.entries(1).pos());
-  // EXPECT_EQ("", user_dic.entries(1).comment());
-  EXPECT_EQ("\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
-            user_dic.entries(1).key());
-  EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA", user_dic.entries(1).value());
+  EXPECT_EQ("おおさか", user_dic.entries(1).key());
+  EXPECT_EQ("大阪", user_dic.entries(1).value());
   EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
             user_dic.entries(1).pos());
   EXPECT_EQ("", user_dic.entries(1).comment());
 
-
-  // EXPECT_EQ("とうきょう", user_dic.entries(2).key());
-  // EXPECT_EQ("東京", user_dic.entries(2).value());
-  // EXPECT_EQ("地名", user_dic.entries(2).pos());
-  // EXPECT_EQ("コメント", user_dic.entries(2).comment());
-  EXPECT_EQ("\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
-            user_dic.entries(2).key());
-  EXPECT_EQ("\xE6\x9D\xB1\xE4\xBA\xAC", user_dic.entries(2).value());
+  EXPECT_EQ("とうきょう", user_dic.entries(2).key());
+  EXPECT_EQ("東京", user_dic.entries(2).value());
   EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
             user_dic.entries(2).pos());
-  EXPECT_EQ("\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88",
-            user_dic.entries(2).comment());
+  EXPECT_EQ("コメント", user_dic.entries(2).comment());
 
-  // EXPECT_EQ("すずき", user_dic.entries(3).key());
-  // EXPECT_EQ("鈴木", user_dic.entries(3).value());
-  // EXPECT_EQ("人名", user_dic.entries(3).pos());
-  // EXPECT_EQ("", user_dic.entries(3).comment());
-  EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D", user_dic.entries(3).key());
-  EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(3).value());
+  EXPECT_EQ("すずき", user_dic.entries(3).key());
+  EXPECT_EQ("鈴木", user_dic.entries(3).value());
   EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
             user_dic.entries(3).pos());
   EXPECT_EQ("", user_dic.entries(3).comment());
 }
 
 TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
-  // "\"きょうと\",\"京都\",\"名詞\"\n"
-  // "\"おおさか\",\"大阪\",\"地名\"\n"
-  // "// last line"
   const char kInput[] =
-      "\"\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\","
-      "\"\xE4\xBA\xAC\xE9\x83\xBD\",\"\xE5\x90\x8D\xE8\xA9\x9E\"\n"
-      "\"\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\","
-      "\"\xE5\xA4\xA7\xE9\x98\xAA\",\"\xE5\x9C\xB0\xE5\x90\x8D\"\n"
+      "\"きょうと\","
+      "\"京都\",\"名詞\"\n"
+      "\"おおさか\","
+      "\"大阪\",\"地名\"\n"
       "// last line";
-
   {
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     UserDictionaryStorage::UserDictionary user_dic;
 
     EXPECT_EQ(UserDictionaryImporter::IMPORT_NOT_SUPPORTED,
               UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::MOZC,
-                  &iter,
-                  &user_dic));
+                  UserDictionaryImporter::MOZC, &iter, &user_dic));
 
     EXPECT_EQ(0, user_dic.entries_size());
   }
-
   {
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     UserDictionaryStorage::UserDictionary user_dic;
 
     EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
               UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::KOTOERI,
-                  &iter,
-                  &user_dic));
+                  UserDictionaryImporter::KOTOERI, &iter, &user_dic));
 
     ASSERT_EQ(2, user_dic.entries_size());
 
-    // EXPECT_EQ("きょうと", user_dic.entries(0).key());
-    // EXPECT_EQ("京都", user_dic.entries(0).value());
-    // EXPECT_EQ("名詞", user_dic.entries(0).pos());
-    EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
-              user_dic.entries(0).key());
-    EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
-    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
-              user_dic.entries(0).pos());
+    EXPECT_EQ("きょうと", user_dic.entries(0).key());
+    EXPECT_EQ("京都", user_dic.entries(0).value());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN, user_dic.entries(0).pos());
 
-    // EXPECT_EQ("おおさか", user_dic.entries(1).key());
-    // EXPECT_EQ("大阪", user_dic.entries(1).value());
-    // EXPECT_EQ("地名", user_dic.entries(1).pos());
-    EXPECT_EQ("\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
-              user_dic.entries(1).key());
-    EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA", user_dic.entries(1).value());
+    EXPECT_EQ("おおさか", user_dic.entries(1).key());
+    EXPECT_EQ("大阪", user_dic.entries(1).value());
     EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
               user_dic.entries(1).pos());
   }
 }
 
 TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
-  // "きょうと\t京都\t名詞\n"
-  // "!おおさか\t大阪\t地名\n"
-  // "\n"
-  // "#とうきょう\t東京\t地名\tコメント\n"
-  // "すずき\t鈴木\t人名\n";
   const char kInput[] =
-      "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\t"
-      "\xE4\xBA\xAC\xE9\x83\xBD\t\xE5\x90\x8D\xE8\xA9\x9E\n"
-      "!\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\t"
-      "\xE5\xA4\xA7\xE9\x98\xAA\t\xE5\x9C\xB0\xE5\x90\x8D\n"
+      "きょうと\t京都\t名詞\n"
+      "!おおさか\t大阪\t地名\n"
       "\n"
-      "#\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\t"
-      "\xE6\x9D\xB1\xE4\xBA\xAC\t\xE5\x9C\xB0\xE5\x90\x8D\t"
-      "\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\n"
-      "\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\t"
-      "\xE9\x88\xB4\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
-
+      "#とうきょう\t東京\t地名\tコメント\n"
+      "すずき\t鈴木\t人名\n";
   {
     const string kMsImeInput(string("!Microsoft IME\n") + kInput);
     UserDictionaryImporter::StringTextLineIterator iter(kMsImeInput);
@@ -238,110 +177,68 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
 
     EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
               UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::MSIME,
-                  &iter,
-                  &user_dic));
+                  UserDictionaryImporter::MSIME, &iter, &user_dic));
 
     ASSERT_EQ(3, user_dic.entries_size());
 
-    // EXPECT_EQ("きょうと", user_dic.entries(0).key());
-    // EXPECT_EQ("京都", user_dic.entries(0).value());
-    // EXPECT_EQ("名詞", user_dic.entries(0).pos());
-    EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
-              user_dic.entries(0).key());
-    EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
-    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
-              user_dic.entries(0).pos());
+    EXPECT_EQ("きょうと", user_dic.entries(0).key());
+    EXPECT_EQ("京都", user_dic.entries(0).value());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN, user_dic.entries(0).pos());
 
-    // EXPECT_EQ("#とうきょう", user_dic.entries(1).key());
-    // EXPECT_EQ("東京", user_dic.entries(1).value());
-    // EXPECT_EQ("地名", user_dic.entries(1).pos());
-    EXPECT_EQ("#\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
-              user_dic.entries(1).key());
-    EXPECT_EQ("\xE6\x9D\xB1\xE4\xBA\xAC", user_dic.entries(1).value());
+    EXPECT_EQ("#とうきょう", user_dic.entries(1).key());
+    EXPECT_EQ("東京", user_dic.entries(1).value());
     EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
               user_dic.entries(1).pos());
 
-    // EXPECT_EQ("すずき", user_dic.entries(2).key());
-    // EXPECT_EQ("鈴木", user_dic.entries(2).value());
-    // EXPECT_EQ("人名", user_dic.entries(2).pos());
-    EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",
-              user_dic.entries(2).key());
-    EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(2).value());
+    EXPECT_EQ("すずき", user_dic.entries(2).key());
+    EXPECT_EQ("鈴木", user_dic.entries(2).value());
     EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
               user_dic.entries(2).pos());
   }
-
   {
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     UserDictionaryStorage::UserDictionary user_dic;
 
     EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
               UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::MOZC,
-                  &iter,
-                  &user_dic));
+                  UserDictionaryImporter::MOZC, &iter, &user_dic));
 
     ASSERT_EQ(3, user_dic.entries_size());
 
-    // EXPECT_EQ("きょうと", user_dic.entries(0).key());
-    // EXPECT_EQ("京都", user_dic.entries(0).value());
-    // EXPECT_EQ("名詞", user_dic.entries(0).pos());
-    EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
-              user_dic.entries(0).key());
-    EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
-    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
-              user_dic.entries(0).pos());
+    EXPECT_EQ("きょうと", user_dic.entries(0).key());
+    EXPECT_EQ("京都", user_dic.entries(0).value());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN, user_dic.entries(0).pos());
 
-    // EXPECT_EQ("!おおさか", user_dic.entries(1).key());
-    // EXPECT_EQ("大阪", user_dic.entries(1).value());
-    // EXPECT_EQ("地名", user_dic.entries(1).pos());
-    EXPECT_EQ("!\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
-              user_dic.entries(1).key());
-    EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA", user_dic.entries(1).value());
+    EXPECT_EQ("!おおさか", user_dic.entries(1).key());
+    EXPECT_EQ("大阪", user_dic.entries(1).value());
     EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
               user_dic.entries(1).pos());
 
-    // EXPECT_EQ("すずき", user_dic.entries(2).key());
-    // EXPECT_EQ("鈴木", user_dic.entries(2).value());
-    // EXPECT_EQ("人名", user_dic.entries(2).pos());
-    EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",
-              user_dic.entries(2).key());
-    EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(2).value());
+    EXPECT_EQ("すずき", user_dic.entries(2).key());
+    EXPECT_EQ("鈴木", user_dic.entries(2).value());
     EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
               user_dic.entries(2).pos());
   }
 }
 
 TEST(UserDictionaryImporter, ImportFromInvalidTextTest) {
-  // "a"
-  // "\n"
-  // "東京\t\t地名\tコメント\n"
-  // "すずき\t鈴木\t人名\n";
   const char kInput[] =
       "a"
       "\n"
-      "\xE6\x9D\xB1\xE4\xBA\xAC\t\t\xE5\x9C\xB0\xE5\x90\x8D\t"
-      "\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\n"
-      "\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\t"
-      "\xE9\x88\xB4\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
+      "東京\t\t地名\tコメント\n"
+      "すずき\t鈴木\t人名\n";
 
   UserDictionaryImporter::StringTextLineIterator iter(kInput);
   UserDictionaryStorage::UserDictionary user_dic;
 
   EXPECT_EQ(UserDictionaryImporter::IMPORT_INVALID_ENTRIES,
             UserDictionaryImporter::ImportFromTextLineIterator(
-                UserDictionaryImporter::MOZC,
-                &iter,
-                &user_dic));
+                UserDictionaryImporter::MOZC, &iter, &user_dic));
 
   ASSERT_EQ(1, user_dic.entries_size());
 
-  // EXPECT_EQ("すずき", user_dic.entries(0).key());
-  // EXPECT_EQ("鈴木", user_dic.entries(0).value());
-  // EXPECT_EQ("人名", user_dic.entries(0).pos());
-  EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D", user_dic.entries(0).key());
-  EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(0).value());
+  EXPECT_EQ("すずき", user_dic.entries(0).key());
+  EXPECT_EQ("鈴木", user_dic.entries(0).value());
   EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
             user_dic.entries(0).pos());
 }
@@ -364,8 +261,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
     UserDictionaryImporter::RawEntry entry;
     entry.key = "aa";
     entry.value = "aa";
-    // entry.pos = "名詞";
-    entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
+    entry.pos = "名詞";
     entries.push_back(entry);
   }
 
@@ -401,8 +297,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
                          std::to_string(static_cast<uint32>(j)));
       entry.key = key;
       entry.value = value;
-      // entry.pos = "名詞";
-      entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
+      entry.pos = "名詞";
       entries.push_back(entry);
     }
 
@@ -443,8 +338,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
       entry.key = key;
       entry.value = value;
       if (j % 2 == 0) {
-        // entry.pos = "名詞";
-        entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
+        entry.pos = "名詞";
       }
       entries.push_back(entry);
     }
@@ -468,7 +362,6 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
         = user_dic.add_entries();
     entry->set_key("aa");
     entry->set_value("aa");
-    // entry->set_pos("名詞");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
 
@@ -478,8 +371,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
     UserDictionaryImporter::RawEntry entry;
     entry.key = "aa";
     entry.value = "aa";
-    // entry.pos = "名詞";
-    entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
+    entry.pos = "名詞";
     entries.push_back(entry);
   }
 
@@ -494,8 +386,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
     UserDictionaryImporter::RawEntry entry;
     entry.key = "bb";
     entry.value = "bb";
-    // entry.pos = "名詞";
-    entry.pos = "\xE5\x90\x8D\xE8\xA9\x9E";
+    entry.pos = "名詞";
     entries.push_back(entry);
   }
 
@@ -619,32 +510,22 @@ TEST(UserDictionaryImporter, DetermineFinalIMETypeTest) {
 
 TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
   {
-    // "これはテストです。"
-    const char str[] = "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF\xE3\x83\x86"
-                       "\xE3\x82\xB9\xE3\x83\x88\xE3\x81\xA7\xE3\x81\x99"
-                       "\xE3\x80\x82";
+    const char str[] = "これはテストです。";
     EXPECT_EQ(UserDictionaryImporter::UTF8,
               UserDictionaryImporter::GuessEncodingType(str));
   }
-
   {
-    // "私の名前は中野ですABC"
-    const char str[] = "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
-                       "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
-                       "\xE3\x81\x99" "ABC";
+    const char str[] = "私の名前は中野ですABC";
     EXPECT_EQ(UserDictionaryImporter::UTF8,
               UserDictionaryImporter::GuessEncodingType(str));
   }
-
   {
     const char str[] = "ABCDEFG abcdefg";
     EXPECT_EQ(UserDictionaryImporter::UTF8,
               UserDictionaryImporter::GuessEncodingType(str));
   }
-
   {
-    // "ハロー"
-    const char str[] = "\xE3\x83\x8F\xE3\x83\xAD\xE3\x83\xBC";
+    const char str[] = "ハロー";
     EXPECT_EQ(UserDictionaryImporter::UTF8,
               UserDictionaryImporter::GuessEncodingType(str));
   }

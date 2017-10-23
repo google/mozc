@@ -76,48 +76,23 @@ TEST_F(UserPOSTest, UserPOSGetTokensTest) {
   user_pos_->GetPOSList(&pos_list);
 
   std::vector<UserPOS::Token> tokens;
-  EXPECT_FALSE(user_pos_->GetTokens("", "test",
-                                    pos_list[0],
-                                    &tokens));
-  EXPECT_FALSE(user_pos_->GetTokens("test", "",
-                                    pos_list[0],
-                                    &tokens));
-  EXPECT_FALSE(user_pos_->GetTokens("test", "test",
-                                    "",
-                                    &tokens));
-  EXPECT_TRUE(user_pos_->GetTokens("test", "test",
-                                   pos_list[0],
-                                   &tokens));
+  EXPECT_FALSE(user_pos_->GetTokens("", "test", pos_list[0], &tokens));
+  EXPECT_FALSE(user_pos_->GetTokens("test", "", pos_list[0], &tokens));
+  EXPECT_FALSE(user_pos_->GetTokens("test", "test", "", &tokens));
+  EXPECT_TRUE(user_pos_->GetTokens("test", "test", pos_list[0], &tokens));
 
   // http://b/2674666
-  // "あか,赤,形容詞"
-  EXPECT_TRUE(user_pos_->GetTokens("\xE3\x81\x82\xE3\x81\x8B",
-                                   "\xE8\xB5\xA4",
-                                   "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E",
-                                   &tokens));
+  EXPECT_TRUE(user_pos_->GetTokens("あか", "赤", "形容詞", &tokens));
 
   for (size_t i = 0; i < pos_list.size(); ++i) {
-    EXPECT_TRUE(user_pos_->GetTokens("test", "test",
-                                     pos_list[i],
-                                     &tokens));
+    EXPECT_TRUE(user_pos_->GetTokens("test", "test", pos_list[i], &tokens));
   }
 }
 
 TEST_F(UserPOSTest, ConjugationTest) {
   std::vector<UserPOS::Token> tokens1, tokens2;
-  // EXPECT_TRUE(user_pos_->GetTokens("わら", "嗤",
-  // "動詞ワ行五段", &tokens1));
-  // EXPECT_TRUE(user_pos_->GetTokens("わらう", "嗤う",
-  // "動詞ワ行五段", &tokens2));
-  EXPECT_TRUE(user_pos_->GetTokens("\xE3\x82\x8F\xE3\x82\x89", "\xE5\x97\xA4",
-                                   "\xE5\x8B\x95\xE8\xA9\x9E\xE3\x83\xAF"
-                                   "\xE8\xA1\x8C\xE4\xBA\x94\xE6\xAE\xB5",
-                                   &tokens1));
-  EXPECT_TRUE(user_pos_->GetTokens("\xE3\x82\x8F\xE3\x82\x89\xE3\x81\x86",
-                                   "\xE5\x97\xA4\xE3\x81\x86",
-                                   "\xE5\x8B\x95\xE8\xA9\x9E\xE3\x83\xAF"
-                                   "\xE8\xA1\x8C\xE4\xBA\x94\xE6\xAE\xB5",
-                                   &tokens2));
+  EXPECT_TRUE(user_pos_->GetTokens("わら", "嗤", "動詞ワ行五段", &tokens1));
+  EXPECT_TRUE(user_pos_->GetTokens("わらう", "嗤う", "動詞ワ行五段", &tokens2));
   EXPECT_EQ(tokens1.size(), tokens2.size());
   for (size_t i = 0; i < tokens1.size(); ++i) {
     EXPECT_EQ(tokens1[i].key, tokens2[i].key);
@@ -126,19 +101,8 @@ TEST_F(UserPOSTest, ConjugationTest) {
     EXPECT_EQ(tokens1[i].cost, tokens2[i].cost);
   }
 
-  // EXPECT_TRUE(user_pos_->GetTokens("おそれ", "惧れ",
-  // "動詞一段", &tokens1));
-  // EXPECT_TRUE(user_pos_->GetTokens("おそれる", "惧れる",
-  // "動詞一段", &tokens2));
-  EXPECT_TRUE(user_pos_->GetTokens("\xE3\x81\x8A\xE3\x81\x9D\xE3\x82\x8C",
-                                   "\xE6\x83\xA7\xE3\x82\x8C",
-                                   "\xE5\x8B\x95\xE8\xA9\x9E"
-                                   "\xE4\xB8\x80\xE6\xAE\xB5", &tokens1));
-  EXPECT_TRUE(user_pos_->GetTokens("\xE3\x81\x8A\xE3\x81\x9D"
-                                   "\xE3\x82\x8C\xE3\x82\x8B",
-                                   "\xE6\x83\xA7\xE3\x82\x8C\xE3\x82\x8B",
-                                   "\xE5\x8B\x95\xE8\xA9\x9E"
-                                   "\xE4\xB8\x80\xE6\xAE\xB5", &tokens2));
+  EXPECT_TRUE(user_pos_->GetTokens("おそれ", "惧れ", "動詞一段", &tokens1));
+  EXPECT_TRUE(user_pos_->GetTokens("おそれる", "惧れる", "動詞一段", &tokens2));
   EXPECT_EQ(tokens1.size(), tokens2.size());
   for (size_t i = 0; i < tokens1.size(); ++i) {
     EXPECT_EQ(tokens1[i].key, tokens2[i].key);
