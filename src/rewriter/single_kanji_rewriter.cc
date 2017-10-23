@@ -240,7 +240,7 @@ void GenerateDescription(StringPiece variant_token_array,
   DCHECK_LT(type_id, variant_type.size());
   // Format like "XXXのYYY"
   desc->assign(original.data(), original.size());
-  desc->append("\xe3\x81\xae");  // "の"
+  desc->append("の");
   desc->append(variant_type[type_id].data(), variant_type[type_id].size());
 }
 

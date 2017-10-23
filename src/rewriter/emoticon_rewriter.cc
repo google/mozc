@@ -130,9 +130,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
       c->attributes |= Segment::Candidate::NO_LEARNING;
     }
 
-    //  "顔文字";
-    const char kBaseEmoticonDescription[]
-        = "\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97";
+    const char kBaseEmoticonDescription[] = "顔文字";
 
     if (sorted_value[i].description().empty()) {
       c->description = kBaseEmoticonDescription;
@@ -166,8 +164,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
     // Displaying non-facemarks with "かおもじ" is not always correct.
     // We have to distinguish pure facemarks and other symbol marks.
 
-    // "かおもじ"
-    if (key == "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98") {
+    if (key == "かおもじ") {
       // When key is "かおもじ", default candidate size should be small enough.
       // It is safe to expand all candidates at this time.
       begin = dic_.begin();
@@ -176,8 +173,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       // set large value(100) so that all candidates are pushed to the bottom
       initial_insert_pos = 100;
       initial_insert_size = dic_.size();
-      // "かお"
-    } else if (key == "\xE3\x81\x8B\xE3\x81\x8A") {
+    } else if (key == "かお") {
       // When key is "かお", expand all candidates in conservative way.
       begin = dic_.begin();
       CHECK(begin != dic_.end());
@@ -185,8 +181,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       // Other candidates are pushed to the buttom.
       initial_insert_pos = 4;
       initial_insert_size = 6;
-    } else if (key == "\xE3\x81\xB5\xE3\x81\x8F\xE3\x82\x8F"
-               "\xE3\x82\x89\xE3\x81\x84") {   // "ふくわらい"
+    } else if (key == "ふくわらい") {
       // Choose one emoticon randomly from the dictionary.
       // TODO(taku): want to make it "generate" more funny emoticon.
       begin = dic_.begin();

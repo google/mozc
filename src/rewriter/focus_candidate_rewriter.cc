@@ -51,8 +51,7 @@ enum {
 
 // TODO(taku): See POS and increase the coverage.
 bool IsConnectorSegment(const Segment &segment) {
-  return (segment.key() == "\xE3\x81\xA8" ||
-          segment.key() == "\xE3\x82\x84");
+  return (segment.key() == "と" || segment.key() == "や");
 }
 
 // Finds value from the candidates list and move the canidate to the top.

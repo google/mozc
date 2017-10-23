@@ -321,7 +321,6 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     InsertCandidate("Candidate4", "Candidate4", 1, segments.mutable_segment(0));
 
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    // "今日の日付"
     EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
 
     for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);

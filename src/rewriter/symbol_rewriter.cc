@@ -104,14 +104,12 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
     if (segment->candidate(i).value == " ") {
       Segment::Candidate *c = segment->insert_candidate(i + 1);
       *c = segment->candidate(i);
-      // "　"
-      c->value = "\xe3\x80\x80";
-      c->content_value = "\xe3\x80\x80";
+      c->value = "　";  // Full-width space
+      c->content_value = "　";  // Full-width space
       // Boundary is invalidated and unnecessary for space.
       c->inner_segment_boundary.clear();
       return;
-    // "　"
-    } else if (segment->candidate(i).value == "\xe3\x80\x80") {
+    } else if (segment->candidate(i).value == "　") {  // Full-width space
       Segment::Candidate *c = segment->insert_candidate(i + 1);
       *c = segment->candidate(i);
       c->value = " ";
@@ -178,8 +176,7 @@ void SymbolRewriter::InsertCandidates(
 
   // If the key is "かおもじ", set the insert position at the bottom,
   // giving priority to emoticons inserted by EmoticonRewriter.
-  // "かおもじ"
-  if (candidate_key == "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98") {
+  if (candidate_key == "かおもじ") {
     offset = segment->candidates_size();
   } else {
     // Find the position wehere we start to insert the symbols
@@ -223,8 +220,7 @@ void SymbolRewriter::InsertCandidates(
 
     // The first two consist of two characters but the one of characters doesn't
     // have alternative character.
-    if (candidate->value == "\xE2\x80\x9C\xE2\x80\x9D" ||  // "“”"
-        candidate->value == "\xE2\x80\x98\xE2\x80\x99" ||  // "‘’"
+    if (candidate->value == "“”" || candidate->value == "‘’" ||
         candidate->value == "w" || candidate->value == "www") {
       candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     }

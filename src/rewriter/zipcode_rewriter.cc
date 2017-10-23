@@ -39,9 +39,10 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 
-using mozc::dictionary::POSMatcher;
-
 namespace mozc {
+namespace {
+using dictionary::POSMatcher;
+}  // namespace
 
 bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
                                                    string *zipcode,
@@ -103,7 +104,7 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
 
   string space;
   if (is_full_width) {
-    space = "\xE3\x80\x80";  // "　" (full-width space)
+    space = "　";  // "　" (full-width space)
   } else {
     space = " ";
   }
@@ -120,10 +121,7 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
   candidate->content_key = zipcode;
   candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   candidate->attributes |= Segment::Candidate::NO_LEARNING;
-  // "郵便番号と住所"
-  candidate->description =
-      "\xE9\x83\xB5\xE4\xBE\xBF\xE7\x95\xAA\xE5"
-      "\x8F\xB7\xE3\x81\xA8\xE4\xBD\x8F\xE6\x89\x80";
+  candidate->description = "郵便番号と住所";
 
   return true;
 }
@@ -131,7 +129,7 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
 ZipcodeRewriter::ZipcodeRewriter(const POSMatcher *pos_matcher)
     : pos_matcher_(pos_matcher) {}
 
-ZipcodeRewriter::~ZipcodeRewriter() {}
+ZipcodeRewriter::~ZipcodeRewriter() = default;
 
 bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
                               Segments *segments) const {
@@ -159,4 +157,5 @@ bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
                          request,
                          segments->mutable_conversion_segment(0));
 }
+
 }  // namespace mozc

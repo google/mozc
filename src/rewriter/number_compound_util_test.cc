@@ -46,12 +46,9 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
   std::unique_ptr<uint32[]> buf;
   const StringPiece data = SerializedStringArray::SerializeToBuffer(
       {
-          // "デシベル"
-          "\xE3\x83\x87\xE3\x82\xB7\xE3\x83\x99\xE3\x83\xAB",
-          // "回"
-          "\xE5\x9B\x9E",
-          // "階"
-          "\xE9\x9A\x8E",
+          "デシベル",
+          "回",
+          "階",
       },
       &buf);
   SerializedStringArray suffix_array;
@@ -65,42 +62,43 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
     uint32 expected_script_type;
   } kSplittableCases[] = {
       {
-          "\xE4\xB8\x80\xE9\x9A\x8E",  //"一階",
-          "\xE4\xB8\x80",              // "一"
-          "\xE9\x9A\x8E",              // "階"
+          "一階",
+          "一",
+          "階",
           number_compound_util::KANJI,
       },
       {
-          "\xE5\xA3\xB1\xE9\x9A\x8E",  //"壱階",
-          "\xE5\xA3\xB1",              // "壱"
-          "\xE9\x9A\x8E",              // "階"
+          "壱階",
+          "壱",
+          "階",
           number_compound_util::OLD_KANJI,
       },
       {
-          "\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x80\xE5\x9B\x9E",  // "三十一回"
-          "\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x80",              // "三十一",
-          "\xE5\x9B\x9E",                                      //"回"
+          "三十一回",
+          "三十一",
+          "回",
           number_compound_util::KANJI,
       },
       {
-          "\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x80",  // "三十一"
-          "\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x80",  // "三十一",
-          "", number_compound_util::KANJI,
+          "三十一",
+          "三十一",
+          "",
+          number_compound_util::KANJI,
       },
       {
-          "\xE3\x83\x87\xE3\x82\xB7\xE3\x83\x99\xE3\x83\xAB",  // "デシベル"
+          "デシベル",
           "",
-          "\xE3\x83\x87\xE3\x82\xB7\xE3\x83\x99\xE3\x83\xAB",  // "デシベル"
+          "デシベル",
       },
       {
-          "\xE5\x9B\x9E",  // "回"
+          "回",
           "",
-          "\xE5\x9B\x9E",  // "回"
+          "回",
       },
       {
-          "\xE9\x9A\x8E",  // "階"
+          "階",
           "",
-          "\xE9\x9A\x8E",  // "階"
+          "階",
       },
   };
   for (size_t i = 0; i < arraysize(kSplittableCases); ++i) {
@@ -117,13 +115,10 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
 
   // Test cases for unsplittable compounds.
   const char* kUnsplittableCases[] = {
-      "\xE5\x9B\x9E\xE5\x85\xAB",  // "階八"
+      "回八",
       "Google",
-      "\xE3\x82\xA2\xE4\xB8\x80\xE9\x9A\x8E",  // "ア一階"
-      // "八億九千万600七十４デシベル"
-      "\xE5\x85\xAB\xE5\x84\x84\xE4\xB9\x9D\xE5\x8D\x83\xE4\xB8\x87"
-      "\x36\x30\x30\xE4\xB8\x83\xE5\x8D\x81\xEF\xBC\x94\xE3\x83\x87"
-      "\xE3\x82\xB7\xE3\x83\x99\xE3\x83\xAB",
+      "ア一階",
+      "八億九千万600七十４デシベル",
   };
   for (size_t i = 0; i < arraysize(kUnsplittableCases); ++i) {
     StringPiece actual_number, actual_suffix;
@@ -139,10 +134,8 @@ TEST(NumberCompoundUtilTest, IsNumber) {
   std::unique_ptr<uint32[]> buf;
   const StringPiece data = SerializedStringArray::SerializeToBuffer(
       {
-          // "回"
-          "\xE5\x9B\x9E",
-          // "階"
-          "\xE9\x9A\x8E",
+          "回",
+          "階",
       },
       &buf);
   SerializedStringArray suffix_array;
@@ -174,8 +167,8 @@ TEST(NumberCompoundUtilTest, IsNumber) {
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
   c.Init();
-  c.value = "\xE4\xB8\x80\xE9\x9A\x8E";          //"一階"
-  c.content_value = "\xE4\xB8\x80\xE9\x9A\x8E";  //"一階"
+  c.value = "一階";
+  c.content_value = "一階";
   c.lid = pos_matcher.GetNumberId();
   c.rid = pos_matcher.GetNumberId();
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));

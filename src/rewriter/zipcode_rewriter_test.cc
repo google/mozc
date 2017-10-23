@@ -75,10 +75,7 @@ bool HasZipcodeAndAddress(const Segments &segments,
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
-    if (candidate.description ==
-      // "郵便番号と住所"
-      "\xE9\x83\xB5\xE4\xBE\xBF\xE7\x95\xAA\xE5"
-      "\x8F\xB7\xE3\x81\xA8\xE4\xBD\x8F\xE6\x89\x80") {
+    if (candidate.description == "郵便番号と住所") {
       if (candidate.content_value == expected) {
         return true;
       }
@@ -110,10 +107,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
   std::unique_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
 
   const string kZipcode = "107-0052";
-  const string kAddress =
-     // "東京都港区赤坂"
-     "\xE6\x9D\xB1\xE4\xBA\xAC\xE9\x83\xBD\xE6"
-     "\xB8\xAF\xE5\x8C\xBA\xE8\xB5\xA4\xE5\x9D\x82";
+  const string kAddress = "東京都港区赤坂";
   ConversionRequest request;
   config::Config config;
   request.set_config(&config);
@@ -140,8 +134,8 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
     AddSegment(kZipcode, kAddress, ZIPCODE, pos_matcher_, &segments);
     zipcode_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
-                                     // "　" (full-width space)
-                                     kZipcode + "\xE3\x80\x80" + kAddress));
+                                     // full-width space
+                                     kZipcode + "　" + kAddress));
   }
 }
 

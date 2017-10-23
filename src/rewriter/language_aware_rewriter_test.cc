@@ -49,13 +49,13 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
-using std::unique_ptr;
-
-using mozc::dictionary::DictionaryMock;
-using mozc::dictionary::Token;
-
 namespace mozc {
 namespace {
+
+using std::unique_ptr;
+
+using dictionary::DictionaryMock;
+using dictionary::Token;
 
 void InsertASCIISequence(const string &text, composer::Composer *composer) {
   for (size_t i = 0; i < text.size(); ++i) {
@@ -143,18 +143,12 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
   dictionary_mock_->AddLookupExact("query", "query", "query", Token::NONE);
   dictionary_mock_->AddLookupExact("google", "google", "google", Token::NONE);
   dictionary_mock_->AddLookupExact("naru", "naru", "naru", Token::NONE);
-  // "なる"
-  dictionary_mock_->AddLookupExact("\xE3\x81\xAA\xE3\x82\x8B",
-                                   "\xE3\x81\xAA\xE3\x82\x8B",
-                                   "naru",
-                                   Token::NONE);
+  dictionary_mock_->AddLookupExact("なる", "なる", "naru", Token::NONE);
 
   unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
 
-  const string &kPrefix = "\xE2\x86\x92 ";  // "→ "
-  const string &kDidYouMean =
-      // "もしかして"
-      "\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6";
+  const string &kPrefix = "→ ";
+  const string &kDidYouMean = "もしかして";
 
   {
     // "python" is composed to "ｐｙてょｎ", but "python" should be suggested,
@@ -164,9 +158,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_TRUE(RewriteWithLanguageAwareInput(rewriter.get(), "python",
                                               &composition, &segments));
 
-    // "ｐｙてょｎ"
-    EXPECT_EQ("\xEF\xBD\x90\xEF\xBD\x99\xE3\x81\xA6\xE3\x82\x87\xEF\xBD\x8E",
-              composition);
+    EXPECT_EQ("ｐｙてょｎ", composition);
     const Segment::Candidate &candidate =
         segments.conversion_segment(0).candidate(0);
     EXPECT_EQ("python", candidate.key);
@@ -183,8 +175,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "mozuk",
                                                &composition, &segments));
 
-    // "もずｋ"
-    EXPECT_EQ("\xE3\x82\x82\xE3\x81\x9A\xEF\xBD\x8B", composition);
+    EXPECT_EQ("もずｋ", composition);
     EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
   }
 
@@ -212,8 +203,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
                                               &composition, &segments));
     EXPECT_EQ(4, segment->candidates_size());
 
-    // "ほうせ"
-    EXPECT_EQ("\xE3\x81\xBB\xE3\x81\x86\xE3\x81\x9B", composition);
+    EXPECT_EQ("ほうせ", composition);
     const Segment::Candidate &candidate =
         segments.conversion_segment(0).candidate(2);
     EXPECT_EQ("house", candidate.key);
@@ -230,8 +220,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_TRUE(RewriteWithLanguageAwareInput(rewriter.get(), "query",
                                               &composition, &segments));
 
-    // "くえｒｙ"
-    EXPECT_EQ("\xE3\x81\x8F\xE3\x81\x88\xEF\xBD\x92\xEF\xBD\x99", composition);
+    EXPECT_EQ("くえｒｙ", composition);
     const Segment::Candidate &candidate =
         segments.conversion_segment(0).candidate(0);
     EXPECT_EQ("query", candidate.key);
@@ -259,8 +248,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "naru",
                                                &composition, &segments));
 
-    // "なる"
-    EXPECT_EQ("\xE3\x81\xAA\xE3\x82\x8B", composition);
+    EXPECT_EQ("なる", composition);
     EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
   }
 }
@@ -271,9 +259,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionTriggered");
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
 
-  const string kPyTeyoN =
-      // "ｐｙてょｎ"
-      "\xEF\xBD\x90\xEF\xBD\x99\xE3\x81\xA6\xE3\x82\x87\xEF\xBD\x8E";
+  const string kPyTeyoN = "ｐｙてょｎ";
 
   {
     // "python" is composed to "ｐｙてょｎ", but "python" should be suggested,
@@ -343,8 +329,7 @@ TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
     Segments segments;
     EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "1d*=",
                                                &composition, &segments));
-    // "１ｄ＊＝"
-    EXPECT_EQ("\xef\xbc\x91\xef\xbd\x84\xef\xbc\x8a\xef\xbc\x9d", composition);
+    EXPECT_EQ("１ｄ＊＝", composition);
   }
 
   {
@@ -353,8 +338,7 @@ TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
     Segments segments;
     EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "xyzw",
                                                &composition, &segments));
-    // "ｘｙｚｗ"
-    EXPECT_EQ("\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x97", composition);
+    EXPECT_EQ("ｘｙｚｗ", composition);
   }
 }
 

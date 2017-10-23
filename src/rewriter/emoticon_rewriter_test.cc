@@ -65,9 +65,7 @@ bool HasEmoticon(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
-    // "顔文字"
-    if (Util::StartsWith(candidate.description,
-                         "\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97")) {
+    if (Util::StartsWith(candidate.description, "顔文字")) {
       return true;
     }
   }
@@ -98,26 +96,19 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
-    // "かお"
-    AddSegment("\xE3\x81\x8B\xE3\x81\x8A", "test", &segments);
+    AddSegment("かお", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
 
-    // "かおもじ"
-    AddSegment("\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98",
-               "test", &segments);
+    AddSegment("かおもじ", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
 
-    // "にこにこ"
-    AddSegment("\xE3\x81\xAB\xE3\x81\x93\xE3\x81\xAB\xE3\x81\x93",
-               "test", &segments);
+    AddSegment("にこにこ", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
 
-    // "ふくわらい"
-    AddSegment("\xE3\x81\xB5\xE3\x81\x8F\xE3\x82\x8F\xE3\x82\x89\xE3\x81\x84",
-               "test", &segments);
+    AddSegment("ふくわらい", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_TRUE(HasEmoticon(segments));
   }
@@ -130,26 +121,19 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
-    // "かお"
-    AddSegment("\xE3\x81\x8B\xE3\x81\x8A", "test", &segments);
+    AddSegment("かお", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
-    // "かおもじ"
-    AddSegment("\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98",
-               "test", &segments);
+    AddSegment("かおもじ", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
-    // "にこにこ"
-    AddSegment("\xE3\x81\xAB\xE3\x81\x93\xE3\x81\xAB\xE3\x81\x93",
-               "test", &segments);
+    AddSegment("にこにこ", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
 
-    // "ふくわらい"
-    AddSegment("\xE3\x81\xB5\xE3\x81\x8F\xE3\x82\x8F\xE3\x82\x89\xE3\x81\x84",
-               "test", &segments);
+    AddSegment("ふくわらい", "test", &segments);
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
   }

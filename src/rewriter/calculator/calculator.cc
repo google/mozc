@@ -102,10 +102,10 @@ CalculatorImpl::CalculatorImpl() {
   // "ー". It is called cho-ompu, onbiki, bobiki, or "nobashi-bou" casually.
   // It is not a full-width hyphen, and may appear in conversion segments by
   // typing '-' more than one time continuouslly.
-  operator_map_["\xE3\x83\xBC"] = MINUS;
+  operator_map_["ー"] = MINUS;
   operator_map_["*"] = TIMES;
   operator_map_["/"] = DIVIDE;
-  operator_map_["\xE3\x83\xBB"] = DIVIDE;  // "･". Consider it as "/".
+  operator_map_["・"] = DIVIDE;  // "･". Consider it as "/".
   operator_map_["%"] = MOD;
   operator_map_["^"] = POW;
   operator_map_["("] = LP;

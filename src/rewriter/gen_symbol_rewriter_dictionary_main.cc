@@ -182,8 +182,8 @@ void MakeDictionary(const string &symbol_dictionary_file,
       seen.insert(value);
     }
     string keys_str;
-    // \xE3\x80\x80 is full width space
-    Util::StringReplace(fields[2], "\xE3\x80\x80", " ", true, &keys_str);
+    Util::StringReplace(fields[2], "　",  // Full-width space
+                        " ", true, &keys_str);
     std::vector<string> keys;
     Util::SplitStringUsing(keys_str, " ", &keys);
     const string &description = (fields.size()) > 3 ? fields[3] : "";
@@ -195,9 +195,8 @@ void MakeDictionary(const string &symbol_dictionary_file,
   // Add space as a symbol
   std::vector<string> keys_space;
   keys_space.push_back(" ");
-  // "記号", "空白"
-  AddSymbolToDictionary("\xe8\xa8\x98\xe5\x8f\xb7", " ", keys_space,
-                        "\xe7\xa9\xba\xe7\x99\xbd", "", sorting_map,
+  AddSymbolToDictionary("記号", " ", keys_space,
+                        "空白", "", sorting_map,
                         dictionary);
 }
 }  // namespace

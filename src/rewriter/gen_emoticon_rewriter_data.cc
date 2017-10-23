@@ -92,7 +92,8 @@ std::map<string, TokenList> ReadEmoticonTsv(const string &path) {
     LOG_IF(WARNING, field_list.size() > 3) << "Ignore extra columns: " << line;
 
     string replaced;
-    Util::StringReplace(field_list[1], "\xE3\x80\x80", " ", true, &replaced);
+    Util::StringReplace(field_list[1], "　",  // Full-width space
+                        " ", true, &replaced);
     KeyList key_list;
     Util::SplitStringUsing(field_list[1], " ", &key_list);
 

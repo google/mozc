@@ -123,16 +123,13 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
       (Segment::Candidate::RERANKED | Segment::Candidate::SPELLING_CORRECTION),
       segments.conversion_segment(0).candidate(0).attributes);
   EXPECT_EQ(
-      // "もしかして"
-      "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6: "
-      "tsukigime>",
+      "<もしかして: tsukigime>",
       segments.conversion_segment(0).candidate(0).description);
 
   // candidate 1
   EXPECT_EQ(Segment::Candidate::DEFAULT_ATTRIBUTE,
             segments.conversion_segment(0).candidate(1).attributes);
   EXPECT_TRUE(segments.conversion_segment(0).candidate(1).description.empty());
-
 }
 
 }  // namespace mozc

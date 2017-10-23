@@ -97,14 +97,10 @@ class FeatureValue {
 MOZC_CLANG_POP_WARNING();
 
 bool IsPunctuationInternal(const string &str) {
-  // return (str == "。" || str == "｡" ||
-  // str == "、" || str == "､" ||
-  // str == "，" || str == "," ||
-  // str == "．"  || str == ".");
-  return (str == "\xE3\x80\x82" || str == "\xEF\xBD\xA1" ||
-          str == "\xE3\x80\x81" || str == "\xEF\xBD\xA4" ||
-          str == "\xEF\xBC\x8C" || str == "," ||
-          str == "\xEF\xBC\x8E"  || str == ".");
+  return (str == "。" || str == "｡" ||
+          str == "、" || str == "､" ||
+          str == "，" || str == "," ||
+          str == "．"  || str == ".");
 }
 
 // Temporarily disable unused private field warning against

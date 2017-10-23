@@ -44,11 +44,11 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::PosGroup;
-
 namespace mozc {
 namespace {
+
+using dictionary::DictionaryInterface;
+using dictionary::PosGroup;
 
 size_t CommandCandidatesSize(const Segment &segment) {
   size_t result = 0;
@@ -70,7 +70,7 @@ class RewriterTest : public ::testing::Test {
     converter_mock_.reset(new ConverterMock);
     const testing::MockDataManager data_manager;
     pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
-    const DictionaryInterface *kNullDictionary = NULL;
+    const DictionaryInterface *kNullDictionary = nullptr;
     rewriter_.reset(new RewriterImpl(converter_mock_.get(),
                                      &data_manager,
                                      pos_group_.get(),
@@ -94,11 +94,8 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("こまんど");
-    // candidate->value = "コマンド";
-    seg->set_key("\xE3\x81\x93\xE3\x81\xBE\xE3\x82\x93\xE3\x81\xA9");
-    candidate->value = "\xE3\x82\xB3\xE3\x83\x9E"
-                       "\xE3\x83\xB3\xE3\x83\x89";
+    seg->set_key("こまんど");
+    candidate->value = "コマンド";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
 #ifdef OS_ANDROID
     EXPECT_EQ(0, CommandCandidatesSize(*seg));
@@ -110,12 +107,8 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("さじぇすと");
-    // candidate->value = "サジェスト";
-    seg->set_key("\xE3\x81\x95\xE3\x81\x98\xE3\x81\x87"
-                 "\xE3\x81\x99\xE3\x81\xA8");
-    candidate->value = "\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
-                       "\xE3\x82\xB9\xE3\x83\x88";
+    seg->set_key("さじぇすと");
+    candidate->value = "サジェスト";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
 #ifdef OS_ANDROID
     EXPECT_EQ(0, CommandCandidatesSize(*seg));
@@ -127,11 +120,9 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
 }
 
 TEST_F(RewriterTest, EmoticonsAboveSymbols) {
-  // "かおもじ"
-  const char kKey[] = "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98";
+  const char kKey[] = "かおもじ";
   const char kEmoticon[] = "^^;";
-  // "☹": A platform-dependent symbol
-  const char kSymbol[] = "\xE2\x98\xB9";
+  const char kSymbol[] = "☹";  // A platform-dependent symbol
 
   const ConversionRequest request;
   Segments segments;

@@ -39,8 +39,8 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-
 namespace {
+
 void AddSegment(const string &key, const string &value,
                 Segments *segments) {
   segments->Clear();
@@ -51,18 +51,15 @@ void AddSegment(const string &key, const string &value,
   candidate->value = value;
   candidate->content_value = value;
 }
-}  // namespace
 
-class NormalizationRewriterTest : public testing::Test {
+class NormalizationRewriterTest : public ::testing::Test {
  protected:
-  NormalizationRewriterTest() {}
-  ~NormalizationRewriterTest() {}
+  NormalizationRewriterTest() = default;
+  ~NormalizationRewriterTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
-
-  virtual void TearDown() {}
 };
 
 TEST_F(NormalizationRewriterTest, NormalizationTest) {
@@ -76,41 +73,33 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   EXPECT_EQ("test", segments.segment(0).candidate(0).value);
 
   segments.Clear();
-  //   AddSegment("きょうと", "京都", &segments);
-  AddSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
-             "\xE4\xBA\xAC\xE9\x83\xBD", &segments);
+  AddSegment("きょうと", "京都", &segments);
   EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
-  //  EXPECT_EQ("京都", segments.segment(0).candidate(0).value);
-  EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD",
-            segments.segment(0).candidate(0).value);
+  EXPECT_EQ("京都", segments.segment(0).candidate(0).value);
 
   // Wave dash (U+301C)
   segments.Clear();
-  //  AddSegment("なみ", "〜", &segments);
-  AddSegment("\xE3\x81\xAA\xE3\x81\xBF",
-             "\xE3\x80\x9C", &segments);
+  AddSegment("なみ", "〜", &segments);
 #ifdef OS_WIN
   EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
   // U+FF5E
-  //  EXPECT_EQ("～", segments.segment(0).candidate(0).value);
-  EXPECT_EQ("\xEF\xBD\x9E", segments.segment(0).candidate(0).value);
+  EXPECT_EQ("～", segments.segment(0).candidate(0).value);
 #else
   EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   // U+301C
-  //  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
-  EXPECT_EQ("\xE3\x80\x9C", segments.segment(0).candidate(0).value);
+  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
 #endif
 
   // not normalized.
   segments.Clear();
-  // AddSegment("なみ", "〜", &segments);
-  AddSegment("\xE3\x81\xAA\xE3\x81\xBF",
-             "\xE3\x80\x9C", &segments);
+  // U+301C
+  AddSegment("なみ", "〜", &segments);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::USER_DICTIONARY;
   EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   // U+301C
-  //  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
-  EXPECT_EQ("\xE3\x80\x9C", segments.segment(0).candidate(0).value);
+  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
 }
+
+}  // namespace
 }  // namespace mozc

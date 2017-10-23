@@ -135,18 +135,17 @@ inline void PushBackJoinedStringPieces(
 void ResolveCompoundSegment(const string &top_value, const string &value,
                             SegmentLookupType type,
                             std::vector<string> *output) {
-  // "格助詞"
   // see "http://ja.wikipedia.org/wiki/助詞"
-  static const char kPat1[] = "\xE3\x81\x8C";  // "が"
+  static const char kPat1[] = "が";
   // "の" was not good...
-  // static const char kPat2[] = "\xE3\x81\xAE";  // "の"
-  static const char kPat3[] = "\xE3\x82\x92";  // "を"
-  static const char kPat4[] = "\xE3\x81\xAB";  // "に"
-  static const char kPat5[] = "\xE3\x81\xB8";  // "へ"
-  static const char kPat6[] = "\xE3\x81\xA8";  // "と"
-  static const char kPat7[] = "\xE3\x81\x8B\xE3\x82\x89";  // "から"
-  static const char kPat8[] = "\xE3\x82\x88\xE3\x82\x8A";  // "より"
-  static const char kPat9[] = "\xE3\x81\xA7";  // "で"
+  // static const char kPat2[] = "の";
+  static const char kPat3[] = "を";
+  static const char kPat4[] = "に";
+  static const char kPat5[] = "へ";
+  static const char kPat6[] = "と";
+  static const char kPat7[] = "から";
+  static const char kPat8[] = "より";
+  static const char kPat9[] = "で";
 
   static const struct {
     const char *pat;
@@ -207,7 +206,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     output->push_back(content);
     // "舞って" workaround
     // V+"て" is often treated as one compound.
-    static const char kPat[] = "\xE3\x81\xA6";  // "て"
+    static const char kPat[] = "て";
     if (Util::EndsWith(content, StringPiece(kPat, arraysize(kPat) - 1))) {
       PushBackStringPiece(
           Util::SubStringPiece(content, 0, content_len - 1), output);
@@ -276,7 +275,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXいる|>" can be rewrited to "<YY|いる>" and vice versa
   {
-    static const char kPat[] = "\xE3\x81\x84\xE3\x82\x8B";  // "いる"
+    static const char kPat[] = "いる";  // "いる"
     const StringPiece kSuffix(kPat, arraysize(kPat) - 1);
     if (top_aux_value_len == 0 &&
         aux_value_len == 2 &&
@@ -303,7 +302,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXせる|>" can be rewrited to "<YY|せる>" and vice versa
   {
-    const char kPat[] = "\xE3\x81\x9B\xE3\x82\x8B";  // "せる"
+    const char kPat[] = "せる";
     const StringPiece kSuffix(kPat, arraysize(kPat) - 1);
     if (top_aux_value_len == 0 &&
         aux_value_len == 2 &&
@@ -332,9 +331,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XX|する>" can be rewrited using "<XXす|る>" and "<XX|する>"
   // in "<XX|する>", XX must be single script type
-  // "評する"
   {
-    static const char kPat[] = "\xE3\x81\x99\xE3\x82\x8B";  // "する"
+    static const char kPat[] = "する";
     const StringPiece kSuffix(kPat, arraysize(kPat) - 1);
     if (aux_value_len == 2 &&
         Util::EndsWith(aux_value, kSuffix)) {
@@ -356,7 +354,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "<XXる>" can be rewrited using "<XX|る>"
   // "まとめる", "衰える"
   {
-    static const char kPat[] = "\xE3\x82\x8B";  // "る"
+    static const char kPat[] = "る";
     const StringPiece kSuffix(kPat, arraysize(kPat) - 1);
     if (aux_value_len == 0 &&
         Util::EndsWith(value, kSuffix)) {
@@ -371,14 +369,14 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXす>" can be rewrited using "XXする"
   {
-    static const char kPat[] = "\xE3\x81\x99";  // "す"
+    static const char kPat[] = "す";
     const StringPiece kSuffix(kPat, arraysize(kPat) - 1);
     if (Util::EndsWith(value, kSuffix) &&
         Util::IsScriptType(
             Util::SubStringPiece(value, 0, value_len - 1),
             Util::KANJI)) {
       if (type == RIGHT) {
-        const char kRu[] = "\xE3\x82\x8B";
+        const char kRu[] = "る";
         // "YYする" in addition to "YY"
         PushBackJoinedStringPieces(
             value, StringPiece(kRu, arraysize(kRu) - 1), output);
@@ -389,7 +387,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXし|た>" can be rewrited using "<XX|した>"
   {
-    static const char kPat[] = "\xE3\x81\x97\xE3\x81\x9F";  // "した"
+    static const char kPat[] = "した";
     const StringPiece kShi(kPat, 3), kTa(kPat + 3, 3);
     if (Util::EndsWith(content, kShi) &&
         aux_value == kTa &&
@@ -513,7 +511,7 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
          pos_matcher_.IsAdverbSegmentSuffix(
              segments->segment(i - 1).candidate(0).rid)) &&
         (cand.content_value != cand.value ||
-         cand.value != "\xe3\x83\xbb")) {  // "・" workaround
+         cand.value != "・")) {  // "・" workaround
       if (!segs_changed[i - 2] &&
           !segs_changed[i] &&
           RewriteUsingNextSegment(segments->mutable_segment(i),

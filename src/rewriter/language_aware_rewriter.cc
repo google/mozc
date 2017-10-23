@@ -43,10 +43,10 @@
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-
 namespace mozc {
+
+using dictionary::DictionaryInterface;
+using dictionary::POSMatcher;
 
 LanguageAwareRewriter::LanguageAwareRewriter(
     const POSMatcher &pos_matcher,
@@ -54,7 +54,7 @@ LanguageAwareRewriter::LanguageAwareRewriter(
     : unknown_id_(pos_matcher.GetUnknownId()),
       dictionary_(dictionary) {}
 
-LanguageAwareRewriter::~LanguageAwareRewriter() {}
+LanguageAwareRewriter::~LanguageAwareRewriter() = default;
 
 namespace {
 
@@ -220,10 +220,8 @@ bool LanguageAwareRewriter::FillRawText(
 
   candidate->attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
                             Segment::Candidate::NO_EXTRA_DESCRIPTION);
-  candidate->prefix = "\xE2\x86\x92 ";  // "→ "
-  candidate->description =
-    // "もしかして"
-    "\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6";
+  candidate->prefix = "→ ";
+  candidate->description = "もしかして";
 
   // Set usage stats
   usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionTriggered");
@@ -244,9 +242,7 @@ bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
                                    const Segment::Candidate &candidate) {
   // Check candidate.prefix to filter if the candidate is probably generated
   // from LanguangeAwareInput or not.
-  //
-  // "→ "
-  if (candidate.prefix != "\xE2\x86\x92 ") {
+  if (candidate.prefix != "→ ") {
     return false;
   }
 

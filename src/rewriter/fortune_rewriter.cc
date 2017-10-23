@@ -138,23 +138,23 @@ bool InsertCandidate(FortuneType fortune_type,
 
   string value;
   switch (fortune_type) {
-    case FORTUNE_TYPE_EXCELLENT_LUCK:  // "大吉"
-      value = "\xE5\xA4\xA7\xE5\x90\x89";
+    case FORTUNE_TYPE_EXCELLENT_LUCK:
+      value = "大吉";
       break;
-    case FORTUNE_TYPE_LUCK:  // "吉"
-      value = "\xE5\x90\x89";
+    case FORTUNE_TYPE_LUCK:
+      value = "吉";
       break;
-    case FORTUNE_TYPE_MIDDLE_LUCK:  // "中吉"
-      value = "\xE4\xB8\xAD\xE5\x90\x89";
+    case FORTUNE_TYPE_MIDDLE_LUCK:
+      value = "中吉";
       break;
-    case FORTUNE_TYPE_LITTLE_LUCK:  // "小吉"
-      value = "\xE5\xB0\x8F\xE5\x90\x89";
+    case FORTUNE_TYPE_LITTLE_LUCK:
+      value = "小吉";
       break;
-    case FORTUNE_TYPE_LUCK_AT_THE_END:  // "末吉"
-      value = "\xE6\x9C\xAB\xE5\x90\x89";
+    case FORTUNE_TYPE_LUCK_AT_THE_END:
+      value = "末吉";
       break;
-    case FORTUNE_TYPE_MISFORTUNE:  // "凶"
-      value = "\xE5\x87\xB6";
+    case FORTUNE_TYPE_MISFORTUNE:
+      value = "凶";
       break;
     default:
       LOG(FATAL) << "undefined fortune type";
@@ -171,9 +171,7 @@ bool InsertCandidate(FortuneType fortune_type,
   c->content_key = base_candidate.content_key;
   c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   c->attributes |= Segment::Candidate::NO_LEARNING;
-  // discription "今日の運勢"
-  c->description =
-      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAE\xE9\x81\x8B\xE5\x8B\xA2";
+  c->description = "今日の運勢";
   return true;
 }
 
@@ -196,8 +194,7 @@ bool FortuneRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  // "おみくじ"
-  if (key != "\xE3\x81\x8A\xE3\x81\xBF\xE3\x81\x8F\xE3\x81\x98") {
+  if (key != "おみくじ") {
     return false;
   }
   FortuneData *fortune_data = Singleton<FortuneData>::get();

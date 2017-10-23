@@ -95,10 +95,10 @@ bool HasCandidate(const Segments &segments, int index, const string &value) {
 
 class SymbolRewriterTest : public ::testing::Test {
  protected:
-  SymbolRewriterTest() {}
-  ~SymbolRewriterTest() {}
+  SymbolRewriterTest() = default;
+  ~SymbolRewriterTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     // We cannot use mock converter here because SymbolRewriter uses
@@ -126,25 +126,18 @@ TEST_F(SymbolRewriterTest, TriggerRewriteTest) {
 
   {
     Segments segments;
-    // "ー"
-    AddSegment("\xe3\x83\xbc", "test", &segments);
-    // ">"
-    AddSegment("\x3e", "test", &segments);
+    AddSegment("ー", "test", &segments);
+    AddSegment(">", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
-    // "→"
-    EXPECT_TRUE(HasCandidate(segments, 0, "\xe2\x86\x92"));
+    EXPECT_TRUE(HasCandidate(segments, 0, "→"));
   }
   {
     Segments segments;
-    // "ー"
-    AddSegment("\xe3\x83\xbc", "test", &segments);
-    // "ー"
-    AddSegment("\xe3\x83\xbc", "test", &segments);
+    AddSegment("ー", "test", &segments);
+    AddSegment("ー", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
-    // "―"
-    EXPECT_TRUE(HasCandidate(segments, 0, "\xe2\x80\x95"));
-    // "―"
-    EXPECT_TRUE(HasCandidate(segments, 1, "\xe2\x80\x95"));
+    EXPECT_TRUE(HasCandidate(segments, 0, "―"));
+    EXPECT_TRUE(HasCandidate(segments, 1, "―"));
   }
 }
 
@@ -153,20 +146,15 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
   const ConversionRequest request;
   {
     Segments segments;
-    // "ー"
-    AddSegment("\xe3\x83\xbc", "test", &segments);
-    // ">"
-    AddSegment("\x3e", "test", &segments);
+    AddSegment("ー", "test", &segments);
+    AddSegment(">", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.RewriteEntireCandidate(request, &segments));
-    // "→"
-    EXPECT_TRUE(HasCandidate(segments, 0, "\xe2\x86\x92"));
+    EXPECT_TRUE(HasCandidate(segments, 0, "→"));
   }
   {
     Segments segments;
-    // "ー"
-    AddSegment("\xe3\x83\xbc", "test", &segments);
-    // "ー"
-    AddSegment("\xe3\x83\xbc", "test", &segments);
+    AddSegment("ー", "test", &segments);
+    AddSegment("ー", "test", &segments);
     EXPECT_FALSE(symbol_rewriter.RewriteEntireCandidate(request, &segments));
   }
 }
@@ -175,18 +163,13 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   {
     Segments segments;
-    // "ー"
-    AddSegment("\xe3\x83\xbc", "test", &segments);
-    // ">"
-    AddSegment("\x3e", "test", &segments);
+    AddSegment("ー", "test", &segments);
+    AddSegment(">", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(&segments));
     EXPECT_EQ(2, segments.segments_size());
-    // "―"
-    EXPECT_TRUE(HasCandidate(segments, 0, "\xe2\x80\x95"));
-    // "→"
-    EXPECT_FALSE(HasCandidate(segments, 0, "\xe2\x86\x92"));
-    // "〉"
-    EXPECT_TRUE(HasCandidate(segments, 1, "\xe3\x80\x89"));
+    EXPECT_TRUE(HasCandidate(segments, 0, "―"));
+    EXPECT_FALSE(HasCandidate(segments, 0, "→"));
+    EXPECT_TRUE(HasCandidate(segments, 1, "〉"));
   }
 }
 
@@ -194,18 +177,11 @@ TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   {
     Segments segments;
-    // "したつき"
-    AddSegment("\xE3\x81\x97\xE3\x81\x9F\xE3\x81\xA4\xE3\x81\x8D",
-               "test", &segments);
+    AddSegment("したつき", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(&segments));
     EXPECT_EQ(1, segments.segments_size());
-    // "₍"
-    EXPECT_TRUE(HasCandidateAndDescription(segments, 0, "\xE2\x82\x8D",
-        // "下付き文字(始め丸括弧)"
-        "\xE4\xB8\x8B\xE4\xBB\x98\xE3\x81\x8D\xE6\x96\x87\xE5\xAD\x97"
-        "("
-        "\xE5\xA7\x8B\xE3\x82\x81\xE4\xB8\xB8\xE6\x8B\xAC\xE5\xBC\xA7"
-        ")"));
+    EXPECT_TRUE(HasCandidateAndDescription(segments, 0, "₍",
+                                           "下付き文字(始め丸括弧)"));
   }
 }
 
@@ -214,41 +190,24 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
   const ConversionRequest request;
   {
     Segments segments;
-    // "てん", "てん"
-    AddSegment("\xe3\x81\xa6\xe3\x82\x93", "\xe3\x81\xa6\xe3\x82\x93",
-               &segments);
+    AddSegment("てん", "てん", &segments);
     Segment *seg = segments.mutable_segment(0);
     // Add 15 single-kanji and transliterated candidates
-    // "点"
-    AddCandidate("\xe7\x82\xb9", seg);
-    // "転"
-    AddCandidate("\xe8\xbb\xa2", seg);
-    // "天"
-    AddCandidate("\xe5\xa4\xa9", seg);
-    // "てん"
-    AddCandidate("\xe3\x81\xa6\xe3\x82\x93", seg);
-    // "テン"
-    AddCandidate("\xe3\x83\x86\xe3\x83\xb3", seg);
-    // "展"
-    AddCandidate("\xe5\xb1\x95", seg);
-    // "店"
-    AddCandidate("\xe5\xba\x97", seg);
-    // "典"
-    AddCandidate("\xe5\x85\xb8", seg);
-    // "添"
-    AddCandidate("\xe6\xb7\xbb", seg);
-    // "填"
-    AddCandidate("\xe5\xa1\xab", seg);
-    // "顛"
-    AddCandidate("\xe9\xa1\x9b", seg);
-    // "辿"
-    AddCandidate("\xe8\xbe\xbf", seg);
-    // "纏"
-    AddCandidate("\xe7\xba\x8f", seg);
-    // "甜"
-    AddCandidate("\xe7\x94\x9c", seg);
-    // "貼"
-    AddCandidate("\xe8\xb2\xbc", seg);
+    AddCandidate("点", seg);
+    AddCandidate("転", seg);
+    AddCandidate("天", seg);
+    AddCandidate("てん", seg);
+    AddCandidate("テン", seg);
+    AddCandidate("展", seg);
+    AddCandidate("店", seg);
+    AddCandidate("典", seg);
+    AddCandidate("添", seg);
+    AddCandidate("填", seg);
+    AddCandidate("顛", seg);
+    AddCandidate("辿", seg);
+    AddCandidate("纏", seg);
+    AddCandidate("甜", seg);
+    AddCandidate("貼", seg);
 
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     EXPECT_GT(segments.segment(0).candidates_size(), 16);
@@ -266,8 +225,7 @@ TEST_F(SymbolRewriterTest, SetKey) {
   const ConversionRequest request;
 
   Segment *segment = segments.push_back_segment();
-  // "てん"
-  const string kKey = "\xe3\x81\xa6\xe3\x82\x93";
+  const string kKey = "てん";
   segment->set_key(kKey);
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
@@ -327,7 +285,7 @@ TEST_F(SymbolRewriterTest, ExpandSpace) {
   EXPECT_EQ(Segment::Candidate::EncodeLengths(1, 1, 1, 1),
             cand0.inner_segment_boundary[0]);
 
-  const char *kFullWidthSpace = "\xe3\x80\x80";
+  const char *kFullWidthSpace = "　";
   const Segment::Candidate &cand1 = segment->candidate(1);
   EXPECT_EQ(" ", cand1.key);
   EXPECT_EQ(kFullWidthSpace, cand1.value);

@@ -41,8 +41,8 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-
 namespace {
+
 void AddSegment(const string &key, const string &value,
                 Segments *segments) {
   segments->Clear();
@@ -59,27 +59,24 @@ bool HasFortune(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
-    // description is "今日の運勢"
-    if ("\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAE\xE9\x81\x8B\xE5\x8B\xA2"
-        == candidate.description) {
+    if ("今日の運勢" == candidate.description) {
       // has valid value?
-      if ("\xE5\xA4\xA7\xE5\x90\x89" == candidate.value ||  // "大吉"
-          "\xE5\x90\x89" == candidate.value ||              // "吉"
-          "\xE4\xB8\xAD\xE5\x90\x89" == candidate.value ||  // "中吉"
-          "\xE5\xB0\x8F\xE5\x90\x89" == candidate.value ||  // "小吉"
-          "\xE6\x9C\xAB\xE5\x90\x89" == candidate.value ||  // "末吉"
-          "\xE5\x87\xB6" == candidate.value) {              // "凶"
+      if ("大吉" == candidate.value ||
+          "吉" == candidate.value ||
+          "中吉" == candidate.value ||
+          "小吉" == candidate.value ||
+          "末吉" == candidate.value ||
+          "凶" == candidate.value) {
         return true;
       }
     }
   }
   return false;
 }
-}  // namespace
 
-class FortuneRewriterTest : public testing::Test {
+class FortuneRewriterTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };
@@ -93,10 +90,10 @@ TEST_F(FortuneRewriterTest, BasicTest) {
   fortune_rewriter.Rewrite(request, &segments);
   EXPECT_FALSE(HasFortune(segments));
 
-  // "おみくじ"
-  AddSegment("\xE3\x81\x8A\xE3\x81\xBF\xE3\x81\x8F\xE3\x81\x98",
-             "test", &segments);
+  AddSegment("おみくじ", "test", &segments);
   fortune_rewriter.Rewrite(request, &segments);
   EXPECT_TRUE(HasFortune(segments));
 }
+
+}  // namespace
 }  // namespace mozc

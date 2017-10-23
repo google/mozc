@@ -186,13 +186,13 @@ void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
 
 class CheckValueOperator {
  public:
-  explicit CheckValueOperator(const string &v) : find_value_(v) {}
+  explicit CheckValueOperator(const string &v) : find_value_(&v) {}
   bool operator() (const Segment::Candidate &cand) const {
-    return (cand.value == find_value_);
+    return (cand.value == *find_value_);
   }
 
  private:
-  const string &find_value_;
+  const string *find_value_;
 };
 
 // If we have the candidates to be inserted before the base candidate,
@@ -243,7 +243,7 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
   cand->style = result_cand.style;
 
   if (base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-    cand->description.assign("\xE9\x83\xA8\xE5\x88\x86");  // "部分"
+    cand->description.assign("部分");
     if (!result_cand.description.empty()) {
       cand->description.append(1, '\n').append(result_cand.description);
     }

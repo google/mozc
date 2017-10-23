@@ -101,8 +101,7 @@ TEST(CalculatorTest, BasicTest) {
   VerifyCalculation(calculator, "5.5-21=", "-15.5");
   VerifyCalculation(calculator, "4*2.1=", "8.4");
   VerifyCalculation(calculator, "8/2=", "4");
-  // "15・3="
-  VerifyCalculation(calculator, "15\xE3\x83\xBB""3=", "5");
+  VerifyCalculation(calculator, "15・3=", "5");
   VerifyCalculation(calculator, "100%6=", "4");
   VerifyCalculation(calculator, "2^10=", "1024");
   VerifyCalculation(calculator, "4*-2=", "-8");
@@ -111,28 +110,14 @@ TEST(CalculatorTest, BasicTest) {
   VerifyCalculation(calculator, "=-10.3+3.5", "-6.8");
 
   // Full width cases (some operators may appear as full width character).
-  // "１２３４５＋６７８９０＝"
-  VerifyCalculation(calculator,
-                    "\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94\xEF\xBC"
-                    "\x95\xEF\xBC\x8B\xEF\xBC\x96\xEF\xBC\x97\xEF\xBC\x98\xEF"
-                    "\xBC\x99\xEF\xBC\x90\xEF\xBC\x9D",
-                    "80235");
-  // "5−1="
-  VerifyCalculation(calculator, "5\xE2\x88\x92""1=", "4");
-  // "-ー3+5="
-  VerifyCalculation(calculator, "-\xE3\x83\xBC""3+5=", "8");
-  // "1．5＊2="
-  VerifyCalculation(calculator, "1\xEF\xBC\x8E""5\xEF\xBC\x8A""2=", "3");
-  // "10／2="
-  VerifyCalculation(calculator, "10\xEF\xBC\x8F""2=", "5");
-  // "2＾ー2="
-  VerifyCalculation(calculator, "2\xEF\xBC\xBE\xE3\x83\xBC""2=", "0.25");
-  // "13％3="
-  VerifyCalculation(calculator, "13\xEF\xBC\x85""3=", "1");
-  // "（1+1）*2="
-  VerifyCalculation(calculator,
-                                "\xEF\xBC\x88""1+1\xEF\xBC\x89*2=",
-                                "4");
+  VerifyCalculation(calculator, "１２３４５＋６７８９０＝", "80235");
+  VerifyCalculation(calculator, "5−1=", "4");     // − is U+2212
+  VerifyCalculation(calculator, "-ー3+5=", "8");  // ー is U+30FC
+  VerifyCalculation(calculator, "1．5＊2=", "3");
+  VerifyCalculation(calculator, "10／2=", "5");
+  VerifyCalculation(calculator, "2＾ー2=", "0.25");
+  VerifyCalculation(calculator, "13％3=", "1");
+  VerifyCalculation(calculator, "（1+1）*2=", "4");
 
   // Expressions with more than one operator.
   VerifyCalculation(calculator, "(1+2)-4=", "-1");

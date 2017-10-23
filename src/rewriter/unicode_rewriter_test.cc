@@ -100,7 +100,7 @@ class UnicodeRewriterTest : public ::testing::Test {
   const config::Config default_config_;
 };
 
-TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
+TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   Segments segments;
   UnicodeRewriter rewriter(engine_->GetConverter());
   const ConversionRequest request;
@@ -112,44 +112,44 @@ TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
 
   const UCS4UTF8Data kUcs4Utf8Data[] = {
     // Hiragana
-    { "U+3042", "\xE3\x81\x82" },  // "あ"
-    { "U+3044", "\xE3\x81\x84" },  // "い"
-    { "U+3046", "\xE3\x81\x86" },  // "う"
-    { "U+3048", "\xE3\x81\x88" },  // "え"
-    { "U+304A", "\xE3\x81\x8A" },  // "お"
+    { "U+3042", "あ" },
+    { "U+3044", "い" },
+    { "U+3046", "う" },
+    { "U+3048", "え" },
+    { "U+304A", "お" },
 
     // Katakana
-    { "U+30A2", "\xE3\x82\xA2" },  // "ア"
-    { "U+30A4", "\xE3\x82\xA4" },  // "イ"
-    { "U+30A6", "\xE3\x82\xA6" },  // "ウ"
-    { "U+30A8", "\xE3\x82\xA8" },  // "エ"
-    { "U+30AA", "\xE3\x82\xAA" },  // "オ"
+    { "U+30A2", "ア" },
+    { "U+30A4", "イ" },
+    { "U+30A6", "ウ" },
+    { "U+30A8", "エ" },
+    { "U+30AA", "オ" },
 
     // half-Katakana
-    { "U+FF71", "\xEF\xBD\xB1" },  // "ｱ"
-    { "U+FF72", "\xEF\xBD\xB2" },  // "ｲ"
-    { "U+FF73", "\xEF\xBD\xB3" },  // "ｳ"
-    { "U+FF74", "\xEF\xBD\xB4" },  // "ｴ"
-    { "U+FF75", "\xEF\xBD\xB5" },  // "ｵ"
+    { "U+FF71", "ｱ" },
+    { "U+FF72", "ｲ" },
+    { "U+FF73", "ｳ" },
+    { "U+FF74", "ｴ" },
+    { "U+FF75", "ｵ" },
 
     // CJK
-    { "U+611B", "\xE6\x84\x9B" },  // "愛"
-    { "U+690D", "\xE6\xA4\x8D" },  // "植"
-    { "U+7537", "\xE7\x94\xB7" },  // "男"
+    { "U+611B", "愛" },
+    { "U+690D", "植" },
+    { "U+7537", "男" },
 
     // Other types (Oriya script)
     { "U+0B00", "\xE0\xAC\x80" },  // "଀"
-    { "U+0B01", "\xE0\xAC\x81" },  // "ଁ"
-    { "U+0B02", "\xE0\xAC\x82" },  // "ଂ"
+    { "U+0B01", "ଁ" },  // "ଁ"
+    { "U+0B02", "ଂ" },  // "ଂ"
 
     // Other types (Arabic)
-    { "U+0600", "\xD8\x80" },  // "؀"
-    { "U+0601", "\xD8\x81" },  // "؁"
-    { "U+0602", "\xD8\x82" },  // "؂"
+    { "U+0600", "؀" },
+    { "U+0601", "؁" },
+    { "U+0602", "؂" },
 
     // Latin-1 support
     { "U+00A0", "\xC2\xA0" },  // " " (nbsp)
-    { "U+00A1", "\xC2\xA1" },  // "¡"
+    { "U+00A1", "¡" },
   };
 
   const char* kMozcUnsupportedUtf8[] = {
@@ -182,7 +182,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
 
-  // invlaid style input
+  // Invalid style input
   InitSegments("U+1234567", "U+12345678", &segments);
   EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 
@@ -265,14 +265,15 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
 
   {  // Multibyte character is also supported.
     composer::Composer composer(NULL, &default_request(), &default_config());
-    composer.set_source_text("\xE6\x84\x9B");  // "愛"
+    composer.set_source_text("愛");
     ConversionRequest request(&composer, &default_request(), &default_config());
 
     Segments segments;
-    AddSegment("\xE3\x81\x82\xE3\x81\x84", "\xE6\x84\x9B", &segments);
+    AddSegment("あい", "愛", &segments);
 
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, "U+611B"));
   }
 }
+
 }  // namespace mozc
