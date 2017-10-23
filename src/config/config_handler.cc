@@ -270,16 +270,16 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   const Config::CharacterForm kFullWidth = Config::FULL_WIDTH;
   const Config::CharacterForm kLastForm = Config::LAST_FORM;
   // "ア"
-  AddCharacterFormRule("\xE3\x82\xA2", kFullWidth, kFullWidth, config);
+  AddCharacterFormRule("ア", kFullWidth, kFullWidth, config);
   AddCharacterFormRule("A", kFullWidth, kLastForm, config);
   AddCharacterFormRule("0", kFullWidth, kLastForm, config);
   AddCharacterFormRule("(){}[]", kFullWidth, kLastForm, config);
   AddCharacterFormRule(".,", kFullWidth, kLastForm, config);
   // "。、",
-  AddCharacterFormRule("\xE3\x80\x82\xE3\x80\x81", kFullWidth, kFullWidth,
+  AddCharacterFormRule("。、", kFullWidth, kFullWidth,
                        config);
   // "・「」"
-  AddCharacterFormRule("\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D",
+  AddCharacterFormRule("・「」",
                        kFullWidth, kFullWidth, config);
   AddCharacterFormRule("\"'", kFullWidth, kLastForm, config);
   AddCharacterFormRule(":;", kFullWidth, kLastForm, config);

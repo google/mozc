@@ -317,16 +317,16 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   };
   const TestCase testcases[] = {
     // "ア"
-    {"\xE3\x82\xA2", Config::FULL_WIDTH, Config::FULL_WIDTH},
+    {"ア", Config::FULL_WIDTH, Config::FULL_WIDTH},
     {"A", Config::FULL_WIDTH, Config::LAST_FORM},
     {"0", Config::FULL_WIDTH, Config::LAST_FORM},
     {"(){}[]", Config::FULL_WIDTH, Config::LAST_FORM},
     {".,", Config::FULL_WIDTH, Config::LAST_FORM},
     // "。、",
-    {"\xE3\x80\x82\xE3\x80\x81",
+    {"。、",
       Config::FULL_WIDTH, Config::FULL_WIDTH},
     // "・「」"
-    {"\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D",
+    {"・「」",
       Config::FULL_WIDTH, Config::FULL_WIDTH},
     {"\"'", Config::FULL_WIDTH, Config::LAST_FORM},
     {":;", Config::FULL_WIDTH, Config::LAST_FORM},
