@@ -45,12 +45,12 @@
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/gunit.h"
 
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::SuppressionDictionary;
-
 namespace mozc {
 namespace converter {
 namespace {
+
+using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::SuppressionDictionary;
 
 const Segments::RequestType kRequestTypes[] = {
   Segments::CONVERSION,
@@ -60,8 +60,6 @@ const Segments::RequestType kRequestTypes[] = {
   Segments::PARTIAL_SUGGESTION,
   // Type Segments::REVERSE_CONVERSION is tested separately.
 };
-
-}  // namespace
 
 class CandidateFilterTest : public ::testing::Test {
  protected:
@@ -89,15 +87,13 @@ class CandidateFilterTest : public ::testing::Test {
   void GetDefaultNodes(std::vector<const Node *> *nodes) {
     nodes->clear();
     Node *n1 = NewNode();
-    // "てすと"
-    n1->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+    n1->value = "てすと";
     n1->lid = pos_matcher().GetUnknownId();
     n1->rid = pos_matcher().GetUnknownId();
     nodes->push_back(n1);
 
     Node *n2 = NewNode();
-    // "てすと"
-    n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+    n2->value = "てすと";
     n2->lid = pos_matcher().GetFunctionalId();
     n2->rid = pos_matcher().GetFunctionalId();
     nodes->push_back(n2);
@@ -276,15 +272,13 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     Node *n2 = NewNode();
     n2->lid = pos_matcher().GetUnknownId();
     n2->rid = pos_matcher().GetUnknownId();
-    n2->key = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";  // "てすと"
-    n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";  // "てすと"
+    n2->key = "てすと";
+    n2->value = "てすと";
     nodes[1] = n2;
     for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-      EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-                filter->FilterCandidate(
-                    // "abcてすと"
-                    "\x61\x62\x63\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8",
-                    c, nodes, kRequestTypes[i]));
+      EXPECT_EQ(
+          CandidateFilter::BAD_CANDIDATE,
+          filter->FilterCandidate("abcてすと", c, nodes, kRequestTypes[i]));
       filter->Reset();
     }
   }
@@ -551,16 +545,15 @@ TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
   n.push_back(n1);
 
   Node *n2 = NewNode();
-  // "てすと"
-  n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+  n2->value = "てすと";
   n2->lid = pos_matcher().GetUnknownId();
   n2->rid = pos_matcher().GetUnknownId();
   n.push_back(n2);
 
   Segment::Candidate *c1 = NewCandidate();
   c1->attributes |= Segment::Candidate::REALTIME_CONVERSION;
-  c1->key = "\x50\x43\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";  // "PCてすと"
-  c1->value = "PC\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88";  // "PCテスト"
+  c1->key = "PCてすと";
+  c1->value = "PCテスト";
   // Don't filter a candidate because it starts with alphabets and
   // is followed by a non-functional word.
   for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
@@ -578,33 +571,25 @@ TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
 
   {
     Node *n1 = NewNode();
-    // "よかっ"
-    n1->key = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3";
-    // "よかっ"
-    n1->value = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3";
+    n1->key = "よかっ";
+    n1->value = "よかっ";
     n1->lid = pos_matcher().GetUnknownId();
     n1->rid = pos_matcher().GetUnknownId();
     nodes.push_back(n1);
 
     Node *n2 = NewNode();
-    // "たり"
-    n2->key = "\xe3\x81\x9f\xe3\x82\x8a";
-    // "たり"
-    n2->value = "\xe3\x81\x9f\xe3\x82\x8a";
+    n2->key = "たり";
+    n2->value = "たり";
     n2->lid = pos_matcher().GetUnknownId();
     n2->rid = pos_matcher().GetUnknownId();
     nodes.push_back(n2);
   }
 
   Segment::Candidate *c1 = NewCandidate();
-  // "よかったり"
-  c1->key = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3\xe3\x81\x9f\xe3\x82\x8a";
-  // "よかったり"
-  c1->value = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3\xe3\x81\x9f\xe3\x82\x8a";
-  // "よかっ"
-  c1->content_key = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3";
-  // "よかっ"
-  c1->content_value = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3";
+  c1->key = "よかったり";
+  c1->value = "よかったり";
+  c1->content_key = "よかっ";
+  c1->content_value = "よかっ";
   c1->cost = 6000;
   c1->structure_cost = 1000;
 
@@ -621,33 +606,25 @@ TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
   nodes.clear();
   {
     Node *n1 = NewNode();
-    // "よかっ"
-    n1->key = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3";
-    // "良かっ"
-    n1->value = "\xe8\x89\xaf\xe3\x81\x8b\xe3\x81\xa3";
+    n1->key = "よかっ";
+    n1->value = "良かっ";
     n1->lid = pos_matcher().GetUnknownId();
     n1->rid = pos_matcher().GetUnknownId();
     nodes.push_back(n1);
 
     Node *n2 = NewNode();
-    // "たり"
-    n2->key = "\xe3\x81\x9f\xe3\x82\x8a";
-    // "たり"
-    n2->value = "\xe3\x81\x9f\xe3\x82\x8a";
+    n2->key = "たり";
+    n2->value = "たり";
     n2->lid = pos_matcher().GetUnknownId();
     n2->rid = pos_matcher().GetUnknownId();
     nodes.push_back(n2);
   }
 
   Segment::Candidate *c2 = NewCandidate();
-  // "よかったり"
-  c2->key = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3\xe3\x81\x9f\xe3\x82\x8a";
-  // "良かったり"
-  c2->value = "\xe8\x89\xaf\xe3\x81\x8b\xe3\x81\xa3\xe3\x81\x9f\xe3\x82\x8a";
-  // "よかっ"
-  c2->content_key = "\xe3\x82\x88\xe3\x81\x8b\xe3\x81\xa3";
-  // "良かっ"
-  c2->content_value = "\xe8\x89\xaf\xe3\x81\x8b\xe3\x81\xa3";
+  c2->key = "よかったり";
+  c2->value = "良かったり";
+  c2->content_key = "よかっ";
+  c2->content_value = "良かっ";
   c2->cost = 12000;
   c2->structure_cost = 7500;  // has big structure cost
 
@@ -664,10 +641,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Conversion) {
   // For Segments::CONVERSION, suggestion filter is not applied.
   {
     Node *n = NewNode();
-    // "ふぃるたー"
-    n->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B\xE3\x81\x9F\xE3\x83\xBC";
-    // "フィルター"
-    n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
+    n->key = "ふぃるたー";
+    n->value = "フィルター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n);
@@ -692,10 +667,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
   // original key length. First test unigram case.
   {
     Node *n = NewNode();
-    // "ふぃるたー"
-    n->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B\xE3\x81\x9F\xE3\x83\xBC";
-    // "フィルター"
-    n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
+    n->key = "ふぃるたー";
+    n->value = "フィルター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n);
@@ -709,9 +682,9 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     c->structure_cost = 2000;
 
     // Test case where "フィルター" is suggested from key "ふぃる".
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B",
-                                      c, nodes, Segments::SUGGESTION));
+    EXPECT_EQ(
+        CandidateFilter::BAD_CANDIDATE,
+        filter->FilterCandidate("ふぃる", c, nodes, Segments::SUGGESTION));
     filter->Reset();
     // Test case where "フィルター" is suggested from key "ふぃるたー".
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
@@ -722,15 +695,12 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     filter->Reset();
 
     Node *n1 = NewNode();
-    // "これは"
-    n1->key = "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF";
+    n1->key = "これは";
     n1->value = n1->key;
 
     Node *n2 = NewNode();
-    // "ふぃるたー"
-    n2->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B\xE3\x81\x9F\xE3\x83\xBC";
-    // "フィルター"
-    n2->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
+    n2->key = "ふぃるたー";
+    n2->value = "フィルター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n1);
@@ -745,10 +715,9 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     c->structure_cost = 2000;
 
     // Test case where "これはフィルター" is suggested from key "これはふ".
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate(
-                  "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF\xE3\x81\xB5",
-                  c, nodes, Segments::SUGGESTION));
+    EXPECT_EQ(
+        CandidateFilter::BAD_CANDIDATE,
+        filter->FilterCandidate("これはふ", c, nodes, Segments::SUGGESTION));
     filter->Reset();
     // Test case where "これはフィルター" is suggested from the same key.
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
@@ -761,16 +730,16 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     filter->Reset();
 
     Node *n1 = NewNode();
-    n1->key = "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF";  // "これは"
+    n1->key = "これは";
     n1->value = n1->key;
 
     Node *n2 = NewNode();
-    n2->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B";  // "ふぃる"
-    n2->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB";  // "フィル"
+    n2->key = "ふぃる";
+    n2->value = "フィル";
 
     Node *n3 = NewNode();
-    n3->key = "\xE3\x81\x9F\xE3\x83\xBC";  // "たー"
-    n3->value = "\xE3\x82\xBF\xE3\x83\xBC";  // "ター"
+    n3->key = "たー";
+    n3->value = "ター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n1);
@@ -787,10 +756,9 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
 
     // Test case where "これはフィルター" is suggested from key "これはふ".
     // Since "フィルター" is constructed from two nodes, it cannot be filtered.
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate(
-                  "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF\xE3\x81\xB5",
-                  c, nodes, Segments::SUGGESTION));
+    EXPECT_EQ(
+        CandidateFilter::GOOD_CANDIDATE,
+        filter->FilterCandidate("これはふ", c, nodes, Segments::SUGGESTION));
     filter->Reset();
     // Test case where "これはフィルター" is suggested from the same key.
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
@@ -805,10 +773,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion_Mobile) {
   // exact match.
   {
     Node *n = NewNode();
-    // "ふぃるたー"
-    n->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B\xE3\x81\x9F\xE3\x83\xBC";
-    // "フィルター"
-    n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
+    n->key = "ふぃるたー";
+    n->value = "フィルター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n);
@@ -822,9 +788,9 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion_Mobile) {
     c->structure_cost = 2000;
 
     // Test case where "フィルター" is suggested from key "ふぃる".
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B",
-                                      c, nodes, Segments::SUGGESTION));
+    EXPECT_EQ(
+        CandidateFilter::BAD_CANDIDATE,
+        filter->FilterCandidate("ふぃる", c, nodes, Segments::SUGGESTION));
     filter->Reset();
     // Test case where "フィルター" is suggested from key "ふぃるたー".
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
@@ -840,10 +806,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
   // unigram case.
   {
     Node *n = NewNode();
-    // "ふぃるたー"
-    n->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B\xE3\x81\x9F\xE3\x83\xBC";
-    // "フィルター"
-    n->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
+    n->key = "ふぃるたー";
+    n->value = "フィルター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n);
@@ -857,9 +821,9 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     c->structure_cost = 2000;
 
     // Test case where "フィルター" is predicted from key "ふぃる".
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B",
-                                      c, nodes, Segments::PREDICTION));
+    EXPECT_EQ(
+        CandidateFilter::BAD_CANDIDATE,
+        filter->FilterCandidate("ふぃる", c, nodes, Segments::PREDICTION));
     // Test case where "フィルター" is predicted from key "ふぃるたー". Note the
     // difference from the case of SUGGESTION, now words in suggestion filter
     // are good if its key is equal to the original key.
@@ -872,15 +836,12 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     filter->Reset();
 
     Node *n1 = NewNode();
-    // "これは"
-    n1->key = "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF";
+    n1->key = "これは";
     n1->value = n1->key;
 
     Node *n2 = NewNode();
-    // "ふぃるたー"
-    n2->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B\xE3\x81\x9F\xE3\x83\xBC";
-    // "フィルター"
-    n2->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB\xE3\x82\xBF\xE3\x83\xBC";
+    n2->key = "ふぃるたー";
+    n2->value = "フィルター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n1);
@@ -895,10 +856,9 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     c->structure_cost = 2000;
 
     // Test case where "これはフィルター" is predicted from key "これはふ".
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate(
-                  "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF\xE3\x81\xB5",
-                  c, nodes, Segments::PREDICTION));
+    EXPECT_EQ(
+        CandidateFilter::BAD_CANDIDATE,
+        filter->FilterCandidate("これはふ", c, nodes, Segments::PREDICTION));
     filter->Reset();
     // Test case where "これはフィルター" is predicted from the same key.
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
@@ -909,20 +869,19 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
   // filtered. Fix this.
   {
     filter->Reset();
-
     filter->Reset();
 
     Node *n1 = NewNode();
-    n1->key = "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF";  // "これは"
+    n1->key = "これは";
     n1->value = n1->key;
 
     Node *n2 = NewNode();
-    n2->key = "\xE3\x81\xB5\xE3\x81\x83\xE3\x82\x8B";  // "ふぃる"
-    n2->value = "\xE3\x83\x95\xE3\x82\xA3\xE3\x83\xAB";  // "フィル"
+    n2->key = "ふぃる";
+    n2->value = "フィル";
 
     Node *n3 = NewNode();
-    n3->key = "\xE3\x81\x9F\xE3\x83\xBC";  // "たー"
-    n3->value = "\xE3\x82\xBF\xE3\x83\xBC";  // "ター"
+    n3->key = "たー";
+    n3->value = "ター";
 
     std::vector<const Node *> nodes;
     nodes.push_back(n1);
@@ -938,10 +897,9 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     c->structure_cost = 2000;
 
     // Test case where "これはフィルター" is predicted from key "これはふ".
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate(
-                  "\xE3\x81\x93\xE3\x82\x8C\xE3\x81\xAF\xE3\x81\xB5",
-                  c, nodes, Segments::PREDICTION));
+    EXPECT_EQ(
+        CandidateFilter::GOOD_CANDIDATE,
+        filter->FilterCandidate("これはふ", c, nodes, Segments::PREDICTION));
     filter->Reset();
     // Test case where "これはフィルター" is predicted from the same key.
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
@@ -954,8 +912,8 @@ TEST_F(CandidateFilterTest, ReverseConversion) {
   std::vector<const Node *> nodes;
   GetDefaultNodes(&nodes);
 
-  const char kHonKanji[] = "\xE6\x9C\xAC";  // "本"
-  const char kHonHiragana[] = "\xE3\x81\xBB\xE3\x82\x93";  // "ほん"
+  const char kHonKanji[] = "本";
+  const char kHonHiragana[] = "ほん";
 
   Node *n1 = NewNode();
   n1->key = kHonKanji;
@@ -998,5 +956,6 @@ TEST_F(CandidateFilterTest, ReverseConversion) {
   }
 }
 
+}  // namespace
 }  // namespace converter
 }  // namespace mozc

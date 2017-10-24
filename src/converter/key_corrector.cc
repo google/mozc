@@ -37,6 +37,7 @@
 
 namespace mozc {
 namespace {
+
 // maximum key length KeyCorrector can handle
 // if key is too long, we don't do key correction
 const size_t kMaxSize = 128;
@@ -575,14 +576,12 @@ size_t KeyCorrector::InvalidPosition() {
 // static
 int KeyCorrector::GetCorrectedCostPenalty(const string &key) {
   // "んん" and "っっ" must be mis-spelling.
-  // if (key.find("んん") != string::npos ||
-  //     key.find("っっ") != string::npos) {
-  if (key.find("\xE3\x82\x93\xE3\x82\x93") != string::npos ||
-      key.find("\xE3\x81\xA3\xE3\x81\xA3") != string::npos) {
+  if (key.find("んん") != string::npos || key.find("っっ") != string::npos) {
     return 0;
   }
   // add 3000 to the original word cost
   const int kCorrectedCostPenalty = 3000;
   return kCorrectedCostPenalty;
 }
+
 }  // namespace mozc
