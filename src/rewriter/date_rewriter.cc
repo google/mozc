@@ -2088,6 +2088,7 @@ bool GetNDigits(const composer::Composer &composer,
 }  // namespace
 
 bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
+                                            int insert_position,
                                             Segments *segments) {
   if (segments->conversion_segments_size() != 1) {
     // This method rewrites a segment only when the segments has only
@@ -2131,10 +2132,11 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
   const Segment::Candidate &top_cand = (segment->candidates_size() > 0)
                                            ? segment->candidate(0)
                                            : segment->meta_candidate(0);
+  if (insert_position < 0) {
+    insert_position = static_cast<int>(segment->candidates_size());
+  }
   for (const auto &result : results) {
-    // Always insert after the last candidate.
-    const int position = static_cast<int>(segment->candidates_size());
-    Insert(top_cand, position, result.first, result.second, segment);
+    Insert(top_cand, insert_position++, result.first, result.second, segment);
   }
 
   return true;
@@ -2330,7 +2332,8 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
   }
 
   if (request.has_composer()) {
-    modified |= RewriteConsecutiveDigits(request.composer(), segments);
+    // Insert the results after the top candidate.
+    modified |= RewriteConsecutiveDigits(request.composer(), 1, segments);
   }
 
   return modified;

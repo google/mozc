@@ -135,9 +135,9 @@ void InitSegment(const string &key, const string &value,
 }
 
 void InsertCandidate(const string &key,
-                const string &value,
-                const int position,
-                Segment *segment) {
+                     const string &value,
+                     const int position,
+                     Segment *segment) {
   Segment::Candidate *cand = segment->insert_candidate(position);
   cand->content_key = key;
   cand->value = value;
@@ -1185,6 +1185,32 @@ TEST_F(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
   AppendSegment("nenn", "年", &segments);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   EXPECT_TRUE(ContainCandidate(segments, "平成23"));
+}
+
+TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
+  const commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
+
+  // Init an instance of Segments for this test.
+  Segments segments;
+  InitSegment("1234", "1234", &segments);
+  InsertCandidate("cand1", "cand1", 1, segments.mutable_segment(0));
+  InsertCandidate("cand2", "cand2", 2, segments.mutable_segment(0));
+
+  // Results are inserted after the top candidate.
+  DateRewriter rewriter;
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+
+  // Verify that the top candidate wans't modified and the next two were moved
+  // to last.
+  const auto &segment = segments.segment(0);
+  const auto cand_size = segment.candidates_size();
+  ASSERT_LT(3, cand_size);
+  EXPECT_EQ("1234", segment.candidate(0).value);
+  EXPECT_EQ("cand1", segment.candidate(cand_size - 2).value);
+  EXPECT_EQ("cand2", segment.candidate(cand_size - 1).value);
 }
 
 }  // namespace mozc

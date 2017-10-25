@@ -92,6 +92,7 @@ class DateRewriter : public RewriterInterface {
   //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
   //   123  -> "1月23日、01/23、1:23"
   static bool RewriteConsecutiveDigits(const composer::Composer &composer,
+                                       int insert_position,
                                        Segments *segments);
 
   // Helper functions for RewriteConsecutiveDigits().

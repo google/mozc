@@ -69,11 +69,13 @@
 
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::PosGroup;
-
 namespace mozc {
+namespace {
+
+using dictionary::DictionaryInterface;
+using dictionary::PosGroup;
+
+}  // namespace
 
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
                            const DataManagerInterface *data_manager,
