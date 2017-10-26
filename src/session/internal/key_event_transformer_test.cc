@@ -134,14 +134,12 @@ TEST(KeyEventTransformerTest, Numpad) {
     table->ReloadConfig(config);
     {
       SCOPED_TRACE("NUMPAD_INPUT_MODE: input: 0");
-      // "０"
-      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "\xef\xbc\x90",
+      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "０",
                                commands::KeyEvent::FOLLOW_MODE);
     }
     {
-      // "＝"
       SCOPED_TRACE("NUMPAD_INPUT_MODE: input: =");
-      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "\xef\xbc\x9d",
+      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "＝",
                                commands::KeyEvent::FOLLOW_MODE);
     }
   }
@@ -152,14 +150,12 @@ TEST(KeyEventTransformerTest, Numpad) {
     table->ReloadConfig(config);
     {
       SCOPED_TRACE("NUMPAD_FULL_WIDTH: input: 0");
-      // "０"
-      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "\xef\xbc\x90",
+      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "０",
                                commands::KeyEvent::AS_IS);
     }
     {
       SCOPED_TRACE("NUMPAD_FULL_WIDTH: input: =");
-      // "＝"
-      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "\xef\xbc\x9d",
+      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "＝",
                                commands::KeyEvent::AS_IS);
     }
   }
@@ -201,10 +197,10 @@ TEST(KeyEventTransformerTest, Kana) {
   KeyEventTransformer *table = Singleton<KeyEventTransformer>::get();
 
   {  // Punctuation
-    const char *kFullKuten = "\xe3\x80\x81";  // "、"
-    const char *kFullTouten = "\xE3\x80\x82";  // "。"
-    const char *kFullComma = "\xef\xbc\x8c";  // "，"
-    const char *kFullPeriod = "\xef\xbc\x8e";  // "．"
+    const char *kFullKuten = "、";
+    const char *kFullTouten = "。";
+    const char *kFullComma = "，";
+    const char *kFullPeriod = "．";
 
     {
       SCOPED_TRACE("KUTEN_TOUTEN");
@@ -245,12 +241,12 @@ TEST(KeyEventTransformerTest, Kana) {
   }
 
   {  // Symbol
-    const char *kFullLeftSquareBracket = "\xef\xbc\xbb";  // "［"
-    const char *kFullRightSquareBracket = "\xef\xbc\xbd";  // "］"
-    const char *kFullLeftCornerBracket = "\xe3\x80\x8c";  // "「"
-    const char *kFullRightCornerBracket = "\xe3\x80\x8d";  // "」"
-    const char *kFullSlash = "\xef\xbc\x8f";  // "／"
-    const char *kFullMiddleDot = "\xE3\x83\xBB";  // "・"
+    const char *kFullLeftSquareBracket = "［";
+    const char *kFullRightSquareBracket = "］";
+    const char *kFullLeftCornerBracket = "「";
+    const char *kFullRightCornerBracket = "」";
+    const char *kFullSlash = "／";
+    const char *kFullMiddleDot = "・";
 
     {
       SCOPED_TRACE("CORNER_BRACKET_MIDDLE_DOT");

@@ -60,12 +60,11 @@
 #include "session/session_usage_stats_util.h"
 #include "usage_stats/usage_stats.h"
 
-using mozc::usage_stats::UsageStats;
-
 namespace mozc {
 namespace session {
-
 namespace {
+
+using ::mozc::usage_stats::UsageStats;
 
 // Set input mode if the current input mode is not the given mode.
 void SwitchInputMode(const transliteration::TransliterationType mode,
@@ -1617,8 +1616,7 @@ bool Session::InsertSpaceFullWidth(commands::Command *command) {
   command->mutable_input()->clear_key();
   commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
   key_event->set_key_code(' ');
-  // "　" (full-width space)
-  key_event->set_key_string("\xE3\x80\x80");
+  key_event->set_key_string("　");  // full-width space
   key_event->set_input_style(commands::KeyEvent::DIRECT_INPUT);
   if (has_mode) {
     key_event->set_mode(mode);
@@ -2698,21 +2696,21 @@ bool IsValidKey(const config::Config &config,
                 const uint32 key_code, const string &key_string) {
   return
       (((key_code == static_cast<uint32>('.') && key_string.empty()) ||
-        key_string == "." || key_string == "\xEF\xBC\x8E" ||
-        key_string == "\xE3\x80\x82" || key_string == "\xEF\xBD\xA1") &&
+        key_string == "." || key_string == "．" ||
+        key_string == "。" || key_string == "｡") &&
        (config.auto_conversion_key() &
         config::Config::AUTO_CONVERSION_KUTEN)) ||
       (((key_code == static_cast<uint32>(',') && key_string.empty()) ||
-        key_string == "," || key_string == "\xEF\xBC\x8C" ||
-        key_string == "\xE3\x80\x81" || key_string == "\xEF\xBD\xA4") &&
+        key_string == "," || key_string == "，" ||
+        key_string == "、" || key_string == "､") &&
        (config.auto_conversion_key() &
         config::Config::AUTO_CONVERSION_TOUTEN)) ||
       (((key_code == static_cast<uint32>('?') && key_string.empty()) ||
-        key_string == "?" || key_string == "\xEF\xBC\x9F") &&
+        key_string == "?" || key_string == "？") &&
        (config.auto_conversion_key() &
         config::Config::AUTO_CONVERSION_QUESTION_MARK)) ||
       (((key_code == static_cast<uint32>('!') && key_string.empty()) ||
-        key_string == "!" || key_string == "\xEF\xBC\x81") &&
+        key_string == "!" || key_string == "！") &&
        (config.auto_conversion_key() &
         config::Config::AUTO_CONVERSION_EXCLAMATION_MARK));
 }

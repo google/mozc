@@ -316,9 +316,7 @@ bool SessionOutput::FillFooter(const commands::Category category,
   commands::Footer *footer = candidates->mutable_footer();
   if (category == commands::SUGGESTION) {
     // TODO(komatsu): Enable to localized the message.
-    // "Tabキーで選択"
-    const char kLabel[] = ("Tab\xE3\x82\xAD\xE3\x83\xBC\xE3\x81\xA7"
-                           "\xE9\x81\xB8\xE6\x8A\x9E");
+    const char kLabel[] = "Tabキーで選択";
     // TODO(komatsu): Need to check if Tab is not changed to other key binding.
     footer->set_label(kLabel);
   } else {
@@ -337,22 +335,11 @@ bool SessionOutput::FillFooter(const commands::Category category,
         if (cand.has_annotation() && cand.annotation().deletable()) {
           // TODO(noriyukit): Change the message depending on user's keymap.
 #if defined(OS_MACOSX)
-          // "control+fn+deleteで履歴から削除"
-          const char kDeleteInstruction[] =
-              "\x63\x6F\x6E\x74\x72\x6F\x6C\x2B\x66\x6E\x2B\x64\x65\x6C\x65"
-              "\x74\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B\xE3"
-              "\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+          const char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
 #elif defined(OS_NACL)
-          // "ctrl+alt+backspaceで履歴から削除"
-          const char kDeleteInstruction[] =
-              "\x63\x74\x72\x6C\x2B\x61\x6C\x74\x2B\x62\x61\x63\x6B\x73\x70"
-              "\x61\x63\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B"
-              "\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
-#else  // !OS_MACOSX && !OS_NACL
-          // "Ctrl+Delで履歴から削除"
-          const char kDeleteInstruction[] =
-              "\x43\x74\x72\x6C\x2B\x44\x65\x6C\xE3\x81\xA7\xE5\xB1\xA5"
-              "\xE6\xAD\xB4\xE3\x81\x8B\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+          const char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
+#else   // !OS_MACOSX && !OS_NACL
+          const char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
 #endif  // OS_MACOSX || OS_NACL
           footer->set_label(kDeleteInstruction);
           show_build_number = false;

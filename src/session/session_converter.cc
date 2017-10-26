@@ -1402,10 +1402,7 @@ void SessionConverter::AppendCandidateList() {
     transliterations = candidate_list_->AllocateSubCandidateList(kNoRotate);
     transliterations->set_focused(true);
 
-    const char kT13nLabel[] =
-      // "そのほかの文字種";
-      "\xe3\x81\x9d\xe3\x81\xae\xe3\x81\xbb\xe3\x81\x8b\xe3\x81\xae"
-      "\xe6\x96\x87\xe5\xad\x97\xe7\xa8\xae";
+    const char kT13nLabel[] = "そのほかの文字種";
     transliterations->set_name(kT13nLabel);
   } else {
     transliterations = candidate_list_.get();

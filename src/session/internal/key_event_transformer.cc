@@ -61,19 +61,15 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
       punctuation == Config::COMMA_TOUTEN) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32>(','));
-    // "，"
-    key_event.set_key_string("\xef\xbc\x8c");
-    // "、"
-    table_.insert(std::make_pair("\xe3\x80\x81", key_event));
+    key_event.set_key_string("，");
+    table_.insert(std::make_pair("、", key_event));
   }
   if (punctuation == Config::COMMA_PERIOD ||
       punctuation == Config::KUTEN_PERIOD) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32>('.'));
-    // "．"
-    key_event.set_key_string("\xef\xbc\x8e");
-    // "。"
-    table_.insert(std::make_pair("\xe3\x80\x82", key_event));
+    key_event.set_key_string("．");
+    table_.insert(std::make_pair("。", key_event));
   }
 
   const Config::SymbolMethod symbol = config.symbol_method();
@@ -82,28 +78,22 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
     {
       KeyEvent key_event;
       key_event.set_key_code(static_cast<uint32>('['));
-      // "［"
-      key_event.set_key_string("\xef\xbc\xbb");
-      // "「"
-      table_.insert(std::make_pair("\xe3\x80\x8c", key_event));
+      key_event.set_key_string("［");
+      table_.insert(std::make_pair("「", key_event));
     }
     {
       KeyEvent key_event;
       key_event.set_key_code(static_cast<uint32>(']'));
-      // "］"
-      key_event.set_key_string("\xef\xbc\xbd");
-      // "」"
-      table_.insert(std::make_pair("\xe3\x80\x8d", key_event));
+      key_event.set_key_string("］");
+      table_.insert(std::make_pair("」", key_event));
     }
   }
   if (symbol == Config::SQUARE_BRACKET_SLASH ||
       symbol == Config::CORNER_BRACKET_SLASH) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32>('/'));
-    // "／"
-    key_event.set_key_string("\xef\xbc\x8f");
-    // "・"
-    table_.insert(std::make_pair("\xE3\x83\xBB", key_event));
+    key_event.set_key_string("／");
+    table_.insert(std::make_pair("・", key_event));
   }
 }
 

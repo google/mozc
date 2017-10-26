@@ -564,9 +564,9 @@ TEST_F(SessionHandlerTest, EmojiUsageStatsTest) {
   // Carrier emoji "GOOGLE"
   storage_entry->mutable_value()->Add()->assign("\xF3\xBE\xBA\xA0");
   // Unicode emoji "BLACK SUN WITH RAYS"
-  storage_entry->mutable_value()->Add()->assign("\xE2\x98\x80");
+  storage_entry->mutable_value()->Add()->assign("☀");
   // Unicode emoji "RABBIT FACE"
-  storage_entry->mutable_value()->Add()->assign("\xF0\x9F\x90\xB0");
+  storage_entry->mutable_value()->Add()->assign("🐰");
   EXPECT_TRUE(handler.EvalCommand(&command));
   EXPECT_COUNT_STATS("CommitCarrierEmoji", 3);
   EXPECT_COUNT_STATS("CommitUnicodeEmoji", 2);
