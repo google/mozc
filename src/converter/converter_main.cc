@@ -55,6 +55,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "session/request_test_util.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200, "maximum candidates size");
 DEFINE_string(user_profile_dir, "", "path to user profile directory");
@@ -271,7 +272,7 @@ bool ExecCommand(const ConverterInterface &converter,
     CHECK_FIELDS_LENGTH(2);
     Table table;
     Composer composer(&table, &request, &config);
-    composer.InsertCharacterPreedit(fields[1]);
+    composer.SetPreeditTextForTestOnly(fields[1]);
     ConversionRequest conversion_request(&composer, &request, &config);
     return converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
@@ -290,7 +291,7 @@ bool ExecCommand(const ConverterInterface &converter,
     Table table;
     Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
-      composer.InsertCharacterPreedit(fields[1]);
+      composer.SetPreeditTextForTestOnly(fields[1]);
       ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartPredictionForRequest(conversion_request, segments);
     } else {
@@ -301,7 +302,7 @@ bool ExecCommand(const ConverterInterface &converter,
     Table table;
     Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
-      composer.InsertCharacterPreedit(fields[1]);
+      composer.SetPreeditTextForTestOnly(fields[1]);
       ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartSuggestionForRequest(conversion_request, segments);
     } else {
@@ -454,11 +455,13 @@ int main(int argc, char **argv) {
                                                  FLAGS_magic);
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
+  mozc::commands::Request request;
   std::unique_ptr<mozc::EngineInterface> engine;
   if (FLAGS_engine_type == "desktop") {
     engine = mozc::Engine::CreateDesktopEngine(std::move(data_manager));
   } else if (FLAGS_engine_type == "mobile") {
     engine = mozc::Engine::CreateMobileEngine(std::move(data_manager));
+    mozc::commands::RequestForUnitTest::FillMobileRequest(&request);
   } else {
     LOG(FATAL) << "Invalid type: --engine_type=" << FLAGS_engine_type;
     return 0;
@@ -467,7 +470,6 @@ int main(int argc, char **argv) {
   mozc::ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
-  const mozc::commands::Request request;
   mozc::Segments segments;
   string line;
 

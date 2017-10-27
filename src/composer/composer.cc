@@ -440,6 +440,12 @@ void Composer::InsertCharacterPreedit(const string &input) {
   DCHECK_EQ(begin, end);
 }
 
+// Note: This method is only for test.
+void Composer::SetPreeditTextForTestOnly(const string &input) {
+  SetTemporaryInputMode(transliteration::HALF_ASCII);
+  InsertCharacterPreedit(input);
+}
+
 void Composer::InsertCharacterPreeditForProbableKeyEvents(
     const string &input,
     const ProbableKeyEvents &probable_key_events) {

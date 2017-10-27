@@ -203,7 +203,7 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
   if (command == kConversionExpect ||
       command == kConversionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
-    composer.InsertCharacterPreedit(key);
+    composer.SetPreeditTextForTestOnly(key);
     ConversionRequest request(&composer, request_.get(), config_.get());
     converter_->StartConversionForRequest(request, segments_.get());
   } else if (command == kReverseConversionExpect ||
@@ -212,13 +212,13 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
   } else if (command == kPredictionExpect ||
              command == kPredictionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
-    composer.InsertCharacterPreedit(key);
+    composer.SetPreeditTextForTestOnly(key);
     ConversionRequest request(&composer, request_.get(), config_.get());
     converter_->StartPredictionForRequest(request, segments_.get());
   } else if (command == kSuggestionExpect ||
              command == kSuggestionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
-    composer.InsertCharacterPreedit(key);
+    composer.SetPreeditTextForTestOnly(key);
     ConversionRequest request(&composer, request_.get(), config_.get());
     converter_->StartSuggestionForRequest(request, segments_.get());
   } else {
