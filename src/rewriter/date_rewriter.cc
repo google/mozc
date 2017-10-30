@@ -2331,9 +2331,21 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
     }
   }
 
-  if (request.has_composer()) {
-    // Insert the results after the top candidate.
-    modified |= RewriteConsecutiveDigits(request.composer(), 1, segments);
+  if (request.has_composer() && segments->segments_size() > 0) {
+    // Select the insert position by Romaji table.  Note:
+    // TWELVE_KEYS_TO_HIRAGANA uses digits for Hiragana composing, date/time
+    // conversion is performed even when typing Hiragana characters.  Thus, it
+    // should not be promoted.
+    int insert_pos = static_cast<int>(segments->segment(0).candidates_size());
+    switch (request.request().special_romanji_table()) {
+      case commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
+        insert_pos = 1;
+        break;
+      default:
+        break;
+    }
+    modified |=
+        RewriteConsecutiveDigits(request.composer(), insert_pos, segments);
   }
 
   return modified;
