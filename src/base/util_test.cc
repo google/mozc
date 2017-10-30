@@ -220,7 +220,7 @@ TEST(UtilTest, SplitIterator_SingleDelimiter_SkipEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    StringPiece s("a b  cde ", 5);  // s = "a b  ";
+    StringPiece s("a b  cde ", 5);
     SplitIterator iter(s, " ");
     EXPECT_FALSE(iter.Done());
     EXPECT_EQ("a", iter.Get());
@@ -328,7 +328,7 @@ TEST(UtilTest, SplitIterator_SingleDelimiter_AllowEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    StringPiece s("a b  cde ", 5);  // s = "a b  ";
+    StringPiece s("a b  cde ", 5);
     SplitIterator iter(s, " ");
     EXPECT_FALSE(iter.Done());
     EXPECT_EQ("a", iter.Get());
@@ -567,14 +567,8 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
   }
 
   {
-    // "a" "あ" "Ａ" "亜" "\n" "a"
     const string kInputs[] = {
-      "a",
-      "\xE3\x81\x82",
-      "\xEF\xBC\xA1",
-      "\xE4\xBA\x9C",
-      "\n",
-      "a",
+        "a", "あ", "亜", "\n", "a",
     };
     string joined_string;
     for (int i = 0; i < arraysize(kInputs); ++i) {
@@ -661,17 +655,9 @@ TEST(UtilTest, LowerString) {
   Util::LowerString(&s);
   EXPECT_EQ("testtest", s);
 
-  // "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛"
-  string s2 = "\xef\xbc\xb4\xef\xbd\x85\xef\xbc\xb3\xef\xbc\xb4\xef\xbc\xa0\xef"
-              "\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3\xef\xbc\xb8\xef\xbc\xb9\xef\xbc"
-              "\xba\xef\xbc\xbb\xef\xbd\x80\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83"
-              "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x9b";
+  string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
   Util::LowerString(&s2);
-  // "ｔｅｓｔ＠ａｂｃｘｙｚ［｀ａｂｃｘｙｚ｛"
-  EXPECT_EQ("\xef\xbd\x94\xef\xbd\x85\xef\xbd\x93\xef\xbd\x94\xef\xbc\xa0\xef"
-            "\xbd\x81\xef\xbd\x82\xef\xbd\x83\xef\xbd\x98\xef\xbd\x99\xef\xbd"
-            "\x9a\xef\xbc\xbb\xef\xbd\x80\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83"
-            "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x9b", s2);
+  EXPECT_EQ("ｔｅｓｔ＠ａｂｃｘｙｚ［｀ａｂｃｘｙｚ｛", s2);
 }
 
 TEST(UtilTest, UpperString) {
@@ -679,17 +665,9 @@ TEST(UtilTest, UpperString) {
   Util::UpperString(&s);
   EXPECT_EQ("TESTTEST", s);
 
-  // "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛"
-  string s2 = "\xef\xbc\xb4\xef\xbd\x85\xef\xbc\xb3\xef\xbc\xb4\xef\xbc\xa0\xef"
-              "\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3\xef\xbc\xb8\xef\xbc\xb9\xef\xbc"
-              "\xba\xef\xbc\xbb\xef\xbd\x80\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83"
-              "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x9b";
+  string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
   Util::UpperString(&s2);
-  // "ＴＥＳＴ＠ＡＢＣＸＹＺ［｀ＡＢＣＸＹＺ｛"
-  EXPECT_EQ("\xef\xbc\xb4\xef\xbc\xa5\xef\xbc\xb3\xef\xbc\xb4\xef\xbc\xa0\xef"
-            "\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3\xef\xbc\xb8\xef\xbc\xb9\xef\xbc"
-            "\xba\xef\xbc\xbb\xef\xbd\x80\xef\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3"
-            "\xef\xbc\xb8\xef\xbc\xb9\xef\xbc\xba\xef\xbd\x9b", s2);
+  EXPECT_EQ("ＴＥＳＴ＠ＡＢＣＸＹＺ［｀ＡＢＣＸＹＺ｛", s2);
 }
 
 TEST(UtilTest, CapitalizeString) {
@@ -697,17 +675,9 @@ TEST(UtilTest, CapitalizeString) {
   Util::CapitalizeString(&s);
   EXPECT_EQ("Testtest", s);
 
-  // "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛"
-  string s2 = "\xef\xbc\xb4\xef\xbd\x85\xef\xbc\xb3\xef\xbc\xb4\xef\xbc\xa0\xef"
-              "\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3\xef\xbc\xb8\xef\xbc\xb9\xef\xbc"
-              "\xba\xef\xbc\xbb\xef\xbd\x80\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83"
-              "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x9b";
+  string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
   Util::CapitalizeString(&s2);
-  // "Ｔｅｓｔ＠ａｂｃｘｙｚ［｀ａｂｃｘｙｚ｛"
-  EXPECT_EQ("\xef\xbc\xb4\xef\xbd\x85\xef\xbd\x93\xef\xbd\x94\xef\xbc\xa0\xef"
-            "\xbd\x81\xef\xbd\x82\xef\xbd\x83\xef\xbd\x98\xef\xbd\x99\xef\xbd"
-            "\x9a\xef\xbc\xbb\xef\xbd\x80\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83"
-            "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x9b", s2);
+  EXPECT_EQ("Ｔｅｓｔ＠ａｂｃｘｙｚ［｀ａｂｃｘｙｚ｛", s2);
 }
 
 TEST(UtilTest, IsLowerAscii) {
@@ -717,8 +687,7 @@ TEST(UtilTest, IsLowerAscii) {
   EXPECT_FALSE(Util::IsLowerAscii("Hello"));
   EXPECT_FALSE(Util::IsLowerAscii("HeLlO"));
   EXPECT_FALSE(Util::IsLowerAscii("symbol!"));
-  EXPECT_FALSE(Util::IsLowerAscii(  // "Ｈｅｌｌｏ"
-      "\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F"));
+  EXPECT_FALSE(Util::IsLowerAscii("Ｈｅｌｌｏ"));
 }
 
 TEST(UtilTest, IsUpperAscii) {
@@ -728,8 +697,7 @@ TEST(UtilTest, IsUpperAscii) {
   EXPECT_FALSE(Util::IsUpperAscii("Hello"));
   EXPECT_FALSE(Util::IsUpperAscii("HeLlO"));
   EXPECT_FALSE(Util::IsUpperAscii("symbol!"));
-  EXPECT_FALSE(Util::IsUpperAscii(  // "Ｈｅｌｌｏ"
-      "\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F"));
+  EXPECT_FALSE(Util::IsUpperAscii("Ｈｅｌｌｏ"));
 }
 
 TEST(UtilTest, IsCapitalizedAscii) {
@@ -739,8 +707,7 @@ TEST(UtilTest, IsCapitalizedAscii) {
   EXPECT_TRUE(Util::IsCapitalizedAscii("Hello"));
   EXPECT_FALSE(Util::IsCapitalizedAscii("HeLlO"));
   EXPECT_FALSE(Util::IsCapitalizedAscii("symbol!"));
-  EXPECT_FALSE(Util::IsCapitalizedAscii(  // "Ｈｅｌｌｏ"
-      "\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F"));
+  EXPECT_FALSE(Util::IsCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
 TEST(UtilTest, IsLowerOrUpperAscii) {
@@ -750,8 +717,7 @@ TEST(UtilTest, IsLowerOrUpperAscii) {
   EXPECT_FALSE(Util::IsLowerOrUpperAscii("Hello"));
   EXPECT_FALSE(Util::IsLowerOrUpperAscii("HeLlO"));
   EXPECT_FALSE(Util::IsLowerOrUpperAscii("symbol!"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii(  // "Ｈｅｌｌｏ"
-      "\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F"));
+  EXPECT_FALSE(Util::IsLowerOrUpperAscii("Ｈｅｌｌｏ"));
 }
 
 TEST(UtilTest, IsUpperOrCapitalizedAscii) {
@@ -761,8 +727,7 @@ TEST(UtilTest, IsUpperOrCapitalizedAscii) {
   EXPECT_TRUE(Util::IsUpperOrCapitalizedAscii("Hello"));
   EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("HeLlO"));
   EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("symbol!"));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii(  // "Ｈｅｌｌｏ"
-      "\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F"));
+  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
 void VerifyUTF8ToUCS4(const string &text, char32 expected_ucs4,
@@ -840,62 +805,46 @@ TEST(UtilTest, UCS4ToUTF8) {
 }
 
 TEST(UtilTest, CharsLen) {
-  // "私の名前は中野です"
-  const string src = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81"
-                     "\xaf\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99";
+  const string src = "私の名前は中野です";
   EXPECT_EQ(Util::CharsLen(src.c_str(), src.size()), 9);
 }
 
 TEST(UtilTest, SubStringPiece) {
-  // "私の名前は中野です"
-  const string src = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81"
-                     "\xaf\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99";
+  const string src = "私の名前は中野です";
   StringPiece result;
 
   result = Util::SubStringPiece(src, 0, 2);
-  // "私の"
-  EXPECT_EQ("\xe7\xa7\x81\xe3\x81\xae", result);
+  EXPECT_EQ("私の", result);
   // |result|'s data should point to the same memory block as src.
   EXPECT_LE(src.data(), result.data());
 
   result = Util::SubStringPiece(src, 4, 1);
-  // "は"
-  EXPECT_EQ("\xe3\x81\xaf", result);
+  EXPECT_EQ("は", result);
   EXPECT_LE(src.data(), result.data());
 
   result = Util::SubStringPiece(src, 5, 3);
-  // "中野で"
-  EXPECT_EQ("\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7", result);
+  EXPECT_EQ("中野で", result);
   EXPECT_LE(src.data(), result.data());
 
   result = Util::SubStringPiece(src, 6, 10);
-  // "野です"
-  EXPECT_EQ("\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99", result);
+  EXPECT_EQ("野です", result);
   EXPECT_LE(src.data(), result.data());
 
   result = Util::SubStringPiece(src, 4, 2);
-  // "は中"
-  EXPECT_EQ("\xe3\x81\xaf\xe4\xb8\xad", result);
+  EXPECT_EQ("は中", result);
   EXPECT_LE(src.data(), result.data());
 
   result = Util::SubStringPiece(src, 2, string::npos);
-  // "名前は中野です"
-  EXPECT_EQ("\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf\xe4\xb8\xad\xe9\x87"
-            "\x8e\xe3\x81\xa7\xe3\x81\x99",
-            result);
+  EXPECT_EQ("名前は中野です", result);
   EXPECT_LE(src.data(), result.data());
 
   result = Util::SubStringPiece(src, 5, string::npos);
-  // "中野です"
-  EXPECT_EQ("\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99", result);
+  EXPECT_EQ("中野です", result);
   EXPECT_LE(src.data(), result.data());
 }
 
 TEST(UtilTest, SubStringPiece2) {
-  // "私はGoogleです"
-  const string src =
-      "\xE7\xA7\x81\xE3\x81\xAF\x47\x6F\x6F\x67\x6C\x65"
-      "\xE3\x81\xA7\xE3\x81\x99";
+  const string src = "私はGoogleです";
 
   StringPiece result;
 
@@ -903,8 +852,7 @@ TEST(UtilTest, SubStringPiece2) {
   EXPECT_EQ(src, result);
 
   result = Util::SubStringPiece(src, 5);
-  // "gleです"
-  EXPECT_EQ("\x67\x6C\x65\xE3\x81\xA7\xE3\x81\x99", result);
+  EXPECT_EQ("gleです", result);
 
   result = Util::SubStringPiece(src, 10);
   EXPECT_TRUE(result.empty());
@@ -914,51 +862,40 @@ TEST(UtilTest, SubStringPiece2) {
 }
 
 TEST(UtilTest, SubString) {
-  // "私の名前は中野です"
-  const string src = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d\xe3\x81"
-                     "\xaf\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99";
+  const string src = "私の名前は中野です";
   string result;
 
   result.clear();
   Util::SubString(src, 0, 2, &result);
-  // "私の"
-  EXPECT_EQ(result, "\xe7\xa7\x81\xe3\x81\xae");
+  EXPECT_EQ(result, "私の");
 
   result.clear();
   Util::SubString(src, 4, 1, &result);
-  // "は"
-  EXPECT_EQ(result, "\xe3\x81\xaf");
+  EXPECT_EQ(result, "は");
 
   result.clear();
   Util::SubString(src, 5, 3, &result);
-  // "中野で"
-  EXPECT_EQ(result, "\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7");
+  EXPECT_EQ(result, "中野で");
 
   result.clear();
   Util::SubString(src, 6, 10, &result);
-  // "野です"
-  EXPECT_EQ(result, "\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99");
+  EXPECT_EQ(result, "野です");
 
   result.clear();
   Util::SubString(src, 4, 2, &result);
-  // "は中"
-  EXPECT_EQ(result, "\xe3\x81\xaf\xe4\xb8\xad");
+  EXPECT_EQ(result, "は中");
 
   result.clear();
   Util::SubString(src, 2, string::npos, &result);
-  // "名前は中野です"
-  EXPECT_EQ(result, "\xe5\x90\x8d\xe5\x89\x8d\xe3\x81\xaf\xe4\xb8\xad\xe9\x87"
-                    "\x8e\xe3\x81\xa7\xe3\x81\x99");
+  EXPECT_EQ(result, "名前は中野です");
 
   result.clear();
   Util::SubString(src, 5, string::npos, &result);
-  // "中野です"
-  EXPECT_EQ(result, "\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99");
+  EXPECT_EQ(result, "中野です");
 
   // Doesn't clear result and call Util::SubString
   Util::SubString(src, 5, string::npos, &result);
-  // "中野です"
-  EXPECT_EQ(result, "\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99");
+  EXPECT_EQ(result, "中野です");
 }
 
 TEST(UtilTest, StartsWith) {
@@ -1062,9 +999,7 @@ TEST(UtilTest, StringPrintf) {
   EXPECT_EQ("hello, world", Util::StringPrintf("hello, world"));
   EXPECT_EQ("hello, world", Util::StringPrintf("%s", "hello, world"));
   EXPECT_EQ("hello, world", Util::StringPrintf("%s, %s", "hello", "world"));
-  const char kHello[] = "\xE3\x81\xAF\xE3\x82\x8D\xE3\x83\xBC"  // はろー
-                        "\xE4\xB8\x96\xE7\x95\x8C";  // 世界
-  EXPECT_EQ(kHello, Util::StringPrintf("%s", kHello));
+  EXPECT_EQ("はろー世界", Util::StringPrintf("%s", "はろー世界"));
 
   // 32-bit integers
   EXPECT_EQ("-2147483648", Util::StringPrintf("%d", kint32min));
@@ -1103,160 +1038,57 @@ TEST(UtilTest, StringPrintf) {
 
 TEST(UtilTest, HiraganaToKatakana) {
   {
-    // "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
-    // "だぢづでどっなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよゃ"
-    // "ゅょらりるれろわゎをんゔ"
     const string input =
-        "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A"
-        "\xE3\x81\x81\xE3\x81\x83\xE3\x81\x85\xE3\x81\x87\xE3\x81\x89"
-        "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F\xE3\x81\x91\xE3\x81\x93"
-        "\xE3\x81\x8C\xE3\x81\x8E\xE3\x81\x90\xE3\x81\x92\xE3\x81\x94"
-        "\xE3\x81\x95\xE3\x81\x97\xE3\x81\x99\xE3\x81\x9B\xE3\x81\x9D"
-        "\xE3\x81\x96\xE3\x81\x98\xE3\x81\x9A\xE3\x81\x9C\xE3\x81\x9E"
-        "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4\xE3\x81\xA6\xE3\x81\xA8"
-        "\xE3\x81\xA0\xE3\x81\xA2\xE3\x81\xA5\xE3\x81\xA7\xE3\x81\xA9"
-        "\xE3\x81\xA3\xE3\x81\xAA\xE3\x81\xAB\xE3\x81\xAC\xE3\x81\xAD"
-        "\xE3\x81\xAE\xE3\x81\xAF\xE3\x81\xB2\xE3\x81\xB5\xE3\x81\xB8"
-        "\xE3\x81\xBB\xE3\x81\xB0\xE3\x81\xB3\xE3\x81\xB6\xE3\x81\xB9"
-        "\xE3\x81\xBC\xE3\x81\xB1\xE3\x81\xB4\xE3\x81\xB7\xE3\x81\xBA"
-        "\xE3\x81\xBD\xE3\x81\xBE\xE3\x81\xBF\xE3\x82\x80\xE3\x82\x81"
-        "\xE3\x82\x82\xE3\x82\x84\xE3\x82\x86\xE3\x82\x88\xE3\x82\x83"
-        "\xE3\x82\x85\xE3\x82\x87\xE3\x82\x89\xE3\x82\x8A\xE3\x82\x8B"
-        "\xE3\x82\x8C\xE3\x82\x8D\xE3\x82\x8F\xE3\x82\x8E\xE3\x82\x92"
-        "\xE3\x82\x93\xE3\x82\x94";
+        "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
+        "だぢづでどっなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよゃ"
+        "ゅょらりるれろわゎをんゔ";
     string output;
     Util::HiraganaToKatakana(input, &output);
-    // "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
-    // "ダヂヅデドッナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨャ"
-    // "ュョラリルレロワヮヲンヴ"
-    EXPECT_EQ("\xE3\x82\xA2\xE3\x82\xA4\xE3\x82\xA6\xE3\x82\xA8\xE3\x82\xAA"
-              "\xE3\x82\xA1\xE3\x82\xA3\xE3\x82\xA5\xE3\x82\xA7\xE3\x82\xA9"
-              "\xE3\x82\xAB\xE3\x82\xAD\xE3\x82\xAF\xE3\x82\xB1\xE3\x82\xB3"
-              "\xE3\x82\xAC\xE3\x82\xAE\xE3\x82\xB0\xE3\x82\xB2\xE3\x82\xB4"
-              "\xE3\x82\xB5\xE3\x82\xB7\xE3\x82\xB9\xE3\x82\xBB\xE3\x82\xBD"
-              "\xE3\x82\xB6\xE3\x82\xB8\xE3\x82\xBA\xE3\x82\xBC\xE3\x82\xBE"
-              "\xE3\x82\xBF\xE3\x83\x81\xE3\x83\x84\xE3\x83\x86\xE3\x83\x88"
-              "\xE3\x83\x80\xE3\x83\x82\xE3\x83\x85\xE3\x83\x87\xE3\x83\x89"
-              "\xE3\x83\x83\xE3\x83\x8A\xE3\x83\x8B\xE3\x83\x8C\xE3\x83\x8D"
-              "\xE3\x83\x8E\xE3\x83\x8F\xE3\x83\x92\xE3\x83\x95\xE3\x83\x98"
-              "\xE3\x83\x9B\xE3\x83\x90\xE3\x83\x93\xE3\x83\x96\xE3\x83\x99"
-              "\xE3\x83\x9C\xE3\x83\x91\xE3\x83\x94\xE3\x83\x97\xE3\x83\x9A"
-              "\xE3\x83\x9D\xE3\x83\x9E\xE3\x83\x9F\xE3\x83\xA0\xE3\x83\xA1"
-              "\xE3\x83\xA2\xE3\x83\xA4\xE3\x83\xA6\xE3\x83\xA8\xE3\x83\xA3"
-              "\xE3\x83\xA5\xE3\x83\xA7\xE3\x83\xA9\xE3\x83\xAA\xE3\x83\xAB"
-              "\xE3\x83\xAC\xE3\x83\xAD\xE3\x83\xAF\xE3\x83\xAE\xE3\x83\xB2"
-              "\xE3\x83\xB3\xE3\x83\xB4",
-              output);
+    EXPECT_EQ(
+        "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
+        "ダヂヅデドッナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨャ"
+        "ュョラリルレロワヮヲンヴ",
+        output);
   }
   {
-    // "わたしのなまえはなかのですうまーよろしゅう"
-    const string input = "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae\xe3"
-                         "\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf\xe3\x81"
-                         "\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7\xe3\x81\x99"
-                         "\xe3\x81\x86\xe3\x81\xbe\xe3\x83\xbc\xe3\x82\x88\xe3"
-                         "\x82\x8d\xe3\x81\x97\xe3\x82\x85\xe3\x81\x86";
+    const string input = "わたしのなまえはなかのですうまーよろしゅう";
     string output;
     Util::HiraganaToKatakana(input, &output);
-    // "ワタシノナマエハナカノデスウマーヨロシュウ"
-    EXPECT_EQ("\xe3\x83\xaf\xe3\x82\xbf\xe3\x82\xb7\xe3\x83\x8e\xe3\x83\x8a\xe3"
-              "\x83\x9e\xe3\x82\xa8\xe3\x83\x8f\xe3\x83\x8a\xe3\x82\xab\xe3\x83"
-              "\x8e\xe3\x83\x87\xe3\x82\xb9\xe3\x82\xa6\xe3\x83\x9e\xe3\x83\xbc"
-              "\xe3\x83\xa8\xe3\x83\xad\xe3\x82\xb7\xe3\x83\xa5\xe3\x82\xa6",
-              output);
+    EXPECT_EQ("ワタシノナマエハナカノデスウマーヨロシュウ", output);
   }
   {
-    // "グーグル工藤よろしくabc"
-    const string input = "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab\xe5"
-                         "\xb7\xa5\xe8\x97\xa4\xe3\x82\x88\xe3\x82\x8d\xe3\x81"
-                         "\x97\xe3\x81\x8f\x61\x62\x63";
+    const string input = "グーグル工藤よろしくabc";
     string output;
     Util::HiraganaToKatakana(input, &output);
-    // "グーグル工藤ヨロシクabc"
-    EXPECT_EQ("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab\xe5\xb7\xa5\xe8"
-              "\x97\xa4\xe3\x83\xa8\xe3\x83\xad\xe3\x82\xb7\xe3\x82\xaf\x61\x62"
-              "\x63", output);
+    EXPECT_EQ("グーグル工藤ヨロシクabc", output);
   }
 }
 
 TEST(UtilTest, KatakanaToHiragana) {
   {
-    // "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
-    // "ダヂヅデドッナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨャ"
-    // "ュョラリルレロワヮヲンヰヱヴ"
     const string input =
-        "\xE3\x82\xA2\xE3\x82\xA4\xE3\x82\xA6\xE3\x82\xA8\xE3\x82\xAA"
-        "\xE3\x82\xA1\xE3\x82\xA3\xE3\x82\xA5\xE3\x82\xA7\xE3\x82\xA9"
-        "\xE3\x82\xAB\xE3\x82\xAD\xE3\x82\xAF\xE3\x82\xB1\xE3\x82\xB3"
-        "\xE3\x82\xAC\xE3\x82\xAE\xE3\x82\xB0\xE3\x82\xB2\xE3\x82\xB4"
-        "\xE3\x82\xB5\xE3\x82\xB7\xE3\x82\xB9\xE3\x82\xBB\xE3\x82\xBD"
-        "\xE3\x82\xB6\xE3\x82\xB8\xE3\x82\xBA\xE3\x82\xBC\xE3\x82\xBE"
-        "\xE3\x82\xBF\xE3\x83\x81\xE3\x83\x84\xE3\x83\x86\xE3\x83\x88"
-        "\xE3\x83\x80\xE3\x83\x82\xE3\x83\x85\xE3\x83\x87\xE3\x83\x89"
-        "\xE3\x83\x83\xE3\x83\x8A\xE3\x83\x8B\xE3\x83\x8C\xE3\x83\x8D"
-        "\xE3\x83\x8E\xE3\x83\x8F\xE3\x83\x92\xE3\x83\x95\xE3\x83\x98"
-        "\xE3\x83\x9B\xE3\x83\x90\xE3\x83\x93\xE3\x83\x96\xE3\x83\x99"
-        "\xE3\x83\x9C\xE3\x83\x91\xE3\x83\x94\xE3\x83\x97\xE3\x83\x9A"
-        "\xE3\x83\x9D\xE3\x83\x9E\xE3\x83\x9F\xE3\x83\xA0\xE3\x83\xA1"
-        "\xE3\x83\xA2\xE3\x83\xA4\xE3\x83\xA6\xE3\x83\xA8\xE3\x83\xA3"
-        "\xE3\x83\xA5\xE3\x83\xA7\xE3\x83\xA9\xE3\x83\xAA\xE3\x83\xAB"
-        "\xE3\x83\xAC\xE3\x83\xAD\xE3\x83\xAF\xE3\x83\xAE\xE3\x83\xB2"
-        "\xE3\x83\xB3\xE3\x83\xB0\xE3\x83\xB1\xE3\x83\xB4";
+        "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
+        "ダヂヅデドッナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨャ"
+        "ュョラリルレロワヮヲンヰヱヴ";
     string output;
     Util::KatakanaToHiragana(input, &output);
-    // "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
-    // "だぢづでどっなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよゃ"
-    // "ゅょらりるれろわゎをんゐゑゔ"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A"
-              "\xE3\x81\x81\xE3\x81\x83\xE3\x81\x85\xE3\x81\x87\xE3\x81\x89"
-              "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F\xE3\x81\x91\xE3\x81\x93"
-              "\xE3\x81\x8C\xE3\x81\x8E\xE3\x81\x90\xE3\x81\x92\xE3\x81\x94"
-              "\xE3\x81\x95\xE3\x81\x97\xE3\x81\x99\xE3\x81\x9B\xE3\x81\x9D"
-              "\xE3\x81\x96\xE3\x81\x98\xE3\x81\x9A\xE3\x81\x9C\xE3\x81\x9E"
-              "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4\xE3\x81\xA6\xE3\x81\xA8"
-              "\xE3\x81\xA0\xE3\x81\xA2\xE3\x81\xA5\xE3\x81\xA7\xE3\x81\xA9"
-              "\xE3\x81\xA3\xE3\x81\xAA\xE3\x81\xAB\xE3\x81\xAC\xE3\x81\xAD"
-              "\xE3\x81\xAE\xE3\x81\xAF\xE3\x81\xB2\xE3\x81\xB5\xE3\x81\xB8"
-              "\xE3\x81\xBB\xE3\x81\xB0\xE3\x81\xB3\xE3\x81\xB6\xE3\x81\xB9"
-              "\xE3\x81\xBC\xE3\x81\xB1\xE3\x81\xB4\xE3\x81\xB7\xE3\x81\xBA"
-              "\xE3\x81\xBD\xE3\x81\xBE\xE3\x81\xBF\xE3\x82\x80\xE3\x82\x81"
-              "\xE3\x82\x82\xE3\x82\x84\xE3\x82\x86\xE3\x82\x88\xE3\x82\x83"
-              "\xE3\x82\x85\xE3\x82\x87\xE3\x82\x89\xE3\x82\x8A\xE3\x82\x8B"
-              "\xE3\x82\x8C\xE3\x82\x8D\xE3\x82\x8F\xE3\x82\x8E\xE3\x82\x92"
-              "\xE3\x82\x93\xE3\x82\x90\xE3\x82\x91\xE3\x82\x94",
-              output);
+    EXPECT_EQ(
+        "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
+        "だぢづでどっなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよゃ"
+        "ゅょらりるれろわゎをんゐゑゔ",
+        output);
   }
   {
-    // "ワタシノナマエハナカノデスウマーヨロシュウ"
-    const string input =
-        "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE\xE3\x81\xAA"
-        "\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF\xE3\x81\xAA\xE3\x81\x8B"
-        "\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99\xE3\x81\x86\xE3\x81\xBE"
-        "\xE3\x83\xBC\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x82\x85"
-        "\xE3\x81\x86";
+    const string input = "ワタシノナマエハナカノデスウマーヨロシュウ";
     string output;
     Util::KatakanaToHiragana(input, &output);
-    // "わたしのなまえはなかのですうまーよろしゅう"
-    EXPECT_EQ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
-              "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
-              "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7"
-              "\xE3\x81\x99\xE3\x81\x86\xE3\x81\xBE\xE3\x83\xBC"
-              "\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x82\x85"
-              "\xE3\x81\x86",
-              output);
+    EXPECT_EQ("わたしのなまえはなかのですうまーよろしゅう", output);
   }
   {
-    // "グーグル工藤ヨロシクabc"
-    const string input =
-        "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB\xE5\xB7\xA5"
-        "\xE8\x97\xA4\xE3\x83\xA8\xE3\x83\xAD\xE3\x82\xB7\xE3\x82\xAF"
-        "\x61\x62\x63";
+    const string input = "グーグル工藤ヨロシクabc";
     string output;
     Util::KatakanaToHiragana(input, &output);
-    // "ぐーぐる工藤よろしくabc"
-    EXPECT_EQ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B"
-              "\xE5\xB7\xA5\xE8\x97\xA4\xE3\x82\x88\xE3\x82\x8D"
-              "\xE3\x81\x97\xE3\x81\x8F\x61\x62\x63",
-              output);
+    EXPECT_EQ("ぐーぐる工藤よろしくabc", output);
   }
 }
 
@@ -1265,20 +1097,11 @@ TEST(UtilTest, RomanjiToHiragana) {
     const char *input;
     const char *expected;
   } kTestCases[] = {
-    {"watasinonamaehatakahashinoriyukidesu",
-     // "わたしのなまえはたかはしのりゆきです"
-     "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE\xE3\x81\xAA"
-     "\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF\xE3\x81\x9F\xE3\x81\x8B"
-     "\xE3\x81\xAF\xE3\x81\x97\xE3\x81\xAE\xE3\x82\x8A\xE3\x82\x86"
-     "\xE3\x81\x8D\xE3\x81\xA7\xE3\x81\x99"},
-    {"majissukamajiyabexe",
-     // "まじっすかまじやべぇ"
-     "\xE3\x81\xBE\xE3\x81\x98\xE3\x81\xA3\xE3\x81\x99\xE3\x81\x8B"
-     "\xE3\x81\xBE\xE3\x81\x98\xE3\x82\x84\xE3\x81\xB9\xE3\x81\x87"},
-    {"kk",
-     // "っk"
-     "\xE3\x81\xA3\x6B"},
-    {"xyz", "xyz"},
+      {"watasinonamaehatakahashinoriyukidesu",
+       "わたしのなまえはたかはしのりゆきです"},
+      {"majissukamajiyabexe", "まじっすかまじやべぇ"},
+      {"kk", "っk"},
+      {"xyz", "xyz"},
   };
   for (size_t i = 0; i < arraysize(kTestCases); ++i) {
     string actual;
@@ -1288,140 +1111,79 @@ TEST(UtilTest, RomanjiToHiragana) {
 }
 
 TEST(UtilTest, NormalizeVoicedSoundMark) {
-  // "僕のう゛ぁいおりん"
-  const string input = "\xe5\x83\x95\xe3\x81\xae\xe3\x81\x86\xe3\x82\x9b\xe3"
-                       "\x81\x81\xe3\x81\x84\xe3\x81\x8a\xe3\x82\x8a\xe3\x82"
-                       "\x93";
+  const string input = "僕のう゛ぁいおりん";
   string output;
   Util::NormalizeVoicedSoundMark(input, &output);
-  // "僕のゔぁいおりん"
-  EXPECT_EQ("\xe5\x83\x95\xe3\x81\xae\xe3\x82\x94\xe3\x81\x81\xe3\x81\x84\xe3"
-            "\x81\x8a\xe3\x82\x8a\xe3\x82\x93", output);
+  EXPECT_EQ("僕のゔぁいおりん", output);
 }
 
 TEST(UtilTest, IsFullWidthSymbolInHalfWidthKatakana) {
-  // "グーグル"
-  EXPECT_FALSE(Util::IsFullWidthSymbolInHalfWidthKatakana("\xe3\x82\xb0\xe3\x83"
-                                                          "\xbc\xe3\x82\xb0\xe3"
-                                                          "\x83\xab"));
-  // "ー"
-  EXPECT_TRUE(Util::IsFullWidthSymbolInHalfWidthKatakana("\xe3\x83\xbc"));
-  // "。"
-  EXPECT_TRUE(Util::IsFullWidthSymbolInHalfWidthKatakana("\xe3\x80\x82"));
-  // "グーグル。"
-  EXPECT_FALSE(Util::IsFullWidthSymbolInHalfWidthKatakana("\xe3\x82\xb0\xe3\x83"
-                                                          "\xbc\xe3\x82\xb0\xe3"
-                                                          "\x83\xab\xe3\x80"
-                                                          "\x82"));
-  // "ー。"
-  EXPECT_TRUE(Util::IsFullWidthSymbolInHalfWidthKatakana(
-      "\xe3\x83\xbc\xe3\x80\x82"));
-  // "ーグ。"
-  EXPECT_FALSE(Util::IsFullWidthSymbolInHalfWidthKatakana(
-      "\xe3\x83\xbc\xe3\x82\xb0\xe3\x80\x82"));
+  EXPECT_FALSE(Util::IsFullWidthSymbolInHalfWidthKatakana("グーグル"));
+  EXPECT_TRUE(Util::IsFullWidthSymbolInHalfWidthKatakana("ー"));
+  EXPECT_TRUE(Util::IsFullWidthSymbolInHalfWidthKatakana("。"));
+  EXPECT_FALSE(Util::IsFullWidthSymbolInHalfWidthKatakana("グーグル。"));
+  EXPECT_TRUE(Util::IsFullWidthSymbolInHalfWidthKatakana("ー。"));
+  EXPECT_FALSE(Util::IsFullWidthSymbolInHalfWidthKatakana("ーグ。"));
 }
 
 TEST(UtilTest, IsHalfWidthKatakanaSymbol) {
-  // "ｸﾞｰｸﾞﾙ"
-  EXPECT_FALSE(Util::IsHalfWidthKatakanaSymbol("\xef\xbd\xb8\xef\xbe\x9e\xef"
-                                               "\xbd\xb0\xef\xbd\xb8\xef\xbe"
-                                               "\x9e\xef\xbe\x99"));
-  // "ｰ"
-  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("\xef\xbd\xb0"));
-  // "｡"
-  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("\xef\xbd\xa1"));
-  // "､"
-  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("\xef\xbd\xa4"));
-  // "グーグル｡"
-  EXPECT_FALSE(Util::IsHalfWidthKatakanaSymbol("\xe3\x82\xb0\xe3\x83\xbc\xe3"
-                                               "\x82\xb0\xe3\x83\xab\xef\xbd"
-                                               "\xa1"));
-  // "､｡"
-  // "not 。、"
-  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("\xef\xbd\xa4\xef\xbd\xa1"));
+  EXPECT_FALSE(Util::IsHalfWidthKatakanaSymbol("ｸﾞｰｸﾞﾙ"));
+  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("ｰ"));
+  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("｡"));  // Half-width
+  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("､"));  // Half-width
+  EXPECT_FALSE(Util::IsHalfWidthKatakanaSymbol("グーグル｡"));
+  EXPECT_TRUE(Util::IsHalfWidthKatakanaSymbol("､｡"));  // Half-width
 }
 
 TEST(UtilTest, FullWidthAndHalfWidth) {
   string output;
 
   Util::FullWidthToHalfWidth("", &output);
-  CHECK_EQ("", output);
+  EXPECT_EQ("", output);
 
   Util::HalfWidthToFullWidth("", &output);
-  CHECK_EQ("", output);
+  EXPECT_EQ("", output);
 
   Util::HalfWidthToFullWidth("abc[]?.", &output);
-  // "ａｂｃ［］？．"
-  CHECK_EQ("\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83\xef\xbc\xbb\xef\xbc\xbd\xef"
-           "\xbc\x9f\xef\xbc\x8e", output);
+  EXPECT_EQ("ａｂｃ［］？．", output);
 
-  // "ｲﾝﾀｰﾈｯﾄ｢」"
-  Util::HalfWidthToFullWidth("\xef\xbd\xb2\xef\xbe\x9d\xef\xbe\x80\xef\xbd\xb0"
-                             "\xef\xbe\x88\xef\xbd\xaf\xef\xbe\x84\xef\xbd\xa2"
-                             "\xe3\x80\x8d", &output);
-  // "インターネット「」"
-  CHECK_EQ("\xe3\x82\xa4\xe3\x83\xb3\xe3\x82\xbf\xe3\x83\xbc\xe3\x83\x8d\xe3"
-           "\x83\x83\xe3\x83\x88\xe3\x80\x8c\xe3\x80\x8d", output);
+  Util::HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄ｢」", &output);
+  EXPECT_EQ("インターネット「」", output);
 
-  // "ｲﾝﾀｰﾈｯﾄグーグル"
-  Util::HalfWidthToFullWidth("\xef\xbd\xb2\xef\xbe\x9d\xef\xbe\x80\xef\xbd\xb0"
-                             "\xef\xbe\x88\xef\xbd\xaf\xef\xbe\x84\xe3\x82\xb0"
-                             "\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab", &output);
-  // "インターネットグーグル"
-  CHECK_EQ("\xe3\x82\xa4\xe3\x83\xb3\xe3\x82\xbf\xe3\x83\xbc\xe3\x83\x8d\xe3"
-           "\x83\x83\xe3\x83\x88\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83"
-           "\xab", output);
+  Util::HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
+  EXPECT_EQ("インターネットグーグル", output);
 
-  // "ａｂｃ［］？．"
-  Util::FullWidthToHalfWidth("\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83\xef\xbc\xbb"
-                             "\xef\xbc\xbd\xef\xbc\x9f\xef\xbc\x8e", &output);
-  CHECK_EQ("abc[]?.", output);
+  Util::FullWidthToHalfWidth("ａｂｃ［］？．", &output);
+  EXPECT_EQ("abc[]?.", output);
 
-  // "インターネット"
-  Util::FullWidthToHalfWidth("\xe3\x82\xa4\xe3\x83\xb3\xe3\x82\xbf\xe3\x83\xbc"
-                             "\xe3\x83\x8d\xe3\x83\x83\xe3\x83\x88", &output);
-  // "ｲﾝﾀｰﾈｯﾄ"
-  CHECK_EQ("\xef\xbd\xb2\xef\xbe\x9d\xef\xbe\x80\xef\xbd\xb0\xef\xbe\x88\xef"
-           "\xbd\xaf\xef\xbe\x84", output);
+  Util::FullWidthToHalfWidth("インターネット", &output);
+  EXPECT_EQ("ｲﾝﾀｰﾈｯﾄ", output);
 
-  // "ｲﾝﾀｰﾈｯﾄグーグル"
-  Util::FullWidthToHalfWidth("\xef\xbd\xb2\xef\xbe\x9d\xef\xbe\x80\xef\xbd\xb0"
-                             "\xef\xbe\x88\xef\xbd\xaf\xef\xbe\x84\xe3\x82\xb0"
-                             "\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab", &output);
-  // "ｲﾝﾀｰﾈｯﾄｸﾞｰｸﾞﾙ"
-  CHECK_EQ("\xef\xbd\xb2\xef\xbe\x9d\xef\xbe\x80\xef\xbd\xb0\xef\xbe\x88\xef"
-           "\xbd\xaf\xef\xbe\x84\xef\xbd\xb8\xef\xbe\x9e\xef\xbd\xb0\xef\xbd"
-           "\xb8\xef\xbe\x9e\xef\xbe\x99", output);
+  Util::FullWidthToHalfWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
+  EXPECT_EQ("ｲﾝﾀｰﾈｯﾄｸﾞｰｸﾞﾙ", output);
 
   // spaces
-  // " 　"
-  Util::FullWidthToHalfWidth("\x20\xe3\x80\x80", &output);
-  CHECK_EQ("  ", output);
+  Util::FullWidthToHalfWidth(" 　", &output);  // Half- and full-width spaces
+  EXPECT_EQ("  ", output);                     // 2 half-width spaces
 
-  // " 　"
-  Util::HalfWidthToFullWidth("\x20\xe3\x80\x80", &output);
-  // "　　"
-  CHECK_EQ("\xe3\x80\x80\xe3\x80\x80", output);
+  Util::HalfWidthToFullWidth(" 　", &output);  // Half- and full-width spaces
+  EXPECT_EQ("　　", output);                   // 2 full-width spaces
 
-  // spaces are treated as Ascii here
-  // " 　"
-  Util::FullWidthAsciiToHalfWidthAscii("\x20\xe3\x80\x80", &output);
-  CHECK_EQ("  ", output);
+  // Spaces are treated as Ascii here
+  // Half- and full-width spaces
+  Util::FullWidthAsciiToHalfWidthAscii(" 　", &output);
+  EXPECT_EQ("  ", output);  // 2 half-width spaces
 
-  // " 　"
-  Util::HalfWidthAsciiToFullWidthAscii("\x20\xe3\x80\x80", &output);
-  // "　　"
-  CHECK_EQ("\xe3\x80\x80\xe3\x80\x80", output);
+  Util::HalfWidthAsciiToFullWidthAscii("  ", &output);
+  EXPECT_EQ("　　", output);  // 2 full-width spaces
 
-  // " 　"
-  Util::FullWidthKatakanaToHalfWidthKatakana("\x20\xe3\x80\x80", &output);
-  // " 　"
-  CHECK_EQ("\x20\xe3\x80\x80", output);
+  // Half- and full-width spaces
+  Util::FullWidthKatakanaToHalfWidthKatakana(" 　", &output);
+  EXPECT_EQ(" 　", output);  // Not changed
 
-  // " 　"
-  Util::HalfWidthKatakanaToFullWidthKatakana("\x20\xe3\x80\x80", &output);
-  // " 　"
-  CHECK_EQ("\x20\xe3\x80\x80", output);
+  // Half- and full-width spaces
+  Util::HalfWidthKatakanaToFullWidthKatakana(" 　", &output);
+  EXPECT_EQ(" 　", output);  // Not changed
 }
 
 TEST(UtilTest, BracketTest) {
@@ -1429,35 +1191,24 @@ TEST(UtilTest, BracketTest) {
     const char *open_bracket;
     const char *close_bracket;
   } kBracketType[] = {
-    //  { "（", "）" },
-    //  { "〔", "〕" },
-    //  { "［", "］" },
-    //  { "｛", "｝" },
-    //  { "〈", "〉" },
-    //  { "《", "》" },
-    //  { "「", "」" },
-    //  { "『", "』" },
-    //  { "【", "】" },
-    //  { "〘", "〙" },
-    //  { "〚", "〛" },
-    { "\xEF\xBC\x88", "\xEF\xBC\x89" },
-    { "\xE3\x80\x94", "\xE3\x80\x95" },
-    { "\xEF\xBC\xBB", "\xEF\xBC\xBD" },
-    { "\xEF\xBD\x9B", "\xEF\xBD\x9D" },
-    { "\xE3\x80\x88", "\xE3\x80\x89" },
-    { "\xE3\x80\x8A", "\xE3\x80\x8B" },
-    { "\xE3\x80\x8C", "\xE3\x80\x8D" },
-    { "\xE3\x80\x8E", "\xE3\x80\x8F" },
-    { "\xE3\x80\x90", "\xE3\x80\x91" },
-    { "\xe3\x80\x98", "\xe3\x80\x99" },
-    { "\xe3\x80\x9a", "\xe3\x80\x9b" },
-    { NULL, NULL },  // sentinel
+      { "（", "）" },
+      { "〔", "〕" },
+      { "［", "］" },
+      { "｛", "｝" },
+      { "〈", "〉" },
+      { "《", "》" },
+      { "「", "」" },
+      { "『", "』" },
+      { "【", "】" },
+      { "〘", "〙" },
+      { "〚", "〛" },
+      { nullptr, nullptr },  // sentinel
   };
 
   string pair;
   for (size_t i = 0;
-       (kBracketType[i].open_bracket != NULL ||
-        kBracketType[i].close_bracket != NULL);
+       (kBracketType[i].open_bracket != nullptr ||
+        kBracketType[i].close_bracket != nullptr);
        ++i) {
     EXPECT_TRUE(Util::IsOpenBracket(kBracketType[i].open_bracket, &pair));
     EXPECT_EQ(kBracketType[i].close_bracket, pair);
@@ -1478,15 +1229,9 @@ TEST(UtilTest, IsEnglishTransliteration) {
   EXPECT_TRUE(Util::IsEnglishTransliteration("Who's"));
   EXPECT_TRUE(Util::IsEnglishTransliteration("!"));
   EXPECT_TRUE(Util::IsEnglishTransliteration("  "));
-  //  EXPECT_FALSE(Util::IsEnglishTransliteration("てすと"));
-  //  EXPECT_FALSE(Util::IsEnglishTransliteration("テスト"));
-  //  EXPECT_FALSE(Util::IsEnglishTransliteration("東京"));
-  EXPECT_FALSE(Util::IsEnglishTransliteration(
-      "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"));
-  EXPECT_FALSE(Util::IsEnglishTransliteration(
-      "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88"));
-  EXPECT_FALSE(Util::IsEnglishTransliteration(
-      "\xE6\x9D\xB1\xE4\xBA\xAC"));
+  EXPECT_FALSE(Util::IsEnglishTransliteration("てすと"));
+  EXPECT_FALSE(Util::IsEnglishTransliteration("テスト"));
+  EXPECT_FALSE(Util::IsEnglishTransliteration("東京"));
 }
 
 TEST(UtilTest, ChopReturns) {
@@ -1517,8 +1262,7 @@ TEST(UtilTest, ChopReturns) {
 
 TEST(UtilTest, EncodeURI) {
   string encoded;
-  // "もずく"
-  Util::EncodeURI("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f", &encoded);
+  Util::EncodeURI("もずく", &encoded);
   EXPECT_EQ("%E3%82%82%E3%81%9A%E3%81%8F", encoded);
 
   encoded.clear();
@@ -1533,8 +1277,7 @@ TEST(UtilTest, EncodeURI) {
 TEST(UtilTest, DecodeURI) {
   string decoded;
   Util::DecodeURI("%E3%82%82%E3%81%9A%E3%81%8F", &decoded);
-  // "もずく"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f", decoded);
+  EXPECT_EQ("もずく", decoded);
 
   decoded.clear();
   Util::DecodeURI("mozc", &decoded);
@@ -1564,19 +1307,16 @@ TEST(UtilTest, AppendCGIParams) {
 
 TEST(UtilTest, Escape) {
   string escaped;
-  // "らむだ"
-  Util::Escape("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0", &escaped);
+  Util::Escape("らむだ", &escaped);
   EXPECT_EQ("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0", escaped);
 }
 
 TEST(UtilTest, Unescape) {
   string unescaped;
-  // "らむだ"
   EXPECT_TRUE(Util::Unescape("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0",
                              &unescaped));
-  EXPECT_EQ("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0", unescaped);
+  EXPECT_EQ("らむだ", unescaped);
 
-  // "Mozc"
   EXPECT_TRUE(Util::Unescape("\\x4D\\x6F\\x7A\\x63", &unescaped));
   EXPECT_EQ("Mozc", unescaped);
 
@@ -1597,11 +1337,9 @@ TEST(UtilTest, Unescape) {
 
 TEST(UtilTest, EscapeUrl) {
   string escaped;
-  // "らむだ"
-  Util::EscapeUrl("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0", &escaped);
+  Util::EscapeUrl("らむだ", &escaped);
   EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0", escaped);
-  EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0",
-            Util::EscapeUrl("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0"));
+  EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0", Util::EscapeUrl("らむだ"));
 }
 
 TEST(UtilTest, EscapeHtml) {
@@ -1617,260 +1355,113 @@ TEST(UtilTest, EscapeCss) {
 }
 
 TEST(UtilTest, ScriptType) {
-  // "くどう"
-  EXPECT_TRUE(Util::IsScriptType("\xe3\x81\x8f\xe3\x81\xa9\xe3\x81\x86",
-                                 Util::HIRAGANA));
-  // "京都"
-  EXPECT_TRUE(Util::IsScriptType("\xe4\xba\xac\xe9\x83\xbd", Util::KANJI));
-  // "人々" (b/4201140)
-  EXPECT_TRUE(Util::IsScriptType("\xE4\xBA\xBA\xE3\x80\x85", Util::KANJI));
-  // "モズク"
-  EXPECT_TRUE(Util::IsScriptType("\xe3\x83\xa2\xe3\x82\xba\xe3\x82\xaf",
+  EXPECT_TRUE(Util::IsScriptType("くどう", Util::HIRAGANA));
+  EXPECT_TRUE(Util::IsScriptType("京都", Util::KANJI));
+  // (b/4201140)
+  EXPECT_TRUE(Util::IsScriptType("人々", Util::KANJI));
+  EXPECT_TRUE(Util::IsScriptType("モズク", Util::KATAKANA));
+  EXPECT_TRUE(Util::IsScriptType("モズクﾓｽﾞｸ", Util::KATAKANA));
+  EXPECT_TRUE(Util::IsScriptType("ぐーぐる", Util::HIRAGANA));
+  EXPECT_TRUE(Util::IsScriptType("グーグル", Util::KATAKANA));
+  // U+309F: HIRAGANA DIGRAPH YORI
+  EXPECT_TRUE(Util::IsScriptType("ゟ", Util::HIRAGANA));
+  // U+30FF: KATAKANA DIGRAPH KOTO
+  EXPECT_TRUE(Util::IsScriptType("ヿ", Util::KATAKANA));
+  EXPECT_TRUE(Util::IsScriptType("ヷヸヹヺㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ",
                                  Util::KATAKANA));
-  // "モズクﾓｽﾞｸ"
-  EXPECT_TRUE(Util::IsScriptType("\xe3\x83\xa2\xe3\x82\xba\xe3\x82\xaf\xef\xbe"
-                                 "\x93\xef\xbd\xbd\xef\xbe\x9e\xef\xbd\xb8",
-                                 Util::KATAKANA));
-  // "ぐーぐる"
-  EXPECT_TRUE(Util::IsScriptType("\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82"
-                                 "\x8b", Util::HIRAGANA));
-  // "グーグル"
-  EXPECT_TRUE(Util::IsScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83"
-                                 "\xab", Util::KATAKANA));
-  // "ゟ" U+309F: HIRAGANA DIGRAPH YORI
-  EXPECT_TRUE(Util::IsScriptType("\xE3\x82\x9F", Util::HIRAGANA));
-  // "ヿ" U+30FF: KATAKANA DIGRAPH KOTO
-  EXPECT_TRUE(Util::IsScriptType("\xE3\x83\xBF", Util::KATAKANA));
-  // "ヷヸヹヺㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ"
-  EXPECT_TRUE(Util::IsScriptType(
-      "\xE3\x83\xB7\xE3\x83\xB8\xE3\x83\xB9\xE3\x83\xBA\xE3\x87\xB0"
-      "\xE3\x87\xB1\xE3\x87\xB2\xE3\x87\xB3\xE3\x87\xB4\xE3\x87\xB5"
-      "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
-      "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF",
-      Util::KATAKANA));
   // "𛀀" U+1B000: KATAKANA LETTER ARCHAIC E
   EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x80", Util::KATAKANA));
   // "𛀁" U+1B001: HIRAGANA LETTER ARCHAIC YE
   EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x81", Util::HIRAGANA));
 
   EXPECT_TRUE(Util::IsScriptType("012", Util::NUMBER));
-  // "０１２012"
-  EXPECT_TRUE(Util::IsScriptType("\xef\xbc\x90\xef\xbc\x91\xef\xbc\x92\x30\x31"
-                                 "\x32", Util::NUMBER));
+  EXPECT_TRUE(Util::IsScriptType("０１２012", Util::NUMBER));
   EXPECT_TRUE(Util::IsScriptType("abcABC", Util::ALPHABET));
-  // "ＡＢＣＤ"
-  EXPECT_TRUE(Util::IsScriptType("\xef\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3\xef\xbc"
-                                 "\xa4", Util::ALPHABET));
+  EXPECT_TRUE(Util::IsScriptType("ＡＢＣＤ", Util::ALPHABET));
   EXPECT_TRUE(Util::IsScriptType("@!#", Util::UNKNOWN_SCRIPT));
 
-  // "くどカう"
-  EXPECT_FALSE(Util::IsScriptType("\xe3\x81\x8f\xe3\x81\xa9\xe3\x82\xab\xe3\x81"
-                                  "\x86", Util::HIRAGANA));
-  // "京あ都"
-  EXPECT_FALSE(Util::IsScriptType("\xe4\xba\xac\xe3\x81\x82\xe9\x83\xbd",
-                                  Util::KANJI));
-  // "モズあク"
-  EXPECT_FALSE(Util::IsScriptType("\xe3\x83\xa2\xe3\x82\xba\xe3\x81\x82\xe3\x82"
-                                  "\xaf", Util::KATAKANA));
-  // "モあズクﾓｽﾞｸ"
-  EXPECT_FALSE(Util::IsScriptType("\xe3\x83\xa2\xe3\x81\x82\xe3\x82\xba\xe3\x82"
-                                  "\xaf\xef\xbe\x93\xef\xbd\xbd\xef\xbe\x9e\xef"
-                                  "\xbd\xb8", Util::KATAKANA));
-  // "012あ"
-  EXPECT_FALSE(Util::IsScriptType("\x30\x31\x32\xe3\x81\x82", Util::NUMBER));
-  // "０１２あ012"
-  EXPECT_FALSE(Util::IsScriptType("\xef\xbc\x90\xef\xbc\x91\xef\xbc\x92\xe3\x81"
-                                  "\x82\x30\x31\x32", Util::NUMBER));
-  // "abcABあC"
-  EXPECT_FALSE(Util::IsScriptType("\x61\x62\x63\x41\x42\xe3\x81\x82\x43",
-                                  Util::ALPHABET));
-  // "ＡＢあＣＤ"
-  EXPECT_FALSE(Util::IsScriptType("\xef\xbc\xa1\xef\xbc\xa2\xe3\x81\x82\xef\xbc"
-                                  "\xa3\xef\xbc\xa4", Util::ALPHABET));
-  // "ぐーぐるグ"
-  EXPECT_FALSE(Util::IsScriptType("\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82"
-                                  "\x8b\xe3\x82\xb0", Util::HIRAGANA));
-  // "グーグルぐ"
-  EXPECT_FALSE(Util::IsScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83"
-                                  "\xab\xe3\x81\x90", Util::KATAKANA));
+  EXPECT_FALSE(Util::IsScriptType("くどカう", Util::HIRAGANA));
+  EXPECT_FALSE(Util::IsScriptType("京あ都", Util::KANJI));
+  EXPECT_FALSE(Util::IsScriptType("モズあク", Util::KATAKANA));
+  EXPECT_FALSE(Util::IsScriptType("モあズクﾓｽﾞｸ", Util::KATAKANA));
+  EXPECT_FALSE(Util::IsScriptType("012あ", Util::NUMBER));
+  EXPECT_FALSE(Util::IsScriptType("０１２あ012", Util::NUMBER));
+  EXPECT_FALSE(Util::IsScriptType("abcABあC", Util::ALPHABET));
+  EXPECT_FALSE(Util::IsScriptType("ＡＢあＣＤ", Util::ALPHABET));
+  EXPECT_FALSE(Util::IsScriptType("ぐーぐるグ", Util::HIRAGANA));
+  EXPECT_FALSE(Util::IsScriptType("グーグルぐ", Util::KATAKANA));
 
-  // "グーグルsuggest"
-  EXPECT_TRUE(Util::ContainsScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0"
-                                       "\xe3\x83\xab\x73\x75\x67\x67\x65\x73"
-                                       "\x74", Util::ALPHABET));
-  // "グーグルサジェスト"
-  EXPECT_FALSE(Util::ContainsScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0"
-                                        "\xe3\x83\xab\xe3\x82\xb5\xe3\x82\xb8"
-                                        "\xe3\x82\xa7\xe3\x82\xb9\xe3\x83\x88",
-                                        Util::ALPHABET));
+  EXPECT_TRUE(Util::ContainsScriptType("グーグルsuggest", Util::ALPHABET));
+  EXPECT_FALSE(Util::ContainsScriptType("グーグルサジェスト", Util::ALPHABET));
 
-  // "くどう"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x81\x8f\xe3\x81\xa9\xe3"
-                                                "\x81\x86"));
-  // "京都"
-  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xe4\xba\xac\xe9\x83\xbd"));
-  // "人々" (b/4201140)
-  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE4\xBA\xBA\xE3\x80\x85"));
-  // "モズク"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x83\xa2\xe3\x82\xba\xe3"
-                                                "\x82\xaf"));
-  // "モズクﾓｽﾞｸ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x83\xa2\xe3\x82\xba\xe3"
-                                                "\x82\xaf\xef\xbe\x93\xef\xbd"
-                                                "\xbd\xef\xbe\x9e\xef\xbd"
-                                                "\xb8"));
-  // "ぐーぐる"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x81\x90\xe3\x83\xbc\xe3"
-                                                "\x81\x90\xe3\x82\x8b"));
-  EXPECT_EQ(Util::HIRAGANA,
-            Util::GetFirstScriptType("\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90"
-                                     "\xe3\x82\x8b"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("くどう"));
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("京都"));
+  // b/4201140
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("人々"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("モズク"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("モズクﾓｽﾞｸ"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("ぐーぐる"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetFirstScriptType("ぐーぐる"));
 
-  // "グーグル"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3"
-                                                "\x82\xb0\xe3\x83\xab"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("グーグル"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("グーグル"));
+  // U+309F HIRAGANA DIGRAPH YORI
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("ゟ"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetFirstScriptType("ゟ"));
+
+  // U+30FF KATAKANA DIGRAPH KOTO
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("ヿ"));
   EXPECT_EQ(Util::KATAKANA,
-            Util::GetFirstScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0"
-                                     "\xe3\x83\xab"));
-  // "ゟ" U+309F HIRAGANA DIGRAPH YORI
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xE3\x82\x9F"));
-  EXPECT_EQ(Util::HIRAGANA, Util::GetFirstScriptType("\xE3\x82\x9F"));
-
-  // "ヿ" U+30FF KATAKANA DIGRAPH KOTO
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xE3\x83\xBF"));
-  // "ヷヸヹヺㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType(
-      "\xE3\x83\xB7\xE3\x83\xB8\xE3\x83\xB9\xE3\x83\xBA\xE3\x87\xB0"
-      "\xE3\x87\xB1\xE3\x87\xB2\xE3\x87\xB3\xE3\x87\xB4\xE3\x87\xB5"
-      "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
-      "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF"));
+            Util::GetScriptType("ヷヸヹヺㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ"));
   // "𛀀" U+1B000 KATAKANA LETTER ARCHAIC E
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xF0\x9B\x80\x80"));
   // "𛀁" U+1B001 HIRAGANA LETTER ARCHAIC YE
   EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xF0\x9B\x80\x81"));
 
-  // "!グーグル"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\x21\xe3\x82\xb0\xe3\x83"
-                                                      "\xbc\xe3\x82\xb0\xe3\x83"
-                                                      "\xab"));
-  // "ー"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xbc"));
-  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xbc"));
-  // "ーー"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xbc\xe3\x83"
-                                                      "\xbc"));
-  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xbc\xe3"
-                                                           "\x83\xbc"));
-  // "゛"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x82\x9b"));
-  // "゜"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x82\x9c"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("!グーグル"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("ー"));    // U+30FC
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("ー"));     // U+30FC
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("ーー"));  // U+30FC * 2
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("ーー"));   // U+30FC * 2
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("゛"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("゜"));
 
   EXPECT_EQ(Util::NUMBER, Util::GetScriptType("012"));
-  // "０１２012"
-  EXPECT_EQ(Util::NUMBER, Util::GetScriptType("\xef\xbc\x90\xef\xbc\x91\xef\xbc"
-                                              "\x92\x30\x31\x32"));
+  EXPECT_EQ(Util::NUMBER, Util::GetScriptType("０１２012"));
   EXPECT_EQ(Util::ALPHABET, Util::GetScriptType("abcABC"));
-  // "ＡＢＣＤ"
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptType("\xef\xbc\xa1\xef\xbc\xa2\xef"
-                                                "\xbc\xa3\xef\xbc\xa4"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptType("ＡＢＣＤ"));
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("@!#"));
-  // "＠！＃"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xef\xbc\xa0\xef\xbc\x81"
-                                                      "\xef\xbc\x83"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("＠！＃"));
 
-  // "ーひらがな"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x83\xbc\xe3\x81\xb2\xe3"
-                                                "\x82\x89\xe3\x81\x8c\xe3\x81"
-                                                "\xaa"));
-  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xbc\xe3\x81\xb2"
-                                                     "\xe3\x82\x89\xe3\x81\x8c"
-                                                     "\xe3\x81\xaa"));
-  // "ーカタカナ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x83\xbc\xe3\x82\xab\xe3"
-                                                "\x82\xbf\xe3\x82\xab\xe3\x83"
-                                                "\x8a"));
-  // "ｰｶﾀｶﾅ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xef\xbd\xb0\xef\xbd\xb6\xef"
-                                                "\xbe\x80\xef\xbd\xb6\xef\xbe"
-                                                "\x85"));
-  // "ひらがなー"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x81\xb2\xe3\x82\x89\xe3"
-                                                "\x81\x8c\xe3\x81\xaa\xe3\x83"
-                                                "\xbc"));
-  // "カタカナー"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x82\xab\xe3\x82\xbf\xe3"
-                                                "\x82\xab\xe3\x83\x8a\xe3\x83"
-                                                "\xbc"));
-  // "ｶﾀｶﾅｰ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xef\xbd\xb6\xef\xbe\x80\xef"
-                                                "\xbd\xb6\xef\xbe\x85\xef\xbd"
-                                                "\xb0"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("ーひらがな"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("ーひらがな"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("ーカタカナ"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("ｰｶﾀｶﾅ"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("ひらがなー"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("カタカナー"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("ｶﾀｶﾅｰ"));
 
-  // "あ゛っ"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x81\x82\xe3\x82\x9b\xe3"
-                                                "\x81\xa3"));
-  // "あ゜っ"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x81\x82\xe3\x82\x9c\xe3"
-                                                "\x81\xa3"));
-  // "ア゛ッ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x82\xa2\xe3\x82\x9b\xe3"
-                                                "\x83\x83"));
-  // "ア゜ッ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x82\xa2\xe3\x82\x9c\xe3"
-                                                "\x83\x83"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("あ゛っ"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("あ゜っ"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("ア゛ッ"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("ア゜ッ"));
 
-  // "くどカう"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x81\x8f\xe3\x81\xa9"
-                                                      "\xe3\x82\xab\xe3\x81"
-                                                      "\x86"));
-  // "京あ都"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe4\xba\xac\xe3\x81\x82"
-                                                      "\xe9\x83\xbd"));
-  EXPECT_EQ(Util::KANJI, Util::GetFirstScriptType("\xe4\xba\xac\xe3\x81\x82"
-                                                  "\xe9\x83\xbd"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("くどカう"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("京あ都"));
+  EXPECT_EQ(Util::KANJI, Util::GetFirstScriptType("京あ都"));
 
-  // "モズあク"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xa2\xe3\x82\xba"
-                                                      "\xe3\x81\x82\xe3\x82"
-                                                      "\xaf"));
-  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xa2\xe3\x82\xba"
-                                                     "\xe3\x81\x82\xe3\x82"
-                                                     "\xaf"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("モズあク"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("モズあク"));
 
-  // "モあズクﾓｽﾞｸ"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xa2\xe3\x81\x82"
-                                                      "\xe3\x82\xba\xe3\x82\xaf"
-                                                      "\xef\xbe\x93\xef\xbd\xbd"
-                                                      "\xef\xbe\x9e\xef\xbd"
-                                                      "\xb8"));
-  // "012あ"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\x30\x31\x32\xe3\x81"
-                                                      "\x82"));
-  EXPECT_EQ(Util::NUMBER, Util::GetFirstScriptType("\x30\x31\x32\xe3\x81"
-                                                   "\x82"));
-  // "０１２あ012"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xef\xbc\x90\xef\xbc\x91"
-                                                      "\xef\xbc\x92\xe3\x81\x82"
-                                                      "\x30\x31\x32"));
-  EXPECT_EQ(Util::NUMBER, Util::GetFirstScriptType("\xef\xbc\x90\xef\xbc\x91"
-                                                   "\xef\xbc\x92\xe3\x81\x82"
-                                                   "\x30\x31\x32"));
-  // "abcABあC"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\x61\x62\x63\x41\x42\xe3"
-                                                      "\x81\x82\x43"));
-  // "ＡＢあＣＤ"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xef\xbc\xa1\xef\xbc\xa2"
-                                                      "\xe3\x81\x82\xef\xbc\xa3"
-                                                      "\xef\xbc\xa4"));
-  // "ぐーぐるグ"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x81\x90\xe3\x83\xbc"
-                                                      "\xe3\x81\x90\xe3\x82\x8b"
-                                                      "\xe3\x82\xb0"));
-  // "グーグルぐ"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x82\xb0\xe3\x83\xbc"
-                                                      "\xe3\x82\xb0\xe3\x83\xab"
-                                                      "\xe3\x81\x90"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("モあズクﾓｽﾞｸ"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("012あ"));
+  EXPECT_EQ(Util::NUMBER, Util::GetFirstScriptType("012あ"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("０１２あ012"));
+  EXPECT_EQ(Util::NUMBER, Util::GetFirstScriptType("０１２あ012"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("abcABあC"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("ＡＢあＣＤ"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("ぐーぐるグ"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("グーグルぐ"));
 
   // "龦" U+9FA6
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xA6"));
@@ -1892,151 +1483,77 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::EMOJI, Util::GetScriptType("\xf3\xbe\x80\x83"));
 }
 
-
 TEST(UtilTest, ScriptTypeWithoutSymbols) {
-  // "くど う"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x81\x8f\xe3\x81\xa9 \xe3\x81\x86"));
-  // "京 都"
-  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutSymbols(
-      "\xe4\xba\xac \xe9\x83\xbd"));
-  // "モズ ク"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x83\xa2\xe3\x82\xba\xe3\x82\xaf"));
-  // "モズ クﾓｽﾞｸ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x83\xa2\xe3\x82\xba \xe3\x82\xaf\xef\xbe\x93\xef\xbd"
-      "\xbd\xef\xbe\x9e\xef\xbd\xb8"));
-  // "Google Earth"
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
-      "Google Earth"));
-  // "Google "
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
-      "Google "));
-  // " Google"
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
-      " Google"));
-  // " Google "
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
-      " Google "));
-  // "     g"
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
-      "     g"));
-  // ""
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      ""));
-  // " "
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      " "));
-  // "  "
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      "   "));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols("くど う"));
+  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutSymbols("京 都"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols("モズク"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols("モズ クﾓｽﾞｸ"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("Google Earth"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("Google "));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(" Google"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(" Google "));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("     g"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(""));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(" "));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols("   "));
   EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("Hello!"));
-  // "Hello!あ"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      "\x48\x65\x6c\x6c\x6f\x21\xe3\x81\x82"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT,
+            Util::GetScriptTypeWithoutSymbols("Hello!あ"));
   EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("CD-ROM"));
-  // "CD-ROMア"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      "\x43\x44\x2d\x52\x4f\x4d\xe3\x82\xa2"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT,
+            Util::GetScriptTypeWithoutSymbols("CD-ROMア"));
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols("-"));
   EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("-A"));
   EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("--A"));
   EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("--A---"));
-  // "--A-ｱ-"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      "\x2d\x2d\x41\x2d\xef\xbd\xb1\x2d"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols("--A-ｱ-"));
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols("!"));
-  // "・あ"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x83\xbb\xe3\x81\x82"));
-  // "・・あ"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x83\xbb\xe3\x83\xbb\xe3\x81\x82"));
-  // "コギト・エルゴ・スム"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x82\xb3\xe3\x82\xae\xe3\x83\x88\xe3\x83\xbb\xe3\x82\xa8"
-      "\xe3\x83\xab\xe3\x82\xb4\xe3\x83\xbb\xe3\x82\xb9\xe3\x83\xa0"));
-  // "コギト・エルゴ・住む"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x82\xb3\xe3\x82\xae\xe3\x83\x88\xe3\x83\xbb\xe3\x82\xa8"
-      "\xe3\x83\xab\xe3\x82\xb4\xe3\x83\xbb\xe4\xbd\x8f\xe3\x82\x80"));
-  // "人☆名"
-  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutSymbols(
-      "\xe4\xba\xba\xe2\x98\x86\xe5\x90\x8d"));
-  // "ひとの☆なまえ"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x81\xb2\xe3\x81\xa8\xe3\x81\xae\xe2\x98\x86\xe3\x81\xaa"
-      "\xe3\x81\xbe\xe3\x81\x88"));
-  // "超☆最高です"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      "\xe8\xb6\x85\xe2\x98\x86\xe6\x9c\x80\xe9\xab\x98\xe3\x81\xa7"
-      "\xe3\x81\x99"));
-  // "・--☆"
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
-      "\xe3\x83\xbb\x2d\x2d\xe2\x98\x86"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols("・あ"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols("・・あ"));
+  EXPECT_EQ(Util::KATAKANA,
+            Util::GetScriptTypeWithoutSymbols("コギト・エルゴ・スム"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT,
+            Util::GetScriptTypeWithoutSymbols("コギト・エルゴ・住む"));
+  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutSymbols("人☆名"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols("ひとの☆なまえ"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT,
+            Util::GetScriptTypeWithoutSymbols("超☆最高です"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols("・--☆"));
 }
 
 TEST(UtilTest, FormType) {
-  // "くどう"
-  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe3\x81\x8f\xe3\x81\xa9\xe3"
-                                                "\x81\x86"));
-  // "京都"
-  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe4\xba\xac\xe9\x83\xbd"));
-  // "モズク"
-  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe3\x83\xa2\xe3\x82\xba\xe3"
-                                                "\x82\xaf"));
-  // "ﾓｽﾞｸ"
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xef\xbe\x93\xef\xbd\xbd\xef"
-                                                "\xbe\x9e\xef\xbd\xb8"));
-  // "ぐーぐる"
-  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe3\x81\x90\xe3\x83\xbc\xe3"
-                                                "\x81\x90\xe3\x82\x8b"));
-  // "グーグル"
-  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe3\x82\xb0\xe3\x83\xbc\xe3"
-                                                "\x82\xb0\xe3\x83\xab"));
-  // "ｸﾞｰｸﾞﾙ"
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xef\xbd\xb8\xef\xbe\x9e\xef"
-                                                "\xbd\xb0\xef\xbd\xb8\xef\xbe"
-                                                "\x9e\xef\xbe\x99"));
-  // "ｰ"
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xef\xbd\xb0"));
-  // "ー"
-  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe3\x83\xbc"));
-
-  // "¢£¥¦¬¯"
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xc2\xa2\xc2\xa3\xc2\xa5"
-                                                "\xc2\xa6\xc2\xac\xc2\xaf"));
-
+  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("くどう"));
+  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("京都"));
+  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("モズク"));
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("ﾓｽﾞｸ"));
+  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("ぐーぐる"));
+  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("グーグル"));
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("ｸﾞｰｸﾞﾙ"));
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("ｰ"));
+  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("ー"));
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("¢£¥¦¬¯"));
   // "￨￩￪￫￬￭￮"
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType(
-      "\xef\xbf\xa8\xef\xbf\xa9\xef\xbf\xaa\xef\xbf\xab\xef\xbf\xac"
-      "\xef\xbf\xad\xef\xbf\xae"));
+  EXPECT_EQ(Util::HALF_WIDTH,
+            Util::GetFormType("\xEF\xBF\xA8\xEF\xBF\xA9\xEF\xBF\xAA\xEF\xBF\xAB"
+                              "\xEF\xBF\xAC\xEF\xBF\xAD\xEF\xBF\xAE"));
 
   // Half-width mathematical symbols
   // [U+27E6, U+27ED], U+2985, and U+2986
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType(
-      "\xe2\x9f\xa6\xe2\x9f\xa7\xe2\x9f\xa8\xe2\x9f\xa9\xe2\x9f\xaa\xe2"
-      "\x9f\xab\xe2\x9f\xac\xe2\x9f\xad\xe2\xa6\x85\xe2\xa6\x86"));
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("⟦⟧⟨⟩⟪⟫⟬⟭⦅⦆"));
 
   // Half-width hangul "ﾠﾡﾢ"
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xef\xbe\xa0\xef\xbe\xa1"
-                                                "\xef\xbe\xa2"));
+  EXPECT_EQ(Util::HALF_WIDTH,
+            Util::GetFormType("\xEF\xBE\xA0\xEF\xBE\xA1\xEF\xBE\xA2"));
 
   // Half-width won "₩"
-  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("\xe2\x82\xa9"));
+  EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("₩"));
 
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("012"));
-  // "０１２012"
-  EXPECT_EQ(Util::UNKNOWN_FORM, Util::GetFormType("\xef\xbc\x90\xef\xbc\x91\xef"
-                                                  "\xbc\x92\x30\x31\x32"));
+  EXPECT_EQ(Util::UNKNOWN_FORM, Util::GetFormType("０１２012"));
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("abcABC"));
-  // "ＡＢＣＤ"
-  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xef\xbc\xa1\xef\xbc\xa2\xef"
-                                                "\xbc\xa3\xef\xbc\xa4"));
+  EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("ＡＢＣＤ"));
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("@!#"));
 }
-
 
 #ifndef OS_NACL
 // We have a snapshot of the result of |Util::GetCharacterSet(ucs4)| in
@@ -2092,44 +1609,28 @@ TEST(UtilTest, CharacterSet_gen_character_set) {
 }
 
 TEST(UtilTest, CharacterSet) {
-  // "あいうえお"
-  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("\xe3\x81\x82\xe3\x81\x84\xe3"
-                                                  "\x81\x86\xe3\x81\x88\xe3\x81"
-                                                  "\x8a"));
+  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("あいうえお"));
   EXPECT_EQ(Util::ASCII, Util::GetCharacterSet("abc"));
-  // "abcあいう"
-  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("\x61\x62\x63\xe3\x81\x82\xe3"
-                                                  "\x81\x84\xe3\x81\x86"));
+  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("abcあいう"));
 
   // half width katakana
-  // "ｶﾀｶﾅ"
-  EXPECT_EQ(Util::JISX0201, Util::GetCharacterSet("\xef\xbd\xb6\xef\xbe\x80\xef"
-                                                  "\xbd\xb6\xef\xbe\x85"));
-  // "ｶﾀｶﾅカタカナ"
-  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("\xef\xbd\xb6\xef\xbe\x80\xef"
-                                                  "\xbd\xb6\xef\xbe\x85\xe3\x82"
-                                                  "\xab\xe3\x82\xbf\xe3\x82\xab"
-                                                  "\xe3\x83\x8a"));
+  EXPECT_EQ(Util::JISX0201, Util::GetCharacterSet("ｶﾀｶﾅ"));
+  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("ｶﾀｶﾅカタカナ"));
 
   // 0213
-  // "Ⅰ"
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe2\x85\xa0"));
-  // "①"
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe2\x91\xa0"));
-  // "㊤"
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe3\x8a\xa4"));
-  // "ð ®" from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xA0\xAE\x9F"));
-  // "ðª²" from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xAA\x9A\xB2"));
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("Ⅰ"));
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("①"));
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("㊤"));
+  // "ð ® " from UCS4 range (b/4176888)
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("𠮟"));
+  // "ðª ²" from UCS4 range (b/4176888)
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("𪚲"));
 
   // only in CP932
-  // "凬"
-  EXPECT_EQ(Util::CP932, Util::GetCharacterSet("\xe5\x87\xac"));
+  EXPECT_EQ(Util::CP932, Util::GetCharacterSet("凬"));
 
   // only in Unicode
-  // "￦"
-  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xef\xbf\xa6"));
+  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("￦"));
   // "ð ®·" from UCS4 range (b/4176888)
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
 }
@@ -2172,7 +1673,7 @@ TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
 #endif  // OS_WIN
 
 TEST(UtilTest, IsKanaSymbolContained) {
-  const string kFullstop("\xe3\x80\x82");  // "。"
+  const string kFullstop("。");
   const string kSpace(" ");
   EXPECT_TRUE(Util::IsKanaSymbolContained(kFullstop));
   EXPECT_TRUE(Util::IsKanaSymbolContained(kSpace + kFullstop));
@@ -2202,14 +1703,14 @@ TEST(UtilTest, SplitFirstChar32) {
   EXPECT_EQ(0, c);
   EXPECT_TRUE(rest.empty());
 
-  // Allow NULL to ignore the matched value.
+  // Allow nullptr to ignore the matched value.
   rest = StringPiece();
-  EXPECT_TRUE(Util::SplitFirstChar32("01", NULL, &rest));
+  EXPECT_TRUE(Util::SplitFirstChar32("01", nullptr, &rest));
   EXPECT_EQ("1", rest);
 
-  // Allow NULL to ignore the matched value.
+  // Allow nullptr to ignore the matched value.
   c = 0;
-  EXPECT_TRUE(Util::SplitFirstChar32("01", &c, NULL));
+  EXPECT_TRUE(Util::SplitFirstChar32("01", &c, nullptr));
   EXPECT_EQ('0', c);
 
   rest = StringPiece();
@@ -2349,14 +1850,14 @@ TEST(UtilTest, SplitLastChar32) {
   EXPECT_EQ(0, c);
   EXPECT_TRUE(rest.empty());
 
-  // Allow NULL to ignore the matched value.
+  // Allow nullptr to ignore the matched value.
   c = 0;
-  EXPECT_TRUE(Util::SplitLastChar32("01", NULL, &c));
+  EXPECT_TRUE(Util::SplitLastChar32("01", nullptr, &c));
   EXPECT_EQ('1', c);
 
-  // Allow NULL to ignore the matched value.
+  // Allow nullptr to ignore the matched value.
   rest = StringPiece();
-  EXPECT_TRUE(Util::SplitLastChar32("01", &rest, NULL));
+  EXPECT_TRUE(Util::SplitLastChar32("01", &rest, nullptr));
   EXPECT_EQ("0", rest);
 
   rest = StringPiece();
