@@ -62,6 +62,8 @@ class InputFileStream : public std::istream {
   string Read();
 
  private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
+
   std::stringbuf string_buffer_;
 };
 
@@ -83,6 +85,8 @@ class OutputFileStream : public std::ostream {
   void close();
 
  private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
+
   string filename_;
   std::stringbuf string_buffer_;
   bool write_done_;
@@ -114,6 +118,9 @@ class InputFileStream : public std::ifstream {
   // Helper functions to load the entire content of a file into string.
   void ReadToString(string *s);
   string Read();
+
+ private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
 };
 
 class OutputFileStream : public std::ofstream {
@@ -127,6 +134,9 @@ class OutputFileStream : public std::ofstream {
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ofstream::open() function.
   void open(const char* filename, ios_base::openmode mode = ios_base::out);
+
+ private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
 };
 #endif  // MOZC_USE_PEPPER_FILE_IO
 

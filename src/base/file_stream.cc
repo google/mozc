@@ -163,4 +163,7 @@ string InputFileStream::Read() {
   return s;
 }
 
+void InputFileStream::UnusedKeyMethod() {}   // go/definekeymethod
+void OutputFileStream::UnusedKeyMethod() {}  // go/definekeymethod
+
 }  // namespace mozc
