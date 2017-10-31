@@ -6,8 +6,6 @@
   <string>FMWK</string>
   <key>CFBundleShortVersionString</key>
   <string>1.0</string>
-  <key>CFBundleSignature</key>
-  <string>????</string>
   <key>CFBundleExecutable</key>
   <string>GuiTool_lib</string>
 </dict>

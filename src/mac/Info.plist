@@ -18,8 +18,6 @@
   <string>${PRODUCT_NAME}</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
-  <key>CFBundleSignature</key>
-  <string>????</string>
   <key>CFBundleVersion</key>
   <string>${GOOGLE_VERSIONINFO_LONG}</string>
   <key>CFBundleShortVersionString</key>
