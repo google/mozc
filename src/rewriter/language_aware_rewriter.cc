@@ -30,6 +30,7 @@
 #include "rewriter/language_aware_rewriter.h"
 
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -59,10 +60,6 @@ LanguageAwareRewriter::~LanguageAwareRewriter() = default;
 namespace {
 
 bool IsEnabled(const ConversionRequest &request) {
-  // The current default value of language_aware_input is
-  // NO_LANGUAGE_AWARE_INPUT and only unittests set LANGUAGE_AWARE_SUGGESTION
-  // at this moment.  Thus, FillRawText is not performed in the productions
-  // yet.
   if (request.request().language_aware_input() ==
       mozc::commands::Request::NO_LANGUAGE_AWARE_INPUT) {
     return false;
@@ -72,16 +69,7 @@ bool IsEnabled(const ConversionRequest &request) {
   }
   DCHECK_EQ(mozc::commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR,
             request.request().language_aware_input());
-
-  if (!request.config().use_spelling_correction()) {
-    return false;
-  }
-
-#ifdef OS_ANDROID
-  return false;
-#else  // OS_ANDROID
-  return true;
-#endif  // OS_ANDROID
+  return request.config().use_spelling_correction();
 }
 
 }  // namespace
@@ -214,7 +202,8 @@ bool LanguageAwareRewriter::FillRawText(
   candidate->value = raw_string;
   candidate->key = raw_string;
   candidate->content_value = raw_string;
-  candidate->content_key = raw_string;
+  // raw_string is no longer used, so move it.
+  candidate->content_key = std::move(raw_string);
   candidate->lid = lid;
   candidate->rid = rid;
 
