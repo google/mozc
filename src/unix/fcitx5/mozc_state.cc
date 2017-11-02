@@ -30,6 +30,7 @@
 #include "unix/fcitx5/mozc_state.h"
 
 #include <fcitx-utils/i18n.h>
+#include <fcitx-utils/log.h>
 #include <fcitx-utils/stringutils.h>
 #include <fcitx/candidatelist.h>
 #include <fcitx/inputpanel.h>
@@ -108,7 +109,6 @@ MozcState::MozcState(InputContext* ic, mozc::client::ClientInterface* client,
   VLOG(1) << "MozcState created.";
   const bool is_vertical = true;
   parser_->SetUseAnnotation(is_vertical);
-  SetCompositionMode(mozc::commands::HIRAGANA);
 
   if (client_->EnsureConnection()) {
     UpdatePreeditMethod();
@@ -349,6 +349,7 @@ void MozcState::SetAuxString(const string& str) { aux_ = str; }
 void MozcState::SetCompositionMode(mozc::commands::CompositionMode mode) {
   composition_mode_ = mode;
   DCHECK(composition_mode_ < kNumCompositionModes);
+  engine_->compositionModeUpdated(ic_);
 }
 
 void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
@@ -357,7 +358,11 @@ void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
   mozc::commands::Output raw_response;
   if (TrySendCompositionMode(kPropCompositionModes[mode].mode, &raw_response,
                              &error)) {
+    auto oldMode = composition_mode_;
     parser_->ParseResponse(raw_response, ic_);
+    if (oldMode != composition_mode_) {
+      engine_->instance()->showInputMethodInformation(ic_);
+    }
   }
 }
 
