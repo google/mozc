@@ -405,8 +405,8 @@ void MozcResponseParser::ParseCandidates(
     mozc_state->SetAuxString(auxString);
   }
 
-  ic->inputPanel().setCandidateList(
-      new MozcCandidateList(candidates, ic, engine_, use_annotation_));
+  ic->inputPanel().setCandidateList(std::make_unique<MozcCandidateList>(
+      candidates, ic, engine_, use_annotation_));
 
   int focused_index = -1;
   if (candidates.has_focused_index()) {

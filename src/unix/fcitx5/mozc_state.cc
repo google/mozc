@@ -422,7 +422,7 @@ void MozcState::DisplayUsage() {
   auto lines = stringutils::split(description_, "\n");
   candidateList->setLayoutHint(CandidateLayoutHint::Vertical);
   candidateList->setContent(lines);
-  ic_->inputPanel().setCandidateList(candidateList.release());
+  ic_->inputPanel().setCandidateList(std::move(candidateList));
   auto str = title_ + " [" + _("Press Escape to go back") + "]";
   ic_->inputPanel().setAuxUp(Text(str));
   ic_->updatePreedit();
