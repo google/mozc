@@ -69,16 +69,14 @@ DEFINE_bool(enable_expansion_for_dictionary_predictor,
 
 DECLARE_bool(enable_typing_correction);
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::Token;
-using mozc::usage_stats::UsageStats;
-
 namespace mozc {
+namespace {
 
 using commands::Request;
-
-namespace {
+using dictionary::DictionaryInterface;
+using dictionary::POSMatcher;
+using dictionary::Token;
+using usage_stats::UsageStats;
 
 // Used to emulate positive infinity for cost. This value is set for those
 // candidates that are thought to be aggressive; thus we can eliminate such
@@ -102,6 +100,12 @@ bool IsLatinInputMode(const ConversionRequest &request) {
   return (request.has_composer() &&
           (request.composer().GetInputMode() == transliteration::HALF_ASCII ||
            request.composer().GetInputMode() == transliteration::FULL_ASCII));
+}
+
+bool IsQwertyMobileTable(const ConversionRequest &request) {
+  const auto table = request.request().special_romanji_table();
+  return (table == commands::Request::QWERTY_MOBILE_TO_HIRAGANA ||
+          table == commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
 }
 
 // Returns true if |segments| contains number history.
@@ -1683,7 +1687,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
   }
 
   string input_key;
-  request.composer().GetQueryForPrediction(&input_key);
+  request.composer().GetRawString(&input_key);
   // We don't look up English words when key length is one.
   if (input_key.size() < 2) {
     return;
@@ -2027,6 +2031,12 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
   if ((segments.request_type() == Segments::PREDICTION && key_len >= 1) ||
       key_len >= kMinUnigramKeyLen) {
     result |= UNIGRAM;
+
+    const auto lang_aware = request.request().language_aware_input();
+    if (lang_aware == commands::Request::LANGUAGE_AWARE_SUGGESTION &&
+        IsQwertyMobileTable(request)) {
+      result |= ENGLISH;
+    }
   }
 
   const size_t history_segments_size = segments.history_segments_size();

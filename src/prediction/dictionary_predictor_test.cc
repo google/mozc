@@ -1025,6 +1025,85 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypes) {
     EXPECT_EQ(DictionaryPredictor::REALTIME,
               DictionaryPredictor::GetPredictionTypes(*convreq_, segments));
   }
+
+  // When romaji table is qwerty mobile => ENGLISH is included depending on the
+  // language aware input setting.
+  {
+    const auto orig_input_mode = composer_->GetInputMode();
+    const auto orig_table = request_->special_romanji_table();
+    const auto orig_lang_aware = request_->language_aware_input();
+    const bool orig_use_dictionary_suggest = config_->use_dictionary_suggest();
+
+    composer_->SetInputMode(transliteration::HIRAGANA);
+    config_->set_use_dictionary_suggest(true);
+
+    // The case where romaji table is set to qwerty.  ENGLISH is turned on if
+    // language aware input is enabled.
+    for (const auto table :
+         {commands::Request::QWERTY_MOBILE_TO_HIRAGANA,
+          commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII}) {
+      request_->set_special_romanji_table(table);
+
+      // Language aware input is default: No English prediction.
+      request_->set_language_aware_input(
+          commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR);
+      auto type = DictionaryPredictor::GetPredictionTypes(*convreq_, segments);
+      EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
+
+      // Language aware input is off: No English prediction.
+      request_->set_language_aware_input(
+          commands::Request::NO_LANGUAGE_AWARE_INPUT);
+      type = DictionaryPredictor::GetPredictionTypes(*convreq_, segments);
+      EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
+
+      // Language aware input is on: English prediction is included.
+      request_->set_language_aware_input(
+          commands::Request::LANGUAGE_AWARE_SUGGESTION);
+      type = DictionaryPredictor::GetPredictionTypes(*convreq_, segments);
+      EXPECT_EQ(DictionaryPredictor::ENGLISH,
+                type & DictionaryPredictor::ENGLISH);
+    }
+
+    // The case where romaji table is not qwerty.  ENGLISH is turned off
+    // regardless of language aware input setting.
+    for (const auto table : {
+             commands::Request::FLICK_TO_HALFWIDTHASCII,
+             commands::Request::FLICK_TO_HIRAGANA,
+             commands::Request::GODAN_TO_HALFWIDTHASCII,
+             commands::Request::GODAN_TO_HIRAGANA,
+             commands::Request::NOTOUCH_TO_HALFWIDTHASCII,
+             commands::Request::NOTOUCH_TO_HIRAGANA,
+             commands::Request::TOGGLE_FLICK_TO_HALFWIDTHASCII,
+             commands::Request::TOGGLE_FLICK_TO_HIRAGANA,
+             commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII,
+             commands::Request::TWELVE_KEYS_TO_HIRAGANA,
+         }) {
+      request_->set_special_romanji_table(table);
+
+      // Language aware input is default.
+      request_->set_language_aware_input(
+          commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR);
+      auto type = DictionaryPredictor::GetPredictionTypes(*convreq_, segments);
+      EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
+
+      // Language aware input is off.
+      request_->set_language_aware_input(
+          commands::Request::NO_LANGUAGE_AWARE_INPUT);
+      type = DictionaryPredictor::GetPredictionTypes(*convreq_, segments);
+      EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
+
+      // Language aware input is on.
+      request_->set_language_aware_input(
+          commands::Request::LANGUAGE_AWARE_SUGGESTION);
+      type = DictionaryPredictor::GetPredictionTypes(*convreq_, segments);
+      EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
+    }
+
+    config_->set_use_dictionary_suggest(orig_use_dictionary_suggest);
+    request_->set_language_aware_input(orig_lang_aware);
+    request_->set_special_romanji_table(orig_table);
+    composer_->SetInputMode(orig_input_mode);
+  }
 }
 
 TEST_F(DictionaryPredictorTest, GetPredictionTypesTestWithTypingCorrection) {
