@@ -35,10 +35,10 @@
 
 #include <atomic>
 #include <string>
-#include <unordered_set>
 
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/mozc_hash_set.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
@@ -395,7 +395,7 @@ string ExtractCharacterFormRules(const Config &config) {
 class GetConfigThread final : public Thread {
  public:
   explicit GetConfigThread(
-      const std::unordered_set<string> &character_form_rules_set)
+      const mozc_hash_set<string> &character_form_rules_set)
       : quitting_(false),
         character_form_rules_set_(character_form_rules_set) {
   }
@@ -418,7 +418,7 @@ class GetConfigThread final : public Thread {
 
  private:
   std::atomic<bool> quitting_;
-  const std::unordered_set<string> character_form_rules_set_;
+  const mozc_hash_set<string> character_form_rules_set_;
 };
 
 
@@ -470,7 +470,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // |GeneralConfig|, the returned object from |ConfigHandler::GetConfig()|
   // is not predictable.  Hence we only make sure that
   // |Config::character_form_rules()| is one of expected values.
-  std::unordered_set<string> character_form_rules_set;
+  mozc_hash_set<string> character_form_rules_set;
   for (const auto &config : configs) {
     character_form_rules_set.insert(ExtractCharacterFormRules(config));
   }

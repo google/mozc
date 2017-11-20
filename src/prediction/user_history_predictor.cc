@@ -34,13 +34,13 @@
 #include <climits>
 #include <memory>
 #include <string>
-#include <unordered_set>
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/flags.h"
 #include "base/hash.h"
 #include "base/logging.h"
+#include "base/mozc_hash_set.h"
 #include "base/thread.h"
 #include "base/trie.h"
 #include "base/util.h"
@@ -69,7 +69,6 @@ namespace mozc {
 namespace {
 
 using std::unique_ptr;
-using std::unordered_set;
 
 using commands::Request;
 using dictionary::SuppressionDictionary;
@@ -914,7 +913,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
   string key = entry->key();
   string value = entry->value();
   const Entry *current_entry = entry;
-  unordered_set<uint32> seen;
+  mozc_hash_set<uint32> seen;
   seen.insert(EntryFingerprint(*current_entry));
   // Until target entry gets longer than input_key.
   while (key.size() <= input_key.size()) {
@@ -1850,7 +1849,7 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
   MakeLearningSegments(*segments, &learning_segments);
 
   string all_key, all_value;
-  unordered_set<uint32> seen;
+  mozc_hash_set<uint32> seen;
   bool this_was_seen = false;
   const size_t history_segments_size =
       learning_segments.history_segments_size();

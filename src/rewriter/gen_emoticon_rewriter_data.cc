@@ -30,13 +30,13 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/mozc_hash_map.h"
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "data_manager/serialized_dictionary.h"
@@ -52,14 +52,14 @@ using KeyList = std::vector<string>;
 using CompilerToken = SerializedDictionary::CompilerToken;
 using TokenList = SerializedDictionary::TokenList;
 
-int LookupCount(const std::unordered_map<string, int> &key_count,
+int LookupCount(const mozc_hash_map<string, int> &key_count,
                 const string &key) {
   const auto iter = key_count.find(key);
   return (iter == key_count.end()) ? 0 : iter->second;
 }
 
 string GetDescription(const KeyList &key_list,
-                      const std::unordered_map<string, int> &key_count) {
+                      const mozc_hash_map<string, int> &key_count) {
   if (key_list.size() == 1) {
     return key_list[0];
   }
@@ -84,7 +84,7 @@ std::map<string, TokenList> ReadEmoticonTsv(const string &path) {
   getline(ifs, line);  // Skip header
 
   std::vector<std::pair<string, KeyList>> data;
-  std::unordered_map<string, int> key_count;
+  mozc_hash_map<string, int> key_count;
   while (getline(ifs, line)) {
     std::vector<StringPiece> field_list;
     Util::SplitStringUsing(line, "\t", &field_list);
