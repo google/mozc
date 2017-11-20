@@ -253,8 +253,7 @@ class DictionaryPredictor::PredictiveBigramLookupCallback :
 // Comparator for sorting prediction candidates.
 // If we have words A and AB, for example "六本木" and "六本木ヒルズ",
 // assume that cost(A) < cost(AB).
-class DictionaryPredictor::ResultWCostLess :
-      public std::binary_function<Result, Result, bool> {
+class DictionaryPredictor::ResultWCostLess {
  public:
   bool operator() (const DictionaryPredictor::Result &lhs,
                    const DictionaryPredictor::Result &rhs) const {
@@ -262,8 +261,7 @@ class DictionaryPredictor::ResultWCostLess :
   }
 };
 
-class DictionaryPredictor::ResultCostLess :
-      public std::binary_function<Result, Result, bool> {
+class DictionaryPredictor::ResultCostLess {
  public:
   bool operator() (const DictionaryPredictor::Result &lhs,
                    const DictionaryPredictor::Result &rhs) const {
