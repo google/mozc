@@ -38,6 +38,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/mozc_hash_set.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/connector.h"
@@ -203,7 +204,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   }
 
   // Load the original suggestion filter from file.
-  std::unordered_set<string> suggestion_filter_set;
+  mozc_hash_set<string> suggestion_filter_set;
 
   for (size_t i = 0; i < suggestion_filter_files_.size(); ++i) {
     InputFileStream input(suggestion_filter_files_[i].c_str());
