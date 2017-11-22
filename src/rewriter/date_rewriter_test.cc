@@ -1239,4 +1239,36 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
   }
 }
 
+TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
+  commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
+
+  Segments segments;
+
+  // If there's a history segment containing N candidates where N is greater
+  // than the number of candidates in the current conversion segment, crash
+  // happened in Segment::insert_candidate().  This is a regression test for it.
+
+  // History segment
+  InitSegment("hist", "hist", &segments);
+  Segment *seg = segments.mutable_segment(0);
+  InsertCandidate("hist1", "hist1", 1, seg);
+  InsertCandidate("hist2", "hist2", 1, seg);
+  InsertCandidate("hist3", "hist3", 1, seg);
+  seg->set_segment_type(Segment::HISTORY);
+
+  // Conversion segment
+  AppendSegment("11", "11", &segments);
+  seg = segments.mutable_segment(1);
+  InsertCandidate("cand1", "cand1", 1, seg);
+  InsertCandidate("cand2", "cand2", 2, seg);
+
+  // Rewrite is successful with a history segment.
+  DateRewriter rewriter;
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+  ASSERT_LT(3, segments.conversion_segment(0).candidates_size());
+}
+
 }  // namespace mozc

@@ -293,9 +293,15 @@ Segment::Candidate *Segment::add_candidate() {
 }
 
 Segment::Candidate *Segment::insert_candidate(int i) {
-  if (i < 0 || i > static_cast<int>(candidates_.size())) {
-    LOG(WARNING) << "invalid index";
-    return NULL;
+  if (i < 0) {
+    LOG(WARNING) << "Invalid insert position [negative]: "
+                 << i << " / " << candidates_.size();
+    return nullptr;
+  }
+  if (i > static_cast<int>(candidates_.size())) {
+    LOG(DFATAL) << "Invalid insert position [out of bounds]: "
+                << i << " / " << candidates_.size();
+    i = static_cast<int>(candidates_.size());
   }
   Candidate *candidate = pool_->Alloc();
   candidate->Init();

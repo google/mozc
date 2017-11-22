@@ -1443,7 +1443,7 @@ void Insert(const Segment::Candidate &base_candidate,
   c->content_key = base_candidate.content_key;
   c->attributes |= Segment::Candidate::NO_LEARNING;
   c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-  if (description != NULL) {
+  if (description != nullptr) {
     c->description = description;
   }
 }
@@ -2314,8 +2314,8 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
-    if (seg == NULL) {
-      LOG(ERROR) << "Segment is NULL";
+    if (seg == nullptr) {
+      LOG(ERROR) << "Segment is nullptr";
       return false;
     }
 
@@ -2331,12 +2331,13 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
     }
   }
 
-  if (request.has_composer() && segments->segments_size() > 0) {
+  if (request.has_composer() && segments->conversion_segments_size() > 0) {
     // Select the insert position by Romaji table.  Note:
     // TWELVE_KEYS_TO_HIRAGANA uses digits for Hiragana composing, date/time
     // conversion is performed even when typing Hiragana characters.  Thus, it
     // should not be promoted.
-    int insert_pos = static_cast<int>(segments->segment(0).candidates_size());
+    int insert_pos =
+        static_cast<int>(segments->conversion_segment(0).candidates_size());
     switch (request.request().special_romanji_table()) {
       case commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
         insert_pos = 1;
