@@ -1,87 +1,79 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# This file is distributed under the same license as the fcitx5-mozc package.
 #
 # Translators:
-# Bon Keun Seo <scobyseo@gmail.com>, 2017
+# csslayer <wengxt@gmail.com>, 2017
 msgid ""
 msgstr ""
-"Project-Id-Version: fcitx\n"
+"Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-07-15 14:20-0700\n"
-"PO-Revision-Date: 2017-07-09 21:58+0000\n"
-"Last-Translator: Bon Keun Seo <scobyseo@gmail.com>\n"
-"Language-Team: Korean (http://www.transifex.com/fcitx/fcitx/language/ko/)\n"
+"POT-Creation-Date: 2017-11-22 21:57-0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
+"Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../eim.cc:187
-msgid "Press Escape to go back"
-msgstr "돌아가려면 ESC를 누르세요"
-
-#: ../fcitx_mozc.cc:65
-msgid "Direct"
-msgstr "직접입력"
-
-#: ../fcitx_mozc.cc:70
-msgid "Hiragana"
-msgstr "히라가나"
-
-#: ../fcitx_mozc.cc:75
-msgid "Full Katakana"
-msgstr "전각 가타가나"
-
-#: ../fcitx_mozc.cc:80
-msgid "Half ASCII"
-msgstr "반각 아스키"
-
-#: ../fcitx_mozc.cc:85
-msgid "Full ASCII"
-msgstr "전각 아스키"
-
-#: ../fcitx_mozc.cc:90
-msgid "Half Katakana"
-msgstr "반각 가타가나"
-
-#: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407 ../fcitx_mozc.cc:475
-msgid "Composition Mode"
-msgstr "조합 모드"
-
-#: ../fcitx_mozc.cc:417 ../fcitx_mozc.cc:418
-msgid "Tool"
-msgstr "도구"
-
-#: ../fcitx_mozc.cc:488
-msgid "Mozc Tool"
-msgstr "Mozc 도구"
-
-#: ../fcitx_mozc.cc:494
-msgid "Configuration Tool"
-msgstr "설정 도구"
-
-#: ../fcitx_mozc.cc:495
-msgid "Dictionary Tool"
-msgstr "사전 도구"
-
-#: ../fcitx_mozc.cc:496
-msgid "Hand Writing"
-msgstr "손 글씨"
-
-#: ../fcitx_mozc.cc:497
+#: mozc_engine.cc:174
 msgid "Character Palette"
 msgstr "글자 팔레트"
 
-#: ../fcitx_mozc.cc:498
-msgid "Add Word"
-msgstr "단어 추가"
+#: mozc_engine.cc:78
+msgid "Composition Mode"
+msgstr "조합 모드"
 
-#: ../fcitx_mozc.cc:499
-msgid "About Mozc"
-msgstr "Mozc에 대해"
+#: mozc_engine.cc:153
+msgid "Configuration Tool"
+msgstr "설정 도구"
 
-#: ../mozc_response_parser.cc:366
+#: mozc_engine.cc:160
+msgid "Dictionary Tool"
+msgstr "사전 도구"
+
+#: mozc_state.cc:61 mozc_engine.cc:45
+msgid "Direct"
+msgstr "직접입력"
+
+#. Full width ASCII letter A.
+#: mozc_state.cc:80 mozc_engine.cc:67
+msgid "Full ASCII"
+msgstr "전각 아스키"
+
+#. Katakana letter A.
+#: mozc_state.cc:71 mozc_engine.cc:56
+msgid "Full Katakana"
+msgstr "전각 가타가나"
+
+#: mozc_state.cc:74 mozc_engine.cc:60
+msgid "Half ASCII"
+msgstr "반각 아스키"
+
+#. Half width Katakana letter A.
+#: mozc_state.cc:85 mozc_engine.cc:72
+msgid "Half Katakana"
+msgstr "반각 가타가나"
+
+#: mozc_engine.cc:167
+msgid "Hand Writing"
+msgstr "손 글씨"
+
+#. Hiragana letter A in UTF-8.
+#: mozc_state.cc:66 mozc_engine.cc:51
+msgid "Hiragana"
+msgstr "히라가나"
+
+#: mozc_response_parser.cc:144
 msgid "Press Ctrl+Alt+H to show usages."
 msgstr "사용법을 보려면 Ctrl+Alt+H를 누르세요."
+
+#: mozc_state.cc:426
+msgid "Press Escape to go back"
+msgstr "돌아가려면 ESC를 누르세요"
+
+#: mozc_engine.cc:137 mozc_engine.cc:138
+msgid "Tool"
+msgstr "도구"
