@@ -1,0 +1,76 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the fcitx5-mozc package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: fcitx5-mozc\n"
+"Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
+"POT-Creation-Date: 2017-11-22 21:11-0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: LANG\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: mozc_engine.cc:174
+msgid "Character Palette"
+msgstr ""
+
+#: mozc_engine.cc:78
+msgid "Composition Mode"
+msgstr ""
+
+#: mozc_engine.cc:153
+msgid "Configuration Tool"
+msgstr ""
+
+#: mozc_engine.cc:160
+msgid "Dictionary Tool"
+msgstr ""
+
+#: mozc_engine.cc:45 mozc_state.cc:61
+msgid "Direct"
+msgstr ""
+
+#. Full width ASCII letter A.
+#: mozc_engine.cc:67 mozc_state.cc:80
+msgid "Full ASCII"
+msgstr ""
+
+#. Katakana letter A.
+#: mozc_engine.cc:56 mozc_state.cc:71
+msgid "Full Katakana"
+msgstr ""
+
+#: mozc_engine.cc:60 mozc_state.cc:74
+msgid "Half ASCII"
+msgstr ""
+
+#. Half width Katakana letter A.
+#: mozc_engine.cc:72 mozc_state.cc:85
+msgid "Half Katakana"
+msgstr ""
+
+#: mozc_engine.cc:167
+msgid "Hand Writing"
+msgstr ""
+
+#. Hiragana letter A in UTF-8.
+#: mozc_engine.cc:51 mozc_state.cc:66
+msgid "Hiragana"
+msgstr ""
+
+#: mozc_response_parser.cc:144
+msgid "Press Ctrl+Alt+H to show usages."
+msgstr ""
+
+#: mozc_state.cc:426
+msgid "Press Escape to go back"
+msgstr ""
+
+#: mozc_engine.cc:137 mozc_engine.cc:138
+msgid "Tool"
+msgstr ""
