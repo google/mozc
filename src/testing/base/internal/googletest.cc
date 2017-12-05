@@ -101,7 +101,7 @@ string GetProgramPath() {
 
   // Turn relative filename into absolute
   char cwd_buf[PATH_MAX+1];
-  CHECK_GT(getcwd(cwd_buf, PATH_MAX), 0);
+  CHECK_NE(getcwd(cwd_buf, PATH_MAX), nullptr);
   cwd_buf[PATH_MAX] = '\0';  // make sure it's terminated
   return FileUtil::JoinPath(cwd_buf, program_invocation_name);
 }
