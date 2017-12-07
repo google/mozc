@@ -59,16 +59,27 @@ LanguageAwareRewriter::~LanguageAwareRewriter() = default;
 
 namespace {
 
-bool IsEnabled(const ConversionRequest &request) {
-  if (request.request().language_aware_input() ==
-      mozc::commands::Request::NO_LANGUAGE_AWARE_INPUT) {
-    return false;
-  } else if (request.request().language_aware_input() ==
-             mozc::commands::Request::LANGUAGE_AWARE_SUGGESTION) {
-    return true;
+bool IsRomanHiraganaInput(const ConversionRequest &request) {
+  const auto table = request.request().special_romanji_table();
+  switch (table) {
+    case commands::Request::DEFAULT_TABLE:
+      return (request.config().preedit_method() == config::Config::ROMAN);
+    case commands::Request::QWERTY_MOBILE_TO_HIRAGANA:
+      return true;
+    default:
+      return false;
   }
-  DCHECK_EQ(mozc::commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR,
-            request.request().language_aware_input());
+}
+
+bool IsEnabled(const ConversionRequest &request) {
+  const auto mode = request.request().language_aware_input();
+  if (mode == commands::Request::NO_LANGUAGE_AWARE_INPUT) {
+    return false;
+  }
+  if (mode == commands::Request::LANGUAGE_AWARE_SUGGESTION) {
+    return IsRomanHiraganaInput(request);
+  }
+  DCHECK_EQ(commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR, mode);
   return request.config().use_spelling_correction();
 }
 

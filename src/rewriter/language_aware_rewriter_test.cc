@@ -342,4 +342,49 @@ TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
   }
 }
 
+TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
+  dictionary_mock_->AddLookupExact("query", "query", "query", Token::NONE);
+
+  struct {
+    commands::Request::SpecialRomanjiTable table;
+    config::Config::PreeditMethod preedit_method;
+    int type;
+  } const kParams[] = {
+      // Enabled combinations.
+      {commands::Request::DEFAULT_TABLE, config::Config::ROMAN,
+       RewriterInterface::SUGGESTION | RewriterInterface::PREDICTION},
+      {commands::Request::QWERTY_MOBILE_TO_HIRAGANA, config::Config::ROMAN,
+       RewriterInterface::SUGGESTION | RewriterInterface::PREDICTION},
+      // Disabled combinations.
+      {commands::Request::DEFAULT_TABLE, config::Config::KANA,
+       RewriterInterface::NOT_AVAILABLE},
+      {commands::Request::TWELVE_KEYS_TO_HIRAGANA, config::Config::ROMAN,
+       RewriterInterface::NOT_AVAILABLE},
+      {commands::Request::TOGGLE_FLICK_TO_HIRAGANA, config::Config::ROMAN,
+       RewriterInterface::NOT_AVAILABLE},
+      {commands::Request::GODAN_TO_HIRAGANA, config::Config::ROMAN,
+       RewriterInterface::NOT_AVAILABLE},
+  };
+
+  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  for (const auto &param : kParams) {
+    commands::Request request;
+    request.set_language_aware_input(
+        commands::Request::LANGUAGE_AWARE_SUGGESTION);
+    request.set_special_romanji_table(param.table);
+
+    config::Config config;
+    config.set_preedit_method(param.preedit_method);
+
+    composer::Table table;
+    table.InitializeWithRequestAndConfig(request, config, data_manager_);
+
+    composer::Composer composer(&table, &request, &config);
+    InsertASCIISequence("query", &composer);
+
+    ConversionRequest conv_request(&composer, &request, &config);
+    EXPECT_EQ(param.type, rewriter->capability(conv_request));
+  }
+}
+
 }  // namespace mozc
