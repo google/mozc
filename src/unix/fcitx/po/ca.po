@@ -3,14 +3,15 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# Robert Antoni Buj Gelonch <rbuj@fedoraproject.org>, 2017
 # Walter Garcia-Fontes <walter.garcia@upf.edu>, 2017
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-02-07 21:21-0800\n"
-"PO-Revision-Date: 2017-01-06 16:21+0000\n"
-"Last-Translator: Walter Garcia-Fontes <walter.garcia@upf.edu>\n"
+"POT-Creation-Date: 2017-12-09 00:03-0800\n"
+"PO-Revision-Date: 2017-12-08 19:26+0000\n"
+"Last-Translator: Robert Antoni Buj Gelonch <rbuj@fedoraproject.org>\n"
 "Language-Team: Catalan (http://www.transifex.com/fcitx/fcitx/language/ca/)\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -24,7 +25,7 @@ msgstr "Premeu Escape per anar endarrere"
 
 #: ../fcitx_mozc.cc:65
 msgid "Direct"
-msgstr "Direct"
+msgstr "Directe"
 
 #: ../fcitx_mozc.cc:70
 msgid "Hiragana"
