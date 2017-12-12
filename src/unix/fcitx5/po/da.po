@@ -1,16 +1,17 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# This file is distributed under the same license as the fcitx5-mozc package.
 #
 # Translators:
+# scootergrisen <scootergrisen@gmail.com>, 2017
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-11-22 21:56-0800\n"
-"PO-Revision-Date: 2012-03-06 06:51+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: Danish (http://www.transifex.com/fcitx/fcitx/language/da/)\n"
+"POT-Creation-Date: 2017-12-12 09:52-0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: scootergrisen <scootergrisen@gmail.com>, 2017\n"
+"Language-Team: Danish (https://www.transifex.com/fcitx/teams/12005/da/)\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,60 +20,60 @@ msgstr ""
 
 #: mozc_engine.cc:174
 msgid "Character Palette"
-msgstr ""
+msgstr "Tegnpalet"
 
 #: mozc_engine.cc:78
 msgid "Composition Mode"
-msgstr ""
+msgstr "Kompositionstilstand"
 
 #: mozc_engine.cc:153
 msgid "Configuration Tool"
-msgstr ""
+msgstr "Konfigurationsværktøj"
 
 #: mozc_engine.cc:160
 msgid "Dictionary Tool"
-msgstr ""
+msgstr "Ordbogsværktøj"
 
 #: mozc_state.cc:61 mozc_engine.cc:45
 msgid "Direct"
-msgstr ""
+msgstr "Direkte"
 
 #. Full width ASCII letter A.
 #: mozc_state.cc:80 mozc_engine.cc:67
 msgid "Full ASCII"
-msgstr ""
+msgstr "Fuld ASCII"
 
 #. Katakana letter A.
 #: mozc_state.cc:71 mozc_engine.cc:56
 msgid "Full Katakana"
-msgstr ""
+msgstr "Fuld Katakana"
 
 #: mozc_state.cc:74 mozc_engine.cc:60
 msgid "Half ASCII"
-msgstr ""
+msgstr "Halv ASCII"
 
 #. Half width Katakana letter A.
 #: mozc_state.cc:85 mozc_engine.cc:72
 msgid "Half Katakana"
-msgstr ""
+msgstr "Halv Katakana"
 
 #: mozc_engine.cc:167
 msgid "Hand Writing"
-msgstr ""
+msgstr "Håndskrift"
 
 #. Hiragana letter A in UTF-8.
 #: mozc_state.cc:66 mozc_engine.cc:51
 msgid "Hiragana"
-msgstr ""
+msgstr "Hiragana"
 
 #: mozc_response_parser.cc:144
 msgid "Press Ctrl+Alt+H to show usages."
-msgstr ""
+msgstr "Tryk på Ctrl+Alt+H for at vise anvendelser."
 
 #: mozc_state.cc:426
 msgid "Press Escape to go back"
-msgstr ""
+msgstr "Tryk på Escape for at gå tilbage"
 
 #: mozc_engine.cc:137 mozc_engine.cc:138
 msgid "Tool"
-msgstr ""
+msgstr "Værktøj"
