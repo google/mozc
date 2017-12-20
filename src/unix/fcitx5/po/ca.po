@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the fcitx5-mozc package.
 #
 # Translators:
-# csslayer <wengxt@gmail.com>, 2017
 # Robert Antoni Buj Gelonch <rbuj@fedoraproject.org>, 2017
+# csslayer <wengxt@gmail.com>, 2017
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-12-12 09:52-0800\n"
+"POT-Creation-Date: 2017-12-20 00:01-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Robert Antoni Buj Gelonch <rbuj@fedoraproject.org>, 2017\n"
+"Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
 "Language-Team: Catalan (https://www.transifex.com/fcitx/teams/12005/ca/)\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -73,7 +73,7 @@ msgstr "Premeu Ctrl+Alt+H per mostrar els usos."
 
 #: mozc_state.cc:426
 msgid "Press Escape to go back"
-msgstr "Premeu Escape per anar endarrere"
+msgstr "Premeu Esc per tornar"
 
 #: mozc_engine.cc:137 mozc_engine.cc:138
 msgid "Tool"
