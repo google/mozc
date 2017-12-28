@@ -48,6 +48,11 @@
     <methods>;
 }
 
+# libmozc.so depends on those methods.
+-keepclassmembers class org.mozc.android.inputmethod.japanese.session.MozcJNI {
+    native <methods>;
+}
+
 # The classes in nativecallback package must keep original class name and method name
 # in order to be called back from native layer.
 -keepclasseswithmembers class org.mozc.android.inputmethod.japanese.nativecallback.* {
