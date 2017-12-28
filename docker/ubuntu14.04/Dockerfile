@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM ubuntu:14.04.5
+FROM ubuntu:14.04.4
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -60,8 +60,9 @@ ENV ANDROID_HOME /home/mozc_builder/work/android-sdk-linux
 ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
 RUN echo y | android update sdk --all --force --no-ui --filter android-22
 RUN echo y | android update sdk --all --force --no-ui --filter build-tools-22.0.0
-RUN echo y | android update sdk --all --force --no-ui --filter extra-android-support
 RUN echo y | android update sdk --all --force --no-ui --filter platform-tool
+RUN mkdir -p ${ANDROID_HOME}/extras/android
+RUN curl -LO https://dl.google.com/dl/android/repository/support_r23.1.1.zip && unzip -d ${ANDROID_HOME}/extras/android support_r23.1.1.zip support/v13/android-support-v13.jar && rm support_r23.1.1.zip
 
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip

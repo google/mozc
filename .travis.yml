@@ -74,8 +74,9 @@ install:
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export PATH="$PATH":${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter android-22; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter build-tools-22.0.0; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter extra-android-support; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter platform-tool; fi
+  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then mkdir -p ${ANDROID_HOME}/extras/android; fi
+  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then curl -LO https://dl.google.com/dl/android/repository/support_r23.1.1.zip && unzip -d ${ANDROID_HOME}/extras/android support_r23.1.1.zip support/v13/android-support-v13.jar && rm support_r23.1.1.zip; fi
 
 script:
   - cd ./src
