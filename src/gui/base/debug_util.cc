@@ -54,6 +54,11 @@ void DebugUtil::MessageHandler(QtMsgType type,
     case QtFatalMsg:
       LOG(FATAL) << msg;
       break;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+    case QtInfoMsg:
+      LOG(INFO) << msg;
+      break;
+#endif  // Qt 5.5+
   }
 }
 
