@@ -129,6 +129,7 @@
         '../converter/converter.gyp:converter',
         '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
+        '../protocol/protocol.gyp:config_proto',
         '../request/request.gyp:conversion_request',
       ],
     },
