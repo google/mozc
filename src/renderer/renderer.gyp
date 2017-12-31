@@ -193,7 +193,7 @@
             'win32_renderer_core_test',
           ],
         }],
-        ['enable_gtk_renderer==1', {
+        ['target_platform=="Linux" and enable_gtk_renderer==1', {
           'dependencies': [
             'gtk_renderer_test',
           ],
@@ -523,7 +523,7 @@
         },
       ],
     }],
-    ['enable_gtk_renderer==1', {
+    ['target_platform=="Linux" and enable_gtk_renderer==1', {
       'targets': [
         {
           # Meta target to set up build environment for gtk+-2.0.
