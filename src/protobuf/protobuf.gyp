@@ -52,6 +52,18 @@
       '4800',
     ],
 
+    # We accept following warnings come from protobuf header files.
+    # This list should be revised when protobuf is updated.
+    'msvc_disabled_warnings_for_proto_headers': [
+      # unary minus operator applied to unsigned type, result still unsigned.
+      # http://msdn.microsoft.com/en-us/library/4kh09110.aspx
+      '4146',
+      # 'type' : forcing value to bool 'true' or 'false'
+      # (performance warning)
+      # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
+      '4800',
+    ],
+
     'protobuf_prebuilt_jar_path': '',
 
     'protobuf_cpp_root': '<(protobuf_root)/src/google/protobuf',
@@ -70,6 +82,7 @@
       '<(protobuf_cpp_root)/extension_set_heavy.cc',
       '<(protobuf_cpp_root)/generated_message_reflection.cc',
       '<(protobuf_cpp_root)/generated_message_util.cc',
+      '<(protobuf_cpp_root)/implicit_weak_message.cc',
       '<(protobuf_cpp_root)/io/coded_stream.cc',
       '<(protobuf_cpp_root)/io/gzip_stream.cc',
       '<(protobuf_cpp_root)/io/printer.cc',
@@ -95,6 +108,7 @@
       '<(protobuf_cpp_root)/stubs/structurally_valid.cc',
       '<(protobuf_cpp_root)/stubs/strutil.cc',
       '<(protobuf_cpp_root)/stubs/substitute.cc',
+      '<(protobuf_cpp_root)/stubs/io_win32.cc',
       '<(protobuf_cpp_root)/text_format.cc',
       '<(protobuf_cpp_root)/unknown_field_set.cc',
       '<(protobuf_cpp_root)/wire_format.cc',
@@ -117,6 +131,7 @@
       '<(protobuf_cpp_root)/compiler/cpp/cpp_map_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_message.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/cpp/cpp_padding_optimizer.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_service.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_string_field.cc',
@@ -197,6 +212,9 @@
           'all_dependent_settings': {
             'include_dirs': [
               '<(protobuf_root)/src',
+            ],
+            'msvs_disabled_warnings': [
+              '<@(msvc_disabled_warnings_for_proto_headers)',
             ],
           },
           'msvs_disabled_warnings': [
