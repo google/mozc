@@ -44,8 +44,6 @@ env:
   - TARGET_PLATFORM=Android_arm64
   - TARGET_PLATFORM=Android_x86
   - TARGET_PLATFORM=Android_x86_64
-  - TARGET_PLATFORM=Android_mips
-  - TARGET_PLATFORM=Android_mips64
   - TARGET_PLATFORM=Linux
   - TARGET_PLATFORM=NaCl
   - TARGET_PLATFORM=Mac
@@ -67,8 +65,8 @@ install:
   - if [ $TARGET_PLATFORM == Mac ]; then brew update && brew install qt5; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then cd src/third_party && curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip && cd nacl_sdk && ./naclsdk install pepper_49 && cd ../../../; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then jdk_switcher use openjdk7; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then cd src/third_party && curl -LO http://dl.google.com/android/repository/android-ndk-r12b-linux-x86_64.zip && unzip -q android-ndk-r12b-linux-x86_64.zip && rm android-ndk-r12b-linux-x86_64.zip && curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx && cd ../../; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export ANDROID_NDK_HOME=`pwd`/src/third_party/android-ndk-r12b ; fi
+  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then cd src/third_party && curl -LO http://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip && unzip -q android-ndk-r16b-linux-x86_64.zip && rm android-ndk-r16b-linux-x86_64.zip && curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx && cd ../../; fi
+  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export ANDROID_NDK_HOME=`pwd`/src/third_party/android-ndk-r16b ; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export ANDROID_HOME=`pwd`/src/third_party/android-sdk-linux ; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export PATH="$PATH":${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}; fi
   - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter android-22; fi
@@ -102,10 +100,6 @@ matrix:
     env: TARGET_PLATFORM=Android_x86
   - os: osx
     env: TARGET_PLATFORM=Android_x86_64
-  - os: osx
-    env: TARGET_PLATFORM=Android_mips
-  - os: osx
-    env: TARGET_PLATFORM=Android_mips64
   - os: osx
     env: TARGET_PLATFORM=Linux
   - os: osx
