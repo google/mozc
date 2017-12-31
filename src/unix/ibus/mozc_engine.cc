@@ -92,13 +92,17 @@ const char *kUILocaleEnvNames[] = {
   "LANG",
 };
 
+string GetEnv(const char *envname) {
+  const char *result = ::getenv(envname);
+  return result != nullptr ? string(result) : "";
+}
+
 string GetMessageLocale() {
   for (size_t i = 0; i < arraysize(kUILocaleEnvNames); ++i) {
-    const char *env_ptr = ::getenv(kUILocaleEnvNames[i]);
-    if (env_ptr == NULL || env_ptr[0] == '\0') {
-      continue;
+    const string result = GetEnv(kUILocaleEnvNames[i]);
+    if (!result.empty()) {
+      return result;
     }
-    return env_ptr;
   }
   return kMozcDefaultUILocale;
 }
@@ -225,6 +229,10 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
 CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
     ::mozc::renderer::RendererClient *renderer_client) {
   if (!FLAGS_use_mozc_renderer) {
+    return nullptr;
+  }
+  if (GetEnv("XDG_SESSION_TYPE") == "wayland") {
+    // mozc_renderer is not supported on wayland session.
     return nullptr;
   }
   auto *handler = new GtkCandidateWindowHandler(renderer_client);
