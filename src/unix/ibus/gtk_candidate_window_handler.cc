@@ -29,6 +29,7 @@
 
 #include "unix/ibus/gtk_candidate_window_handler.h"
 
+#include <gio/gio.h>
 #include <unistd.h>
 
 #include "base/logging.h"
@@ -40,8 +41,109 @@ namespace mozc {
 namespace ibus {
 
 namespace {
+
 const char kDefaultFont[] = "SansSerif 11";
+const gchar kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
+const gchar kIBusPanelUseCustomFont[] = "use-custom-font";
+const gchar kIBusPanelCustomFont[] = "custom-font";
+
+bool GetString(GVariant *value, string *out_string) {
+  if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
+    return false;
+  }
+  *out_string = static_cast<const char *>(g_variant_get_string(value, NULL));
+  return true;
+}
+
+bool GetBoolean(GVariant *value, bool *out_boolean) {
+  if (g_variant_classify(value) != G_VARIANT_CLASS_BOOLEAN) {
+    return false;
+  }
+  *out_boolean = (g_variant_get_boolean(value) != FALSE);
+  return true;
+}
+
+bool HasScheme(const char *schema_name) {
+  GSettingsSchemaSource *schema_source = g_settings_schema_source_get_default();
+  if (schema_source == nullptr) {
+    return false;
+  }
+  GSettingsSchema *schema = g_settings_schema_source_lookup(
+      schema_source, schema_name, TRUE);
+  if (schema == nullptr) {
+    return false;
+  }
+  g_settings_schema_unref(schema);
+  return true;
+}
+
+GSettings *OpenIBusPanelSettings() {
+  if (!HasScheme(kIBusPanelSchema)) {
+    return nullptr;
+  }
+  return g_settings_new(kIBusPanelSchema);
+}
+
+// The callback function to the "changed" signal to GSettings object.
+void GSettingsChangedCallback(GSettings *settings,
+                              const gchar *key,
+                              gpointer user_data) {
+  GtkCandidateWindowHandler *handler =
+      reinterpret_cast<GtkCandidateWindowHandler *>(user_data);
+  if (g_strcmp0(key, kIBusPanelUseCustomFont) == 0) {
+    GVariant *use_custom_font_value =
+        g_settings_get_value(settings, kIBusPanelUseCustomFont);
+    bool use_custom_font = false;
+    if (GetBoolean(use_custom_font_value, &use_custom_font)) {
+      handler->OnIBusUseCustomFontDescriptionChanged(use_custom_font);
+    } else {
+      LOG(ERROR) << "Cannot get panel:use_custom_font configuration.";
+    }
+  } else if (g_strcmp0(key, kIBusPanelCustomFont) == 0) {
+    GVariant *custom_font_value = g_settings_get_value(settings,
+                                                       kIBusPanelCustomFont);
+    string font_description;
+    if (GetString(custom_font_value, &font_description)) {
+      handler->OnIBusCustomFontDescriptionChanged(font_description);
+    } else {
+      LOG(ERROR) << "Cannot get panel:custom_font configuration.";
+    }
+  }
+}
+
 }  // namespace
+
+class GSettingsObserver {
+ public:
+  explicit GSettingsObserver(GtkCandidateWindowHandler *handler)
+      :  settings_(OpenIBusPanelSettings()),
+         settings_observer_id_(0) {
+    if (settings_ != nullptr) {
+      gpointer ptr = reinterpret_cast<gpointer>(handler);
+      settings_observer_id_ = g_signal_connect(
+          settings_,
+          "changed",
+          G_CALLBACK(GSettingsChangedCallback),
+          ptr);
+      // Emulate state changes to set the initial values to the renderer.
+      GSettingsChangedCallback(settings_, kIBusPanelUseCustomFont, ptr);
+      GSettingsChangedCallback(settings_, kIBusPanelCustomFont, ptr);
+    }
+  }
+
+  ~GSettingsObserver() {
+    if (settings_ != nullptr) {
+      if (settings_observer_id_ != 0) {
+        g_signal_handler_disconnect(settings_, settings_observer_id_);
+      }
+      g_object_unref(settings_);
+    }
+  }
+
+ private:
+  GSettings *settings_;
+  gulong settings_observer_id_;
+};
 
 GtkCandidateWindowHandler::GtkCandidateWindowHandler(
     renderer::RendererInterface *renderer)
@@ -120,6 +222,10 @@ void GtkCandidateWindowHandler::OnIBusCustomFontDescriptionChanged(
 void GtkCandidateWindowHandler::OnIBusUseCustomFontDescriptionChanged(
     bool use_custom_font_description) {
   use_custom_font_description_ = use_custom_font_description;
+}
+
+void GtkCandidateWindowHandler::RegisterGSettingsObserver() {
+  settings_observer_.reset(new GSettingsObserver(this));
 }
 
 string GtkCandidateWindowHandler::GetFontDescription() const {

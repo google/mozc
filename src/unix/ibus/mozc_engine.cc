@@ -80,10 +80,6 @@ namespace {
 // The ID for candidates which are not associated with texts.
 const int32 kBadCandidateId = -1;
 
-#ifdef ENABLE_GTK_RENDERER
-const char kMozcPanelSectionName[] = "panel";
-#endif  // ENABLE_GTK_RENDERER
-
 // Default UI locale
 const char kMozcDefaultUILocale[] = "en_US.UTF-8";
 
@@ -105,22 +101,6 @@ string GetMessageLocale() {
     return env_ptr;
   }
   return kMozcDefaultUILocale;
-}
-
-bool GetString(GVariant *value, string *out_string) {
-  if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
-    return false;
-  }
-  *out_string = static_cast<const char *>(g_variant_get_string(value, NULL));
-  return true;
-}
-
-bool GetBoolean(GVariant *value, bool *out_boolean) {
-  if (g_variant_classify(value) != G_VARIANT_CLASS_BOOLEAN) {
-    return false;
-  }
-  *out_boolean = (g_variant_get_boolean(value) != FALSE);
-  return true;
 }
 
 struct IBusMozcEngineClass {
@@ -241,6 +221,18 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
   return client;
 }
 
+#ifdef ENABLE_GTK_RENDERER
+CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
+    ::mozc::renderer::RendererClient *renderer_client) {
+  if (!FLAGS_use_mozc_renderer) {
+    return nullptr;
+  }
+  auto *handler = new GtkCandidateWindowHandler(renderer_client);
+  handler->RegisterGSettingsObserver();
+  return handler;
+}
+#endif  // !ENABLE_GTK_RENDERER
+
 }  // namespace
 
 MozcEngine::MozcEngine()
@@ -254,7 +246,7 @@ MozcEngine::MozcEngine()
           new LocaleBasedMessageTranslator(GetMessageLocale()), client_.get())),
       preedit_handler_(new PreeditHandler()),
 #ifdef ENABLE_GTK_RENDERER
-      gtk_candidate_window_handler_(new GtkCandidateWindowHandler(
+      gtk_candidate_window_handler_(createGtkCandidateWindowHandler(
           new renderer::RendererClient())),
 #endif  // ENABLE_GTK_RENDERER
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
@@ -486,53 +478,6 @@ void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) {
   ibus_quit();
 }
 
-void MozcEngine::ConfigValueChanged(IBusConfig *config,
-                                    const gchar *section,
-                                    const gchar *name,
-                                    GVariant *value,
-                                    gpointer user_data) {
-  // This function might be called _before_ MozcEngineClassInit is called if
-  // you press the "Configure..." button for Mozc before switching to the Mozc
-  // input method.
-  MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
-  engine->UpdateConfig(section, name, value);
-}
-
-#ifdef ENABLE_GTK_RENDERER
-void MozcEngine::InitRendererConfig(IBusConfig *config) {
-  GVariant *custom_font_value = ibus_config_get_value(config,
-                                                      kMozcPanelSectionName,
-                                                      "custom_font");
-  GVariant *use_custom_font_value = ibus_config_get_value(config,
-                                                          kMozcPanelSectionName,
-                                                          "use_custom_font");
-  bool use_custom_font;
-  if (GetBoolean(use_custom_font_value, &use_custom_font)) {
-    gtk_candidate_window_handler_->OnIBusUseCustomFontDescriptionChanged(
-        use_custom_font);
-  } else {
-    LOG(ERROR) << "Initialize Failed: "
-               << "Cannot get panel:use_custom_font configuration.";
-  }
-  string font_description;
-  if (GetString(custom_font_value, &font_description)) {
-    gtk_candidate_window_handler_->OnIBusCustomFontDescriptionChanged(
-       font_description);
-  } else {
-    LOG(ERROR) << "Initialize Failed: "
-               << "Cannot get panel:custom_font configuration.";
-  }
-}
-#endif  // ENABLE_GTK_RENDERER
-
-// TODO(mazda): Move the impelementation to an appropriate file.
-void MozcEngine::InitConfig(IBusConfig *config) {
-#ifdef ENABLE_GTK_RENDERER
-  MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
-  engine->InitRendererConfig(config);
-#endif  // ENABLE_GTK_RENDERER
-}
-
 bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
   UpdateDeletionRange(engine, output);
   UpdateResult(engine, output);
@@ -594,36 +539,6 @@ bool MozcEngine::UpdateCandidateIDMapping(const commands::Output &output) {
     }
   }
   return true;
-}
-
-void MozcEngine::UpdateConfig(const gchar *section,
-                              const gchar *name,
-                              GVariant *value) {
-  if (!section || !name || !value) {
-    return;
-  }
-#ifdef ENABLE_GTK_RENDERER
-  // TODO(nona): Introduce ConfigHandler
-  if (g_strcmp0(section, kMozcPanelSectionName) == 0) {
-    if (g_strcmp0(name, "use_custom_font") == 0) {
-      bool use_custom_font;
-      if (!GetBoolean(value, &use_custom_font)) {
-        LOG(ERROR) << "Cannot get " << section << ":" << name << " value.";
-        return;
-      }
-      gtk_candidate_window_handler_->OnIBusUseCustomFontDescriptionChanged(
-          use_custom_font);
-    } else if (g_strcmp0(name, "custom_font") == 0) {
-      string font_description;
-      if (!GetString(value, &font_description)) {
-        LOG(ERROR) << "Cannot get " << section << ":" << name << " value.";
-        return;
-      }
-      gtk_candidate_window_handler_->OnIBusCustomFontDescriptionChanged(
-          font_description);
-    }
-  }
-#endif  // ENABLE_GTK_RENDERER
 }
 
 void MozcEngine::UpdatePreeditMethod() {
@@ -762,7 +677,7 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
 #ifndef ENABLE_GTK_RENDERER
   return ibus_candidate_window_handler_.get();
 #else
-  if (!FLAGS_use_mozc_renderer) {
+  if (!gtk_candidate_window_handler_) {
     return ibus_candidate_window_handler_.get();
   }
 

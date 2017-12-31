@@ -108,21 +108,6 @@ class MozcEngine : public EngineInterface {
   static GType GetType();
   // The callback function to the "disconnected" signal to the bus object.
   static void Disconnected(IBusBus *bus, gpointer user_data);
-  // The callback function to the "value-changed" signal to the config object.
-  static void ConfigValueChanged(IBusConfig *config,
-                                 const gchar *section,
-                                 const gchar *name,
-                                 GVariant *value,
-                                 gpointer user_data);
-
-  // Initializes mozc config.
-  static void InitConfig(IBusConfig *config);
-
-#if ENABLE_GTK_RENDERER
-  // Initialize RendererConfiguration.
-  // TODO(nona): Introduce ConfigHandler.
-  void InitRendererConfig(IBusConfig *config);
-#endif  // ENABLE_GTK_RENDERER
 
  private:
   // Updates the preedit text and the candidate window and inserts result
@@ -137,8 +122,6 @@ class MozcEngine : public EngineInterface {
 
   // Updates the callback message based on the content of |output|.
   bool ExecuteCallback(IBusEngine *engine, const commands::Output &output);
-  // Updates the configuration.
-  void UpdateConfig(const gchar *section, const gchar *name, GVariant *value);
 
   // Launches Mozc tool with appropriate arguments.
   bool LaunchTool(const commands::Output &output) const;
@@ -168,9 +151,11 @@ class MozcEngine : public EngineInterface {
   std::unique_ptr<PropertyHandlerInterface> property_handler_;
   std::unique_ptr<PreeditHandlerInterface> preedit_handler_;
 
+#ifdef ENABLE_GTK_RENDERER
   // TODO(nona): Introduce CandidateWindowHandlerManager to avoid direct access.
   std::unique_ptr<CandidateWindowHandlerInterface>
       gtk_candidate_window_handler_;
+#endif  // ENABLE_GTK_RENDERER
   std::unique_ptr<CandidateWindowHandlerInterface>
       ibus_candidate_window_handler_;
   config::Config::PreeditMethod preedit_method_;
