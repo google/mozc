@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ const char *kDummyDataVersion = "dataversion";
 
 }  // namespace
 
-class VersionRewriterTest : public testing::Test {
+class VersionRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -122,12 +122,7 @@ TEST_F(VersionRewriterTest, RewriteTest_Version) {
 
   const ConversionRequest request;
   Segments segments;
-  VersionRewriterTest::AddSegment(
-      // "ばーじょん"
-      "\xe3\x81\xb0\xe3\x83\xbc\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93",
-      // "バージョン"
-      "\xe3\x83\x90\xe3\x83\xbc\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
-      &segments);
+  VersionRewriterTest::AddSegment("ばーじょん", "バージョン", &segments);
 
   EXPECT_TRUE(version_rewriter.Rewrite(request, &segments));
   EXPECT_TRUE(VersionRewriterTest::FindCandidateWithPrefix(

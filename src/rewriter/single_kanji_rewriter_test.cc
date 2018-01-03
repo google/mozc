@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,9 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-using mozc::dictionary::POSMatcher;
-
 namespace mozc {
+
+using dictionary::POSMatcher;
 
 class SingleKanjiRewriterTest : public ::testing::Test {
  protected:
@@ -92,8 +92,7 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
 
   Segments segments;
   Segment *segment = segments.add_segment();
-  // "あ"
-  const string kKey = "\xe3\x81\x82";
+  const string kKey = "あ";
   segment->set_key(kKey);
   Segment::Candidate *candidate = segment->add_candidate();
   // First candidate may be inserted by other rewriters.
@@ -133,65 +132,49 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   Segments segments;
   Segment *segment1 = segments.add_segment();
 
-  // "み"
-  segment1->set_key("\xE3\x81\xBF");
+  segment1->set_key("み");
   Segment::Candidate *candidate1 = segment1->add_candidate();
 
   candidate1->Init();
-  // candidate1->key = "み";
-  // candidate1->content_key = "見";
-  // candidate1->value = "見";
-  // candidate1->content_value = "見";
-  candidate1->key = "\xE3\x81\xBF";
-  candidate1->content_key = "\xE8\xA6\x8B";
-  candidate1->value = "\xE8\xA6\x8B";
-  candidate1->content_value = "\xE8\xA6\x8B";
+  candidate1->key = "み";
+  candidate1->content_key = "見";
+  candidate1->value = "見";
+  candidate1->content_value = "見";
 
   EXPECT_EQ(1, segment1->candidates_size());
   rewriter.Rewrite(default_request_, &segments);
 
-  // "未"
-  EXPECT_EQ("\xE6\x9C\xAA", segment1->candidate(0).value);
+  EXPECT_EQ("未", segment1->candidate(0).value);
 
   Segment *segment2 = segments.add_segment();
 
-  // segment2->set_key("こうたい");
-  segment2->set_key("\xE3\x81\x93\xE3\x81\x86\xE3\x81\x9F\xE3\x81\x84");
+  segment2->set_key("こうたい");
   Segment::Candidate *candidate2 = segment2->add_candidate();
 
   candidate2->Init();
-  // candidate2->key = "こうたい";
-  // candidate2->content_key = "後退";
-  // candidate2->value = "後退";
-  candidate2->key = "\xE3\x81\x93\xE3\x81\x86\xE3\x81\x9F\xE3\x81\x84";
-  candidate2->content_key = "\xE5\xBE\x8C\xE9\x80\x80";
-  candidate2->value = "\xE5\xBE\x8C\xE9\x80\x80";
+  candidate2->key = "こうたい";
+  candidate2->content_key = "後退";
+  candidate2->value = "後退";
 
   candidate2->lid = pos_matcher().GetContentWordWithConjugationId();
   candidate2->rid = pos_matcher().GetContentWordWithConjugationId();
 
   candidate1 = segment1->mutable_candidate(0);
   candidate1->Init();
-  // candidate1->key = "み";
-  // candidate1->content_key = "見";
-  // candidate1->value = "見";
-  // candidate1->content_value = "見";
-  candidate1->key = "\xE3\x81\xBF";
-  candidate1->content_key = "\xE8\xA6\x8B";
-  candidate1->value = "\xE8\xA6\x8B";
-  candidate1->content_value = "\xE8\xA6\x8B";
+  candidate1->key = "み";
+  candidate1->content_key = "見";
+  candidate1->value = "見";
+  candidate1->content_value = "見";
 
   rewriter.Rewrite(default_request_, &segments);
-  // "見"
-  EXPECT_EQ("\xE8\xA6\x8B", segment1->candidate(0).value);
+  EXPECT_EQ("見", segment1->candidate(0).value);
 
   // Only applied when right word's POS is noun.
   candidate2->lid = pos_matcher().GetContentNounId();
   candidate2->rid = pos_matcher().GetContentNounId();
 
   rewriter.Rewrite(default_request_, &segments);
-  // "未"
-  EXPECT_EQ("\xE6\x9C\xAA", segment1->candidate(0).value);
+  EXPECT_EQ("未", segment1->candidate(0).value);
 
   EXPECT_EQ(pos_matcher().GetNounPrefixId(), segment1->candidate(0).lid);
   EXPECT_EQ(pos_matcher().GetNounPrefixId(), segment1->candidate(0).rid);
@@ -202,8 +185,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
   Segments segments;
   Segment *segment = segments.add_segment();
 
-  // "あ"
-  segment->set_key("\xe3\x81\x82");
+  segment->set_key("あ");
   for (int i = 0; i < 10; ++i) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
@@ -229,15 +211,13 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
   Segments segments;
   Segment *segment = segments.add_segment();
 
-  // "あ"
-  segment->set_key("\xe3\x81\x82");
+  segment->set_key("あ");
   {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
     candidate->key = segment->key();
     candidate->content_key = segment->key();
-    // "亞"
-    candidate->value = "\xe4\xba\x9e";  // variant of "亜".
+    candidate->value = "亞";  // variant of "亜".
     candidate->content_value = candidate->value;
   }
 
@@ -245,8 +225,7 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
   EXPECT_TRUE(segment->candidate(0).description.empty());
   EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
   EXPECT_LT(1, segment->candidates_size());  // Some candidates were inserted.
-  // "亜の旧字体"
-  EXPECT_EQ("\xe4\xba\x9c\xe3\x81\xae\xe6\x97\xa7\xe5\xad\x97\xe4\xbd\x93",
-            segment->candidate(0).description);
+  EXPECT_EQ("亜の旧字体", segment->candidate(0).description);
 }
+
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,39 +43,28 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
 
+namespace mozc {
+namespace {
+
 using ::mozc::protobuf::RepeatedPtrField;
 using ::mozc::user_dictionary::UserDictionary;
 using ::mozc::user_dictionary::UserDictionaryCommand;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySessionHandler;
 
-namespace mozc {
-
-namespace {
-// "きょうと\t京都\t名詞\n"
-// "!おおさか\t大阪\t地名\n"
-// "\n"
-// "#とうきょう\t東京\t地名\tコメント\n"
-// "すずき\t鈴木\t人名\n";
 const char kDictionaryData[] =
-    "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\t"
-    "\xE4\xBA\xAC\xE9\x83\xBD\t\xE5\x90\x8D\xE8\xA9\x9E\n"
-    "\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\t"
-    "\xE5\xA4\xA7\xE9\x98\xAA\t\xE5\x9C\xB0\xE5\x90\x8D\n"
-    "\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3"
-    "\x81\x86\t\xE6\x9D\xB1\xE4\xBA\xAC\t\xE5\x9C\xB0\xE5"
-    "\x90\x8D\t\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\n"
-    "\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\t\xE9\x88\xB4"
-    "\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
+    "きょうと\t京都\t名詞\n"
+    "おおさか\t大阪\t地名\n"
+    "とうきょう\t東京\t地名\tコメント\n"
+    "すずき\t鈴木\t人名\n";
 
 // 0 means invalid dictionary id.
 // c.f., UserDictionaryUtil::CreateNewDictionaryId()
 const uint64 kInvalidDictionaryId = 0;
-}  // namespace
 
 class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     FileUtil::Unlink(GetUserDictionaryFile());
@@ -87,7 +76,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     handler_->set_dictionary_path(GetUserDictionaryFile());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     FileUtil::Unlink(GetUserDictionaryFile());
     SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
   }
@@ -925,6 +914,31 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataFailure) {
   DeleteSession(session_id);
 }
 
+TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
+  const uint64 session_id = CreateSession();
+
+  string data = kDictionaryData;
+  data.append("☻\tEMOTICON\t名詞\n");  // Invalid symbol reading.
+  data.append("読み\tYOMI\t名詞\n");  // Invalid Kanji reading.
+
+  // Import data to a new dictionary.
+  Clear();
+  command_->set_type(UserDictionaryCommand::IMPORT_DATA);
+  command_->set_session_id(session_id);
+  command_->set_dictionary_name("user dictionary");
+  command_->set_data(data);
+  command_->set_ignore_invalid_entries(true);
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
+  ASSERT_TRUE(status_->has_dictionary_id());
+  const uint64 dictionary_id = status_->dictionary_id();
+
+  // Make sure the size of the data.
+  ASSERT_EQ(4, GetUserDictionaryEntrySize(session_id, dictionary_id));
+
+  DeleteSession(session_id);
+}
+
 TEST_F(UserDictionarySessionHandlerTest, GetStorage) {
   const uint64 session_id = CreateSession();
   const uint64 dictionary_id1 = CreateUserDictionary(session_id, "dictionary1");
@@ -975,4 +989,6 @@ TEST_F(UserDictionarySessionHandlerTest, GetStorage) {
 
   DeleteSession(session_id);
 }
+
+}  // namespace
 }  // namespace mozc

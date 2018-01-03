@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -109,8 +109,7 @@ bool UserPOS::GetTokens(const string &key, const string &value,
   // Set smaller cost for "短縮よみ" in order to make
   // the rank of the word higher than others.
   const int16 kIsolatedWordCost = 200;
-  const char kIsolatedWordPOS[] =
-      "\xE7\x9F\xAD\xE7\xB8\xAE\xE3\x82\x88\xE3\x81\xBF";
+  const char kIsolatedWordPOS[] = "短縮よみ";
 
   if (size == 1) {  // no conjugation
     const auto &token_iter = range.first;

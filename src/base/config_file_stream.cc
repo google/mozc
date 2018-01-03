@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -89,11 +89,11 @@ class OnMemoryFileMap {
   std::map<string, string> map_;
 };
 
-#include "base/config_file_stream_data.h"
+#include "base/config_file_stream_data.inc"
 }  // namespace
 
 std::istream *ConfigFileStream::Open(const string &filename,
-                                     ios_base::openmode mode) {
+                                     std::ios_base::openmode mode) {
   // system://foo.bar.txt
   if (Util::StartsWith(filename, kSystemPrefix)) {
     const string new_filename = RemovePrefix(kSystemPrefix, filename);

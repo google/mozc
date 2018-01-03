@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,12 +42,6 @@ namespace mozc {
 // Arabic numbers, Roman numbers, Kanji numbers, and so on.
 class NumberUtil {
  public:
-  // Converts the number to a string and append it to output.
-  static string SimpleItoa(int32 number);
-  static string SimpleItoa(uint32 number);
-  static string SimpleItoa(int64 number);
-  static string SimpleItoa(uint64 number);
-
   // Converts the string to a number and return it.
   static int SimpleAtoi(StringPiece str);
 

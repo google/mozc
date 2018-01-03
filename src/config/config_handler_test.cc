@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,10 @@
 
 #include <atomic>
 #include <string>
-#include <unordered_set>
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
+#include "base/mozc_hash_set.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
@@ -226,8 +225,8 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
 }
 
 TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
-  const string config_file = string("config")
-      + NumberUtil::SimpleItoa(config::CONFIG_VERSION);
+  const string config_file =
+      string("config") + std::to_string(config::CONFIG_VERSION);
 
   const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, config_file);
   FileUtil::Unlink(filename);
@@ -318,16 +317,16 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   };
   const TestCase testcases[] = {
     // "ア"
-    {"\xE3\x82\xA2", Config::FULL_WIDTH, Config::FULL_WIDTH},
+    {"ア", Config::FULL_WIDTH, Config::FULL_WIDTH},
     {"A", Config::FULL_WIDTH, Config::LAST_FORM},
     {"0", Config::FULL_WIDTH, Config::LAST_FORM},
     {"(){}[]", Config::FULL_WIDTH, Config::LAST_FORM},
     {".,", Config::FULL_WIDTH, Config::LAST_FORM},
     // "。、",
-    {"\xE3\x80\x82\xE3\x80\x81",
+    {"。、",
       Config::FULL_WIDTH, Config::FULL_WIDTH},
     // "・「」"
-    {"\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D",
+    {"・「」",
       Config::FULL_WIDTH, Config::FULL_WIDTH},
     {"\"'", Config::FULL_WIDTH, Config::LAST_FORM},
     {":;", Config::FULL_WIDTH, Config::LAST_FORM},
@@ -396,7 +395,7 @@ string ExtractCharacterFormRules(const Config &config) {
 class GetConfigThread final : public Thread {
  public:
   explicit GetConfigThread(
-      const std::unordered_set<string> &character_form_rules_set)
+      const mozc_hash_set<string> &character_form_rules_set)
       : quitting_(false),
         character_form_rules_set_(character_form_rules_set) {
   }
@@ -419,7 +418,7 @@ class GetConfigThread final : public Thread {
 
  private:
   std::atomic<bool> quitting_;
-  const std::unordered_set<string> character_form_rules_set_;
+  const mozc_hash_set<string> character_form_rules_set_;
 };
 
 
@@ -471,7 +470,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // |GeneralConfig|, the returned object from |ConfigHandler::GetConfig()|
   // is not predictable.  Hence we only make sure that
   // |Config::character_form_rules()| is one of expected values.
-  std::unordered_set<string> character_form_rules_set;
+  mozc_hash_set<string> character_form_rules_set;
   for (const auto &config : configs) {
     character_form_rules_set.insert(ExtractCharacterFormRules(config));
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,31 +34,22 @@
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
 
-static void InitTable(mozc::composer::Table* table) {
-  // "あ"
-  table->AddRule("a",  "\xE3\x81\x82", "");
-  // "い"
-  table->AddRule("i",  "\xE3\x81\x84", "");
-  // "か"
-  table->AddRule("ka", "\xE3\x81\x8B", "");
-  // "き"
-  table->AddRule("ki", "\xE3\x81\x8D", "");
-  // "く"
-  table->AddRule("ku", "\xE3\x81\x8F", "");
-  // "け"
-  table->AddRule("ke", "\xE3\x81\x91", "");
-  // "こ"
-  table->AddRule("ko", "\xE3\x81\x93", "");
-  // "っ"
-  table->AddRule("kk", "\xE3\x81\xA3", "k");
-  // "な"
-  table->AddRule("na", "\xE3\x81\xAA", "");
-  // "に"
-  table->AddRule("ni", "\xE3\x81\xAB", "");
-  // "ん"
-  table->AddRule("n",  "\xE3\x82\x93", "");
-  // "ん"
-  table->AddRule("nn", "\xE3\x82\x93", "");
+namespace mozc {
+namespace {
+
+void InitTable(mozc::composer::Table* table) {
+  table->AddRule("a",  "あ", "");
+  table->AddRule("i",  "い", "");
+  table->AddRule("ka", "か", "");
+  table->AddRule("ki", "き", "");
+  table->AddRule("ku", "く", "");
+  table->AddRule("ke", "け", "");
+  table->AddRule("ko", "こ", "");
+  table->AddRule("kk", "っ", "k");
+  table->AddRule("na", "な", "");
+  table->AddRule("ni", "に", "");
+  table->AddRule("n",  "ん", "");
+  table->AddRule("nn", "ん", "");
 }
 
 TEST(ConverterTest, Converter) {
@@ -66,29 +57,16 @@ TEST(ConverterTest, Converter) {
     const char *input;
     const char *expected_output;
   } test_cases[] = {
-    // "あ"
-    { "a", "\xE3\x81\x82" },
-    // "か"
-    { "ka", "\xE3\x81\x8B" },
-    // "き"
-    { "ki", "\xE3\x81\x8D" },
-    // "く"
-    { "ku", "\xE3\x81\x8F" },
-    // "っk"
-    { "kk", "\xE3\x81\xA3\x6B" },
-    // "あか"
-    { "aka", "\xE3\x81\x82\xE3\x81\x8B" },
-    // "かきzっか"
-    { "kakizkka", "\xE3\x81\x8B\xE3\x81\x8D\x7A\xE3\x81\xA3\xE3\x81\x8B" },
-    // "なんかない?"
-    { "nankanai?", "\xE3\x81\xAA\xE3\x82\x93\xE3\x81\x8B\xE3\x81\xAA\xE3\x81"
-                   "\x84\x3F" },
-    // "なんかないん?"
-    { "nannkanain?", "\xE3\x81\xAA\xE3\x82\x93\xE3\x81\x8B\xE3\x81\xAA\xE3\x81"
-                     "\x84\xE3\x82\x93\x3F" },
-    // "なんかないん"
-    { "nannkanain", "\xE3\x81\xAA\xE3\x82\x93\xE3\x81\x8B\xE3\x81\xAA\xE3\x81"
-                    "\x84\xE3\x82\x93" },
+    { "a", "あ" },
+    { "ka", "か" },
+    { "ki", "き" },
+    { "ku", "く" },
+    { "kk", "っk" },
+    { "aka", "あか" },
+    { "kakizkka", "かきzっか" },
+    { "nankanai?", "なんかない?" },
+    { "nannkanain?", "なんかないん?" },
+    { "nannkanain", "なんかないん" },
   };
   static const int size = arraysize(test_cases);
 
@@ -103,3 +81,6 @@ TEST(ConverterTest, Converter) {
     EXPECT_EQ(test.expected_output, output);
   }
 }
+
+}  // namespace
+}  // namespace mozc

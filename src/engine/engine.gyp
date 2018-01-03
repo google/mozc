@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -116,6 +116,21 @@
         'oss_engine_factory',
       ],
       'conditions': [
+      ],
+    },
+    {
+      'target_name': 'minimal_engine',
+      'type': 'static_library',
+      'sources': [
+        'minimal_engine.cc',
+      ],
+      'dependencies': [
+        '../composer/composer.gyp:composer',
+        '../converter/converter.gyp:converter',
+        '../data_manager/data_manager_base.gyp:data_manager',
+        '../dictionary/dictionary_base.gyp:suppression_dictionary',
+        '../protocol/protocol.gyp:config_proto',
+        '../request/request.gyp:conversion_request',
       ],
     },
   ],

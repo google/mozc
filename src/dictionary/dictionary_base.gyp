@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,7 @@
           'variables': {
             'user_pos': '../data/rules/user_pos.def',
             'third_party_pos_map': '../data/rules/third_party_pos_map.def',
-            'pos_map_header': '<(gen_out_dir)/pos_map.h',
+            'pos_map_header': '<(gen_out_dir)/pos_map.inc',
           },
           'inputs': [
             'gen_pos_map.py',
@@ -161,7 +161,7 @@
       'target_name': 'user_dictionary',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/pos_map.h',
+        '<(gen_out_dir)/pos_map.inc',
         'user_dictionary.cc',
         'user_dictionary_importer.cc',
         'user_dictionary_session.cc',

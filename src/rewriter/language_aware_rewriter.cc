@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "rewriter/language_aware_rewriter.h"
 
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -43,10 +44,10 @@
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-
 namespace mozc {
+
+using dictionary::DictionaryInterface;
+using dictionary::POSMatcher;
 
 LanguageAwareRewriter::LanguageAwareRewriter(
     const POSMatcher &pos_matcher,
@@ -54,34 +55,32 @@ LanguageAwareRewriter::LanguageAwareRewriter(
     : unknown_id_(pos_matcher.GetUnknownId()),
       dictionary_(dictionary) {}
 
-LanguageAwareRewriter::~LanguageAwareRewriter() {}
+LanguageAwareRewriter::~LanguageAwareRewriter() = default;
 
 namespace {
 
+bool IsRomanHiraganaInput(const ConversionRequest &request) {
+  const auto table = request.request().special_romanji_table();
+  switch (table) {
+    case commands::Request::DEFAULT_TABLE:
+      return (request.config().preedit_method() == config::Config::ROMAN);
+    case commands::Request::QWERTY_MOBILE_TO_HIRAGANA:
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool IsEnabled(const ConversionRequest &request) {
-  // The current default value of language_aware_input is
-  // NO_LANGUAGE_AWARE_INPUT and only unittests set LANGUAGE_AWARE_SUGGESTION
-  // at this moment.  Thus, FillRawText is not performed in the productions
-  // yet.
-  if (request.request().language_aware_input() ==
-      mozc::commands::Request::NO_LANGUAGE_AWARE_INPUT) {
-    return false;
-  } else if (request.request().language_aware_input() ==
-             mozc::commands::Request::LANGUAGE_AWARE_SUGGESTION) {
-    return true;
-  }
-  DCHECK_EQ(mozc::commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR,
-            request.request().language_aware_input());
-
-  if (!request.config().use_spelling_correction()) {
+  const auto mode = request.request().language_aware_input();
+  if (mode == commands::Request::NO_LANGUAGE_AWARE_INPUT) {
     return false;
   }
-
-#ifdef OS_ANDROID
-  return false;
-#else  // OS_ANDROID
-  return true;
-#endif  // OS_ANDROID
+  if (mode == commands::Request::LANGUAGE_AWARE_SUGGESTION) {
+    return IsRomanHiraganaInput(request);
+  }
+  DCHECK_EQ(commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR, mode);
+  return request.config().use_spelling_correction();
 }
 
 }  // namespace
@@ -214,16 +213,15 @@ bool LanguageAwareRewriter::FillRawText(
   candidate->value = raw_string;
   candidate->key = raw_string;
   candidate->content_value = raw_string;
-  candidate->content_key = raw_string;
+  // raw_string is no longer used, so move it.
+  candidate->content_key = std::move(raw_string);
   candidate->lid = lid;
   candidate->rid = rid;
 
   candidate->attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
                             Segment::Candidate::NO_EXTRA_DESCRIPTION);
-  candidate->prefix = "\xE2\x86\x92 ";  // "→ "
-  candidate->description =
-    // "もしかして"
-    "\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6";
+  candidate->prefix = "→ ";
+  candidate->description = "もしかして";
 
   // Set usage stats
   usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionTriggered");
@@ -244,9 +242,7 @@ bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
                                    const Segment::Candidate &candidate) {
   // Check candidate.prefix to filter if the candidate is probably generated
   // from LanguangeAwareInput or not.
-  //
-  // "→ "
-  if (candidate.prefix != "\xE2\x86\x92 ") {
+  if (candidate.prefix != "→ ") {
     return false;
   }
 

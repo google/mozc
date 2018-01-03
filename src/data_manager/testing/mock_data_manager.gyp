@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@
     'magic_number': '\\x4D\\x4F\\x43\\x4B',  # MOCK
     'mozc_data_varname': 'kMockMozcDataSet',
     'out_mozc_data': 'mock_mozc.data',
-    'out_mozc_data_header': 'mock_mozc_data.h',
+    'out_mozc_data_header': 'mock_mozc_data.inc',
   },
   # This 'includes' defines the following targets:
   #   - mock_data_manager  (type: static_library)

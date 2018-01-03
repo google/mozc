@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -606,9 +606,6 @@ def GypMain(options, unused_args):
     gyp_options.extend(['-D', 'wix_dir=%s' % options.wix_dir])
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
-
-  if target_platform == 'Linux':
-    gyp_options.extend(['-D', 'enable_gtk_renderer=1'])
 
   # Android
   if target_platform == 'Android':

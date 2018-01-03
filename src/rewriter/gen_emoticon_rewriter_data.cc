@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,13 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/mozc_hash_map.h"
 #include "base/string_piece.h"
 #include "base/util.h"
 #include "data_manager/serialized_dictionary.h"
@@ -52,27 +52,27 @@ using KeyList = std::vector<string>;
 using CompilerToken = SerializedDictionary::CompilerToken;
 using TokenList = SerializedDictionary::TokenList;
 
-int LookupCount(const std::unordered_map<string, int> &key_count,
+int LookupCount(const mozc_hash_map<string, int> &key_count,
                 const string &key) {
   const auto iter = key_count.find(key);
   return (iter == key_count.end()) ? 0 : iter->second;
 }
 
 string GetDescription(const KeyList &key_list,
-                      const std::unordered_map<string, int> &key_count) {
+                      const mozc_hash_map<string, int> &key_count) {
   if (key_list.size() == 1) {
     return key_list[0];
   }
   KeyList sorted_key_list(key_list);
-  sort(sorted_key_list.begin(), sorted_key_list.end(),
-       [&key_count](const string &x, const string &y) {
-         const int x_count = LookupCount(key_count, x);
-         const int y_count = LookupCount(key_count, y);
-         if (x_count == y_count) {
-           return x < y;
-         }
-         return x_count < y_count;
-       });
+  std::sort(sorted_key_list.begin(), sorted_key_list.end(),
+            [&key_count](const string &x, const string &y) {
+              const int x_count = LookupCount(key_count, x);
+              const int y_count = LookupCount(key_count, y);
+              if (x_count == y_count) {
+                return x < y;
+              }
+              return x_count < y_count;
+            });
   return Util::StringPrintf("%s %s", sorted_key_list.back().c_str(),
                             sorted_key_list.front().c_str());
 }
@@ -84,7 +84,7 @@ std::map<string, TokenList> ReadEmoticonTsv(const string &path) {
   getline(ifs, line);  // Skip header
 
   std::vector<std::pair<string, KeyList>> data;
-  std::unordered_map<string, int> key_count;
+  mozc_hash_map<string, int> key_count;
   while (getline(ifs, line)) {
     std::vector<StringPiece> field_list;
     Util::SplitStringUsing(line, "\t", &field_list);
@@ -92,7 +92,8 @@ std::map<string, TokenList> ReadEmoticonTsv(const string &path) {
     LOG_IF(WARNING, field_list.size() > 3) << "Ignore extra columns: " << line;
 
     string replaced;
-    Util::StringReplace(field_list[1], "\xE3\x80\x80", " ", true, &replaced);
+    Util::StringReplace(field_list[1], "　",  // Full-width space
+                        " ", true, &replaced);
     KeyList key_list;
     Util::SplitStringUsing(field_list[1], " ", &key_list);
 

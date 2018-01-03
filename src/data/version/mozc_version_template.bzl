@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MAJOR=2
-MINOR=20
-BUILD=2677
+MINOR=23
+BUILD=2785
 REVISION=102
 # This version represents the version of Mozc IME engine (converter, predictor,
 # etc.).  This version info is included both in the Mozc server and in the Mozc
@@ -43,4 +43,5 @@ ENGINE_VERSION=24
 # This version is used to manage the data version and is included only in the
 # data set file.  DATA_VERSION can be incremented without updating
 # ENGINE_VERSION as long as it's compatible with the engine.
-DATA_VERSION=0
+# This version should be reset to 0 when ENGINE_VERSION is incremented.
+DATA_VERSION=2

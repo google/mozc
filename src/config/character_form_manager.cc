@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -133,15 +133,15 @@ class PreeditCharacterFormManagerImpl : public CharacterFormManagerImpl {
   virtual void SetDefaultRule() {
     Clear();
     // AddRule("ア", Config::FULL_WIDTH);
-    AddRule("\xE3\x82\xA2", Config::FULL_WIDTH);
+    AddRule("ア", Config::FULL_WIDTH);
     AddRule("A", Config::FULL_WIDTH);
     AddRule("0", Config::FULL_WIDTH);
     AddRule("(){}[]", Config::FULL_WIDTH);
     AddRule(".,", Config::FULL_WIDTH);
     // AddRule("。、", Config::FULL_WIDTH);  // don't like half-width
     // AddRule("・「」", Config::FULL_WIDTH);  // don't like half-width
-    AddRule("\xE3\x80\x82\xE3\x80\x81", Config::FULL_WIDTH);
-    AddRule("\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D", Config::FULL_WIDTH);
+    AddRule("。、", Config::FULL_WIDTH);
+    AddRule("・「」", Config::FULL_WIDTH);
     AddRule("\"'", Config::FULL_WIDTH);
     AddRule(":;", Config::FULL_WIDTH);
     AddRule("#%&@$^_|`\\", Config::FULL_WIDTH);
@@ -164,15 +164,15 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
     Clear();
     // AddRule("ア", Config::FULL_WIDTH);
     // don't like half-width
-    AddRule("\xE3\x82\xA2", Config::FULL_WIDTH);
+    AddRule("ア", Config::FULL_WIDTH);
     AddRule("A", Config::LAST_FORM);
     AddRule("0", Config::LAST_FORM);
     AddRule("(){}[]", Config::LAST_FORM);
     AddRule(".,", Config::LAST_FORM);
     // AddRule("。、", Config::FULL_WIDTH);  // don't like half-width
     // AddRule("・「」", Config::FULL_WIDTH);  // don't like half-width
-    AddRule("\xE3\x80\x82\xE3\x80\x81", Config::FULL_WIDTH);
-    AddRule("\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D", Config::FULL_WIDTH);
+    AddRule("。、", Config::FULL_WIDTH);
+    AddRule("・「」", Config::FULL_WIDTH);
     AddRule("\"'", Config::LAST_FORM);
     AddRule(":;", Config::LAST_FORM);
     AddRule("#%&@$^_|`\\", Config::LAST_FORM);

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ config::Config::CharacterForm StringToForm(const QString &str) {
 
 QString GroupToString(const string &str) {
   // if (str == "ア") {
-  if (str == "\xE3\x82\xA2") {
+  if (str == "ア") {
     return QObject::tr("Katakana");
   } else if (str == "0") {
     return QObject::tr("Numbers");
@@ -84,7 +84,7 @@ QString GroupToString(const string &str) {
 const string StringToGroup(const QString &str) {
   if (str == QObject::tr("Katakana")) {
     // return "ア";
-    return "\xE3\x82\xA2";
+    return "ア";
   } else if (str == QObject::tr("Numbers")) {
     return "0";
   } else if (str == QObject::tr("Alphabets")) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ namespace mozc {
 // This class reads all of the file using Pepper FileIO and sotres the data in
 // string_buffer_ when open() is called. This class can't be used in the NaCl
 // main thread.
-class InputFileStream : public istream {
+class InputFileStream : public std::istream {
  public:
   InputFileStream();
   explicit InputFileStream(const char* filename,
@@ -62,6 +62,8 @@ class InputFileStream : public istream {
   string Read();
 
  private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
+
   std::stringbuf string_buffer_;
 };
 
@@ -69,7 +71,7 @@ class InputFileStream : public istream {
 // This class writes all of the data to the file using Pepper FileIO in the
 // destructor or when close() is called. This class can't be used in the NaCl
 // main thread.
-class OutputFileStream : public ostream {
+class OutputFileStream : public std::ostream {
  public:
   OutputFileStream();
   explicit OutputFileStream(const char* filename,
@@ -83,6 +85,8 @@ class OutputFileStream : public ostream {
   void close();
 
  private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
+
   string filename_;
   std::stringbuf string_buffer_;
   bool write_done_;
@@ -114,6 +118,9 @@ class InputFileStream : public std::ifstream {
   // Helper functions to load the entire content of a file into string.
   void ReadToString(string *s);
   string Read();
+
+ private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
 };
 
 class OutputFileStream : public std::ofstream {
@@ -127,6 +134,9 @@ class OutputFileStream : public std::ofstream {
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ofstream::open() function.
   void open(const char* filename, ios_base::openmode mode = ios_base::out);
+
+ private:
+  virtual void UnusedKeyMethod();  // go/definekeymethod
 };
 #endif  // MOZC_USE_PEPPER_FILE_IO
 

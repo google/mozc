@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,6 @@
 #include <memory>
 #include <string>
 
-#include "base/number_util.h"
 #include "base/pepper_file_util.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -56,14 +55,14 @@ class DictionaryDownloaderTest : public testing::Test {
     // to "/RETRY_TEST" returns 404.
     EXPECT_TRUE(HTTPClient::Get(
         base_url_ + "?action=set_counter&value=" +
-        NumberUtil::SimpleItoa(counter),
+        std::to_string(counter),
         &output_));
     CheckRetryTestCounter(counter);
   }
   void CheckRetryTestCounter(int32 counter) {
     EXPECT_TRUE(HTTPClient::Get(
         base_url_ + "?action=get_counter", &output_));
-    EXPECT_EQ(NumberUtil::SimpleItoa(counter), output_);
+    EXPECT_EQ(std::to_string(counter), output_);
   }
 
   const string base_url_;

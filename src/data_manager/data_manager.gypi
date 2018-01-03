@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -469,16 +469,16 @@
             '<@(input_files)',
           ],
           'outputs': [
-            '<(gen_out_dir)/segmenter_inl.h',
+            '<(gen_out_dir)/segmenter_inl.inc',
           ],
           'action': [
             'python', '<(mozc_dir)/build_tools/redirect.py',
-            '<(gen_out_dir)/segmenter_inl.h',
+            '<(gen_out_dir)/segmenter_inl.inc',
             '<(mozc_dir)/converter/gen_segmenter_code.py',
             '<@(input_files)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
-                      '<(gen_out_dir)/segmenter_inl.h.'),
+                      '<(gen_out_dir)/segmenter_inl.inc.'),
         },
       ],
     },

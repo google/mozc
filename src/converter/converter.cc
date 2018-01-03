@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -499,10 +499,9 @@ bool ConverterImpl::FinishConversion(const ConversionRequest &request,
 
   // Remove the front segments except for some segments which will be
   // used as history segments.
-  const int start_index = max(
-      0,
-      static_cast<int>(segments->segments_size()
-          - segments->max_history_segments_size()));
+  const int start_index =
+      std::max(0, static_cast<int>(segments->segments_size() -
+                                   segments->max_history_segments_size()));
   for (int i = 0; i < start_index; ++i) {
     segments->pop_front_segment();
   }
@@ -754,20 +753,20 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
       Segment *segment2 = segments->mutable_segment(segment_index + 1);
       segment2->set_segment_type(Segment::FREE);
       string tmp;
-      Util::SubString(cur_segment_key,
-                      max(static_cast<size_t>(0), cur_length + offset_length),
-                      cur_length,
-                      &tmp);
+      Util::SubString(
+          cur_segment_key,
+          std::max(static_cast<size_t>(0), cur_length + offset_length),
+          cur_length, &tmp);
       tmp += segment2->key();
       segment2->set_key(tmp);
     } else {
       Segment *segment2 = segments->add_segment();
       segment2->set_segment_type(Segment::FREE);
       string new_key;
-      Util::SubString(cur_segment_key,
-                      max(static_cast<size_t>(0), cur_length + offset_length),
-                      cur_length,
-                      &new_key);
+      Util::SubString(
+          cur_segment_key,
+          std::max(static_cast<size_t>(0), cur_length + offset_length),
+          cur_length, &new_key);
       segment2->set_key(new_key);
     }
   }
@@ -940,7 +939,7 @@ void ConverterImpl::TrimCandidates(const ConversionRequest &request,
     const int candidates_size = seg->candidates_size();
     // A segment should have at least one candidate.
     const int candidates_limit =
-        max(1, limit - static_cast<int>(seg->meta_candidates_size()));
+        std::max(1, limit - static_cast<int>(seg->meta_candidates_size()));
     if (candidates_size < candidates_limit) {
       continue;
     }

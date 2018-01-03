@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 
 namespace mozc {
 namespace dictionary {
+namespace {
 
 TEST(SuffixDictionaryTest, LookupPredictive) {
   // Test SuffixDictionary with mock data.
@@ -73,7 +74,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   }
   {
     // Non-empty prefix.
-    const string kPrefix = "\xE3\x81\x9F";  // "た"
+    const string kPrefix = "た";
     CollectTokenCallback callback;
     dic->LookupPredictive(kPrefix, convreq, &callback);
     EXPECT_FALSE(callback.tokens().empty());
@@ -88,5 +89,6 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   }
 }
 
+}  // namespace
 }  // namespace dictionary
 }  // namespace mozc

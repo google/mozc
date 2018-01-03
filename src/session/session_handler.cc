@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -196,7 +196,7 @@ void SessionHandler::Init(
   config::ConfigHandler::GetConfig(config_.get());
 
   // allow [2..128] sessions
-  max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
+  max_session_size_ = std::max(2, std::min(FLAGS_max_session_size, 128));
   session_map_.reset(new SessionMap(max_session_size_));
 
   if (!engine_) {
@@ -626,7 +626,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
   const int create_session_minimum_interval =
-      max(0, min(FLAGS_create_session_min_interval, 10));
+      std::max(0, std::min(FLAGS_create_session_min_interval, 10));
 
   uint64 current_time = Clock::GetTime();
   if (last_create_session_time_ != 0 &&
@@ -754,12 +754,11 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   // allow [1..600] sec. default: 300
   const uint64 create_session_timeout =
       suspend_time +
-      max(1, min(FLAGS_last_create_session_timeout, 600));
+      std::max(1, std::min(FLAGS_last_create_session_timeout, 600));
 
   // allow [10..7200] sec. default 3600
   const uint64 last_command_timeout =
-      suspend_time +
-      max(10, min(FLAGS_last_command_timeout, 7200));
+      suspend_time + std::max(10, std::min(FLAGS_last_command_timeout, 7200));
 
   std::vector<SessionID> remove_ids;
   for (SessionElement *element =

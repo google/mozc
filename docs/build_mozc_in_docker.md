@@ -5,7 +5,7 @@ How to build Mozc in Docker
 Docker containers are available to build Mozc binaries for Android, NaCl, and Linux desktop.
 
 # System Requirements
-Currently, only Ubuntu 14.04 is tested to host the Docker container to build Mozc. See [official document](http://docs.docker.com/installation/ubuntulinux/#ubuntu-trusty-1404-lts-64-bit) to set up Docker for Ubuntu 14.04.
+Currently, only Ubuntu 14.04 is tested to host the Docker container to build Mozc. See [official document](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/) to set up Docker for Ubuntu 14.04.
 
 ## Set up Ubuntu 14.04 Docker container
 
@@ -115,7 +115,7 @@ python build_mozc.py build -c {Release, Debug} [gyp_path_1.gyp:gyp_target_name1]
 
 ### Application package name
 
-**CAUTION**: Currently the application package is fixed (org.mozc.android.inputmethod.japanese). Don't publish the built package. If you want to publish, specify `--android_application_id` to `build_mozc.py gyp` command and manually update related files.
+**CAUTION**: Currently the application package name is fixed (org.mozc.android.inputmethod.japanese). Don't publish the built package. If you want to publish, specify `--android_application_id` to `build_mozc.py gyp` command and manually update related files.
 
 ### zipalign
 

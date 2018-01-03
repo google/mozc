@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ class KatakanaPromotionRewriterTest : public ::testing::Test {
     mobile_conv_request_.set_request(&mobile_request_);
   }
 
-  ~KatakanaPromotionRewriterTest() override {}
+  ~KatakanaPromotionRewriterTest() override = default;
 
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
   ConversionRequest desktop_conv_request_;
@@ -104,34 +104,21 @@ TEST_F(KatakanaPromotionRewriterTest, PromoteKatakanaFromT13N) {
 
   Segments segments;
   Segment *segment = segments.push_back_segment();
-  // "きょう"
-  segment->set_key("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86");
-  // "今日"
-  AddCandidateWithValue("\xe4\xbb\x8a\xe6\x97\xa5", segment);
-  // "きょう"
-  AddCandidateWithValue("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86", segment);
-  // "強"
-  AddCandidateWithValue("\xe5\xbc\xb7", segment);
-  // "教"
-  AddCandidateWithValue("\xe6\x95\x99", segment);
-  // "凶"
-  AddCandidateWithValue("\xe5\x87\xb6", segment);
-  // "卿"
-  AddCandidateWithValue("\xe5\x8d\xbf", segment);
+  segment->set_key("きょう");
+  AddCandidateWithValue("今日", segment);
+  AddCandidateWithValue("きょう", segment);
+  AddCandidateWithValue("強", segment);
+  AddCandidateWithValue("教", segment);
+  AddCandidateWithValue("凶", segment);
+  AddCandidateWithValue("卿", segment);
 
-  // "キョウ"
-  EXPECT_EQ(-1, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(-1, GetCandidateIndexByValue("キョウ", *segment));
 
   EXPECT_TRUE(t13n_rewriter_->Rewrite(mobile_conv_request_, &segments));
-  // "キョウ"
-  EXPECT_EQ(-1, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(-1, GetCandidateIndexByValue("キョウ", *segment));
 
   EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
-  // "キョウ"
-  EXPECT_EQ(5, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(5, GetCandidateIndexByValue("キョウ", *segment));
 }
 
 TEST_F(KatakanaPromotionRewriterTest, PromoteKatakanaFromT13NForFewCandidates) {
@@ -139,28 +126,18 @@ TEST_F(KatakanaPromotionRewriterTest, PromoteKatakanaFromT13NForFewCandidates) {
 
   Segments segments;
   Segment *segment = segments.push_back_segment();
-  // "きょう"
-  segment->set_key("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86");
-  // "今日"
-  AddCandidateWithValue("\xe4\xbb\x8a\xe6\x97\xa5", segment);
-  // "きょう"
-  AddCandidateWithValue("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86", segment);
-  // "強"
-  AddCandidateWithValue("\xe5\xbc\xb7", segment);
+  segment->set_key("きょう");
+  AddCandidateWithValue("今日", segment);
+  AddCandidateWithValue("きょう", segment);
+  AddCandidateWithValue("強", segment);
 
-  // "キョウ"
-  EXPECT_EQ(-1, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(-1, GetCandidateIndexByValue("キョウ", *segment));
 
   EXPECT_TRUE(t13n_rewriter_->Rewrite(mobile_conv_request_, &segments));
-  // "キョウ"
-  EXPECT_EQ(-1, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(-1, GetCandidateIndexByValue("キョウ", *segment));
 
   EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
-  // "キョウ"
-  EXPECT_EQ(3, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(3, GetCandidateIndexByValue("キョウ", *segment));
 }
 
 TEST_F(KatakanaPromotionRewriterTest, PromoteKatakana) {
@@ -168,28 +145,18 @@ TEST_F(KatakanaPromotionRewriterTest, PromoteKatakana) {
 
   Segments segments;
   Segment *segment = segments.push_back_segment();
-  // "きょう"
-  segment->set_key("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86");
-  // "今日"
-  AddCandidateWithValue("\xe4\xbb\x8a\xe6\x97\xa5", segment);
-  // "きょう"
-  AddCandidateWithValue("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86", segment);
-  // "強"
-  AddCandidateWithValue("\xe5\xbc\xb7", segment);
-  // "教"
-  AddCandidateWithValue("\xe6\x95\x99", segment);
-  // "凶"
-  AddCandidateWithValue("\xe5\x87\xb6", segment);
-  // "卿"
-  AddCandidateWithValue("\xe5\x8d\xbf", segment);
-  // "京"
-  AddCandidateWithValue("\xe4\xba\xac", segment);
-  // "キョウ"
-  AddCandidateWithValue("\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", segment);
+  segment->set_key("きょう");
+  AddCandidateWithValue("今日", segment);
+  AddCandidateWithValue("きょう", segment);
+  AddCandidateWithValue("強", segment);
+  AddCandidateWithValue("教", segment);
+  AddCandidateWithValue("凶", segment);
+  AddCandidateWithValue("卿", segment);
+  AddCandidateWithValue("京", segment);
+  AddCandidateWithValue("キョウ", segment);
 
   const int katakana_index = GetCandidateIndexByValue(
-      // "キョウ"
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment);
+      "キョウ", *segment);
   EXPECT_EQ(katakana_index, 7);
 
   Segment::Candidate *katakana_candidate =
@@ -201,9 +168,7 @@ TEST_F(KatakanaPromotionRewriterTest, PromoteKatakana) {
 
   EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
 
-  const int promoted_index = GetCandidateIndexByValue(
-      // "キョウ"
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment);
+  const int promoted_index = GetCandidateIndexByValue("キョウ", *segment);
   // Make sure that the existing candidate was promoted.
   EXPECT_EQ(5, promoted_index);
   EXPECT_EQ(1, segment->candidate(promoted_index).lid);
@@ -215,33 +180,21 @@ TEST_F(KatakanaPromotionRewriterTest, KatakanaIsAlreadyRankedHigh) {
 
   Segments segments;
   Segment *segment = segments.push_back_segment();
-  // "きょう"
-  segment->set_key("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86");
-  // "今日"
-  AddCandidateWithValue("\xe4\xbb\x8a\xe6\x97\xa5", segment);
-  // "きょう"
-  AddCandidateWithValue("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86", segment);
-  // "キョウ"
-  AddCandidateWithValue("\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", segment);
-  // "強"
-  AddCandidateWithValue("\xe5\xbc\xb7", segment);
-  // "教"
-  AddCandidateWithValue("\xe6\x95\x99", segment);
-  // "凶"
-  AddCandidateWithValue("\xe5\x87\xb6", segment);
-  // "卿"
-  AddCandidateWithValue("\xe5\x8d\xbf", segment);
+  segment->set_key("きょう");
+  AddCandidateWithValue("今日", segment);
+  AddCandidateWithValue("きょう", segment);
+  AddCandidateWithValue("キョウ", segment);
+  AddCandidateWithValue("強", segment);
+  AddCandidateWithValue("教", segment);
+  AddCandidateWithValue("凶", segment);
+  AddCandidateWithValue("卿", segment);
 
-  // "キョウ"
-  EXPECT_EQ(2, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(2, GetCandidateIndexByValue("キョウ", *segment));
 
   EXPECT_TRUE(t13n_rewriter_->Rewrite(mobile_conv_request_, &segments));
 
   EXPECT_FALSE(rewriter.Rewrite(mobile_conv_request_, &segments));
-  // "キョウ"
-  EXPECT_EQ(2, GetCandidateIndexByValue(
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6", *segment));
+  EXPECT_EQ(2, GetCandidateIndexByValue("キョウ", *segment));
 }
 
 TEST_F(KatakanaPromotionRewriterTest, PromoteKatakanaForMultiSegments) {
@@ -249,56 +202,35 @@ TEST_F(KatakanaPromotionRewriterTest, PromoteKatakanaForMultiSegments) {
 
   Segments segments;
   Segment *segment = segments.push_back_segment();
-  // "きょうは"
-  segment->set_key("\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86\xe3\x81\xaf");
-  // "今日は"
-  AddCandidateWithValue("\xe4\xbb\x8a\xe6\x97\xa5\xe3\x81\xaf", segment);
-  // "きょうは"
-  AddCandidateWithValue(
-      "\xe3\x81\x8d\xe3\x82\x87\xe3\x81\x86\xe3\x81\xaf", segment);
-  // "強は"
-  AddCandidateWithValue("\xe5\xbc\xb7\xe3\x81\xaf", segment);
-  // "教は"
-  AddCandidateWithValue("\xe6\x95\x99\xe3\x81\xaf", segment);
-  // "凶は"
-  AddCandidateWithValue("\xe5\x87\xb6\xe3\x81\xaf", segment);
-  // "卿は"
-  AddCandidateWithValue("\xe5\x8d\xbf\xe3\x81\xaf", segment);
+  segment->set_key("きょうは");
+  AddCandidateWithValue("今日は", segment);
+  AddCandidateWithValue("きょうは", segment);
+  AddCandidateWithValue("強は", segment);
+  AddCandidateWithValue("教は", segment);
+  AddCandidateWithValue("凶は", segment);
+  AddCandidateWithValue("卿は", segment);
 
   segment = segments.push_back_segment();
-  // "はれ"
-  segment->set_key("\xe3\x81\xaf\xe3\x82\x8c");
-  // "晴れ"
-  AddCandidateWithValue("\xe6\x99\xb4\xe3\x82\x8c", segment);
-  // "腫れ"
-  AddCandidateWithValue("\xe8\x85\xab\xe3\x82\x8c", segment);
-  // "晴"
-  AddCandidateWithValue("\xe6\x99\xb4", segment);
-  // "貼れ"
-  AddCandidateWithValue("\xe8\xb2\xbc\xe3\x82\x8c", segment);
-  // "張れ"
-  AddCandidateWithValue("\xe5\xbc\xb5\xe3\x82\x8c", segment);
-  // "脹れ"
-  AddCandidateWithValue("\xe8\x84\xb9\xe3\x82\x8c", segment);
+  segment->set_key("はれ");
+  AddCandidateWithValue("晴れ", segment);
+  AddCandidateWithValue("腫れ", segment);
+  AddCandidateWithValue("晴", segment);
+  AddCandidateWithValue("貼れ", segment);
+  AddCandidateWithValue("張れ", segment);
+  AddCandidateWithValue("脹れ", segment);
 
   EXPECT_TRUE(t13n_rewriter_->Rewrite(mobile_conv_request_, &segments));
 
-  EXPECT_EQ(-1, GetCandidateIndexByValue(
-      // "キョウハ"
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6\xe3\x83\x8f",
-      segments.conversion_segment(0)));
-  EXPECT_EQ(-1, GetCandidateIndexByValue(
-      // "ハレ"
-      "\xe3\x83\x8f\xe3\x83\xac", segments.conversion_segment(1)));
+  EXPECT_EQ(
+      -1, GetCandidateIndexByValue("キョウハ", segments.conversion_segment(0)));
+  EXPECT_EQ(
+      -1, GetCandidateIndexByValue("ハレ", segments.conversion_segment(1)));
 
   EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
-  EXPECT_EQ(5, GetCandidateIndexByValue(
-      // "キョウハ"
-      "\xe3\x82\xad\xe3\x83\xa7\xe3\x82\xa6\xe3\x83\x8f",
-      segments.conversion_segment(0)));
-  EXPECT_EQ(5, GetCandidateIndexByValue(
-      // "ハレ"
-      "\xe3\x83\x8f\xe3\x83\xac", segments.conversion_segment(1)));
+  EXPECT_EQ(
+      5, GetCandidateIndexByValue("キョウハ", segments.conversion_segment(0)));
+  EXPECT_EQ(
+      5, GetCandidateIndexByValue("ハレ", segments.conversion_segment(1)));
 }
 
 TEST_F(KatakanaPromotionRewriterTest, NoNeedToPromote) {
@@ -316,8 +248,7 @@ TEST_F(KatakanaPromotionRewriterTest, NoNeedToPromote) {
 
   EXPECT_TRUE(t13n_rewriter_->Rewrite(mobile_conv_request_, &segments));
 
-  EXPECT_EQ(-1, GetCandidateIndexByValue(
-      "go", segments.conversion_segment(0)));
+  EXPECT_EQ(-1, GetCandidateIndexByValue("go", segments.conversion_segment(0)));
 
   EXPECT_FALSE(rewriter.Rewrite(mobile_conv_request_, &segments));
 }

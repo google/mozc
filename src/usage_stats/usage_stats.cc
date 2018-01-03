@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -174,8 +174,8 @@ void UsageStats::UpdateTiming(const string &name, uint32 val) {
     stats.set_num_timings(stats.num_timings() + 1);
     stats.set_total_time(stats.total_time() + val);
     stats.set_avg_time(stats.total_time() / stats.num_timings());
-    stats.set_min_time(min(stats.min_time(), val));
-    stats.set_max_time(max(stats.max_time(), val));
+    stats.set_min_time(std::min(stats.min_time(), val));
+    stats.set_max_time(std::max(stats.max_time(), val));
   } else {
     stats.set_name(name);
     stats.set_type(Stats::TIMING);

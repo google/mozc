@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM ubuntu:14.04.5
+FROM ubuntu:14.04.4
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -53,15 +53,16 @@ RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 
 ## Android SDK/NDK
-RUN curl -LO http://dl.google.com/android/repository/android-ndk-r12b-linux-x86_64.zip && unzip android-ndk-r12b-linux-x86_64.zip && rm android-ndk-r12b-linux-x86_64.zip
+RUN curl -LO http://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip && unzip android-ndk-r16b-linux-x86_64.zip && rm android-ndk-r16b-linux-x86_64.zip
 RUN curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r12b
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r16b
 ENV ANDROID_HOME /home/mozc_builder/work/android-sdk-linux
 ENV PATH $PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
 RUN echo y | android update sdk --all --force --no-ui --filter android-22
 RUN echo y | android update sdk --all --force --no-ui --filter build-tools-22.0.0
-RUN echo y | android update sdk --all --force --no-ui --filter extra-android-support
 RUN echo y | android update sdk --all --force --no-ui --filter platform-tool
+RUN mkdir -p ${ANDROID_HOME}/extras/android
+RUN curl -LO https://dl.google.com/dl/android/repository/support_r23.1.1.zip && unzip -d ${ANDROID_HOME}/extras/android support_r23.1.1.zip support/v13/android-support-v13.jar && rm support_r23.1.1.zip
 
 ## NaCl SDK
 RUN curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip

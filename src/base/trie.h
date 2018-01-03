@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -215,7 +215,7 @@ class Trie {
   }
 
   StringPiece GetKeyTail(StringPiece key) const {
-    return key.substr(Util::OneCharLen(key.data()));
+    return ClippedSubstr(key, Util::OneCharLen(key.data()));
   }
 
   Trie<T> *GetSubTrie(StringPiece key) const {

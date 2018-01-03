@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -293,9 +293,15 @@ Segment::Candidate *Segment::add_candidate() {
 }
 
 Segment::Candidate *Segment::insert_candidate(int i) {
-  if (i < 0 || i > static_cast<int>(candidates_.size())) {
-    LOG(WARNING) << "invalid index";
-    return NULL;
+  if (i < 0) {
+    LOG(WARNING) << "Invalid insert position [negative]: "
+                 << i << " / " << candidates_.size();
+    return nullptr;
+  }
+  if (i > static_cast<int>(candidates_.size())) {
+    LOG(DFATAL) << "Invalid insert position [out of bounds]: "
+                << i << " / " << candidates_.size();
+    i = static_cast<int>(candidates_.size());
   }
   Candidate *candidate = pool_->Alloc();
   candidate->Init();
@@ -653,8 +659,8 @@ size_t Segments::max_history_segments_size() const {
 
 void Segments::set_max_history_segments_size(size_t max_history_segments_size) {
   max_history_segments_size_ =
-      max(static_cast<size_t>(0),
-          min(max_history_segments_size, kMaxHistorySize));
+      std::max(static_cast<size_t>(0),
+               std::min(max_history_segments_size, kMaxHistorySize));
 }
 
 void Segments::set_resized(bool resized) {

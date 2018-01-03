@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -124,12 +124,9 @@ TEST(ImeContextTest, BasicTest) {
 
 TEST(ImeContextTest, CopyContext) {
   composer::Table table;
-  // "あ"
-  table.AddRule("a", "\xE3\x81\x82", "");
-  // "ん"
-  table.AddRule("n", "\xE3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xE3\x81\xAA", "");
+  table.AddRule("a", "あ", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
   const commands::Request request;
   const config::Config config;
 
@@ -137,11 +134,9 @@ TEST(ImeContextTest, CopyContext) {
 
   Segments segments;
   Segment *segment = segments.add_segment();
-  // "あん"
-  segment->set_key("\xE3\x81\x82\xE3\x82\x93");
+  segment->set_key("あん");
   Segment::Candidate *candidate = segment->add_candidate();
-  // "庵"
-  candidate->value = "\xE5\xBA\xB5";
+  candidate->value = "庵";
 
   engine->mutable_converter_mock()->SetStartConversionForRequest(&segments,
                                                                  true);
@@ -162,15 +157,13 @@ TEST(ImeContextTest, CopyContext) {
 
     string composition;
     source.composer().GetStringForSubmission(&composition);
-    // "あｎ"
-    EXPECT_EQ("\xE3\x81\x82\xEF\xBD\x8E", composition);
+    EXPECT_EQ("あｎ", composition);
 
     ImeContext::CopyContext(source, &destination);
     EXPECT_EQ(ImeContext::COMPOSITION, destination.state());
     composition.clear();
     source.composer().GetStringForSubmission(&composition);
-    // "あｎ"
-    EXPECT_EQ("\xE3\x81\x82\xEF\xBD\x8E", composition);
+    EXPECT_EQ("あｎ", composition);
   }
 
   {
@@ -192,20 +185,17 @@ TEST(ImeContextTest, CopyContext) {
     source.mutable_composer()->InsertCharacter("a");
     source.mutable_composer()->InsertCharacter("n");
     source.mutable_converter()->Convert(source.composer());
-    // "早い"
-    const string &kQuick = "\xE6\x97\xA9\xE3\x81\x84";
+    const string &kQuick = "早い";
     source.mutable_composer()->set_source_text(kQuick);
 
     string composition;
     source.composer().GetQueryForConversion(&composition);
-    // "あん"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", composition);
+    EXPECT_EQ("あん", composition);
 
     commands::Output output;
     source.converter().FillOutput(source.composer(), &output);
     EXPECT_EQ(1, output.preedit().segment_size());
-    // "庵"
-    EXPECT_EQ("\xE5\xBA\xB5", output.preedit().segment(0).value());
+    EXPECT_EQ("庵", output.preedit().segment(0).value());
 
     ImeContext::CopyContext(source, &destination);
     EXPECT_EQ(kCreateTime, destination.create_time());
@@ -213,14 +203,12 @@ TEST(ImeContextTest, CopyContext) {
     EXPECT_EQ(ImeContext::CONVERSION, destination.state());
     composition.clear();
     destination.composer().GetQueryForConversion(&composition);
-    // "あん"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", composition);
+    EXPECT_EQ("あん", composition);
 
     output.Clear();
     destination.converter().FillOutput(source.composer(), &output);
     EXPECT_EQ(1, output.preedit().segment_size());
-    // "庵"
-    EXPECT_EQ("\xE5\xBA\xB5", output.preedit().segment(0).value());
+    EXPECT_EQ("庵", output.preedit().segment(0).value());
 
     EXPECT_EQ(kQuick, destination.composer().source_text());
   }

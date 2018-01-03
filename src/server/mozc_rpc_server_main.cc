@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,6 @@ using ssize_t = SSIZE_T;
 
 #include "base/flags.h"
 #include "base/init_mozc.h"
-#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "engine/engine_factory.h"
@@ -288,7 +287,7 @@ class RPCClient {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = AF_INET;
 
-    const string port_str = NumberUtil::SimpleItoa(FLAGS_port);
+    const string port_str = std::to_string(FLAGS_port);
     CHECK_EQ(::getaddrinfo(FLAGS_host.c_str(), port_str.c_str(),
                            &hints, &res), 0)
         << "getaddrinfo failed";

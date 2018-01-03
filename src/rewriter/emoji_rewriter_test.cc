@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/string_piece.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
@@ -57,8 +56,7 @@ namespace {
 
 using mozc::commands::Request;
 
-// "えもじ"
-const char kEmoji[] = "\xE3\x81\x88\xE3\x82\x82\xE3\x81\x98";
+const char kEmoji[] = "えもじ";
 
 // Makes |segments| to have only a segment with a key-value paired candidate.
 void SetSegment(const string &key, const string &value, Segments *segments) {
@@ -101,7 +99,7 @@ bool HasExpectedCandidate(const Segments &segments,
 }
 
 // Replaces an emoji candidate into the 0-th index, as the Mozc converter
-// does with a commited candidate.
+// does with a committed candidate.
 void ChooseEmojiCandidate(Segments *segments) {
   CHECK_LE(1, segments->segments_size());
   Segment *segment = segments->mutable_segment(0);
@@ -127,7 +125,7 @@ struct EmojiData {
 // Elements must be sorted lexicographically by key (first string).
 const EmojiData kTestEmojiList[] = {
   // An actual emoji character
-  {"Emoji", "\xF0\x9F\x90\xAD", 0, "nezumi picture", "", "", ""},
+  {"Emoji", "🐭", 0, "nezumi picture", "", "", ""},
 
   // Meta candidates.
   {"Inu", "DOG", 0, "inu", "", "", ""},
@@ -195,8 +193,9 @@ class TestDataManager : public testing::MockDataManager {
 
   void GetEmojiRewriterData(StringPiece *token_array_data,
                             StringPiece *string_array_data) const override {
-    token_array_data->set(reinterpret_cast<const char*>(token_array_.data()),
-                          token_array_.size() * sizeof(uint32));
+    *token_array_data =
+        StringPiece(reinterpret_cast<const char *>(token_array_.data()),
+                    token_array_.size() * sizeof(uint32));
     *string_array_data = string_array_data_;
   }
 
@@ -456,13 +455,9 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
     if (!EmojiRewriter::IsEmojiCandidate(candidate)) {
       continue;
     }
-    // "<機種依存文字>"
-    EXPECT_NE(string::npos, description.find("<"
-        "\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D\xE5\xAD\x98"
-        "\xE6\x96\x87\xE5\xAD\x97" ">"))
+    EXPECT_NE(string::npos, description.find("<機種依存文字>"))
         << "for \"" << candidate.value << "\" : \"" << description << "\"";
-    // "[全]"
-    EXPECT_EQ(string::npos, description.find("[" "\xE5\x85\xA8" "]"))
+    EXPECT_EQ(string::npos, description.find("[全]"))
         << "for \"" << candidate.value << "\" : \"" << description << "\"";
   }
 }
@@ -480,7 +475,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
     Segment *segment = segments.push_back_segment();
     segment->set_key("Neko");
     for (int i = 0; i < kExpectPosition * 2; ++i) {
-      string value = "candidate" + NumberUtil::SimpleItoa(i);
+      string value = "candidate" + std::to_string(i);
       Segment::Candidate *candidate = segment->add_candidate();
       candidate->Init();
       candidate->value = value;
@@ -538,9 +533,7 @@ TEST_F(EmojiRewriterTest, CheckUsageStats) {
 TEST_F(EmojiRewriterTest, QueryNormalization) {
   {
     Segments segments;
-    // "Ｎｅｋｏ"
-    SetSegment("\xEF\xBC\xAE\xEF\xBD\x85\xEF\xBD\x8B\xEF\xBD\x8F", "Neko",
-               &segments);
+    SetSegment("Ｎｅｋｏ", "Neko", &segments);
     EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
   }
   {
@@ -554,8 +547,7 @@ TEST_F(EmojiRewriterTest, FullDataTest) {
   // U+1F646 (FACE WITH OK GESTURE)
   {
     Segments segments;
-    // "ＯＫ"
-    SetSegment("\xEF\xBC\xAF\xEF\xBC\xAB", "OK", &segments);
+    SetSegment("ＯＫ", "OK", &segments);
     EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
   }
   {
@@ -566,8 +558,7 @@ TEST_F(EmojiRewriterTest, FullDataTest) {
   // U+2795 (HEAVY PLUS SIGN)
   {
     Segments segments;
-    // "＋"
-    SetSegment("\xEF\xBC\x8B", "+", &segments);
+    SetSegment("＋", "+", &segments);
     EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
   }
   {
@@ -578,9 +569,7 @@ TEST_F(EmojiRewriterTest, FullDataTest) {
   // U+1F522 (INPUT SYMBOL FOR NUMBERS)
   {
     Segments segments;
-    // "１２３４"
-    SetSegment("\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94", "1234",
-               &segments);
+    SetSegment("１２３４", "1234", &segments);
     EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
   }
   {
@@ -591,13 +580,12 @@ TEST_F(EmojiRewriterTest, FullDataTest) {
   // U+1F552 (CLOCK FACE THREE OCLOCK)
   {
     Segments segments;
-    // "３じ"
-    SetSegment("\xEF\xBC\x93\xE3\x81\x98", "3ji", &segments);
+    SetSegment("３じ", "3ji", &segments);
     EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
   }
   {
     Segments segments;
-    SetSegment("\x33\xE3\x81\x98", "3ji", &segments);
+    SetSegment("3じ", "3ji", &segments);
     EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
   }
   // U+31 U+20E3 (KEYCAP 1)
@@ -605,8 +593,7 @@ TEST_F(EmojiRewriterTest, FullDataTest) {
   // Rewrite function returns false though ideally it should be supported.
   {
     Segments segments;
-    // "１"
-    SetSegment("\xEF\xBC\x91", "1", &segments);
+    SetSegment("１", "1", &segments);
     EXPECT_FALSE(full_data_rewriter_->Rewrite(convreq_, &segments));
   }
   {

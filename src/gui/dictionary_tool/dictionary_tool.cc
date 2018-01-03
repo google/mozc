@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,13 +72,12 @@
 
 namespace mozc {
 namespace gui {
-
-using mozc::user_dictionary::UserDictionary;
-using mozc::user_dictionary::UserDictionaryCommandStatus;
-using mozc::user_dictionary::UserDictionarySession;
-using mozc::user_dictionary::UserDictionaryStorage;
-
 namespace {
+
+using ::mozc::user_dictionary::UserDictionary;
+using ::mozc::user_dictionary::UserDictionaryCommandStatus;
+using ::mozc::user_dictionary::UserDictionarySession;
+using ::mozc::user_dictionary::UserDictionaryStorage;
 
 // set longer timeout because it takes longer time
 // to reload all user dictionary.
@@ -87,11 +86,9 @@ const int kSessionTimeout = 100000;
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
   // Here we use "龍" to calc font size, as it looks almsot square
-  // const char kHexBaseChar[]= "龍";
-  const char kHexBaseChar[]= "\xE9\xBE\x8D";
+  const char kHexBaseChar[] = "龍";
   const QRect rect =
-      QFontMetrics(widget->font()).boundingRect(
-          QObject::trUtf8(kHexBaseChar));
+      QFontMetrics(widget->font()).boundingRect(QObject::trUtf8(kHexBaseChar));
   return static_cast<int>(rect.height() * 1.4);
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,10 +53,8 @@ using commands::Request;
 
 namespace {
 
-// "絵文字"
-const char kEmoji[] = "\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97";
-// "えもじ"
-const char kEmojiKey[] = "\xE3\x81\x88\xE3\x82\x82\xE3\x81\x98";
+const char kEmoji[] = "絵文字";
+const char kEmojiKey[] = "えもじ";
 // Where to insert emoji candidate by default.
 const size_t kDefaultInsertPos = 6;
 
@@ -82,10 +80,10 @@ bool InsertCandidate(StringPiece key,
   candidate->lid = 0;
   candidate->rid = 0;
   candidate->cost = cost;
-  value.CopyToString(&candidate->value);
-  value.CopyToString(&candidate->content_value);
-  key.CopyToString(&candidate->key);
-  key.CopyToString(&candidate->content_key);
+  candidate->value.assign(value.data(), value.size());
+  candidate->content_value.assign(value.data(), value.size());
+  candidate->key.assign(key.data(), key.size());
+  candidate->content_key.assign(key.data(), key.size());
   candidate->description.assign(kEmoji);
   if (!description.empty()) {
     Util::AppendStringWithDelimiter(
@@ -191,7 +189,7 @@ bool InsertToken(StringPiece key,
   bool inserted = false;
 
   size_t insert_position =
-      min(segment->candidates_size(), kDefaultInsertPos);
+      std::min(segment->candidates_size(), kDefaultInsertPos);
   int cost = GetEmojiCost(*segment);
   for (; range.first != range.second; ++range.first) {
     inserted |= InsertEmojiData(

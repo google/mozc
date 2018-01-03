@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@ DEFINE_bool(test_testsendkey, true, "test TestSendKey");
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv, false);
 
-  FLAGS_logtostderr = true;
+  mozc::SetFlag(&FLAGS_logtostderr, true);
 
   mozc::client::Client client;
   if (!FLAGS_server_path.empty()) {

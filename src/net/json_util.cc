@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ bool ProtobufRepeatedFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
-      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<int64>(
+      *value = Json::Value(std::to_string(static_cast<int64>(
                    reflection.GetRepeatedInt64(message, &field, index))));
       return true;
     }
@@ -74,7 +74,7 @@ bool ProtobufRepeatedFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
-      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<uint64>(
+      *value = Json::Value(std::to_string(static_cast<uint64>(
                    reflection.GetRepeatedUInt64(message, &field, index))));
       return true;
     }
@@ -124,7 +124,7 @@ bool ProtobufFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
-      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<int64>(
+      *value = Json::Value(std::to_string(static_cast<int64>(
                    reflection.GetInt64(message, &field))));
       return true;
     }
@@ -133,7 +133,7 @@ bool ProtobufFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
-      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<uint64>(
+      *value = Json::Value(std::to_string(static_cast<uint64>(
                    reflection.GetUInt64(message, &field))));
       return true;
     }

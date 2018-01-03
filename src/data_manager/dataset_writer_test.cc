@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ TEST(DatasetWriterTest, Write) {
   // Create a dummy file to be packed.
   const string &in = FileUtil::JoinPath({FLAGS_test_tmpdir, "in"});
   {
-    OutputFileStream f(in.c_str(), ios_base::out | ios_base::binary);
+    OutputFileStream f(in.c_str(), std::ios_base::out | std::ios_base::binary);
     f.write("m\0zc\xEF", 5);
     f.close();
   }

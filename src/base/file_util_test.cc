@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,10 @@
 #endif  // OS_WIN
 
 #include <fstream>
+#include <string>
 
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -262,7 +262,7 @@ TEST_F(FileUtilTest, CopyFile) {
 
   for (size_t i = 0; i < arraysize(kTestDataList); ++i) {
     const string test_label =
-        "overwrite test with attributes " + NumberUtil::SimpleItoa(i);
+        "overwrite test with attributes " + std::to_string(i);
     SCOPED_TRACE(test_label);
     CreateTestFile(from, test_label);
 
@@ -351,7 +351,7 @@ TEST_F(FileUtilTest, AtomicRename) {
 
   for (size_t i = 0; i < arraysize(kTestDataList); ++i) {
     const string test_label =
-        "overwrite file with attributes " + NumberUtil::SimpleItoa(i);
+        "overwrite file with attributes " + std::to_string(i);
     SCOPED_TRACE(test_label);
     CreateTestFile(from, test_label);
 

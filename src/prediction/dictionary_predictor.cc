@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,16 +69,14 @@ DEFINE_bool(enable_expansion_for_dictionary_predictor,
 
 DECLARE_bool(enable_typing_correction);
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::Token;
-using mozc::usage_stats::UsageStats;
-
 namespace mozc {
+namespace {
 
 using commands::Request;
-
-namespace {
+using dictionary::DictionaryInterface;
+using dictionary::POSMatcher;
+using dictionary::Token;
+using usage_stats::UsageStats;
 
 // Used to emulate positive infinity for cost. This value is set for those
 // candidates that are thought to be aggressive; thus we can eliminate such
@@ -102,6 +100,12 @@ bool IsLatinInputMode(const ConversionRequest &request) {
   return (request.has_composer() &&
           (request.composer().GetInputMode() == transliteration::HALF_ASCII ||
            request.composer().GetInputMode() == transliteration::FULL_ASCII));
+}
+
+bool IsQwertyMobileTable(const ConversionRequest &request) {
+  const auto table = request.request().special_romanji_table();
+  return (table == commands::Request::QWERTY_MOBILE_TO_HIRAGANA ||
+          table == commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
 }
 
 // Returns true if |segments| contains number history.
@@ -171,7 +175,7 @@ class DictionaryPredictor::PredictiveLookupCallback
     // to get more performance but it's overkill here.
     // TODO(noriyukit): vector<string> would be better than set<string>.  To
     // this end, we need to fix Comopser as well.
-    const StringPiece rest = key.substr(original_key_len_);
+    const StringPiece rest = ClippedSubstr(key, original_key_len_);
     for (const string &chr : *subsequent_chars_) {
       if (Util::StartsWith(rest, chr)) {
         return TRAVERSE_CONTINUE;
@@ -249,8 +253,7 @@ class DictionaryPredictor::PredictiveBigramLookupCallback :
 // Comparator for sorting prediction candidates.
 // If we have words A and AB, for example "六本木" and "六本木ヒルズ",
 // assume that cost(A) < cost(AB).
-class DictionaryPredictor::ResultWCostLess :
-      public std::binary_function<Result, Result, bool> {
+class DictionaryPredictor::ResultWCostLess {
  public:
   bool operator() (const DictionaryPredictor::Result &lhs,
                    const DictionaryPredictor::Result &rhs) const {
@@ -258,8 +261,7 @@ class DictionaryPredictor::ResultWCostLess :
   }
 };
 
-class DictionaryPredictor::ResultCostLess :
-      public std::binary_function<Result, Result, bool> {
+class DictionaryPredictor::ResultCostLess {
  public:
   bool operator() (const DictionaryPredictor::Result &lhs,
                    const DictionaryPredictor::Result &rhs) const {
@@ -285,6 +287,7 @@ DictionaryPredictor::DictionaryPredictor(
       segmenter_(segmenter),
       suggestion_filter_(suggestion_filter),
       counter_suffix_word_id_(pos_matcher->GetCounterSuffixWordId()),
+      general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       predictor_name_("DictionaryPredictor") {
   StringPiece zero_query_token_array_data;
   StringPiece zero_query_string_array_data;
@@ -470,8 +473,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   // we can pop as many results as we need efficiently.
   std::make_heap(results->begin(), results->end(), ResultCostLess());
 
-  const size_t size = min(segments->max_prediction_candidates_size(),
-                          results->size());
+  const size_t size =
+      std::min(segments->max_prediction_candidates_size(), results->size());
 
   int added = 0;
   std::set<string> seen;
@@ -598,18 +601,10 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
                                          uint32 attributes,
                                          string *description) {
   if (types & TYPING_CORRECTION) {
-    // "補正"
-    Util::AppendStringWithDelimiter(
-        " ",
-        "\xE8\xA3\x9C\xE6\xAD\xA3",
-        description);
+    Util::AppendStringWithDelimiter(" ", "補正", description);
   }
   if (attributes & Segment::Candidate::AUTO_PARTIAL_SUGGESTION) {
-    // "部分"
-    Util::AppendStringWithDelimiter(
-        " ",
-        "\xE9\x83\xA8\xE5\x88\x86",
-        description);
+    Util::AppendStringWithDelimiter(" ", "部分", description);
   }
 }
 
@@ -651,7 +646,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
   // Here, taking the minimum of |cost1| and |cost2| has a similar effect.
   const int cost1 = connector_->GetTransitionCost(rid, result.lid);
   const int cost2 = connector_->GetTransitionCost(0, result.lid);
-  int lm_cost = min(cost1, cost2) + result.wcost;
+  int lm_cost = std::min(cost1, cost2) + result.wcost;
   if (!(result.types & REALTIME)) {
     // Relatime conversion already adds perfix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
@@ -874,8 +869,10 @@ void DictionaryPredictor::SetPredictionCost(
     //
     // TODO(team): want find the best parameter instread of kCostFactor.
     const int kCostFactor = 500;
-    results->at(i).cost = cost -
-        kCostFactor * log(1.0 + max(0, static_cast<int>(key_len - query_len)));
+    results->at(i).cost =
+        cost -
+        kCostFactor *
+            log(1.0 + std::max(0, static_cast<int>(key_len - query_len)));
 
     // Update the minimum cost for REALTIME candidates that have the same key
     // length as input_key.
@@ -889,7 +886,7 @@ void DictionaryPredictor::SetPredictionCost(
   // Ensure that the REALTIME_TOP candidate has relatively smaller cost than
   // those of REALTIME candidates.
   if (realtime_top_result != NULL) {
-    realtime_top_result->cost = max(0, realtime_cost_min - 10);
+    realtime_top_result->cost = std::max(0, realtime_cost_min - 10);
   }
 }
 
@@ -916,6 +913,13 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
   const size_t input_key_len = Util::CharsLen(
       segments.conversion_segment(0).key());
   for (Result &result : *results) {
+    // TODO(noriyukit): Workaround for a noisy suggestion when "ー" is typed.
+    // Currently it's filtered here but this hack should be removed after fixing
+    // the issue at dictionary level.
+    if (result.value == "ーチャン") {
+      result.cost = kInfinity;
+      continue;
+    }
     int cost = GetLMCost(result, rid);
     // Demote filtered word here, because they are not filtered for exact match.
     // Even for exact match, we don't want to show aggressive words
@@ -957,19 +961,21 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       const int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
     }
-    if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY) {
-      // Decrease cost for words from user dictionary in order to promote them.
-      // Currently user dictionary words are evaluated 5 times bigger in
-      // frequency, being capped by 1000 (this number is adhoc, so feel free to
-      // adjust).
+    if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY &&
+        result.lid != general_symbol_id_) {
+      // Decrease cost for words from user dictionary in order to promote them,
+      // provided that it is not a general symbol (Note: emoticons are mapped to
+      // general symbol).  Currently user dictionary words are evaluated 5 times
+      // bigger in frequency, being capped by 1000 (this number is adhoc, so
+      // feel free to adjust).
       const int kUserDictionaryPromotionFactor = 804;  // 804 = 500 * log(5)
       const int kUserDictionaryCostUpperLimit = 1000;
-      cost = min(cost - kUserDictionaryPromotionFactor,
-                 kUserDictionaryCostUpperLimit);
+      cost = std::min(cost - kUserDictionaryPromotionFactor,
+                      kUserDictionaryCostUpperLimit);
     }
     // Note that the cost is defined as -500 * log(prob).
     // Even after the ad hoc manipulations, cost must remain larger than 0.
-    result.cost = max(1, cost);
+    result.cost = std::max(1, cost);
   }
 }
 
@@ -1117,7 +1123,7 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
       Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold) {
     // We don't make so many realtime conversion prediction
     // even if we have enough margin, as it's expected less useful.
-    max_size = min(max_size, static_cast<size_t>(8));
+    max_size = std::min(max_size, static_cast<size_t>(8));
     default_size = 5;
   }
   size_t size = 0;
@@ -1144,7 +1150,7 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
       size = 0;  // Never reach here
   }
 
-  return min(max_size, size);
+  return std::min(max_size, size);
 }
 
 bool DictionaryPredictor::PushBackTopConversionResult(
@@ -1679,7 +1685,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglish(
   }
 
   string input_key;
-  request.composer().GetQueryForPrediction(&input_key);
+  request.composer().GetRawString(&input_key);
   // We don't look up English words when key length is one.
   if (input_key.size() < 2) {
     return;
@@ -2023,6 +2029,12 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
   if ((segments.request_type() == Segments::PREDICTION && key_len >= 1) ||
       key_len >= kMinUnigramKeyLen) {
     result |= UNIGRAM;
+
+    const auto lang_aware = request.request().language_aware_input();
+    if (lang_aware == commands::Request::LANGUAGE_AWARE_SUGGESTION &&
+        IsQwertyMobileTable(request)) {
+      result |= ENGLISH;
+    }
   }
 
   const size_t history_segments_size = segments.history_segments_size();

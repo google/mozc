@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -325,7 +325,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
   }
 
   const size_t old_size = static_cast<size_t>(end_ - begin_);
-  const size_t new_size = min(buf.size(), old_size);
+  const size_t new_size = std::min(buf.size(), old_size);
 
   // TODO(taku): this part is not atomic.
   // If the converter process is killed while memcpy or memset is running,

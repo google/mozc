@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/number_util.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
@@ -47,10 +46,9 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace {
 
 using user_dictionary::UserDictionary;
-
-namespace {
 
 string GenRandomString(int size) {
   string result;
@@ -124,7 +122,7 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
     EXPECT_TRUE(storage.CreateDictionary(
-        "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)),
+        "test" + std::to_string(static_cast<uint32>(i)),
         &id[i]));
     EXPECT_EQ(i + 1 + dict_size, storage.dictionaries_size());
   }
@@ -180,7 +178,7 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
     std::vector<uint64> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
       EXPECT_TRUE(storage.CreateDictionary(
-          "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)),
+          "test" + std::to_string(static_cast<uint32>(i)),
           &ids[i]));
     }
 
@@ -212,7 +210,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
 
   for (size_t i = 0; i < 1000; ++i) {
     UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-    const string prefix = NumberUtil::SimpleItoa(static_cast<uint32>(i));
+    const string prefix = std::to_string(static_cast<uint32>(i));
     // set empty fields randomly
     entry->set_key(prefix + "key");
     entry->set_value(prefix + "value");
@@ -266,7 +264,7 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
         uint64 id = 0;
         EXPECT_TRUE(
             storage1.CreateDictionary(
-                "test" + NumberUtil::SimpleItoa(static_cast<uint32>(i)), &id));
+                "test" + std::to_string(static_cast<uint32>(i)), &id));
         const size_t entry_size = Util::Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =
@@ -375,9 +373,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
 
   ASSERT_TRUE(storage.ConvertSyncDictionariesToNormalDictionaries());
 
-  // "同期用辞書"
-  const char *kDictionaryNameConvertedFromSyncableDictionary =
-      "\xE5\x90\x8C\xE6\x9C\x9F\xE7\x94\xA8\xE8\xBE\x9E\xE6\x9B\xB8";
+  const char kDictionaryNameConvertedFromSyncableDictionary[] = "同期用辞書";
   const struct ExpectedData {
     bool has_normal_entry;
     string dictionary_name;
@@ -494,12 +490,11 @@ TEST_F(UserDictionaryStorageTest, Export) {
 
   // Make sure the exported format, especially that the pos is exported in
   // Japanese.
-  // "key value 名詞 comment" separted by a tab character.
 #ifdef OS_WIN
-  EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\r\n",
+  EXPECT_EQ("key\tvalue\t名詞\tcomment\r\n",
             string(mapped_data.begin(), mapped_data.size()));
 #else
-  EXPECT_EQ("key\tvalue\t\xE5\x90\x8D\xE8\xA9\x9E\tcomment\n",
+  EXPECT_EQ("key\tvalue\t名詞\tcomment\n",
             string(mapped_data.begin(), mapped_data.size()));
 #endif  // OS_WIN
 }

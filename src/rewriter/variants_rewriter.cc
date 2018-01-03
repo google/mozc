@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,51 +47,27 @@ using mozc::dictionary::POSMatcher;
 namespace mozc {
 
 #ifndef OS_ANDROID
-// "ひらがな"
-const char *VariantsRewriter::kHiragana =
-    "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
-// "カタカナ"
-const char *VariantsRewriter::kKatakana =
-    "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
-// "数字"
-const char *VariantsRewriter::kNumber = "\xE6\x95\xB0\xE5\xAD\x97";
-// "アルファベット"
-const char *VariantsRewriter::kAlphabet = "\xE3\x82\xA2\xE3\x83\xAB"
-    "\xE3\x83\x95\xE3\x82\xA1\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
-// "漢字"
-const char *VariantsRewriter::kKanji = "\xe6\xbc\xa2\xe5\xad\x97";
-// "[全]"
-const char *VariantsRewriter::kFullWidth = "[\xE5\x85\xA8]";
-// "[半]"
-const char *VariantsRewriter::kHalfWidth = "[\xE5\x8D\x8A]";
-// "<機種依存文字>"
-const char *VariantsRewriter::kPlatformDependent = "<\xE6\xA9\x9F\xE7\xA8\xAE"
-    "\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
-// "<もしかして>"
-const char *VariantsRewriter::kDidYouMean =
-    "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
-// "円記号"
-const char *VariantsRewriter::kYenKigou =
-    "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7";
-#else  // OS_ANDROID
+const char *VariantsRewriter::kHiragana = "ひらがな";
+const char *VariantsRewriter::kKatakana = "カタカナ";
+const char *VariantsRewriter::kNumber = "数字";
+const char *VariantsRewriter::kAlphabet = "アルファベット";
+const char *VariantsRewriter::kKanji = "漢字";
+const char *VariantsRewriter::kFullWidth = "[全]";
+const char *VariantsRewriter::kHalfWidth = "[半]";
+const char *VariantsRewriter::kPlatformDependent = "<機種依存文字>";
+const char *VariantsRewriter::kDidYouMean = "<もしかして>";
+const char *VariantsRewriter::kYenKigou = "円記号";
+#else   // OS_ANDROID
 const char *VariantsRewriter::kHiragana = "";
 const char *VariantsRewriter::kKatakana = "";
 const char *VariantsRewriter::kNumber = "";
 const char *VariantsRewriter::kAlphabet = "";
 const char *VariantsRewriter::kKanji = "";
-// "[全]"
-const char *VariantsRewriter::kFullWidth = "[\xE5\x85\xA8]";
-// "[半]"
-const char *VariantsRewriter::kHalfWidth = "[\xE5\x8D\x8A]";
-// "<機種依存>"
-const char *VariantsRewriter::kPlatformDependent = "<\xE6\xA9\x9F\xE7\xA8\xAE"
-    "\xE4\xBE\x9D\xE5\xAD\x98>";
-// "<もしかして>"
-const char *VariantsRewriter::kDidYouMean =
-    "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
-// "円記号"
-const char *VariantsRewriter::kYenKigou =
-    "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7";
+const char *VariantsRewriter::kFullWidth = "[全]";
+const char *VariantsRewriter::kHalfWidth = "[半]";
+const char *VariantsRewriter::kPlatformDependent = "<機種依存>";
+const char *VariantsRewriter::kDidYouMean = "<もしかして>";
+const char *VariantsRewriter::kYenKigou = "円記号";
 #endif  // OS_ANDROID
 
 // Append |src| to |dst| with a separator ' '.
@@ -101,7 +77,7 @@ void AppendString(StringPiece src, string *dst) {
     if (!dst->empty()) {
       dst->append(1, ' ');
     }
-    src.AppendToString(dst);
+    dst->append(src.data(), src.size());
   }
 }
 
@@ -186,22 +162,22 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
         Util::GetScriptTypeWithoutSymbols(candidate->value);
     switch (type) {
       case Util::HIRAGANA:
-        character_form_message.set(kHiragana);
+        character_form_message = StringPiece(kHiragana);
         // don't need to set full/half, because hiragana only has
         // full form
         description_type &= ~FULL_HALF_WIDTH;
         break;
       case Util::KATAKANA:
         // character_form_message = "カタカナ";
-        character_form_message.set(kKatakana);
+        character_form_message = StringPiece(kKatakana);
         break;
       case Util::NUMBER:
         // character_form_message = "数字";
-        character_form_message.set(kNumber);
+        character_form_message = StringPiece(kNumber);
         break;
       case Util::ALPHABET:
         // character_form_message = "アルファベット";
-        character_form_message.set(kAlphabet);
+        character_form_message = StringPiece(kAlphabet);
         break;
       case Util::KANJI:
       case Util::EMOJI:
@@ -258,17 +234,15 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   AppendString(character_form_message, &description);
 
   // add main message
-  if (candidate->value == "\x5C" || candidate->value == "\xEF\xBC\xBC") {
-    // if "\" (half-width backslash) or "＼" (full-width backslash)
-    // AppendString("バックスラッシュ", &description);
-    AppendString("\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF\xE3\x82\xB9"
-                 "\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5",
-                 &description);
-  } else if (candidate->value == "\xC2\xA5") {
+  if (candidate->value == "\\" ||
+      candidate->value == "＼") {  // full-width backslash
+    // if "\" (half-width backslash) or "＼" ()
+    AppendString("バックスラッシュ", &description);
+  } else if (candidate->value == "¥") {
     // if "¥" (half-width Yen sign), append kYenKigou and kPlatformDependent.
     AppendString(kYenKigou, &description);
     AppendString(kPlatformDependent, &description);
-  } else if (candidate->value == "\xEF\xBF\xA5") {
+  } else if (candidate->value == "￥") {
     // if "￥" (full-width Yen sign), append only kYenKigou
     AppendString(kYenKigou, &description);
   } else {
@@ -281,7 +255,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     AppendString(kPlatformDependent, &description);
   }
 
-  // The follwoing description tries to overwrite exisiting description.
+  // The follwoing description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Zipcode description
   if ((description_type & ZIPCODE) &&
@@ -292,14 +266,14 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     AppendString(candidate->description, &description);
   }
 
-  // The follwoing description tries to overwrite exisiting description.
+  // The follwoing description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Spelling Correction description
   if ((description_type & SPELLING_CORRECTION) &&
       (candidate->attributes & Segment::Candidate::SPELLING_CORRECTION)) {
     description = kDidYouMean;
     // Add prefix to distinguish this candidate.
-    candidate->prefix = "\xE2\x86\x92 ";  // "→ "
+    candidate->prefix = "→ ";
     // Append default description because it may contain extra description.
     AppendString(candidate->description, &description);
   }
@@ -482,20 +456,22 @@ bool VariantsRewriter::GenerateAlternatives(
   string inner_default_content_value, inner_alternative_content_value;
   for (Segment::Candidate::InnerSegmentIterator iter(&original);
        !iter.Done(); iter.Next()) {
-    iter.GetValue().CopyToString(&tmp);
+    tmp.assign(iter.GetValue().data(), iter.GetValue().size());
     inner_default_value.clear();
     inner_alternative_value.clear();
     if (!manager->ConvertConversionStringWithAlternative(
             tmp, &inner_default_value, &inner_alternative_value)) {
-      iter.GetValue().CopyToString(&inner_default_value);
-      iter.GetValue().CopyToString(&inner_alternative_value);
+      inner_default_value.assign(iter.GetValue().data(),
+                                 iter.GetValue().size());
+      inner_alternative_value.assign(iter.GetValue().data(),
+                                     iter.GetValue().size());
     } else {
       at_least_one_modified = true;
     }
     if (iter.GetValue() != iter.GetContentValue()) {
       inner_default_content_value.clear();
       inner_alternative_content_value.clear();
-      iter.GetContentValue().CopyToString(&tmp);
+      tmp.assign(iter.GetContentValue().data(), iter.GetContentValue().size());
       manager->ConvertConversionStringWithAlternative(
           tmp, &inner_default_content_value,
           &inner_alternative_content_value);

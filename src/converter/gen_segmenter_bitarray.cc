@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -196,28 +196,28 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
     pb.set_compressed_lsize(kCompressedLSize);
     pb.set_compressed_rsize(kCompressedRSize);
     mozc::OutputFileStream ofs(output_size_info.c_str(),
-                               ios_base::out | ios_base::binary);
+                               std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     CHECK(pb.SerializeToOstream(&ofs));
     ofs.close();
   }
   {
     mozc::OutputFileStream ofs(output_ltable.c_str(),
-                               ios_base::out | ios_base::binary);
+                               std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     ltable.Output(&ofs);
     ofs.close();
   }
   {
     mozc::OutputFileStream ofs(output_rtable.c_str(),
-                               ios_base::out | ios_base::binary);
+                               std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     rtable.Output(&ofs);
     ofs.close();
   }
   {
     mozc::OutputFileStream ofs(output_bitarray.c_str(),
-                               ios_base::out | ios_base::binary);
+                               std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     ofs.write(barray.array(), barray.array_size());
     ofs.close();

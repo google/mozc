@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ void SerializedStringArray::Set(StringPiece data_aligned_at_4byte_boundary) {
 }
 
 void SerializedStringArray::clear() {
-  data_.set(reinterpret_cast<const char *>(&kEmptyArrayData), 4);
+  data_ = StringPiece(reinterpret_cast<const char *>(&kEmptyArrayData), 4);
 }
 
 bool SerializedStringArray::VerifyData(StringPiece data) {
@@ -146,7 +146,8 @@ void SerializedStringArray::SerializeToFile(
     const std::vector<StringPiece> &strs, const string &filepath) {
   std::unique_ptr<uint32[]> buffer;
   const StringPiece data = SerializeToBuffer(strs, &buffer);
-  OutputFileStream ofs(filepath.c_str(), ios_base::out | ios_base::binary);
+  OutputFileStream ofs(filepath.c_str(),
+                       std::ios_base::out | std::ios_base::binary);
   CHECK(ofs.write(data.data(), data.size()));
 }
 

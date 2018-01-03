@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -438,6 +438,12 @@ void Composer::InsertCharacterPreedit(const string &input) {
     begin += mblen;
   }
   DCHECK_EQ(begin, end);
+}
+
+// Note: This method is only for test.
+void Composer::SetPreeditTextForTestOnly(const string &input) {
+  SetTemporaryInputMode(transliteration::HALF_ASCII);
+  InsertCharacterPreedit(input);
 }
 
 void Composer::InsertCharacterPreeditForProbableKeyEvents(
@@ -1140,8 +1146,9 @@ bool Composer::TransformCharactersForNumbers(string *query) {
 
         // JA_HYPHEN should be transformed to MINUS.
         if (check) {
-          CharacterFormManager::GetCharacterFormManager()->
-              ConvertPreeditString("\xE2\x88\x92", &append_char);  // "−"
+          CharacterFormManager::GetCharacterFormManager()->ConvertPreeditString(
+              "−",  // U+2212
+              &append_char);
           DCHECK(!append_char.empty());
         }
         break;
@@ -1156,7 +1163,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
         // JA_COMMA should be transformed to COMMA.
         if (lhs_check) {
           CharacterFormManager::GetCharacterFormManager()->
-              ConvertPreeditString("\xEF\xBC\x8C", &append_char);  // "，"
+              ConvertPreeditString("，", &append_char);
           DCHECK(!append_char.empty());
         }
         break;
@@ -1171,7 +1178,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
         // JA_PRERIOD should be transformed to PRERIOD.
         if (lhs_check) {
           CharacterFormManager::GetCharacterFormManager()->
-              ConvertPreeditString("\xEF\xBC\x8E", &append_char);  // "．"
+              ConvertPreeditString("．", &append_char);
           DCHECK(!append_char.empty());
         }
         break;

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,8 +51,7 @@ enum {
 
 // TODO(taku): See POS and increase the coverage.
 bool IsConnectorSegment(const Segment &segment) {
-  return (segment.key() == "\xE3\x81\xA8" ||
-          segment.key() == "\xE3\x82\x84");
+  return (segment.key() == "と" || segment.key() == "や");
 }
 
 // Finds value from the candidates list and move the canidate to the top.
@@ -376,7 +375,8 @@ int FocusCandidateRewriter::FindMatchingCandidates(
 
   // Check only top 10 candidates because, when the top candidate is a number
   // candidate, other number compounds likely to appear near the top candidate.
-  const size_t max_size = min(seg.candidates_size(), static_cast<size_t>(10));
+  const size_t max_size =
+      std::min(seg.candidates_size(), static_cast<size_t>(10));
   for (size_t i = 1; i < max_size; ++i) {
     if (!ParseNumberCandidate(seg.candidate(i), &number, &suffix,
                               &script_type)) {

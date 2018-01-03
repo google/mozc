@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -282,7 +282,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // of the original (correct) reading.
     const int kCostPenalty = 2302;      // -log(1/100) * 500;
     std::unique_ptr<Token> token(new Token);
-    value_key.second.CopyToString(&token->key);
+    token->key.assign(value_key.second.data(), value_key.second.size());
     token->value = max_cost_token->value;
     token->lid = max_cost_token->lid;
     token->rid = max_cost_token->rid;

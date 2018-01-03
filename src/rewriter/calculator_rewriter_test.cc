@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,9 +70,7 @@ void SetSegment(const string &key, const string &value, Segments *segments) {
   AddSegment(key, value, segments);
 }
 
-// "計算結果"
-const char kCalculationDescription[] =
-    "\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
+const char kCalculationDescription[] = "計算結果";
 
 bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
   return candidate.description.find(kCalculationDescription) != string::npos;
@@ -247,12 +245,7 @@ TEST_F(CalculatorRewriterTest, ExpressionStartingWithEqualTest) {
 
 // Verify the description of calculator candidate.
 TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
-  // "５・（８／４）ー７％３＋６＾−１＊９＝"
-  const char kExpression[] =
-      "\xEF\xBC\x95\xE3\x83\xBB\xEF\xBC\x88\xEF\xBC\x98\xEF\xBC\x8F"
-      "\xEF\xBC\x94\xEF\xBC\x89\xE3\x83\xBC\xEF\xBC\x97\xEF\xBC\x85"
-      "\xEF\xBC\x93\xEF\xBC\x8B\xEF\xBC\x96\xEF\xBC\xBE\xE2\x88\x92"
-      "\xEF\xBC\x91\xEF\xBC\x8A\xEF\xBC\x99\xEF\xBC\x9D";
+  const char kExpression[] = "５・（８／４）ー７％３＋６＾−１＊９＝";
   // Expected description
   const string description = kCalculationDescription;
 

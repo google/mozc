@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,8 +73,8 @@
 namespace mozc {
 namespace dictionary {
 
-using mozc::storage::louds::BitVectorBasedArray;
-using mozc::storage::louds::LoudsTrie;
+using ::mozc::storage::louds::BitVectorBasedArray;
+using ::mozc::storage::louds::LoudsTrie;
 
 namespace {
 
@@ -105,35 +105,35 @@ const size_t kValueTrieTermvecCacheSize = 4 * 1024;
 // be mixed.
 // TODO(hidehiko): Clean up this hacky implementation.
 const char *kHiraganaExpansionTable[] = {
-  "\xe3\x81\x82\xe3\x81\x82\xe3\x81\x81",  // "ああぁ"
-  "\xe3\x81\x84\xe3\x81\x84\xe3\x81\x83",  // "いいぃ"
-  "\xe3\x81\x86\xe3\x81\x86\xe3\x81\x85\xe3\x82\x94",  // "ううぅゔ"
-  "\xe3\x81\x88\xe3\x81\x88\xe3\x81\x87",  // "ええぇ"
-  "\xe3\x81\x8a\xe3\x81\x8a\xe3\x81\x89",  // "おおぉ"
-  "\xe3\x81\x8b\xe3\x81\x8b\xe3\x81\x8c",  // "かかが"
-  "\xe3\x81\x8d\xe3\x81\x8d\xe3\x81\x8e",  // "ききぎ"
-  "\xe3\x81\x8f\xe3\x81\x8f\xe3\x81\x90",  // "くくぐ"
-  "\xe3\x81\x91\xe3\x81\x91\xe3\x81\x92",  // "けけげ"
-  "\xe3\x81\x93\xe3\x81\x93\xe3\x81\x94",  // "ここご"
-  "\xe3\x81\x95\xe3\x81\x95\xe3\x81\x96",  // "ささざ"
-  "\xe3\x81\x97\xe3\x81\x97\xe3\x81\x98",  // "ししじ"
-  "\xe3\x81\x99\xe3\x81\x99\xe3\x81\x9a",  // "すすず"
-  "\xe3\x81\x9b\xe3\x81\x9b\xe3\x81\x9c",  // "せせぜ"
-  "\xe3\x81\x9d\xe3\x81\x9d\xe3\x81\x9e",  // "そそぞ"
-  "\xe3\x81\x9f\xe3\x81\x9f\xe3\x81\xa0",  // "たただ"
-  "\xe3\x81\xa1\xe3\x81\xa1\xe3\x81\xa2",  // "ちちぢ"
-  "\xe3\x81\xa4\xe3\x81\xa4\xe3\x81\xa3\xe3\x81\xa5",  // "つつっづ"
-  "\xe3\x81\xa6\xe3\x81\xa6\xe3\x81\xa7",  // "ててで"
-  "\xe3\x81\xa8\xe3\x81\xa8\xe3\x81\xa9",  // "ととど"
-  "\xe3\x81\xaf\xe3\x81\xaf\xe3\x81\xb0\xe3\x81\xb1",  // "ははばぱ"
-  "\xe3\x81\xb2\xe3\x81\xb2\xe3\x81\xb3\xe3\x81\xb4",  // "ひひびぴ"
-  "\xe3\x81\xb5\xe3\x81\xb5\xe3\x81\xb6\xe3\x81\xb7",  // "ふふぶぷ"
-  "\xe3\x81\xb8\xe3\x81\xb8\xe3\x81\xb9\xe3\x81\xba",  // "へへべぺ"
-  "\xe3\x81\xbb\xe3\x81\xbb\xe3\x81\xbc\xe3\x81\xbd",  // "ほほぼぽ"
-  "\xe3\x82\x84\xe3\x82\x84\xe3\x82\x83",  // "ややゃ"
-  "\xe3\x82\x86\xe3\x82\x86\xe3\x82\x85",  // "ゆゆゅ"
-  "\xe3\x82\x88\xe3\x82\x88\xe3\x82\x87",  // "よよょ"
-  "\xe3\x82\x8f\xe3\x82\x8f\xe3\x82\x8e",  // "わわゎ"
+  "ああぁ",
+  "いいぃ",
+  "ううぅゔ",
+  "ええぇ",
+  "おおぉ",
+  "かかが",
+  "ききぎ",
+  "くくぐ",
+  "けけげ",
+  "ここご",
+  "ささざ",
+  "ししじ",
+  "すすず",
+  "せせぜ",
+  "そそぞ",
+  "たただ",
+  "ちちぢ",
+  "つつっづ",
+  "ててで",
+  "ととど",
+  "ははばぱ",
+  "ひひびぴ",
+  "ふふぶぷ",
+  "へへべぺ",
+  "ほほぼぽ",
+  "ややゃ",
+  "ゆゆゅ",
+  "よよょ",
+  "わわゎ",
 };
 
 const uint32 kAsciiRange = 0x80;
@@ -315,7 +315,7 @@ class SystemDictionary::ReverseLookupIndex {
     for (TokenScanIterator iter(codec, token_array);
          !iter.Done(); iter.Next()) {
       const TokenScanIterator::Result &result = iter.Get();
-      value_id_max = max(value_id_max, result.value_id);
+      value_id_max = std::max(value_id_max, result.value_id);
     }
 
     CHECK_GE(value_id_max, 0);
@@ -733,12 +733,12 @@ void SystemDictionary::LookupPredictive(
     const StringPiece encoded_actual_key =
         key_trie_.RestoreKeyString(state.node, encoded_actual_key_buffer);
     const StringPiece encoded_actual_key_prediction_suffix =
-        encoded_actual_key.substr(
-            encoded_key.size(), encoded_actual_key.size() - encoded_key.size());
+        ClippedSubstr(encoded_actual_key, encoded_key.size(),
+                      encoded_actual_key.size() - encoded_key.size());
 
     // decoded_key = "くーぐる" (= key + prediction suffix)
     decoded_key.clear();
-    key.CopyToString(&decoded_key);
+    decoded_key.assign(key.data(), key.size());
     codec_->DecodeKey(encoded_actual_key_prediction_suffix, &decoded_key);
     switch (callback->OnKey(decoded_key)) {
       case Callback::TRAVERSE_DONE:
@@ -1096,7 +1096,7 @@ void SystemDictionary::PopulateReverseLookupCache(StringPiece str) const {
   string lookup_key;
   lookup_key.reserve(str.size());
   while (pos < str.size()) {
-    const StringPiece suffix = str.substr(pos);
+    const StringPiece suffix = ClippedSubstr(str, pos);
     lookup_key.clear();
     codec_->EncodeValue(suffix, &lookup_key);
     AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);

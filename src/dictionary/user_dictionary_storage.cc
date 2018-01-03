@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,14 +60,9 @@ const size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
-// "自動登録単語";
-const char kAutoRegisteredDictionaryName[] =
-  "\xE8\x87\xAA\xE5\x8B\x95\xE7\x99\xBB\xE9\x8C\xB2\xE5\x8D\x98\xE8\xAA\x9E";
-
+const char kAutoRegisteredDictionaryName[] = "自動登録単語";
 const char kDefaultSyncDictionaryName[] = "Sync Dictionary";
-// "同期用辞書"
-const char *kDictionaryNameConvertedFromSyncableDictionary =
-    "\xE5\x90\x8C\xE6\x9C\x9F\xE7\x94\xA8\xE8\xBE\x9E\xE6\x9B\xB8";
+const char *kDictionaryNameConvertedFromSyncableDictionary = "同期用辞書";
 
 }  // namespace
 

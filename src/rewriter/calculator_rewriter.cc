@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -134,12 +134,11 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
   // Normalize the expression, used in description.
   string temp, temp2, expression;
   Util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key, &temp);
-  // "・"
-  Util::StringReplace(temp, "\xE3\x83\xBB", "/", true, &temp2);
+  Util::StringReplace(temp, "・", "/", true, &temp2);
   // "ー", onbiki
-  Util::StringReplace(temp2, "\xE3\x83\xBC", "-", true, &expression);
+  Util::StringReplace(temp2, "ー", "-", true, &expression);
 
-  size_t offset = min(insert_pos, segment->candidates_size());
+  size_t offset = std::min(insert_pos, segment->candidates_size());
 
   for (int n = 0; n < 2; ++n) {
     int current_offset = offset + n;
@@ -167,8 +166,7 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
     candidate->content_key = base_candidate.content_key;
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     candidate->attributes |= Segment::Candidate::NO_LEARNING;
-    // "計算結果"
-    candidate->description = "\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
+    candidate->description = "計算結果";
 
     if (n == 0) {   // without expression
       candidate->value = value;

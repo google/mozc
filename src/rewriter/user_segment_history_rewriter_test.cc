@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,14 +52,14 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-using mozc::config::CharacterFormManager;
-using mozc::config::Config;
-using mozc::config::ConfigHandler;
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::PosGroup;
-
 namespace mozc {
 namespace {
+
+using config::CharacterFormManager;
+using config::Config;
+using config::ConfigHandler;
+using dictionary::POSMatcher;
+using dictionary::PosGroup;
 
 const size_t kCandidatesSize = 20;
 
@@ -70,12 +70,12 @@ void InitSegments(Segments *segments, size_t size,
     Segment *segment = segments->add_segment();
     CHECK(segment);
     segment->set_key(string("segment") +
-                     NumberUtil::SimpleItoa(static_cast<uint32>(i)));
+                     std::to_string(static_cast<uint32>(i)));
     for (size_t j = 0; j < candidate_size; ++j) {
       Segment::Candidate *c = segment->add_candidate();
       c->content_key = segment->key();
-      c->content_value = string("candidate") +
-                         NumberUtil::SimpleItoa(static_cast<uint32>(j));
+      c->content_value =
+          string("candidate") + std::to_string(static_cast<uint32>(j));
       c->value = c->content_value;
       if (j == 0) {
         c->attributes |= Segment::Candidate::BEST_CANDIDATE;
@@ -106,6 +106,7 @@ void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
   // we set 1 as rid to avoid this.
   AppendCandidateSuffix(segment, index, suffix, lid, 1);
 }
+
 }  // namespace
 
 class UserSegmentHistoryRewriterTest : public ::testing::Test {
@@ -414,7 +415,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     EXPECT_EQ("candidate2",
               segments.segment(0).candidate(0).value);
 
-    // back to the orignal
+    // back to the original
     segments.mutable_segment(0)->move_candidate(1, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
@@ -1202,8 +1203,8 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     segments.mutable_segment(0)->set_key("12");
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(0);
-    candidate->value = "\xE2\x91\xAB";  // circled 12
-    candidate->content_value = "\xE2\x91\xAB";
+    candidate->value = "⑫";
+    candidate->content_value = "⑫";
     candidate->content_key = "12";
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
@@ -1230,8 +1231,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     EXPECT_TRUE(number_rewriter->Rewrite(request_, &segments));
     rewriter->Rewrite(request_, &segments);
 
-    EXPECT_EQ("\xE2\x91\xAD",  // circled 14
-              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("⑭", segments.segment(0).candidate(0).value);
   }
 }
 
@@ -1250,11 +1250,8 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     segments.mutable_segment(0)->set_key("1234");
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(0);
-    // "１，２３４"
-    candidate->value =
-        "\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94";
-    candidate->content_value =
-        "\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94";
+    candidate->value = "１，２３４";
+    candidate->content_value = "１，２３４";
     candidate->content_key = "1234";
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
@@ -1281,8 +1278,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     EXPECT_TRUE(number_rewriter->Rewrite(request_, &segments));
     rewriter->Rewrite(request_, &segments);
 
-    EXPECT_EQ("1,234",
-              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("1,234", segments.segment(0).candidate(0).value);
   }
 }
 
@@ -1328,9 +1324,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     EXPECT_TRUE(number_rewriter->Rewrite(request_, &segments));
     rewriter->Rewrite(request_, &segments);
 
-    // "１，２３４"
-    EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94",
-              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("１，２３４", segments.segment(0).candidate(0).value);
   }
 }
 
@@ -1349,8 +1343,8 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     segments.mutable_segment(0)->set_key("10");
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(0);
-    candidate->value = "\xe5\x8d\x81";  // "十"
-    candidate->content_value = "\xe5\x8d\x81";
+    candidate->value = "十";
+    candidate->content_value = "十";
     candidate->content_key = "10";
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
@@ -1574,14 +1568,10 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     segments.mutable_segment(0)->set_key("abc");
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
-    // "ａｂｃ"
-    candidate->value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
-    // "ａｂｃ"
-    candidate->content_value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
+    candidate->value = "ａｂｃ";
+    candidate->content_value = "ａｂｃ";
     candidate->content_key = "abc";
-    // "[全] アルファベット"
-    candidate->description = "[\xE5\x85\xA8] \xE3\x82\xA2\xE3\x83\xAB"
-        "\xE3\x83\x95\xE3\x82\xA1\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
+    candidate->description = "[全] アルファベット";
     segments.mutable_segment(0)->move_candidate(1, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
@@ -1595,14 +1585,10 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     segments.mutable_segment(0)->set_key("abc");
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
-    // "ａｂｃ"
-    candidate->value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
-    // "ａｂｃ"
-    candidate->content_value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
+    candidate->value = "ａｂｃ";
+    candidate->content_value = "ａｂｃ";
     candidate->content_key = "abc";
-    // "[全] アルファベット"
-    candidate->description = "[\xE5\x85\xA8]\xE3\x82\xA2\xE3\x83\xAB"
-        "\xE3\x83\x95\xE3\x82\xA1\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
+    candidate->description = "[全]アルファベット";
     candidate->content_key = "abc";
     rewriter->Rewrite(request_, &segments);
     EXPECT_EQ("abc", segments.segment(0).candidate(0).content_value);
@@ -1617,4 +1603,5 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     rewriter->Finish(request_, &segments);
   }
 }
+
 }  // namespace mozc

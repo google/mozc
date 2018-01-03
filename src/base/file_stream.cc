@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,13 +46,13 @@ namespace mozc {
 #ifdef MOZC_USE_PEPPER_FILE_IO
 
 InputFileStream::InputFileStream()
-    : istream(nullptr) {
+    : std::istream(nullptr) {
   init(&string_buffer_);
 }
 
 InputFileStream::InputFileStream(const char* filename,
                                  ios_base::openmode mode)
-    : istream(nullptr) {
+    : std::istream(nullptr) {
   init(&string_buffer_);
   InputFileStream::open(filename, mode);
 }
@@ -162,5 +162,8 @@ string InputFileStream::Read() {
   ReadToString(&s);
   return s;
 }
+
+void InputFileStream::UnusedKeyMethod() {}   // go/definekeymethod
+void OutputFileStream::UnusedKeyMethod() {}  // go/definekeymethod
 
 }  // namespace mozc

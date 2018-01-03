@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -263,7 +263,7 @@ TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
 
   EXPECT_TRUE(result);
   EXPECT_EQ(arraysize(golden), output.size());
-  int len = min(arraysize(golden), output.size());
+  int len = std::min(arraysize(golden), output.size());
   for (int i =0; i < len; ++i) {
     EXPECT_EQ(golden[i], output[i]);
   }

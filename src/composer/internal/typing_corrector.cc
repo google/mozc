@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -101,12 +101,12 @@ TypingCorrector::~TypingCorrector() {}
 void TypingCorrector::InsertCharacter(
     const StringPiece key,
     const ProbableKeyEvents &probable_key_events) {
-  key.AppendToString(&raw_key_);
+  raw_key_.append(key.data(), key.size());
   if (!IsAvailable() || probable_key_events.size() == 0) {
     // If this corrector is not available or no ProbableKeyEvent is available,
     // just append |key| to each corrections.
     for (size_t i = 0; i < top_n_.size(); ++i) {
-      key.AppendToString(&top_n_[i].first);
+      top_n_[i].first.append(key.data(), key.size());
     }
     return;
   }
@@ -129,7 +129,8 @@ void TypingCorrector::InsertCharacter(
       }
     }
   }
-  const size_t cutoff_size = min(max_correction_query_candidates_, tmp.size());
+  const size_t cutoff_size =
+      std::min(max_correction_query_candidates_, tmp.size());
   std::partial_sort(tmp.begin(), tmp.begin() + cutoff_size, tmp.end(),
                     KeyAndPenaltyLess());
   tmp.resize(cutoff_size);
@@ -283,7 +284,7 @@ void TypingCorrector::GetQueriesForPrediction(
   }
   // If some queries are filtered, there are unused queries
   // at the tail of queries. Trim them.
-  queries->resize(min(result_count, max_correction_query_results_));
+  queries->resize(std::min(result_count, max_correction_query_results_));
 }
 
 }  // namespace composer

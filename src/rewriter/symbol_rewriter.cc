@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -80,7 +80,7 @@ const string SymbolRewriter::GetDescription(
   // Merge description
   if (!additional_description.empty()) {
     result.append(1, '(');
-    additional_description.AppendToString(&result);
+    result.append(additional_description.data(), additional_description.size());
     result.append(1, ')');
   }
   return result;
@@ -104,14 +104,12 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
     if (segment->candidate(i).value == " ") {
       Segment::Candidate *c = segment->insert_candidate(i + 1);
       *c = segment->candidate(i);
-      // "　"
-      c->value = "\xe3\x80\x80";
-      c->content_value = "\xe3\x80\x80";
+      c->value = "　";  // Full-width space
+      c->content_value = "　";  // Full-width space
       // Boundary is invalidated and unnecessary for space.
       c->inner_segment_boundary.clear();
       return;
-    // "　"
-    } else if (segment->candidate(i).value == "\xe3\x80\x80") {
+    } else if (segment->candidate(i).value == "　") {  // Full-width space
       Segment::Candidate *c = segment->insert_candidate(i + 1);
       *c = segment->candidate(i);
       c->value = " ";
@@ -144,7 +142,7 @@ bool SymbolRewriter::InSameSymbolGroup(
     return false;
   }
   const size_t cmp_len =
-      max(lhs.description().size(), rhs.description().size());
+      std::max(lhs.description().size(), rhs.description().size());
   return std::strncmp(lhs.description().data(),
                       rhs.description().data(), cmp_len) == 0;
 }
@@ -178,14 +176,13 @@ void SymbolRewriter::InsertCandidates(
 
   // If the key is "かおもじ", set the insert position at the bottom,
   // giving priority to emoticons inserted by EmoticonRewriter.
-  // "かおもじ"
-  if (candidate_key == "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98") {
+  if (candidate_key == "かおもじ") {
     offset = segment->candidates_size();
   } else {
     // Find the position wehere we start to insert the symbols
     // We want to skip the single-kanji we inserted by single-kanji rewriter.
     // We also skip transliterated key candidates.
-    offset = min(kOffsetSize, segment->candidates_size());
+    offset = std::min(kOffsetSize, segment->candidates_size());
     for (size_t i = offset; i < segment->candidates_size(); ++i) {
       const string &target_value = segment->candidate(i).value;
       if ((Util::CharsLen(target_value) == 1 &&
@@ -212,8 +209,8 @@ void SymbolRewriter::InsertCandidates(
     candidate->rid = iter.rid();
     candidate->cost = base_candidate.cost;
     candidate->structure_cost = base_candidate.structure_cost;
-    iter.value().CopyToString(&candidate->value);
-    iter.value().CopyToString(&candidate->content_value);
+    candidate->value.assign(iter.value().data(), iter.value().size());
+    candidate->content_value.assign(iter.value().data(), iter.value().size());
     candidate->key = candidate_key;
     candidate->content_key = candidate_key;
 
@@ -223,8 +220,7 @@ void SymbolRewriter::InsertCandidates(
 
     // The first two consist of two characters but the one of characters doesn't
     // have alternative character.
-    if (candidate->value == "\xE2\x80\x9C\xE2\x80\x9D" ||  // "“”"
-        candidate->value == "\xE2\x80\x98\xE2\x80\x99" ||  // "‘’"
+    if (candidate->value == "“”" || candidate->value == "‘’" ||
         candidate->value == "w" || candidate->value == "www") {
       candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     }

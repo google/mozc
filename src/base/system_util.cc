@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,6 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mac_util.h"
-#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -603,7 +602,7 @@ string GetSessionIdString() {
   if (!GetCurrentSessionId(&session_id)) {
     return "";
   }
-  return NumberUtil::SimpleItoa(session_id);
+  return std::to_string(session_id);
 }
 
 }  // namespace
@@ -796,11 +795,11 @@ string SystemUtil::GetOSVersionString() {
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
     ret += ".";
-    ret += NumberUtil::SimpleItoa(static_cast<uint32>(osvi.dwMajorVersion));
+    ret += std::to_string(static_cast<uint32>(osvi.dwMajorVersion));
     ret += ".";
-    ret += NumberUtil::SimpleItoa(static_cast<uint32>(osvi.dwMinorVersion));
-    ret += "." + NumberUtil::SimpleItoa(osvi.wServicePackMajor);
-    ret += "." + NumberUtil::SimpleItoa(osvi.wServicePackMinor);
+    ret += std::to_string(static_cast<uint32>(osvi.dwMinorVersion));
+    ret += "." + std::to_string(osvi.wServicePackMajor);
+    ret += "." + std::to_string(osvi.wServicePackMinor);
   } else {
     LOG(WARNING) << "GetVersionEx failed";
   }

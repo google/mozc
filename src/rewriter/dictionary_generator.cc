@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -157,9 +157,9 @@ bool DictionaryGenerator::Output(const string &filename) const {
     const uint32 cost = 10 * num_same_keys;
 
     uint16 id;
-    if (pos == "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x8B") {      // "括弧開"
+    if (pos == "括弧開") {
       id = open_bracket_id_;
-    } else if (pos == "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89") {  // "括弧閉"
+    } else if (pos == "括弧閉") {
       id = close_bracket_id_;
     } else {
       CHECK(user_pos_->GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;

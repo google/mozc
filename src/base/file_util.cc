@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -348,7 +348,7 @@ void FileUtil::JoinPath(const std::vector<StringPiece> &components,
     if (!output->empty() && output->back() != kFileDelimiter) {
       output->append(1, kFileDelimiter);
     }
-    components[i].AppendToString(output);
+    output->append(components[i].data(), components[i].size());
   }
 }
 

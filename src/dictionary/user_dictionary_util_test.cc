@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,41 +47,22 @@ static void TestNormalizeReading(const string &golden, const string &input) {
 
 TEST(UserDictionaryUtilTest, TestIsValidReading) {
   EXPECT_TRUE(UserDictionaryUtil::IsValidReading("ABYZabyz0189"));
-  // "〜「」"
-  EXPECT_TRUE(UserDictionaryUtil::IsValidReading(
-                  "\xe3\x80\x9c\xe3\x80\x8c\xe3\x80\x8d"));
-  // "あいうわをんゔ"
-  EXPECT_TRUE(UserDictionaryUtil::IsValidReading(
-                  "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x82\x8f\xe3\x82\x92"
-                  "\xe3\x82\x93\xe3\x82\x94"));
-  // "アイウワヲンヴ"
-  EXPECT_TRUE(UserDictionaryUtil::IsValidReading(
-                  "\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x83\xaf\xe3\x83\xb2"
-                  "\xe3\x83\xb3\xe3\x83\xb4"));
-  // "水雲"
-  EXPECT_FALSE(UserDictionaryUtil::IsValidReading("\xe6\xb0\xb4\xe9\x9b\xb2"));
+  EXPECT_TRUE(UserDictionaryUtil::IsValidReading("〜「」"));
+  EXPECT_TRUE(UserDictionaryUtil::IsValidReading("あいうわをんゔ"));
+  EXPECT_TRUE(UserDictionaryUtil::IsValidReading("アイウワヲンヴ"));
+  EXPECT_FALSE(UserDictionaryUtil::IsValidReading("水雲"));
 
   // COMBINING KATAKANA-HIRAGANA VOICED/SEMI-VOICED SOUND MARK (u3099, u309A)
-  EXPECT_FALSE(UserDictionaryUtil::IsValidReading("\xE3\x82\x99\xE3\x82\x9A"));
+  EXPECT_FALSE(UserDictionaryUtil::IsValidReading("゙゚"));
 
   // KATAKANA-HIRAGANA VOICED/SEMI-VOICED SOUND MARK (u309B, u309C)
-  EXPECT_TRUE(UserDictionaryUtil::IsValidReading("\xE3\x82\x9B\xE3\x82\x9C"));
+  EXPECT_TRUE(UserDictionaryUtil::IsValidReading("゛゜"));
 }
 
 TEST(UserDictionaryUtilTest, TestNormalizeReading) {
-  // "あいうゔゎ", "アイウヴヮ"
-  TestNormalizeReading(
-      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x82\x94\xe3\x82\x8e",
-      "\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x83\xb4\xe3\x83\xae");
-  // "あいうゃ", "ｱｲｳｬ"
-  TestNormalizeReading(
-      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x82\x83",
-      "\xef\xbd\xb1\xef\xbd\xb2\xef\xbd\xb3\xef\xbd\xac");
-  // "ＡＢａｂ０１＠＆＝｜"
-  TestNormalizeReading(
-      "ABab01@&=|",
-      "\xef\xbc\xa1\xef\xbc\xa2\xef\xbd\x81\xef\xbd\x82\xef\xbc\x90\xef\xbc\x91"
-      "\xef\xbc\xa0\xef\xbc\x86\xef\xbc\x9d\xef\xbd\x9c");
+  TestNormalizeReading("あいうゔゎ", "アイウヴヮ");
+  TestNormalizeReading("あいうゃ", "ｱｲｳｬ");
+  TestNormalizeReading("ABab01@&=|", "ＡＢａｂ０１＠＆＝｜");
 }
 
 namespace {
@@ -151,43 +132,34 @@ TEST(UserDictionaryUtilTest, TestSanitize) {
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 10));
   EXPECT_EQ("abc", str);
 
-  str = "\xE3\x81\x8B\xE3\x81\x97\xE3\x82\x86\xE3\x81\x8B";  // "かしゆか"
+  str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 3));
-  EXPECT_EQ("\xE3\x81\x8B", str);  // "か"
+  EXPECT_EQ("か", str);
 
-  str = "\xE3\x81\x8B\xE3\x81\x97\xE3\x82\x86\xE3\x81\x8B";  // "かしゆか"
+  str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 4));
-  EXPECT_EQ("\xE3\x81\x8B", str);  // "か"
+  EXPECT_EQ("か", str);
 
-  str = "\xE3\x81\x8B\xE3\x81\x97\xE3\x82\x86\xE3\x81\x8B";  // "かしゆか"
+  str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 5));
-  EXPECT_EQ("\xE3\x81\x8B", str);  // "か"
+  EXPECT_EQ("か", str);
 
-  str = "\xE3\x81\x8B\xE3\x81\x97\xE3\x82\x86\xE3\x81\x8B";  // "かしゆか"
+  str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 6));
-  EXPECT_EQ("\xE3\x81\x8B\xE3\x81\x97", str);  // "かし"
+  EXPECT_EQ("かし", str);
 
-  str = "\xE3\x81\x8B\xE3\x81\x97\xE3\x82\x86\xE3\x81\x8B";  // "かしゆか"
+  str = "かしゆか";
   EXPECT_FALSE(UserDictionaryUtil::Sanitize(&str, 100));
-  // "かしゆか"
-  EXPECT_EQ("\xE3\x81\x8B\xE3\x81\x97\xE3\x82\x86\xE3\x81\x8B", str);
+  EXPECT_EQ("かしゆか", str);
 }
 
 TEST(UserDictionaryUtilTest, ValidateEntry) {
   // Create a valid entry.
   UserDictionary::Entry base_entry;
-  // "よみ"
-  base_entry.set_key("\xE3\x82\x88\xE3\x81\xBF");
-
-  // "単語"
-  base_entry.set_value("\xE5\x8D\x98\xE8\xAA\x9E");
-
-  // "名詞"
+  base_entry.set_key("よみ");
+  base_entry.set_value("単語");
   base_entry.set_pos(UserDictionary::NOUN);
-
-  // "コメント"
-  base_entry.set_comment("\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88");
-
+  base_entry.set_comment("コメント");
 
   UserDictionary::Entry entry;
   entry.CopyFrom(base_entry);

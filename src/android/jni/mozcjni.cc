@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,7 @@
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "engine/engine_builder.h"
+#include "engine/minimal_engine.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
@@ -122,24 +123,39 @@ string JstringToCcString(JNIEnv *env, jstring j_string) {
   return cc_string;
 }
 
+std::unique_ptr<DataManager> CreateDataManager(JNIEnv *env,
+                                               jstring j_data_file_path) {
+  if (j_data_file_path == nullptr) {
+    return nullptr;
+  }
+  const string &data_file_path = JstringToCcString(env, j_data_file_path);
+  std::unique_ptr<DataManager> data_manager(new TargetDataManager());
+  const auto status = data_manager->InitFromFile(data_file_path);
+  if (status != DataManager::Status::OK) {
+    LOG(INFO) << "Failed to load data file from " << data_file_path << "("
+              << DataManager::StatusCodeToString(status) << "). "
+              << "Fall back to the embedded data.";
+    data_manager.reset();
+  }
+  return data_manager;
+}
+
 std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
     JNIEnv *env, jstring data_file_path) {
   if (env == nullptr) {
     LOG(DFATAL) << "JNIEnv is null";
     return nullptr;
   }
-  std::unique_ptr<DataManager> data_manager(new TargetDataManager());
-  if (data_file_path != nullptr) {
-    const DataManager::Status status =
-        data_manager->InitFromFile(JstringToCcString(env, data_file_path));
-    if (status != DataManager::Status::OK) {
-      LOG(ERROR) << "Error in the data passed through JNI: " << status;
-      return nullptr;
-    }
+  std::unique_ptr<DataManager> data_manager =
+      CreateDataManager(env, data_file_path);
+  std::unique_ptr<EngineInterface> engine;
+  if (data_manager) {
+    engine = Engine::CreateMobileEngine(std::move(data_manager));
+  } else {
+    engine.reset(new MinimalEngine());
   }
   std::unique_ptr<SessionHandlerInterface> result(new SessionHandler(
-      Engine::CreateMobileEngine(std::move(data_manager)),
-      std::unique_ptr<EngineBuilder>(new EngineBuilder())));
+      std::move(engine), std::unique_ptr<EngineBuilder>(new EngineBuilder())));
   result->AddObserver(Singleton<session::SessionUsageObserver>::get());
   return result;
 }

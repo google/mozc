@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 #include "renderer/unix/candidate_window.h"
 
 #include <sstream>
+#include <string>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "client/client_interface.h"
 #include "renderer/table_layout_mock.h"
@@ -110,7 +110,7 @@ void SetTestCandidates(uint32 count,
     candidate->set_index(i);
     candidate->set_id(i * 0x10);
 
-    const string id_str = NumberUtil::SimpleItoa(i);
+    const string id_str = std::to_string(i);
 
     if (has_value) {
       candidate->set_value(kSampleValue + id_str);
@@ -139,7 +139,7 @@ void SetTestCandidates(uint32 count,
 string GetExpectedValue(int index, bool has_prefix, bool has_suffix) {
   string result;
 
-  const string id_str = NumberUtil::SimpleItoa(index);
+  const string id_str = std::to_string(index);
   const string expected_prefix = kSamplePrefix + id_str;
   const string expected_value = kSampleValue + id_str;
   const string expected_suffix = kSampleSuffix + id_str;
@@ -154,12 +154,12 @@ string GetExpectedValue(int index, bool has_prefix, bool has_suffix) {
 }
 
 string GetExpectedShortcut(int index) {
-  const string id_str = NumberUtil::SimpleItoa(index);
+  const string id_str = std::to_string(index);
   return kSampleShortcut + id_str;
 }
 
 string GetExpectedDescription(int index) {
-  const string id_str = NumberUtil::SimpleItoa(index);
+  const string id_str = std::to_string(index);
   return kSampleDescription + id_str;
 }
 

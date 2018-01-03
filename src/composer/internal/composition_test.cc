@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -99,15 +99,11 @@ static int InitComposition(Composition* comp) {
   } test_chunks[] = {
     // "あ ky き った っty"  (9 chars)
     // a ky ki tta tty
-    // "あ"
-    { "\xe3\x81\x82", "", "a" },
+    { "あ", "", "a" },
     { "", "ky", "ky" },
-    // "き"
-    { "\xe3\x81\x8d", "", "ki" },
-    // "った"
-    { "\xe3\x81\xa3\xe3\x81\x9f", "", "tta" },
-    // "っ"
-    { "\xe3\x81\xa3", "ty", "tty" },
+    { "き", "", "ki" },
+    { "った", "", "tta" },
+    { "っ", "ty", "tty" },
   };
   static const int test_chunks_size = arraysize(test_chunks);
   CharChunkList::iterator it;
@@ -144,15 +140,11 @@ TEST_F(CompositionTest, GetChunkLength) {
     const int expected_conv_length;
     const int expected_raw_length;
   } test_cases[] = {
-    // "あ"
-    { "\xe3\x81\x82", "", "a", 1, 1 },
+    { "あ", "", "a", 1, 1 },
     { "", "ky", "ky", 2, 2 },
-    // "き"
-    { "\xe3\x81\x8d", "", "ki", 1, 2 },
-    // "った"
-    { "\xe3\x81\xa3\xe3\x81\x9f", "", "tta", 2, 3 },
-    // "っ"
-    { "\xe3\x81\xa3", "ty", "tty", 3, 3 },
+    { "き", "", "ki", 1, 2 },
+    { "った", "", "tta", 2, 3 },
+    { "っ", "ty", "tty", 3, 3 },
   };
   CharChunk *chunk = AppendChunk("", "", "", composition_.get());
 
@@ -262,24 +254,18 @@ TEST_F(CompositionTest, GetString) {
   composition_->SetDisplayMode(dummy_position,
                                Transliterators::CONVERSION_STRING);
   composition_->GetString(&composition);
-  // "あkyきったっty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81"
-            "\xa3\x74\x79", composition);
+  EXPECT_EQ("あkyきったっty", composition);
 }
 
 TEST_F(CompositionTest, GetStringWithDisplayMode) {
-  // "も"
-  AppendChunk("\xe3\x82\x82", "", "mo", composition_.get());
-  // "ず"
-  AppendChunk("\xe3\x81\x9a", "", "z", composition_.get());
-  // "く"
-  AppendChunk("\xe3\x81\x8f", "", "c", composition_.get());
+  AppendChunk("も", "", "mo", composition_.get());
+  AppendChunk("ず", "", "z", composition_.get());
+  AppendChunk("く", "", "c", composition_.get());
 
   string composition;
   composition_->GetStringWithTransliterator(Transliterators::CONVERSION_STRING,
                                             &composition);
-  // "もずく"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f", composition);
+  EXPECT_EQ("もずく", composition);
 
   composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
                                             &composition);
@@ -299,21 +285,14 @@ TEST_F(CompositionTest, SplitRawChunk) {
     const char* expected_right_pending;
     const char* expected_right_raw;
   } test_cases[] = {
-    // "あ", "あ"
-    { "\xe3\x81\x82", "", "a", 0, "", "", "", "\xe3\x81\x82", "", "a" },
+    { "あ", "", "a", 0, "", "", "", "あ", "", "a" },
     { "", "ky", "ky", 1, "", "k", "k", "", "y", "y" },
-    // "き"
-    { "\xe3\x81\x8d", "", "ki", 1, "k", "", "k", "i", "", "i" },
-    // "った"
-    { "\xe3\x81\xa3\xe3\x81\x9f", "", "tta", 1, "t", "", "t", "ta", "", "ta" },
-    // "った"
-    { "\xe3\x81\xa3\xe3\x81\x9f", "", "tta", 2, "tt", "", "tt", "a", "", "a" },
-    // "っ", "っ"
-    { "\xe3\x81\xa3", "ty", "tty", 1, "\xe3\x81\xa3", "", "t", "", "ty", "ty" },
-    // "っ", "っ"
-    { "\xe3\x81\xa3", "ty", "tty", 2, "\xe3\x81\xa3", "t", "tt", "", "y", "y" },
-    // "っ", "っ"
-    { "\xe3\x81\xa3", "ty", "tty", 3, "", "", "", "\xe3\x81\xa3", "ty", "tty" },
+    { "き", "", "ki", 1, "k", "", "k", "i", "", "i" },
+    { "った", "", "tta", 1, "t", "", "t", "ta", "", "ta" },
+    { "った", "", "tta", 2, "tt", "", "tt", "a", "", "a" },
+    { "っ", "ty", "tty", 1, "っ", "", "t", "", "ty", "ty" },
+    { "っ", "ty", "tty", 2, "っ", "t", "tt", "", "y", "y" },
+    { "っ", "ty", "tty", 3, "", "", "", "っ", "ty", "tty" },
   };
   for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
@@ -351,23 +330,14 @@ TEST_F(CompositionTest, SplitConversionChunk) {
     const char* expected_right_pending;
     const char* expected_right_raw;
   } test_cases[] = {
-    // "あ", "あ"
-    { "\xe3\x81\x82", "", "a", 0, "", "", "", "\xe3\x81\x82", "", "a" },
+    { "あ", "", "a", 0, "", "", "", "あ", "", "a" },
     { "", "ky", "ky", 1, "", "k", "k", "", "y", "y" },
-    // "きょ", "き", "き", "ょ", "ょ"
-    { "\xe3\x81\x8d\xe3\x82\x87", "", "kyo", 1, "\xe3\x81\x8d", "",
-      "\xe3\x81\x8d", "\xe3\x82\x87", "", "\xe3\x82\x87" },
-    // "っ", "っ"
-    { "\xe3\x81\xa3", "t", "tt", 1, "\xe3\x81\xa3", "", "t", "", "t", "t" },
-    // "った", "っ", "っ", "た", "た"
-    { "\xe3\x81\xa3\xe3\x81\x9f", "", "tta", 1, "\xe3\x81\xa3", "",
-      "\xe3\x81\xa3", "\xe3\x81\x9f", "", "\xe3\x81\x9f" },
-    // "っ", "っ"
-    { "\xe3\x81\xa3", "ty", "tty", 1, "\xe3\x81\xa3", "", "t", "", "ty", "ty" },
-    // "っ", "っ"
-    { "\xe3\x81\xa3", "ty", "tty", 2, "\xe3\x81\xa3", "t", "tt", "", "y", "y" },
-    // "っ", "っ"
-    { "\xe3\x81\xa3", "ty", "tty", 3, "", "", "", "\xe3\x81\xa3", "ty", "tty" },
+    { "きょ", "", "kyo", 1, "き", "", "き", "ょ", "", "ょ" },
+    { "っ", "t", "tt", 1, "っ", "", "t", "", "t", "t" },
+    { "った", "", "tta", 1, "っ", "", "っ", "た", "", "た" },
+    { "っ", "ty", "tty", 1, "っ", "", "t", "", "ty", "ty" },
+    { "っ", "ty", "tty", 2, "っ", "t", "tt", "", "y", "y" },
+    { "っ", "ty", "tty", 3, "", "", "", "っ", "ty", "tty" },
   };
   for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
@@ -381,9 +351,9 @@ TEST_F(CompositionTest, SplitConversionChunk) {
     std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
 
     if (left_new_chunk.get() != NULL) {
-    EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
-    EXPECT_EQ(test.expected_left_pending, left_new_chunk->pending());
-    EXPECT_EQ(test.expected_left_raw, left_new_chunk->raw());
+      EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
+      EXPECT_EQ(test.expected_left_pending, left_new_chunk->pending());
+      EXPECT_EQ(test.expected_left_raw, left_new_chunk->raw());
     }
 
     EXPECT_EQ(test.expected_right_conversion, right_orig_chunk.conversion());
@@ -473,47 +443,28 @@ string GetDeletedString(Transliterators::Transliterator t12r,
 
 TEST_F(CompositionTest, DeleteAt) {
   // "あkyきったっty" is the original string
-
-  // "kyきったっty"
-  EXPECT_EQ("\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
+  EXPECT_EQ("kyきったっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 0));
-  // "あyきったっty"
-  EXPECT_EQ("\xe3\x81\x82\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3"
-            "\x74\x79",
+  EXPECT_EQ("あyきったっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 1));
-  // "あkきったっty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3"
-            "\x74\x79",
+  EXPECT_EQ("あkきったっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 2));
-  // "あkyったっty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
+  EXPECT_EQ("あkyったっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 3));
-  // "あkyきたっty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
+  EXPECT_EQ("あkyきたっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 4));
-  // "あkyきっっty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\x74\x79",
+  EXPECT_EQ("あkyきっっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 5));
-  // "あkyきったty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\x74\x79",
+  EXPECT_EQ("あkyきったty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 6));
-  // "あkyきったっy"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81"
-            "\xa3\x79",
+  EXPECT_EQ("あkyきったっy",
             GetDeletedString(Transliterators::CONVERSION_STRING, 7));
-  // "あkyきったっt"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81"
-            "\xa3\x74",
+  EXPECT_EQ("あkyきったっt",
             GetDeletedString(Transliterators::CONVERSION_STRING, 8));
-  // "あkyきったっty"
   // end
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f"
-            "\xe3\x81\xa3\x74\x79",
+  EXPECT_EQ("あkyきったっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, 9));
-
-  // "あkyきったっty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f"
-            "\xe3\x81\xa3\x74\x79",
+  EXPECT_EQ("あkyきったっty",
             GetDeletedString(Transliterators::CONVERSION_STRING, -1));
 
   // "akykittatty" is the original string
@@ -564,22 +515,14 @@ TEST_F(CompositionTest, DeleteAt_InvisibleCharacter) {
 namespace {
 
 void InitTable(Table* table) {
-  // "い"
-  table->AddRule("i",  "\xe3\x81\x84", "");
-  // "き"
-  table->AddRule("ki", "\xe3\x81\x8d", "");
-  // "きぃ"
-  table->AddRule("kyi", "\xe3\x81\x8d\xe3\x81\x83", "");
-  // "ち"
-  table->AddRule("ti", "\xe3\x81\xa1", "");
-  // "ちゃ"
-  table->AddRule("tya", "\xe3\x81\xa1\xe3\x82\x83", "");
-  // "ちぃ"
-  table->AddRule("tyi", "\xe3\x81\xa1\xe3\x81\x83", "");
-  // "や"
-  table->AddRule("ya", "\xe3\x82\x84", "");
-  // "っ"
-  table->AddRule("yy", "\xe3\x81\xa3", "y");
+  table->AddRule("i",  "い", "");
+  table->AddRule("ki", "き", "");
+  table->AddRule("kyi", "きぃ", "");
+  table->AddRule("ti", "ち", "");
+  table->AddRule("tya", "ちゃ", "");
+  table->AddRule("tyi", "ちぃ", "");
+  table->AddRule("ya", "や", "");
+  table->AddRule("yy", "っ", "y");
 }
 
 string GetInsertedString(Transliterators::Transliterator t12r,
@@ -606,82 +549,37 @@ string GetInsertedString(Transliterators::Transliterator t12r,
 
 TEST_F(CompositionTest, InsertAt) {
   // "あkyきったっty" is the original string
-
-  // "いあkyきったっty"
-  EXPECT_EQ("\xe3\x81\x84\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3"
-            "\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
+  EXPECT_EQ("いあkyきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 0, "i"));
-
-  // "あいkyきったっty"
-  EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\x6B\x79\xE3\x81\x8D\xE3\x81\xA3"
-            "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あいkyきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 1, "i"));
-
-  // "あきyきったっty"
-  EXPECT_EQ("\xE3\x81\x82\xE3\x81\x8D\x79\xE3\x81\x8D\xE3\x81\xA3"
-            "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あきyきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 2, "i"));
-
-  // "あきぃきったっty"
-  EXPECT_EQ("\xE3\x81\x82\xE3\x81\x8D\xE3\x81\x83\xE3\x81\x8D\xE3\x81\xA3"
-            "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あきぃきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 3, "i"));
-
-  // "あkyきいったっty"
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\x84\xE3\x81\xA3"
-            "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あkyきいったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 4, "i"));
-
-  // "あkyきっいたっty"
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x84"
-            "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あkyきっいたっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 5, "i"));
-
-  // "あkyきったっちぃ"
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\xE3\x81\xA1\xE3\x81\x83",
+  EXPECT_EQ("あkyきったっちぃ",
             GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"));
-
-  // "yあkyきったっty"
-  EXPECT_EQ("\x79\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("yあkyきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 0, "y"));
-
-  // "あykyきったっty"
-  EXPECT_EQ("\xE3\x81\x82\x79\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あykyきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 1, "y"));
-
-  // "あkyyきったっty"
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あkyyきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 2, "y"));
-
-  // "あkyyきったっty"
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あkyyきったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 3, "y"));
-
-  // "あkyきyったっty"
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\x79\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あkyきyったっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 4, "y"));
-
-  // "あkyきっyたっty"
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\x79\xE3\x81\x9F"
-            "\xE3\x81\xA3\x74\x79",
+  EXPECT_EQ("あkyきっyたっty",
             GetInsertedString(Transliterators::CONVERSION_STRING, 5, "y"));
-
-  // "あkyきったっちぃ"
   // end
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\xE3\x81\xA1\xE3\x81\x83",
+  EXPECT_EQ("あkyきったっちぃ",
             GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"));
-
-  // "あkyきったっtyy"
   // end
-  EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
-            "\xE3\x81\xA3\x74\x79\x79",
+  EXPECT_EQ("あkyきったっtyy",
             GetInsertedString(Transliterators::CONVERSION_STRING, 9, "y"));
 
   // "akykittatty" is the original string
@@ -717,19 +615,14 @@ TEST_F(CompositionTest, GetExpandedStrings) {
   string base;
   std::set<string> expanded;
   composition_->GetExpandedStrings(&base, &expanded);
-  // "あkyきったっ"
-  EXPECT_EQ(
-      "\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3",
-      base);
+  EXPECT_EQ("あkyきったっ", base);
   EXPECT_EQ(2, expanded.size());
-  // "ちぃ"
   // You cannot use EXPECT_NE here because it causes compile error in gtest
   // when the compiler is Visual C++. b/5655673
-  EXPECT_TRUE(expanded.find("\xe3\x81\xa1\xe3\x81\x83") != expanded.end());
-  // "ちゃ"
+  EXPECT_TRUE(expanded.find("ちぃ") != expanded.end());
   // You cannot use EXPECT_NE here because it causes compile error in gtest
   // when the compiler is Visual C++. b/5655673
-  EXPECT_TRUE(expanded.find("\xe3\x81\xa1\xe3\x82\x83") != expanded.end());
+  EXPECT_TRUE(expanded.find("ちゃ") != expanded.end());
 }
 
 TEST_F(CompositionTest, ConvertPosition) {
@@ -767,10 +660,8 @@ TEST_F(CompositionTest, ConvertPosition) {
                 Transliterators::RAW_STRING,
                 Transliterators::CONVERSION_STRING));
 
-  // "ね"
-  AppendChunk("\xe3\x81\xad", "", "ne", composition_.get());
-  // "っと"
-  AppendChunk("\xe3\x81\xa3\xe3\x81\xa8", "", "tto", composition_.get());
+  AppendChunk("ね", "", "ne", composition_.get());
+  AppendChunk("っと", "", "tto", composition_.get());
 
   // "|ねっと" -> "|netto"
   EXPECT_EQ(0,
@@ -867,12 +758,9 @@ TEST_F(CompositionTest, ConvertPosition) {
 }
 
 TEST_F(CompositionTest, SetDisplayMode) {
-  // "も"
-  AppendChunk("\xe3\x82\x82", "", "mo", composition_.get());
-  // "ず"
-  AppendChunk("\xe3\x81\x9a", "", "zu", composition_.get());
-  // "く"
-  AppendChunk("\xe3\x81\x8f", "", "ku", composition_.get());
+  AppendChunk("も", "", "mo", composition_.get());
+  AppendChunk("ず", "", "zu", composition_.get());
+  AppendChunk("く", "", "ku", composition_.get());
 
   CharChunkList::iterator chunk_it;
   size_t inner_position;
@@ -906,13 +794,10 @@ TEST_F(CompositionTest, SetDisplayMode) {
 
 TEST_F(CompositionTest, GetStringWithTrimMode) {
   Table table;
-  // "か"
-  table.AddRule("ka", "\xe3\x81\x8b", "");
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
+  table.AddRule("ka", "か", "");
+  table.AddRule("n", "ん", "");
   // This makes the above rule ambiguous.
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
+  table.AddRule("na", "な", "");
   composition_->SetTable(&table);
 
   string output_empty;
@@ -926,43 +811,33 @@ TEST_F(CompositionTest, GetStringWithTrimMode) {
 
   string output_trim;
   composition_->GetStringWithTrimMode(TRIM, &output_trim);
-  // "か"
-  EXPECT_EQ("\xe3\x81\x8b", output_trim);
+  EXPECT_EQ("か", output_trim);
 
   string output_asis;
   composition_->GetStringWithTrimMode(ASIS, &output_asis);
-  // "かn"
-  EXPECT_EQ("\xe3\x81\x8b\x6e", output_asis);
+  EXPECT_EQ("かn", output_asis);
 
   string output_fix;
   composition_->GetStringWithTrimMode(FIX, &output_asis);
-  // "かん"
-  EXPECT_EQ("\xe3\x81\x8b\xe3\x82\x93", output_asis);
+  EXPECT_EQ("かん", output_asis);
 }
 
 TEST_F(CompositionTest, InsertKeyAndPreeditAt) {
   Table table;
-  // "す゛", "ず"
-  table.AddRule("\xe3\x81\x99\xe3\x82\x9b", "\xe3\x81\x9a", "");
-  // "く゛", "ぐ"
-  table.AddRule("\xe3\x81\x8f\xe3\x82\x9b", "\xe3\x81\x90", "");
+  table.AddRule("す゛", "ず", "");
+  table.AddRule("く゛", "ぐ", "");
   composition_->SetTable(&table);
 
   size_t pos = 0;
-  // "も"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "m", "\xe3\x82\x82");
-  // "す"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "r", "\xe3\x81\x99");
-  // "゛"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "@", "\xe3\x82\x9b");
-  // "く"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "h", "\xe3\x81\x8f");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "m", "も");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "r", "す");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "@", "゛");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "h", "く");
   pos = composition_->InsertKeyAndPreeditAt(pos, "!", "!");
 
   string comp_str;
   composition_->GetString(&comp_str);
-  // "もずく!"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\x21", comp_str);
+  EXPECT_EQ("もずく!", comp_str);
 
   string comp_ascii_str;
   composition_->GetStringWithTransliterator(
@@ -999,8 +874,7 @@ TEST_F(CompositionTest, GetStringWithDisplayMode_ForKana) {
   composition_->SetTable(&table);
 
   size_t pos = 0;
-  // "も"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "m", "\xe3\x82\x82");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "m", "も");
 
   string comp_str;
   composition_->GetStringWithTransliterator(
@@ -1010,10 +884,8 @@ TEST_F(CompositionTest, GetStringWithDisplayMode_ForKana) {
 
 TEST_F(CompositionTest, InputMode) {
   Table table;
-  // "あ"
-  table.AddRule("a", "\xE3\x81\x82", "");
-  // "か"
-  table.AddRule("ka", "\xE3\x81\x8B", "");
+  table.AddRule("a", "あ", "");
+  table.AddRule("ka", "か", "");
   composition_->SetTable(&table);
 
   size_t pos = 0;
@@ -1021,7 +893,6 @@ TEST_F(CompositionTest, InputMode) {
 
   string result;
   composition_->GetString(&result);
-  // "k"
   EXPECT_EQ("k", result);
 
   composition_->SetInputMode(Transliterators::FULL_KATAKANA);
@@ -1029,50 +900,37 @@ TEST_F(CompositionTest, InputMode) {
   composition_->GetString(&result);
   // If a vowel and a consonant were typed with different
   // transliterators, these characters should not be combined.
-  // "kア"
-  EXPECT_EQ("\x6B\xE3\x82\xA2", result);
+  EXPECT_EQ("kア", result);
 
   composition_->SetInputMode(Transliterators::HALF_ASCII);
   pos = composition_->InsertAt(pos, "k");
   composition_->GetString(&result);
-  // "kアk"
-  EXPECT_EQ("\x6B\xE3\x82\xA2\x6B", result);
+  EXPECT_EQ("kアk", result);
 
   composition_->SetInputMode(Transliterators::HIRAGANA);
   pos = composition_->InsertAt(pos, "a");
   composition_->GetString(&result);
-  // "kアkあ"
-  EXPECT_EQ("\x6B\xE3\x82\xA2\x6B\xE3\x81\x82", result);
+  EXPECT_EQ("kアkあ", result);
 
-  // "|kアkあ"
   EXPECT_EQ(Transliterators::CONVERSION_STRING,
             composition_->GetTransliterator(0));
-  // "k|アkあ"
   EXPECT_EQ(Transliterators::CONVERSION_STRING,
             composition_->GetTransliterator(1));
-  // "kア|kあ"
   EXPECT_EQ(Transliterators::FULL_KATAKANA, composition_->GetTransliterator(2));
-  // "kアk|あ"
   EXPECT_EQ(Transliterators::HALF_ASCII, composition_->GetTransliterator(3));
-  // "kアkあ|"
   EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(4));
-  // "kアkあ...|"
   EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(5));
   EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(10));
 }
 
 TEST_F(CompositionTest, SetTable) {
   Table table;
-  // "あ"
-  table.AddRule("a", "\xE3\x81\x82", "");
-  // "か"
-  table.AddRule("ka", "\xE3\x81\x8B", "");
+  table.AddRule("a", "あ", "");
+  table.AddRule("ka", "か", "");
 
   Table table2;
-  // "あ"
-  table2.AddRule("a", "\xE3\x81\x82", "");
-  // "か"
-  table2.AddRule("ka", "\xE3\x81\x8B", "");
+  table2.AddRule("a", "あ", "");
+  table2.AddRule("ka", "か", "");
 
   composition_->SetTable(&table);
   composition_->SetInputMode(Transliterators::HIRAGANA);
@@ -1082,21 +940,18 @@ TEST_F(CompositionTest, SetTable) {
 
   string result;
   composition_->GetString(&result);
-  // "ｋ"
-  EXPECT_EQ("\xEF\xBD\x8B", result);
+  EXPECT_EQ("ｋ", result);
 
   composition_->SetTable(&table2);
 
   pos = composition_->InsertAt(pos, "a");
   composition_->GetString(&result);
-  // "ｋあ";
-  EXPECT_EQ("\xEF\xBD\x8B\xE3\x81\x82", result);
+  EXPECT_EQ("ｋあ", result);
 }
 
 TEST_F(CompositionTest, Transliterator) {
   Table table;
-  // "あ"
-  table.AddRule("a", "\xE3\x81\x82", "");
+  table.AddRule("a", "あ", "");
   composition_->SetTable(&table);
 
   // Insert "a" which is converted to "あ".
@@ -1105,8 +960,7 @@ TEST_F(CompositionTest, Transliterator) {
   EXPECT_EQ(1, pos);
   string result;
   composition_->GetString(&result);
-  // "あ"
-  EXPECT_EQ("\xE3\x81\x82", result);
+  EXPECT_EQ("あ", result);
 
   // Set transliterator for Half Ascii.
   composition_->SetTransliterator(0, pos, Transliterators::HALF_ASCII);
@@ -1118,20 +972,17 @@ TEST_F(CompositionTest, Transliterator) {
   EXPECT_EQ(2, pos);
   result.clear();
   composition_->GetString(&result);
-  // "aあ"
-  EXPECT_EQ("a\xE3\x81\x82", result);
+  EXPECT_EQ("aあ", result);
 
   // Set transliterator for Full Katakana.
   composition_->SetTransliterator(0, pos, Transliterators::FULL_KATAKANA);
   composition_->GetString(&result);
-  // "アア"
-  EXPECT_EQ("\xE3\x82\xA2\xE3\x82\xA2", result);
+  EXPECT_EQ("アア", result);
 }
 
 TEST_F(CompositionTest, HalfAsciiTransliterator) {
   Table table;
-  // "ー"
-  table.AddRule("-", "\xE3\x83\xBC", "");
+  table.AddRule("-", "ー", "");
   composition_->SetTable(&table);
   composition_->SetInputMode(Transliterators::HALF_ASCII);
 
@@ -1152,31 +1003,24 @@ TEST_F(CompositionTest, ShouldCommit) {
 
   size_t pos = 0;
 
-  // k
   pos = composition_->InsertAt(pos, "k");
   EXPECT_FALSE(composition_->ShouldCommit());
 
-  // k + a
   pos = composition_->InsertAt(pos, "a");
   EXPECT_TRUE(composition_->ShouldCommit());
 
-  // ka + t
   pos = composition_->InsertAt(pos, "t");
   EXPECT_FALSE(composition_->ShouldCommit());
 
-  // kat + t
   pos = composition_->InsertAt(pos, "t");
   EXPECT_FALSE(composition_->ShouldCommit());
 
-  // katt + a
   pos = composition_->InsertAt(pos, "a");
   EXPECT_TRUE(composition_->ShouldCommit());
 
-  // katta + t
   pos = composition_->InsertAt(pos, "t");
   EXPECT_FALSE(composition_->ShouldCommit());
 
-  // kattat + a
   pos = composition_->InsertAt(pos, "a");
   EXPECT_FALSE(composition_->ShouldCommit());
   EXPECT_EQ("[KA][X][TA][TA]", GetString(*composition_));
@@ -1190,22 +1034,18 @@ TEST_F(CompositionTest, Issue2190364) {
   size_t pos = 0;
 
   composition_->SetInputMode(Transliterators::FULL_ASCII);
-  // "ち"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "a", "\xE3\x81\xA1");
-  // "ａ"
-  EXPECT_EQ("\xEF\xBD\x81", GetString(*composition_));
+  pos = composition_->InsertKeyAndPreeditAt(pos, "a", "ち");
+  EXPECT_EQ("ａ", GetString(*composition_));
 
   pos = composition_->InsertAt(pos, " ");
-  // "ａ　"
-  EXPECT_EQ("\xEF\xBD\x81\xE3\x80\x80", GetString(*composition_));
+  EXPECT_EQ("ａ　", GetString(*composition_));
 }
 
 
 TEST_F(CompositionTest, Issue1817410) {
   // This is a unittest against http://b/2190364
   Table table;
-  // "っ"
-  table.AddRule("ss", "\xE3\x81\xA3", "s");
+  table.AddRule("ss", "っ", "s");
   composition_->SetTable(&table);
 
   size_t pos = 0;
@@ -1214,8 +1054,7 @@ TEST_F(CompositionTest, Issue1817410) {
 
   string preedit;
   composition_->GetString(&preedit);
-  // "っs"
-  EXPECT_EQ("\xE3\x81\xA3\x73", preedit);
+  EXPECT_EQ("っs", preedit);
 
   EXPECT_EQ(0, composition_->ConvertPosition(0, Transliterators::LOCAL,
                                              Transliterators::HALF_ASCII));
@@ -1255,10 +1094,8 @@ TEST_F(CompositionTest, Issue2209634) {
   // This is a unittest against http://b/2209634
   // "q@" becomes "qた@".
   Table table;
-  // "た"
-  table.AddRule("q", "", "\xE3\x81\x9F");
-  // "た@", "だ"
-  table.AddRule("\xE3\x81\x9F\x40", "\xE3\x81\xA0", "");
+  table.AddRule("q", "", "た");
+  table.AddRule("た@", "だ", "");
   composition_->SetTable(&table);
 
   composition_->SetInputMode(Transliterators::HALF_ASCII);
@@ -1276,14 +1113,10 @@ TEST_F(CompositionTest, Issue2330530) {
   // This is a unittest against http://b/2330530
   // "Win" + Numpad7 becomes "Win77" instead of "Win7".
   Table table;
-  // "うぃ"
-  table.AddRule("wi", "\xe3\x81\x86\xe3\x81\x83", "");
-  // "い"
-  table.AddRule("i", "\xe3\x81\x84", "");
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
+  table.AddRule("wi", "うぃ", "");
+  table.AddRule("i", "い", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
   composition_->SetTable(&table);
 
   composition_->SetInputMode(Transliterators::HALF_ASCII);
@@ -1306,18 +1139,12 @@ TEST_F(CompositionTest, Issue2819580) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
   Table table;
-  // "ぽ"
-  table.AddRule("po", "\xe3\x81\xbd", "");
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table.AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
-  // "びょ"
-  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+  table.AddRule("po", "ぽ", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
+  table.AddRule("ya", "や", "");
+  table.AddRule("nya", "にゃ", "");
+  table.AddRule("byo", "びょ", "");
 
   composition_->SetTable(&table);
 
@@ -1329,15 +1156,12 @@ TEST_F(CompositionTest, Issue2819580) {
   {
     string output;
     composition_->GetStringWithTrimMode(FIX, &output);
-    // "んｙ"
-    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x99", output);
+    EXPECT_EQ("んｙ", output);
 
     composition_->GetStringWithTrimMode(ASIS, &output);
-    // "ｎｙ"
-    EXPECT_EQ("\xef\xbd\x8e\xef\xbd\x99", output);
+    EXPECT_EQ("ｎｙ", output);
 
     composition_->GetStringWithTrimMode(TRIM, &output);
-    // ""
     EXPECT_EQ("", output);
   }
 }
@@ -1346,18 +1170,12 @@ TEST_F(CompositionTest, Issue2990253) {
   // SplitChunk fails.
   // Ambiguous text is left in rhs CharChunk invalidly.
   Table table;
-  // "ぽ"
-  table.AddRule("po", "\xe3\x81\xbd", "");
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table.AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
-  // "びょ"
-  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+  table.AddRule("po", "ぽ", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
+  table.AddRule("ya", "や", "");
+  table.AddRule("nya", "にゃ", "");
+  table.AddRule("byo", "びょ", "");
 
   composition_->SetTable(&table);
 
@@ -1371,18 +1189,15 @@ TEST_F(CompositionTest, Issue2990253) {
   {
     string output;
     composition_->GetStringWithTrimMode(FIX, &output);
-    // "んｂｙ"
-    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x82\xef\xbd\x99", output);
+    EXPECT_EQ("んｂｙ", output);
 
     composition_->GetStringWithTrimMode(ASIS, &output);
-    // "んｂｙ"
-    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x82\xef\xbd\x99", output);
+    EXPECT_EQ("んｂｙ", output);
 
     composition_->GetStringWithTrimMode(TRIM, &output);
-    // "んｂ"
     // doubtful result. should be "ん"
     // May relate to http://b/2990358
-    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x82", output);
+    EXPECT_EQ("んｂ", output);
   }
 }
 
@@ -1391,18 +1206,12 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_1) {
   // Test for mainly Composition::InsertAt()
 
   Table table;
-  // "ぽ"
-  table.AddRule("po", "\xe3\x81\xbd", "");
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table.AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
-  // "びょ"
-  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+  table.AddRule("po", "ぽ", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
+  table.AddRule("ya", "や", "");
+  table.AddRule("nya", "にゃ", "");
+  table.AddRule("byo", "びょ", "");
 
   composition_->SetTable(&table);
 
@@ -1418,16 +1227,13 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_1) {
   {
     string output;
     composition_->GetStringWithTrimMode(FIX, &output);
-    // "んびょ"
-    EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+    EXPECT_EQ("んびょ", output);
 
     composition_->GetStringWithTrimMode(ASIS, &output);
-    // "んびょ"
-    EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+    EXPECT_EQ("んびょ", output);
 
     composition_->GetStringWithTrimMode(TRIM, &output);
-    // "んびょ"
-    EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+    EXPECT_EQ("んびょ", output);
   }
 }
 
@@ -1436,27 +1242,20 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_2) {
   // Test for mainly Composition::InsertKeyAndPreeditAt()
 
   Table table;
-  // "す゛", "ず"
-  table.AddRule("\xe3\x81\x99\xe3\x82\x9b", "\xe3\x81\x9a", "");
-  // "く゛", "ぐ"
-  table.AddRule("\xe3\x81\x8f\xe3\x82\x9b", "\xe3\x81\x90", "");
+  table.AddRule("す゛", "ず", "");
+  table.AddRule("く゛", "ぐ", "");
   composition_->SetTable(&table);
 
   size_t pos = 0;
-  // "も"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "m", "\xe3\x82\x82");
-  // "す"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "r", "\xe3\x81\x99");
-  // "く"
-  pos = composition_->InsertKeyAndPreeditAt(pos, "h", "\xe3\x81\x8f");
-  // "゛"
-  pos = composition_->InsertKeyAndPreeditAt(2, "@", "\xe3\x82\x9b");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "m", "も");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "r", "す");
+  pos = composition_->InsertKeyAndPreeditAt(pos, "h", "く");
+  pos = composition_->InsertKeyAndPreeditAt(2, "@", "゛");
   pos = composition_->InsertKeyAndPreeditAt(5, "!", "!");
 
   string comp_str;
   composition_->GetString(&comp_str);
-  // "もずく!"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\x21", comp_str);
+  EXPECT_EQ("もずく!", comp_str);
 
   string comp_ascii_str;
   composition_->GetStringWithTransliterator(
@@ -1466,18 +1265,12 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_2) {
 
 TEST_F(CompositionTest, CombinePendingChunks) {
   Table table;
-  // "ぽ"
-  table.AddRule("po", "\xe3\x81\xbd", "");
-  // "ん"
-  table.AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table.AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table.AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
-  // "びょ"
-  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+  table.AddRule("po", "ぽ", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("na", "な", "");
+  table.AddRule("ya", "や", "");
+  table.AddRule("nya", "にゃ", "");
+  table.AddRule("byo", "びょ", "");
 
   {
     // empty chunks + "n" -> empty chunks + "n"
@@ -1539,8 +1332,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     EXPECT_EQ("ny", (*chunk_it)->pending());
     EXPECT_EQ("", (*chunk_it)->conversion());
     EXPECT_EQ("ny", (*chunk_it)->raw());
-    // "んy"
-    EXPECT_EQ("\xe3\x82\x93y", (*chunk_it)->ambiguous());
+    EXPECT_EQ("んy", (*chunk_it)->ambiguous());
   }
   {
     // Append "a" to [x][n][y] -> [x][ny] + "a"
@@ -1564,8 +1356,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     EXPECT_EQ("ny", (*chunk_it)->pending());
     EXPECT_EQ("", (*chunk_it)->conversion());
     EXPECT_EQ("ny", (*chunk_it)->raw());
-    // "んy"
-    EXPECT_EQ("\xe3\x82\x93y", (*chunk_it)->ambiguous());
+    EXPECT_EQ("んy", (*chunk_it)->ambiguous());
   }
 
   {
@@ -1595,18 +1386,12 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
 TEST_F(CompositionTest, NewChunkBehaviors) {
   Table table;
-  // "ん"
-  table.AddRule("n", "", "\xe3\x82\x93");
-  // "な"
-  table.AddRule("na", "", "\xe3\x81\xaa");
-  // "あ"
-  table.AddRuleWithAttributes("a", "", "\xE3\x81\x82", NEW_CHUNK);
-  // "ん*" -> "猫"
-  table.AddRule("\xe3\x82\x93*", "", "\xE7\x8C\xAB");
-  // "*" -> ""
+  table.AddRule("n", "", "ん");
+  table.AddRule("na", "", "な");
+  table.AddRuleWithAttributes("a", "", "あ", NEW_CHUNK);
+  table.AddRule("ん*", "", "猫");
   table.AddRule("*", "", "");
-  // "ん#" -> "猫"
-  table.AddRule("\xe3\x82\x93#", "", "\xE7\x8C\xAB");
+  table.AddRule("ん#", "", "猫");
 
   composition_->SetTable(&table);
 
@@ -1618,8 +1403,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("a", "", true, &input);
     pos = composition_->InsertInput(pos, input);
-    // "nあ"
-    EXPECT_EQ("n\xe3\x81\x82", GetString(*composition_));
+    EXPECT_EQ("nあ", GetString(*composition_));
   }
   {
     size_t pos = 0;
@@ -1628,8 +1412,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("a", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    // "な"
-    EXPECT_EQ("\xe3\x81\xaa", GetString(*composition_));
+    EXPECT_EQ("な", GetString(*composition_));
   }
 
   {
@@ -1639,8 +1422,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("*", "", true, &input);
     pos = composition_->InsertInput(pos, input);
-    // "猫"
-    EXPECT_EQ("\xE7\x8C\xAB", GetString(*composition_));
+    EXPECT_EQ("猫", GetString(*composition_));
   }
   {
     size_t pos = 0;
@@ -1649,8 +1431,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("*", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    // "猫"
-    EXPECT_EQ("\xE7\x8C\xAB", GetString(*composition_));
+    EXPECT_EQ("猫", GetString(*composition_));
   }
 
   {
@@ -1669,8 +1450,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("#", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    // "猫"
-    EXPECT_EQ("\xE7\x8C\xAB", GetString(*composition_));
+    EXPECT_EQ("猫", GetString(*composition_));
   }
 
   {
@@ -1689,8 +1469,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("1", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    // "ん1"
-    EXPECT_EQ("\xE3\x82\x93""1", GetString(*composition_));
+    EXPECT_EQ("ん""1", GetString(*composition_));
   }
 }
 
@@ -1698,22 +1477,14 @@ TEST_F(CompositionTest, TwelveKeysInput) {
   // Simulates flick + toggle input mode.
 
   Table table;
-  // "ん"
-  table.AddRule("n", "", "\xe3\x82\x93");
-  // "な"
-  table.AddRule("na", "", "\xe3\x81\xaa");
-  // "あ"
-  table.AddRule("a", "", "\xE3\x81\x82");
-  // "*" -> ""
+  table.AddRule("n", "", "ん");
+  table.AddRule("na", "", "な");
+  table.AddRule("a", "", "あ");
   table.AddRule("*", "", "");
-  // "ほ" + "*" ->"ぼ"
-  table.AddRule("\xE3\x81\xBB*", "", "\xE3\x81\xBC");
-  // "は"
-  table.AddRuleWithAttributes("7", "", "\xE3\x81\xAF", NEW_CHUNK);
-  // "は7" -> "ひ"
-  table.AddRule("\xE3\x81\xAF""7", "", "\xE3\x81\xB2");
-  // "ひ" + "*" ->"び"
-  table.AddRule("\xE3\x81\xB2*", "", "\xE3\x81\xB3");
+  table.AddRule("ほ*", "", "ぼ");
+  table.AddRuleWithAttributes("7", "", "は", NEW_CHUNK);
+  table.AddRule("は""7", "", "ひ");
+  table.AddRule("ひ*", "", "び");
 
   composition_->SetTable(&table);
 
@@ -1726,35 +1497,28 @@ TEST_F(CompositionTest, TwelveKeysInput) {
   SetInput("a", "", false, &input);
   pos = composition_->InsertInput(pos, input);
 
-  // "ほ"
-  SetInput("7", "\xE3\x81\xBB", false, &input);
+  SetInput("7", "ほ", false, &input);
   pos = composition_->InsertInput(pos, input);
 
   SetInput("*", "", true, &input);
   pos = composition_->InsertInput(pos, input);
 
-  // "ひ"
-  SetInput("7", "\xE3\x81\xB2", false, &input);
+  SetInput("7", "ひ", false, &input);
   pos = composition_->InsertInput(pos, input);
 
   SetInput("7", "", true, &input);
   pos = composition_->InsertInput(pos, input);
 
-  // "は"
-  SetInput("7", "\xE3\x81\xAF", false, &input);
+  SetInput("7", "は", false, &input);
   pos = composition_->InsertInput(pos, input);
 
   SetInput("7", "", true, &input);
   pos = composition_->InsertInput(pos, input);
 
-  // "は"
-  SetInput("7", "\xE3\x81\xAF", false, &input);
+  SetInput("7", "は", false, &input);
   pos = composition_->InsertInput(pos, input);
 
-  // "なぼひはははは"
-  EXPECT_EQ("\xE3\x81\xAA\xE3\x81\xBC\xE3\x81\xB2\xE3\x81\xAF"
-            "\xE3\x81\xAF\xE3\x81\xAF\xE3\x81\xAF",
-            GetString(*composition_));
+  EXPECT_EQ("なぼひはははは", GetString(*composition_));
 }
 
 TEST_F(CompositionTest, DifferentRulesForSamePendingWithSpecialKeys) {
@@ -1864,10 +1628,8 @@ TEST_F(CompositionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
   Table table;
-  // "っ"
-  table.AddRule("ss", "\xE3\x81\xA3", "s");
-  // "し"
-  table.AddRule("shi", "\xE3\x81\x97", "");
+  table.AddRule("ss", "っ", "s");
+  table.AddRule("shi", "し", "");
 
   composition_->SetTable(&table);
   composition_->SetInputMode(Transliterators::HIRAGANA);
@@ -1879,16 +1641,13 @@ TEST_F(CompositionTest, AlphanumericOfSSH) {
 
   string output;
   composition_->GetStringWithTrimMode(FIX, &output);
-  // "っｓｈ"
-  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", output);
+  EXPECT_EQ("っｓｈ", output);
 }
 
 TEST_F(CompositionTest, GrassHack) {
   Table table;
-  // "っ"
-  table.AddRule("ww", "\xE3\x81\xA3", "w");
-  // "うぇ"
-  table.AddRule("we", "\xE3\x81\x86\xE3\x81\x87", "");
+  table.AddRule("ww", "っ", "w");
+  table.AddRule("we", "うぇ", "");
   table.AddRule("www", "w", "ww");
 
   composition_->SetTable(&table);
@@ -1898,14 +1657,10 @@ TEST_F(CompositionTest, GrassHack) {
   pos = composition_->InsertAt(pos, "w");
   pos = composition_->InsertAt(pos, "w");
 
-  // "ｗｗｗ"
-  EXPECT_EQ("\xEF\xBD\x97" "\xEF\xBD\x97" "\xEF\xBD\x97",
-            GetString(*composition_));
+  EXPECT_EQ("ｗｗｗ", GetString(*composition_));
 
   pos = composition_->InsertAt(pos, "e");
-  // "ｗっうぇ"
-  EXPECT_EQ("\xEF\xBD\x97" "\xE3\x81\xA3" "\xE3\x81\x86\xE3\x81\x87",
-            GetString(*composition_));
+  EXPECT_EQ("ｗっうぇ", GetString(*composition_));
 }
 
 TEST_F(CompositionTest, RulesForFirstKeyEvents) {
@@ -1974,26 +1729,17 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
 TEST_F(CompositionTest, NoTransliteration) {
   table_->AddRuleWithAttributes("0", "0", "", NO_TABLE_ATTRIBUTE);
   table_->AddRuleWithAttributes("1", "1", "", NO_TRANSLITERATION);
-  // "っ"
-  table_->AddRuleWithAttributes("kk", "\xE3\x81\xA3", "k", NO_TABLE_ATTRIBUTE);
-  // "か"
-  table_->AddRuleWithAttributes("ka", "\xE3\x81\x8B", "", NO_TRANSLITERATION);
-  // "っ"
-  table_->AddRuleWithAttributes("ss", "\xE3\x81\xA3", "s", NO_TRANSLITERATION);
-  // "さ"
-  table_->AddRuleWithAttributes("sa", "\xE3\x81\x95", "", NO_TABLE_ATTRIBUTE);
-  // "っ"
-  table_->AddRuleWithAttributes("tt", "\xE3\x81\xA3", "t", NO_TRANSLITERATION);
-  // "た"
-  table_->AddRuleWithAttributes("ta", "\xE3\x81\x9F", "", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("kk", "っ", "k", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("ka", "か", "", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("ss", "っ", "s", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("sa", "さ", "", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("tt", "っ", "t", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("ta", "た", "", NO_TRANSLITERATION);
 
   composition_->SetInputMode(Transliterators::FULL_KATAKANA);
 
   InsertCharacters("01kkassatta", 0, composition_.get());
-  // "０1ッカっさった"
-  EXPECT_EQ("\xEF\xBC\x90\x31\xE3\x83\x83\xE3\x82\xAB\xE3\x81\xA3\xE3\x81\x95"
-            "\xE3\x81\xA3\xE3\x81\x9F",
-            GetString(*composition_));
+  EXPECT_EQ("０1ッカっさった", GetString(*composition_));
 }
 
 TEST_F(CompositionTest, NoTransliteration_Issue3497962) {
@@ -2025,12 +1771,9 @@ TEST_F(CompositionTest, Clone) {
   Composition src(table_.get());
   src.SetInputMode(Transliterators::FULL_KATAKANA);
 
-  // "も"
-  AppendChunk("\xe3\x82\x82", "", "mo", &src);
-  // "ず"
-  AppendChunk("\xe3\x81\x9a", "", "z", &src);
-  // "く"
-  AppendChunk("\xe3\x81\x8f", "", "c", &src);
+  AppendChunk("も", "", "mo", &src);
+  AppendChunk("ず", "", "z", &src);
+  AppendChunk("く", "", "c", &src);
 
   EXPECT_EQ(table_.get(), src.table());
   EXPECT_EQ(Transliterators::FULL_KATAKANA, src.input_t12r());

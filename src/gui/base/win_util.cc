@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -140,28 +140,11 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
 
   // TODO(yukawa): Investigate better way to localize strings.
   const LinkInfo kLinks[] = {
-    // "手書き文字入力"
-    {"--mode=hand_writing",
-     "Hand Wrinting",
-     "\xE6\x89\x8B\xE6\x9B\xB8\xE3\x81\x8D\xE6\x96\x87\xE5\xAD\x97"
-     "\xE5\x85\xA5\xE5\x8A\x9B"},
-    // "文字パレット"
-    {"--mode=character_palette",
-     "Character Palette",
-     "\xE6\x96\x87\xE5\xAD\x97\xE3\x83\x91\xE3\x83\xAC\xE3\x83\x83"
-     "\xE3\x83\x88"},
-    // "辞書ツール"
-    {"--mode=dictionary_tool",
-     "Dictionary Tool",
-     "\xE8\xBE\x9E\xE6\x9B\xB8\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB"},
-    // "単語登録"
-    {"--mode=word_register_dialog",
-     "Add Word",
-     "\xE5\x8D\x98\xE8\xAA\x9E\xE7\x99\xBB\xE9\x8C\xB2"},
-    // "プロパティ"
-    {"--mode=config_dialog",
-     "Properties",
-     "\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3"},
+      {"--mode=hand_writing", "Hand Wrinting", "手書き文字入力"},
+      {"--mode=character_palette", "Character Palette", "文字パレット"},
+      {"--mode=dictionary_tool", "Dictionary Tool", "辞書ツール"},
+      {"--mode=word_register_dialog", "Add Word", "単語登録"},
+      {"--mode=config_dialog", "Properties", "プロパティ"},
   };
 
   const LANGID kJapaneseLangId = MAKELANGID(LANG_JAPANESE,

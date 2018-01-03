@@ -1,7 +1,7 @@
 [Mozc - a Japanese Input Method Editor designed for multi-platform](https://github.com/google/mozc)
 ===================================
 
-Copyright 2010-2016, Google Inc.
+Copyright 2010-2018, Google Inc.
 
 Mozc is a Japanese Input Method Editor (IME) designed for multi-platform such as
 Android OS, Apple OS X, Chromium OS, GNU/Linux and Microsoft Windows.  This
@@ -61,18 +61,22 @@ see each sub directory to find the copyright notice.  Note also that
 outside [src/third_party](src/third_party) following directories contain
 thrid party code.
 
-###[src/data/dictionary_oss/](src/data/dictionary_oss)
+### [src/data/dictionary_oss/](src/data/dictionary_oss)
+
 Mixed.
 See [src/data/dictionary_oss/README.txt](src/data/dictionary_oss/README.txt)
 
-###[src/data/test/dictionary/](src/data/test/dictionary)
+### [src/data/test/dictionary/](src/data/test/dictionary)
+
 The same to [src/data/dictionary_oss/](src/data/dictionary_oss).
 See [src/data/dictionary_oss/README.txt](src/data/dictionary_oss/README.txt)
 
-###[src/data/test/stress_test/](src/data/test/stress_test)
+### [src/data/test/stress_test/](src/data/test/stress_test)
+
 Public Domain.  See the comment in
 [src/data/test/stress_test/sentences.txt](src/data/test/stress_test/sentences.txt)
 
-###[src/data/unicode/](src/data/unicode)
+### [src/data/unicode/](src/data/unicode)
+
 UNICODE, INC. LICENSE AGREEMENT.
 See each file header for details.

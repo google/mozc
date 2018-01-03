@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 #include "converter/gen_segmenter_bitarray.h"
 
 namespace {
-#include "data_manager/chromeos/segmenter_inl.h"
+#include "data_manager/chromeos/segmenter_inl.inc"
 }
 
 DEFINE_string(output_size_info, "", "Serialized SegmenterDataSizeInfo");

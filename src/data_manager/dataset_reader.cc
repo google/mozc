@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ bool DataSetReader::Init(StringPiece memblock, StringPiece magic) {
 
   // Check the file size.
   uint64 filesize = 0;
-  if (!Util::DeserializeUint64(memblock.substr(memblock.size() - 8, 8),
+  if (!Util::DeserializeUint64(ClippedSubstr(memblock, memblock.size() - 8, 8),
                                &filesize)) {
     LOG(ERROR) << "Broken: failed to read filesize";
     return false;
@@ -85,7 +85,8 @@ bool DataSetReader::Init(StringPiece memblock, StringPiece magic) {
   // Read the metadata size.
   uint64 metadata_size = 0;
   if (!Util::DeserializeUint64(
-          memblock.substr(memblock.size() - kFooterSize, 8), &metadata_size)) {
+          ClippedSubstr(memblock, memblock.size() - kFooterSize, 8),
+          &metadata_size)) {
     LOG(ERROR) << "Broken: failed to read metadata size";
     return false;
   }
@@ -104,7 +105,7 @@ bool DataSetReader::Init(StringPiece memblock, StringPiece magic) {
   // Open metadata.
   DataSetMetadata metadata;
   const StringPiece metadata_chunk =
-      memblock.substr(metadata_offset, metadata_size);
+      ClippedSubstr(memblock, metadata_offset, metadata_size);
   if (!metadata.ParseFromArray(metadata_chunk.data(), metadata_chunk.size())) {
     LOG(ERROR) << "Broken: Failed to parse metadata";
     return false;
@@ -127,7 +128,7 @@ bool DataSetReader::Init(StringPiece memblock, StringPiece magic) {
                  << ", metadata offset = " << metadata_offset;
       return false;
     }
-    name_to_data_map_[e.name()] = memblock.substr(e.offset(), e.size());
+    name_to_data_map_[e.name()] = ClippedSubstr(memblock, e.offset(), e.size());
     prev_chunk_end = e.offset() + e.size();
   }
 
@@ -154,7 +155,7 @@ bool DataSetReader::VerifyChecksum(StringPiece memblock) {
   // Extract the stored SHA1; see dataset.proto for file format.
   const std::size_t kSHA1Length = 20;
   StringPiece expected_checksum =
-      memblock.substr(memblock.size() - 28, kSHA1Length);
+      ClippedSubstr(memblock, memblock.size() - 28, kSHA1Length);
 
   return actual_checksum == expected_checksum;
 }

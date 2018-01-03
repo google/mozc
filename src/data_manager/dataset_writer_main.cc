@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
       writer.AddFile(input.name, input.alignment, input.filename);
     }
     mozc::OutputFileStream output(tmpfile.c_str(),
-                                  ios_base::out | ios_base::binary);
+                                  std::ios_base::out | std::ios_base::binary);
     writer.Finish(&output);
     output.close();
   }

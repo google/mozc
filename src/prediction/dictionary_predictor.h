@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -476,6 +476,7 @@ class DictionaryPredictor : public PredictorInterface {
   const Segmenter *segmenter_;
   const SuggestionFilter *suggestion_filter_;
   const uint16 counter_suffix_word_id_;
+  const uint16 general_symbol_id_;
   const string predictor_name_;
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;

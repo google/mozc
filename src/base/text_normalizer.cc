@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@ void TextNormalizer::NormalizeText(StringPiece input, string *output) {
     Util::UCS4ToUTF8Append(NormalizeCharForWindows(iter.Get()), output);
   }
 #else
-  input.CopyToString(output);
+  output->assign(input.data(), input.size());
 #endif
 }
 

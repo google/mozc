@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,7 @@ class DictionaryImplTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
@@ -100,8 +100,8 @@ class DictionaryImplTest : public ::testing::Test {
     CheckKeyValueExistenceCallback(StringPiece key, StringPiece value)
         : key_(key), value_(value), found_(false) {}
 
-    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                               const Token &token) {
+    ResultType OnToken(StringPiece /* key */, StringPiece /* actual_key */,
+                       const Token &token) override {
       if (token.key == key_ && token.value == value_) {
         found_ = true;
         return TRAVERSE_DONE;
@@ -121,8 +121,8 @@ class DictionaryImplTest : public ::testing::Test {
     CheckSpellingExistenceCallback(StringPiece key, StringPiece value)
         : key_(key), value_(value), found_(false) {}
 
-    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                               const Token &token) {
+    ResultType OnToken(StringPiece /* key */, StringPiece /* actual_key */,
+                       const Token &token) override {
       if (token.key == key_ && token.value == value_ &&
           (token.attributes & Token::SPELLING_CORRECTION)) {
         found_ = true;
@@ -144,8 +144,8 @@ class DictionaryImplTest : public ::testing::Test {
                                            const POSMatcher *pos_matcher)
         : key_(key), value_(value), pos_matcher_(pos_matcher), found_(false) {}
 
-    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                               const Token &token) {
+    ResultType OnToken(StringPiece /* key */, StringPiece /* actual_key */,
+                       const Token &token) override {
       if (token.key == key_ && token.value == value_ &&
           pos_matcher_->IsZipcode(token.lid)) {
         found_ = true;
@@ -167,8 +167,8 @@ class DictionaryImplTest : public ::testing::Test {
     CheckEnglishT13nCallback(StringPiece key, StringPiece value)
         : key_(key), value_(value), found_(false) {}
 
-    virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                               const Token &token) {
+    ResultType OnToken(StringPiece /* key */, StringPiece /* actual_key */,
+                       const Token &token) override {
       if (token.key == key_ && token.value == value_ &&
           Util::IsEnglishTransliteration(token.value)) {
         found_ = true;
@@ -202,18 +202,12 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   DictionaryInterface *d = data->dictionary.get();
   SuppressionDictionary *s = data->suppression_dictionary.get();
 
-  const char kKey[] =
-      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";  // "ぐーぐる"
-  const char kValue[] =
-      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";  // "グーグル"
+  const char kKey[] = "ぐーぐる";
+  const char kValue[] = "グーグル";
 
   const LookupMethodAndQuery kTestPair[] = {
-    // "ぐーぐるは"
-    {&DictionaryInterface::LookupPrefix,
-     "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\xAF"},
-    // "ぐーぐ"
-    {&DictionaryInterface::LookupPredictive,
-     "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90"},
+      {&DictionaryInterface::LookupPrefix, "ぐーぐるは"},
+      {&DictionaryInterface::LookupPredictive, "ぐーぐ"},
   };
 
   // First add (kKey, kValue) to the suppression dictionary; thus it should not
@@ -244,14 +238,12 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   DictionaryInterface *d = data->dictionary.get();
 
   // "あぼがど" -> "アボカド", which is in the test dictionary.
-  const char kKey[] = "\xE3\x81\x82\xE3\x81\xBC\xE3\x81\x8C\xE3\x81\xA9";
-  const char kValue[] = "\xE3\x82\xA2\xE3\x83\x9C\xE3\x82\xAB\xE3\x83\x89";
+  const char kKey[] = "あぼがど";
+  const char kValue[] = "アボカド";
 
   const LookupMethodAndQuery kTestPair[] = {
-    // "あぼがど"
     {&DictionaryInterface::LookupPrefix, kKey},
-    // "あぼ"
-    {&DictionaryInterface::LookupPredictive, "\xE3\x81\x82\xE3\x81\xBC"},
+    {&DictionaryInterface::LookupPredictive, "あぼ"},
   };
 
   // The spelling correction entry (kKey, kValue) should be found if spelling
@@ -278,8 +270,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
 
   // "100-0000" -> "東京都千代田区", which is in the test dictionary.
   const char kKey[] = "100-0000";
-  const char kValue[] = "\xE6\x9D\xB1\xE4\xBA\xAC\xE9\x83\xBD\xE5\x8D"
-                        "\x83\xE4\xBB\xA3\xE7\x94\xB0\xE5\x8C\xBA";
+  const char kValue[] = "東京都千代田区";
 
   const LookupMethodAndQuery kTestPair[] = {
     {&DictionaryInterface::LookupPrefix, kKey},
@@ -309,15 +300,12 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   DictionaryInterface *d = data->dictionary.get();
   NodeAllocator allocator;
 
-  // "ぐーぐる" -> "Google"
-  const char kKey[] =
-      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+  const char kKey[] = "ぐーぐる";
   const char kValue[] = "Google";
 
   const LookupMethodAndQuery kTestPair[] = {
     {&DictionaryInterface::LookupPrefix, kKey},
-    // "ぐー"
-    {&DictionaryInterface::LookupPredictive, "\xE3\x81\x90\xE3\x83\xBC"},
+    {&DictionaryInterface::LookupPredictive, "ぐー"},
   };
 
   // The T13N entry (kKey, kValue) should be found if the flag is set in the

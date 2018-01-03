@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,8 @@ const string NamedEventUtil::GetEventPath(const char *name) {
   //  character."
   const size_t kEventPathLength = 14;
   char buf[32];
-  snprintf(buf, kEventPathLength, "/%llx", Hash::Fingerprint(event_name));
+  snprintf(buf, kEventPathLength, "/%" MOZC_PRIx64,
+           Hash::Fingerprint(event_name));
   return buf;
 #endif
 }

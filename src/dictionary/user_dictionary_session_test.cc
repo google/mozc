@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,21 +44,11 @@ DECLARE_string(test_tmpdir);
 
 namespace {
 
-// "きょうと\t京都\t名詞\n"
-// "!おおさか\t大阪\t地名\n"
-// "\n"
-// "#とうきょう\t東京\t地名\tコメント\n"
-// "すずき\t鈴木\t人名\n";
 const char kDictionaryData[] =
-    "\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\t"
-    "\xE4\xBA\xAC\xE9\x83\xBD\t\xE5\x90\x8D\xE8\xA9\x9E\n"
-    "\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\t"
-    "\xE5\xA4\xA7\xE9\x98\xAA\t\xE5\x9C\xB0\xE5\x90\x8D\n"
-    "\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3"
-    "\x81\x86\t\xE6\x9D\xB1\xE4\xBA\xAC\t\xE5\x9C\xB0\xE5"
-    "\x90\x8D\t\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\n"
-    "\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\t\xE9\x88\xB4"
-    "\xE6\x9C\xA8\t\xE4\xBA\xBA\xE5\x90\x8D\n";
+    "きょうと\t京都\t名詞\n"
+    "おおさか\t大阪\t地名\n"
+    "とうきょう\t東京\t地名\tコメント\n"
+    "すずき\t鈴木\t人名\n";
 
 using ::mozc::FileUtil;
 using ::mozc::SystemUtil;
@@ -69,13 +59,13 @@ using ::mozc::user_dictionary::UserDictionaryStorage;
 
 class UserDictionarySessionTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     FileUtil::Unlink(GetUserDictionaryFile());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     FileUtil::Unlink(GetUserDictionaryFile());
     SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
   }
@@ -617,25 +607,24 @@ TEST_F(UserDictionarySessionTest, ImportFromString) {
   EXPECT_PROTO_PEQ(
       "dictionaries: <\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\"\n"
-      "    value: \"\xE4\xBA\xAC\xE9\x83\xBD\"\n"
+      "    key: \"きょうと\"\n"
+      "    value: \"京都\"\n"
       "    pos: NOUN\n"
       "  >\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\"\n"
-      "    value: \"\xE5\xA4\xA7\xE9\x98\xAA\"\n"
+      "    key: \"おおさか\"\n"
+      "    value: \"大阪\"\n"
       "    pos: PLACE_NAME\n"
       "  >\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\xA8\xE3\x81\x86\xE3"
-                     "\x81\x8D\xE3\x82\x87\xE3\x81\x86\"\n"
-      "    value: \"\xE6\x9D\xB1\xE4\xBA\xAC\"\n"
+      "    key: \"とうきょう\"\n"
+      "    value: \"東京\"\n"
       "    pos: PLACE_NAME\n"
-      "    comment: \"\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\"\n"
+      "    comment: \"コメント\"\n"
       "  >\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\"\n"
-      "    value: \"\xE9\x88\xB4\xE6\x9C\xA8\"\n"
+      "    key: \"すずき\"\n"
+      "    value: \"鈴木\"\n"
       "    pos: PERSONAL_NAME\n"
       "  >\n"
       ">",
@@ -665,25 +654,24 @@ TEST_F(UserDictionarySessionTest, ImportToNewDictionaryFromString) {
       "dictionaries: <\n"
       "  name: \"user dictionary\"\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8\"\n"
-      "    value: \"\xE4\xBA\xAC\xE9\x83\xBD\"\n"
+      "    key: \"きょうと\"\n"
+      "    value: \"京都\"\n"
       "    pos: NOUN\n"
       "  >\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B\"\n"
-      "    value: \"\xE5\xA4\xA7\xE9\x98\xAA\"\n"
+      "    key: \"おおさか\"\n"
+      "    value: \"大阪\"\n"
       "    pos: PLACE_NAME\n"
       "  >\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\xA8\xE3\x81\x86\xE3"
-                     "\x81\x8D\xE3\x82\x87\xE3\x81\x86\"\n"
-      "    value: \"\xE6\x9D\xB1\xE4\xBA\xAC\"\n"
+      "    key: \"とうきょう\"\n"
+      "    value: \"東京\"\n"
       "    pos: PLACE_NAME\n"
-      "    comment: \"\xE3\x82\xB3\xE3\x83\xA1\xE3\x83\xB3\xE3\x83\x88\"\n"
+      "    comment: \"コメント\"\n"
       "  >\n"
       "  entries: <\n"
-      "    key: \"\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D\"\n"
-      "    value: \"\xE9\x88\xB4\xE6\x9C\xA8\"\n"
+      "    key: \"すずき\"\n"
+      "    value: \"鈴木\"\n"
       "    pos: PERSONAL_NAME\n"
       "  >\n"
       ">",

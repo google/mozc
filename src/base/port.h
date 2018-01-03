@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,26 +65,37 @@
 
 
 
+#ifndef _MSC_VER
+#if !defined(__STDC_FORMAT_MACROS)
+#define __STDC_FORMAT_MACROS
+#endif  // !__STDC_FORMAT_MACROS
+#include <inttypes.h>
+#endif  // _MSC_VER
 #include <sys/types.h>
+#include <stdint.h>
 #include <cstddef>
 
-// basic macros
-typedef signed char         int8;
-typedef short               int16;
-typedef int                 int32;
-typedef unsigned char      uint8;
-typedef unsigned short     uint16;
-typedef unsigned int       uint32;
-typedef unsigned int       char32;
+// Integral types.
 #ifdef OS_WIN
-typedef unsigned __int64   uint64;
-typedef __int64             int64;
-#else
-typedef unsigned long long uint64;
-typedef long long           int64;
+using int8 = __int8;
+using int16 = __int16;
+using int32 = __int32;
+using int64 = __int64;
+using uint8 = unsigned __int8;
+using uint16 = unsigned __int16;
+using uint32 = unsigned __int32;
+using uint64 = unsigned __int64;
+#else  // OS_WIN
+using int8 = int8_t;
+using int16 = int16_t;
+using int32 = int32_t;
+using int64 = int64_t;
+using uint8 = uint8_t;
+using uint16 = uint16_t;
+using uint32 = uint32_t;
+using uint64 = uint64_t;
 #endif  // OS_WIN
-
-#include <stdint.h>
+using char32 = uint32;
 
 template <typename T, size_t N>
 char (&ArraySizeHelper(T (&array)[N]))[N];
@@ -99,13 +110,19 @@ char (&ArraySizeHelper(const T (&array)[N]))[N];
 #define GG_LONGLONG(x) x##LL
 #define GG_ULONGLONG(x) x##ULL
 
+// Print format strings for 64-bit integers.
 #ifdef _MSC_VER
-// Length modifier in printf format string for int64's (e.g. within %d)
-#define GG_LL_FORMAT "I64"  // As in printf("%I64d", ...)
-#define GG_LL_FORMAT_W L"I64"
-#else
-#define GG_LL_FORMAT "ll"  // As in "%lld". Note that "q" is poor form also.
-#define GG_LL_FORMAT_W L"ll"
+#define MOZC_PRId64 "I64d"
+#define MOZC_PRIo64 "I64o"
+#define MOZC_PRIu64 "I64u"
+#define MOZC_PRIx64 "I64x"
+#define MOZC_PRIX64 "I64X"
+#else  // _MSC_VER
+#define MOZC_PRId64 PRId64
+#define MOZC_PRIo64 PRIo64
+#define MOZC_PRIu64 PRIu64
+#define MOZC_PRIx64 PRIx64
+#define MOZC_PRIX64 PRIX64
 #endif  // _MSC_VER
 
 // INT_MIN, INT_MAX, UINT_MAX family at Google
@@ -142,13 +159,13 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 // N.B.: As the GCC manual states, "[s]ince non-static C++ methods
 // have an implicit 'this' argument, the arguments of such methods
 // should be counted from two, not one."
-#define PRINTF_ATTRIBUTE(string_index, first_to_check) \
-    __attribute__((__format__ (__printf__, string_index, first_to_check)))
-#define SCANF_ATTRIBUTE(string_index, first_to_check) \
-    __attribute__((__format__ (__scanf__, string_index, first_to_check)))
+#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check) \
+  __attribute__((__format__(__printf__, string_index, first_to_check)))
+#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check) \
+  __attribute__((__format__(__scanf__, string_index, first_to_check)))
 #else
-#define PRINTF_ATTRIBUTE(string_index, first_to_check)
-#define SCANF_ATTRIBUTE(string_index, first_to_check)
+#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check)
+#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check)
 #endif  // __GNUC__ || __clang__
 
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)

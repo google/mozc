@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,10 +39,10 @@
 
 namespace mozc {
 namespace {
+
 void SetSegments(Segments *segments, const string &cand_value) {
   Segment *segment = segments->add_segment();
-  // "Testてすと"
-  segment->set_key("\x54\x65\x73\x74\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8");
+  segment->set_key("Testてすと");
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = cand_value;
 
@@ -51,11 +51,10 @@ void SetSegments(Segments *segments, const string &cand_value) {
   meta_cand->Init();
   meta_cand->value = "TestT13N";
 }
-}  // namespace
 
-class ConverterMockTest : public testing::Test {
+class ConverterMockTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     mock_.reset(new ConverterMock);
   }
 
@@ -77,8 +76,7 @@ TEST_F(ConverterMockTest, CopySegment) {
   EXPECT_EQ(expect.DebugString(), output.DebugString());
   EXPECT_EQ(1, output.segments_size());
   const Segment &seg = output.segment(0);
-  // "Testてすと"
-  EXPECT_EQ("\x54\x65\x73\x74\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8", seg.key());
+  EXPECT_EQ("Testてすと", seg.key());
   EXPECT_EQ(1, seg.candidates_size());
   EXPECT_EQ("StartConvert", seg.candidate(0).value);
   EXPECT_EQ(1, seg.meta_candidates_size());
@@ -544,4 +542,5 @@ TEST_F(ConverterMockTest, DefaultBehavior) {
   EXPECT_EQ(input_str, last_str);
 }
 
+}  // namespace
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -85,7 +85,7 @@ struct POSMap {
 };
 
 // Include actual POS mapping rules defined outside the file.
-#include "dictionary/pos_map.h"
+#include "dictionary/pos_map.inc"
 
 // A functor for searching an array of POSMap for the given POS. The class is
 // used with std::lower_bound().
@@ -250,18 +250,19 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
   const StringPiece crlf("\r\n");
   for (size_t i = position_; i < data_.length(); ++i) {
     if (data_[i] == '\n' || data_[i] == '\r') {
-      const StringPiece next_line = data_.substr(position_, i - position_);
-      next_line.CopyToString(line);
+      const StringPiece next_line =
+          ClippedSubstr(data_, position_, i - position_);
+      line->assign(next_line.data(), next_line.size());
       // Handles CR/LF issue.
-      const StringPiece possible_crlf = data_.substr(i, 2);
+      const StringPiece possible_crlf = ClippedSubstr(data_, i, 2);
       position_ = possible_crlf.compare(crlf) == 0 ? (i + 2) : (i + 1);
       return true;
     }
   }
 
   const StringPiece next_line =
-      data_.substr(position_, data_.size() - position_);
-  next_line.CopyToString(line);
+      ClippedSubstr(data_, position_, data_.size() - position_);
+  line->assign(next_line.data(), next_line.size());
   position_ = data_.length();
   return true;
 }
@@ -500,7 +501,7 @@ UserDictionaryImporter::GuessFileEncodingType(const string &filename) {
     return NUM_ENCODINGS;
   }
   const size_t kMaxCheckSize = 1024;
-  const size_t size = min(kMaxCheckSize, static_cast<size_t>(mmap.size()));
+  const size_t size = std::min(kMaxCheckSize, static_cast<size_t>(mmap.size()));
   const StringPiece mapped_data(static_cast<const char *>(mmap.begin()), size);
   return GuessEncodingType(mapped_data);
 }

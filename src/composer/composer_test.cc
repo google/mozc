@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -252,12 +252,9 @@ TEST_F(ComposerTest, BackSpace) {
 TEST_F(ComposerTest, OutputMode) {
   // This behaviour is based on Kotoeri
 
-  // "あ"
-  table_->AddRule("a", "\xe3\x81\x82", "");
-  // "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
-  // "う"
-  table_->AddRule("u", "\xe3\x81\x86", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("u", "う", "");
 
   composer_->SetOutputMode(transliteration::HIRAGANA);
 
@@ -267,33 +264,25 @@ TEST_F(ComposerTest, OutputMode) {
 
   string output;
   composer_->GetStringForPreedit(&output);
-  // "あいう"
-  EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86", output);
+  EXPECT_EQ("あいう", output);
 
   composer_->SetOutputMode(transliteration::FULL_ASCII);
   composer_->GetStringForPreedit(&output);
-  // "ａｉｕ"
-  EXPECT_EQ("\xEF\xBD\x81\xEF\xBD\x89\xEF\xBD\x95", output);
+  EXPECT_EQ("ａｉｕ", output);
 
   composer_->InsertCharacter("a");
   composer_->InsertCharacter("i");
   composer_->InsertCharacter("u");
   composer_->GetStringForPreedit(&output);
-  // "ａｉｕあいう"
-  EXPECT_EQ("\xEF\xBD\x81\xEF\xBD\x89\xEF\xBD\x95"
-            "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86",
-            output);
+  EXPECT_EQ("ａｉｕあいう", output);
 }
 
 TEST_F(ComposerTest, OutputMode_2) {
   // This behaviour is based on Kotoeri
 
-  // "あ"
-  table_->AddRule("a", "\xe3\x81\x82", "");
-  // "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
-  // "う"
-  table_->AddRule("u", "\xe3\x81\x86", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("u", "う", "");
 
   composer_->InsertCharacter("a");
   composer_->InsertCharacter("i");
@@ -301,52 +290,37 @@ TEST_F(ComposerTest, OutputMode_2) {
 
   string output;
   composer_->GetStringForPreedit(&output);
-  // "あいう"
-  EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86", output);
+  EXPECT_EQ("あいう", output);
 
   composer_->MoveCursorLeft();
   composer_->SetOutputMode(transliteration::FULL_ASCII);
   composer_->GetStringForPreedit(&output);
-  // "ａｉｕ"
-  EXPECT_EQ("\xEF\xBD\x81\xEF\xBD\x89\xEF\xBD\x95", output);
+  EXPECT_EQ("ａｉｕ", output);
 
   composer_->InsertCharacter("a");
   composer_->InsertCharacter("i");
   composer_->InsertCharacter("u");
   composer_->GetStringForPreedit(&output);
-  // "ａｉｕあいう"
-  EXPECT_EQ("\xEF\xBD\x81\xEF\xBD\x89\xEF\xBD\x95"
-            "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86",
-            output);
+  EXPECT_EQ("ａｉｕあいう", output);
 }
 
 TEST_F(ComposerTest, GetTransliterations) {
-  // "あ"
-  table_->AddRule("a", "\xe3\x81\x82", "");
-  // "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
-  // "う"
-  table_->AddRule("u", "\xe3\x81\x86", "");
-  // "あ"
-  table_->AddRule("A", "\xe3\x81\x82", "");
-  // "い"
-  table_->AddRule("I", "\xe3\x81\x84", "");
-  // "う"
-  table_->AddRule("U", "\xe3\x81\x86", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("u", "う", "");
+  table_->AddRule("A", "あ", "");
+  table_->AddRule("I", "い", "");
+  table_->AddRule("U", "う", "");
   composer_->InsertCharacter("a");
 
   transliteration::Transliterations transliterations;
   composer_->GetTransliterations(&transliterations);
   EXPECT_EQ(transliteration::NUM_T13N_TYPES, transliterations.size());
-  // "あ"
-  EXPECT_EQ("\xe3\x81\x82", transliterations[transliteration::HIRAGANA]);
-  // "ア"
-  EXPECT_EQ("\xe3\x82\xa2", transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("あ", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("ア", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("a", transliterations[transliteration::HALF_ASCII]);
-  // "ａ"
-  EXPECT_EQ("\xef\xbd\x81", transliterations[transliteration::FULL_ASCII]);
-  // "ｱ"
-  EXPECT_EQ("\xef\xbd\xb1", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ("ａ", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("ｱ", transliterations[transliteration::HALF_KATAKANA]);
 
   composer_->Reset();
   ASSERT_TRUE(composer_->Empty());
@@ -356,13 +330,10 @@ TEST_F(ComposerTest, GetTransliterations) {
   composer_->GetTransliterations(&transliterations);
   EXPECT_EQ(transliteration::NUM_T13N_TYPES, transliterations.size());
   // NOTE(komatsu): The duplication will be handled by the session layer.
-  // "！"
-  EXPECT_EQ("\xef\xbc\x81", transliterations[transliteration::HIRAGANA]);
-  // "！"
-  EXPECT_EQ("\xef\xbc\x81", transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("！", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("！", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("!", transliterations[transliteration::HALF_ASCII]);
-  // "！"
-  EXPECT_EQ("\xef\xbc\x81", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("！", transliterations[transliteration::FULL_ASCII]);
   EXPECT_EQ("!", transliterations[transliteration::HALF_KATAKANA]);
 
   composer_->Reset();
@@ -372,31 +343,18 @@ TEST_F(ComposerTest, GetTransliterations) {
   composer_->InsertCharacter("aIu");
   composer_->GetTransliterations(&transliterations);
   EXPECT_EQ(transliteration::NUM_T13N_TYPES, transliterations.size());
-  // "あいう"
-  EXPECT_EQ("\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86",
-            transliterations[transliteration::HIRAGANA]);
-  // "アイウ"
-  EXPECT_EQ("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6",
-            transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("あいう", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("アイウ", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("aIu", transliterations[transliteration::HALF_ASCII]);
   EXPECT_EQ("AIU", transliterations[transliteration::HALF_ASCII_UPPER]);
   EXPECT_EQ("aiu", transliterations[transliteration::HALF_ASCII_LOWER]);
   EXPECT_EQ("Aiu", transliterations[transliteration::HALF_ASCII_CAPITALIZED]);
-  // "ａＩｕ"
-  EXPECT_EQ("\xef\xbd\x81\xef\xbc\xa9\xef\xbd\x95",
-            transliterations[transliteration::FULL_ASCII]);
-  // "ＡＩＵ"
-  EXPECT_EQ("\xef\xbc\xa1\xef\xbc\xa9\xef\xbc\xb5",
-            transliterations[transliteration::FULL_ASCII_UPPER]);
-  // "ａｉｕ"
-  EXPECT_EQ("\xef\xbd\x81\xef\xbd\x89\xef\xbd\x95",
-            transliterations[transliteration::FULL_ASCII_LOWER]);
-  // "Ａｉｕ"
-  EXPECT_EQ("\xef\xbc\xa1\xef\xbd\x89\xef\xbd\x95",
+  EXPECT_EQ("ａＩｕ", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("ＡＩＵ", transliterations[transliteration::FULL_ASCII_UPPER]);
+  EXPECT_EQ("ａｉｕ", transliterations[transliteration::FULL_ASCII_LOWER]);
+  EXPECT_EQ("Ａｉｕ",
             transliterations[transliteration::FULL_ASCII_CAPITALIZED]);
-  // "ｱｲｳ"
-  EXPECT_EQ("\xef\xbd\xb1\xef\xbd\xb2\xef\xbd\xb3",
-            transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ("ｱｲｳ", transliterations[transliteration::HALF_KATAKANA]);
 
   // Transliterations for quote marks.  This is a test against
   // http://b/1581367
@@ -406,67 +364,41 @@ TEST_F(ComposerTest, GetTransliterations) {
 
   composer_->InsertCharacter("'\"`");
   composer_->GetTransliterations(&transliterations);
-  // "'" -> \u2019
-  // """ -> \u201d
-  // "`" -> \uff40
   EXPECT_EQ("'\"`", transliterations[transliteration::HALF_ASCII]);
-  // "’”｀"
-  EXPECT_EQ("\xe2\x80\x99\xe2\x80\x9d\xef\xbd\x80",
-            transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("’”｀", transliterations[transliteration::FULL_ASCII]);
 }
 
 TEST_F(ComposerTest, GetSubTransliterations) {
-  // "か"
-  table_->AddRule("ka", "\xe3\x81\x8b", "");
-  // "ん"
-  table_->AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table_->AddRule("na", "\xe3\x81\xaa", "");
-  // "だ"
-  table_->AddRule("da", "\xe3\x81\xa0", "");
+  table_->AddRule("ka", "か", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("da", "だ", "");
 
   composer_->InsertCharacter("kanna");
 
   transliteration::Transliterations transliterations;
   composer_->GetSubTransliterations(0, 2, &transliterations);
-  // "かん"
-  EXPECT_EQ("\xe3\x81\x8b\xe3\x82\x93",
-            transliterations[transliteration::HIRAGANA]);
-  // "カン"
-  EXPECT_EQ("\xe3\x82\xab\xe3\x83\xb3",
-            transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("かん", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("カン", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("kan", transliterations[transliteration::HALF_ASCII]);
-  // "ｋａｎ"
-  EXPECT_EQ("\xef\xbd\x8b\xef\xbd\x81\xef\xbd\x8e",
-            transliterations[transliteration::FULL_ASCII]);
-  // "ｶﾝ"
-  EXPECT_EQ("\xef\xbd\xb6\xef\xbe\x9d",
-            transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ("ｋａｎ", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("ｶﾝ", transliterations[transliteration::HALF_KATAKANA]);
 
   transliterations.clear();
   composer_->GetSubTransliterations(1, 1, &transliterations);
-  // "ん"
-  EXPECT_EQ("\xe3\x82\x93", transliterations[transliteration::HIRAGANA]);
-  // "ン"
-  EXPECT_EQ("\xe3\x83\xb3", transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("ん", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("ン", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("n", transliterations[transliteration::HALF_ASCII]);
-  // "ｎ"
-  EXPECT_EQ("\xef\xbd\x8e", transliterations[transliteration::FULL_ASCII]);
-  // "ﾝ"
-  EXPECT_EQ("\xef\xbe\x9d", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ("ｎ", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("ﾝ", transliterations[transliteration::HALF_KATAKANA]);
 
   transliterations.clear();
   composer_->GetSubTransliterations(2, 1, &transliterations);
-  // "な"
-  EXPECT_EQ("\xe3\x81\xaa", transliterations[transliteration::HIRAGANA]);
-  // "ナ"
-  EXPECT_EQ("\xe3\x83\x8a", transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("な", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("ナ", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("na", transliterations[transliteration::HALF_ASCII]);
-  // "ｎａ"
-  EXPECT_EQ("\xef\xbd\x8e\xef\xbd\x81",
-            transliterations[transliteration::FULL_ASCII]);
-  // "ﾅ"
-  EXPECT_EQ("\xef\xbe\x85", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ("ｎａ", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("ﾅ", transliterations[transliteration::HALF_KATAKANA]);
 
   // Invalid position
   transliterations.clear();
@@ -480,71 +412,47 @@ TEST_F(ComposerTest, GetSubTransliterations) {
   // Invalid size
   transliterations.clear();
   composer_->GetSubTransliterations(0, 999, &transliterations);
-  // "かんな"
-  EXPECT_EQ("\xe3\x81\x8b\xe3\x82\x93\xe3\x81\xaa",
-            transliterations[transliteration::HIRAGANA]);
-  // "カンナ"
-  EXPECT_EQ("\xe3\x82\xab\xe3\x83\xb3\xe3\x83\x8a",
-            transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("かんな", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("カンナ", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("kanna", transliterations[transliteration::HALF_ASCII]);
-  // "ｋａｎｎａ"
-  EXPECT_EQ("\xef\xbd\x8b\xef\xbd\x81\xef\xbd\x8e\xef\xbd\x8e\xef\xbd\x81",
-            transliterations[transliteration::FULL_ASCII]);
-  // "ｶﾝﾅ"
-  EXPECT_EQ("\xef\xbd\xb6\xef\xbe\x9d\xef\xbe\x85",
-            transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ("ｋａｎｎａ", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("ｶﾝﾅ", transliterations[transliteration::HALF_KATAKANA]);
 
   // Dakuon case
   transliterations.clear();
   composer_->EditErase();
   composer_->InsertCharacter("dankann");
   composer_->GetSubTransliterations(0, 3, &transliterations);
-  // "だんか"
-  EXPECT_EQ("\xe3\x81\xa0\xe3\x82\x93\xe3\x81\x8b",
-            transliterations[transliteration::HIRAGANA]);
-  // "ダンカ"
-  EXPECT_EQ("\xe3\x83\x80\xe3\x83\xb3\xe3\x82\xab",
-            transliterations[transliteration::FULL_KATAKANA]);
+  EXPECT_EQ("だんか", transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ("ダンカ", transliterations[transliteration::FULL_KATAKANA]);
   EXPECT_EQ("danka", transliterations[transliteration::HALF_ASCII]);
-  // "ｄａｎｋａ"
-  EXPECT_EQ("\xef\xbd\x84\xef\xbd\x81\xef\xbd\x8e\xef\xbd\x8b\xef\xbd\x81",
-            transliterations[transliteration::FULL_ASCII]);
-  // "ﾀﾞﾝｶ"
-  EXPECT_EQ("\xef\xbe\x80\xef\xbe\x9e\xef\xbe\x9d\xef\xbd\xb6",
-            transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ("ｄａｎｋａ", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ("ﾀﾞﾝｶ", transliterations[transliteration::HALF_KATAKANA]);
 }
 
 TEST_F(ComposerTest, GetStringFunctions) {
-  // "か"
-  table_->AddRule("ka", "\xe3\x81\x8b", "");
-  // "ん"
-  table_->AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table_->AddRule("na", "\xe3\x81\xaa", "");
-  // "さ"
-  table_->AddRule("sa", "\xe3\x81\x95", "");
+  table_->AddRule("ka", "か", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("sa", "さ", "");
 
   // Query: "!kan"
   composer_->InsertCharacter("!kan");
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "！かｎ"
-  EXPECT_EQ("\xef\xbc\x81\xe3\x81\x8b\xef\xbd\x8e", preedit);
+  EXPECT_EQ("！かｎ", preedit);
 
   string submission;
   composer_->GetStringForSubmission(&submission);
-  // "！かｎ"
-  EXPECT_EQ("\xef\xbc\x81\xe3\x81\x8b\xef\xbd\x8e", submission);
+  EXPECT_EQ("！かｎ", submission);
 
   string conversion;
   composer_->GetQueryForConversion(&conversion);
-  // "!かん"
-  EXPECT_EQ("\x21\xe3\x81\x8b\xe3\x82\x93", conversion);
+  EXPECT_EQ("!かん", conversion);
 
   string prediction;
   composer_->GetQueryForPrediction(&prediction);
-  // "!か"
-  EXPECT_EQ("\x21\xe3\x81\x8b", prediction);
+  EXPECT_EQ("!か", prediction);
 
   // Query: "kas"
   composer_->EditErase();
@@ -552,25 +460,21 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   preedit.clear();
   composer_->GetStringForPreedit(&preedit);
-  // "かｓ"
-  EXPECT_EQ("\xe3\x81\x8b\xef\xbd\x93", preedit);
+  EXPECT_EQ("かｓ", preedit);
 
   submission.clear();
   composer_->GetStringForSubmission(&submission);
-  // "かｓ"
-  EXPECT_EQ("\xe3\x81\x8b\xef\xbd\x93", submission);
+  EXPECT_EQ("かｓ", submission);
 
   // Pending chars should remain.  This is a test against
   // http://b/1799399
   conversion.clear();
   composer_->GetQueryForConversion(&conversion);
-  // "かs"
-  EXPECT_EQ("\xe3\x81\x8b\x73", conversion);
+  EXPECT_EQ("かs", conversion);
 
   prediction.clear();
   composer_->GetQueryForPrediction(&prediction);
-  // "か"
-  EXPECT_EQ("\xe3\x81\x8b", prediction);
+  EXPECT_EQ("か", prediction);
 
   // Query: "s"
   composer_->EditErase();
@@ -578,17 +482,14 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   preedit.clear();
   composer_->GetStringForPreedit(&preedit);
-  // "ｓ"
-  EXPECT_EQ("\xef\xbd\x93", preedit);
+  EXPECT_EQ("ｓ", preedit);
 
   submission.clear();
   composer_->GetStringForSubmission(&submission);
-  // "ｓ"
-  EXPECT_EQ("\xef\xbd\x93", submission);
+  EXPECT_EQ("ｓ", submission);
 
   conversion.clear();
   composer_->GetQueryForConversion(&conversion);
-  // "s"
   EXPECT_EQ("s", conversion);
 
   prediction.clear();
@@ -601,30 +502,26 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   preedit.clear();
   composer_->GetStringForPreedit(&preedit);
-  // "ｓｋ"
-  EXPECT_EQ("\xef\xbd\x93\xEF\xBD\x8B", preedit);
+  EXPECT_EQ("ｓｋ", preedit);
 
   submission.clear();
   composer_->GetStringForSubmission(&submission);
-  // "ｓｋ"
-  EXPECT_EQ("\xef\xbd\x93\xEF\xBD\x8B", submission);
+  EXPECT_EQ("ｓｋ", submission);
 
   conversion.clear();
   composer_->GetQueryForConversion(&conversion);
-  // "sk"
   EXPECT_EQ("sk", conversion);
 
   prediction.clear();
   composer_->GetQueryForPrediction(&prediction);
-  // "sk"
   EXPECT_EQ("sk", prediction);
 }
 
 TEST_F(ComposerTest, GetQueryForPredictionHalfAscii) {
   // Dummy setup of romanji table.
-  table_->AddRule("he", "\xe3\x81\xb8", "");  // "へ"
-  table_->AddRule("ll", "\xe3\x81\xa3\xef\xbd\x8c", "");  // "っｌ"
-  table_->AddRule("lo", "\xe3\x82\x8d", "");  // "ろ"
+  table_->AddRule("he", "へ", "");
+  table_->AddRule("ll", "っｌ", "");
+  table_->AddRule("lo", "ろ", "");
 
   // Switch to Half-Latin input mode.
   composer_->SetInputMode(transliteration::HALF_ASCII);
@@ -648,48 +545,36 @@ TEST_F(ComposerTest, GetQueryForPredictionHalfAscii) {
 
 TEST_F(ComposerTest, GetQueryForPredictionFullAscii) {
   // Dummy setup of romanji table.
-  table_->AddRule("he", "\xe3\x81\xb8", "");  // "へ"
-  table_->AddRule("ll", "\xe3\x81\xa3\xef\xbd\x8c", "");  // "っｌ"
-  table_->AddRule("lo", "\xe3\x82\x8d", "");  // "ろ"
+  table_->AddRule("he", "へ", "");
+  table_->AddRule("ll", "っｌ", "");
+  table_->AddRule("lo", "ろ", "");
 
   // Switch to Full-Latin input mode.
   composer_->SetInputMode(transliteration::FULL_ASCII);
 
   string prediction;
   {
-    // "ｈｅｌｌｏ"
-    composer_->InsertCharacter(
-        "\xef\xbd\x88\xef\xbd\x85\xef\xbd\x8c\xef\xbd\x8c\xef\xbd\x8f");
+    composer_->InsertCharacter("ｈｅｌｌｏ");
     composer_->GetQueryForPrediction(&prediction);
     EXPECT_EQ("hello", prediction);
   }
   prediction.clear();
   composer_->EditErase();
   {
-    // "ｈｅｌｌｏ！"
-    composer_->InsertCharacter(
-        "\xef\xbd\x88\xef\xbd\x85\xef\xbd\x8c\xef\xbd\x8c"
-        "\xef\xbd\x8f\xef\xbc\x81");
+    composer_->InsertCharacter("ｈｅｌｌｏ！");
     composer_->GetQueryForPrediction(&prediction);
     EXPECT_EQ("hello!", prediction);
   }
 }
 
 TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
-  // "う"
-  table_->AddRule("u", "\xe3\x81\x86", "");
-  // "っ"
-  table_->AddRule("ss", "\xe3\x81\xa3", "s");
-  // "さ"
-  table_->AddRule("sa", "\xe3\x81\x95", "");
-  // "し"
-  table_->AddRule("si", "\xe3\x81\x97", "");
-  // "す"
-  table_->AddRule("su", "\xe3\x81\x99", "");
-  // "せ"
-  table_->AddRule("se", "\xe3\x81\x9b", "");
-  // "そ"
-  table_->AddRule("so", "\xe3\x81\x9d", "");
+  table_->AddRule("u", "う", "");
+  table_->AddRule("ss", "っ", "s");
+  table_->AddRule("sa", "さ", "");
+  table_->AddRule("si", "し", "");
+  table_->AddRule("su", "す", "");
+  table_->AddRule("se", "せ", "");
+  table_->AddRule("so", "そ", "");
 
   {
     string base, preedit;
@@ -698,39 +583,26 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
     composer_->InsertCharacter("us");
     composer_->GetQueriesForPrediction(&base, &expanded);
     composer_->GetStringForPreedit(&preedit);
-    // "う"
-    EXPECT_EQ("\xe3\x81\x86", base);
+    EXPECT_EQ("う", base);
     EXPECT_EQ(7, expanded.size());
     // We can't use EXPECT_NE for iterator
     EXPECT_TRUE(expanded.end() != expanded.find("s"));
-    // "っ"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\xa3"));
-    // "さ"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\x95"));
-    // "し"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\x97"));
-    // "す"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\x99"));
-    // "せ"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\x9b"));
-    // "そ"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\x9d"));
+    EXPECT_TRUE(expanded.end() != expanded.find("っ"));
+    EXPECT_TRUE(expanded.end() != expanded.find("さ"));
+    EXPECT_TRUE(expanded.end() != expanded.find("し"));
+    EXPECT_TRUE(expanded.end() != expanded.find("す"));
+    EXPECT_TRUE(expanded.end() != expanded.find("せ"));
+    EXPECT_TRUE(expanded.end() != expanded.find("そ"));
   }
 }
 
 TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
-  // "い"
-  table_->AddRule("_", "", "\xe3\x81\x84");
-  // "い*", "ぃ"
-  table_->AddRule("\xe3\x81\x84\x2a", "", "\xe3\x81\x83");
-  // "ぃ*", "い"
-  table_->AddRule("\xe3\x81\x83\x2a", "", "\xe3\x81\x84");
-  // "と"
-  table_->AddRule("$", "", "\xe3\x81\xa8");
-  // "と*", "ど"
-  table_->AddRule("\xe3\x81\xa8\x2a", "", "\xe3\x81\xa9");
-  // "ど*", "と"
-  table_->AddRule("\xe3\x81\xa9\x2a", "", "\xe3\x81\xa8");
+  table_->AddRule("_", "", "い");
+  table_->AddRule("い*", "", "ぃ");
+  table_->AddRule("ぃ*", "", "い");
+  table_->AddRule("$", "", "と");
+  table_->AddRule("と*", "", "ど");
+  table_->AddRule("ど*", "", "と");
 
   {
     string base, preedit;
@@ -739,13 +611,10 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     composer_->InsertCharacter("_$");
     composer_->GetQueriesForPrediction(&base, &expanded);
     composer_->GetStringForPreedit(&preedit);
-    // "い"
-    EXPECT_EQ("\xe3\x81\x84", base);
+    EXPECT_EQ("い", base);
     EXPECT_EQ(2, expanded.size());
-    // "と"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\xa8"));
-    // "ど"
-    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\xa9"));
+    EXPECT_TRUE(expanded.end() != expanded.find("と"));
+    EXPECT_TRUE(expanded.end() != expanded.find("ど"));
   }
 }
 
@@ -761,15 +630,11 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
   composer_->InsertCharacter("nynyan");
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "ｎｙ［ＮＹＡ］ｎ"
-  EXPECT_EQ("\xEF\xBD\x8E\xEF\xBD\x99\xEF\xBC\xBB\xEF\xBC\xAE\xEF\xBC\xB9"
-            "\xEF\xBC\xA1\xEF\xBC\xBD\xEF\xBD\x8E", preedit);
+  EXPECT_EQ("ｎｙ［ＮＹＡ］ｎ", preedit);
 
   string submission;
   composer_->GetStringForSubmission(&submission);
-  // "ｎｙ［ＮＹＡ］ｎ"
-  EXPECT_EQ("\xEF\xBD\x8E\xEF\xBD\x99\xEF\xBC\xBB\xEF\xBC\xAE\xEF\xBC\xB9"
-            "\xEF\xBC\xA1\xEF\xBC\xBD\xEF\xBD\x8E", submission);
+  EXPECT_EQ("ｎｙ［ＮＹＡ］ｎ", submission);
 
   string conversion;
   composer_->GetQueryForConversion(&conversion);
@@ -838,32 +703,28 @@ TEST_F(ComposerTest, InsertCommandCharacter) {
 
 TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   commands::KeyEvent key;
-  // "あ"
-  table_->AddRule("a", "\xe3\x81\x82", "");
+  table_->AddRule("a", "あ", "");
 
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
 
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "あ"
-  EXPECT_EQ("\xe3\x81\x82", preedit);
+  EXPECT_EQ("あ", preedit);
 
   // Half width "A" will be inserted.
   key.set_key_code('A');
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  // "あA"
-  EXPECT_EQ("\xe3\x81\x82\x41", preedit);
+  EXPECT_EQ("あA", preedit);
 
   // Half width "a" will be inserted.
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  // "あAa"
-  EXPECT_EQ("\xe3\x81\x82\x41\x61", preedit);
+  EXPECT_EQ("あAa", preedit);
 
   // Reset() should revert the previous input mode (Hiragana).
   composer_->Reset();
@@ -871,8 +732,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  // "あ"
-  EXPECT_EQ("\xE3\x81\x82", preedit);
+  EXPECT_EQ("あ", preedit);
 
   // Typing "A" temporarily switch the input mode.  The input mode
   // should be reverted back after reset.
@@ -880,14 +740,12 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  // "あア"
-  EXPECT_EQ("\xE3\x81\x82\xE3\x82\xA2", preedit);
+  EXPECT_EQ("あア", preedit);
 
   key.set_key_code('A');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  // "あアA"
-  EXPECT_EQ("\xE3\x81\x82\xE3\x82\xA2\x41", preedit);
+  EXPECT_EQ("あアA", preedit);
 
   // Reset() should revert the previous input mode (Katakana).
   composer_->Reset();
@@ -895,17 +753,13 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  // "ア"
-  EXPECT_EQ("\xE3\x82\xA2", preedit);
+  EXPECT_EQ("ア", preedit);
 }
 
 namespace {
-// "山"
-const char kYama[] = "\xE5\xB1\xB1";
-// "川"
-const char kKawa[] = "\xE5\xB7\x9D";
-// "空"
-const char kSora[] = "\xE7\xA9\xBA";
+const char kYama[] = "山";
+const char kKawa[] = "川";
+const char kSora[] = "空";
 }  // namespace
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithUcs4KeyCode) {
@@ -954,18 +808,15 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithoutKeyCode) {
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   commands::KeyEvent key;
-  // "あ"
-  table_->AddRule("a", "\xe3\x81\x82", "");
-  // "ー"
-  table_->AddRule("-", "\xE3\x83\xBC", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("-", "ー", "");
 
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
 
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "あ"
-  EXPECT_EQ("\xe3\x81\x82", preedit);
+  EXPECT_EQ("あ", preedit);
 
   // Full width "０" will be inserted.
   key.set_key_code('0');
@@ -973,8 +824,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  // "あ０"
-  EXPECT_EQ("\xE3\x81\x82\xEF\xBC\x90", preedit);
+  EXPECT_EQ("あ０", preedit);
 
   // Half width "0" will be inserted.
   key.set_key_code('0');
@@ -983,8 +833,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  // "あ０0"
-  EXPECT_EQ("\xE3\x81\x82\xEF\xBC\x90\x30", preedit);
+  EXPECT_EQ("あ０0", preedit);
 
   // Full width "0" will be inserted.
   key.set_key_code('0');
@@ -993,8 +842,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  // "あ０0０"
-  EXPECT_EQ("\xE3\x81\x82\xEF\xBC\x90\x30\xEF\xBC\x90", preedit);
+  EXPECT_EQ("あ０0０", preedit);
 
   // Half width "-" will be inserted.
   key.set_key_code('-');
@@ -1003,60 +851,48 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  // "あ０0０-"
-  EXPECT_EQ("\xE3\x81\x82\xEF\xBC\x90\x30\xEF\xBC\x90\x2D", preedit);
+  EXPECT_EQ("あ０0０-", preedit);
 
-  // Full width "−" will be inserted.
+  // Full width "−" (U+2212) will be inserted.
   key.set_key_code('-');
-  // "−"
-  key.set_key_string("\xE2\x88\x92");
+  key.set_key_string("−");
   key.set_input_style(commands::KeyEvent::FOLLOW_MODE);
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  // "あ０0０-−"
-  EXPECT_EQ("\xE3\x81\x82\xEF\xBC\x90\x30\xEF\xBC\x90\x2D\xE2\x88\x92",
-            preedit);
+  EXPECT_EQ("あ０0０-−", preedit);  // The last hyphen is U+2212.
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
-  // "あ"
-  table_->AddRule("a", "\xE3\x81\x82", "");
-  // "い"
-  table_->AddRule("i", "\xE3\x81\x84", "");
-  // "う"
-  table_->AddRule("u", "\xE3\x81\x86", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("u", "う", "");
 
   {
     // "a" → "あ" (Hiragana)
     EXPECT_TRUE(InsertKeyWithMode("a", commands::HIRAGANA, composer_.get()));
-    // "あ"
-    EXPECT_EQ("\xE3\x81\x82", GetPreedit(composer_.get()));
+    EXPECT_EQ("あ", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
 
     // "aI" → "あI" (Alphanumeric)
     EXPECT_TRUE(InsertKeyWithMode("I", commands::HIRAGANA, composer_.get()));
-    // "あI"
-    EXPECT_EQ("\xE3\x81\x82\x49", GetPreedit(composer_.get()));
+    EXPECT_EQ("あI", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // "u" → "あIu" (Alphanumeric)
     EXPECT_TRUE(InsertKeyWithMode("u", commands::HALF_ASCII, composer_.get()));
-    // "あIu"
-    EXPECT_EQ("\xE3\x81\x82\x49\x75", GetPreedit(composer_.get()));
+    EXPECT_EQ("あIu", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // [shift] → "あIu" (Hiragana)
     EXPECT_TRUE(InsertKeyWithMode("Shift", commands::HALF_ASCII,
                                   composer_.get()));
-    // "あIu"
-    EXPECT_EQ("\xE3\x81\x82\x49\x75", GetPreedit(composer_.get()));
+    EXPECT_EQ("あIu", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
 
     // "u" → "あIuう" (Hiragana)
     EXPECT_TRUE(InsertKeyWithMode("u", commands::HIRAGANA, composer_.get()));
-    // "あIuう"
-    EXPECT_EQ("\xE3\x81\x82\x49\x75\xE3\x81\x86", GetPreedit(composer_.get()));
+    EXPECT_EQ("あIuう", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
@@ -1065,15 +901,13 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
   {
     // "a" → "あ" (Hiragana)
     EXPECT_TRUE(InsertKeyWithMode("a", commands::HIRAGANA, composer_.get()));
-    // "あ"
-    EXPECT_EQ("\xE3\x81\x82", GetPreedit(composer_.get()));
+    EXPECT_EQ("あ", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
 
     // "i" (Katakana) → "あイ" (Katakana)
     EXPECT_TRUE(InsertKeyWithMode("i", commands::FULL_KATAKANA,
                                   composer_.get()));
-    // "あイ"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x82\xA4", GetPreedit(composer_.get()));
+    EXPECT_EQ("あイ", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
 
     // SetInputMode(Alphanumeric) → "あイ" (Alphanumeric)
@@ -1083,22 +917,19 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     // [shift] → "あイ" (Alphanumeric) - Nothing happens.
     EXPECT_TRUE(InsertKeyWithMode("Shift", commands::HALF_ASCII,
                                   composer_.get()));
-    // "あイ"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x82\xA4", GetPreedit(composer_.get()));
+    EXPECT_EQ("あイ", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // "U" → "あイ" (Alphanumeric)
     EXPECT_TRUE(InsertKeyWithMode("U", commands::HALF_ASCII,
                                   composer_.get()));
-    // "あイU"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x82\xA4\x55", GetPreedit(composer_.get()));
+    EXPECT_EQ("あイU", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // [shift] → "あイU" (Alphanumeric) - Nothing happens.
     EXPECT_TRUE(InsertKeyWithMode("Shift", commands::HALF_ASCII,
                                   composer_.get()));
-    // "あイU"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x82\xA4\x55", GetPreedit(composer_.get()));
+    EXPECT_EQ("あイU", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
   }
 }
@@ -1107,8 +938,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   const bool kCapsLocked = true;
   const bool kCapsUnlocked = false;
 
-  // "あ"
-  table_->AddRule("a", "\xE3\x81\x82", "");
+  table_->AddRule("a", "あ", "");
   composer_->SetInputMode(transliteration::HIRAGANA);
 
   // Since handlings of continuous shifted input differ,
@@ -1128,8 +958,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair(".", true), std::make_pair("a", true),
         std::make_pair("A", true), std::make_pair("A", true),
         std::make_pair(".", true), std::make_pair("a", true),
-        // "あ"
-        std::make_pair("\xE3\x81\x82", false), std::make_pair("a", false),
+        std::make_pair("あ", false), std::make_pair("a", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
@@ -1161,8 +990,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair(".", true), std::make_pair("A", true),
         std::make_pair("a", true), std::make_pair("a", true),
         std::make_pair(".", true), std::make_pair("A", true),
-        // "あ"
-        std::make_pair("\xE3\x81\x82", false), std::make_pair("A", false),
+        std::make_pair("あ", false), std::make_pair("A", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
@@ -1194,8 +1022,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair(".", true), std::make_pair("a", false),
         std::make_pair("A", true), std::make_pair("A", true),
         std::make_pair(".", true), std::make_pair("a", false),
-        // "あ"
-        std::make_pair("\xE3\x81\x82", false), std::make_pair("a", false),
+        std::make_pair("あ", false), std::make_pair("a", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
@@ -1227,8 +1054,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair(".", true), std::make_pair("A", false),
         std::make_pair("a", true), std::make_pair("a", true),
         std::make_pair(".", true), std::make_pair("A", false),
-        // "あ"
-        std::make_pair("\xE3\x81\x82", false), std::make_pair("A", false),
+        std::make_pair("あ", false), std::make_pair("A", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
@@ -1256,50 +1082,30 @@ TEST_F(ComposerTest, FullWidthCharRules_b31444698) {
   // {?}かか<tab><tab>{?}き<tab>
   const int kAttrs =
       TableAttribute::NEW_CHUNK | TableAttribute::NO_TRANSLITERATION;
-  table_->AddRuleWithAttributes("1", "",
-                                "\x7B\x3F\x7D\xE3\x81\x82",  // "{?}あ"
-                                kAttrs);
-  table_->AddRule("\x7B\x3F\x7D\xE3\x81\x82\x31",  // "{?}あ1"
-                  "",
-                  "\x7B\x3F\x7D\xE3\x81\x84");  // "{?}い"
-  table_->AddRuleWithAttributes("\xE3\x81\x8B",  // "か"
-                                "",
-                                "\x7B\x3F\x7D\xE3\x81\x8B",  // "{?}か"
-                                kAttrs);
-  table_->AddRule("\x7B\x3F\x7D\xE3\x81\x8B\xE3\x81\x8B",  // "{?}かか"
-                  "",
-                  "\x7B\x3F\x7D\xE3\x81\x8D");  // "{?}き"
+  table_->AddRuleWithAttributes("1", "", "{?}あ", kAttrs);
+  table_->AddRule("{?}あ1", "", "{?}い");
+  table_->AddRuleWithAttributes("か", "", "{?}か", kAttrs);
+  table_->AddRule("{?}かか", "", "{?}き");
 
   // Test if "11" is transliterated to "い"
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("\xE3\x81\x82",  // "あ"
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("あ", GetPreedit(composer_.get()));
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("\xE3\x81\x84",  // "い"
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("い", GetPreedit(composer_.get()));
 
   composer_->Reset();
 
   // b/31444698.  Test if "かか" is transliterated to "き"
-  ASSERT_TRUE(InsertKeyWithMode("\xE3\x81\x8B",  // "か"
-                                commands::HIRAGANA,
-                                composer_.get()));
-  EXPECT_EQ("\xE3\x81\x8B",  // "か"
-            GetPreedit(composer_.get()));
-  ASSERT_TRUE(InsertKeyWithMode("\xE3\x81\x8B",  // "か"
-                                commands::HIRAGANA,
-                                composer_.get()));
-  EXPECT_EQ("\xE3\x81\x8D",  // "き"
-            GetPreedit(composer_.get()));
+  ASSERT_TRUE(InsertKeyWithMode("か", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("か", GetPreedit(composer_.get()));
+  ASSERT_TRUE(InsertKeyWithMode("か", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("き", GetPreedit(composer_.get()));
 }
 
 TEST_F(ComposerTest, CopyFrom) {
-  // "あ"
-  table_->AddRule("a", "\xE3\x81\x82", "");
-  // "ん"
-  table_->AddRule("n", "\xE3\x82\x93", "");
-  // "な"
-  table_->AddRule("na", "\xE3\x81\xAA", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
 
   {
     SCOPED_TRACE("Precomposition");
@@ -1321,8 +1127,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->InsertCharacter("n");
     string src_composition;
     composer_->GetStringForSubmission(&src_composition);
-    // "あｎ"
-    EXPECT_EQ("\xE3\x81\x82\xEF\xBD\x8E", src_composition);
+    EXPECT_EQ("あｎ", src_composition);
 
     Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
@@ -1335,8 +1140,7 @@ TEST_F(ComposerTest, CopyFrom) {
 
     string src_composition;
     composer_->GetQueryForConversion(&src_composition);
-    // "あん"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", src_composition);
+    EXPECT_EQ("あん", src_composition);
 
     Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
@@ -1355,8 +1159,7 @@ TEST_F(ComposerTest, CopyFrom) {
     InsertKey("a", composer_.get());
     string src_composition;
     composer_->GetStringForSubmission(&src_composition);
-    // "AaAAあ"
-    EXPECT_EQ("AaAA\xE3\x81\x82", src_composition);
+    EXPECT_EQ("AaAAあ", src_composition);
 
     Composer dest(NULL, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
@@ -1385,10 +1188,9 @@ TEST_F(ComposerTest, CopyFrom) {
 
 TEST_F(ComposerTest, ShiftKeyOperation) {
   commands::KeyEvent key;
-  // "あ"
-  table_->AddRule("a", "\xe3\x81\x82", "");
+  table_->AddRule("a", "あ", "");
 
-  {  // Basic feature.
+  { // Basic feature.
     composer_->Reset();
     InsertKey("a", composer_.get());  // "あ"
     InsertKey("A", composer_.get());  // "あA"
@@ -1402,8 +1204,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     string preedit;
     composer_->GetStringForPreedit(&preedit);
-    // "あAaああ"
-    EXPECT_EQ("\xE3\x81\x82\x41\x61\xE3\x81\x82\xE3\x81\x82", preedit);
+    EXPECT_EQ("あAaああ", preedit);
   }
 
   {  // Revert back to the previous input mode.
@@ -1421,8 +1222,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     string preedit;
     composer_->GetStringForPreedit(&preedit);
-    // "アAaアア"
-    EXPECT_EQ("\xE3\x82\xA2\x41\x61\xE3\x82\xA2\xE3\x82\xA2", preedit);
+    EXPECT_EQ("アAaアア", preedit);
     EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
   }
 
@@ -1440,8 +1240,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     string preedit;
     composer_->GetStringForPreedit(&preedit);
-    // "AAあAa"
-    EXPECT_EQ("\x41\x41\xE3\x81\x82\x41\x61", preedit);
+    EXPECT_EQ("AAあAa", preedit);
   }
 
   {  // Multiple shifted characters #2
@@ -1455,8 +1254,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     string preedit;
     composer_->GetStringForPreedit(&preedit);
-    // "D&D2a"
-    EXPECT_EQ("\x44\x26\x44\x32\x61", preedit);
+    EXPECT_EQ("D&D2a", preedit);
   }
 
   {  // Full-witdh alphanumeric
@@ -1467,8 +1265,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     string preedit;
     composer_->GetStringForPreedit(&preedit);
-    // "Ａａ"
-    EXPECT_EQ("\xEF\xBC\xA1\xEF\xBD\x81", preedit);
+    EXPECT_EQ("Ａａ", preedit);
   }
 
   {  // Half-witdh alphanumeric
@@ -1515,13 +1312,9 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   // to avoid complecated implementation.  Unless this is a problem
   // for users, this difference probably remains.
   //
-  // "カタカな"
-  // EXPECT_EQ("\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x81\xAA", preedit);
+  // EXPECT_EQ("カタカな", preedit);
 
-  // "カＴあｋアな"
-  EXPECT_EQ("\xE3\x82\xAB\xEF\xBC\xB4\xE3\x81\x82"
-            "\xEF\xBD\x8B\xE3\x82\xA2\xE3\x81\xAA",
-            preedit);
+  EXPECT_EQ("カＴあｋアな", preedit);
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
@@ -1564,8 +1357,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
 
     InsertKey("a", composer_.get());
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
-    // "googleあ"
-    EXPECT_EQ("google\xE3\x81\x82", GetPreedit(composer_.get()));
+    EXPECT_EQ("googleあ", GetPreedit(composer_.get()));
 
     composer_->Reset();
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
@@ -1582,17 +1374,11 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     InsertKey("e", composer_.get());
     EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
 
-    // "ｇｏｏｇｌｅ"
-    EXPECT_EQ("\xEF\xBD\x87\xEF\xBD\x8F\xEF\xBD\x8F"
-              "\xEF\xBD\x87\xEF\xBD\x8C\xEF\xBD\x85",
-              GetPreedit(composer_.get()));
+    EXPECT_EQ("ｇｏｏｇｌｅ", GetPreedit(composer_.get()));
 
     InsertKey("a", composer_.get());
     EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
-    // "ｇｏｏｇｌｅａ"
-    EXPECT_EQ("\xEF\xBD\x87\xEF\xBD\x8F\xEF\xBD\x8F"
-              "\xEF\xBD\x87\xEF\xBD\x8C\xEF\xBD\x85\xEF\xBD\x81",
-              GetPreedit(composer_.get()));
+    EXPECT_EQ("ｇｏｏｇｌｅａ", GetPreedit(composer_.get()));
 
     composer_->Reset();
     EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
@@ -1636,8 +1422,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
 
     InsertKey("a", composer_.get());
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
-    // "Googleあ"
-    EXPECT_EQ("Google\xE3\x81\x82", GetPreedit(composer_.get()));
+    EXPECT_EQ("Googleあ", GetPreedit(composer_.get()));
 
     composer_->Reset();
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
@@ -1677,9 +1462,7 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
 
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "ｈっｔｐ：・・"
-  EXPECT_EQ("\xEF\xBD\x88\xE3\x81\xA3\xEF\xBD\x94"
-            "\xEF\xBD\x90\xEF\xBC\x9A\xE3\x83\xBB\xE3\x83\xBB", preedit);
+  EXPECT_EQ("ｈっｔｐ：・・", preedit);
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffKana) {
@@ -1715,64 +1498,41 @@ TEST_F(ComposerTest, AutoIMETurnOffKana) {
 
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "ｈっｔｐ：・・"
-  EXPECT_EQ("\xEF\xBD\x88\xE3\x81\xA3\xEF\xBD\x94\xEF\xBD\x90\xEF\xBC\x9A"
-            "\xE3\x83\xBB\xE3\x83\xBB", preedit);
+  EXPECT_EQ("ｈっｔｐ：・・", preedit);
 }
 
 TEST_F(ComposerTest, KanaPrediction) {
-  // "か゛", "か"
-  //  table_->AddRule("\xE3\x81\x8B", "\xE3\x81\x8B", "");
-  // "か゛", "が"
-  //  table_->AddRule("\xE3\x81\x8B\xE3\x82\x9B", "\xE3\x81\x8C", "");
-  // "ー", "ー"
-  //  table_->AddRule("\xE3\x83\xBC", "\xE3\x83\xBC", "");
-
-  // "か"
-  composer_->InsertCharacterKeyAndPreedit("t", "\xE3\x81\x8B");
+  composer_->InsertCharacterKeyAndPreedit("t", "か");
   {
     string preedit;
     composer_->GetQueryForPrediction(&preedit);
-    // "か"
-    EXPECT_EQ("\xE3\x81\x8B", preedit);
+    EXPECT_EQ("か", preedit);
   }
-  // "ー"
-  composer_->InsertCharacterKeyAndPreedit("\\", "\xE3\x83\xBC");
+  composer_->InsertCharacterKeyAndPreedit("\\", "ー");
   {
     string preedit;
     composer_->GetQueryForPrediction(&preedit);
-    // "かー"
-    EXPECT_EQ("\xE3\x81\x8B\xE3\x83\xBC", preedit);
+    EXPECT_EQ("かー", preedit);
   }
-  // "、"
-  composer_->InsertCharacterKeyAndPreedit(",", "\xE3\x80\x81");
+  composer_->InsertCharacterKeyAndPreedit(",", "、");
   {
     string preedit;
     composer_->GetQueryForPrediction(&preedit);
-    // "かー、"
-    EXPECT_EQ("\xE3\x81\x8B\xE3\x83\xBC\xE3\x80\x81", preedit);
+    EXPECT_EQ("かー、", preedit);
   }
 }
 
 TEST_F(ComposerTest, KanaTransliteration) {
-  // "く゛", "ぐ"
-  table_->AddRule("\xE3\x81\x8F\xE3\x82\x9B", "\xE3\x81\x90", "");
-  // "く"
-  composer_->InsertCharacterKeyAndPreedit("h", "\xE3\x81\x8F");
-  // "い"
-  composer_->InsertCharacterKeyAndPreedit("e", "\xE3\x81\x84");
-  // "り"
-  composer_->InsertCharacterKeyAndPreedit("l", "\xE3\x82\x8A");
-  // "り"
-  composer_->InsertCharacterKeyAndPreedit("l", "\xE3\x82\x8A");
-  // "ら"
-  composer_->InsertCharacterKeyAndPreedit("o", "\xE3\x82\x89");
+  table_->AddRule("く゛", "ぐ", "");
+  composer_->InsertCharacterKeyAndPreedit("h", "く");
+  composer_->InsertCharacterKeyAndPreedit("e", "い");
+  composer_->InsertCharacterKeyAndPreedit("l", "り");
+  composer_->InsertCharacterKeyAndPreedit("l", "り");
+  composer_->InsertCharacterKeyAndPreedit("o", "ら");
 
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "くいりりら"
-  EXPECT_EQ("\xE3\x81\x8F\xE3\x81\x84\xE3\x82\x8A\xE3\x82\x8A\xE3\x82\x89",
-            preedit);
+  EXPECT_EQ("くいりりら", preedit);
 
   transliteration::Transliterations transliterations;
   composer_->GetTransliterations(&transliterations);
@@ -1781,10 +1541,8 @@ TEST_F(ComposerTest, KanaTransliteration) {
 }
 
 TEST_F(ComposerTest, SetOutputMode) {
-  // "も"
-  table_->AddRule("mo", "\xE3\x82\x82", "");
-  // "ず"
-  table_->AddRule("zu", "\xE3\x81\x9A", "");
+  table_->AddRule("mo", "も", "");
+  table_->AddRule("zu", "ず", "");
 
   composer_->InsertCharacter("m");
   composer_->InsertCharacter("o");
@@ -1793,8 +1551,7 @@ TEST_F(ComposerTest, SetOutputMode) {
 
   string output;
   composer_->GetStringForPreedit(&output);
-  // "もず"
-  EXPECT_EQ("\xE3\x82\x82\xE3\x81\x9A", output);
+  EXPECT_EQ("もず", output);
   EXPECT_EQ(2, composer_->GetCursor());
 
   composer_->SetOutputMode(transliteration::HALF_ASCII);
@@ -1804,16 +1561,13 @@ TEST_F(ComposerTest, SetOutputMode) {
 
   composer_->SetOutputMode(transliteration::HALF_KATAKANA);
   composer_->GetStringForPreedit(&output);
-  // "ﾓｽﾞ"
-  EXPECT_EQ("\xEF\xBE\x93\xEF\xBD\xBD\xEF\xBE\x9E", output);
+  EXPECT_EQ("ﾓｽﾞ", output);
   EXPECT_EQ(3, composer_->GetCursor());
 }
 
 TEST_F(ComposerTest, UpdateInputMode) {
-  // "あ"
-  table_->AddRule("a", "\xE3\x81\x82", "");
-  // "い"
-  table_->AddRule("i", "\xE3\x81\x84", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("i", "い", "");
 
   InsertKey("A", composer_.get());
   EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
@@ -1836,9 +1590,7 @@ TEST_F(ComposerTest, UpdateInputMode) {
 
   string output;
   composer_->GetStringForPreedit(&output);
-  // "AIあいａｉ"
-  EXPECT_EQ("\x41\x49\xE3\x81\x82\xE3\x81\x84\xEF\xBD\x81\xEF\xBD\x89",
-            output);
+  EXPECT_EQ("AIあいａｉ", output);
 
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
 
@@ -1914,10 +1666,8 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
   request.set_update_input_mode_from_surrounding_text(false);
   composer_->SetRequest(&request);
 
-  // "あ"
-  table_->AddRule("a", "\xE3\x81\x82", "");
-  // "い"
-  table_->AddRule("i", "\xE3\x81\x84", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("i", "い", "");
 
   InsertKey("A", composer_.get());
   EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
@@ -1940,9 +1690,7 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
 
   string output;
   composer_->GetStringForPreedit(&output);
-  // "AIあいａｉ"
-  EXPECT_EQ("\x41\x49\xE3\x81\x82\xE3\x81\x84\xEF\xBD\x81\xEF\xBD\x89",
-            output);
+  EXPECT_EQ("AIあいａｉ", output);
 
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
 
@@ -2023,194 +1771,123 @@ TEST_F(ComposerTest, TransformCharactersForNumbers) {
   query = "R2D2";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ー１"
-  query = "\xE3\x83\xBC\xEF\xBC\x91";
+  query = "ー１";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "−１"
-  EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91", query);
+  EXPECT_EQ("−１", query);  // The hyphen is U+2212.
 
-  // "ーー１"
-  query = "\xE3\x83\xBC\xE3\x83\xBC\xEF\xBC\x91";
+  query = "ーー１";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ー"
-  query = "\xE3\x83\xBC";
+  query = "ー";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ーー"
-  query = "\xE3\x83\xBC\xE3\x83\xBC";
+  query = "ーー";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ーーーーー"
-  query = "\xE3\x83\xBC\xE3\x83\xBC\xE3\x83\xBC\xE3\x83\xBC\xE3\x83\xBC";
+  query = "ーーーーー";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ｗ"
-  query = "\xEF\xBD\x97";
+  query = "ｗ";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ーｗ"
-  query = "\xE3\x83\xBC\xEF\xBD\x97";
+  query = "ーｗ";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ーーｗ"
-  query = "\xE3\x83\xBC\xE3\x83\xBC\xEF\xBD\x97";
+  query = "ーーｗ";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "@" (half-width @)
   query = "@";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ー@" (half-width @)
-  query = "\xE3\x83\xBC@";
+  query = "ー@";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ーー@" (half-width @)
-  query = "\xE3\x83\xBC\xE3\x83\xBC@";
+  query = "ーー@";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "＠" (full-width @)
-  query = "\xEF\xBC\xA0";
+  query = "＠";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ー＠" (full-width @)
-  query = "\xE3\x83\xBC\xEF\xBC\xA0";
+  query = "ー＠";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "ーー＠" (full-width @)
-  query = "\xE3\x83\xBC\xE3\x83\xBC\xEF\xBC\xA0";
+  query = "ーー＠";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "まじかー１"
-  query = "\xE3\x81\xBE\xE3\x81\x98\xE3\x81\x8B\xE3\x83\xBC\xEF\xBC\x91";
+  query = "まじかー１";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "まじかーｗ"
-  query = "\xE3\x81\xBE\xE3\x81\x98\xE3\x81\x8B\xE3\x83\xBC\xEF\xBD\x97";
+  query = "まじかーｗ";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "１、０"
-  query = "\xEF\xBC\x91\xE3\x80\x81\xEF\xBC\x90";
+  query = "１、０";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "１，０"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90", query);
+  EXPECT_EQ("１，０", query);
 
-  // "０。５"
-  query = "\xEF\xBC\x90\xE3\x80\x82\xEF\xBC\x95";
+  query = "０。５";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "０．５"
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95", query);
+  EXPECT_EQ("０．５", query);
 
-  // "ー１、０００。５"
-  query = "\xE3\x83\xBC\xEF\xBC\x91\xE3\x80\x81\xEF\xBC\x90\xEF\xBC\x90"
-          "\xEF\xBC\x90\xE3\x80\x82\xEF\xBC\x95";
+  query = "ー１、０００。５";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "−１，０００．５"
-  EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95",
-            query);
+  EXPECT_EQ("−１，０００．５", query);  // The hyphen is U+2212.
 
-  // "０３ー"
-  query = "\xEF\xBC\x90\xEF\xBC\x93\xE3\x83\xBC";
+  query = "０３ー";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "０３−"
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x93\xE2\x88\x92", query);
+  EXPECT_EQ("０３−", query);  // The hyphen is U+2212.
 
-  // "０３ーーーーー"
-  query = "\xEF\xBC\x90\xEF\xBC\x93"
-      "\xE3\x83\xBC\xE3\x83\xBC\xE3\x83\xBC\xE3\x83\xBC\xE3\x83\xBC";
+  query = "０３ーーーーー";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "０３−−−−−"
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x93"
-            "\xE2\x88\x92\xE2\x88\x92\xE2\x88\x92\xE2\x88\x92\xE2\x88\x92",
-            query);
+  EXPECT_EQ("０３−−−−−", query);  // The hyphen is U+2212.
 
-  // "ｘー（ー１）＞ーｘ"
-  query = "\xEF\xBD\x98\xE3\x83\xBC\xEF\xBC\x88\xE3\x83\xBC\xEF\xBC\x91"
-          "\xEF\xBC\x89\xEF\xBC\x9E\xE3\x83\xBC\xEF\xBD\x98";
+  query = "ｘー（ー１）＞ーｘ";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "ｘ−（−１）＞−ｘ"
-  EXPECT_EQ("\xEF\xBD\x98\xE2\x88\x92\xEF\xBC\x88\xE2\x88\x92\xEF\xBC\x91"
-            "\xEF\xBC\x89\xEF\xBC\x9E\xE2\x88\x92\xEF\xBD\x98",
-            query);
+  EXPECT_EQ("ｘ−（−１）＞−ｘ", query);  // The hyphen is U+2212.
 
-  // "１＊ー２／ー３ーー４"
-  query = "\xEF\xBC\x91\xEF\xBC\x8A\xE3\x83\xBC\xEF\xBC\x92\xEF\xBC\x8F"
-          "\xE3\x83\xBC\xEF\xBC\x93\xE3\x83\xBC\xE3\x83\xBC\xEF\xBC\x94";
+  query = "１＊ー２／ー３ーー４";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "１＊−２／−３−−４"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8A\xE2\x88\x92\xEF\xBC\x92\xEF\xBC\x8F"
-            "\xE2\x88\x92\xEF\xBC\x93\xE2\x88\x92\xE2\x88\x92\xEF\xBC\x94",
-            query);
+  EXPECT_EQ("１＊−２／−３−−４", query);  // The hyphen is U+2212.
 
-  // "ＡーＺ"
-  query = "\xEF\xBC\xA1\xE3\x83\xBC\xEF\xBC\xBA";
+  query = "ＡーＺ";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "Ａ−Ｚ"
-  EXPECT_EQ("\xEF\xBC\xA1\xE2\x88\x92\xEF\xBC\xBA", query);
+  EXPECT_EQ("Ａ−Ｚ", query);  // The hyphen is U+2212.
 
-  // "もずく、うぉーきんぐ。"
-  query = "\xE3\x82\x82\xE3\x81\x9A\xE3\x81\x8F\xE3\x80\x81\xE3\x81\x86"
-          "\xE3\x81\x89\xE3\x83\xBC\xE3\x81\x8D\xE3\x82\x93\xE3\x81\x90"
-          "\xE3\x80\x82";
+  query = "もずく、うぉーきんぐ。";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
-  // "えー２、９８０円！月々たった、２、９８０円？"
-  query = "\xE3\x81\x88\xE3\x83\xBC\xEF\xBC\x92\xE3\x80\x81\xEF\xBC\x99"
-          "\xEF\xBC\x98\xEF\xBC\x90\xE5\x86\x86\xEF\xBC\x81\xE6\x9C\x88"
-          "\xE3\x80\x85\xE3\x81\x9F\xE3\x81\xA3\xE3\x81\x9F\xE3\x80\x81"
-          "\xEF\xBC\x92\xE3\x80\x81\xEF\xBC\x99\xEF\xBC\x98\xEF\xBC\x90"
-          "\xE5\x86\x86\xEF\xBC\x9F";
+  query = "えー２、９８０円！月々たった、２、９８０円？";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "えー２，９８０円！月々たった、２，９８０円？"
-  EXPECT_EQ("\xE3\x81\x88\xE3\x83\xBC\xEF\xBC\x92\xEF\xBC\x8C\xEF\xBC\x99"
-            "\xEF\xBC\x98\xEF\xBC\x90\xE5\x86\x86\xEF\xBC\x81\xE6\x9C\x88"
-            "\xE3\x80\x85\xE3\x81\x9F\xE3\x81\xA3\xE3\x81\x9F\xE3\x80\x81"
-            "\xEF\xBC\x92\xEF\xBC\x8C\xEF\xBC\x99\xEF\xBC\x98\xEF\xBC\x90"
-            "\xE5\x86\x86\xEF\xBC\x9F",
-            query);
+  EXPECT_EQ("えー２，９８０円！月々たった、２，９８０円？", query);
 
-  // "およそ、３。１４１５９。"
-  query = "\xE3\x81\x8A\xE3\x82\x88\xE3\x81\x9D\xE3\x80\x81\xEF\xBC\x93"
-          "\xE3\x80\x82\xEF\xBC\x91\xEF\xBC\x94\xEF\xBC\x91\xEF\xBC\x95"
-          "\xEF\xBC\x99\xE3\x80\x82";
+  query = "およそ、３。１４１５９。";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "およそ、３．１４１５９．"
-  EXPECT_EQ("\xE3\x81\x8A\xE3\x82\x88\xE3\x81\x9D\xE3\x80\x81\xEF\xBC\x93"
-            "\xEF\xBC\x8E\xEF\xBC\x91\xEF\xBC\x94\xEF\xBC\x91\xEF\xBC\x95"
-            "\xEF\xBC\x99\xEF\xBC\x8E",
-            query);
+  EXPECT_EQ("およそ、３．１４１５９．", query);
 
-  // "１００、" => "１００，"
-  query = "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xE3\x80\x81";
+  query = "１００、";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C",
-            query);
+  EXPECT_EQ("１００，", query);
 
-  // "１００。" => "１００．"
-  query = "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xE3\x80\x82";
+  query = "１００。";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8E",
-            query);
+  EXPECT_EQ("１００．", query);
 }
 
 TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
   CharacterFormManager *manager =
       CharacterFormManager::GetCharacterFormManager();
-  table_->AddRule("0", "\xEF\xBC\x90", "");  // "０"
-  table_->AddRule("1", "\xEF\xBC\x91", "");  // "１"
-  table_->AddRule("2", "\xEF\xBC\x92", "");  // "２"
-  table_->AddRule("3", "\xEF\xBC\x93", "");  // "３"
-  table_->AddRule("4", "\xEF\xBC\x94", "");  // "４"
-  table_->AddRule("5", "\xEF\xBC\x95", "");  // "５"
-  table_->AddRule("6", "\xEF\xBC\x96", "");  // "６"
-  table_->AddRule("7", "\xEF\xBC\x97", "");  // "７"
-  table_->AddRule("8", "\xEF\xBC\x98", "");  // "８"
-  table_->AddRule("9", "\xEF\xBC\x99", "");  // "９"
-  table_->AddRule("-", "\xE3\x83\xBC", "");  // "ー"
-  table_->AddRule(",", "\xE3\x80\x81", "");  // "、"
-  table_->AddRule(".", "\xE3\x80\x82", "");  // "。"
-
+  table_->AddRule("0", "０", "");
+  table_->AddRule("1", "１", "");
+  table_->AddRule("2", "２", "");
+  table_->AddRule("3", "３", "");
+  table_->AddRule("4", "４", "");
+  table_->AddRule("5", "５", "");
+  table_->AddRule("6", "６", "");
+  table_->AddRule("7", "７", "");
+  table_->AddRule("8", "８", "");
+  table_->AddRule("9", "９", "");
+  table_->AddRule("-", "ー", "");
+  table_->AddRule(",", "、", "");
+  table_->AddRule(".", "。", "");
 
   {
     composer_->Reset();
@@ -2220,8 +1897,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("3.14",
-              result);
+    EXPECT_EQ("3.14", result);
   }
 
   {
@@ -2232,9 +1908,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
-    // "３.１４"
-    EXPECT_EQ("\xef\xbc\x93\x2e\xef\xbc\x91\xef\xbc\x94",
-              result);
+    EXPECT_EQ("３.１４", result);
   }
 
   {
@@ -2245,9 +1919,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
-    // "3．14"
-    EXPECT_EQ("\x33\xef\xbc\x8e\x31\x34",
-              result);
+    EXPECT_EQ("3．14", result);
   }
 
   {
@@ -2258,43 +1930,35 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
-    // "３．１４"
-    EXPECT_EQ("\xef\xbc\x93\xef\xbc\x8e\xef\xbc\x91\xef\xbc\x94",
-              result);
+    EXPECT_EQ("３．１４", result);
   }
 }
 
 TEST_F(ComposerTest, ComposingWithcharactertransform) {
-  table_->AddRule("0", "\xEF\xBC\x90", "");  // "０"
-  table_->AddRule("1", "\xEF\xBC\x91", "");  // "１"
-  table_->AddRule("2", "\xEF\xBC\x92", "");  // "２"
-  table_->AddRule("3", "\xEF\xBC\x93", "");  // "３"
-  table_->AddRule("4", "\xEF\xBC\x94", "");  // "４"
-  table_->AddRule("5", "\xEF\xBC\x95", "");  // "５"
-  table_->AddRule("6", "\xEF\xBC\x96", "");  // "６"
-  table_->AddRule("7", "\xEF\xBC\x97", "");  // "７"
-  table_->AddRule("8", "\xEF\xBC\x98", "");  // "８"
-  table_->AddRule("9", "\xEF\xBC\x99", "");  // "９"
-  table_->AddRule("-", "\xE3\x83\xBC", "");  // "ー"
-  table_->AddRule(",", "\xE3\x80\x81", "");  // "、"
-  table_->AddRule(".", "\xE3\x80\x82", "");  // "。"
+  table_->AddRule("0", "０", "");
+  table_->AddRule("1", "１", "");
+  table_->AddRule("2", "２", "");
+  table_->AddRule("3", "３", "");
+  table_->AddRule("4", "４", "");
+  table_->AddRule("5", "５", "");
+  table_->AddRule("6", "６", "");
+  table_->AddRule("7", "７", "");
+  table_->AddRule("8", "８", "");
+  table_->AddRule("9", "９", "");
+  table_->AddRule("-", "ー", "");
+  table_->AddRule(",", "、", "");
+  table_->AddRule(".", "。", "");
   composer_->InsertCharacter("-1,000.5");
 
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "−１，０００．５"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-              "\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95",
-              result);
+    EXPECT_EQ("−１，０００．５", result);  // The hyphen is U+2212.
   }
   {
     string result;
     composer_->GetStringForSubmission(&result);
-    // "−１，０００．５"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-              "\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95",
-              result);
+    EXPECT_EQ("−１，０００．５", result);  // The hyphen is U+2212.
   }
   {
     string result;
@@ -2310,93 +1974,58 @@ TEST_F(ComposerTest, ComposingWithcharactertransform) {
     string left, focused, right;
     // Right edge
     composer_->GetPreedit(&left, &focused, &right);
-    // "−１，０００．５"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-              "\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95",
-              left);
+    EXPECT_EQ("−１，０００．５", left);  // The hyphen is U+2212.
     EXPECT_TRUE(focused.empty());
     EXPECT_TRUE(right.empty());
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    // "−１，０００．"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-              "\xEF\xBC\x90\xEF\xBC\x8E",
-              left);
-    // "５"
-    EXPECT_EQ("\xEF\xBC\x95", focused);
+    EXPECT_EQ("−１，０００．", left);  // The hyphen is U+2212.
+    EXPECT_EQ("５", focused);
     EXPECT_TRUE(right.empty());
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    // "−１，０００"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-              "\xEF\xBC\x90",
-              left);
-    // "．"
-    EXPECT_EQ("\xEF\xBC\x8E", focused);
-    // "５"
-    EXPECT_EQ("\xEF\xBC\x95", right);
+    EXPECT_EQ("−１，０００", left);  // The hyphen is U+2212.
+    EXPECT_EQ("．", focused);
+    EXPECT_EQ("５", right);
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    // "−１，００"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90",
-              left);
-    // "０"
-    EXPECT_EQ("\xEF\xBC\x90", focused);
-    // "．５"
-    EXPECT_EQ("\xEF\xBC\x8E\xEF\xBC\x95", right);
+    EXPECT_EQ("−１，００", left);  // The hyphen is U+2212.
+    EXPECT_EQ("０", focused);
+    EXPECT_EQ("．５", right);
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    // "−１，０"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90", left);
-    // "０"
-    EXPECT_EQ("\xEF\xBC\x90", focused);
-    // "０．５"
-    EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95", right);
+    EXPECT_EQ("−１，０", left);  // The hyphen is U+2212.
+    EXPECT_EQ("０", focused);
+    EXPECT_EQ("０．５", right);
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    // "−１，"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91\xEF\xBC\x8C", left);
-    // "０"
-    EXPECT_EQ("\xEF\xBC\x90", focused);
-    // "００．５"
-    EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95", right);
+    EXPECT_EQ("−１，", left);  // The hyphen is U+2212.
+    EXPECT_EQ("０", focused);
+    EXPECT_EQ("００．５", right);
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    // "−１"
-    EXPECT_EQ("\xE2\x88\x92\xEF\xBC\x91", left);
-    // "，"
-    EXPECT_EQ("\xEF\xBC\x8C", focused);
-    // "０００．５"
-    EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8E\xEF\xBC\x95",
-              right);
+    EXPECT_EQ("−１", left);
+    EXPECT_EQ("，", focused);
+    EXPECT_EQ("０００．５", right);
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    // "−"
-    EXPECT_EQ("\xE2\x88\x92", left);
-    // "１"
-    EXPECT_EQ("\xEF\xBC\x91", focused);
-    // "，０００．５"
-    EXPECT_EQ("\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8E"
-              "\xEF\xBC\x95",
-              right);
+    EXPECT_EQ("−", left);  // U+2212.
+    EXPECT_EQ("１", focused);
+    EXPECT_EQ("，０００．５", right);
 
     // Left edge
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
     EXPECT_TRUE(left.empty());
-    // "−"
-    EXPECT_EQ("\xE2\x88\x92", focused);
-    // "１，０００．５"
-    EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-              "\xEF\xBC\x8E\xEF\xBC\x95",
-              right);
+    EXPECT_EQ("−", focused);  // U+2212.
+    EXPECT_EQ("１，０００．５", right);
   }
 }
 
@@ -2406,9 +2035,7 @@ TEST_F(ComposerTest, AlphanumericOfSSH) {
   table_->AddRule("ss", "[X]", "s");
   table_->AddRule("sha", "[SHA]", "");
   composer_->InsertCharacter("ssh");
-  // "［Ｘ］ｓｈ"
-  EXPECT_EQ("\xEF\xBC\xBB\xEF\xBC\xB8\xEF\xBC\xBD\xEF\xBD\x93\xEF\xBD\x88",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("［Ｘ］ｓｈ", GetPreedit(composer_.get()));
 
   string query;
   composer_->GetQueryForConversion(&query);
@@ -2423,8 +2050,7 @@ TEST_F(ComposerTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   commands::KeyEvent key;
   key.set_key_code('a');
-  // "ち"
-  key.set_key_string("\xE3\x81\xA1");
+  key.set_key_string("ち");
 
   // Toggle the input mode to HALF_ASCII
   composer_->ToggleInputMode();
@@ -2454,22 +2080,19 @@ TEST_F(ComposerTest, Issue2190364) {
   EXPECT_TRUE(composer_->InsertCharacterKeyEvent(key));
   output.clear();
   composer_->GetStringForPreedit(&output);
-  // "aち"
-  EXPECT_EQ("a\xE3\x81\xA1", output);
+  EXPECT_EQ("aち", output);
 }
 
 TEST_F(ComposerTest, Issue1817410) {
   // This is a unittest against http://b/2190364
-  // "っ"
-  table_->AddRule("ss", "\xE3\x81\xA3", "s");
+  table_->AddRule("ss", "っ", "s");
 
   InsertKey("s", composer_.get());
   InsertKey("s", composer_.get());
 
   string preedit;
   composer_->GetStringForPreedit(&preedit);
-  // "っｓ"
-  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93", preedit);
+  EXPECT_EQ("っｓ", preedit);
 
   string t13n;
   composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 2, &t13n);
@@ -2519,37 +2142,27 @@ TEST_F(ComposerTest, Isue2555503) {
 TEST_F(ComposerTest, Issue2819580_1) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
-  // "ん"
-  table_->AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table_->AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table_->AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table_->AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
 
   InsertKey("n", composer_.get());
   InsertKey("y", composer_.get());
 
   string result;
   composer_->GetQueryForConversion(&result);
-  // "んy"
-  EXPECT_EQ("\xe3\x82\x93y", result);
+  EXPECT_EQ("んy", result);
 }
 
 TEST_F(ComposerTest, Issue2819580_2) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
-  // "ぽ"
-  table_->AddRule("po", "\xe3\x81\xbd", "");
-  // "ん"
-  table_->AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table_->AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table_->AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table_->AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
 
   InsertKey("p", composer_.get());
   InsertKey("o", composer_.get());
@@ -2558,21 +2171,16 @@ TEST_F(ComposerTest, Issue2819580_2) {
 
   string result;
   composer_->GetQueryForConversion(&result);
-  // "ぽんy"
-  EXPECT_EQ("\xe3\x81\xbd\xe3\x82\x93y", result);
+  EXPECT_EQ("ぽんy", result);
 }
 
 TEST_F(ComposerTest, Issue2819580_3) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
-  // "ん"
-  table_->AddRule("n", "\xe3\x82\x93", "");
-  // "な"
-  table_->AddRule("na", "\xe3\x81\xaa", "");
-  // "や"
-  table_->AddRule("ya", "\xe3\x82\x84", "");
-  // "にゃ"
-  table_->AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
 
   InsertKey("z", composer_.get());
   InsertKey("n", composer_.get());
@@ -2580,8 +2188,7 @@ TEST_F(ComposerTest, Issue2819580_3) {
 
   string result;
   composer_->GetQueryForConversion(&result);
-  // "zんy"
-  EXPECT_EQ("z\xe3\x82\x93y", result);
+  EXPECT_EQ("zんy", result);
 }
 
 TEST_F(ComposerTest, Issue2797991_1) {
@@ -2589,8 +2196,7 @@ TEST_F(ComposerTest, Issue2797991_1) {
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい
 
-  // "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
+  table_->AddRule("i", "い", "");
 
   InsertKey("C", composer_.get());
   InsertKey(":", composer_.get());
@@ -2608,8 +2214,7 @@ TEST_F(ComposerTest, Issue2797991_2) {
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい
 
-  // "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
+  table_->AddRule("i", "い", "");
 
   InsertKey("C", composer_.get());
   InsertKey(":", composer_.get());
@@ -2626,8 +2231,7 @@ TEST_F(ComposerTest, Issue2797991_3) {
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい
 
-  // "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
+  table_->AddRule("i", "い", "");
 
   InsertKey("C", composer_.get());
   InsertKey(":", composer_.get());
@@ -2637,8 +2241,7 @@ TEST_F(ComposerTest, Issue2797991_3) {
   InsertKeyWithMode("i", commands::HIRAGANA, composer_.get());
   string result;
   composer_->GetStringForPreedit(&result);
-  // "C:\Wiい"
-  EXPECT_EQ("C:\\Wi\xe3\x81\x84", result);
+  EXPECT_EQ("C:\\Wiい", result);
 }
 
 TEST_F(ComposerTest, Issue2797991_4) {
@@ -2646,8 +2249,7 @@ TEST_F(ComposerTest, Issue2797991_4) {
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい
 
-  // "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
+  table_->AddRule("i", "い", "");
 
   InsertKey("c", composer_.get());
   InsertKey(":", composer_.get());
@@ -2666,10 +2268,8 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     table_->InitializeWithRequestAndConfig(*request_, *config_,
                                            mock_data_manager_);
 
-    // i -> "い"
-    table_->AddRule("i", "\xe3\x81\x84", "");
-    // I -> "イ"
-    table_->AddRule("I", "\xe3\x82\xa4", "");
+    table_->AddRule("i", "い", "");
+    table_->AddRule("I", "イ", "");
 
     InsertKey("i", composer_.get());
     InsertKey("I", composer_.get());
@@ -2677,8 +2277,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     InsertKey("I", composer_.get());
     string result;
     composer_->GetStringForPreedit(&result);
-    // "いイいイ"
-    EXPECT_EQ("\xe3\x81\x84\xe3\x82\xa4\xe3\x81\x84\xe3\x82\xa4", result);
+    EXPECT_EQ("いイいイ", result);
   }
   composer_->Reset();
   {
@@ -2686,10 +2285,8 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     table_->InitializeWithRequestAndConfig(*request_, *config_,
                                            mock_data_manager_);
 
-    // i -> "い"
-    table_->AddRule("i", "\xe3\x81\x84", "");
-    // I -> "イ"
-    table_->AddRule("I", "\xe3\x82\xa4", "");
+    table_->AddRule("i", "い", "");
+    table_->AddRule("I", "イ", "");
 
     InsertKey("i", composer_.get());
     InsertKey("I", composer_.get());
@@ -2697,8 +2294,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     InsertKey("I", composer_.get());
     string result;
     composer_->GetStringForPreedit(&result);
-    // "いIiI"
-    EXPECT_EQ("\xe3\x81\x84IiI", result);
+    EXPECT_EQ("いIiI", result);
   }
 }
 
@@ -2709,10 +2305,8 @@ TEST_F(ComposerTest,
     table_->InitializeWithRequestAndConfig(*request_, *config_,
                                            mock_data_manager_);
 
-    // i -> "い"
-    table_->AddRule("i", "\xe3\x81\x84", "");
-    // I -> "イ"
-    table_->AddRule("I", "\xe3\x82\xa4", "");
+    table_->AddRule("i", "い", "");
+    table_->AddRule("I", "イ", "");
 
     {
       composer_->Reset();
@@ -2720,8 +2314,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       string result;
       composer_->GetStringForPreedit(&result);
-      // "Ｉ"
-      EXPECT_EQ("\xef\xbc\xa9", result);
+      EXPECT_EQ("Ｉ", result);
     }
 
     {
@@ -2739,8 +2332,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       string result;
       composer_->GetStringForPreedit(&result);
-      // "イ"
-      EXPECT_EQ("\xe3\x82\xa4", result);
+      EXPECT_EQ("イ", result);
     }
 
     {
@@ -2749,8 +2341,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       string result;
       composer_->GetStringForPreedit(&result);
-      // "ｲ"
-      EXPECT_EQ("\xEF\xBD\xB2", result);
+      EXPECT_EQ("ｲ", result);
     }
 
     {
@@ -2759,8 +2350,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       string result;
       composer_->GetStringForPreedit(&result);
-      // "イ"
-      EXPECT_EQ("\xe3\x82\xa4", result);
+      EXPECT_EQ("イ", result);
     }
   }
 }
@@ -2775,8 +2365,7 @@ TEST_F(ComposerTest,
   table_->InitializeWithRequestAndConfig(*request_, *config_,
                                          mock_data_manager_);
 
-  // i -> "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
+  table_->AddRule("i", "い", "");
 
   InsertKey("i", composer_.get());
   InsertKey("G", composer_.get());
@@ -2789,8 +2378,7 @@ TEST_F(ComposerTest,
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "いGoogle"
-    EXPECT_EQ("\xe3\x81\x84Google", result);
+    EXPECT_EQ("いGoogle", result);
   }
 
   composer_->Backspace();
@@ -2803,8 +2391,7 @@ TEST_F(ComposerTest,
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "い"
-    EXPECT_EQ("\xe3\x81\x84", result);
+    EXPECT_EQ("い", result);
   }
 
   InsertKey("i", composer_.get());
@@ -2812,8 +2399,7 @@ TEST_F(ComposerTest,
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "いい"
-    EXPECT_EQ("\xe3\x81\x84\xe3\x81\x84", result);
+    EXPECT_EQ("いい", result);
   }
 }
 
@@ -2823,50 +2409,43 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   table_->InitializeWithRequestAndConfig(*request_, *config_,
                                          mock_data_manager_);
 
-  // i -> "い"
-  table_->AddRule("i", "\xe3\x81\x84", "");
-  // gi -> "ぎ"
-  table_->AddRule("gi", "\xe3\x81\x8e", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("gi", "ぎ", "");
 
   InsertKey("i", composer_.get());
   composer_->MoveCursorRight();
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "い"
-    EXPECT_EQ("\xe3\x81\x84", result);
+    EXPECT_EQ("い", result);
   }
 
   composer_->MoveCursorLeft();
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "い"
-    EXPECT_EQ("\xe3\x81\x84", result);
+    EXPECT_EQ("い", result);
   }
 
   InsertKey("G", composer_.get());
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "Gい"
-    EXPECT_EQ("G\xe3\x81\x84", result);
+    EXPECT_EQ("Gい", result);
   }
 
   composer_->MoveCursorRight();
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "Gい"
-    EXPECT_EQ("G\xe3\x81\x84", result);
+    EXPECT_EQ("Gい", result);
   }
 
   InsertKey("G", composer_.get());
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "GいG"
-    EXPECT_EQ("G\xe3\x81\x84G", result);
+    EXPECT_EQ("GいG", result);
   }
 
   composer_->MoveCursorLeft();
@@ -2874,8 +2453,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "GいいG"
-    EXPECT_EQ("G\xe3\x81\x84\xe3\x81\x84G", result);
+    EXPECT_EQ("GいいG", result);
   }
 
   composer_->MoveCursorRight();
@@ -2883,8 +2461,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "GいいGi"
-    EXPECT_EQ("G\xe3\x81\x84\xe3\x81\x84Gi", result);
+    EXPECT_EQ("GいいGi", result);
   }
 
   InsertKey("G", composer_.get());
@@ -2892,8 +2469,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "GいいGiGi"
-    EXPECT_EQ("G\xe3\x81\x84\xe3\x81\x84GiGi", result);
+    EXPECT_EQ("GいいGiGi", result);
   }
 
   composer_->Backspace();
@@ -2903,8 +2479,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "GいいGi"
-    EXPECT_EQ("G\xe3\x81\x84\xe3\x81\x84Gi", result);
+    EXPECT_EQ("GいいGi", result);
   }
 
   InsertKey("G", composer_.get());
@@ -2914,8 +2489,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "GいいGiGGi"
-    EXPECT_EQ("G\xe3\x81\x84\xe3\x81\x84GiGGi", result);
+    EXPECT_EQ("GいいGiGGi", result);
   }
 
   composer_->Backspace();
@@ -2929,8 +2503,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "Gい"
-    EXPECT_EQ("G\xe3\x81\x84", result);
+    EXPECT_EQ("Gい", result);
   }
 
   composer_->Backspace();
@@ -2940,7 +2513,6 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     string result;
     composer_->GetStringForPreedit(&result);
-    // "Gi"
     EXPECT_EQ("Gi", result);
   }
 }
@@ -2950,31 +2522,24 @@ TEST_F(ComposerTest, ShuoldCommit) {
   table_->AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
   table_->AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);
 
-  // k
   composer_->InsertCharacter("k");
   EXPECT_FALSE(composer_->ShouldCommit());
 
-  // k + a
   composer_->InsertCharacter("a");
   EXPECT_TRUE(composer_->ShouldCommit());
 
-  // ka + t
   composer_->InsertCharacter("t");
   EXPECT_FALSE(composer_->ShouldCommit());
 
-  // kat + t
   composer_->InsertCharacter("t");
   EXPECT_FALSE(composer_->ShouldCommit());
 
-  // katt + a
   composer_->InsertCharacter("a");
   EXPECT_TRUE(composer_->ShouldCommit());
 
-  // katta + t
   composer_->InsertCharacter("t");
   EXPECT_FALSE(composer_->ShouldCommit());
 
-  // kattat + a
   composer_->InsertCharacter("a");
   EXPECT_FALSE(composer_->ShouldCommit());
 }
@@ -3085,57 +2650,43 @@ TEST_F(ComposerTest, SourceText) {
 }
 
 TEST_F(ComposerTest, DeleteAt) {
-  // "も"
-  table_->AddRule("mo", "\xE3\x82\x82", "");
-  // "ず"
-  table_->AddRule("zu", "\xE3\x81\x9a", "");
+  table_->AddRule("mo", "も", "");
+  table_->AddRule("zu", "ず", "");
 
   composer_->InsertCharacter("z");
-  // "ｚ"
-  EXPECT_EQ("\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ("ｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(1, composer_->GetCursor());
   composer_->DeleteAt(0);
   EXPECT_EQ("", GetPreedit(composer_.get()));
   EXPECT_EQ(0, composer_->GetCursor());
 
   composer_->InsertCharacter("mmoz");
-  // "ｍもｚ"
-  EXPECT_EQ("\xef\xbd\x8d\xe3\x82\x82\xef\xbd\x9a",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("ｍもｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(3, composer_->GetCursor());
   composer_->DeleteAt(0);
-  // "もｚ"
-  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ("もｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
   composer_->InsertCharacter("u");
-  // "もず"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ("もず", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 
   composer_->InsertCharacter("m");
-  // "もずｍ"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xef\xbd\x8d",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("もずｍ", GetPreedit(composer_.get()));
   EXPECT_EQ(3, composer_->GetCursor());
   composer_->DeleteAt(1);
-  // "もｍ"
-  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x8d", GetPreedit(composer_.get()));
+  EXPECT_EQ("もｍ", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
   composer_->InsertCharacter("o");
-  // "もも"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82", GetPreedit(composer_.get()));
+  EXPECT_EQ("もも", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 }
 
 TEST_F(ComposerTest, DeleteRange) {
-  // "も"
-  table_->AddRule("mo", "\xE3\x82\x82", "");
-  // "ず"
-  table_->AddRule("zu", "\xE3\x81\x9a", "");
+  table_->AddRule("mo", "も", "");
+  table_->AddRule("zu", "ず", "");
 
   composer_->InsertCharacter("z");
-  // "ｚ"
-  EXPECT_EQ("\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ("ｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(1, composer_->GetCursor());
 
   composer_->DeleteRange(0, 1);
@@ -3143,46 +2694,36 @@ TEST_F(ComposerTest, DeleteRange) {
   EXPECT_EQ(0, composer_->GetCursor());
 
   composer_->InsertCharacter("mmozmoz");
-  // "ｍもｚもｚ"
-  EXPECT_EQ("\xef\xbd\x8d\xe3\x82\x82\xef\xbd\x9a\xe3\x82\x82\xef\xbd\x9a",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("ｍもｚもｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(5, composer_->GetCursor());
 
   composer_->DeleteRange(0, 3);
-  // "もｚ"
-  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ("もｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 
   composer_->InsertCharacter("u");
-  // "もず"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ("もず", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 
   composer_->InsertCharacter("xyz");
   composer_->MoveCursorToBeginning();
   composer_->InsertCharacter("mom");
-  // "もｍ|もずｘｙｚ"
-  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x8d\xe3\x82\x82\xe3\x81\x9a"
-            "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("もｍもずｘｙｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 
   composer_->DeleteRange(2, 3);
   // "もｍ|ｙｚ"
-  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x8d\xef\xbd\x99\xef\xbd\x9a",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("もｍｙｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 
   composer_->InsertCharacter("o");
   // "もも|ｙｚ"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82\xef\xbd\x99\xef\xbd\x9a",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("ももｙｚ", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 
   composer_->DeleteRange(2, 1000);
   // "もも|"
-  EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82",
-            GetPreedit(composer_.get()));
+  EXPECT_EQ("もも", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 }
 
@@ -3207,9 +2748,7 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
 }
 
 TEST_F(ComposerTest, InsertCharacterPreedit) {
-  // "ああaｋka。"
-  const char kTestStr[] =
-      "\xe3\x81\x82\xe3\x81\x82\x61\xef\xbd\x8b\x6b\x61\xe3\x80\x82";
+  const char kTestStr[] = "ああaｋka。";
 
   {
     string preedit;
@@ -3435,12 +2974,9 @@ TEST_F(TypingCorrectionTest, GetTypeCorrectedQueriesForPrediction) {
 }
 
 TEST_F(ComposerTest, GetRawString) {
-  // "さ"
-  table_->AddRule("sa", "\xE3\x81\x95", "");
-  // "し"
-  table_->AddRule("shi", "\xE3\x81\x97", "");
-  // "み"
-  table_->AddRule("mi", "\xE3\x81\xBF", "");
+  table_->AddRule("sa", "さ", "");
+  table_->AddRule("shi", "し", "");
+  table_->AddRule("mi", "み", "");
 
   composer_->SetOutputMode(transliteration::HIRAGANA);
 
@@ -3448,8 +2984,7 @@ TEST_F(ComposerTest, GetRawString) {
 
   string output;
   composer_->GetStringForPreedit(&output);
-  // "さしみ"
-  EXPECT_EQ("\xE3\x81\x95\xE3\x81\x97\xE3\x81\xBF", output);
+  EXPECT_EQ("さしみ", output);
 
   string raw_string;
   composer_->GetRawString(&raw_string);

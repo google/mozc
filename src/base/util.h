@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -106,8 +106,7 @@ class Util {
   // String utils
   template <typename StringContainer>
   static void PushBackStringPiece(StringPiece s, StringContainer *container) {
-    container->push_back(string());
-    s.CopyToString(&container->back());
+    container->push_back(string(s));
   }
 
   static void SplitStringUsing(StringPiece str,
@@ -277,7 +276,7 @@ class Util {
   // C++ string version of sprintf.
   static string StringPrintf(const char *format, ...)
       // Tell the compiler to do printf format string checking.
-      PRINTF_ATTRIBUTE(1, 2);
+      ABSL_PRINTF_ATTRIBUTE(1, 2);
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.

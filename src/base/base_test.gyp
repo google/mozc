@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -414,7 +414,7 @@
           'action_name': 'gen_embedded_file_test_data',
           'variables': {
             'input': 'embedded_file.h',
-            'gen_header_path': '<(gen_out_dir)/embedded_file_test_data.h',
+            'gen_header_path': '<(gen_out_dir)/embedded_file_test_data.inc',
           },
           'inputs': [
             '<(input)',

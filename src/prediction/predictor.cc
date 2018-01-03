@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -158,8 +158,8 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
 
   int size = kPredictionSize;
   if (segments->request_type() == Segments::SUGGESTION) {
-    size = min(9,
-               max(1, static_cast<int>(request.config().suggestions_size())));
+    size = std::min(
+        9, std::max(1, static_cast<int>(request.config().suggestions_size())));
   }
 
   bool result = false;

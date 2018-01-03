@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,13 +45,11 @@ namespace mozc {
 
 void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
                                       Segment::Candidate *candidate) {
-  candidate->prefix = "\xE2\x86\x92 ";  // "→ "
+  candidate->prefix = "→ ";
   candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
 
-  candidate->description =
-      // "もしかして"
-      "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6: ";
-  item.correction.AppendToString(&candidate->description);
+  candidate->description = "<もしかして: ";
+  candidate->description.append(item.correction.data(), item.correction.size());
   candidate->description.append(1, '>');
 
   DCHECK(candidate->IsValid());
@@ -102,7 +100,7 @@ CorrectionRewriter *CorrectionRewriter::CreateCorrectionRewriter(
                                 correction_array_data);
 }
 
-CorrectionRewriter::~CorrectionRewriter() {}
+CorrectionRewriter::~CorrectionRewriter() = default;
 
 bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
                                  Segments *segments) const {
@@ -142,15 +140,15 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
     // TODO(taku): In order to provide all miss reading corrections
     // defined in the tsv file, we want to add miss-read entries to
     // the system dictionary.
-    const size_t kInsertPostion = min(static_cast<size_t>(3),
-                                      segment->candidates_size());
+    const size_t kInsertPosition =
+        std::min(static_cast<size_t>(3), segment->candidates_size());
     const Segment::Candidate &top_candidate = segment->candidate(0);
     if (!LookupCorrection(top_candidate.content_key, "", &results)) {
       continue;
     }
     for (size_t k = 0; k < results.size(); ++k) {
       Segment::Candidate *mutable_candidate =
-          segment->insert_candidate(kInsertPostion);
+          segment->insert_candidate(kInsertPosition);
       DCHECK(mutable_candidate);
       mutable_candidate->CopyFrom(top_candidate);
       Util::ConcatStrings(results[k].error,

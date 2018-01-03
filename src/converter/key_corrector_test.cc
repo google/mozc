@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
 
 TEST(KeyCorrectorTest, KeyCorrectorBasicTest) {
   EXPECT_FALSE(KeyCorrector::IsValidPosition(
@@ -56,21 +57,16 @@ TEST(KeyCorrectorTest, KeyCorrectorBasicTest) {
   }
 
   {
-    // "てすと"
-    KeyCorrector corrector("\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
-                           KeyCorrector::ROMAN, 0);
+    KeyCorrector corrector("てすと", KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "てすと"
-    EXPECT_EQ("\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8", corrector.original_key());
+    EXPECT_EQ("てすと", corrector.original_key());
     corrector.Clear();
     EXPECT_FALSE(corrector.IsAvailable());
   }
 }
 
 TEST(KeyCorrectorTest, KeyCorrectorKanaTest) {
-  // "みんあであそぼう"
-  const string input = "\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82\xe3\x81\xa7\xe3"
-      "\x81\x82\xe3\x81\x9d\xe3\x81\xbc\xe3\x81\x86";
+  const string input = "みんあであそぼう";
   KeyCorrector corrector(input, KeyCorrector::KANA, 0);
   EXPECT_FALSE(corrector.IsAvailable());
   EXPECT_EQ("", corrector.corrected_key());
@@ -85,336 +81,203 @@ TEST(KeyCorrectorTest, KeyCorrectorKanaTest) {
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   {
-    // "ん"
-    const string input = "\xe3\x82\x93";
+    const string input = "ん";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "ん"
-    EXPECT_EQ("\xe3\x82\x93", corrector.corrected_key());
+    EXPECT_EQ("ん", corrector.corrected_key());
   }
 
   {
-    // "かん"
-    const string input = "\xe3\x81\x8b\xe3\x82\x93";
+    const string input = "かん";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "かん"
-    EXPECT_EQ("\xe3\x81\x8b\xe3\x82\x93",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("かん", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "かに"
-    const string input = "\xe3\x81\x8b\xe3\x81\xab";
+    const string input = "かに";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "かに"
-    EXPECT_EQ("\xe3\x81\x8b\xe3\x81\xab", corrector.corrected_key());
+    EXPECT_EQ("かに", corrector.corrected_key());
   }
 
   {
-    // "かｍ"
-    const string input = "\xe3\x81\x8b\xef\xbd\x8d";
+    const string input = "かｍ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "かｍ"
-    EXPECT_EQ("\xe3\x81\x8b\xef\xbd\x8d", corrector.corrected_key());
+    EXPECT_EQ("かｍ", corrector.corrected_key());
   }
 
   {
-    // "みんあであそぼう"
-    const string input = "\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82\xe3\x81\xa7\xe3"
-        "\x81\x82\xe3\x81\x9d\xe3\x81\xbc\xe3\x81\x86";
+    const string input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "みんなであそぼう"
-    EXPECT_EQ("\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xa7\xe3\x81\x82\xe3"
-              "\x81\x9d\xe3\x81\xbc\xe3\x81\x86",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("みんなであそぼう", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
     // don't rewrite 1st "ん"
-    // "んあであそぼう"
-    const string input = "\xe3\x82\x93\xe3\x81\x82\xe3\x81\xa7\xe3\x81\x82\xe3"
-        "\x81\x9d\xe3\x81\xbc\xe3\x81\x86";
+    const string input = "んあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "んあであそぼう"
-    EXPECT_EQ("\xe3\x82\x93\xe3\x81\x82\xe3\x81\xa7\xe3\x81\x82\xe3\x81\x9d\xe3"
-              "\x81\xbc\xe3\x81\x86",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("んあであそぼう", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "こんかいのみんあはこんんでた"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x81\x8b\xe3\x81\x84\xe3"
-        "\x81\xae\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82\xe3\x81"
-        "\xaf\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xa7"
-        "\xe3\x81\x9f";
+    const string input = "こんかいのみんあはこんんでた";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんかいのみんなはこんでた"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\x8b\xe3\x81\x84\xe3\x81\xae\xe3"
-              "\x81\xbf\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xaf\xe3\x81\x93\xe3\x82"
-              "\x93\xe3\x81\xa7\xe3\x81\x9f",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("こんかいのみんなはこんでた", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "みんあみんいみんうみんえみんおみんんか"
-    const string input = "\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82\xe3\x81\xbf\xe3"
-        "\x82\x93\xe3\x81\x84\xe3\x81\xbf\xe3\x82\x93\xe3\x81"
-        "\x86\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x88\xe3\x81\xbf"
-        "\xe3\x82\x93\xe3\x81\x8a\xe3\x81\xbf\xe3\x82\x93\xe3"
-        "\x82\x93\xe3\x81\x8b";
+    const string input = "みんあみんいみんうみんえみんおみんんか";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "みんなみんにみんぬみんねみんのみんか"
-    EXPECT_EQ("\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xbf\xe3\x82\x93\xe3"
-              "\x81\xab\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xac\xe3\x81\xbf\xe3\x82"
-              "\x93\xe3\x81\xad\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xae\xe3\x81\xbf"
-              "\xe3\x82\x93\xe3\x81\x8b",
+    EXPECT_EQ("みんなみんにみんぬみんねみんのみんか",
               corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "こんんにちは"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xab\xe3"
-        "\x81\xa1\xe3\x81\xaf";
+    const string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちは"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("こんにちは", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "こんんいちは"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\x84\xe3"
-        "\x81\xa1\xe3\x81\xaf";
+    const string input = "こんんいちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちは"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("こんにちは", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "しぜんんお"
-    const string input = "\xe3\x81\x97\xe3\x81\x9c\xe3\x82\x93\xe3\x82\x93\xe3"
-        "\x81\x8a";
+    const string input = "しぜんんお";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "しぜんの"
-    EXPECT_EQ("\xe3\x81\x97\xe3\x81\x9c\xe3\x82\x93\xe3\x81\xae",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("しぜんの", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "あんんんたい"
-    const string input = "\xe3\x81\x82\xe3\x82\x93\xe3\x82\x93\xe3\x82\x93\xe3"
-        "\x81\x9f\xe3\x81\x84";
+    const string input = "あんんんたい";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "あんんんたい"
-    EXPECT_EQ("\xe3\x81\x82\xe3\x82\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\x9f\xe3"
-              "\x81\x84",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("あんんんたい", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "せにょう"
-    const string input = "\xe3\x81\x9b\xe3\x81\xab\xe3\x82\x87\xe3\x81\x86";
+    const string input = "せにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "せんよう"
-    EXPECT_EQ("\xe3\x81\x9b\xe3\x82\x93\xe3\x82\x88\xe3\x81\x86",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("せんよう", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "せにゃうせにゅうせにょう"
-    const string input = "\xe3\x81\x9b\xe3\x81\xab\xe3\x82\x83\xe3\x81\x86\xe3"
-        "\x81\x9b\xe3\x81\xab\xe3\x82\x85\xe3\x81\x86\xe3\x81"
-        "\x9b\xe3\x81\xab\xe3\x82\x87\xe3\x81\x86";
+    const string input = "せにゃうせにゅうせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "せんやうせんゆうせんよう"
-    EXPECT_EQ("\xe3\x81\x9b\xe3\x82\x93\xe3\x82\x84\xe3\x81\x86\xe3\x81\x9b\xe3"
-              "\x82\x93\xe3\x82\x86\xe3\x81\x86\xe3\x81\x9b\xe3\x82\x93\xe3\x82"
-              "\x88\xe3\x81\x86",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
-  }
-
-
-  {
-    // "こんんにちはせにょう"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xab\xe3"
-        "\x81\xa1\xe3\x81\xaf\xe3\x81\x9b\xe3\x81\xab\xe3\x82"
-        "\x87\xe3\x81\x86";
-    KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
-    EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちはせんよう"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe3"
-              "\x81\x9b\xe3\x82\x93\xe3\x82\x88\xe3\x81\x86",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("せんやうせんゆうせんよう", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "おんあのここんいちは"
-    const string input = "\xe3\x81\x8a\xe3\x82\x93\xe3\x81\x82\xe3\x81\xae\xe3"
-        "\x81\x93\xe3\x81\x93\xe3\x82\x93\xe3\x81\x84\xe3\x81"
-        "\xa1\xe3\x81\xaf";
+    const string input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "おんなのここんにちは"
-    EXPECT_EQ("\xe3\x81\x8a\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xae\xe3\x81\x93\xe3"
-              "\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("こんにちはせんよう", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "きっって"
-    const string input = "\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\xe3\x81\xa6";
+    const string input = "おんあのここんいちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "きって"
-    EXPECT_EQ("\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa6",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("おんなのここんにちは", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "きっっって"
-    const string input = "\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\xe3\x81\xa3\xe3"
-        "\x81\xa6";
+    const string input = "きっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "きっっって"
-    EXPECT_EQ("\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\xe3\x81\xa3\xe3\x81\xa6",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("きって", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "きっっっ"
-    const string input = "\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\xe3\x81\xa3";
+    const string input = "きっっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "きっっっ"
-    EXPECT_EQ("\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\xe3\x81\xa3",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("きっっって", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "っっ"
-    const string input = "\xe3\x81\xa3\xe3\x81\xa3";
+    const string input = "きっっっ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "っっ"
-    EXPECT_EQ("\xe3\x81\xa3\xe3\x81\xa3",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
-  }
-
-
-  {
-    // "しｍばし"
-    const string input = "\xe3\x81\x97\xef\xbd\x8d\xe3\x81\xb0\xe3\x81\x97";
-    KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
-    EXPECT_TRUE(corrector.IsAvailable());
-    // "しんばし"
-    EXPECT_EQ("\xe3\x81\x97\xe3\x82\x93\xe3\x81\xb0\xe3\x81\x97",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("きっっっ", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "しｍはししｍぱしー"
-    const string input = "\xe3\x81\x97\xef\xbd\x8d\xe3\x81\xaf\xe3\x81\x97\xe3"
-        "\x81\x97\xef\xbd\x8d\xe3\x81\xb1\xe3\x81\x97\xe3\x83"
-        "\xbc";
+    const string input = "っっ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "しｍはししんぱしー"
-    EXPECT_EQ("\xe3\x81\x97\xef\xbd\x8d\xe3\x81\xaf\xe3\x81\x97\xe3\x81\x97"
-              "\xe3\x82\x93\xe3\x81\xb1\xe3\x81\x97\xe3\x83\xbc",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("っっ", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "ちゅごく"
-    const string input = "\xE3\x81\xA1\xE3\x82\x85\xE3\x81\x94\xE3\x81\x8F";
+    const string input = "しｍばし";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "ちゅうごく"
-    EXPECT_EQ("\xE3\x81\xA1\xE3\x82\x85\xE3\x81\x86\xE3\x81\x94\xE3\x81\x8F",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("しんばし", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 
   {
-    // "きゅきゅしゃ"
-    const string input = "\xE3\x81\x8D\xE3\x82\x85\xE3\x81\x8D"
-        "\xE3\x82\x85\xE3\x81\x97\xE3\x82\x83";
+    const string input = "しｍはししｍぱしー";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "きゅうきゅうしゃ"
-    EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x85\xE3\x81\x86\xE3\x81\x8D"
-              "\xE3\x82\x85\xE3\x81\x86\xE3\x81\x97\xE3\x82\x83",
-              corrector.corrected_key());
-    EXPECT_EQ(input,
-              corrector.original_key());
+    EXPECT_EQ("しｍはししんぱしー", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
+  }
+
+  {
+    const string input = "ちゅごく";
+    KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
+    EXPECT_TRUE(corrector.IsAvailable());
+    EXPECT_EQ("ちゅうごく", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
+  }
+
+  {
+    const string input = "きゅきゅしゃ";
+    KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
+    EXPECT_TRUE(corrector.IsAvailable());
+    EXPECT_EQ("きゅうきゅうしゃ", corrector.corrected_key());
+    EXPECT_EQ(input, corrector.original_key());
   }
 }
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
   {
-    // "みんあであそぼう"
-    const string input = "\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82\xe3\x81\xa7\xe3"
-        "\x81\x82\xe3\x81\x9d\xe3\x81\xbc\xe3\x81\x86";
+    const string input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "みんなであそぼう"
-    EXPECT_EQ("\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xa7\xe3\x81\x82\xe3"
-              "\x81\x9d\xe3\x81\xbc\xe3\x81\x86",
-              corrector.corrected_key());
+    EXPECT_EQ("みんなであそぼう", corrector.corrected_key());
 
     EXPECT_EQ(0, corrector.GetCorrectedPosition(0));
     EXPECT_EQ(1, corrector.GetCorrectedPosition(1));
@@ -440,14 +303,10 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
   }
 
   {
-    // "こんんにちは"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xab\xe3"
-        "\x81\xa1\xe3\x81\xaf";
+    const string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちは"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf",
-              corrector.corrected_key());
+    EXPECT_EQ("こんにちは", corrector.corrected_key());
 
     EXPECT_EQ(0, corrector.GetCorrectedPosition(0));
     EXPECT_EQ(KeyCorrector::InvalidPosition(),
@@ -478,16 +337,10 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
   }
 
   {
-    // "こんんにちはせにょう"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xab\xe3"
-        "\x81\xa1\xe3\x81\xaf\xe3\x81\x9b\xe3\x81\xab\xe3\x82"
-        "\x87\xe3\x81\x86";
+    const string input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちはせんよう"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe3"
-              "\x81\x9b\xe3\x82\x93\xe3\x82\x88\xe3\x81\x86",
-              corrector.corrected_key());
+    EXPECT_EQ("こんにちはせんよう", corrector.corrected_key());
 
     EXPECT_EQ(0, corrector.GetCorrectedPosition(0));
     EXPECT_EQ(KeyCorrector::InvalidPosition(),
@@ -508,8 +361,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
   {
-    // "てすと"
-    const string input = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
+    const string input = "てすと";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     size_t length = 0;
@@ -522,33 +374,22 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
   }
 
   {
-    // "みんあであそぼう"
-    const string input = "\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82\xe3\x81\xa7\xe3"
-        "\x81\x82\xe3\x81\x9d\xe3\x81\xbc\xe3\x81\x86";
+    const string input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "みんなであそぼう"
-    EXPECT_EQ("\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xa7\xe3\x81\x82\xe3"
-              "\x81\x9d\xe3\x81\xbc\xe3\x81\x86",
-              corrector.corrected_key());
+    EXPECT_EQ("みんなであそぼう", corrector.corrected_key());
 
     const char *output = NULL;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
-    // "みんなであそぼう"
-    EXPECT_EQ("\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xa7\xe3\x81\x82\xe3"
-              "\x81\x9d\xe3\x81\xbc\xe3\x81\x86", string(output, length));
+    EXPECT_EQ("みんなであそぼう", string(output, length));
 
     output = corrector.GetCorrectedPrefix(3, &length);
-    // "んなであそぼう"
-    EXPECT_EQ("\xe3\x82\x93\xe3\x81\xaa\xe3\x81\xa7\xe3\x81\x82\xe3\x81\x9d\xe3"
-              "\x81\xbc\xe3\x81\x86", string(output, length));
+    EXPECT_EQ("んなであそぼう", string(output, length));
 
     output = corrector.GetCorrectedPrefix(6, &length);
-    // "なであそぼう"
-    EXPECT_EQ("\xe3\x81\xaa\xe3\x81\xa7\xe3\x81\x82\xe3\x81\x9d\xe3\x81\xbc\xe3"
-              "\x81\x86", string(output, length));
+    EXPECT_EQ("なであそぼう", string(output, length));
 
     output = corrector.GetCorrectedPrefix(9, &length);
     // same
@@ -556,22 +397,16 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
   }
 
   {
-    // "こんんにちは"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xab\xe3"
-        "\x81\xa1\xe3\x81\xaf";
+    const string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちは"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf",
-              corrector.corrected_key());
+    EXPECT_EQ("こんにちは", corrector.corrected_key());
 
     const char *output = NULL;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
-    // "こんにちは"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf",
-              string(output, length));
+    EXPECT_EQ("こんにちは", string(output, length));
 
     output = corrector.GetCorrectedPrefix(3, &length);
     EXPECT_TRUE(NULL == output);
@@ -584,25 +419,16 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
   }
 
   {
-    // "こんんにちはせにょう"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xab\xe3"
-        "\x81\xa1\xe3\x81\xaf\xe3\x81\x9b\xe3\x81\xab\xe3\x82"
-        "\x87\xe3\x81\x86";
+    const string input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちはせんよう"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe3"
-              "\x81\x9b\xe3\x82\x93\xe3\x82\x88\xe3\x81\x86",
-              corrector.corrected_key());
+    EXPECT_EQ("こんにちはせんよう", corrector.corrected_key());
 
     const char *output = NULL;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
-    // "こんにちはせんよう"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe3"
-              "\x81\x9b\xe3\x82\x93\xe3\x82\x88\xe3\x81\x86",
-              string(output, length));
+    EXPECT_EQ("こんにちはせんよう", string(output, length));
 
     output = corrector.GetCorrectedPrefix(3, &length);
     EXPECT_TRUE(NULL == output);
@@ -611,16 +437,13 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(NULL == output);
 
     output = corrector.GetCorrectedPrefix(9, &length);
-    // "にちはせんよう"
-    EXPECT_EQ("\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe3\x81\x9b\xe3\x82\x93\xe3"
-              "\x82\x88\xe3\x81\x86", string(output, length));
+    EXPECT_EQ("にちはせんよう", string(output, length));
   }
 }
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
   {
-    // "てすと"
-    const string input = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
+    const string input = "てすと";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(3, corrector.GetOriginalOffset(0, 3));
@@ -632,8 +455,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
   }
 
   {
-    // "みんあ"
-    const string input = "\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82";
+    const string input = "みんあ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(3, corrector.GetOriginalOffset(0, 3));
@@ -642,22 +464,17 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
   }
 
   {
-    // "きっって"
-    const string input = "\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\xe3\x81\xa6";
+    const string input = "きっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(12, corrector.GetOriginalOffset(0, 9));
   }
 
   {
-    // "こんんにちは"
-    const string input = "\xe3\x81\x93\xe3\x82\x93\xe3\x82\x93\xe3\x81\xab\xe3"
-        "\x81\xa1\xe3\x81\xaf";
+    const string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    // "こんにちは"
-    EXPECT_EQ("\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf",
-              corrector.corrected_key());
+    EXPECT_EQ("こんにちは", corrector.corrected_key());
 
     EXPECT_EQ(KeyCorrector::InvalidPosition(),
               corrector.GetOriginalOffset(0, 3));
@@ -673,26 +490,22 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
     EXPECT_EQ(KeyCorrector::InvalidPosition(),
               corrector.GetOriginalOffset(6, 3));
 
-    EXPECT_EQ(3,
-              corrector.GetOriginalOffset(9, 3));
+    EXPECT_EQ(3, corrector.GetOriginalOffset(9, 3));
 
-    EXPECT_EQ(6,
-              corrector.GetOriginalOffset(9, 6));
+    EXPECT_EQ(6, corrector.GetOriginalOffset(9, 6));
   }
 }
 
 // Check if UCS4 is supported. b/3386634
 TEST(KeyCorrectorTest, UCS4IsAvailable) {
   {
-    // "𠮟"
-    const string input = "\xF0\xA0\xAE\x9F";  // UCS4 char in UTF8
+    const string input = "𠮟";  // UCS4 char in UTF8
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
   }
 
   {
-    // "叱"
-    const string input = "\xe3\x81\x93";      // UCS2 char in UTF8
+    const string input = "こ";      // UCS2 char in UTF8
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
   }
@@ -700,9 +513,7 @@ TEST(KeyCorrectorTest, UCS4IsAvailable) {
 
 TEST(KeyCorrectorTest, UCS4Test) {
   {
-    // "😁みんあ"
-    const string input =
-        "\xF0\x9F\x98\x81\xe3\x81\xbf\xe3\x82\x93\xe3\x81\x82";
+    const string input = "😁みんあ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(7, corrector.GetOriginalOffset(0, 7));
@@ -714,8 +525,7 @@ TEST(KeyCorrectorTest, UCS4Test) {
 // Should not rewrite the character which is at the beginning of current input
 TEST(KeyCorrectorTest, Bug3046266Test) {
   {
-    // "かんあか"
-    const string input = "\xE3\x81\x8B\xE3\x82\x93\xE3\x81\x82\xE3\x81\x8B";
+    const string input = "かんあか";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 6);  // history_size = 6
     EXPECT_TRUE(corrector.IsAvailable());
     size_t length = 0;
@@ -728,4 +538,5 @@ TEST(KeyCorrectorTest, Bug3046266Test) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -135,18 +134,10 @@ void InitSegment(const string &key, const string &value,
   AppendSegment(key, value, segments);
 }
 
-void InitMetaSegment(const string &key, const string &value,
-                     Segments *segments) {
-  segments->Clear();
-  Segment *seg = segments->add_segment();
-  seg->set_key(key);
-  InitCandidate(key, value, seg->add_meta_candidate());
-}
-
 void InsertCandidate(const string &key,
-                const string &value,
-                const int position,
-                Segment *segment) {
+                     const string &value,
+                     const int position,
+                     Segment *segment) {
   Segment::Candidate *cand = segment->insert_candidate(position);
   cand->content_key = key;
   cand->value = value;
@@ -206,11 +197,9 @@ const uint32 kTestMicroSeconds = 588377u;
 
 }  // namespace
 
-class DateRewriterTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  }
+class DateRewriterTest : public ::testing::Test {
+ private:
+  const mozc::testing::ScopedTmpUserProfileDirectory scoped_tmp_profile_dir_;
 };
 
 TEST_F(DateRewriterTest, DateRewriteTest) {
@@ -222,189 +211,76 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
   Segments segments;
   const ConversionRequest request;
 
-  // "きょう/今日/今日の日付"
   {
-    InitSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
-                "\xE4\xBB\x8A\xE6\x97\xA5", &segments);
+    InitSegment("きょう", "今日", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(5, CountDescription(
-        segments,
-        "\xE4\xBB\x8A\xE6\x97\xA5"
-        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
-
-    // "平成23年4月18日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE5\xB9\xB3\xE6\x88\x90" "23" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "18" "\xE6\x97\xA5"));
-    // "2011年4月18日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "18" "\xE6\x97\xA5"));
-    // "2011-04-18"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011-04-18"));
-    // "2011/04/18"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011/04/18"));
-    // "月曜日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE6\x9C\x88" "\xE6\x9B\x9C\xE6\x97\xA5"));
+    EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
+    EXPECT_TRUE(ContainCandidate(segments, "平成23年4月18日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011年4月18日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011-04-18"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011/04/18"));
+    EXPECT_TRUE(ContainCandidate(segments, "月曜日"));
   }
-
-  // "あした/明日/明日の日付"
   {
-    InitSegment("\xE3\x81\x82\xE3\x81\x97\xE3\x81\x9F",
-                "\xE6\x98\x8E\xE6\x97\xA5", &segments);
+    InitSegment("あした", "明日", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(5, CountDescription(
-        segments,
-        "\xE6\x98\x8E\xE6\x97\xA5"
-        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
-
-    // "平成23年4月19日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE5\xB9\xB3\xE6\x88\x90" "23" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "19" "\xE6\x97\xA5"));
-    // "2011年4月19日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "19" "\xE6\x97\xA5"));
-    // "2011-04-19"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011-04-19"));
-    // "2011/04/19"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011/04/19"));
-    // "火曜日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE7\x81\xAB" "\xE6\x9B\x9C\xE6\x97\xA5"));
+    EXPECT_EQ(5, CountDescription(segments, "明日の日付"));
+    EXPECT_TRUE(ContainCandidate(segments, "平成23年4月19日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011年4月19日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011-04-19"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011/04/19"));
+    EXPECT_TRUE(ContainCandidate(segments, "火曜日"));
   }
-
-  // "きのう/昨日/昨日の日付"
   {
-    InitSegment("\xE3\x81\x8D\xE3\x81\xAE\xE3\x81\x86",
-                "\xE6\x98\xA8\xE6\x97\xA5", &segments);
+    InitSegment("きのう", "昨日", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(5, CountDescription(
-        segments,
-        "\xE6\x98\xA8\xE6\x97\xA5"
-        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
-
-    // "平成23年4月17日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE5\xB9\xB3\xE6\x88\x90" "23" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "17" "\xE6\x97\xA5"));
-    // "2011年4月17日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "17" "\xE6\x97\xA5"));
-    // "2011-04-17"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011-04-17"));
-    // "2011/04/17"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011/04/17"));
-    // "日曜日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE6\x97\xA5" "\xE6\x9B\x9C\xE6\x97\xA5"));
+    EXPECT_EQ(5, CountDescription(segments, "昨日の日付"));
+    EXPECT_TRUE(ContainCandidate(segments, "平成23年4月17日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011年4月17日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011-04-17"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011/04/17"));
+    EXPECT_TRUE(ContainCandidate(segments, "日曜日"));
   }
-
-  // "あさって/明後日/明後日の日付"
   {
-    InitSegment("\xE3\x81\x82\xE3\x81\x95\xE3\x81\xA3\xE3\x81\xA6",
-                "\xE6\x98\x8E\xE5\xBE\x8C\xE6\x97\xA5", &segments);
+    InitSegment("あさって", "明後日", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(5, CountDescription(
-        segments,
-        "\xE6\x98\x8E\xE5\xBE\x8C\xE6\x97\xA5"
-        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
-
-    // "平成23年4月20日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE5\xB9\xB3\xE6\x88\x90" "23" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "20" "\xE6\x97\xA5"));
-    // "2011年4月20日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011" "\xE5\xB9\xB4"
-        "4" "\xE6\x9C\x88"
-        "20" "\xE6\x97\xA5"));
-    // "2011-04-20"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011-04-20"));
-    // "2011/04/20"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "2011/04/20"));
-    // "水曜日"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE6\xB0\xB4" "\xE6\x9B\x9C\xE6\x97\xA5"));
+    EXPECT_EQ(5, CountDescription(segments, "明後日の日付"));
+    EXPECT_TRUE(ContainCandidate(segments, "平成23年4月20日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011年4月20日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011-04-20"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011/04/20"));
+    EXPECT_TRUE(ContainCandidate(segments, "水曜日"));
   }
-
-  // "にちじ/日時/現在の日時"
   {
-    InitSegment("\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\x98",
-                "\xE6\x97\xA5\xE6\x99\x82", &segments);
+    InitSegment("にちじ", "日時", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(1, CountDescription(
-        segments,
-        "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x97\xA5\xE6\x99\x82"));
-
-    // "2011/04/18 15:06"
+    EXPECT_EQ(1, CountDescription(segments, "現在の日時"));
     EXPECT_TRUE(ContainCandidate(segments, "2011/04/18 15:06"));
   }
-
-  // "いま/今/現在の時刻"
   {
-    InitSegment("\xE3\x81\x84\xE3\x81\xBE",
-                "\xE4\xBB\x8A", &segments);
+    InitSegment("いま", "今", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(3, CountDescription(
-        segments,
-        "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x99\x82\xE5\x88\xBB"));
-
-    // "15:06"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "15:06"));
-    // "15時06分"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "15" "\xE6\x99\x82" "06" "\xE5\x88\x86"));
-    // "午後3時6分"
-    EXPECT_TRUE(ContainCandidate(segments,
-        "\xE5\x8D\x88\xE5\xBE\x8C" "3" "\xE6\x99\x82" "6" "\xE5\x88\x86"));
+    EXPECT_EQ(3, CountDescription(segments, "現在の時刻"));
+    EXPECT_TRUE(ContainCandidate(segments, "15:06"));
+    EXPECT_TRUE(ContainCandidate(segments, "15時06分"));
+    EXPECT_TRUE(ContainCandidate(segments, "午後3時6分"));
   }
 
   // DateRewrite candidate order check.
   {
     // This parameter is copied from date_rewriter.cc.
     const size_t kMinimumDateCandidateIdx = 3;
-
-    const char* kTodayCandidate[] = {
-      "2011/04/18",
-      "2011-04-18",
-      // "2011年4月18日"
-      "2011\xE5\xB9\xB4" "4\xE6\x9C\x88" "18\xE6\x97\xA5",
-      // "平成23年4月18日"
-      "\xE5\xB9\xB3\xE6\x88\x90" "23\xE5\xB9\xB4"
-      "4\xE6\x9C\x88" "18\xE6\x97\xA5",
-      // "月曜日"
-      "\xE6\x9C\x88\xE6\x9B\x9C\xE6\x97\xA5"};
+    const char *kTodayCandidate[] = {"2011/04/18", "2011-04-18",
+                                     "2011年4月18日",
+                                     "平成23年"
+                                     "4月18日",
+                                     "月曜日"};
 
     // If initial count of candidate is 1, date rewrited candidate start from 1.
     // "きょう", "今日"
-    InitSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
-                "\xE4\xBB\x8A\xE6\x97\xA5", &segments);
+    InitSegment("きょう", "今日", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(5, CountDescription(
-        segments,
-        // "今日の日付"
-        "\xE4\xBB\x8A\xE6\x97\xA5"
-        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
+    EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
     size_t offset = 1;
     for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
          ++rel_cand_idx) {
@@ -415,8 +291,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     // If initial count of candidate is 5 and target candidate is located at
     // index 4, date rewrited candidate start from 5.
     // "きょう", "今日"
-    InitSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
-                "\xE4\xBB\x8A\xE6\x97\xA5", &segments);
+    InitSegment("きょう", "今日", &segments);
 
     // Inserts no meaning candidates into segment.
     InsertCandidate("Candidate1", "Candidate1", 0, segments.mutable_segment(0));
@@ -425,11 +300,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     InsertCandidate("Candidate4", "Candidate4", 0, segments.mutable_segment(0));
 
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    // "今日の日付"
-    EXPECT_EQ(5, CountDescription(
-        segments,
-        "\xE4\xBB\x8A\xE6\x97\xA5"
-        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
+    EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
 
     offset = 5;
     for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
@@ -441,8 +312,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     // If initial count of candidate is 5 and target candidate is located at
     // index 0, date rewrited candidate start from kMinimumDateCandidateIdx.
     // "きょう", "今日"
-    InitSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
-                "\xE4\xBB\x8A\xE6\x97\xA5", &segments);
+    InitSegment("きょう", "今日", &segments);
 
     // Inserts no meaning candidates into segment.
     InsertCandidate("Candidate1", "Candidate1", 1, segments.mutable_segment(0));
@@ -451,11 +321,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     InsertCandidate("Candidate4", "Candidate4", 1, segments.mutable_segment(0));
 
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    // "今日の日付"
-    EXPECT_EQ(5, CountDescription(
-        segments,
-        "\xE4\xBB\x8A\xE6\x97\xA5"
-        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
+    EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
 
     for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
          ++rel_cand_idx) {
@@ -481,16 +347,15 @@ TEST_F(DateRewriterTest, ADToERA) {
   results.clear();
   rewriter.AdToEra(645, &results);
   EXPECT_EQ(results.size(), 1);
-  EXPECT_EQ(results[0],
-            "\xE5\xA4\xA7\xE5\x8C\x96\xE5\x85\x83");
+  EXPECT_EQ(results[0], "大化元");
 
   // AD.646 is "大化2(年)" or "大化二(年)"
   results.clear();
   rewriter.AdToEra(646, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
-            "\xE5\xA4\xA7\xE5\x8C\x96" "2",
-            "\xE5\xA4\xA7\xE5\x8C\x96\xE4\xBA\x8C");
+                 "大化2",
+                 "大化二");
 
 
   // AD.1976 is "昭和51(年)" or "昭和五十一(年)"
@@ -498,40 +363,40 @@ TEST_F(DateRewriterTest, ADToERA) {
   rewriter.AdToEra(1976, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
-            "\xE6\x98\xAD\xE5\x92\x8C" "51",
-            "\xE6\x98\xAD\xE5\x92\x8C\xE4\xBA\x94\xE5\x8D\x81\xE4\xB8\x80");
+                 "昭和51",
+                 "昭和五十一");
 
   // AD.1989 is "昭和64(年)" or "昭和六四(年)" or "平成元(年)"
   results.clear();
   rewriter.AdToEra(1989, &results);
   Expect3Results(results,
-                 "\xE6\x98\xAD\xE5\x92\x8C" "64",
-                 "\xE6\x98\xAD\xE5\x92\x8C\xE5\x85\xAD\xE5\x8D\x81\xE5\x9B\x9B",
-                 "\xE5\xB9\xB3\xE6\x88\x90\xE5\x85\x83");
+                 "昭和64",
+                 "昭和六十四",
+                 "平成元");
 
   // AD.1990 is "平成2(年)" or "平成(二)年"
   results.clear();
   rewriter.AdToEra(1990, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
-            "\xE5\xB9\xB3\xE6\x88\x90" "2",
-            "\xE5\xB9\xB3\xE6\x88\x90\xE4\xBA\x8C");
+                 "平成2",
+                 "平成二");
 
   // 2 courts era.
   // AD.1331 "元徳3(年)" or "元弘元(年)"
   results.clear();
   rewriter.AdToEra(1331, &results);
   Expect3Results(results,
-                 "\xE5\x85\x83\xE5\xBE\xB3" "3",
-                 "\xE5\x85\x83\xE5\xBE\xB3\xE4\xB8\x89",
-                 "\xE5\x85\x83\xE5\xBC\x98\xE5\x85\x83");
+                 "元徳3",
+                 "元徳三",
+                 "元弘元");
 
   // AD.1393 "明徳4(年)" or "明徳四(年)"
   results.clear();
   rewriter.AdToEra(1393, &results);
   Expect2Results(results,
-            "\xE6\x98\x8E\xE5\xBE\xB3" "4",
-            "\xE6\x98\x8E\xE5\xBE\xB3\xE5\x9B\x9B");
+                 "明徳4",
+                 "明徳四");
 
   // AD.1375
   // South: "文中4(年)" or "文中四(年)", "天授元(年)"
@@ -548,21 +413,21 @@ TEST_F(DateRewriterTest, ADToERA) {
   rewriter.AdToEra(1332, &results);
   EXPECT_EQ(results.size(), 5);
   Expect5Results(results,
-                 "\xE5\x85\x83\xE5\xBC\x98" "2",
-                 "\xE5\x85\x83\xE5\xBC\x98\xE4\xBA\x8C",
-                 "\xE6\xAD\xA3\xE6\x85\xB6\xE5\x85\x83",
-                 "\xE5\x85\x83\xE5\xBE\xB3" "4",
-                 "\xE5\x85\x83\xE5\xBE\xB3\xE5\x9B\x9B");
+                 "元弘2",
+                 "元弘二",
+                 "正慶元",
+                 "元徳4",
+                 "元徳四");
   // AD.1333
   // South: "元弘3" or "元弘三(年)"
   // North: "正慶2" or "正慶二(年)"
   results.clear();
   rewriter.AdToEra(1333, &results);
   Expect4Results(results,
-                 "\xE5\x85\x83\xE5\xBC\x98" "3",
-                 "\xE5\x85\x83\xE5\xBC\x98\xE4\xB8\x89",
-                 "\xE6\xAD\xA3\xE6\x85\xB6" "2",
-                 "\xE6\xAD\xA3\xE6\x85\xB6\xE4\xBA\x8C");
+                 "元弘3",
+                 "元弘三",
+                 "正慶2",
+                 "正慶二");
 
   // AD.1334
   // South: "元弘4" or "元弘四(年)", "建武元"
@@ -571,11 +436,11 @@ TEST_F(DateRewriterTest, ADToERA) {
   rewriter.AdToEra(1334, &results);
   EXPECT_EQ(results.size(), 5);
   Expect5Results(results,
-                 "\xE5\x85\x83\xE5\xBC\x98" "4",
-                 "\xE5\x85\x83\xE5\xBC\x98\xE5\x9B\x9B",
-                 "\xE5\xBB\xBA\xE6\xAD\xA6\xE5\x85\x83",
-                 "\xE6\xAD\xA3\xE6\x85\xB6\xE4\xB8\x89",
-                 "\xE6\xAD\xA3\xE6\x85\xB6" "3");
+                 "元弘4",
+                 "元弘四",
+                 "建武元",
+                 "正慶三",
+                 "正慶3");
 
   // AD.1997
   // "平成九年"
@@ -583,18 +448,17 @@ TEST_F(DateRewriterTest, ADToERA) {
   rewriter.AdToEra(1997, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
-                 "\xE5\xB9\xB3\xE6\x88\x90" "9",
-                 "\xE5\xB9\xB3\xE6\x88\x90\xE4\xB9\x9D");
+                 "平成9",
+                 "平成九");
 
   // AD.2011
   // "平成二十三年"
   results.clear();
   rewriter.AdToEra(2011, &results);
   EXPECT_EQ(results.size(), 2);
-  Expect2Results(
-      results,
-      "\xE5\xB9\xB3\xE6\x88\x90" "23",
-      "\xE5\xB9\xB3\xE6\x88\x90\xE4\xBA\x8C\xE5\x8D\x81\xE4\xB8\x89");
+  Expect2Results(results,
+                 "平成23",
+                 "平成二十三");
 
   // AD.1998
   // "平成十年" or "平成10年"
@@ -602,8 +466,8 @@ TEST_F(DateRewriterTest, ADToERA) {
   rewriter.AdToEra(1998, &results);
   EXPECT_EQ(results.size(), 2);
   Expect2Results(results,
-                 "\xE5\xB9\xB3\xE6\x88\x90" "10",
-                 "\xE5\xB9\xB3\xE6\x88\x90\xE5\x8D\x81");
+                 "平成10",
+                 "平成十");
 
   // Negative Test
   // Too big number or negative number input are expected false return
@@ -626,202 +490,114 @@ TEST_F(DateRewriterTest, ERAToAD) {
   EXPECT_EQ(0, descriptions.size());
 
   // "たいか1ねん" is "645年" or "６４５年" or "六四五年"
-  // "大化1年"
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x9F\xE3\x81\x84\xE3\x81\x8B"
-                               "1" "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("たいか1ねん", &results, &descriptions));
   EXPECT_EQ(kNumYearRepresentation, results.size());
   EXPECT_EQ(kNumYearRepresentation, descriptions.size());
-  Expect3Results(results,
-                 "645\xE5\xB9\xB4",
-                 "\xE5\x85\xAD\xE5\x9B\x9B\xE4\xBA\x94\xE5\xB9\xB4",
-                 "\xEF\xBC\x96\xEF\xBC\x94\xEF\xBC\x95\xE5\xB9\xB4");
-  EXPECT_TRUE(AllElementsAreSame("\xE5\xA4\xA7\xE5\x8C\x96" "1" "\xE5\xB9\xB4",
-                                 descriptions));
+  Expect3Results(results, "645年", "六四五年", "６４５年");
+  EXPECT_TRUE(AllElementsAreSame("大化1年", descriptions));
 
   // "たいか2ねん" is "646年" or "６４６年" or "六四六年"
-  // "大化2年"
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x9F\xE3\x81\x84\xE3\x81\x8B"
-                               "2" "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("たいか2ねん", &results, &descriptions));
   EXPECT_EQ(kNumYearRepresentation, results.size());
   EXPECT_EQ(kNumYearRepresentation, descriptions.size());
-  Expect3Results(results,
-                 "646\xE5\xB9\xB4",
-                 "\xEF\xBC\x96\xEF\xBC\x94\xEF\xBC\x96\xE5\xB9\xB4",
-                 "\xE5\x85\xAD\xE5\x9B\x9B\xE5\x85\xAD\xE5\xB9\xB4");
-  EXPECT_TRUE(AllElementsAreSame("\xE5\xA4\xA7\xE5\x8C\x96" "2" "\xE5\xB9\xB4",
-                                 descriptions));
+  Expect3Results(results, "646年", "６４６年", "六四六年");
+  EXPECT_TRUE(AllElementsAreSame("大化2年", descriptions));
 
   // "しょうわ2ねん" is AD.1313 or AD.1927
   // "1313年", "１３１３年", "一三一三年"
   // "1927年", "１９２７年", "一九二七年"
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
-                               "\xE3\x81\x86\xE3\x82\x8F"
-                               "2"
-                               "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("しょうわ2ねん", &results, &descriptions));
   EXPECT_EQ(kNumYearRepresentation * 2, results.size());
   EXPECT_EQ(kNumYearRepresentation * 2, descriptions.size());
 
   for (int i = 0; i < kNumYearRepresentation; ++i) {
-    // "正和2年"
-    EXPECT_EQ("\xE6\xAD\xA3\xE5\x92\x8C" "2" "\xE5\xB9\xB4", descriptions[i]);
-    // "昭和2年"
-    EXPECT_EQ("\xE6\x98\xAD\xE5\x92\x8C" "2" "\xE5\xB9\xB4",
-              descriptions[i + kNumYearRepresentation]);
+    EXPECT_EQ("正和2年", descriptions[i]);
+    EXPECT_EQ("昭和2年", descriptions[i + kNumYearRepresentation]);
   }
   std::vector<string> first(results.begin(),
-                       results.begin() + kNumYearRepresentation);
+                            results.begin() + kNumYearRepresentation);
   std::vector<string> second(results.begin() + kNumYearRepresentation,
-                        results.end());
-  EXPECT_TRUE(IsStringContained("1313" "\xE5\xB9\xB4", first));
-  EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x93\xEF\xBC\x91"
-                                "\xEF\xBC\x93\xE5\xB9\xB4", first));
-  EXPECT_TRUE(IsStringContained("\xE4\xB8\x80\xE4\xB8\x89\xE4\xB8\x80"
-                                "\xE4\xB8\x89\xE5\xB9\xB4", first));
-  EXPECT_TRUE(IsStringContained("1927" "\xE5\xB9\xB4", second));
-  EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x99\xEF\xBC\x92"
-                                "\xEF\xBC\x97\xE5\xB9\xB4", second));
-  EXPECT_TRUE(IsStringContained("\xE4\xB8\x80\xE4\xB9\x9D\xE4\xBA\x8C"
-                                "\xE4\xB8\x83\xE5\xB9\xB4", second));
+                             results.end());
+  EXPECT_TRUE(IsStringContained("1313年", first));
+  EXPECT_TRUE(IsStringContained("１３１３年", first));
+  EXPECT_TRUE(IsStringContained("一三一三年", first));
+  EXPECT_TRUE(IsStringContained("1927年", second));
+  EXPECT_TRUE(IsStringContained("１９２７年", second));
+  EXPECT_TRUE(IsStringContained("一九二七年", second));
 
   // North court test
   // "げんとく1ねん" is AD.1329
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x92\xE3\x82\x93"
-                               "\xE3\x81\xA8\xE3\x81\x8F"
-                               "1"
-                               "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("げんとく1ねん", &results, &descriptions));
   EXPECT_EQ(kNumYearRepresentation, results.size());
   EXPECT_EQ(kNumYearRepresentation, descriptions.size());
-  EXPECT_TRUE(IsStringContained("1329" "\xE5\xB9\xB4", results));
+  EXPECT_TRUE(IsStringContained("1329年", results));
   // "めいとく3ねん" is AD.1392
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x82\x81\xE3\x81\x84"
-                               "\xE3\x81\xA8\xE3\x81\x8F"
-                               "3"
-                               "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("めいとく3ねん", &results, &descriptions));
   EXPECT_EQ(kNumYearRepresentation, results.size());
   EXPECT_EQ(kNumYearRepresentation, descriptions.size());
-  EXPECT_TRUE(IsStringContained("1392" "\xE5\xB9\xB4", results));
+  EXPECT_TRUE(IsStringContained("1392年", results));
   // "けんむ1ねん" is AD.1334 (requires dedupe)
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x91\xE3\x82\x93\xE3\x82\x80"
-                               "1"
-                               "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("けんむ1ねん", &results, &descriptions));
   EXPECT_EQ(kNumYearRepresentation, results.size());
   EXPECT_EQ(kNumYearRepresentation, descriptions.size());
-  EXPECT_TRUE(IsStringContained("1334" "\xE5\xB9\xB4", results));
+  EXPECT_TRUE(IsStringContained("1334年", results));
 
   // Big number test
   // "昭和80年" is AD.2005
-  // "しょうわ80ねん"
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
-                               "\xE3\x81\x86\xE3\x82\x8F"
-                               "80"
-                               "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
-  EXPECT_TRUE(IsStringContained("2005" "\xE5\xB9\xB4", results));
+  EXPECT_TRUE(rewriter.EraToAd("しょうわ80ねん", &results, &descriptions));
+  EXPECT_TRUE(IsStringContained("2005年", results));
   // "大正101年" is AD.2012
-  // "たいしょう101ねん"
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x9F\xE3\x81\x84"
-                               "\xE3\x81\x97\xE3\x82\x87\xE3\x81\x86"
-                               "101" "\xE3\x81\xAD\xE3\x82\x93",
-                               &results, &descriptions));
-  EXPECT_TRUE(IsStringContained("2012" "\xE5\xB9\xB4", results));
+  EXPECT_TRUE(rewriter.EraToAd("たいしょう101ねん", &results, &descriptions));
+  EXPECT_TRUE(IsStringContained("2012年", results));
 
   // "元年" test
   // "へいせいがんねん" is AD.1989
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\xB8\xE3\x81\x84"
-                               "\xE3\x81\x9B\xE3\x81\x84"
-                               "\xE3\x81\x8C\xE3\x82\x93"
-                               "\xE3\x81\xAD\xE3\x82\x93"
-                               , &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("へいせいがんねん", &results, &descriptions));
   EXPECT_EQ(kNumYearRepresentation, results.size());
   EXPECT_EQ(kNumYearRepresentation, descriptions.size());
-  // "1989年"
-  EXPECT_TRUE(IsStringContained("1989" "\xE5\xB9\xB4", results));
-  // "１９８９年"
-  EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x99"
-                                "\xEF\xBC\x98\xEF\xBC\x99"
-                                "\xE5\xB9\xB4", results));
-  // "一九八九年"
-  EXPECT_TRUE(IsStringContained("\xE4\xB8\x80\xE4\xB9\x9D"
-                                "\xE5\x85\xAB\xE4\xB9\x9D"
-                                "\xE5\xB9\xB4", results));
-  // description is "平成元年"
-  EXPECT_TRUE(AllElementsAreSame("\xE5\xB9\xB3\xE6\x88\x90"
-                                 "\xE5\x85\x83\xE5\xB9\xB4",
-                                 descriptions));
+  EXPECT_TRUE(IsStringContained("1989年", results));
+  EXPECT_TRUE(IsStringContained("１９８９年", results));
+  EXPECT_TRUE(IsStringContained("一九八九年", results));
+  EXPECT_TRUE(AllElementsAreSame("平成元年", descriptions));
 
   // "しょうわがんねん" is AD.1926 or AD.1312
   results.clear();
   descriptions.clear();
-  EXPECT_TRUE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
-                               "\xE3\x81\x86\xE3\x82\x8F"
-                               "\xE3\x81\x8C\xE3\x82\x93"
-                               "\xE3\x81\xAD\xE3\x82\x93"
-                               , &results, &descriptions));
+  EXPECT_TRUE(rewriter.EraToAd("しょうわがんねん", &results, &descriptions));
   EXPECT_EQ(2 * kNumYearRepresentation, results.size());
   EXPECT_EQ(2 * kNumYearRepresentation, descriptions.size());
-  // "1926年"
-  EXPECT_TRUE(IsStringContained("1926" "\xE5\xB9\xB4", results));
-  // "１９２６年"
-  EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x99"
-                                "\xEF\xBC\x92\xEF\xBC\x96"
-                                "\xE5\xB9\xB4", results));
-  // "一九二六年"
-  EXPECT_TRUE(IsStringContained("\xE4\xB8\x80\xE4\xB9\x9D"
-                                "\xE4\xBA\x8C\xE5\x85\xAD"
-                                "\xE5\xB9\xB4", results));
-  // "1312年"
-  EXPECT_TRUE(IsStringContained("1312" "\xE5\xB9\xB4", results));
-  // "１３１２年"
-  EXPECT_TRUE(IsStringContained("\xEF\xBC\x91\xEF\xBC\x93"
-                                "\xEF\xBC\x91\xEF\xBC\x92"
-                                "\xE5\xB9\xB4", results));
-  // "一三一二年"
-  EXPECT_TRUE(IsStringContained("\xE4\xB8\x80\xE4\xB8\x89"
-                                "\xE4\xB8\x80\xE4\xBA\x8C"
-                                "\xE5\xB9\xB4", results));
+  EXPECT_TRUE(IsStringContained("1926年", results));
+  EXPECT_TRUE(IsStringContained("１９２６年", results));
+  EXPECT_TRUE(IsStringContained("一九二六年", results));
+  EXPECT_TRUE(IsStringContained("1312年", results));
+  EXPECT_TRUE(IsStringContained("１３１２年", results));
+  EXPECT_TRUE(IsStringContained("一三一二年", results));
 
   // Negative Test
   // 0 or negative number input are expected false return
   results.clear();
   descriptions.clear();
-  EXPECT_FALSE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
-                                "\xE3\x81\x86\xE3\x82\x8F"
-                                "-1"
-                                "\xE3\x81\xAD\xE3\x82\x93",
-                                &results, &descriptions));
-  EXPECT_FALSE(rewriter.EraToAd("\xE3\x81\x97\xE3\x82\x87"
-                                "\xE3\x81\x86\xE3\x82\x8F"
-                                "0"
-                                "\xE3\x81\xAD\xE3\x82\x93",
-                                &results, &descriptions));
-  EXPECT_FALSE(rewriter.EraToAd(""
-                                "0"
-                                "\xE3\x81\xAD\xE3\x82\x93",
-                                &results, &descriptions));
+  EXPECT_FALSE(rewriter.EraToAd("しょうわ-1ねん", &results, &descriptions));
+  EXPECT_FALSE(rewriter.EraToAd("しょうわ0ねん", &results, &descriptions));
+  EXPECT_FALSE(rewriter.EraToAd("0ねん", &results, &descriptions));
   EXPECT_EQ(0, results.size());
   EXPECT_EQ(0, descriptions.size());
 }
@@ -833,115 +609,31 @@ TEST_F(DateRewriterTest, ConvertTime) {
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(0, 0, &results));
-
-  // "0時00分, 午前0時00分"
-  Expect3Results(results,
-                 "0:00",
-                 "0"
-                 "\xE6\x99\x82"
-                 "00"
-                 "\xE5\x88\x86",
-                 "\xE5\x8D\x88\xE5\x89\x8D"
-                 "0"
-                 "\xE6\x99\x82"
-                 "0"
-                 "\xE5\x88\x86");
+  Expect3Results(results, "0:00", "0時00分", "午前0時0分");
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(9, 9, &results));
-
-  // "9時09分, 午前9時09分"
-  Expect3Results(results,
-                 "9:09",
-                 "9"
-                 "\xE6\x99\x82"
-                 "09"
-                 "\xE5\x88\x86",
-                 "\xE5\x8D\x88\xE5\x89\x8D"
-                 "9"
-                 "\xE6\x99\x82"
-                 "9"
-                 "\xE5\x88\x86");
+  Expect3Results(results, "9:09", "9時09分", "午前9時9分");
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(11, 59, &results));
-
-  // "11時59分, 午前11時59分"
-  Expect3Results(results,
-                 "11:59",
-                 "11"
-                 "\xE6\x99\x82"
-                 "59"
-                 "\xE5\x88\x86",
-                 "\xE5\x8D\x88\xE5\x89\x8D"
-                 "11"
-                 "\xE6\x99\x82"
-                 "59"
-                 "\xE5\x88\x86");
+  Expect3Results(results, "11:59", "11時59分", "午前11時59分");
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(12, 0, &results));
-
-  // "12時00分, 午後0時0分"
-  Expect3Results(results,
-                 "12:00",
-                 "12"
-                 "\xE6\x99\x82"
-                 "00"
-                 "\xE5\x88\x86",
-                 "\xE5\x8D\x88\xE5\xBE\x8C"
-                 "0"
-                 "\xE6\x99\x82"
-                 "0"
-                 "\xE5\x88\x86");
+  Expect3Results(results, "12:00", "12時00分", "午後0時0分");
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(12, 1, &results));
-
-  // "12時01分, 午後0時1分"
-  Expect3Results(results,
-                 "12:01",
-                 "12"
-                 "\xE6\x99\x82"
-                 "01"
-                 "\xE5\x88\x86",
-                 "\xE5\x8D\x88\xE5\xBE\x8C"
-                 "0"
-                 "\xE6\x99\x82"
-                 "1"
-                 "\xE5\x88\x86");
+  Expect3Results(results, "12:01", "12時01分", "午後0時1分");
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(19, 23, &results));
-
-  // "19時23分, 午後7時23分"
-  Expect3Results(results,
-                 "19:23",
-                 "19"
-                 "\xE6\x99\x82"
-                 "23"
-                 "\xE5\x88\x86",
-                 "\xE5\x8D\x88\xE5\xBE\x8C"
-                 "7"
-                 "\xE6\x99\x82"
-                 "23"
-                 "\xE5\x88\x86");
+  Expect3Results(results, "19:23", "19時23分", "午後7時23分");
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(25, 23, &results));
-
-  // "25時23分, 午前1時23分"
-  Expect3Results(results,
-                 "25:23",
-                 "25"
-                 "\xE6\x99\x82"
-                 "23"
-                 "\xE5\x88\x86",
-                 "\xE5\x8D\x88\xE5\x89\x8D"
-                 "1"
-                 "\xE6\x99\x82"
-                 "23"
-                 "\xE5\x88\x86");
+  Expect3Results(results, "25:23", "25時23分", "午前1時23分");
 
   results.clear();
 
@@ -950,11 +642,10 @@ TEST_F(DateRewriterTest, ConvertTime) {
   EXPECT_TRUE(rewriter.ConvertTime(18, 30, &results));
   ASSERT_EQ(5, results.size());
   EXPECT_EQ("18:30", results[0]);
-  EXPECT_EQ("\x31\x38\xE6\x99\x82\x33\x30\xE5\x88\x86", results[1]);
-  EXPECT_EQ("\x31\x38\xE6\x99\x82\xE5\x8D\x8A", results[2]);
-  EXPECT_EQ("\xE5\x8D\x88\xE5\xBE\x8C\x36\xE6\x99\x82\x33\x30\xE5\x88\x86",
-            results[3]);
-  EXPECT_EQ("\xE5\x8D\x88\xE5\xBE\x8C\x36\xE6\x99\x82\xE5\x8D\x8A", results[4]);
+  EXPECT_EQ("18時30分", results[1]);
+  EXPECT_EQ("18時半", results[2]);
+  EXPECT_EQ("午後6時30分", results[3]);
+  EXPECT_EQ("午後6時半", results[4]);
   results.clear();
 
   EXPECT_FALSE(rewriter.ConvertTime(-10, 20, &results));
@@ -971,11 +662,7 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
   results.clear();
   EXPECT_TRUE(rewriter.ConvertDateWithYear(2011, 4, 17, &results));
   ASSERT_EQ(3, results.size());
-  // "2011年4月17日"
-  EXPECT_TRUE(IsStringContained("2011" "\xE5\xB9\xB4"
-                                "4" "\xE6\x9C\x88"
-                                "17" "\xE6\x97\xA5",
-                                results));
+  EXPECT_TRUE(IsStringContained("2011年4月17日", results));
   EXPECT_TRUE(IsStringContained("2011-04-17", results));
   EXPECT_TRUE(IsStringContained("2011/04/17", results));
 
@@ -1010,25 +697,13 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
         month_days_test_data[i].month,
         month_days_test_data[i].days+1,
         &results));
-    ASSERT_TRUE(rewriter.ConvertDateWithoutYear(
-        month_days_test_data[i].month,
-        month_days_test_data[i].days,
-        &results));
-    ASSERT_FALSE(rewriter.ConvertDateWithoutYear(
-        month_days_test_data[i].month,
-        month_days_test_data[i].days + 1,
-        &results));
   }
 
   // 4 dividable year is leap year.
   results.clear();
   EXPECT_TRUE(rewriter.ConvertDateWithYear(2004, 2, 29, &results));
   ASSERT_EQ(3, results.size());
-  // "2004年2月29日"
-  EXPECT_TRUE(IsStringContained("2004" "\xE5\xB9\xB4"
-                                "2" "\xE6\x9C\x88"
-                                "29" "\xE6\x97\xA5",
-                                results));
+  EXPECT_TRUE(IsStringContained("2004年2月29日", results));
   EXPECT_TRUE(IsStringContained("2004-02-29", results));
   EXPECT_TRUE(IsStringContained("2004/02/29", results));
 
@@ -1042,11 +717,7 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
   results.clear();
   EXPECT_TRUE(rewriter.ConvertDateWithYear(2000, 2, 29, &results));
   ASSERT_EQ(3, results.size());
-  // "2000年2月29日"
-  EXPECT_TRUE(IsStringContained("2000" "\xE5\xB9\xB4"
-                                "2" "\xE6\x9C\x88"
-                                "29" "\xE6\x97\xA5",
-                                results));
+  EXPECT_TRUE(IsStringContained("2000年2月29日", results));
   EXPECT_TRUE(IsStringContained("2000-02-29", results));
   EXPECT_TRUE(IsStringContained("2000/02/29", results));
 
@@ -1057,12 +728,6 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
   EXPECT_FALSE(rewriter.ConvertDateWithYear(2000, 0, 1, &results));
   EXPECT_FALSE(rewriter.ConvertDateWithYear(2000, 1, 0, &results));
   EXPECT_FALSE(rewriter.ConvertDateWithYear(2000, 0, 0, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(13, 1, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(1, 41, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(13, 41, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(0, 1, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(1, 0, &results));
-  EXPECT_FALSE(rewriter.ConvertDateWithoutYear(0, 0, &results));
 }
 
 TEST_F(DateRewriterTest, NumberRewriterTest) {
@@ -1073,135 +738,359 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   const composer::Composer composer(nullptr, &request, &config);
   const ConversionRequest conversion_request(&composer, &request, &config);
 
-  // 0101 is expected 3 time candidate and 2 date candidates
-  InitSegment("0101", "0101", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments,
-                                "\xE6\x99\x82\xE5\x88\xBB"));
-  // "午前1時1分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8D\x88\xE5\x89\x8D\x31\xE6\x99\x82\x31\xE5\x88\x86"));
-  // "1時01分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\xE6\x99\x82\x30\x31\xE5\x88\x86"));
-  EXPECT_TRUE(ContainCandidate(segments, "1:01"));
+  // Not targets of rewrite.
+  const char *kNonTargetCases[] = {
+    "", "0", "1", "01234", "00000",  // Invalid number of digits.
+    "hello", "123xyz",  // Not numbers.
+    "660", "999", "3400"  // Neither date nor time.
+  };
+  for (const char *input : kNonTargetCases) {
+    InitSegment(input, input, &segments);
+    EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments))
+        << "Input: " << input
+        << "\nSegments: " << segments.DebugString();
+  }
 
-  // "日付"
-  EXPECT_EQ(2, CountDescription(
-      segments,
-      "\xE6\x97\xA5\xE4\xBB\x98"));
-  // "1月1日"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\xE6\x9C\x88\x31\xE6\x97\xA5"));
-  EXPECT_TRUE(ContainCandidate(segments, "01/01"));
+// Macro for {"M/D", "日付"}
+#define DATE(month, day) \
+  { #month "/" #day, "日付" }
 
-  // 1830 is expected 5 time candidate and 0 date candidates
-  InitSegment("1830", "1830", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(5, CountDescription(segments,
-                                "\xE6\x99\x82\xE5\x88\xBB"));
-  // "18時半"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\x38\xE6\x99\x82\xE5\x8D\x8A"));
-  // "午後6時30分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8D\x88\xE5\xBE\x8C\x36\xE6\x99\x82\x33\x30\xE5\x88\x86"));
-  // "18時30分"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\x38\xE6\x99\x82\x33\x30\xE5\x88\x86"));
-  // "午後6時半"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8D\x88\xE5\xBE\x8C\x36\xE6\x99\x82\xE5\x8D\x8A"));
-  EXPECT_TRUE(ContainCandidate(segments, "18:30"));
+// Macro for {"M月D日", "日付"}
+#define KANJI_DATE(month, day) \
+  { #month "月" #day "日", "日付" }
 
-  // "日付"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+// Macro for {"H:M", "時刻"}
+#define TIME(hour, minute) \
+  { #hour ":" #minute, "時刻" }
 
-  // 123 is expected 3 time candidates and 2 date candidates
-  InitSegment("123", "123", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
-  EXPECT_TRUE(ContainCandidate(segments, "1:23"));
-  // "1時23分"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
-  // "午前1時23分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xe5\x8d\x88\xe5\x89\x8d\x31\xe6\x99\x82\x32\x33\xe5\x88\x86"));
+// Macro for {"H時M分", "時刻"}
+#define KANJI_TIME(hour, minute) \
+  { #hour "時" #minute "分", "時刻" }
 
-  // "日付"
-  EXPECT_EQ(2, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
-  EXPECT_TRUE(ContainCandidate(segments, "01/23"));
-  // "1月23日"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x31\xe6\x9c\x88\x32\x33\xe6\x97\xa5"));
+// Macro for {"H時半", "時刻"}
+#define KANJI_TIME_HAN(hour) \
+  { #hour "時半", "時刻" }
 
-  // 346 is expected 3 time candidates and 0 date candidate
-  InitSegment("346", "346", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
-  EXPECT_TRUE(ContainCandidate(segments, "3:46"));
-  // "3時46分"
-  EXPECT_TRUE(ContainCandidate(segments,
-                               "\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
-  // "午前3時46分"
-  EXPECT_TRUE(ContainCandidate(
-        segments,
-        "\xe5\x8d\x88\xe5\x89\x8d\x33\xe6\x99\x82\x34\x36\xe5\x88\x86"));
+// Macro for {"午前H時M分", "時刻"}
+#define GOZEN(hour, minute) \
+  { "午前" #hour "時" #minute "分", "時刻" }
 
-  // "日付"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+// Macro for {"午後H時M分", "時刻"}
+#define GOGO(hour, minute) \
+  { "午後" #hour "時" #minute "分", "時刻" }
 
-  // 765 is expected 0 time candidate and 0 date candidate
-  InitSegment("765", "765", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x99\x82\xE5\x88\xBB"));
+// Macro for {"午前H時半", "時刻"}
+#define GOZEN_HAN(hour) \
+  { "午前" #hour "時半", "時刻" }
 
-  // "日付"
-  EXPECT_EQ(0, CountDescription(segments, "\xE6\x97\xA5\xE4\xBB\x98"));
+// Macro for {"午後H時半", "時刻"}
+#define GOGO_HAN(hour) \
+  { "午後" #hour "時半", "時刻" }
 
-  // Especially for mobile, look at meta candidates' value, too.
-  // "あかあか" on 12keys layout will be transliterated to "1212".
-  InitMetaSegment(
-      "\xE3\x81\x82\xE3\x81\x8B\xE3\x81\x82\xE3\x81\x8B", "1212", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
-  // "時刻"
-  EXPECT_EQ(3, CountDescription(segments,
-                                "\xE6\x99\x82\xE5\x88\xBB"));
-  // "午後0時12分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\xE5\x8d\x88\xE5\xBE\x8C\x30\xE6\x99\x82\x31\x32\xE5\x88\x86"));
-  // "12時12分"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\x32\xE6\x99\x82\x31\x32\xE5\x88\x86"));
-  EXPECT_TRUE(ContainCandidate(segments, "12:12"));
+  // Targets of rewrite.
+  using ValueAndDescription = std::pair<const char *, const char *>;
+  const std::vector<ValueAndDescription> kTestCases[] = {
+      // Two digits.
+      {
+          {"00", ""},
+          KANJI_TIME(0, 0),
+          GOZEN(0, 0),
+          GOGO(0, 0),
+      },
+      {
+          {"01", ""},
+          KANJI_TIME(0, 1),
+          GOZEN(0, 1),
+          GOGO(0, 1),
+      },
+      {
+          {"10", ""},
+          KANJI_TIME(1, 0),
+          GOZEN(1, 0),
+          GOGO(1, 0),
+      },
+      {
+          {"11", ""},
+          DATE(1, 1),
+          KANJI_DATE(1, 1),
+          KANJI_TIME(1, 1),
+          GOZEN(1, 1),
+          GOGO(1, 1),
+      },
 
-  // "日付"
-  EXPECT_EQ(2, CountDescription(
-      segments,
-      "\xE6\x97\xA5\xE4\xBB\x98"));
-  // "12月12日"
-  EXPECT_TRUE(ContainCandidate(
-      segments,
-      "\x31\x32\xE6\x9C\x88\x31\x32\xE6\x97\xA5"));
-  EXPECT_TRUE(ContainCandidate(segments, "12/12"));
+      // Three digits.
+      {
+          {"000", ""},
+          TIME(0, 00),
+          KANJI_TIME(0, 00),
+          GOZEN(0, 00),
+          GOGO(0, 00),
+      },
+      {
+          {"001", ""},
+          TIME(0, 01),
+          KANJI_TIME(0, 01),
+          GOZEN(0, 01),
+          GOGO(0, 01),
+      },
+      {
+          {"010", ""},
+          TIME(0, 10),
+          KANJI_TIME(0, 10),
+          GOZEN(0, 10),
+          GOGO(0, 10),
+      },
+      {
+          {"011", ""},
+          TIME(0, 11),
+          KANJI_TIME(0, 11),
+          GOZEN(0, 11),
+          GOGO(0, 11),
+      },
+      {
+          {"100", ""},
+          TIME(1, 00),
+          KANJI_TIME(1, 00),
+          KANJI_TIME(10, 0),
+          GOZEN(1, 00),
+          GOGO(1, 00),
+          GOZEN(10, 0),
+          GOGO(10, 0),
+      },
+      {
+          {"101", ""},
+          DATE(10, 1),
+          TIME(1, 01),
+          KANJI_DATE(10, 1),
+          KANJI_TIME(1, 01),
+          KANJI_TIME(10, 1),
+          GOZEN(1, 01),
+          GOGO(1, 01),
+          GOZEN(10, 1),
+          GOGO(10, 1),
+      },
+      {
+          {"110", ""},
+          DATE(1, 10),
+          TIME(1, 10),
+          KANJI_DATE(1, 10),
+          KANJI_TIME(1, 10),
+          KANJI_TIME(11, 0),
+          GOZEN(1, 10),
+          GOGO(1, 10),
+          GOZEN(11, 0),
+          GOGO(11, 0),
+      },
+      {
+          {"111", ""},
+          DATE(1, 11),
+          DATE(11, 1),
+          TIME(1, 11),
+          KANJI_DATE(1, 11),
+          KANJI_DATE(11, 1),
+          KANJI_TIME(1, 11),
+          KANJI_TIME(11, 1),
+          GOZEN(1, 11),
+          GOGO(1, 11),
+          GOZEN(11, 1),
+          GOGO(11, 1),
+      },
+      {
+          {"130", ""},
+          DATE(1, 30),
+          TIME(1, 30),
+          KANJI_DATE(1, 30),
+          KANJI_TIME(1, 30),
+          KANJI_TIME_HAN(1),
+          KANJI_TIME(13, 0),
+          GOZEN(1, 30),
+          GOZEN_HAN(1),
+          GOGO(1, 30),
+          GOGO_HAN(1),
+      },
 
-  // Invalid date or time number expect false return
-  InitSegment("9999", "9999", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
+      // Four digits.
+      {
+          {"0000", ""},
+          TIME(00, 00),
+          KANJI_TIME(00, 00),
+      },
+      {
+          {"0010", ""},
+          TIME(00, 10),
+          KANJI_TIME(00, 10),
+      },
+      {
+          {"0100", ""},
+          TIME(01, 00),
+          KANJI_TIME(01, 00),
+      },
+      {
+          {"1000", ""},
+          TIME(10, 00),
+          KANJI_TIME(10, 00),
+          GOZEN(10, 00),
+          GOGO(10, 00),
+      },
+      {
+          {"0011", ""},
+          TIME(00, 11),
+          KANJI_TIME(00, 11),
+      },
+      {
+          {"0101", ""},
+          DATE(01, 01),
+          TIME(01, 01),
+          KANJI_TIME(01, 01),
+      },
+      {
+          {"1001", ""},
+          DATE(10, 01),
+          TIME(10, 01),
+          KANJI_TIME(10, 01),
+          GOZEN(10, 01),
+          GOGO(10, 01),
+      },
+      {
+          {"0110", ""},
+          DATE(01, 10),
+          TIME(01, 10),
+          KANJI_TIME(01, 10),
+      },
+      {
+          {"1010", ""},
+          DATE(10, 10),
+          TIME(10, 10),
+          KANJI_DATE(10, 10),
+          KANJI_TIME(10, 10),
+          GOZEN(10, 10),
+          GOGO(10, 10),
+      },
+      {
+          {"1100", ""},
+          TIME(11, 00),
+          KANJI_TIME(11, 00),
+          GOZEN(11, 00),
+          GOGO(11, 00),
+      },
+      {
+          {"0111", ""},
+          DATE(01, 11),
+          TIME(01, 11),
+          KANJI_TIME(01, 11),
+      },
+      {
+          {"1011", ""},
+          DATE(10, 11),
+          TIME(10, 11),
+          KANJI_DATE(10, 11),
+          KANJI_TIME(10, 11),
+          GOZEN(10, 11),
+          GOGO(10, 11),
+      },
+      {
+          {"1101", ""},
+          DATE(11, 01),
+          TIME(11, 01),
+          KANJI_TIME(11, 01),
+          GOZEN(11, 01),
+          GOGO(11, 01),
+      },
+      {
+          {"1110", ""},
+          DATE(11, 10),
+          TIME(11, 10),
+          KANJI_DATE(11, 10),
+          KANJI_TIME(11, 10),
+          GOZEN(11, 10),
+          GOGO(11, 10),
+      },
+      {
+          {"1111", ""},
+          DATE(11, 11),
+          TIME(11, 11),
+          KANJI_DATE(11, 11),
+          KANJI_TIME(11, 11),
+          GOZEN(11, 11),
+          GOGO(11, 11),
+      },
+      {
+          {"0030", ""},
+          TIME(00, 30),
+          KANJI_TIME(00, 30),
+      },
+      {
+          {"0130", ""},
+          DATE(01, 30),
+          TIME(01, 30),
+          KANJI_TIME(01, 30),
+      },
+      {
+          {"1030", ""},
+          DATE(10, 30),
+          TIME(10, 30),
+          KANJI_DATE(10, 30),
+          KANJI_TIME(10, 30),
+          KANJI_TIME_HAN(10),
+          GOZEN(10, 30),
+          GOZEN_HAN(10),
+          GOGO(10, 30),
+          GOGO_HAN(10),
+      },
+      {
+          {"1130", ""},
+          DATE(11, 30),
+          TIME(11, 30),
+          KANJI_DATE(11, 30),
+          KANJI_TIME(11, 30),
+          KANJI_TIME_HAN(11),
+          GOZEN(11, 30),
+          GOZEN_HAN(11),
+          GOGO(11, 30),
+          GOGO_HAN(11),
+      },
+      {
+          {"1745", ""},
+          TIME(17, 45),
+          KANJI_TIME(17, 45),
+      },
+      {
+          {"2730", ""},
+          TIME(27, 30),
+          KANJI_TIME(27, 30),
+          KANJI_TIME_HAN(27),
+      },
+  };
+
+#undef DATE
+#undef GOGO
+#undef GOGO_HAN
+#undef GOZEN
+#undef GOZEN_HAN
+#undef KANJI_DATE
+#undef KANJI_TIME
+#undef KANJI_TIME_HAN
+#undef TIME
+
+  for (const auto &test_case : kTestCases) {
+    InitSegment(test_case[0].first, test_case[0].first, &segments);
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    ASSERT_EQ(1, segments.segments_size());
+    const auto &segment = segments.segment(0);
+    EXPECT_EQ(test_case.size(), segment.candidates_size())
+        << segment.DebugString();
+    if (test_case.size() != segment.candidates_size()) {
+      continue;
+    }
+    for (std::size_t i = 0; i < test_case.size(); ++i) {
+      EXPECT_EQ(test_case[i].first, segment.candidate(i).value)
+          << "Value of " << i << "-th candidate is unexpected:\n"
+          << segment.DebugString();
+      EXPECT_EQ(test_case[i].second, segment.candidate(i).description)
+          << "Description of " << i << "-th candidate is unexpected:\n"
+          << segment.DebugString();
+    }
+  }
 }
 
 TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
@@ -1279,14 +1168,10 @@ TEST_F(DateRewriterTest, RewriteYearTest) {
   DateRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
-
   InitSegment("2010", "2010", &segments);
-  // "年"
-  AppendSegment("nenn", "\xE5\xB9\xB4", &segments);
-
+  AppendSegment("nenn", "年", &segments);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  // "平成22"
-  EXPECT_TRUE(ContainCandidate(segments, "\xE5\xB9\xB3\xE6\x88\x90\x32\x32"));
+  EXPECT_TRUE(ContainCandidate(segments, "平成22"));
 }
 
 // This test treats the situation that if UserHistoryRewriter or other like
@@ -1296,17 +1181,94 @@ TEST_F(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
   DateRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
-
-  // "二千十一"
-  InitSegment("2011",
-              "\xE4\xBA\x8C\xE5\x8D\x83\xE5\x8D\x81\xE4\xB8\x80",
-              &segments);
-  // "年"
-  AppendSegment("nenn", "\xE5\xB9\xB4", &segments);
-
+  InitSegment("2011", "二千十一", &segments);
+  AppendSegment("nenn", "年", &segments);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  // "平成23"
-  EXPECT_TRUE(ContainCandidate(segments, "\xE5\xB9\xB3\xE6\x88\x90\x32\x33"));
+  EXPECT_TRUE(ContainCandidate(segments, "平成23"));
+}
+
+TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
+  commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
+
+  // Init an instance of Segments for this test.
+  Segments test_segments;
+  InitSegment("1234", "1234", &test_segments);
+  InsertCandidate("cand1", "cand1", 1, test_segments.mutable_segment(0));
+  InsertCandidate("cand2", "cand2", 2, test_segments.mutable_segment(0));
+
+  // Test case where results are inserted after the top candidate.
+  {
+    request.set_special_romanji_table(
+        commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
+
+    DateRewriter rewriter;
+    Segments segments;
+    segments.CopyFrom(test_segments);
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+
+    // Verify that the top candidate wans't modified and the next two were moved
+    // to last.
+    const auto &segment = segments.segment(0);
+    const auto cand_size = segment.candidates_size();
+    ASSERT_LT(3, cand_size);
+    EXPECT_EQ("1234", segment.candidate(0).value);
+    EXPECT_EQ("cand1", segment.candidate(cand_size - 2).value);
+    EXPECT_EQ("cand2", segment.candidate(cand_size - 1).value);
+  }
+
+  // Test case where results are inserted after the last candidate.
+  {
+    request.set_special_romanji_table(
+        commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+
+    DateRewriter rewriter;
+    Segments segments;
+    segments.CopyFrom(test_segments);
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+
+    // Verify that the first three candidate weren't moved.
+    const auto &segment = segments.segment(0);
+    const auto cand_size = segment.candidates_size();
+    ASSERT_LT(3, cand_size);
+    EXPECT_EQ("1234", segment.candidate(0).value);
+    EXPECT_EQ("cand1", segment.candidate(1).value);
+    EXPECT_EQ("cand2", segment.candidate(2).value);
+  }
+}
+
+TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
+  commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
+
+  Segments segments;
+
+  // If there's a history segment containing N candidates where N is greater
+  // than the number of candidates in the current conversion segment, crash
+  // happened in Segment::insert_candidate().  This is a regression test for it.
+
+  // History segment
+  InitSegment("hist", "hist", &segments);
+  Segment *seg = segments.mutable_segment(0);
+  InsertCandidate("hist1", "hist1", 1, seg);
+  InsertCandidate("hist2", "hist2", 1, seg);
+  InsertCandidate("hist3", "hist3", 1, seg);
+  seg->set_segment_type(Segment::HISTORY);
+
+  // Conversion segment
+  AppendSegment("11", "11", &segments);
+  seg = segments.mutable_segment(1);
+  InsertCandidate("cand1", "cand1", 1, seg);
+  InsertCandidate("cand2", "cand2", 2, seg);
+
+  // Rewrite is successful with a history segment.
+  DateRewriter rewriter;
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+  ASSERT_LT(3, segments.conversion_segment(0).candidates_size());
 }
 
 }  // namespace mozc

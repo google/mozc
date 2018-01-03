@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ class IPCClientFactoryMock;  // declared below.
 
 class IPCClientMock : public IPCClientInterface {
  public:
-  IPCClientMock(IPCClientFactoryMock *caller);
+  explicit IPCClientMock(IPCClientFactoryMock *caller);
   virtual bool Connected() const;
   virtual uint32 GetServerProtocolVersion() const;
   virtual const string &GetServerProductVersion() const;

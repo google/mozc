@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,12 +46,11 @@
 #include "testing/base/public/mozctest.h"
 
 namespace mozc {
+namespace {
 
-using mozc::commands::Request;
-using mozc::composer::Composer;
-using mozc::composer::Table;
-using mozc::config::Config;
-using mozc::config::ConfigHandler;
+using commands::Request;
+using composer::Composer;
+using composer::Table;
 
 class ConverterRegressionTest : public ::testing::Test {
  private:
@@ -65,14 +64,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
   CHECK(converter);
   {
     Segments segments;
-    // "りゅきゅけmぽ"
-    EXPECT_TRUE(converter->StartConversion(
-        &segments,
-        "\xE3\x82\x8A\xE3\x82\x85"
-        "\xE3\x81\x8D\xE3\x82\x85"
-        "\xE3\x81\x91"
-        "m"
-        "\xE3\x81\xBD"));
+    EXPECT_TRUE(converter->StartConversion(&segments, "りゅきゅけmぽ"));
   }
   {
     Segments segments;
@@ -92,8 +84,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
     composer::Composer composer(&table, &request, nullptr);
     conv_request.set_composer(&composer);
     // Converter returns false, but not crash.
-    EXPECT_FALSE(converter->StartConversionForRequest(conv_request,
-                                                      &segments));
+    EXPECT_FALSE(converter->StartConversionForRequest(conv_request, &segments));
   }
 }
 
@@ -102,23 +93,13 @@ TEST_F(ConverterRegressionTest, Regression3323108) {
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
-  // "ここではきものをぬぐ"
-  EXPECT_TRUE(converter->StartConversion(
-      &segments,
-      "\xE3\x81\x93\xE3\x81\x93\xE3\x81\xA7"
-      "\xE3\x81\xAF\xE3\x81\x8D\xE3\x82\x82"
-      "\xE3\x81\xAE\xE3\x82\x92\xE3\x81\xAC"
-      "\xE3\x81\x90"));
+  EXPECT_TRUE(converter->StartConversion(&segments, "ここではきものをぬぐ"));
   EXPECT_EQ(3, segments.conversion_segments_size());
   const ConversionRequest default_request;
   EXPECT_TRUE(converter->ResizeSegment(&segments, default_request, 1, 2));
   EXPECT_EQ(2, segments.conversion_segments_size());
-
-  // "きものをぬぐ"
-  EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x82"
-            "\xE3\x81\xAE\xE3\x82\x92"
-            "\xE3\x81\xAC\xE3\x81\x90",
-            segments.conversion_segment(1).key());
+  EXPECT_EQ("きものをぬぐ", segments.conversion_segment(1).key());
 }
 
+}  // namespace
 }  // namespace mozc

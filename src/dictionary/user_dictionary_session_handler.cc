@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -532,6 +532,12 @@ void UserDictionarySessionHandler::ImportData(
     result_status =
         session->ImportToNewDictionaryFromString(
             command.dictionary_name(), command.data(), &dictionary_id);
+  }
+  if (result_status == UserDictionaryCommandStatus::IMPORT_INVALID_ENTRIES &&
+      command.ignore_invalid_entries()) {
+    LOG(INFO) << "There are some invalid entries but ignored.";
+    result_status =
+        UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
   }
 
   if (dictionary_id != 0) {

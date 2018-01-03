@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@
 #include <cstddef>
 #include <string>
 
-#include "base/number_util.h"
 #include "base/system_util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -43,9 +42,9 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
-class EnglishVariantsRewriterTest : public testing::Test {
+class EnglishVariantsRewriterTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };
@@ -54,54 +53,32 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
   EnglishVariantsRewriter rewriter;
   std::vector<string> variants;
 
-  EXPECT_TRUE(
-      rewriter.ExpandEnglishVariants(
-          "foo",
-          &variants));
+  EXPECT_TRUE(rewriter.ExpandEnglishVariants("foo", &variants));
   EXPECT_EQ(2, variants.size());
   EXPECT_EQ("Foo", variants[0]);
   EXPECT_EQ("FOO", variants[1]);
 
-  EXPECT_TRUE(
-      rewriter.ExpandEnglishVariants(
-          "Bar",
-          &variants));
+  EXPECT_TRUE(rewriter.ExpandEnglishVariants("Bar", &variants));
   EXPECT_EQ(2, variants.size());
   EXPECT_EQ("bar", variants[0]);
   EXPECT_EQ("BAR", variants[1]);
 
-  EXPECT_TRUE(
-      rewriter.ExpandEnglishVariants(
-          "HOGE",
-          &variants));
+  EXPECT_TRUE(rewriter.ExpandEnglishVariants("HOGE", &variants));
   EXPECT_EQ(2, variants.size());
   EXPECT_EQ("hoge", variants[0]);
   EXPECT_EQ("Hoge", variants[1]);
 
-  EXPECT_FALSE(
-      rewriter.ExpandEnglishVariants(
-          "Foo Bar",
-          &variants));
+  EXPECT_FALSE(rewriter.ExpandEnglishVariants("Foo Bar", &variants));
 
-  EXPECT_TRUE(
-      rewriter.ExpandEnglishVariants(
-          "iPhone",
-          &variants));
+  EXPECT_TRUE(rewriter.ExpandEnglishVariants("iPhone", &variants));
   EXPECT_EQ(1, variants.size());
   EXPECT_EQ("iphone", variants[0]);
 
-  EXPECT_TRUE(
-      rewriter.ExpandEnglishVariants(
-          "MeCab",
-          &variants));
+  EXPECT_TRUE(rewriter.ExpandEnglishVariants("MeCab", &variants));
   EXPECT_EQ(1, variants.size());
   EXPECT_EQ("mecab", variants[0]);
 
-  EXPECT_FALSE(
-      rewriter.ExpandEnglishVariants(
-          // "グーグル"
-          "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
-          &variants));
+  EXPECT_FALSE(rewriter.ExpandEnglishVariants("グーグル", &variants));
 }
 
 TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
@@ -114,11 +91,8 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   {
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    // "ぐーぐる"
-    candidate->content_key =
-        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
-    candidate->key =
-        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
     candidate->value = "Google";
     candidate->content_value = "Google";
     candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -142,15 +116,12 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     for (int i = 0; i < 10; ++i) {
       Segment::Candidate *candidate1 = seg->add_candidate();
       candidate1->Init();
-      candidate1->value = NumberUtil::SimpleItoa(i);
-      candidate1->content_value = NumberUtil::SimpleItoa(i);
+      candidate1->value = std::to_string(i);
+      candidate1->content_value = std::to_string(i);
       Segment::Candidate *candidate2 = seg->add_candidate();
       candidate2->Init();
-      // "ぐーぐる"
-      candidate2->content_key =
-          "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
-      candidate2->key =
-          "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+      candidate2->content_key = "ぐーぐる";
+      candidate2->key = "ぐーぐる";
       candidate2->value = "Google";
       candidate2->content_value = "Google";
       candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -160,8 +131,8 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     EXPECT_EQ(40, seg->candidates_size());
 
     for (int i = 0; i < 10; ++i) {
-      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(4 * i).value);
-      EXPECT_EQ(NumberUtil::SimpleItoa(i), seg->candidate(4 * i).content_value);
+      EXPECT_EQ(std::to_string(i), seg->candidate(4 * i).value);
+      EXPECT_EQ(std::to_string(i), seg->candidate(4 * i).content_value);
       EXPECT_EQ("Google", seg->candidate(4 * i + 1).value);
       EXPECT_EQ("Google", seg->candidate(4 * i + 1).content_value);
       EXPECT_EQ("google", seg->candidate(4 * i + 2).value);
@@ -183,15 +154,8 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
   {
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    // "まいけるじゃくそん";
-    candidate->content_key =
-        "\xE3\x81\xBE\xE3\x81\x84\xE3\x81\x91"
-        "\xE3\x82\x8B\xE3\x81\x98\xE3\x82\x83"
-        "\xE3\x81\x8F\xE3\x81\x9D\xE3\x82\x93";
-    candidate->key =
-        "\xE3\x81\xBE\xE3\x81\x84\xE3\x81\x91"
-        "\xE3\x82\x8B\xE3\x81\x98\xE3\x82\x83"
-        "\xE3\x81\x8F\xE3\x81\x9D\xE3\x82\x93";
+    candidate->content_key = "まいけるじゃくそん";
+    candidate->key = "まいけるじゃくそん";
     candidate->value = "Michael Jackson";
     candidate->content_value = "Michael Jackson";
     candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -217,11 +181,8 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
   {
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    // "ぐーぐる"
-    candidate->content_key =
-        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
-    candidate->key =
-        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
     candidate->value = "Google";
     candidate->content_value = "Google";
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -236,11 +197,8 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
     seg->clear_candidates();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    // "ぐーぐる"
-    candidate->content_key =
-        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
-    candidate->key =
-        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
     candidate->value = "Google";
     candidate->content_value = "Google";
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;

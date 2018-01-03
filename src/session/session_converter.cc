@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1402,10 +1402,7 @@ void SessionConverter::AppendCandidateList() {
     transliterations = candidate_list_->AllocateSubCandidateList(kNoRotate);
     transliterations->set_focused(true);
 
-    const char kT13nLabel[] =
-      // "そのほかの文字種";
-      "\xe3\x81\x9d\xe3\x81\xae\xe3\x81\xbb\xe3\x81\x8b\xe3\x81\xae"
-      "\xe6\x96\x87\xe5\xad\x97\xe7\xa8\xae";
+    const char kT13nLabel[] = "そのほかの文字種";
     transliterations->set_name(kT13nLabel);
   } else {
     transliterations = candidate_list_.get();
@@ -1682,7 +1679,7 @@ void SessionConverter::UpdateCandidateStats(const string &base_name,
   }
 
   if (index <= 9) {
-    const string stats_name = prefix + NumberUtil::SimpleItoa(index);
+    const string stats_name = prefix + std::to_string(index);
     UsageStats::IncrementCount(stats_name);
   } else {
     const string stats_name = prefix + "GE10";

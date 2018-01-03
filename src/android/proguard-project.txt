@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,11 @@
 -keep public class * extends android.app.Fragment
 -keepclassmembers class * extends org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory$ImeSwitcher {
     <methods>;
+}
+
+# libmozc.so depends on those methods.
+-keepclassmembers class org.mozc.android.inputmethod.japanese.session.MozcJNI {
+    native <methods>;
 }
 
 # The classes in nativecallback package must keep original class name and method name

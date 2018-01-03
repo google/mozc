@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ inline TokenDecodeIterator::TokenDecodeIterator(
       state_(HAS_NEXT),
       ptr_(ptr),
       token_info_(nullptr) {
-  key.CopyToString(&token_.key);
+  token_.key.assign(key.data(), key.size());
   NextInternal();
 }
 

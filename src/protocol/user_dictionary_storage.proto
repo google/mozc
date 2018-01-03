@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -254,6 +254,7 @@ message UserDictionaryCommand {
   optional UserDictionary.Entry entry = 6;
   optional string data = 7;
   optional bool ensure_non_empty_storage = 8;
+  optional bool ignore_invalid_entries = 9;
 };
 
 message UserDictionaryCommandStatus {

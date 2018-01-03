@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -597,9 +597,7 @@ TEST(SessionOutputTest, FillFooter) {
 #else  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
   EXPECT_TRUE(candidates.footer().has_label());
   EXPECT_FALSE(candidates.footer().has_sub_label());
-  // "Tabキーで選択"
-  const char kLabel[] = ("Tab\xE3\x82\xAD\xE3\x83\xBC\xE3\x81\xA7"
-                         "\xE9\x81\xB8\xE6\x8A\x9E");
+  const char kLabel[] = "Tabキーで選択";
   EXPECT_EQ(kLabel, candidates.footer().label());
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -646,19 +644,11 @@ TEST(SessionOutputTest, FillFooter) {
       ASSERT_TRUE(candidates.has_footer());
       ASSERT_TRUE(candidates.footer().has_label());
 #if defined(OS_MACOSX)
-      const char kDeleteInstruction[] =  // "control+fn+deleteで履歴から削除"
-          "\x63\x6F\x6E\x74\x72\x6F\x6C\x2B\x66\x6E\x2B\x64\x65\x6C\x65"
-          "\x74\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B\xE3"
-          "\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+      const char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
 #elif defined(OS_NACL)
-      const char kDeleteInstruction[] =  // "ctrl+alt+backspaceで履歴から削除"
-          "\x63\x74\x72\x6C\x2B\x61\x6C\x74\x2B\x62\x61\x63\x6B\x73\x70"
-          "\x61\x63\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B"
-          "\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+      const char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
 #else  // !OS_MACOSX && !OS_NACL
-      const char kDeleteInstruction[] =  // "Ctrl+Delで履歴から削除"
-          "\x43\x74\x72\x6C\x2B\x44\x65\x6C\xE3\x81\xA7\xE5\xB1\xA5"
-          "\xE6\xAD\xB4\xE3\x81\x8B\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+      const char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
 #endif  // OS_MACOSX || OS_NACL
       EXPECT_EQ(kDeleteInstruction, candidates.footer().label());
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
@@ -772,8 +762,7 @@ TEST(SessionOutputTest, AddSegment) {
 }
 
 TEST(SessionOutputTest, FillConversionResultWithoutNormalization) {
-  // "ゔ"
-  const char kInput[] = "\xE3\x82\x94";
+  const char kInput[] = "ゔ";
 
   commands::Result result;
   SessionOutput::FillConversionResultWithoutNormalization(

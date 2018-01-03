@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,8 @@ void CollocationUtil::GetNormalizedScript(
   string temp;
   RemoveExtraCharacters(str, remove_number, &temp);
   string temp2;
-  // "％" -> "%"
-  Util::StringReplace(temp, "\xef\xbc\x85", "%", true, &temp2);
-  // "～" -> "〜"
-  Util::StringReplace(temp2, "\xef\xbd\x9e", "\xe3\x80\x9c", true, output);
+  Util::StringReplace(temp, "％", "%", true, &temp2);
+  Util::StringReplace(temp2, "～", "〜", true, output);
 }
 
 bool CollocationUtil::IsNumber(char32 c) {

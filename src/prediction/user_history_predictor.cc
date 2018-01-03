@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,13 @@
 #include <climits>
 #include <memory>
 #include <string>
-#include <unordered_set>
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/flags.h"
 #include "base/hash.h"
 #include "base/logging.h"
+#include "base/mozc_hash_set.h"
 #include "base/thread.h"
 #include "base/trie.h"
 #include "base/util.h"
@@ -59,15 +59,6 @@
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 
-using std::unique_ptr;
-using std::unordered_set;
-
-using mozc::commands::Request;
-using mozc::dictionary::SuppressionDictionary;
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-using mozc::usage_stats::UsageStats;
-
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.
 DEFINE_bool(enable_expansion_for_user_history_predictor,
@@ -76,6 +67,15 @@ DEFINE_bool(enable_expansion_for_user_history_predictor,
 
 namespace mozc {
 namespace {
+
+using std::unique_ptr;
+
+using commands::Request;
+using dictionary::SuppressionDictionary;
+using dictionary::DictionaryInterface;
+using dictionary::POSMatcher;
+using usage_stats::UsageStats;
+
 // Finds suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event
 const size_t kMaxSuggestionTrial = 3000;
@@ -114,9 +114,7 @@ const char kFileName[] = "user://.history.db";
 
 // Uses '\t' as a key/value delimiter
 const char kDelimiter[] = "\t";
-
-// "絵文字"
-const char kEmojiDescription[] = "\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97";
+const char kEmojiDescription[] = "絵文字";
 
 // TODO(peria, hidehiko): Unify this checker and IsEmojiCandidate in
 //     EmojiRewriter.  If you make similar functions before the merging in
@@ -127,16 +125,11 @@ bool IsEmojiEntry(const UserHistoryPredictor::Entry &entry) {
 }
 
 bool IsPunctuation(const string &value) {
-  //  return (value == "。" || value == "." ||
-  //          value == "、" || value == "," ||
-  //          value == "？" || value == "?" ||
-  //          value == "！" || value == "!" ||
-  //          value == "，" || value == "．");
-  return (value == "\xE3\x80\x82" || value == "." ||
-          value == "\xE3\x80\x81" || value == "," ||
-          value == "\xEF\xBC\x9F" || value == "?" ||
-          value == "\xEF\xBC\x81" || value == "!" ||
-          value == "\xEF\xBC\x8C" || value == "\xEF\xBC\x8E");
+  return (value == "。" || value == "." ||
+          value == "、" || value == "," ||
+          value == "？" || value == "?" ||
+          value == "！" || value == "!" ||
+          value == "，" || value == "．");
 }
 
 bool IsSentenceLikeCandidate(const Segment::Candidate &candidate) {
@@ -201,7 +194,7 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
   const Segment &conversion_segment = segments->conversion_segment(0);
   const string &segment_key = conversion_segment.key();
 
-  // The top candidate, which is about to be commited.
+  // The top candidate, which is about to be committed.
   const Segment::Candidate &candidate = conversion_segment.candidate(0);
   const string &candidate_value = candidate.value;
 
@@ -841,6 +834,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
       // swap.
       if (i + 1 < prefix.size()) {
         string swapped_prefix = prefix;
+        using std::swap;
         swap(swapped_prefix[i], swapped_prefix[i + 1]);
         if (Util::StartsWith(str, swapped_prefix)) {
           return true;
@@ -919,7 +913,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
   string key = entry->key();
   string value = entry->value();
   const Entry *current_entry = entry;
-  unordered_set<uint32> seen;
+  mozc_hash_set<uint32> seen;
   seen.insert(EntryFingerprint(*current_entry));
   // Until target entry gets longer than input_key.
   while (key.size() <= input_key.size()) {
@@ -1194,6 +1188,11 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
 
   if (request.config().incognito_mode()) {
     VLOG(2) << "incognito mode";
+    return false;
+  }
+
+  if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
+    VLOG(2) << "history learning level is NO_HISTORY";
     return false;
   }
 
@@ -1705,6 +1704,13 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     return;
   }
 
+  if (request.config().history_learning_level() !=
+      config::Config::DEFAULT_HISTORY) {
+    VLOG(2) << "history learning level is not DEFAULT_HISTORY: "
+            << request.config().history_learning_level();
+    return;
+  }
+
   if (!request.config().use_history_suggest()) {
     VLOG(2) << "no history suggest";
     return;
@@ -1822,10 +1828,13 @@ void UserHistoryPredictor::MakeLearningSegments(
       SegmentForLearning learning_segment;
       for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
            !iter.Done(); iter.Next()) {
-        iter.GetKey().CopyToString(&learning_segment.key);
-        iter.GetValue().CopyToString(&learning_segment.value);
-        iter.GetContentKey().CopyToString(&learning_segment.content_key);
-        iter.GetContentValue().CopyToString(&learning_segment.content_value);
+        learning_segment.key.assign(iter.GetKey().data(), iter.GetKey().size());
+        learning_segment.value.assign(iter.GetValue().data(),
+                                      iter.GetValue().size());
+        learning_segment.content_key.assign(iter.GetContentKey().data(),
+                                            iter.GetContentKey().size());
+        learning_segment.content_value.assign(iter.GetContentValue().data(),
+                                              iter.GetContentValue().size());
         learning_segments->push_back_conversion_segment(learning_segment);
       }
     }
@@ -1840,7 +1849,7 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
   MakeLearningSegments(*segments, &learning_segments);
 
   string all_key, all_value;
-  unordered_set<uint32> seen;
+  mozc_hash_set<uint32> seen;
   bool this_was_seen = false;
   const size_t history_segments_size =
       learning_segments.history_segments_size();
@@ -1975,7 +1984,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
     return LEFT_EMPTY_MATCH;
   }
 
-  const size_t size = min(lstr.size(), rstr.size());
+  const size_t size = std::min(lstr.size(), rstr.size());
   if (size == 0) {
     return NO_MATCH;
   }
@@ -2021,7 +2030,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
         return LEFT_PREFIX_MATCH;
       }
   } else {
-    const size_t size = min(key_base.size(), target.size());
+    const size_t size = std::min(key_base.size(), target.size());
     if (size == 0) {
       return NO_MATCH;
     }
@@ -2121,11 +2130,11 @@ bool UserHistoryPredictor::IsValidSuggestion(
   }
   // Handles suggestion_freq and conversion_freq differently.
   // conversion_freq is less aggressively affecting to the final decision.
-  const uint32 freq = max(entry.suggestion_freq(),
-                          entry.conversion_freq() / 4);
+  const uint32 freq =
+      std::max(entry.suggestion_freq(), entry.conversion_freq() / 4);
 
   // TODO(taku,komatsu): better to make it simpler and easier to be understood.
-  const uint32 base_prefix_len = 3 - min(static_cast<uint32>(2), freq);
+  const uint32 base_prefix_len = 3 - std::min(static_cast<uint32>(2), freq);
   return (prefix_len >= base_prefix_len);
 }
 

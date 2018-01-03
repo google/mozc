@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -283,7 +283,9 @@ class NullLogFinalizer {
 DECLARE_bool(logtostderr);
 
 
+#ifndef DVLOG_IF
 #define DVLOG_IF(verboselevel, condition) \
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
+#endif
 
 #endif  // MOZC_BASE_LOGGING_H_

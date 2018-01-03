@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ struct Flag {
 
 namespace {
 
-typedef map<string, mozc_flags::Flag *> FlagMap;
+typedef std::map<string, mozc_flags::Flag *> FlagMap;
 
 FlagMap *GetFlagMap() {
   return mozc::Singleton<FlagMap>::get();
@@ -133,7 +133,7 @@ FlagRegister::~FlagRegister() {
 }
 
 bool SetFlag(const string &name, const string &value) {
-  map<string, Flag *>::iterator it = GetFlagMap()->find(name);
+  std::map<string, Flag *>::iterator it = GetFlagMap()->find(name);
   if (it == GetFlagMap()->end()) return false;
   string v = value;
   Flag *flag = it->second;
@@ -183,8 +183,8 @@ namespace {
 #ifndef IGNORE_HELP_FLAG
 
 void PrintFlags(string *output) {
-  ostringstream os;
-  for (map<string, Flag *>::const_iterator it = GetFlagMap()->begin();
+  std::ostringstream os;
+  for (std::map<string, Flag *>::const_iterator it = GetFlagMap()->begin();
        it != GetFlagMap()->end(); ++it) {
     os << "   --" << it->first << " (" << it->second->help << ")";
     const Flag *flag = it->second;
@@ -290,7 +290,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
 #ifndef IGNORE_HELP_FLAG
       string help;
       PrintFlags(&help);
-      cout << help;
+      std::cout << help;
       exit(0);
 #endif
     }
@@ -311,7 +311,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
 #endif
     if (!SetFlag(key, value)) {
 #ifndef IGNORE_INVALID_FLAG
-      cerr << "Unknown/Invalid flag " << key << std::endl;
+      std::cerr << "Unknown/Invalid flag " << key << std::endl;
       exit(1);
 #endif
     }

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -367,8 +367,8 @@ void CollectNodesFromJson(const Json::Value &value,
             size : node.slice_end;
         const int step = JsonPathNode::IsUndef(node.slice_step) ?
             1 : node.slice_step;
-        start = (start < 0) ? max(0, start + size) : min(size, start);
-        end   = (end < 0) ?   max(0, end + size)   : min(size, end);
+        start = (start < 0) ? std::max(0, start + size) : std::min(size, start);
+        end = (end < 0) ? std::max(0, end + size) : std::min(size, end);
         if (step > 0 && end > start) {
           for (int i = start; i < end; i += step) {
             if (value.isValidIndex(i)) {

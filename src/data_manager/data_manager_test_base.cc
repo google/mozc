@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/mozc_hash_set.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/connector.h"
@@ -203,7 +204,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   }
 
   // Load the original suggestion filter from file.
-  std::unordered_set<string> suggestion_filter_set;
+  mozc_hash_set<string> suggestion_filter_set;
 
   for (size_t i = 0; i < suggestion_filter_files_.size(); ++i) {
     InputFileStream input(suggestion_filter_files_[i].c_str());
@@ -280,7 +281,7 @@ void DataManagerTestBase::TypingModelTest() {
   // Check if typing models are included in the data set.
   for (const auto &key_and_fname : typing_model_files_) {
     InputFileStream ifs(key_and_fname.second.c_str(),
-                        ios_base::in | ios_base::binary);
+                        std::ios_base::in | std::ios_base::binary);
     EXPECT_EQ(ifs.Read(), data_manager_->GetTypingModel(key_and_fname.first));
   }
 }

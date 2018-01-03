@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
@@ -55,11 +54,11 @@ string GetExistFailure(const string &name, Stats stats) {
   switch (stats.type()) {
     case Stats::COUNT:
       type_string = "Count";
-      value_string = NumberUtil::SimpleItoa(stats.count());
+      value_string = std::to_string(stats.count());
       break;
     case Stats::INTEGER:
       type_string = "Integer";
-      value_string = NumberUtil::SimpleItoa(stats.int_value());
+      value_string = std::to_string(stats.int_value());
       break;
     case Stats::BOOLEAN:
       type_string = "Boolean";
@@ -68,10 +67,10 @@ string GetExistFailure(const string &name, Stats stats) {
     case Stats::TIMING:
       type_string = "Timing";
       value_string = string() +
-          "num:" + NumberUtil::SimpleItoa(stats.num_timings()) + " total:" +
-          NumberUtil::SimpleItoa(static_cast<uint64>(stats.total_time())) +
-          " min:" + NumberUtil::SimpleItoa(stats.min_time()) +
-          " max:" + NumberUtil::SimpleItoa(stats.max_time());
+          "num:" + std::to_string(stats.num_timings()) + " total:" +
+          std::to_string(static_cast<uint64>(stats.total_time())) +
+          " min:" + std::to_string(stats.min_time()) +
+          " max:" + std::to_string(stats.max_time());
       break;
     case Stats::VIRTUAL_KEYBOARD:
       type_string = "Virtual Keyboard";
@@ -103,8 +102,8 @@ string GetError(const string &name, const string &expected_string,
 
 string GetNumberError(const string &name, const string &expected_string,
                       int expected, int actual) {
-  return GetError(name, expected_string, NumberUtil::SimpleItoa(expected),
-                  NumberUtil::SimpleItoa(actual));
+  return GetError(name, expected_string, std::to_string(expected),
+                  std::to_string(actual));
 }
 
 string GetBooleanError(const string &name, const string &expected_string,

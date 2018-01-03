@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -186,13 +186,13 @@ void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
 
 class CheckValueOperator {
  public:
-  explicit CheckValueOperator(const string &v) : find_value_(v) {}
+  explicit CheckValueOperator(const string &v) : find_value_(&v) {}
   bool operator() (const Segment::Candidate &cand) const {
-    return (cand.value == find_value_);
+    return (cand.value == *find_value_);
   }
 
  private:
-  const string &find_value_;
+  const string *find_value_;
 };
 
 // If we have the candidates to be inserted before the base candidate,
@@ -243,7 +243,7 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
   cand->style = result_cand.style;
 
   if (base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-    cand->description.assign("\xE9\x83\xA8\xE5\x88\x86");  // "部分"
+    cand->description.assign("部分");
     if (!result_cand.description.empty()) {
       cand->description.append(1, '\n').append(result_cand.description);
     }
@@ -332,10 +332,10 @@ void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
 int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
   if (type == ARABIC_FIRST) {
     // +2 for arabic half_width full_width expansion
-    return min(base_pos + 2, static_cast<int>(segment.candidates_size()));
+    return std::min(base_pos + 2, static_cast<int>(segment.candidates_size()));
   } else {
-    return min(base_pos + kArabicNumericOffset,
-               static_cast<int>(segment.candidates_size()));
+    return std::min(base_pos + kArabicNumericOffset,
+                    static_cast<int>(segment.candidates_size()));
   }
 }
 
@@ -391,8 +391,8 @@ bool RewriteOneSegment(
     if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
       if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
         // Rewrite for number suffix
-        const int insert_pos = min(info.position + 1,
-                                   static_cast<int>(seg->candidates_size()));
+        const int insert_pos = std::min(
+            info.position + 1, static_cast<int>(seg->candidates_size()));
         InsertCandidate(seg, insert_pos, info.candidate, info.candidate);
         modified = true;
         continue;

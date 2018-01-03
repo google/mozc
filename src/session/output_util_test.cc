@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,16 +50,14 @@ void SetTestDataForConversion(commands::Output *output) {
       segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
       segment->set_value("Alpha");
       segment->set_value_length(5);
-      // "あるふぁ"
-      segment->set_key("\343\201\202\343\202\213\343\201\265\343\201\201");
+      segment->set_key("あるふぁ");
     }
     {
       commands::Preedit::Segment *segment = preedit->add_segment();
       segment->set_annotation(commands::Preedit::Segment::HIGHLIGHT);
       segment->set_value("be-ta");
       segment->set_value_length(5);
-      // "べーた"
-      segment->set_key("\343\201\271\343\203\274\343\201\237");
+      segment->set_key("べーた");
     }
     preedit->set_highlighted_position(5);
   }
@@ -73,10 +71,7 @@ void SetTestDataForConversion(commands::Output *output) {
       candidate->set_value("BETA");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[半] アルファベット"
-        annotation->set_description(
-            "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241"
-            "\343\203\231\343\203\203\343\203\210");
+        annotation->set_description("[半] アルファベット");
         annotation->set_shortcut("1");
       }
       candidate->set_id(0);
@@ -84,13 +79,10 @@ void SetTestDataForConversion(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(1);
-      // "ベータ"
-      candidate->set_value("\343\203\231\343\203\274\343\202\277");
+      candidate->set_value("ベータ");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[全] カタカナ"
-        annotation->set_description(
-            "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212");
+        annotation->set_description("[半] カタカナ");
         annotation->set_shortcut("2");
       }
       candidate->set_id(1);
@@ -101,10 +93,7 @@ void SetTestDataForConversion(commands::Output *output) {
       candidate->set_value("beta");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[半] アルファベット"
-        annotation->set_description(
-            "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241"
-            "\343\203\231\343\203\203\343\203\210");
+        annotation->set_description("[半] アルファベット");
         annotation->set_shortcut("3");
       }
       candidate->set_id(2);
@@ -112,14 +101,10 @@ void SetTestDataForConversion(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(3);
-      // "β"
-      candidate->set_value("\316\262");
+      candidate->set_value("β");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "ギリシャ文字(小文字)"
-        annotation->set_description(
-            "\343\202\256\343\203\252\343\202\267\343\203\243\346\226\207"
-            "\345\255\227(\345\260\217\346\226\207\345\255\227)");
+        annotation->set_description("ギリシャ文字(小文字)");
         annotation->set_shortcut("4");
       }
       candidate->set_id(3);
@@ -127,14 +112,10 @@ void SetTestDataForConversion(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(4);
-      // "Β"
-      candidate->set_value("\316\222");
+      candidate->set_value("Β");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "ギリシャ文字(大文字)"
-        annotation->set_description(
-            "\343\202\256\343\203\252\343\202\267\343\203\243\346\226\207"
-            "\345\255\227(\345\244\247\346\226\207\345\255\227)");
+        annotation->set_description("ギリシャ文字(大文字)");
         annotation->set_shortcut("5");
       }
       candidate->set_id(4);
@@ -142,13 +123,10 @@ void SetTestDataForConversion(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(5);
-      // "㌼"
-      candidate->set_value("\343\214\274");
+      candidate->set_value("㌼");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "<機種依存文字>"
-        annotation->set_description("<\346\251\237\347\250\256\344\276\235"
-                                    "\345\255\230\346\226\207\345\255\227>");
+        annotation->set_description("<機種依存文字>");
         annotation->set_shortcut("6");
       }
       candidate->set_id(5);
@@ -159,10 +137,7 @@ void SetTestDataForConversion(commands::Output *output) {
       candidate->set_value("Beta");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "[半] アルファベット"
-        annotation->set_description(
-            "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241"
-            "\343\203\231\343\203\203\343\203\210");
+        annotation->set_description("[半] アルファベット");
         annotation->set_shortcut("7");
       }
       candidate->set_id(6);
@@ -170,13 +145,10 @@ void SetTestDataForConversion(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(7);
-      // "べーた"
-      candidate->set_value("\343\201\271\343\203\274\343\201\237");
+      candidate->set_value("べーた");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
-        // "ひらがな"
-        annotation->set_description(
-            "\343\201\262\343\202\211\343\201\214\343\201\252");
+        annotation->set_description("ひらがな");
         annotation->set_shortcut("8");
       }
       candidate->set_id(7);
@@ -184,9 +156,7 @@ void SetTestDataForConversion(commands::Output *output) {
     {
       commands::Candidates::Candidate *candidate = candidates->add_candidate();
       candidate->set_index(8);
-      // "そのほかの文字種"
-      candidate->set_value("\343\201\235\343\201\256\343\201\273\343\201\213"
-                           "\343\201\256\346\226\207\345\255\227\347\250\256");
+      candidate->set_value("そのほかの文字種");
       {
         commands::Annotation *annotation = candidate->mutable_annotation();
         annotation->set_shortcut("9");
@@ -204,13 +174,10 @@ void SetTestDataForConversion(commands::Output *output) {
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(0);
-          // "べーた"
-          candidate->set_value("\343\201\271\343\203\274\343\201\237");
+          candidate->set_value("べーた");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "ひらがな"
-            annotation->set_description(
-                "\343\201\262\343\202\211\343\201\214\343\201\252");
+            annotation->set_description("ひらがな");
           }
           candidate->set_id(-1);
         }
@@ -218,14 +185,10 @@ void SetTestDataForConversion(commands::Output *output) {
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(1);
-          // "ベータ"
-          candidate->set_value("\343\203\231\343\203\274\343\202\277");
+          candidate->set_value("ベータ");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[全] カタカナ"
-            annotation->set_description(
-                "[\345\215\212] "
-                "\343\202\253\343\202\277\343\202\253\343\203\212");
+            annotation->set_description("[半] カタカナ");
           }
           candidate->set_id(-2);
         }
@@ -236,8 +199,7 @@ void SetTestDataForConversion(commands::Output *output) {
           candidate->set_value("be-ta");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[半]"
-            annotation->set_description("[\345\215\212]");
+            annotation->set_description("[半]");
           }
           candidate->set_id(-3);
         }
@@ -245,13 +207,10 @@ void SetTestDataForConversion(commands::Output *output) {
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(3);
-          // "ｂｅ－ｔａ"
-          candidate->set_value(
-              "\357\275\202\357\275\205\357\274\215\357\275\224\357\275\201");
+          candidate->set_value("ｂｅ－ｔａ");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[全]"
-            annotation->set_description("[\345\205\250]");
+            annotation->set_description("[全]");
           }
           candidate->set_id(-7);
         }
@@ -259,15 +218,10 @@ void SetTestDataForConversion(commands::Output *output) {
           commands::Candidates::Candidate *candidate =
               sub_candidates->add_candidate();
           candidate->set_index(4);
-          // "ﾍﾞｰﾀ"
-          candidate->set_value(
-              "\357\276\215\357\276\236\357\275\260\357\276\200");
+          candidate->set_value("ﾍﾞｰﾀ");
           {
             commands::Annotation *annotation = candidate->mutable_annotation();
-            // "[半] カタカナ"
-            annotation->set_description(
-                "[\345\215\212] "
-                "\343\202\253\343\202\277\343\202\253\343\203\212");
+            annotation->set_description("[半] カタカナ");
           }
           candidate->set_id(-11);
         }
@@ -305,8 +259,7 @@ void SetTestDataForConversion(commands::Output *output) {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(1);
       candidate->set_index(1);
-      // "ベータ"
-      candidate->set_value("\343\203\231\343\203\274\343\202\277");
+      candidate->set_value("ベータ");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
@@ -324,43 +277,37 @@ void SetTestDataForConversion(commands::Output *output) {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(4);
       candidate->set_index(4);
-      // "β"
-      candidate->set_value("\316\262");
+      candidate->set_value("β");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(5);
       candidate->set_index(5);
-      // "Β"
-      candidate->set_value("\316\222");
+      candidate->set_value("Β");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(6);
       candidate->set_index(6);
-      // "㌼"
-      candidate->set_value("\343\214\274");
+      candidate->set_value("㌼");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(7);
       candidate->set_index(7);
-      // "べーた"
-      candidate->set_value("\343\201\271\343\203\274\343\201\237");
+      candidate->set_value("べーた");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(-1);
       candidate->set_index(8);
-      // "べーた"
-      candidate->set_value("\343\201\271\343\203\274\343\201\237");
+      candidate->set_value("べーた");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(-2);
       candidate->set_index(9);
-      // "ベータ"
-      candidate->set_value("\343\203\231\343\203\274\343\202\277");
+      candidate->set_value("ベータ");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
@@ -372,21 +319,17 @@ void SetTestDataForConversion(commands::Output *output) {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(-7);
       candidate->set_index(11);
-      // "ｂｅ－ｔａ"
-      candidate->set_value(
-          "\357\275\202\357\275\205\357\274\215\357\275\224\357\275\201");
+      candidate->set_value("ｂｅ－ｔａ");
     }
     {
       commands::CandidateWord *candidate = candidate_list->add_candidates();
       candidate->set_id(-11);
       candidate->set_index(12);
-      // "ﾍﾞｰﾀ"
-      candidate->set_value("\357\276\215\357\276\236\357\275\260\357\276\200");
+      candidate->set_value("ﾍﾞｰﾀ");
     }
     candidate_list->set_category(commands::CONVERSION);
   }
 }
-}  // namespace
 
 TEST(OutputUtilTest, GetCandidateIndexById) {
   commands::Output output;
@@ -427,4 +370,5 @@ TEST(OutputUtilTest, GetFocusedCandidateId) {
   EXPECT_EQ(-3, candidate_id);
 }
 
+}  // namespace
 }  // namespace mozc

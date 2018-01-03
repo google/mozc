@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -116,8 +116,9 @@ void TableLayout::EnsureCellSize(int column, const Size &size) {
   }
   DCHECK(0 <= column && column < column_width_list_.size());
 
-  column_width_list_[column] = max(column_width_list_[column], size.width);
-  row_height_ = max(row_height_, size.height + row_rect_padding_pixels_ * 2);
+  column_width_list_[column] = std::max(column_width_list_[column], size.width);
+  row_height_ =
+      std::max(row_height_, size.height + row_rect_padding_pixels_ * 2);
 }
 
 void TableLayout::EnsureColumnsWidth(int from_column, int to_column,
@@ -132,10 +133,10 @@ void TableLayout::EnsureFooterSize(const Size &size_in_pixels) {
     LOG(ERROR) << "Layout already frozen";
     return;
   }
-  minimum_footer_size_.height
-      = max(minimum_footer_size_.height, size_in_pixels.height);
-  minimum_footer_size_.width
-      = max(minimum_footer_size_.width, size_in_pixels.width);
+  minimum_footer_size_.height =
+      std::max(minimum_footer_size_.height, size_in_pixels.height);
+  minimum_footer_size_.width =
+      std::max(minimum_footer_size_.width, size_in_pixels.width);
 }
 
 void TableLayout::EnsureHeaderSize(const Size &size_in_pixels) {
@@ -143,10 +144,10 @@ void TableLayout::EnsureHeaderSize(const Size &size_in_pixels) {
     LOG(ERROR) << "Layout already frozen";
     return;
   }
-  minimum_header_size_.height
-      = max(minimum_header_size_.height, size_in_pixels.height);
-  minimum_header_size_.width
-      = max(minimum_header_size_.width, size_in_pixels.width);
+  minimum_header_size_.height =
+      std::max(minimum_header_size_.height, size_in_pixels.height);
+  minimum_header_size_.width =
+      std::max(minimum_header_size_.width, size_in_pixels.width);
 }
 
 // ------------------------------------------------------------------------
@@ -184,9 +185,9 @@ void TableLayout::FreezeLayout() {
 
   // contetnt width is determined as the maximum of
   // { table width, header width, footer width }
-  const int content_width =
-      max(table_width,
-          max(minimum_footer_size_.width, minimum_header_size_.width));
+  const int content_width = std::max(
+      table_width,
+      std::max(minimum_footer_size_.width, minimum_header_size_.width));
 
   const int width = content_width +             // total content width
                     window_border_pixels_ * 2;  // border left and right

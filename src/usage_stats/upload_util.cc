@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,9 @@
 
 #include "usage_stats/upload_util.h"
 
+#include <string>
+
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "net/http_client.h"
 
@@ -61,8 +62,7 @@ void UploadUtil::SetHeader(
     LOG(WARNING) << "elapsed_sec < 0";
     elapsed_sec = 0;
   }
-  stat_header_ = type + "&" +
-      NumberUtil::SimpleItoa(static_cast<uint32>(elapsed_sec));
+  stat_header_ = type + "&" + std::to_string(static_cast<uint32>(elapsed_sec));
   optional_url_params_ = optional_url_params;
 }
 
@@ -76,7 +76,7 @@ void UploadUtil::AddCountValue(const string &name, uint32 count) {
   stat_values_.append("&");
   stat_values_.append(encoded_name);
   stat_values_.append(":c=");
-  stat_values_.append(NumberUtil::SimpleItoa(count));
+  stat_values_.append(std::to_string(count));
 }
 
 void UploadUtil::AddTimingValue(const string &name, uint32 num_timings,
@@ -87,13 +87,13 @@ void UploadUtil::AddTimingValue(const string &name, uint32 num_timings,
   stat_values_.append("&");
   stat_values_.append(encoded_name);
   stat_values_.append(":t=");
-  stat_values_.append(NumberUtil::SimpleItoa(num_timings));
+  stat_values_.append(std::to_string(num_timings));
   stat_values_.append(";");
-  stat_values_.append(NumberUtil::SimpleItoa(avg_time));
+  stat_values_.append(std::to_string(avg_time));
   stat_values_.append(";");
-  stat_values_.append(NumberUtil::SimpleItoa(min_time));
+  stat_values_.append(std::to_string(min_time));
   stat_values_.append(";");
-  stat_values_.append(NumberUtil::SimpleItoa(max_time));
+  stat_values_.append(std::to_string(max_time));
 }
 
 void UploadUtil::AddIntegerValue(const string &name, int int_value) {
@@ -102,7 +102,7 @@ void UploadUtil::AddIntegerValue(const string &name, int int_value) {
   stat_values_.append("&");
   stat_values_.append(encoded_name);
   stat_values_.append(":i=");
-  stat_values_.append(NumberUtil::SimpleItoa(int_value));
+  stat_values_.append(std::to_string(int_value));
 }
 
 void UploadUtil::AddBooleanValue(const string &name, bool boolean_value) {

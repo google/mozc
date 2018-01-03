@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -179,8 +179,7 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
 
     const commands::Preedit &conversion = output.preedit();
     ASSERT_LE(2, conversion.segment_size());
-    // "ぃ"
-    EXPECT_EQ("\xE3\x81\x83", conversion.segment(0).value());
+    EXPECT_EQ("ぃ", conversion.segment(0).value());
   }
 
   // TranslateHalfASCII
@@ -302,9 +301,7 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
 
   commands::Command command;
   InsertCharacterChars("yoroshi", &command);
-  // "よろしく"
-  const string kYoroshikuString =
-      "\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3\x81\x8f";
+  const string kYoroshikuString = "よろしく";
 
   command.Clear();
   session_->PredictAndConvert(&command);
@@ -459,9 +456,7 @@ TEST_F(SessionRegressionTest, Transliteration_Issue2330463) {
     InsertCharacterChars("[],.", &command);
     command.Clear();
     SendKey("F8", &command);
-    // "｢｣､｡"
-    EXPECT_EQ("\357\275\242\357\275\243\357\275\244\357\275\241",
-              command.output().preedit().segment(0).value());
+    EXPECT_EQ("｢｣､｡", command.output().preedit().segment(0).value());
   }
 
   {
@@ -471,9 +466,7 @@ TEST_F(SessionRegressionTest, Transliteration_Issue2330463) {
     InsertCharacterChars("[g],.", &command);
     command.Clear();
     SendKey("F8", &command);
-    // "｢g｣､｡"
-    EXPECT_EQ("\357\275\242\147\357\275\243\357\275\244\357\275\241",
-              command.output().preedit().segment(0).value());
+    EXPECT_EQ("｢g｣､｡", command.output().preedit().segment(0).value());
   }
 
   {
@@ -483,9 +476,7 @@ TEST_F(SessionRegressionTest, Transliteration_Issue2330463) {
     InsertCharacterChars("[a],.", &command);
     command.Clear();
     SendKey("F8", &command);
-    // "｢ｱ｣､｡"
-    EXPECT_EQ("\357\275\242\357\275\261\357\275\243\357\275\244\357\275\241",
-              command.output().preedit().segment(0).value());
+    EXPECT_EQ("｢ｱ｣､｡", command.output().preedit().segment(0).value());
   }
 }
 
@@ -514,7 +505,7 @@ TEST_F(SessionRegressionTest, Transliteration_Issue6209563) {
       command.Clear();
       commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
       key_event->set_key_code('a');
-      key_event->set_key_string("\xE3\x81\xA1");  // "ち"
+      key_event->set_key_string("ち");
       session_->InsertCharacter(&command);
     }
 
@@ -535,8 +526,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
 
   commands::Command command;
   InsertCharacterChars("ssh", &command);
-  // "っｓｈ"
-  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", GetComposition(command));
+  EXPECT_EQ("っｓｈ", GetComposition(command));
 
   command.Clear();
   command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
@@ -549,9 +539,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   EXPECT_TRUE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
 
-  // "っｓｈ"
-  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88",
-            command.output().result().value());
+  EXPECT_EQ("っｓｈ", command.output().result().value());
 }
 
 }  // namespace mozc

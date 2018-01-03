@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -102,10 +102,10 @@ CalculatorImpl::CalculatorImpl() {
   // "ー". It is called cho-ompu, onbiki, bobiki, or "nobashi-bou" casually.
   // It is not a full-width hyphen, and may appear in conversion segments by
   // typing '-' more than one time continuouslly.
-  operator_map_["\xE3\x83\xBC"] = MINUS;
+  operator_map_["ー"] = MINUS;
   operator_map_["*"] = TIMES;
   operator_map_["/"] = DIVIDE;
-  operator_map_["\xE3\x83\xBB"] = DIVIDE;  // "･". Consider it as "/".
+  operator_map_["・"] = DIVIDE;  // "･". Consider it as "/".
   operator_map_["%"] = MOD;
   operator_map_["^"] = POW;
   operator_map_["("] = LP;
@@ -126,10 +126,12 @@ bool CalculatorImpl::CalculateString(const string &key, string *result) const {
   StringPiece expression_body;
   if (normalized_key.front() == '=') {
     // Expression starts with '='.
-    expression_body.set(normalized_key.data() + 1, normalized_key.size() - 1);
+    expression_body =
+        StringPiece(normalized_key.data() + 1, normalized_key.size() - 1);
   } else if (normalized_key.back() == '=') {
     // Expression is ended with '='.
-    expression_body.set(normalized_key.data(), normalized_key.size() - 1);
+    expression_body =
+        StringPiece(normalized_key.data(), normalized_key.size() - 1);
   } else {
     // Expression does not start nor end with '='.
     result->clear();

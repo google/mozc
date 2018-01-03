@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -140,7 +140,24 @@ class Composer {
   void DeleteRange(size_t pos, size_t length);
 
   void InsertCharacter(const string &input);
+
+  // Set preedit text to composer.
+  //
+  // If you want to set preedit text for testing
+  // (to convert from HIRAGANA string rather than key input),
+  // you should use SetPreeditTextForTestOnly().
+  // With the current implementation, prediction queries can be transliterated
+  // and you will not be able to get right candidates.
   void InsertCharacterPreedit(const string &input);
+
+  // TEST ONLY: Set preedit text to composer.
+  //
+  // The |input| will be used in as-is form for conversion/suggestion query
+  // and will not be transliterated.
+  // For example, when the |input| will be set as "mo", suggestion will be
+  // triggered by "mo", rather than "も", or "ｍｏ", etc.
+  void SetPreeditTextForTestOnly(const string &input);
+
   bool InsertCharacterKeyAndPreedit(const string &key, const string &preedit);
   void InsertCharacterForProbableKeyEvents(
       const string &input,

@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,18 @@
       '4800',
     ],
 
+    # We accept following warnings come from protobuf header files.
+    # This list should be revised when protobuf is updated.
+    'msvc_disabled_warnings_for_proto_headers': [
+      # unary minus operator applied to unsigned type, result still unsigned.
+      # http://msdn.microsoft.com/en-us/library/4kh09110.aspx
+      '4146',
+      # 'type' : forcing value to bool 'true' or 'false'
+      # (performance warning)
+      # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
+      '4800',
+    ],
+
     'protobuf_prebuilt_jar_path': '',
 
     'protobuf_cpp_root': '<(protobuf_root)/src/google/protobuf',
@@ -70,6 +82,7 @@
       '<(protobuf_cpp_root)/extension_set_heavy.cc',
       '<(protobuf_cpp_root)/generated_message_reflection.cc',
       '<(protobuf_cpp_root)/generated_message_util.cc',
+      '<(protobuf_cpp_root)/implicit_weak_message.cc',
       '<(protobuf_cpp_root)/io/coded_stream.cc',
       '<(protobuf_cpp_root)/io/gzip_stream.cc',
       '<(protobuf_cpp_root)/io/printer.cc',
@@ -95,12 +108,13 @@
       '<(protobuf_cpp_root)/stubs/structurally_valid.cc',
       '<(protobuf_cpp_root)/stubs/strutil.cc',
       '<(protobuf_cpp_root)/stubs/substitute.cc',
+      '<(protobuf_cpp_root)/stubs/io_win32.cc',
       '<(protobuf_cpp_root)/text_format.cc',
       '<(protobuf_cpp_root)/unknown_field_set.cc',
       '<(protobuf_cpp_root)/wire_format.cc',
       '<(protobuf_cpp_root)/wire_format_lite.cc',
     ],
-    # Sources for Proto3.
+    # Sources for protoc (common part and C++ generator only).
     'protoc_sources': [
       '<(protobuf_cpp_root)/any.cc',
       '<(protobuf_cpp_root)/arena.cc',
@@ -117,26 +131,22 @@
       '<(protobuf_cpp_root)/compiler/cpp/cpp_map_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_message.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_message_field.cc',
+      '<(protobuf_cpp_root)/compiler/cpp/cpp_padding_optimizer.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_primitive_field.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_service.cc',
       '<(protobuf_cpp_root)/compiler/cpp/cpp_string_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_doc_comment.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_enum.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_enum_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_field_base.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_generator.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_helpers.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_map_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_message.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_message_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_primitive_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_reflection_class.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_repeated_enum_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_repeated_message_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_repeated_primitive_field.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_source_generator_base.cc',
-      '<(protobuf_cpp_root)/compiler/csharp/csharp_wrapper_field.cc',
       '<(protobuf_cpp_root)/compiler/importer.cc',
+      '<(protobuf_cpp_root)/compiler/parser.cc',
+      '<(protobuf_cpp_root)/compiler/plugin.cc',
+      '<(protobuf_cpp_root)/compiler/plugin.pb.cc',
+      '<(protobuf_cpp_root)/compiler/subprocess.cc',
+      '<(protobuf_cpp_root)/compiler/zip_writer.cc',
+      '<(protobuf_cpp_root)/io/strtod.cc',
+      '<(protobuf_cpp_root)/map_field.cc',
+      'custom_protoc_main.cc',
+    ],
+    # Sources for protoc (Java generator only).
+    'protoc_java_sources': [
       '<(protobuf_cpp_root)/compiler/java/java_context.cc',
       '<(protobuf_cpp_root)/compiler/java/java_doc_comment.cc',
       '<(protobuf_cpp_root)/compiler/java/java_enum.cc',
@@ -167,42 +177,6 @@
       '<(protobuf_cpp_root)/compiler/java/java_shared_code_generator.cc',
       '<(protobuf_cpp_root)/compiler/java/java_string_field.cc',
       '<(protobuf_cpp_root)/compiler/java/java_string_field_lite.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_enum.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_enum_field.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_extension.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_field.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_file.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_generator.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_helpers.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_map_field.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_message.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_message_field.cc',
-      '<(protobuf_cpp_root)/compiler/javanano/javanano_primitive_field.cc',
-      '<(protobuf_cpp_root)/compiler/js/js_generator.cc',
-      '<(protobuf_cpp_root)/compiler/main.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_enum.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_enum_field.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_extension.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_field.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_file.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_generator.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_helpers.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_map_field.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_message.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_message_field.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_oneof.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_primitive_field.cc',
-      '<(protobuf_cpp_root)/compiler/objectivec/objectivec_generator.cc',
-      '<(protobuf_cpp_root)/compiler/parser.cc',
-      '<(protobuf_cpp_root)/compiler/php/php_generator.cc',
-      '<(protobuf_cpp_root)/compiler/plugin.cc',
-      '<(protobuf_cpp_root)/compiler/plugin.pb.cc',
-      '<(protobuf_cpp_root)/compiler/python/python_generator.cc',
-      '<(protobuf_cpp_root)/compiler/ruby/ruby_generator.cc',
-      '<(protobuf_cpp_root)/compiler/subprocess.cc',
-      '<(protobuf_cpp_root)/compiler/zip_writer.cc',
-      '<(protobuf_cpp_root)/io/strtod.cc',
-      '<(protobuf_cpp_root)/map_field.cc',
     ],
   },
   'targets': [
@@ -238,6 +212,9 @@
           'all_dependent_settings': {
             'include_dirs': [
               '<(protobuf_root)/src',
+            ],
+            'msvs_disabled_warnings': [
+              '<@(msvc_disabled_warnings_for_proto_headers)',
             ],
           },
           'msvs_disabled_warnings': [
@@ -297,6 +274,12 @@
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
                 '-Wno-unused-function',
+              ],
+            }],
+            ['_toolset=="host" and target_platform=="Android"', {
+              'sources': ['<@(protoc_java_sources)'],
+              'defines': [
+                'MOZC_ENABLE_PROTOC_GEN_JAVA',
               ],
             }],
             ['OS=="win"', {

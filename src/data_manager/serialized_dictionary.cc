@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -201,12 +201,12 @@ void SerializedDictionary::CompileToFiles(
   CHECK(VerifyData(data.first, data.second));
 
   OutputFileStream token_ofs(output_token_array.c_str(),
-                             ios_base::out | ios_base::binary);
+                             std::ios_base::out | std::ios_base::binary);
   CHECK(token_ofs.good());
   CHECK(token_ofs.write(data.first.data(), data.first.size()));
 
   OutputFileStream string_ofs(output_string_array.c_str(),
-                              ios_base::out | ios_base::binary);
+                              std::ios_base::out | std::ios_base::binary);
   CHECK(string_ofs.good());
   CHECK(string_ofs.write(data.second.data(), data.second.size()));
 }

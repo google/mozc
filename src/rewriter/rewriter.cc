@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,11 +69,13 @@
 
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::PosGroup;
-
 namespace mozc {
+namespace {
+
+using dictionary::DictionaryInterface;
+using dictionary::PosGroup;
+
+}  // namespace
 
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
                            const DataManagerInterface *data_manager,
@@ -114,7 +116,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   // So we temporarily disable it.
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(new CommandRewriter);
-#endif  // OS_ANDROID
+#endif  // !OS_ANDROID
 #ifndef NO_USAGE_REWRITER
   AddRewriter(new UsageRewriter(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,17 +40,25 @@ Exapmle:
 import optparse
 import os
 import platform
+import subprocess
 import sys
 
 
 def RunOrDie(command):
   """Run the command, or die if it failed."""
   print "Running: " + command
-  if os.system(command) != 0:
+  try:
+    output = subprocess.check_output(command, shell=True)
+    print >> sys.stderr, "=========="
+    print >> sys.stderr, "COMMAND: " + command
+    print >> sys.stderr, output
+  except subprocess.CalledProcessError as e:
     print >> sys.stderr, "=========="
     print >> sys.stderr, "ERROR: " + command
+    print >> sys.stderr, e.output
     print >> sys.stderr, "=========="
     sys.exit(1)
+
 
 def Codesign(target, sign, flags):
   """Run the codesign command with the arguments."""
@@ -85,9 +93,14 @@ def UnlockKeychain(keychain, password=None):
   RunOrDie(" ".join(command))
 
 
-def IsReleaseBuild():
-  """Return true if the build is a release build."""
-  return False
+def GetIdentifier(default):
+  """Return the identifier for the keychain."""
+  return default
+
+
+def GetKeychain(default):
+  """Return the keychain for the keychain."""
+  return os.path.abspath(default)
 
 
 def ParseOption():
@@ -126,19 +139,20 @@ def main():
     Verify(opts.target)
     return
 
-  if IsReleaseBuild():
-    DumpEnviron()
+  DumpEnviron()
 
-    # Call Codesign with the release keychain.
-    return
+  # Call Codesign with the release keychain.
+  sign = GetIdentifier(opts.sign)
+  keychain = GetKeychain(opts.keychain)
 
-  sign = opts.sign
-  keychain = os.path.abspath(opts.keychain)
-  flags = "--keychain " + keychain
+  flags = "--keychain " + os.path.abspath(keychain)
+  RunOrDie(" ".join(["/usr/bin/security", "find-identity", keychain]))
+
   # Unlock Keychain for codesigning.
   UnlockKeychain(keychain, opts.password)
 
   Codesign(opts.target, sign, flags)
+
 
 if __name__ == "__main__":
   main()

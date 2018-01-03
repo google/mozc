@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,57 +50,48 @@ namespace mozc {
 namespace {
 void SetBoundedSegments(Segments *segments, bool fixed) {
   Segment *segment = segments->add_segment();
-  // "たん"
-  segment->set_key("\xe3\x81\x9f\xe3\x82\x93");
+  segment->set_key("たん");
   if (fixed) {
     segment->set_segment_type(Segment::FIXED_VALUE);
   }
   Segment::Candidate *candidate = segment->add_candidate();
-  // "たん"
-  candidate->value = "\xe3\x81\x9f\xe3\x82\x93";
-  // "たん"
-  candidate->content_value = "\xe3\x81\x9f\xe3\x82\x93";
+  candidate->value = "たん";
+  candidate->content_value = "たん";
 
   segment = segments->add_segment();
-  // "ぽぽ"
-  segment->set_key("\xe3\x81\xbd\xe3\x81\xbd");
+  segment->set_key("ぽぽ");
   if (fixed) {
     segment->set_segment_type(Segment::FIXED_VALUE);
   }
   candidate = segment->add_candidate();
-  // "ぽぽ"
-  candidate->value = "\xe3\x81\xbd\xe3\x81\xbd";
-  // "ぽぽ"
-  candidate->content_value = "\xe3\x81\xbd\xe3\x81\xbd";
+  candidate->value = "ぽぽ";
+  candidate->content_value = "ぽぽ";
 }
 
 void SetSegments(Segments *segments, bool fixed) {
   Segment *segment = segments->add_segment();
-  // "たんぽぽ"
-  segment->set_key("\xe3\x81\x9f\xe3\x82\x93\xe3\x81\xbd\xe3\x81\xbd");
+  segment->set_key("たんぽぽ");
   if (fixed) {
     segment->set_segment_type(Segment::FIXED_VALUE);
   }
   Segment::Candidate *candidate = segment->add_candidate();
-  // "たんぽぽ"
-  candidate->value = "\xe3\x81\x9f\xe3\x82\x93\xe3\x81\xbd\xe3\x81\xbd";
-  // "たんぽぽ"
-  candidate->content_value = "\xe3\x81\x9f\xe3\x82\x93\xe3\x81\xbd\xe3\x81\xbd";
+  candidate->value = "たんぽぽ";
+  candidate->content_value = "たんぽぽ";
 }
 }  // namespace
 
-class UserBoundaryHistoryRewriterTest : public testing::Test {
+class UserBoundaryHistoryRewriterTest : public ::testing::Test {
  protected:
   UserBoundaryHistoryRewriterTest() {
     request_.set_config(&config_);
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     UserBoundaryHistoryRewriter rewriter(&mock_);
     // clear history
     rewriter.Clear();
@@ -308,7 +299,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
-  const string segments_str =segments.DebugString();
+  const string segments_str = segments.DebugString();
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
@@ -376,17 +367,17 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str =bounded_segments.DebugString();
+  const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
 
-  const string segments_str =segments.DebugString();
+  const string segments_str = segments.DebugString();
   SetLearningLevel(config::Config::NO_HISTORY);
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str =segments.DebugString();
+  const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -400,16 +391,16 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str =bounded_segments.DebugString();
+  const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(false);
 
-  const string segments_str =segments.DebugString();
+  const string segments_str = segments.DebugString();
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str =segments.DebugString();
+  const string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -423,7 +414,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str =bounded_segments.DebugString();
+  const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);

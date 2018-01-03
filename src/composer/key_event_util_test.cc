@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,8 @@
 
 #include "composer/key_event_util.h"
 
-#include "base/number_util.h"
+#include <string>
+
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
@@ -69,9 +70,9 @@ namespace {
         (actual.has_special_key()) ? actual.special_key() : -1;
     if (expected_special_key != actual_special_key) {
       const string expected_value = (expected_special_key == -1)
-          ? "None" : NumberUtil::SimpleItoa(expected_special_key);
+          ? "None" : std::to_string(expected_special_key);
       const string actual_value = (actual_special_key == -1)
-          ? "None" : NumberUtil::SimpleItoa(actual_special_key);
+          ? "None" : std::to_string(actual_special_key);
       return ::testing::AssertionFailure() <<
           "Special keys are not same\n" <<
           "Expected: " << expected_value << "\n" <<

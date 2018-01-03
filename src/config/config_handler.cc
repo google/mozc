@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,12 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -80,7 +80,7 @@ class ConfigHandlerImpl {
   ConfigHandlerImpl() {
     // <user_profile>/config1.db
     filename_ = kFileNamePrefix;
-    filename_ += NumberUtil::SimpleItoa(CONFIG_VERSION);
+    filename_ += std::to_string(CONFIG_VERSION);
     filename_ += ".db";
     Reload();
     ConfigHandler::GetDefaultConfig(&default_config_);
@@ -270,16 +270,16 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   const Config::CharacterForm kFullWidth = Config::FULL_WIDTH;
   const Config::CharacterForm kLastForm = Config::LAST_FORM;
   // "ア"
-  AddCharacterFormRule("\xE3\x82\xA2", kFullWidth, kFullWidth, config);
+  AddCharacterFormRule("ア", kFullWidth, kFullWidth, config);
   AddCharacterFormRule("A", kFullWidth, kLastForm, config);
   AddCharacterFormRule("0", kFullWidth, kLastForm, config);
   AddCharacterFormRule("(){}[]", kFullWidth, kLastForm, config);
   AddCharacterFormRule(".,", kFullWidth, kLastForm, config);
   // "。、",
-  AddCharacterFormRule("\xE3\x80\x82\xE3\x80\x81", kFullWidth, kFullWidth,
+  AddCharacterFormRule("。、", kFullWidth, kFullWidth,
                        config);
   // "・「」"
-  AddCharacterFormRule("\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D",
+  AddCharacterFormRule("・「」",
                        kFullWidth, kFullWidth, config);
   AddCharacterFormRule("\"'", kFullWidth, kLastForm, config);
   AddCharacterFormRule(":;", kFullWidth, kLastForm, config);

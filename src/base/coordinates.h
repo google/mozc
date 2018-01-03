@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,14 @@ namespace mozc {
 struct Point {
   int x;
   int y;
-  Point(int newx = 0, int newy = 0) : x(newx), y(newy) {}
+  explicit Point(int newx = 0, int newy = 0) : x(newx), y(newy) {}
   Point(const Point &point) : x(point.x), y(point.y) {}
 };
 
 struct Size {
   int width;
   int height;
-  Size(int newwidth = 0, int newheight = 0)
+  explicit Size(int newwidth = 0, int newheight = 0)
       : width(newwidth), height(newheight) {}
   Size(const Size &size) : width(size.width), height(size.height) {}
 };

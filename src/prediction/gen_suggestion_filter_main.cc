@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,10 +84,10 @@ int main(int argc, char **argv) {
   LOG(INFO) << words.size() << " words found";
 
   static const float kErrorRate = 0.00001;
-  const size_t num_bytes = max(
-      ExistenceFilter::MinFilterSizeInBytesForErrorRate(
-          kErrorRate, words.size()),
-      kMinimumFilterBytes);
+  const size_t num_bytes =
+      std::max(ExistenceFilter::MinFilterSizeInBytesForErrorRate(kErrorRate,
+                                                                 words.size()),
+               kMinimumFilterBytes);
 
   LOG(INFO) << "num_bytes: " << num_bytes;
 

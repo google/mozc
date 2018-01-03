@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,11 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
@@ -48,30 +50,35 @@
 #include "converter/lattice.h"
 #include "converter/pos_id_printer.h"
 #include "converter/segments.h"
-#include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
-#include "engine/mock_data_engine_factory.h"
+#include "data_manager/data_manager.h"
+#include "engine/engine.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "session/request_test_util.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200, "maximum candidates size");
 DEFINE_string(user_profile_dir, "", "path to user profile directory");
-DEFINE_string(engine, "default", "engine: (default, chromeos)");
+DEFINE_string(engine, "default",
+              "Shortcut to select engine_data from name: (default|oss|mock)");
+DEFINE_string(engine_type, "desktop", "Engine type: (desktop|mobile)");
 DEFINE_bool(output_debug_string, true, "output debug string for each input");
 DEFINE_bool(show_meta_candidates, false, "if true, show meta candidates");
-DEFINE_string(
-    id_def,
-    "",
-    "id.def file for POS IDs. If provided, show human readable "
-    "POS instead of ID number");
 
-using mozc::composer::Composer;
-using mozc::composer::Table;
-using mozc::config::Config;
+// Advanced options for data files.  These are automatically set when --engine
+// is used but they can be overridden by specifying these flags.
+DEFINE_string(engine_data, "", "Path to engine data file");
+DEFINE_string(magic, "", "Expected magic number of data file");
+DEFINE_string(id_def, "",
+              "id.def file for POS IDs. If provided, show human readable "
+              "POS instead of ID number");
 
 namespace mozc {
 namespace {
+
+using composer::Composer;
+using composer::Table;
+using config::Config;
 
 // Wrapper class for pos id printing
 class PosIdPrintUtil {
@@ -88,7 +95,7 @@ class PosIdPrintUtil {
   string IdToStringInternal(int id) const {
     const string &pos_string = pos_id_printer_->IdToString(id);
     if (pos_string.empty()) {
-      return NumberUtil::SimpleItoa(id);
+      return std::to_string(id);
     }
     return Util::StringPrintf("%s (%d)", pos_string.c_str(), id);
   }
@@ -175,13 +182,13 @@ string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
   for (Segment::Candidate::InnerSegmentIterator iter(&cand);
        !iter.Done(); iter.Next()) {
     string s = "<";
-    iter.GetKey().AppendToString(&s);
+    s.append(iter.GetKey().data(), iter.GetKey().size());
     s.append(", ");
-    iter.GetValue().AppendToString(&s);
+    s.append(iter.GetValue().data(), iter.GetValue().size());
     s.append(", ");
-    iter.GetContentKey().AppendToString(&s);
+    s.append(iter.GetContentKey().data(), iter.GetContentKey().size());
     s.append(", ");
-    iter.GetContentValue().AppendToString(&s);
+    s.append(iter.GetContentValue().data(), iter.GetContentValue().size());
     s.append(1, '>');
     pieces.push_back(s);
   }
@@ -265,7 +272,7 @@ bool ExecCommand(const ConverterInterface &converter,
     CHECK_FIELDS_LENGTH(2);
     Table table;
     Composer composer(&table, &request, &config);
-    composer.InsertCharacterPreedit(fields[1]);
+    composer.SetPreeditTextForTestOnly(fields[1]);
     ConversionRequest conversion_request(&composer, &request, &config);
     return converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
@@ -284,7 +291,7 @@ bool ExecCommand(const ConverterInterface &converter,
     Table table;
     Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
-      composer.InsertCharacterPreedit(fields[1]);
+      composer.SetPreeditTextForTestOnly(fields[1]);
       ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartPredictionForRequest(conversion_request, segments);
     } else {
@@ -295,7 +302,7 @@ bool ExecCommand(const ConverterInterface &converter,
     Table table;
     Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
-      composer.InsertCharacterPreedit(fields[1]);
+      composer.SetPreeditTextForTestOnly(fields[1]);
       ConversionRequest conversion_request(&composer, &request, &config);
       return converter.StartSuggestionForRequest(conversion_request, segments);
     } else {
@@ -374,6 +381,45 @@ bool ExecCommand(const ConverterInterface &converter,
   return true;
 }
 
+std::pair<string, string> SelectDataFileFromName(
+    const string &mozc_runfiles_dir, const string &engine_name) {
+  struct {
+    const char *engine_name;
+    const char *path;
+    const char *magic;
+  } kNameAndPath[] = {
+    {"default", "data_manager/oss/mozc.data", "\xEFMOZC\r\n"},
+    {"oss", "data_manager/oss/mozc.data", "\xEFMOZC\r\n"},
+    {"mock", "data_manager/testing/mock_mozc.data", "MOCK"},
+  };
+  for (const auto &entry : kNameAndPath) {
+    if (engine_name == entry.engine_name) {
+      return std::pair<string, string>(
+          FileUtil::JoinPath(mozc_runfiles_dir, entry.path),
+          entry.magic);
+    }
+  }
+  return std::pair<string, string>("", "");
+}
+
+string SelectIdDefFromName(const string &mozc_runfiles_dir,
+                           const string &engine_name) {
+  struct {
+    const char *engine_name;
+    const char *path;
+  } kNameAndPath[] = {
+    {"default", "data/dictionary_oss/id.def"},
+    {"oss", "data/dictionary_oss/id.def"},
+    {"mock", "data/test/dictionary/id.def"},
+  };
+  for (const auto &entry : kNameAndPath) {
+    if (engine_name == entry.engine_name) {
+      return FileUtil::JoinPath(mozc_runfiles_dir, entry.path);
+    }
+  }
+  return "";
+}
+
 }  // namespace
 }  // namespace mozc
 
@@ -384,18 +430,43 @@ int main(int argc, char **argv) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_dir);
   }
 
-  std::unique_ptr<mozc::EngineInterface> engine;
-  mozc::commands::Request request;
-  if (FLAGS_engine == "default") {
-    LOG(INFO) << "Using default preference and engine";
-    engine.reset(mozc::EngineFactory::Create());
+  string mozc_runfiles_dir = ".";
+  if (FLAGS_engine_data.empty()) {
+    const auto path_and_magic = mozc::SelectDataFileFromName(mozc_runfiles_dir,
+                                                             FLAGS_engine);
+    FLAGS_engine_data = path_and_magic.first;
+    FLAGS_magic = path_and_magic.second;
   }
-  if (FLAGS_engine == "test") {
-    LOG(INFO) << "Using test preference and engine";
-    engine.reset(mozc::MockDataEngineFactory::Create());
+  CHECK(!FLAGS_engine_data.empty())
+      << "--engine_data or --engine is invalid: "
+      << "--engine_data=" << FLAGS_engine_data << " "
+      << "--engine=" << FLAGS_engine;
+
+  if (FLAGS_id_def.empty()) {
+    FLAGS_id_def = mozc::SelectIdDefFromName(mozc_runfiles_dir, FLAGS_engine);
   }
 
-  CHECK(engine.get()) << "Invalid engine: " << FLAGS_engine;
+  std::cout << "Engine type: " << FLAGS_engine_type
+            << "\nData file: " << FLAGS_engine_data
+            << "\nid.def: " << FLAGS_id_def << std::endl;
+
+  std::unique_ptr<mozc::DataManager> data_manager(new mozc::DataManager);
+  const auto status = data_manager->InitFromFile(FLAGS_engine_data,
+                                                 FLAGS_magic);
+  CHECK_EQ(status, mozc::DataManager::Status::OK);
+
+  mozc::commands::Request request;
+  std::unique_ptr<mozc::EngineInterface> engine;
+  if (FLAGS_engine_type == "desktop") {
+    engine = mozc::Engine::CreateDesktopEngine(std::move(data_manager));
+  } else if (FLAGS_engine_type == "mobile") {
+    engine = mozc::Engine::CreateMobileEngine(std::move(data_manager));
+    mozc::commands::RequestForUnitTest::FillMobileRequest(&request);
+  } else {
+    LOG(FATAL) << "Invalid type: --engine_type=" << FLAGS_engine_type;
+    return 0;
+  }
+
   mozc::ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 

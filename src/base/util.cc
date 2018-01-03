@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#include <WinCrypt.h>
-#include <time.h>
+#include <WinCrypt.h>  // WinCrypt.h must be included after Windows.h
 #include <stdio.h>  // MSVC requires this for _vsnprintf
+#include <time.h>
 #else  // OS_WIN
 
 #ifdef OS_MACOSX
@@ -364,7 +364,7 @@ void Util::JoinStringPieces(const std::vector<StringPiece> &pieces,
     len += pieces[i].size();
   }
   output->reserve(len);
-  pieces[0].CopyToString(output);
+  output->assign(pieces[0].data(), pieces[0].size());
   for (size_t i = 1; i < pieces.size(); ++i) {
     output->append(delim, delim_len);
     output->append(pieces[i].data(), pieces[i].size());
@@ -372,8 +372,8 @@ void Util::JoinStringPieces(const std::vector<StringPiece> &pieces,
 }
 
 void Util::ConcatStrings(StringPiece s1, StringPiece s2, string *output) {
-  s1.CopyToString(output);
-  s2.AppendToString(output);
+  output->assign(s1.data(), s1.size());
+  output->append(s2.data(), s2.size());
 }
 
 void Util::AppendStringWithDelimiter(StringPiece delimiter,
@@ -381,9 +381,9 @@ void Util::AppendStringWithDelimiter(StringPiece delimiter,
                                      string *output) {
   CHECK(output);
   if (!output->empty()) {
-    delimiter.AppendToString(output);
+    output->append(delimiter.data(), delimiter.size());
   }
-  append_string.AppendToString(output);
+  output->append(append_string.data(), append_string.size());
 }
 
 
@@ -391,7 +391,7 @@ void Util::StringReplace(StringPiece s, StringPiece oldsub,
                          StringPiece newsub, bool replace_all,
                          string *res) {
   if (oldsub.empty()) {
-    s.AppendToString(res);  // if empty, append the given string.
+    res->append(s.data(), s.size());  // if empty, append the given string.
     return;
   }
 
@@ -403,7 +403,7 @@ void Util::StringReplace(StringPiece s, StringPiece oldsub,
       break;
     }
     res->append(s.data() + start_pos, pos - start_pos);
-    newsub.AppendToString(res);
+    res->append(newsub.data(), newsub.size());
     start_pos = pos + oldsub.size();  // start searching again after the "old"
   } while (replace_all);
   res->append(s.data() + start_pos, s.length() - start_pos);
@@ -504,7 +504,7 @@ bool Util::IsCapitalizedAscii(StringPiece s) {
     return true;
   }
   if (isupper(*s.begin())) {
-    return IsLowerAscii(s.substr(1));
+    return IsLowerAscii(ClippedSubstr(s, 1));
   }
   return false;
 }
@@ -514,10 +514,10 @@ bool Util::IsLowerOrUpperAscii(StringPiece s) {
     return true;
   }
   if (islower(*s.begin())) {
-    return IsLowerAscii(s.substr(1));
+    return IsLowerAscii(ClippedSubstr(s, 1));
   }
   if (isupper(*s.begin())) {
-    return IsUpperAscii(s.substr(1));
+    return IsUpperAscii(ClippedSubstr(s, 1));
   }
   return false;
 }
@@ -527,7 +527,7 @@ bool Util::IsUpperOrCapitalizedAscii(StringPiece s) {
     return true;
   }
   if (isupper(*s.begin())) {
-    return IsLowerOrUpperAscii(s.substr(1));
+    return IsLowerOrUpperAscii(ClippedSubstr(s, 1));
   }
   return false;
 }
@@ -628,7 +628,7 @@ bool Util::SplitFirstChar32(StringPiece s,
       const uint8 leading_byte = static_cast<uint8>(s[0]);
       if (leading_byte < 0x80) {
         *first_char32 = leading_byte;
-        *rest = s.substr(1);
+        *rest = ClippedSubstr(s, 1);
         return true;
       }
 
@@ -688,7 +688,7 @@ bool Util::SplitFirstChar32(StringPiece s,
       return false;
     }
     *first_char32 = result;
-    *rest = s.substr(len);
+    *rest = ClippedSubstr(s, len);
     return true;
   }
 }
@@ -717,7 +717,7 @@ bool Util::SplitLastChar32(StringPiece s,
     return false;
   }
   const StringPiece::difference_type len = std::distance(s.rbegin(), it) + 1;
-  const StringPiece last_piece = s.substr(s.size() - len);
+  const StringPiece last_piece = ClippedSubstr(s, s.size() - len);
   StringPiece result_piece;
   if (!SplitFirstChar32(last_piece, last_char32, &result_piece)) {
     return false;
@@ -869,7 +869,7 @@ void Util::SubString(StringPiece src, size_t start, size_t length,
                      string *result) {
   DCHECK(result);
   const StringPiece substr = SubStringPiece(src, start, length);
-  substr.CopyToString(result);
+  result->assign(substr.data(), substr.size());
 }
 
 void Util::StripUTF8BOM(string *line) {
@@ -1025,7 +1025,7 @@ namespace {
 void EscapeInternal(char input, StringPiece prefix, string *output) {
   const int hi = ((static_cast<int>(input) & 0xF0) >> 4);
   const int lo = (static_cast<int>(input) & 0x0F);
-  prefix.AppendToString(output);
+  output->append(prefix.data(), prefix.size());
   *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
@@ -1255,21 +1255,21 @@ struct BracketPair {
 // NOTE: This array is sorted in order of both |open| and |close|.  If you add a
 // new bracket pair, you must keep this property.
 const BracketPair kSortedBracketPairs[] = {
-  {"\x28", 1, "\x29", 1},  // "(", ")"
-  {"\x5B", 1, "\x5D", 1},  // "[", "]"
-  {"\x7B", 1, "\x7D", 1},  // "{", "}"
-  {"\xE3\x80\x88", 3, "\xE3\x80\x89", 3},  // "〈", "〉"
-  {"\xE3\x80\x8A", 3, "\xE3\x80\x8B", 3},  // "《", "》"
-  {"\xE3\x80\x8C", 3, "\xE3\x80\x8D", 3},  // "「", "」"
-  {"\xE3\x80\x8E", 3, "\xE3\x80\x8F", 3},  // "『", "』"
-  {"\xE3\x80\x90", 3, "\xE3\x80\x91", 3},  // "【", "】"
-  {"\xE3\x80\x94", 3, "\xE3\x80\x95", 3},  // "〔", "〕"
-  {"\xE3\x80\x98", 3, "\xE3\x80\x99", 3},  // "〘", "〙"
-  {"\xE3\x80\x9A", 3, "\xE3\x80\x9B", 3},  // "〚", "〛"
-  {"\xEF\xBC\x88", 3, "\xEF\xBC\x89", 3},  // "（", "）"
-  {"\xEF\xBC\xBB", 3, "\xEF\xBC\xBD", 3},  // "［", "］"
-  {"\xEF\xBD\x9B", 3, "\xEF\xBD\x9D", 3},  // "｛", "｝"
-  {"\xEF\xBD\xA2", 3, "\xEF\xBD\xA3", 3},  // "｢", "｣"
+  {"(", 1, ")", 1},
+  {"[", 1, "]", 1},
+  {"{", 1, "}", 1},
+  {"〈", 3, "〉", 3},
+  {"《", 3, "》", 3},
+  {"「", 3, "」", 3},
+  {"『", 3, "』", 3},
+  {"【", 3, "】", 3},
+  {"〔", 3, "〕", 3},
+  {"〘", 3, "〙", 3},
+  {"〚", 3, "〛", 3},
+  {"（", 3, "）", 3},
+  {"［", 3, "］", 3},
+  {"｛", 3, "｝", 3},
+  {"｢", 3, "｣", 3},
 };
 
 }  // namespace
@@ -1286,7 +1286,7 @@ bool Util::IsOpenBracket(StringPiece key, string *close_bracket) {
   if (iter == end || iter->GetOpenBracket() != key) {
     return false;
   }
-  iter->GetCloseBracket().CopyToString(close_bracket);
+  *close_bracket = string(iter->GetCloseBracket());
   return true;
 }
 
@@ -1302,7 +1302,7 @@ bool Util::IsCloseBracket(StringPiece key, string *open_bracket) {
   if (iter == end || iter->GetCloseBracket() != key) {
     return false;
   }
-  iter->GetOpenBracket().CopyToString(open_bracket);
+  *open_bracket = string(iter->GetOpenBracket());
   return true;
 }
 
@@ -1729,12 +1729,12 @@ Util::FormType Util::GetFormType(const string &str) {
 }
 
 // Util::CharcterSet Util::GetCharacterSet(char32 ucs4);
-#include "base/character_set.h"
+#include "base/character_set.inc"
 
 Util::CharacterSet Util::GetCharacterSet(StringPiece str) {
   CharacterSet result = ASCII;
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    result = max(result, GetCharacterSet(iter.Get()));
+    result = std::max(result, GetCharacterSet(iter.Get()));
   }
   return result;
 }

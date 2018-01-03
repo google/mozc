@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -236,11 +236,13 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
 
         const StringPiece value_suffix = string_array_[
             base_conjugation_suffix_[2 * iter.conjugation_id()]];
-        string_array_[iter.value_index()].CopyToString(&candidate->usage_title);
-        value_suffix.AppendToString(&candidate->usage_title);
+        candidate->usage_title.assign(string_array_[iter.value_index()].data(),
+                                      string_array_[iter.value_index()].size());
+        candidate->usage_title.append(value_suffix.data(), value_suffix.size());
 
-        string_array_[iter.meaning_index()].CopyToString(
-            &candidate->usage_description);
+        candidate->usage_description.assign(
+            string_array_[iter.meaning_index()].data(),
+            string_array_[iter.meaning_index()].size());
 
         VLOG(2) << i << ":" << j
                 << ":" << candidate->content_key

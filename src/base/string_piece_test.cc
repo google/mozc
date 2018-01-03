@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -417,9 +417,9 @@ TEST(StringPieceTest, CheckSTL) {
   ASSERT_EQ(a.substr(0), a);
   ASSERT_EQ(a.substr(3, 2), "de");
   // empty string nonsense
+  ASSERT_EQ(d.substr(0, 99), e);
   ASSERT_EQ(a.substr(99, 2), e);
   ASSERT_EQ(d.substr(99), e);
-  ASSERT_EQ(d.substr(0, 99), e);
   ASSERT_EQ(d.substr(99, 99), e);
 }
 
@@ -431,25 +431,6 @@ TEST(StringPieceTest, CheckCustom) {
   StringPiece b(s1);
   StringPiece e;
   string s2;
-
-  // CopyToString
-  a.CopyToString(&s2);
-  ASSERT_SIZE_EQ(s2.size(), 6);
-  ASSERT_EQ(s2, "foobar");
-  b.CopyToString(&s2);
-  ASSERT_SIZE_EQ(s2.size(), 7);
-  ASSERT_EQ(s1, s2);
-  e.CopyToString(&s2);
-  ASSERT_TRUE(s2.empty());
-
-  // AppendToString
-  s2.erase();
-  a.AppendToString(&s2);
-  ASSERT_SIZE_EQ(s2.size(), 6);
-  ASSERT_EQ(s2, "foobar");
-  a.AppendToString(&s2);
-  ASSERT_SIZE_EQ(s2.size(), 12);
-  ASSERT_EQ(s2, "foobarfoobar");
 
   // starts_with
   ASSERT_TRUE(a.starts_with(a));
@@ -496,14 +477,14 @@ TEST(StringPieceTest, CheckCustom) {
   ASSERT_EQ(c, e);
 
   // set
-  c.set("foobar", 6);
+  c = StringPiece("foobar", 6);
   ASSERT_EQ(c, a);
-  c.set("foobar", 0);
+  c = StringPiece("foobar", 0);
   ASSERT_EQ(c, e);
-  c.set("foobar", 7);
+  c = StringPiece("foobar", 7);
   ASSERT_NE(c, a);
 
-  c.set("foobar");
+  c = StringPiece("foobar");
   ASSERT_EQ(c, a);
 
   // as_string
@@ -512,6 +493,16 @@ TEST(StringPieceTest, CheckCustom) {
   ASSERT_EQ(c, s3);
   string s4(e.as_string());
   ASSERT_TRUE(s4.empty());
+
+  // cast to string
+  c = StringPiece("foobar");
+  ASSERT_EQ(string("foobar"), string(c));
+  c = StringPiece("foobar", 6);
+  ASSERT_EQ(string("foobar"), string(c));
+  c = StringPiece("foobarfoobar", 6);
+  ASSERT_EQ(string("foobar"), string(c));
+  string s5 = string(e);
+  ASSERT_TRUE(s5.empty());
 }
 
 TEST(StringPieceTest, CheckNULL) {
@@ -520,7 +511,7 @@ TEST(StringPieceTest, CheckNULL) {
   ASSERT_EQ(static_cast<const char *>(NULL), s.data());
   ASSERT_SIZE_EQ(s.size(), 0);
 
-  s.set(NULL);
+  s = StringPiece(NULL);
   ASSERT_EQ(static_cast<const char *>(NULL), s.data());
   ASSERT_SIZE_EQ(s.size(), 0);
 }

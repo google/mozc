@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -318,7 +318,7 @@ TEST(SegmentsTest, RevertEntryTest) {
   const int kSize = 10;
   for (int i = 0; i < kSize; ++i) {
     Segments::RevertEntry *e = segments.push_back_revert_entry();
-    e->key = "test" + NumberUtil::SimpleItoa(i);
+    e->key = "test" + std::to_string(i);
     e->id = i;
   }
 
@@ -327,12 +327,12 @@ TEST(SegmentsTest, RevertEntryTest) {
   for (int i = 0; i < kSize; ++i) {
     {
       const Segments::RevertEntry &e = segments.revert_entry(i);
-      EXPECT_EQ(string("test") + NumberUtil::SimpleItoa(i), e.key);
+      EXPECT_EQ(string("test") + std::to_string(i), e.key);
       EXPECT_EQ(i, e.id);
     }
     {
       Segments::RevertEntry *e = segments.mutable_revert_entry(i);
-      EXPECT_EQ(string("test") + NumberUtil::SimpleItoa(i), e->key);
+      EXPECT_EQ(string("test") + std::to_string(i), e->key);
       EXPECT_EQ(i, e->id);
     }
   }
@@ -340,12 +340,12 @@ TEST(SegmentsTest, RevertEntryTest) {
   for (int i = 0; i < kSize; ++i) {
     Segments::RevertEntry *e = segments.mutable_revert_entry(i);
     e->id = kSize - i;
-    e->key = "test2" + NumberUtil::SimpleItoa(i);
+    e->key = "test2" + std::to_string(i);
   }
 
   for (int i = 0; i < kSize; ++i) {
     const Segments::RevertEntry &e = segments.revert_entry(i);
-    EXPECT_EQ(string("test2") + NumberUtil::SimpleItoa(i), e.key);
+    EXPECT_EQ(string("test2") + std::to_string(i), e.key);
     EXPECT_EQ(kSize - i, e.id);
   }
 
@@ -549,7 +549,7 @@ TEST(SegmentTest, MetaCandidateTest) {
   const int kCandidatesSize = 5;
   std::vector<string> values;
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    values.push_back(string('a' + i, 1));
+    values.push_back(string(1, 'a' + i));
   }
 
   // add_meta_candidate()

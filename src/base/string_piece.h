@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #ifndef MOZC_BASE_STRING_PIECE_H_
 #define MOZC_BASE_STRING_PIECE_H_
 
+#include <algorithm>
 #include <cstddef>
 #include <cstring>
 #include <iosfwd>
@@ -113,6 +114,10 @@ class StringPiece {
 
   string as_string() const {
     // string doesn't like to take a nullptr pointer even with a 0 size.
+    return string(!empty() ? data() : "", size());
+  }
+
+  explicit operator string() const {
     return string(!empty() ? data() : "", size());
   }
 
@@ -206,6 +211,14 @@ class StringPiece {
 
 // allow StringPiece to be logged (needed for unit testing).
 extern ostream &operator<<(ostream &o, const StringPiece &piece);
+
+inline StringPiece ClippedSubstr(StringPiece sp, size_t pos,
+                                 size_t n = StringPiece::npos) {
+  size_t sp_size = sp.size();
+  pos = std::min(pos, sp_size);
+  n = std::min(n, sp_size - pos);
+  return sp.substr(pos, n);
+}
 
 
 }  // namespace mozc

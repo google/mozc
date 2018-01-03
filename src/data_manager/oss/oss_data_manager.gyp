@@ -1,4 +1,4 @@
-# Copyright 2010-2016, Google Inc.
+# Copyright 2010-2018, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@
     'magic_number': "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A",
     'mozc_data_varname': 'kOssMozcDataSet',
     'out_mozc_data': 'mozc.data',
-    'out_mozc_data_header': 'mozc_data.h',
+    'out_mozc_data_header': 'mozc_data.inc',
   },
   # This 'includes' defines the following targets:
   #   - oss_data_manager  (type: static_library)

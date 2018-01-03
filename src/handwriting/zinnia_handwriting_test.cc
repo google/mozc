@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ namespace handwriting {
 
 class ZinniaHandwritingTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     const string filepath = mozc::testing::GetSourceFileOrDie({
         "handwriting", "handwriting-ja.model"});
     zinnia_.reset(new ZinniaHandwriting(filepath));
@@ -63,8 +63,7 @@ TEST_F(ZinniaHandwritingTest, Recognize) {
   std::vector<string> results;
   const HandwritingStatus status = zinnia_->Recognize(strokes, &results);
   EXPECT_EQ(HANDWRITING_NO_ERROR, status);
-  // "一"
-  EXPECT_EQ("\xE4\xB8\x80", results[0]);
+  EXPECT_EQ("一", results[0]);
 }
 
 TEST_F(ZinniaHandwritingTest, Commit) {

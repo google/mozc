@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace {
 
 size_t CommandCandidatesSize(const Segment &segment) {
   size_t result = 0;
@@ -64,7 +65,7 @@ string GetCommandCandidateValue(const Segment &segment) {
   return "";
 }
 
-class CommandRewriterTest : public testing::Test {
+class CommandRewriterTest : public ::testing::Test {
  protected:
   CommandRewriterTest() {
     convreq_.set_request(&request_);
@@ -96,11 +97,8 @@ TEST_F(CommandRewriterTest, Rewrite) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("こまんど");
-    // candidate->value = "コマンド";
-    seg->set_key("\xE3\x81\x93\xE3\x81\xBE\xE3\x82\x93\xE3\x81\xA9");
-    candidate->value = "\xE3\x82\xB3\xE3\x83\x9E"
-        "\xE3\x83\xB3\xE3\x83\x89";
+    seg->set_key("こまんど");
+    candidate->value = "コマンド";
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
     EXPECT_EQ(2, CommandCandidatesSize(*seg));
     seg->clear_candidates();
@@ -108,12 +106,8 @@ TEST_F(CommandRewriterTest, Rewrite) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("さじぇすと");
-    // candidate->value = "サジェスト";
-    seg->set_key("\xE3\x81\x95\xE3\x81\x98\xE3\x81\x87"
-                 "\xE3\x81\x99\xE3\x81\xA8");
-    candidate->value = "\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
-        "\xE3\x82\xB9\xE3\x83\x88";
+    seg->set_key("さじぇすと");
+    candidate->value = "サジェスト";
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
     EXPECT_EQ(1, CommandCandidatesSize(*seg));
     seg->clear_candidates();
@@ -121,10 +115,8 @@ TEST_F(CommandRewriterTest, Rewrite) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("ひみつ");
-    // candidate->value = "秘密";
-    seg->set_key("\xE3\x81\xB2\xE3\x81\xBF\xE3\x81\xA4");
-    candidate->value = "\xE7\xA7\x98\xE5\xAF\x86";
+    seg->set_key("ひみつ");
+    candidate->value = "秘密";
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
     EXPECT_EQ(1, CommandCandidatesSize(*seg));
     seg->clear_candidates();
@@ -132,10 +124,8 @@ TEST_F(CommandRewriterTest, Rewrite) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("きょうと");
-    // candidate->value = "京都";
-    seg->set_key("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8");
-    candidate->value = "\xE4\xBA\xAC\xE9\x83\xBD";
+    seg->set_key("きょうと");
+    candidate->value = "京都";
     EXPECT_FALSE(rewriter.Rewrite(convreq_, &segments));
     EXPECT_EQ(0, CommandCandidatesSize(*seg));
     seg->clear_candidates();
@@ -144,16 +134,12 @@ TEST_F(CommandRewriterTest, Rewrite) {
   {
     // don't trigger when multiple segments.
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("こまんど");
-    // candidate->value = "コマンド";
-    seg->set_key("\xE3\x81\x93\xE3\x81\xBE\xE3\x82\x93\xE3\x81\xA9");
-    candidate->value = "\xE3\x82\xB3\xE3\x83\x9E\xE3\x83\xB3\xE3\x83\x89";
+    seg->set_key("こまんど");
+    candidate->value = "コマンド";
     Segment *seg2 = segments.push_back_segment();
     Segment::Candidate *candidate2 = seg2->add_candidate();
-    // seg2->set_key("です");
-    // candidate2->value = "です";
-    seg2->set_key("\xE3\x81\xA7\xE3\x81\x99");
-    candidate2->value = "\xE3\x81\xA7\xE3\x81\x99";
+    seg2->set_key("です");
+    candidate2->value = "です";
     EXPECT_FALSE(rewriter.Rewrite(convreq_, &segments));
     EXPECT_EQ(0, CommandCandidatesSize(*seg));
   }
@@ -166,78 +152,44 @@ TEST_F(CommandRewriterTest, ValueCheck) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("さじぇすと");
-    // candidate->value = "サジェスト";
-    seg->set_key("\xE3\x81\x95\xE3\x81\x98\xE3\x81\x87"
-                 "\xE3\x81\x99\xE3\x81\xA8");
-    candidate->value = "\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
-        "\xE3\x82\xB9\xE3\x83\x88";
+    seg->set_key("さじぇすと");
+    candidate->value = "サジェスト";
     config_.set_presentation_mode(false);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    // EXPECT_EQ("サジェスト機能の一時停止",
-    // GetCommandCandidateValue(*seg));
-    EXPECT_EQ("\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
-              "\xE3\x82\xB9\xE3\x83\x88\xE6\xA9\x9F"
-              "\xE8\x83\xBD\xE3\x81\xAE\xE4\xB8\x80"
-              "\xE6\x99\x82\xE5\x81\x9C\xE6\xAD\xA2",
-              GetCommandCandidateValue(*seg));
+    EXPECT_EQ("サジェスト機能の一時停止", GetCommandCandidateValue(*seg));
     seg->clear_candidates();
   }
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("さじぇすと");
-    // candidate->value = "サジェスト";
-    seg->set_key("\xE3\x81\x95\xE3\x81\x98\xE3\x81\x87"
-                 "\xE3\x81\x99\xE3\x81\xA8");
-    candidate->value = "\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
-        "\xE3\x82\xB9\xE3\x83\x88";
+    seg->set_key("さじぇすと");
+    candidate->value = "サジェスト";
     config_.set_presentation_mode(true);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    // EXPECT_EQ("サジェスト機能を元に戻す",
-    // GetCommandCandidateValue(*seg));
-    EXPECT_EQ("\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
-              "\xE3\x82\xB9\xE3\x83\x88\xE6\xA9\x9F"
-              "\xE8\x83\xBD\xE3\x82\x92\xE5\x85\x83"
-              "\xE3\x81\xAB\xE6\x88\xBB\xE3\x81\x99",
-              GetCommandCandidateValue(*seg));
+    EXPECT_EQ("サジェスト機能を元に戻す", GetCommandCandidateValue(*seg));
     seg->clear_candidates();
   }
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("ひみつ");
-    // candidate->value = "秘密";
-    seg->set_key("\xE3\x81\xB2\xE3\x81\xBF\xE3\x81\xA4");
-    candidate->value = "\xE7\xA7\x98\xE5\xAF\x86";
+    seg->set_key("ひみつ");
+    candidate->value = "秘密";
     config_.set_incognito_mode(false);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    // EXPECT_EQ("シークレットモードをオン",
-    // GetCommandCandidateValue(*seg));
-    EXPECT_EQ("\xE3\x82\xB7\xE3\x83\xBC\xE3\x82\xAF"
-              "\xE3\x83\xAC\xE3\x83\x83\xE3\x83\x88"
-              "\xE3\x83\xA2\xE3\x83\xBC\xE3\x83\x89"
-              "\xE3\x82\x92\xE3\x82\xAA\xE3\x83\xB3",
-              GetCommandCandidateValue(*seg));
+    EXPECT_EQ("シークレットモードをオン", GetCommandCandidateValue(*seg));
     seg->clear_candidates();
   }
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    // seg->set_key("ひみつ");
-    // candidate->value = "秘密";
-    seg->set_key("\xE3\x81\xB2\xE3\x81\xBF\xE3\x81\xA4");
-    candidate->value = "\xE7\xA7\x98\xE5\xAF\x86";
+    seg->set_key("ひみつ");
+    candidate->value = "秘密";
     config_.set_incognito_mode(true);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    // EXPECT_EQ("シークレットモードをオフ",
-    //               GetCommandCandidateValue(*seg));
-    EXPECT_EQ("\xE3\x82\xB7\xE3\x83\xBC\xE3\x82\xAF"
-              "\xE3\x83\xAC\xE3\x83\x83\xE3\x83\x88"
-              "\xE3\x83\xA2\xE3\x83\xBC\xE3\x83\x89"
-              "\xE3\x82\x92\xE3\x82\xAA\xE3\x83\x95",
-              GetCommandCandidateValue(*seg));
+    EXPECT_EQ("シークレットモードをオフ", GetCommandCandidateValue(*seg));
     seg->clear_candidates();
   }
 }
+
+}  // namespace
 }  // namespace mozc

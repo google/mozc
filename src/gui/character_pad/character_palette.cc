@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,57 +60,23 @@ const char kJISX0212Name[] = "JISX 0212";
 
 const CharacterPalette::UnicodeRange kUCS2Range = { 0, 0xffff };
 
-//   static const CP932JumpTo kCP932JumpTo[] = {
-//     { "半角英数字",    0x0020 },
-//     { "半角カタカナ",  0x00A1 },
-//     { "全角記号",      0x8141 },
-//     { "全角英数字",    0x8250 },
-//     { "ひらがな",      0x829F },
-//     { "カタカナ",      0x8340 },
-//     { "丸数字",        0x8740 },
-//     { "ローマ数字",    0xFA40 },
-//     { "単位",          0x875F },
-//     { "その他の記号",  0x8780 },
-//     { "ギリシャ文字",  0x839F },
-//     { "キリル文字",    0x8440 },
-//     { "罫線",          0x849F },
-//     { "第一水準漢字",  0x889F },
-//     { "第二水準漢字",  0x989F },
-//     { NULL, 0 }
-//   };
-
 const CharacterPalette::CP932JumpTo kCP932JumpTo[] = {
-  { "\xE5\x8D\x8A\xE8\xA7\x92\xE8\x8B\xB1\xE6\x95\xB0\xE5\xAD\x97",
-    0x0020 },
-  { "\xE5\x8D\x8A\xE8\xA7\x92\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A",
-    0x00A1 },
-  { "\xE5\x85\xA8\xE8\xA7\x92\xE8\xA8\x98\xE5\x8F\xB7",
-    0x8141 },
-  { "\xE5\x85\xA8\xE8\xA7\x92\xE8\x8B\xB1\xE6\x95\xB0\xE5\xAD\x97",
-    0x8250 },
-  { "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA",
-    0x829F },
-  { "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A",
-    0x8340 },
-  { "\xE4\xB8\xB8\xE6\x95\xB0\xE5\xAD\x97",
-    0x8740 },
-  { "\xE3\x83\xAD\xE3\x83\xBC\xE3\x83\x9E\xE6\x95\xB0\xE5\xAD\x97",
-    0xFA40 },
-  { "\xE5\x8D\x98\xE4\xBD\x8D",
-    0x875F },
-  { "\xE3\x81\x9D\xE3\x81\xAE\xE4\xBB\x96\xE3\x81\xAE\xE8\xA8\x98\xE5\x8F\xB7",
-    0x8780 },
-  { "\xE3\x82\xAE\xE3\x83\xAA\xE3\x82\xB7\xE3\x83\xA3\xE6\x96\x87\xE5\xAD\x97",
-    0x839F },
-  { "\xE3\x82\xAD\xE3\x83\xAA\xE3\x83\xAB\xE6\x96\x87\xE5\xAD\x97",
-    0x8440 },
-  { "\xE7\xBD\xAB\xE7\xB7\x9A",
-    0x849F },
-  { "\xE7\xAC\xAC\xE4\xB8\x80\xE6\xB0\xB4\xE6\xBA\x96\xE6\xBC\xA2\xE5\xAD\x97",
-    0x889F },
-  { "\xE7\xAC\xAC\xE4\xBA\x8C\xE6\xB0\xB4\xE6\xBA\x96\xE6\xBC\xA2\xE5\xAD\x97",
-    0x989F },
-  { NULL, 0 }
+    {"半角英数字", 0x0020},
+    {"半角カタカナ", 0x00A1},
+    {"全角記号", 0x8141},
+    {"全角英数字", 0x8250},
+    {"ひらがな", 0x829F},
+    {"カタカナ", 0x8340},
+    {"丸数字", 0x8740},
+    {"ローマ数字", 0xFA40},
+    {"単位", 0x875F},
+    {"その他の記号", 0x8780},
+    {"ギリシャ文字", 0x839F},
+    {"キリル文字", 0x8440},
+    {"罫線", 0x849F},
+    {"第一水準漢字", 0x889F},
+    {"第二水準漢字", 0x989F},
+    {NULL, 0},
 };
 
 // Adds a child QTreeWidgetItem with the text "name" to parent.
@@ -277,8 +243,7 @@ void CharacterPalette::resizeEvent(QResizeEvent *) {
 
 void CharacterPalette::updateTableSize() {
   // here we use "龍" to calc font size, as it looks almsot square
-  // const char kHexBaseChar[]= "龍";
-  const char kHexBaseChar[]= "\xE9\xBE\x8D";
+  const char kHexBaseChar[]= "龍";
   const QRect rect =
       QFontMetrics(tableWidget->font()).boundingRect(trUtf8(kHexBaseChar));
 

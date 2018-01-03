@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
   RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x,
                                             &scale_factor_y);
 
-  // TODO(horo):Change to read from human-readable ASCII format protobuf.
+  // TODO(horo): Change to read from human-readable ASCII format protobuf.
   style->Clear();
   style->set_window_border(1);  // non-scalable
   style->set_scrollbar_width(4 * scale_factor_x);
@@ -119,9 +119,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
 
   // We want to ensure that the candidate window is at least wide
   // enough to render "そのほかの文字種  " as a candidate.
-  style->set_column_minimum_width_string(
-    "\xE3\x81\x9D\xE3\x81\xAE\xE3\x81\xBB\xE3\x81\x8B\xE3\x81\xAE"
-    "\xE6\x96\x87\xE5\xAD\x97\xE7\xA8\xAE  ");
+  style->set_column_minimum_width_string("そのほかの文字種  ");
 
   style->mutable_footer_style()->set_font_size(14 * scale_factor_y);
   style->mutable_footer_style()->set_left_padding(4 * scale_factor_x);
@@ -168,8 +166,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
   style->mutable_scrollbar_indicator_color()->set_b(0xb8);
 
   RendererStyle::InfolistStyle *infostyle = style->mutable_infolist_style();
-  // "用例"
-  infostyle->set_caption_string("\xE7\x94\xA8\xE4\xBE\x8B");
+  infostyle->set_caption_string("用例");
   infostyle->set_caption_height(20 * scale_factor_y);
   infostyle->set_caption_padding(1);
   infostyle->mutable_caption_style()->set_font_size(12 * scale_factor_y);
@@ -196,7 +193,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
   infostyle->mutable_focused_border_color()->set_g(0xac);
   infostyle->mutable_focused_border_color()->set_b(0xdd);
 }
-} // namespace
+}  // namespace
 
 bool RendererStyleHandler::GetRendererStyle(RendererStyle *style) {
   return GetRendererStyleHandlerImpl()->GetRendererStyle(style);
@@ -210,24 +207,24 @@ void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle *style) {
 
 void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
 #if defined OS_WIN
-  WTL::CDC desktop_dc(::GetDC(NULL));
+  WTL::CDC desktop_dc(::GetDC(nullptr));
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
-  if (x != NULL) {
+  if (x != nullptr) {
     *x = static_cast<double>(dpi_x) / kDefaultDPI;
   }
-  if (y != NULL) {
+  if (y != nullptr) {
     *y = static_cast<double>(dpi_y) / kDefaultDPI;
   }
 #else
-  if (x != NULL) {
+  if (x != nullptr) {
     *x = 1.0;
   }
-  if (y != NULL) {
+  if (y != nullptr) {
     *y = 1.0;
   }
 #endif
 }
 
-} // namespace renderer
-} // namespace mozc
+}  // namespace renderer
+}  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -239,9 +239,9 @@ void GenerateDescription(StringPiece variant_token_array,
   const uint32 type_id = iter[2];
   DCHECK_LT(type_id, variant_type.size());
   // Format like "XXXのYYY"
-  original.CopyToString(desc);
-  desc->append("\xe3\x81\xae");  // "の"
-  variant_type[type_id].AppendToString(desc);
+  desc->assign(original.data(), original.size());
+  desc->append("の");
+  desc->append(variant_type[type_id].data(), variant_type[type_id].size());
 }
 
 // Add single kanji variants description to existing candidates,
@@ -333,19 +333,20 @@ void InsertNounPrefix(const POSMatcher &pos_matcher,
                                  segment->key() :
                                  segment->candidate(0).key);
   for (auto iter = begin; iter != end; ++iter) {
-    const int insert_pos = min(
+    const int insert_pos = std::min(
         static_cast<int>(segment->candidates_size()),
-        static_cast<int>(iter.cost() +
-                         (segment->candidate(0).attributes &
-                          Segment::Candidate::CONTEXT_SENSITIVE) ? 1 : 0));
+        static_cast<int>(iter.cost() + (segment->candidate(0).attributes &
+                                        Segment::Candidate::CONTEXT_SENSITIVE)
+                             ? 1
+                             : 0));
     Segment::Candidate *c = segment->insert_candidate(insert_pos);
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();
     c->cost = 5000;
-    iter.value().CopyToString(&c->content_value);
+    c->content_value = string(iter.value());
     c->key = candidate_key;
     c->content_key = candidate_key;
-    iter.value().CopyToString(&c->value);
+    c->value = string(iter.value());
     c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   }

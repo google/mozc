@@ -1,4 +1,4 @@
-// Copyright 2010-2016, Google Inc.
+// Copyright 2010-2018, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -108,5 +108,23 @@ DECLARE_VARIABLE(bool, B, name)
 DEFINE_VARIABLE(string, S, name, value, help)
 #define DECLARE_string(name) \
 DECLARE_VARIABLE(string, S, name)
+
+namespace mozc {
+
+inline bool GetFlag(bool flag) { return flag; }
+inline int32 GetFlag(int32 flag) { return flag; }
+inline int64 GetFlag(int64 flag) { return flag; }
+inline uint64 GetFlag(uint64 flag) { return flag; }
+inline double GetFlag(double flag) { return flag; }
+inline string GetFlag(const string &flag) { return flag; }
+
+inline void SetFlag(bool* f, bool v) { *f = v; }
+inline void SetFlag(int32* f, int32 v) { *f = v; }
+inline void SetFlag(int64* f, int64 v) { *f = v; }
+inline void SetFlag(uint64* f, uint64 v) { *f = v; }
+inline void SetFlag(double* f, double v) { *f = v; }
+inline void SetFlag(string* f, const string& v) { *f = v; }
+
+}  // namespace mozc
 
 #endif  // MOZC_BASE_FLAGS_H_
