@@ -115,7 +115,7 @@ jbyteArray BufferToJByteArray(
 
 // Copies the contents of the given source to buf, and store the size into
 // buf_size.
-// Retruns true, if finished successfully. Otherwise, false.
+// Returns true, if finished successfully. Otherwise, false.
 bool CopyJByteArrayToBuf(JNIEnv *env, const jbyteArray &source,
                          void *buf, size_t *buf_size) {
   const jsize size = env->GetArrayLength(source);

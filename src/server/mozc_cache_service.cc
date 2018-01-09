@@ -77,7 +77,7 @@ wstring GetMappedFileNameByAddress(LPVOID address) {
 
 // This function scans each section of a given mapped image section and
 // changes memory protection attribute to read-only.
-// Retruns true if all sections are changed to one read-only region.
+// Returns true if all sections are changed to one read-only region.
 // |result_info| contains the memory block information of the combined
 // region if succeeds.
 bool MakeReadOnlyForMappedModule(
