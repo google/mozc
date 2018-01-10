@@ -47,7 +47,6 @@
           'sources': [
             '<(zinnia_src_dir)/character.cpp',
             '<(zinnia_src_dir)/param.cpp',
-            '<(zinnia_src_dir)/svm.cpp',
             '<(zinnia_src_dir)/feature.cpp',
             '<(zinnia_src_dir)/recognizer.cpp',
             '<(zinnia_src_dir)/trainer.cpp',
