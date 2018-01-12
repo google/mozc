@@ -872,6 +872,14 @@ void Util::SubString(StringPiece src, size_t start, size_t length,
   result->assign(substr.data(), substr.size());
 }
 
+bool Util::StartsWith(StringPiece str, StringPiece prefix) {
+  return str.starts_with(prefix);
+}
+
+bool Util::EndsWith(StringPiece str, StringPiece suffix) {
+  return str.ends_with(suffix);
+}
+
 void Util::StripUTF8BOM(string *line) {
   static const char kUTF8BOM[] = "\xef\xbb\xbf";
   if (line->substr(0, 3) == kUTF8BOM) {
