@@ -70,7 +70,7 @@ class LocaleBasedMessageTranslator : public MessageTranslatorInterface {
   virtual string MaybeTranslate(const string &message) const;
 
  private:
-  map<string, string> utf8_japanese_map_;
+  std::map<string, string> utf8_japanese_map_;
   DISALLOW_COPY_AND_ASSIGN(LocaleBasedMessageTranslator);
 };
 

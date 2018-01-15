@@ -204,7 +204,7 @@ bool GetSurroundingText(IBusEngine *engine,
     return false;
   }
 
-  const size_t selection_start = min(cursor_pos, anchor_pos);
+  const size_t selection_start = std::min(cursor_pos, anchor_pos);
   const size_t selection_length = abs(info->relative_selected_length);
   Util::SubStringPiece(surrounding_text, 0, selection_start)
       .CopyToString(&info->preceding_text);

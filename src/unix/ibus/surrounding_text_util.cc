@@ -48,11 +48,11 @@ bool SurroundingTextUtil::GetSafeDelta(guint from, guint to, int32 *delta) {
   static_assert(sizeof(int64) == sizeof(llabs(0)),
                 "|llabs(0)| must returns a 64-bit integer.");
   const int64 kInt32AbsMax =
-      llabs(static_cast<int64>(numeric_limits<int32>::max()));
+      llabs(static_cast<int64>(std::numeric_limits<int32>::max()));
   const int64 kInt32AbsMin =
-      llabs(static_cast<int64>(numeric_limits<int32>::min()));
+      llabs(static_cast<int64>(std::numeric_limits<int32>::min()));
   const int64 kInt32SafeAbsMax =
-      min(kInt32AbsMax, kInt32AbsMin);
+      std::min(kInt32AbsMax, kInt32AbsMin);
 
   const int64 diff = static_cast<int64>(from) - static_cast<int64>(to);
   if (llabs(diff) > kInt32SafeAbsMax) {

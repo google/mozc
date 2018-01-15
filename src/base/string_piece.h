@@ -210,7 +210,7 @@ class StringPiece {
 };
 
 // allow StringPiece to be logged (needed for unit testing).
-extern ostream &operator<<(ostream &o, const StringPiece &piece);
+extern std::ostream &operator<<(std::ostream &o, const StringPiece &piece);
 
 inline StringPiece ClippedSubstr(StringPiece sp, size_t pos,
                                  size_t n = StringPiece::npos) {

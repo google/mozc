@@ -161,7 +161,7 @@ class MozcEngine : public EngineInterface {
   config::Config::PreeditMethod preedit_method_;
 
   // Unique IDs of candidates that are currently shown.
-  vector<int32> unique_candidate_ids_;
+  std::vector<int32> unique_candidate_ids_;
 
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);
