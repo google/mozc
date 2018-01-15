@@ -69,7 +69,7 @@ using mozc::CallOnce;
 - (id)initWithFrame:(NSRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    RendererStyle *style = new(nothrow)RendererStyle;
+    RendererStyle *style = new(std::nothrow)RendererStyle;
     if (style) {
       RendererStyleHandler::GetRendererStyle(style);
     }

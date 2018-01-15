@@ -109,7 +109,8 @@ class ConfigDialog : public QDialog,
   int initial_preedit_method_;
   bool initial_use_keyboard_to_change_preedit_method_;
   bool initial_use_mode_indicator_;
-  map<QString, config::Config::SessionKeymap> keymapname_sessionkeymap_map_;
+  std::map<QString, config::Config::SessionKeymap>
+      keymapname_sessionkeymap_map_;
 };
 }  // namespace gui
 }  // namespace mozc

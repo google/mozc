@@ -160,7 +160,7 @@ class KeyMapValidator {
 
   // Returns true if the key map entry is valid
   // invalid keymaps are not exported/imported.
-  bool IsValidEntry(const vector<string> &fields) {
+  bool IsValidEntry(const std::vector<string> &fields) {
     if (fields.size() < 3) {
       return false;
     }
@@ -175,7 +175,7 @@ class KeyMapValidator {
 
   // Returns true if the key map entry is configurable and
   // we want to show them.
-  bool IsVisibleEntry(const vector<string> &fields) {
+  bool IsVisibleEntry(const std::vector<string> &fields) {
     if (fields.size() < 3) {
       return false;
     }
@@ -192,22 +192,22 @@ class KeyMapValidator {
   }
 
  private:
-  set<uint32> invisible_modifiers_;
-  set<uint32> invisible_key_events_;
-  set<string> invisible_commands_;
+  std::set<uint32> invisible_modifiers_;
+  std::set<uint32> invisible_key_events_;
+  std::set<string> invisible_commands_;
 };
 
 class KeyMapTableLoader {
  public:
   KeyMapTableLoader() {
     string line;
-    vector<string> fields;
-    set<string> status;
-    set<string> commands;
+    std::vector<string> fields;
+    std::set<string> status;
+    std::set<string> commands;
     KeyMapValidator *validator = mozc::Singleton<KeyMapValidator>::get();
 
     // get all command names
-    set<string> command_names;
+    std::set<string> command_names;
     mozc::keymap::KeyMapManager manager;
     manager.GetAvailableCommandNameDirect(&command_names);
     manager.GetAvailableCommandNamePrecomposition(&command_names);
@@ -216,7 +216,7 @@ class KeyMapTableLoader {
     manager.GetAvailableCommandNameZeroQuerySuggestion(&command_names);
     manager.GetAvailableCommandNameSuggestion(&command_names);
     manager.GetAvailableCommandNamePrediction(&command_names);
-    for (set<string>::const_iterator itr = command_names.begin();
+    for (std::set<string>::const_iterator itr = command_names.begin();
          itr != command_names.end(); ++itr) {
       if (validator->IsVisibleCommand(*itr)) {
         commands.insert(*itr);
@@ -227,7 +227,7 @@ class KeyMapTableLoader {
       status_ << QString::fromUtf8(kKeyMapStatus[i]);
     }
 
-    for (set<string>::const_iterator it = commands.begin();
+    for (std::set<string>::const_iterator it = commands.begin();
          it != commands.end(); ++it) {
       commands_ << QString::fromUtf8(it->c_str());
     }
@@ -323,7 +323,7 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
 
 KeyMapEditorDialog::~KeyMapEditorDialog() {}
 
-bool KeyMapEditorDialog::LoadFromStream(istream *is) {
+bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
   if (is == NULL) {
     return false;
   }
@@ -333,7 +333,7 @@ bool KeyMapEditorDialog::LoadFromStream(istream *is) {
     return false;
   }
 
-  vector<string> fields;
+  std::vector<string> fields;
   int row = 0;
   mutable_table_widget()->setRowCount(0);
   mutable_table_widget()->verticalHeader()->hide();
@@ -408,7 +408,7 @@ bool KeyMapEditorDialog::Update() {
     return false;
   }
 
-  set<string> new_direct_mode_commands;
+  std::set<string> new_direct_mode_commands;
 
   KeyMapValidator *validator = Singleton<KeyMapValidator>::get();
   string *keymap_table = mutable_table();
@@ -423,7 +423,7 @@ bool KeyMapEditorDialog::Update() {
     const string &i18n_command =
         TableUtil::SafeGetItemText(mutable_table_widget(), i, 2).toStdString();
 
-    const map<string, string>::const_iterator status_it =
+    const std::map<string, string>::const_iterator status_it =
         normalized_status_map_.find(i18n_status);
     if (status_it == normalized_status_map_.end()) {
       LOG(ERROR) << "Unsupported i18n status name: " << i18n_status;
@@ -431,7 +431,7 @@ bool KeyMapEditorDialog::Update() {
     }
     const string &status = status_it->second;
 
-    const map<string, string>::const_iterator command_it =
+    const std::map<string, string>::const_iterator command_it =
         normalized_command_map_.find(i18n_command);
     if (command_it == normalized_command_map_.end()) {
       LOG(ERROR) << "Unsupported i18n command name:" << i18n_command;
@@ -512,7 +512,7 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
                import_index < arraysize(kKeyMaps)) {
       const char *keymap_file =
           keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[import_index]);
-      std::unique_ptr<istream> ifs(
+      std::unique_ptr<std::istream> ifs(
           ConfigFileStream::LegacyOpen(keymap_file));
       CHECK(ifs.get() != NULL);  // should never happen
       CHECK(LoadFromStream(ifs.get()));

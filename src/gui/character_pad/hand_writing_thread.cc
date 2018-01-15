@@ -58,8 +58,9 @@ void CopyStrokes(const mozc::handwriting::Strokes &source,
 }
 
 // Thread-safe copying of candidates.
-void CopyCandidates(
-    const vector<string> &source, vector<string> *target, QMutex *mutex) {
+void CopyCandidates(const std::vector<string> &source,
+                    std::vector<string> *target,
+                    QMutex *mutex) {
   DCHECK(target);
   DCHECK(mutex);
   QMutexLocker l(mutex);
@@ -99,7 +100,7 @@ void HandWritingThread::SetStrokes(const handwriting::Strokes &strokes) {
   Clock::GetTimeOfDay(&strokes_sec_, &strokes_usec_);
 }
 
-void HandWritingThread::GetCandidates(vector<string> *candidates) {
+void HandWritingThread::GetCandidates(std::vector<string> *candidates) {
   CopyCandidates(candidates_, candidates, &candidates_mutex_);
 }
 
@@ -118,7 +119,7 @@ void HandWritingThread::startRecognition() {
     return;
   }
 
-  vector<string> candidates;
+  std::vector<string> candidates;
   status = handwriting::HandwritingManager::Recognize(strokes, &candidates);
   CopyCandidates(candidates, &candidates_, &candidates_mutex_);
   last_requested_sec_ = strokes_sec_;

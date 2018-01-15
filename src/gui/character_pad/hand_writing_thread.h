@@ -58,7 +58,7 @@ class HandWritingThread : public QThread {
   void SetStrokes(const handwriting::Strokes &strokes);
   // Copy internal candidates_ into the candidates.  This will make
   // lock on candidates_ so thead-safe.
-  void GetCandidates(vector<string> *candidates);
+  void GetCandidates(std::vector<string> *candidates);
 
  public slots:
   // This slot invokes the recognition and emit candidatesUpdated().
@@ -71,7 +71,7 @@ class HandWritingThread : public QThread {
 
  private:
   handwriting::Strokes strokes_;
-  vector<string> candidates_;
+  std::vector<string> candidates_;
 
   uint64 strokes_sec_;
   uint32 strokes_usec_;

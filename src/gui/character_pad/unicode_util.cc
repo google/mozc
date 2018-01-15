@@ -90,10 +90,10 @@ uint16 LookupCP932Data(const QString &str) {
   CP932MapData key;
   key.ucs4 = ucs4;
   const CP932MapData *result =
-      lower_bound(kCP932MapData,
-                  kCP932MapData + kCP932MapDataSize,
-                  key,
-                  UnicodeDataCompare<CP932MapData>());
+      std::lower_bound(kCP932MapData,
+                       kCP932MapData + kCP932MapDataSize,
+                       key,
+                       UnicodeDataCompare<CP932MapData>());
   if (result == kCP932MapData + kCP932MapDataSize ||
       result->ucs4 != key.ucs4) {
     return 0;
@@ -109,10 +109,10 @@ const UnihanData *LookupUnihanData(const QString &str) {
   UnihanData key;
   key.ucs4 = ucs4;
   const UnihanData *result =
-      lower_bound(kUnihanData,
-                  kUnihanData + kUnihanDataSize,
-                  key,
-                  UnicodeDataCompare<UnihanData>());
+      std::lower_bound(kUnihanData,
+                       kUnihanData + kUnihanDataSize,
+                       key,
+                       UnicodeDataCompare<UnihanData>());
   if (result == kUnihanData + kUnihanDataSize ||
       result->ucs4 != ucs4) {
     return NULL;
@@ -130,10 +130,10 @@ const QString LookupUnicodeData(const QString &str) {
   key.ucs4 = ucs4;
   key.description = NULL;
   const UnicodeData *result =
-      lower_bound(kUnicodeData,
-                  kUnicodeData + kUnicodeDataSize,
-                  key,
-                  UnicodeDataCompare<UnicodeData>());
+      std::lower_bound(kUnicodeData,
+                       kUnicodeData + kUnicodeDataSize,
+                       key,
+                       UnicodeDataCompare<UnicodeData>());
   if (result == kUnicodeData + kUnicodeDataSize ||
       result->ucs4 != ucs4) {
     return QString("");

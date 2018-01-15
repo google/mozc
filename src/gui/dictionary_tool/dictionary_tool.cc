@@ -188,9 +188,9 @@ class MultiByteTextLineIterator
         ifs_(new InputFileStream(filename.c_str())),
         first_line_(true) {
     const std::streampos begin = ifs_->tellg();
-    ifs_->seekg(0, ios::end);
+    ifs_->seekg(0, std::ios::end);
     const size_t size = static_cast<size_t>(ifs_->tellg() - begin);
-    ifs_->seekg(0, ios::beg);
+    ifs_->seekg(0, std::ios::beg);
     progress_.reset(CreateProgressDialog(message, parent, size));
   }
 
@@ -248,7 +248,7 @@ class MultiByteTextLineIterator
   void Reset() {
     // Clear state bit (eofbit, failbit, badbit).
     ifs_->clear();
-    ifs_->seekg(0, ios_base::beg);
+    ifs_->seekg(0, std::ios_base::beg);
     first_line_ = true;
   }
 
@@ -392,7 +392,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       GetTableHeight(dic_content_));
 
   // Get a list of POS and set a custom delagate that holds the list.
-  vector<string> tmp_pos_vec;
+  std::vector<string> tmp_pos_vec;
   pos_list_provider_->GetPOSList(&tmp_pos_vec);
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
@@ -1029,7 +1029,7 @@ void DictionaryTool::AddWord() {
   UpdateUIStatus();
 }
 
-void DictionaryTool::GetSortedSelectedRows(vector<int> *rows) const {
+void DictionaryTool::GetSortedSelectedRows(std::vector<int> *rows) const {
   DCHECK(rows);
   rows->clear();
 
@@ -1042,8 +1042,8 @@ void DictionaryTool::GetSortedSelectedRows(vector<int> *rows) const {
     rows->push_back(items[i]->row());
   }
 
-  sort(rows->begin(), rows->end(), greater<int>());
-  vector<int>::const_iterator end = unique(rows->begin(), rows->end());
+  sort(rows->begin(), rows->end(), std::greater<int>());
+  std::vector<int>::const_iterator end = unique(rows->begin(), rows->end());
 
   rows->resize(end - rows->begin());
 }
@@ -1061,7 +1061,7 @@ QListWidgetItem *DictionaryTool::GetFirstSelectedDictionary() const {
 }
 
 void DictionaryTool::DeleteWord() {
-  vector<int> rows;
+  std::vector<int> rows;
   GetSortedSelectedRows(&rows);
   if (rows.size() == 0) {
     return;
@@ -1145,7 +1145,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
         target_dict_item->data(Qt::UserRole).toULongLong());
   }
 
-  vector<int> rows;
+  std::vector<int> rows;
   GetSortedSelectedRows(&rows);
   if (rows.size() == 0) {
     return;
@@ -1296,7 +1296,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
       }
     }
   }
-  vector<pair<int, QAction *> > change_dictionary_actions;
+  std::vector<std::pair<int, QAction *> > change_dictionary_actions;
   // "Move to" is available only when we have 2 or more dictionaries.
   if (dic_list_->count() > 1) {
     QMenu *move_to = menu->addMenu(move_to_menu_text);
@@ -1312,7 +1312,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
             continue;
           }
           change_dictionary_actions.push_back(
-              make_pair(i, move_to->addAction(item->text())));
+              std::make_pair(i, move_to->addAction(item->text())));
         }
       }
     }
@@ -1321,9 +1321,9 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
 
   menu->addSeparator();
   QMenu *change_category_to = menu->addMenu(tr("Change category to"));
-  vector<string> pos_list;
+  std::vector<string> pos_list;
   pos_list_provider_->GetPOSList(&pos_list);
-  vector<QAction *> change_pos_actions(pos_list.size());
+  std::vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] = change_category_to->addAction(
         QString::fromUtf8(pos_list[i].c_str()));

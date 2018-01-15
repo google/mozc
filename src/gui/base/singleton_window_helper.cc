@@ -103,7 +103,7 @@ bool ReadWindowInfo(const string &lock_name,
     }
   }
 #else
-  InputFileStream is(lock_name.c_str(), ios::binary|ios::in);
+  InputFileStream is(lock_name.c_str(), std::ios::binary|std::ios::in);
   if (!is) {
     LOG(ERROR) << "cannot open: " << lock_name;
     return false;

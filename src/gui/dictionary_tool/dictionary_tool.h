@@ -37,6 +37,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"
@@ -178,7 +179,7 @@ class DictionaryTool : public QMainWindow,
 
   // Helper function for DeleteWord and MoveTo.
   // Fills selected word entry rows as a unique sorted sequence.
-  void GetSortedSelectedRows(vector<int> *rows) const;
+  void GetSortedSelectedRows(std::vector<int> *rows) const;
 
   // Returns a pointer to the first selected dictionary.
   // Returns NULL if no dictionary is selected.

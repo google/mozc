@@ -187,7 +187,7 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
         candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
-        const uint32 delay = max(0u, candidates.usages().delay());
+        const uint32 delay = std::max(0u, candidates.usages().delay());
         infolist_window_->DelayShow(delay);
       } else {
         infolist_window_->DelayHide(kHideWindowDelay);

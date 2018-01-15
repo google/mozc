@@ -40,7 +40,7 @@ class POSListProvider : public POSListProviderInterface {
   POSListProvider();
   ~POSListProvider() override;
 
-  void GetPOSList(vector<string> *pos_list) const override;
+  void GetPOSList(std::vector<string> *pos_list) const override;
 };
 
 }  // namespace mozc

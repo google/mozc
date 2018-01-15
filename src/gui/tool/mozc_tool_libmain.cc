@@ -90,7 +90,7 @@ void SetFlagFromEnv(const string &key) {
   }
   if (!mozc_flags::SetFlag(key, env)) {
 #ifndef IGNORE_INVALID_FLAG
-    cerr << "Unknown/Invalid flag " << key << endl;
+    std::cerr << "Unknown/Invalid flag " << key << std::endl;
 #endif
   }
 }

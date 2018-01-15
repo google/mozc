@@ -63,7 +63,7 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
   virtual string GetDefaultFilename() const {
     return "romantable.txt";
   }
-  virtual bool LoadFromStream(istream *is);
+  virtual bool LoadFromStream(std::istream *is);
   virtual bool Update();
 
  private:

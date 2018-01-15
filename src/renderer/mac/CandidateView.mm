@@ -123,8 +123,8 @@ void InitializeDefaultStyle() {
   CallOnce(&g_OnceForInitializeStyle, InitializeDefaultStyle);
   self = [super initWithFrame:frame];
   if (self) {
-    tableLayout_ = new(nothrow)TableLayout;
-    RendererStyle *style = new(nothrow)RendererStyle;
+    tableLayout_ = new(std::nothrow)TableLayout;
+    RendererStyle *style = new(std::nothrow)RendererStyle;
     if (style) {
       RendererStyleHandler::GetRendererStyle(style);
     }

@@ -50,7 +50,7 @@ namespace {
 POSListProvider::POSListProvider() = default;
 POSListProvider::~POSListProvider() = default;
 
-void POSListProvider::GetPOSList(vector<string> *pos_list) const {
+void POSListProvider::GetPOSList(std::vector<string> *pos_list) const {
   SerializedStringArray array;
   CHECK(array.Init(LoadEmbeddedFile(kPosArray)));
   pos_list->resize(array.size());

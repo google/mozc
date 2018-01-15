@@ -70,7 +70,7 @@ class TranslationDataImpl {
 
   TranslationDataImpl();
   ~TranslationDataImpl() {
-    for (map<string, QTranslator *>::iterator it = translators_.begin();
+    for (std::map<string, QTranslator *>::iterator it = translators_.begin();
          it != translators_.end(); ++it) {
       delete it->second;
     }
@@ -78,7 +78,7 @@ class TranslationDataImpl {
   }
 
  private:
-  map<string, QTranslator *> translators_;
+  std::map<string, QTranslator *> translators_;
   QTranslator default_translator_;
   QFont font_;
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
@@ -118,7 +118,7 @@ void TranslationDataImpl::InstallTranslationMessageAndFont(
   }
   QTranslator *translator = new QTranslator;
   CHECK(translator);
-  translators_.insert(make_pair(resource_name, translator));
+  translators_.insert(std::make_pair(resource_name, translator));
 
   // Load ":/<resource_name>_<lang>.qm" from a qrc file.
   if (translator->load(QLocale::system(), resource_name, "_", ":/", ".qm")) {
