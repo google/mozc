@@ -61,7 +61,7 @@ class KeyEventHandlerTest : public testing::Test {
 
   // Currently this function does not supports special keys.
   void AppendToKeyEvent(guint keyval, commands::KeyEvent *key) const {
-    const map<guint, commands::KeyEvent::ModifierKey>::const_iterator it =
+    const std::map<guint, commands::KeyEvent::ModifierKey>::const_iterator it =
         keyval_to_modifier_.find(keyval);
     if (it != keyval_to_modifier_.end()) {
       bool found = false;
@@ -91,7 +91,7 @@ class KeyEventHandlerTest : public testing::Test {
   }
 
   bool IsPressed(guint keyval) const {
-    const set<guint> &pressed_set = handler_->currently_pressed_modifiers_;
+    const std::set<guint> &pressed_set = handler_->currently_pressed_modifiers_;
     return pressed_set.find(keyval) != pressed_set.end();
   }
 
@@ -99,17 +99,17 @@ class KeyEventHandlerTest : public testing::Test {
     return handler_->is_non_modifier_key_pressed_;
   }
 
-  const set<guint> &currently_pressed_modifiers() {
+  const std::set<guint> &currently_pressed_modifiers() {
     return handler_->currently_pressed_modifiers_;
   }
 
-  const set<commands::KeyEvent::ModifierKey> &modifiers_to_be_sent() {
+  const std::set<commands::KeyEvent::ModifierKey> &modifiers_to_be_sent() {
     return handler_->modifiers_to_be_sent_;
   }
 
   testing::AssertionResult CheckModifiersToBeSent(uint32 modifiers) {
     uint32 to_be_sent_mask = 0;
-    for (set<commands::KeyEvent::ModifierKey>::iterator it =
+    for (std::set<commands::KeyEvent::ModifierKey>::iterator it =
              modifiers_to_be_sent().begin();
          it != modifiers_to_be_sent().end(); ++it) {
       to_be_sent_mask |= *it;
@@ -136,7 +136,7 @@ class KeyEventHandlerTest : public testing::Test {
   }
 
   unique_ptr<KeyEventHandler> handler_;
-  map<guint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
+  std::map<guint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
 };
 
 #define EXPECT_MODIFIERS_TO_BE_SENT(modifiers)          \
@@ -432,7 +432,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
   for (int trial = 0; trial < kTrialNum; ++trial) {
     handler_->Clear();
 
-    set<guint> pressed_keys;
+    std::set<guint> pressed_keys;
     string key_sequence;
 
     const int kSequenceLength = 100;
@@ -453,7 +453,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
                                          is_key_up, key_index);
 
       commands::KeyEvent key;
-      for (set<guint>::const_iterator it = pressed_keys.begin();
+      for (std::set<guint>::const_iterator it = pressed_keys.begin();
            it != pressed_keys.end(); ++it) {
         AppendToKeyEvent(*it, &key);
       }

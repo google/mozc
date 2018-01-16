@@ -38,7 +38,7 @@ namespace ibus {
 
 TEST(SurroundingTextUtilTest, GetSafeDelta) {
   const guint kSafeInt32MaxAsGUint =
-      static_cast<guint>(numeric_limits<int32>::max());
+      static_cast<guint>(std::numeric_limits<int32>::max());
   const guint kTooLargeGUint = kSafeInt32MaxAsGUint + 42;
 
   int32 delta = 0;
@@ -81,7 +81,7 @@ TEST(SurroundingTextUtilTest, GetSafeDelta) {
 
   // The abs(result) exceeds int32.
   EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(
-      static_cast<guint>(-numeric_limits<int32>::min()),
+      static_cast<guint>(-std::numeric_limits<int32>::min()),
       0, &delta));
 }
 
