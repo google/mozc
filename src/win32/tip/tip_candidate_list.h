@@ -50,7 +50,7 @@ namespace tsf {
 class TipCandidateListCallback {
  public:
   virtual ~TipCandidateListCallback();
-  virtual void OnFinalize(size_t index, const wstring &candidate) = 0;
+  virtual void OnFinalize(size_t index, const std::wstring &candidate) = 0;
 };
 
 class TipCandidateList {
@@ -60,7 +60,7 @@ class TipCandidateList {
   // is called with CAND_FINALIZED. TipCandidateList will take the
   // ownership of |callback|. |callback| can be nullptr.
   // Caller must maintain the reference count of the returned object.
-  static ITfCandidateList *New(const vector<wstring> &candidates,
+  static ITfCandidateList *New(const std::vector<wstring> &candidates,
                                TipCandidateListCallback *callback);
   static const IID& GetIID();
 

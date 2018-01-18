@@ -161,7 +161,7 @@ bool MessageQueue::Send() {
   return true;
 }
 
-const vector<TRANSMSG> &MessageQueue::messages() const {
+const std::vector<TRANSMSG> &MessageQueue::messages() const {
   return messages_;
 }
 

@@ -38,7 +38,7 @@ namespace win32 {
 namespace {
 struct FixedReconvertString : public RECONVERTSTRING {
   BYTE buffer[4096];
-  void Initialize(const wstring &entire_string,
+  void Initialize(const std::wstring &entire_string,
                   size_t padding_bytes) {
     dwSize = sizeof(FixedReconvertString);
     dwVersion = 0;
@@ -164,11 +164,11 @@ TEST(ReconvertStringTest, dwCompAndTargetStrOffset_IsOnEnd) {
     expected_following_text,                                             \
     actual_reconvert_string)                                             \
   do {                                                                   \
-    wstring actual_precedeing_text;                                      \
-    wstring actual_preceding_composition;                                \
-    wstring actual_target;                                               \
-    wstring actual_following_composition;                                \
-    wstring actual_following_text;                                       \
+    std::wstring actual_precedeing_text;                                      \
+    std::wstring actual_preceding_composition;                                \
+    std::wstring actual_target;                                               \
+    std::wstring actual_following_composition;                                \
+    std::wstring actual_following_text;                                       \
     EXPECT_TRUE(ReconvertString::Decompose(                              \
         &(actual_reconvert_string),                                      \
         &actual_precedeing_text,                                         \
@@ -187,11 +187,11 @@ TEST(ReconvertStringTest, dwCompAndTargetStrOffset_IsOnEnd) {
 
 #define EXPECT_DECOMPOSE_FAIL(actual_reconvert_string)                   \
   do {                                                                   \
-    wstring actual_precedeing_text;                                      \
-    wstring actual_preceding_composition;                                \
-    wstring actual_target;                                               \
-    wstring actual_following_composition;                                \
-    wstring actual_following_text;                                       \
+    std::wstring actual_precedeing_text;                                      \
+    std::wstring actual_preceding_composition;                                \
+    std::wstring actual_target;                                               \
+    std::wstring actual_following_composition;                                \
+    std::wstring actual_following_text;                                       \
     EXPECT_FALSE(ReconvertString::Decompose(                             \
         &(actual_reconvert_string),                                      \
         &actual_precedeing_text,                                         \
@@ -589,7 +589,7 @@ TEST(ReconvertStringTest, ExcludeControlCode) {
   FixedReconvertString reconvert_string;
   reconvert_string.Initialize(L"", 10);
 
-  wstring following_text;
+  std::wstring following_text;
   following_text += L'\0';
   // "つづく"
   following_text += L"\u3064\u3065\u304F";

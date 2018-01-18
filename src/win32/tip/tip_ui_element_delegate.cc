@@ -339,7 +339,7 @@ class TipUiElementDelegateImpl : public TipUiElementDelegate {
     if (visible_index >= list.candidates_size()) {
       return E_FAIL;
     }
-    wstring wide_text;
+    std::wstring wide_text;
     Util::UTF8ToWide(list.candidates(visible_index).value(), &wide_text);
     *text = CComBSTR(wide_text.size(), wide_text.data()).Detach();
     return S_OK;

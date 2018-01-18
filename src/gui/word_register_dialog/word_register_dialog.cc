@@ -64,9 +64,6 @@ using mozc::user_dictionary::UserDictionary;
 using mozc::user_dictionary::UserDictionaryCommandStatus;
 using mozc::user_dictionary::UserDictionarySession;
 using mozc::user_dictionary::UserDictionaryStorage;
-#ifdef OS_WIN
-using std::unique_ptr;
-#endif  // OS_WIN
 
 namespace {
 const int kSessionTimeout = 100000;
@@ -75,14 +72,14 @@ const int kMaxReverseConversionLength = 30;
 
 QString GetEnv(const char *envname) {
 #if defined(OS_WIN)
-  wstring wenvname;
+  std::wstring wenvname;
   mozc::Util::UTF8ToWide(envname, &wenvname);
   const DWORD buffer_size =
       ::GetEnvironmentVariable(wenvname.c_str(), NULL, 0);
   if (buffer_size == 0) {
     return "";
   }
-  unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_size]);
+  std::unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_size]);
   const DWORD num_copied =
       ::GetEnvironmentVariable(wenvname.c_str(), buffer.get(), buffer_size);
   if (num_copied > 0) {

@@ -803,7 +803,7 @@ size_t Util::WideCharsLen(StringPiece src) {
   return num_chars;
 }
 
-int Util::UTF8ToWide(StringPiece input, wstring *output) {
+int Util::UTF8ToWide(StringPiece input, std::wstring *output) {
   const size_t output_length = WideCharsLen(input);
   if (output_length == 0) {
     return 0;
@@ -837,7 +837,7 @@ int Util::WideToUTF8(const wchar_t *input, string *output) {
   return result;
 }
 
-int Util::WideToUTF8(const wstring &input, string *output) {
+int Util::WideToUTF8(const std::wstring &input, string *output) {
   return WideToUTF8(input.c_str(), output);
 }
 #endif  // OS_WIN

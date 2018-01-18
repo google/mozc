@@ -52,7 +52,7 @@ class CompositionWindowList {
   virtual void Destroy() = 0;
   virtual void Hide() = 0;
   virtual void UpdateLayout(
-      const vector<CompositionWindowLayout> &layouts) = 0;
+      const std::vector<CompositionWindowLayout> &layouts) = 0;
 
   static CompositionWindowList *CreateInstance();
 

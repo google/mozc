@@ -135,7 +135,7 @@ class ScopedCanidateInfoBuffer {
         reinterpret_cast<const BYTE *>(header_) +
         header_->dwOffset[candidate_list_no]);
   }
-  const wstring GetCandidateString(int candidate_list_no,
+  const std::wstring GetCandidateString(int candidate_list_no,
                                    int candidate_index) const {
     const CANDIDATELIST *list = GetList(candidate_list_no);
     DCHECK_GE(candidate_index, 0);
@@ -456,7 +456,7 @@ void FillOutputForConversion(
   }
 }
 
-string ToUTF8(const wstring &wstr) {
+string ToUTF8(const std::wstring &wstr) {
   string result;
   Util::WideToUTF8(wstr, &result);
   return result;

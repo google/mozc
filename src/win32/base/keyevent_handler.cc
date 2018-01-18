@@ -326,7 +326,7 @@ const KeyEvent::SpecialKey kSpecialKeyMap[] = {
 };
 
 void ClearModifyerKeyIfNeeded(
-    const KeyEvent *key, set<KeyEvent::ModifierKey> *modifiers) {
+    const KeyEvent *key, std::set<KeyEvent::ModifierKey> *modifiers) {
   if (key == nullptr) {
     return;
   }
@@ -394,7 +394,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
                            const KeyboardStatus &keyboard_status,
                            Win32KeyboardInterface *keyboard,
                            commands::KeyEvent *key,
-                           set<KeyEvent::ModifierKey> *modifer_keys) {
+                           std::set<KeyEvent::ModifierKey> *modifer_keys) {
   if (key == nullptr) {
     return false;
   }
@@ -956,7 +956,7 @@ bool KeyEventHandler::ConvertToKeyEvent(
   // Since Mozc protocol requires tricky conditions for modifiers, using set
   // container makes the the main part of key event conversion simple rather
   // than using vector-like container.
-  set<KeyEvent::ModifierKey> modifiers;
+  std::set<KeyEvent::ModifierKey> modifiers;
   const bool result = ConvertToKeyEventMain(
       virtual_key,
       scan_code,
@@ -973,7 +973,7 @@ bool KeyEventHandler::ConvertToKeyEvent(
   }
 
   // Updates |modifier_keys| field based on the returned set of modifier keys.
-  for (set<KeyEvent::ModifierKey>::const_iterator i = modifiers.begin();
+  for (std::set<KeyEvent::ModifierKey>::const_iterator i = modifiers.begin();
        i != modifiers.end(); ++i) {
     key->add_modifier_keys(*i);
   }

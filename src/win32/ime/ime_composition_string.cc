@@ -82,7 +82,7 @@ bool CompositionString::Initialize() {
 }
 
 bool CompositionString::Update(
-    const mozc::commands::Output &output, vector<UIMessage> *messages) {
+    const mozc::commands::Output &output, std::vector<UIMessage> *messages) {
   CompositionString prev_composition;
   ::CopyMemory(&prev_composition, this, sizeof(CompositionString));
 
@@ -136,7 +136,7 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
 
   HRESULT result = S_OK;
 
-  wstring result_string;
+  std::wstring result_string;
   mozc::Util::UTF8ToWide(output.result().value(), &result_string);
   result = ::StringCchCopyN(result_,
                             arraysize(result_),
@@ -160,7 +160,7 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
   if (output.result().has_key()) {
     // Reading string should be stored as half-width katakana like
     // other major IMEs.  See b/1793283 for details.
-    const wstring &reading_string =
+    const std::wstring &reading_string =
         StringUtil::KeyToReading(output.result().key());
     result = ::StringCchCopyN(result_reading_,
                               arraysize(result_reading_),
@@ -194,16 +194,16 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
 
   const mozc::commands::Preedit &preedit = output.preedit();
 
-  vector<BYTE> reading_attributes;
-  vector<DWORD> reading_clauses;
+  std::vector<BYTE> reading_attributes;
+  std::vector<DWORD> reading_clauses;
   reading_clauses.push_back(0);
 
-  vector<BYTE> composition_attributes;
-  vector<DWORD> composition_clauses;
+  std::vector<BYTE> composition_attributes;
+  std::vector<DWORD> composition_clauses;
   composition_clauses.push_back(0);
 
-  wstring reading_string;
-  wstring composition_string;
+  std::wstring reading_string;
+  std::wstring composition_string;
 
   // As filed in b/2962397, we should use ATTR_CONVERTED as default
   // attribute when the preedit state is 'Convert' ("変換") or 'Prediction'
@@ -221,7 +221,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
     if (segment.has_key()) {
       // Reading string should be stored as half-width katakana like
       // other major IMEs.  See b/1793283 for details.
-      const wstring &segment_reading =
+      const std::wstring &segment_reading =
           StringUtil::KeyToReading(segment.key());
       reading_string.append(segment_reading);
       for (size_t i = 0; i < segment_reading.size(); ++i) {
@@ -240,7 +240,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
     reading_clauses.push_back(reading_string.size());
     DCHECK(segment.has_value());
     {
-      wstring segment_composition;
+      std::wstring segment_composition;
       mozc::Util::UTF8ToWide(segment.value(), &segment_composition);
       composition_string.append(segment_composition);
       preedit_utf8.append(segment.value());

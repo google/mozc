@@ -662,7 +662,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
   const size_t j_max = std::min(next_seg->candidates_size(), kCandidateSize);
 
   // Cache the results for the next segment
-  std::vector<int> next_seg_ok(j_max);  // Avoiding vector<bool>
+  std::vector<int> next_seg_ok(j_max);  // Avoiding std::vector<bool>
   std::vector<std::vector<string> > normalized_string(j_max);
 
   // Reuse |nexts| in the loop as this method is performance critical.

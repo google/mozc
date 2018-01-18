@@ -61,11 +61,11 @@ bool g_exe_module_ver_initialized_ = false;
 BrowserInfo::BrowserType g_browser_type_ = BrowserInfo::kBrowserTypeUnknown;
 bool g_browser_type_initialized_ = false;
 
-wstring GetProcessModuleName() {
+std::wstring GetProcessModuleName() {
   if (g_exe_module_name_len_ == 0) {
     return L"";
   }
-  return wstring(g_exe_module_name_, g_exe_module_name_len_);
+  return std::wstring(g_exe_module_name_, g_exe_module_name_len_);
 }
 
 }  // namespace

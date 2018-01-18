@@ -91,7 +91,7 @@ bool Process::OpenBrowser(const string &url) {
   }
 
 #ifdef OS_WIN
-  wstring wurl;
+  std::wstring wurl;
   Util::UTF8ToWide(url, &wurl);
   return WinUtil::ShellExecuteInSystemDir(L"open", wurl.c_str(), nullptr);
 #endif
@@ -112,11 +112,11 @@ bool Process::OpenBrowser(const string &url) {
 bool Process::SpawnProcess(const string &path,
                            const string& arg, size_t *pid) {
 #ifdef OS_WIN
-  wstring wpath;
+  std::wstring wpath;
   Util::UTF8ToWide(path, &wpath);
   wpath = L"\"" + wpath + L"\"";
   if (!arg.empty()) {
-    wstring warg;
+    std::wstring warg;
     Util::UTF8ToWide(arg, &warg);
     wpath += L" ";
     wpath += warg;

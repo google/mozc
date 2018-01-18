@@ -166,7 +166,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
   bool start_server_called_;
   uint32 server_protocol_version_;
   string response_;
-  map<int, int> error_map_;
+  std::map<int, int> error_map_;
 };
 
 class KeyboardMock : public Win32KeyboardInterface {
@@ -202,7 +202,7 @@ class KeyboardMock : public Win32KeyboardInterface {
     return JapaneseKeyboardLayoutEmulator::ToUnicode(
         wVirtKey, wScanCode, lpKeyState, pwszBuff, cchBuff, wFlags);
   }
-  virtual UINT SendInput(const vector<INPUT> &input) {
+  virtual UINT SendInput(const std::vector<INPUT> &input) {
     // Not implemented.
     return 0;
   }
@@ -267,11 +267,11 @@ class KeyEventHandlerTest : public testing::Test {
     mozc::config::ConfigHandler::SetConfig(default_config_);
   }
 
-  vector<KeyInformation> GetDefaultDirectModeKeys() const {
+  std::vector<KeyInformation> GetDefaultDirectModeKeys() const {
     return KeyInfoUtil::ExtractSortedDirectModeKeys(default_config_);
   }
 
-  vector<KeyInformation> GetDirectModeKeysCtrlJToEnableIME() const {
+  std::vector<KeyInformation> GetDirectModeKeysCtrlJToEnableIME() const {
     config::Config config;
     config.CopyFrom(default_config_);
 
@@ -285,7 +285,8 @@ class KeyEventHandlerTest : public testing::Test {
     return KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   }
 
-  vector<KeyInformation> GetDirectModeKeysCtrlBackslashToEnableIME() const {
+  std::vector<KeyInformation>
+      GetDirectModeKeysCtrlBackslashToEnableIME() const {
     config::Config config;
     config.CopyFrom(default_config_);
 

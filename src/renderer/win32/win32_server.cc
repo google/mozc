@@ -148,7 +148,7 @@ void Win32Server::SetSendCommandInterface(
 
 bool Win32Server::AsyncExecCommand(string *proto_message) {
   // Take the ownership of |proto_message|.
-  unique_ptr<string> proto_message_owner(proto_message);
+  std::unique_ptr<string> proto_message_owner(proto_message);
   scoped_lock l(&mutex_);
   if (message_ == *proto_message_owner.get()) {
     // This is exactly the same to the previous message. Theoretically it is

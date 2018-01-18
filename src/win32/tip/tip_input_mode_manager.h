@@ -64,8 +64,9 @@ class TipInputModeManagerImpl {
   };
 
  protected:
-  static StatePair GetOverriddenState(const StatePair &base_state,
-                                      const vector<InputScope> &input_scopes);
+  static StatePair GetOverriddenState(
+      const StatePair &base_state,
+      const std::vector<InputScope> &input_scopes);
 };
 
 // In TSF, IME open/close mode and conversion mode are managed per thread not
@@ -115,10 +116,10 @@ class TipInputModeManager : public TipInputModeManagerImpl {
                                    DWORD mozc_visible_mode);
   Action OnSetFocus(bool system_open_close_mode,
                     DWORD system_conversion_mode,
-                    const vector<InputScope> &input_scopes);
+                    const std::vector<InputScope> &input_scopes);
   Action OnChangeOpenClose(bool new_open_close_mode);
   Action OnChangeConversionMode(DWORD new_conversion_mode);
-  Action OnChangeInputScope(const vector<InputScope> &input_scopes);
+  Action OnChangeInputScope(const std::vector<InputScope> &input_scopes);
 
   // Returns IME open/close state that is visible from Mozc session.
   bool GetEffectiveOpenClose() const;

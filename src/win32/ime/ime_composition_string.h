@@ -53,7 +53,7 @@ struct CompositionString {
  public:
   bool Initialize();
   bool Update(const mozc::commands::Output &output,
-              vector<UIMessage> *messages);
+              std::vector<UIMessage> *messages);
 
   // Returns |focused_character_index_|, which represents the index of wide
   // character where suggest/predict/candidate window is aligned.

@@ -59,7 +59,7 @@ using std::unique_ptr;
 
 namespace {
 
-typedef map<int, DWORD> PreloadOrderToKLIDMap;
+typedef std::map<int, DWORD> PreloadOrderToKLIDMap;
 
 // Windows NT 6.0, 6.1 and 6.2
 const CLSID CLSID_IMJPTIP = {
@@ -85,13 +85,13 @@ const DWORD kMaxValueNameLength = 16383;
 const uint32 kWaitForAsmCacheReadyEventTimeout = 10000;  // 10 sec.
 
 // Converts an unsigned integer to a wide string.
-wstring utow(unsigned int i) {
-  wstringstream ss;
+std::wstring utow(unsigned int i) {
+  std::wstringstream ss;
   ss << i;
   return ss.str();
 }
 
-wstring GetIMEFileNameFromKeyboardLayout(
+std::wstring GetIMEFileNameFromKeyboardLayout(
     const CRegKey &key, const KeyboardLayoutID &klid) {
   CRegKey subkey;
   LONG result = subkey.Open(key, klid.ToString().c_str(), KEY_READ);
@@ -110,14 +110,15 @@ wstring GetIMEFileNameFromKeyboardLayout(
   }
 
   const ULONG filename_length = (filename_length_including_null - 1);
-  const wstring filename(filename_buffer);
+  const std::wstring filename(filename_buffer);
 
   // Note that |filename_length| does not contain NUL character.
   DCHECK_EQ(filename_length, filename.size());
   return filename;
 }
 
-bool GenerateKeyboardLayoutList(vector<KeyboardLayoutInfo> *keyboard_layouts) {
+bool GenerateKeyboardLayoutList(
+    std::vector<KeyboardLayoutInfo> *keyboard_layouts) {
   if (keyboard_layouts == nullptr) {
     return false;
   }
@@ -146,7 +147,7 @@ bool GenerateKeyboardLayoutList(vector<KeyboardLayoutInfo> *keyboard_layouts) {
 
     // Note that |value_name_length| does not contain NUL character.
     const KeyboardLayoutID klid(
-        wstring(value_name, value_name + value_name_length));
+        std::wstring(value_name, value_name + value_name_length));
 
     if (!klid.has_id()) {
       continue;
@@ -160,11 +161,12 @@ bool GenerateKeyboardLayoutList(vector<KeyboardLayoutInfo> *keyboard_layouts) {
   return true;
 }
 
-bool GenerateKeyboardLayoutMap(map<DWORD, wstring> *keyboard_layouts) {
+bool GenerateKeyboardLayoutMap(
+    std::map<DWORD, std::wstring> *keyboard_layouts) {
   if (keyboard_layouts == nullptr) {
     return false;
   }
-  vector<KeyboardLayoutInfo> keyboard_layout_list;
+  std::vector<KeyboardLayoutInfo> keyboard_layout_list;
   if (!GenerateKeyboardLayoutList(&keyboard_layout_list)) {
     return false;
   }
@@ -177,7 +179,7 @@ bool GenerateKeyboardLayoutMap(map<DWORD, wstring> *keyboard_layouts) {
   return true;
 }
 
-wstring GetIMEFileName(HKL hkl) {
+std::wstring GetIMEFileName(HKL hkl) {
   const UINT num_chars_without_null = ::ImmGetIMEFileName(hkl, nullptr, 0);
   const size_t num_chars_with_null = num_chars_without_null + 1;
   unique_ptr<wchar_t[]> buffer(new wchar_t[num_chars_with_null]);
@@ -185,12 +187,12 @@ wstring GetIMEFileName(HKL hkl) {
       ::ImmGetIMEFileName(hkl, buffer.get(), num_chars_with_null);
 
   // |num_copied| does not include terminating null character.
-  return wstring(buffer.get(), buffer.get() + num_copied);
+  return std::wstring(buffer.get(), buffer.get() + num_copied);
 }
 
 bool GetInstalledProfilesByLanguageForTSF(
     LANGID langid,
-    vector<LayoutProfileInfo> *installed_profiles) {
+    std::vector<LayoutProfileInfo> *installed_profiles) {
   ScopedCOMInitializer com_initializer;
   if (FAILED(com_initializer.error_code())) {
     return false;
@@ -244,8 +246,8 @@ bool GetInstalledProfilesByLanguageForTSF(
 
 bool GetInstalledProfilesByLanguageForIMM32(
     LANGID langid,
-    vector<LayoutProfileInfo> *installed_profiles) {
-  vector<KeyboardLayoutInfo> keyboard_layouts;
+    std::vector<LayoutProfileInfo> *installed_profiles) {
+  std::vector<KeyboardLayoutInfo> keyboard_layouts;
   if (!GenerateKeyboardLayoutList(&keyboard_layouts)) {
     DLOG(ERROR) << "GenerateKeyboardLayoutList failed.";
     return false;
@@ -303,7 +305,7 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
     }
 
     const int ivalue_name = _wtoi(value_name);
-    const wstring wvalue(reinterpret_cast<wchar_t*>(value),
+    const std::wstring wvalue(reinterpret_cast<wchar_t*>(value),
                          (value_length / sizeof(wchar_t)) - 1);
     KeyboardLayoutID klid(wvalue);
     if (!klid.has_id()) {
@@ -314,7 +316,7 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
   return true;
 }
 
-wstring GUIDToString(const GUID &guid) {
+std::wstring GUIDToString(const GUID &guid) {
   wchar_t buffer[256];
   const int character_length_with_null =
       ::StringFromGUID2(guid, buffer, arraysize(buffer));
@@ -324,10 +326,10 @@ wstring GUIDToString(const GUID &guid) {
 
   const size_t character_length_without_null =
       character_length_with_null - 1;
-  return wstring(buffer, buffer + character_length_without_null);
+  return std::wstring(buffer, buffer + character_length_without_null);
 }
 
-wstring LANGIDToString(LANGID langid) {
+std::wstring LANGIDToString(LANGID langid) {
   wchar_t buffer[5];
   HRESULT hr = ::StringCchPrintf(buffer, arraysize(buffer), L"%04x", langid);
   if (FAILED(hr)) {
@@ -458,7 +460,7 @@ bool EnableAndBroadcastNewLayout(
   return true;
 }
 
-bool GetActiveKeyboardLayouts(vector<HKL> *keyboard_layouts) {
+bool GetActiveKeyboardLayouts(std::vector<HKL> *keyboard_layouts) {
   if (keyboard_layouts == nullptr) {
     return false;
   }
@@ -555,15 +557,15 @@ void EnableAndSetDefaultIfLayoutIsTIP(const KeyboardLayoutInfo &layout) {
 // function unloads any active IME if it is included in |ime_filenames|.
 // If |exclude| is false, this function unloads any active IME unless it is
 // included in |ime_filenames|.
-void UnloadActivatedKeyboardMain(const vector<wstring> &ime_filenames,
+void UnloadActivatedKeyboardMain(const std::vector<std::wstring> &ime_filenames,
                                  bool exclude) {
-  vector<HKL> loaded_layouts;
+  std::vector<HKL> loaded_layouts;
   if (!GetActiveKeyboardLayouts(&loaded_layouts)) {
     return;
   }
   for (size_t i = 0; i < loaded_layouts.size(); ++i) {
     const HKL hkl = loaded_layouts[i];
-    const wstring ime_filename = GetIMEFileName(hkl);
+    const std::wstring ime_filename = GetIMEFileName(hkl);
     if (ime_filename.empty()) {
       continue;
     }
@@ -581,8 +583,8 @@ void UnloadActivatedKeyboardMain(const vector<wstring> &ime_filenames,
 }
 
 void UnloadProfilesForVista(
-    const vector<LayoutProfileInfo> &profiles_to_be_removed) {
-  vector <wstring> ime_filenames;
+    const std::vector<LayoutProfileInfo> &profiles_to_be_removed) {
+  std::vector<std::wstring> ime_filenames;
   for (size_t i = 0; i < profiles_to_be_removed.size(); ++i) {
     ime_filenames.push_back(profiles_to_be_removed[i].ime_filename);
   }
@@ -627,8 +629,9 @@ bool IsEqualProfile(const LayoutProfileInfo &lhs,
   return true;
 }
 
-bool IsEqualPreload(const PreloadOrderToKLIDMap &current_preload_map,
-                    const vector<KeyboardLayoutInfo> &new_preload_layouts) {
+bool IsEqualPreload(
+    const PreloadOrderToKLIDMap &current_preload_map,
+    const std::vector<KeyboardLayoutInfo> &new_preload_layouts) {
   if (current_preload_map.size() != new_preload_layouts.size()) {
     return false;
   }
@@ -650,7 +653,7 @@ bool IsEqualPreload(const PreloadOrderToKLIDMap &current_preload_map,
 
 // Currently only keyboard layouts which have IME filename are supported.
 bool RemoveHotKeyForIME(
-    const vector<KeyboardLayoutInfo> &layouts_to_be_removed) {
+    const std::vector<KeyboardLayoutInfo> &layouts_to_be_removed) {
   bool succeeded = true;
   for (DWORD id = IME_HOTKEY_DSWITCH_FIRST; id <= IME_HOTKEY_DSWITCH_LAST;
        ++id) {
@@ -664,7 +667,7 @@ bool RemoveHotKeyForIME(
     if (hkl == nullptr) {
       continue;
     }
-    const wstring ime_name = GetIMEFileName(hkl);
+    const std::wstring ime_name = GetIMEFileName(hkl);
     for (size_t i = 0; i < layouts_to_be_removed.size(); ++i) {
       const KeyboardLayoutInfo &layout = layouts_to_be_removed[i];
       if (layout.ime_filename.empty()) {
@@ -687,8 +690,9 @@ bool RemoveHotKeyForIME(
 
 // Currently this function is Mozc-specific.
 // TODO(yukawa): Generalize this function for any IME.
-void RemoveHotKeyForVista(const vector<LayoutProfileInfo> &installed_profiles) {
-  vector<KeyboardLayoutInfo> hotkey_remove_targets;
+void RemoveHotKeyForVista(
+    const std::vector<LayoutProfileInfo> &installed_profiles) {
+  std::vector<KeyboardLayoutInfo> hotkey_remove_targets;
   for (size_t i = 0; i < installed_profiles.size(); ++i) {
     const LayoutProfileInfo &profile = installed_profiles[i];
     if (!profile.is_tip && WinUtil::SystemEqualString(
@@ -724,11 +728,11 @@ LayoutProfileInfo::LayoutProfileInfo()
 // Currently this function is Mozc-specific.
 // TODO(yukawa): Generalize this function for any IME and/or TIP.
 bool UninstallHelper::GetNewEnabledProfileForVista(
-    const vector<LayoutProfileInfo> &current_profiles,
-    const vector<LayoutProfileInfo> &installed_profiles,
+    const std::vector<LayoutProfileInfo> &current_profiles,
+    const std::vector<LayoutProfileInfo> &installed_profiles,
     LayoutProfileInfo *current_default,
     LayoutProfileInfo *new_default,
-    vector<LayoutProfileInfo> *removed_profiles) {
+    std::vector<LayoutProfileInfo> *removed_profiles) {
   if (current_default == nullptr) {
     return false;
   }
@@ -796,7 +800,7 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
 
 bool UninstallHelper::GetInstalledProfilesByLanguage(
     LANGID langid,
-    vector<LayoutProfileInfo> *installed_profiles) {
+    std::vector<LayoutProfileInfo> *installed_profiles) {
   if (installed_profiles == nullptr) {
     return false;
   }
@@ -818,13 +822,13 @@ bool UninstallHelper::GetInstalledProfilesByLanguage(
 }
 
 bool UninstallHelper::GetCurrentProfilesForVista(
-    vector<LayoutProfileInfo> *current_profiles) {
+    std::vector<LayoutProfileInfo> *current_profiles) {
   if (current_profiles == nullptr) {
     return false;
   }
   current_profiles->clear();
 
-  map<DWORD, wstring> keyboard_layouts;
+  std::map<DWORD, std::wstring> keyboard_layouts;
   if (!GenerateKeyboardLayoutMap(&keyboard_layouts)) {
     return false;
   }
@@ -857,7 +861,7 @@ bool UninstallHelper::GetCurrentProfilesForVista(
       }
 
       if ((src.dwProfileType & LOTP_KEYBOARDLAYOUT) == LOTP_KEYBOARDLAYOUT) {
-        const wstring id(src.szId);
+        const std::wstring id(src.szId);
         // A valid |profile.szId| should consists of language ID (LANGID) and
         // keyboard layout ID (KILD) as follows.
         //  <LangID 1>:<KLID 1>
@@ -887,13 +891,13 @@ bool UninstallHelper::GetCurrentProfilesForVista(
 }
 
 bool UninstallHelper::RemoveProfilesForVista(
-    const vector<LayoutProfileInfo> &profiles_to_be_removed) {
+    const std::vector<LayoutProfileInfo> &profiles_to_be_removed) {
   if (profiles_to_be_removed.size() == 0) {
     // Nothing to do.
     return true;
   }
 
-  const wstring &profile_string = ComposeProfileStringForVista(
+  const std::wstring &profile_string = ComposeProfileStringForVista(
       profiles_to_be_removed);
 
   const BOOL result = ::InstallLayoutOrTipUserReg(
@@ -902,23 +906,23 @@ bool UninstallHelper::RemoveProfilesForVista(
   return result != FALSE;
 }
 
-wstring UninstallHelper::ComposeProfileStringForVista(
-    const vector<LayoutProfileInfo> &profiles) {
-  wstringstream ss;
+std::wstring UninstallHelper::ComposeProfileStringForVista(
+    const std::vector<LayoutProfileInfo> &profiles) {
+  std::wstringstream ss;
   for (size_t i = 0; i < profiles.size(); ++i) {
     const LayoutProfileInfo &info = profiles[i];
     if (i != 0) {
       ss << L";";
     }
 
-    const wstring &langid_string = LANGIDToString(info.langid);
+    const std::wstring &langid_string = LANGIDToString(info.langid);
     if (langid_string.empty()) {
       continue;
     }
 
     if (info.is_tip) {
-      const wstring &clsid_string = GUIDToString(info.clsid);
-      const wstring &guid_string = GUIDToString(info.profile_guid);
+      const std::wstring &clsid_string = GUIDToString(info.clsid);
+      const std::wstring &guid_string = GUIDToString(info.profile_guid);
       if (clsid_string.empty() || guid_string.empty()) {
         continue;
       }
@@ -946,9 +950,10 @@ bool UninstallHelper::SetDefaultForVista(
     DLOG(ERROR) << "EnableAndBroadcastNewLayout failed.";
   }
 
-  vector<LayoutProfileInfo> profile_list;
+  std::vector<LayoutProfileInfo> profile_list;
   profile_list.push_back(new_default);
-  const wstring profile_string = ComposeProfileStringForVista(profile_list);
+  const std::wstring profile_string =
+      ComposeProfileStringForVista(profile_list);
   if (profile_string.empty()) {
     return false;
   }
@@ -969,20 +974,20 @@ bool UninstallHelper::SetDefaultForVista(
 }
 
 bool UninstallHelper::RestoreUserIMEEnvironmentForVista(bool broadcast_change) {
-  vector<LayoutProfileInfo> installed_profiles;
+  std::vector<LayoutProfileInfo> installed_profiles;
   if (!GetInstalledProfilesByLanguage(kLANGJaJP, &installed_profiles)) {
     return false;
   }
 
   RemoveHotKeyForVista(installed_profiles);
 
-  vector<LayoutProfileInfo> current_profiles;
+  std::vector<LayoutProfileInfo> current_profiles;
   if (!GetCurrentProfilesForVista(&current_profiles)) {
     return false;
   }
   LayoutProfileInfo current_default;
   LayoutProfileInfo new_default;
-  vector<LayoutProfileInfo> removed_profiles;
+  std::vector<LayoutProfileInfo> removed_profiles;
   if (!GetNewEnabledProfileForVista(current_profiles, installed_profiles,
                                     &current_default, &new_default,
                                     &removed_profiles)) {

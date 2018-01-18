@@ -171,7 +171,7 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
             infostyle.caption_background_color().g(),
             infostyle.caption_background_color().b()));
 
-    wstring caption_str;
+    std::wstring caption_str;
     const Rect caption_rect(
       infostyle.window_border() + infostyle.caption_padding()
       + caption_style.left_padding(),
@@ -222,12 +222,12 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
       infostyle.row_rect_padding() * 2;
   const Information &info = usages.information(row);
 
-  wstring title_str;
+  std::wstring title_str;
   mozc::Util::UTF8ToWide(info.title(), &title_str);
   const Size title_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_TITLE, title_str, title_width);
 
-  wstring desc_str;
+  std::wstring desc_str;
   mozc::Util::UTF8ToWide(info.description(), &desc_str);
   const Size desc_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_DESCRIPTION, desc_str, desc_width);

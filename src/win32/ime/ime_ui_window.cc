@@ -202,7 +202,7 @@ void UpdateCommand(const UIContext &context,
   const bool show_suggest_window =
       ui_visibility_tracker.IsSuggestWindowVisible();
 
-  vector<wstring> candidate_list;
+  std::vector<wstring> candidate_list;
   DWORD focused_index = 0;
   if (!context.IsEmpty() && context.GetOpenStatus()) {
     // Copy the last output.

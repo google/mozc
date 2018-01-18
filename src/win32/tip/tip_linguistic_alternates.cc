@@ -127,7 +127,7 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
       return E_INVALIDARG;
     }
     *candidate_list = nullptr;
-    wstring query;
+    std::wstring query;
     if (!TipEditSession::GetTextSync(text_service_, range, &query)) {
       return E_FAIL;
     }

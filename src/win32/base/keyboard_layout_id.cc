@@ -63,7 +63,7 @@ KeyboardLayoutID::KeyboardLayoutID()
     : id_(kDefaultKLID),
       has_id_(false) {}
 
-KeyboardLayoutID::KeyboardLayoutID(const wstring &text)
+KeyboardLayoutID::KeyboardLayoutID(const std::wstring &text)
     : id_(kDefaultKLID),
       has_id_(false) {
   Parse(text);
@@ -73,7 +73,7 @@ KeyboardLayoutID::KeyboardLayoutID(DWORD id)
     : id_(id),
       has_id_(true) {}
 
-bool KeyboardLayoutID::Parse(const wstring &text) {
+bool KeyboardLayoutID::Parse(const std::wstring &text) {
   clear_id();
 
   if (text.size() != kTextLength) {
@@ -86,14 +86,14 @@ bool KeyboardLayoutID::Parse(const wstring &text) {
   }
 
   DWORD id = 0;
-  wstringstream ss;
+  std::wstringstream ss;
   ss << text;
-  ss >> hex >> id;
+  ss >> std::hex >> id;
   set_id(id);
   return true;
 }
 
-wstring KeyboardLayoutID::ToString() const {
+std::wstring KeyboardLayoutID::ToString() const {
   CHECK(has_id()) << "ID is not set.";
   wchar_t buffer[KL_NAMELENGTH];
   const HRESULT result =

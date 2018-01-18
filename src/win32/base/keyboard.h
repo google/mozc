@@ -132,7 +132,7 @@ class Win32KeyboardInterface {
     __in UINT wFlags) = 0;
 
   // Injection point for SendInput API.
-  virtual UINT SendInput(const vector<INPUT> &inputs) = 0;
+  virtual UINT SendInput(const std::vector<INPUT> &inputs) = 0;
 
   static Win32KeyboardInterface *CreateDefault();
 };

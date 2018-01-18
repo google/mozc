@@ -432,10 +432,10 @@ bool CanUseExcludeRegionInCandidateFrom(
   return true;
 }
 
-wstring ComposePreeditText(const commands::Preedit &preedit,
+std::wstring ComposePreeditText(const commands::Preedit &preedit,
                            string *preedit_utf8,
-                           vector<int> *segment_indices,
-                           vector<CharacterRange> *segment_ranges) {
+                          std::vector<int> *segment_indices,
+                          std::vector<CharacterRange> *segment_ranges) {
   if (preedit_utf8 != NULL) {
     preedit_utf8->clear();
   }
@@ -445,12 +445,12 @@ wstring ComposePreeditText(const commands::Preedit &preedit,
   if (segment_ranges != NULL) {
     segment_ranges->clear();
   }
-  wstring value;
+  std::wstring value;
   int total_characters = 0;
   for (size_t segment_index = 0; segment_index < preedit.segment_size();
        ++segment_index) {
     const commands::Preedit::Segment &segment = preedit.segment(segment_index);
-    wstring segment_value;
+    std::wstring segment_value;
     mozc::Util::UTF8ToWide(segment.value(), &segment_value);
     value.append(segment_value);
     if (preedit_utf8 != NULL) {
@@ -475,10 +475,10 @@ wstring ComposePreeditText(const commands::Preedit &preedit,
 
 bool CalcLayoutWithTextWrappingInternal(
     CDCHandle dc,
-    const wstring &str,
+    const std::wstring &str,
     const int maximum_line_length,
     const int initial_offset,
-    vector<LineLayout> *line_layouts) {
+   std::vector<LineLayout> *line_layouts) {
   DCHECK(line_layouts != NULL);
   if (initial_offset < 0 || maximum_line_length <= 0 ||
       maximum_line_length < initial_offset) {
@@ -558,7 +558,7 @@ bool CalcLayoutWithTextWrappingInternal(
       } else {
         CSize line_size;
         int allowable_chars_for_confirmation = 0;
-        unique_ptr<int[]> size_buffer(new int[allowable_chars]);
+        std::unique_ptr<int[]> size_buffer(new int[allowable_chars]);
         result = dc.GetTextExtentExPoint(
             layout.text.c_str(),
             layout.text.size(),
@@ -742,7 +742,8 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowClassName(HWND window_handle, wstring *class_name) {
+  virtual bool GetWindowClassName(HWND window_handle,
+                                  std::wstring *class_name) {
     if (class_name == NULL) {
       return false;
     }
@@ -784,7 +785,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
 };
 
 struct WindowInfo {
-  wstring class_name;
+  std::wstring class_name;
   CRect window_rect;
   CPoint client_area_offset;
   CSize client_area_size;
@@ -885,7 +886,8 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method wraps API call of GetAncestor/GA_ROOT.
   virtual HWND GetRootWindow(HWND window_handle) {
-    const map<HWND, HWND>::const_iterator it = root_map_.find(window_handle);
+    const std::map<HWND, HWND>::const_iterator it =
+        root_map_.find(window_handle);
     if (it == root_map_.end()) {
       return window_handle;
     }
@@ -893,7 +895,8 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowClassName(HWND window_handle, wstring *class_name) {
+  virtual bool GetWindowClassName(HWND window_handle,
+                                  std::wstring *class_name) {
     if (class_name == NULL) {
       return false;
     }
@@ -935,7 +938,7 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   virtual HWND RegisterWindow(
-      const wstring &class_name, const RECT &window_rect,
+      const std::wstring &class_name, const RECT &window_rect,
       const POINT &client_area_offset, const SIZE &client_area_size,
       double scale_factor) {
     const HWND hwnd = GetNextWindowHandle();
@@ -969,8 +972,8 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
     return &(window_map_.find(hwnd)->second);
   }
 
-  map<HWND, WindowInfo> window_map_;
-  map<HWND, HWND> root_map_;
+  std::map<HWND, WindowInfo> window_map_;
+  std::map<HWND, HWND> root_map_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowPositionEmulatorImpl);
 };
@@ -1666,10 +1669,10 @@ void IndicatorWindowLayout::Clear() {
 
 bool LayoutManager::CalcLayoutWithTextWrapping(
     const LOGFONTW &font,
-    const wstring &text,
+    const std::wstring &text,
     int maximum_line_length,
     int initial_offset,
-    vector<LineLayout> *line_layouts) {
+   std::vector<LineLayout> *line_layouts) {
   if (line_layouts == NULL) {
     return false;
   }
@@ -1762,7 +1765,7 @@ LayoutManager::~LayoutManager() {}
 //   more easily.
 bool LayoutManager::LayoutCompositionWindow(
     const commands::RendererCommand &command,
-    vector<CompositionWindowLayout> *composition_window_layouts,
+   std::vector<CompositionWindowLayout> *composition_window_layouts,
     CandidateWindowLayout *candidate_layout) const {
   if (composition_window_layouts != NULL) {
     composition_window_layouts->clear();
@@ -1930,13 +1933,13 @@ bool LayoutManager::LayoutCompositionWindow(
   }
 
   string preedit_utf8;
-  vector<int> segment_indices;
-  vector<CharacterRange> segment_lengths;
-  const wstring composition_text = ComposePreeditText(
+  std::vector<int> segment_indices;
+  std::vector<CharacterRange> segment_lengths;
+  const std::wstring composition_text = ComposePreeditText(
       preedit, &preedit_utf8, &segment_indices, &segment_lengths);
   DCHECK_EQ(composition_text.size(), segment_indices.size());
   DCHECK_EQ(preedit.segment_size(), segment_lengths.size());
-  vector<mozc::renderer::win32::LineLayout> layouts;
+  std::vector<mozc::renderer::win32::LineLayout> layouts;
   bool result = false;
   {
     const int offset = is_vertical
@@ -2134,10 +2137,10 @@ bool LayoutManager::LayoutCompositionWindow(
         continue;
       }
       const int segment_begin =
-          max(segment_lengths[segment_index].begin, total_characters) -
+          std::max(segment_lengths[segment_index].begin, total_characters) -
           total_characters;
       const int segment_end =
-          min(segment_lengths[segment_index].begin +
+          std::min(segment_lengths[segment_index].begin +
               segment_lengths[segment_index].length,
               next_total_characters) - total_characters;
       if (segment_begin >= segment_end) {
@@ -2201,12 +2204,12 @@ bool LayoutManager::LayoutCompositionWindow(
     // Initialize the |exclusion_area| with invalid data. These values will
     // be updated to be valid at the first turn of the next for-loop.
     // For example, |exclusion_area.left| will be updated as follows.
-    //   exclusion_area.left = min(exclusion_area.left,
-    //                             numeric_limits<int>::max());
-    CRect exclusion_area(numeric_limits<int>::max(),
-                         numeric_limits<int>::max(),
-                         numeric_limits<int>::min(),
-                         numeric_limits<int>::min());
+    //   exclusion_area.left = std::min(exclusion_area.left,
+    //                             std::numeric_limits<int>::max());
+    CRect exclusion_area(std::numeric_limits<int>::max(),
+                         std::numeric_limits<int>::max(),
+                         std::numeric_limits<int>::min(),
+                         std::numeric_limits<int>::min());
 
     for (size_t i = 0; i < composition_window_layouts->size(); ++i) {
       const CompositionWindowLayout &layout = composition_window_layouts->at(i);
@@ -2214,14 +2217,14 @@ bool LayoutManager::LayoutCompositionWindow(
       text_area_in_screen_coord.OffsetRect(
           layout.window_position_in_screen_coordinate.left,
           layout.window_position_in_screen_coordinate.top);
-      exclusion_area.left = min(exclusion_area.left,
-                                text_area_in_screen_coord.left);
-      exclusion_area.top = min(exclusion_area.top,
-                               text_area_in_screen_coord.top);
-      exclusion_area.right = max(exclusion_area.right,
-                                 text_area_in_screen_coord.right);
-      exclusion_area.bottom = max(exclusion_area.bottom,
-                                  text_area_in_screen_coord.bottom);
+      exclusion_area.left = std::min(exclusion_area.left,
+                                     text_area_in_screen_coord.left);
+      exclusion_area.top = std::min(exclusion_area.top,
+                                    text_area_in_screen_coord.top);
+      exclusion_area.right = std::max(exclusion_area.right,
+                                      text_area_in_screen_coord.right);
+      exclusion_area.bottom = std::max(exclusion_area.bottom,
+                                       text_area_in_screen_coord.bottom);
     }
 
     CPoint cursor_pos;
@@ -2538,7 +2541,7 @@ int LayoutManager::GetCompatibilityMode(
     return COMPATIBILITY_MODE_NONE;
   }
 
-  wstring class_name;
+  std::wstring class_name;
   if (!window_position_->GetWindowClassName(target_window, &class_name)) {
     return COMPATIBILITY_MODE_NONE;
   }

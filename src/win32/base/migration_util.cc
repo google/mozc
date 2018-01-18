@@ -78,7 +78,7 @@ bool MigrationUtil::IsFullIMEAvailable() {
 
 bool MigrationUtil::IsFullTIPAvailable() {
   const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-  vector<LayoutProfileInfo> profile_list;
+  std::vector<LayoutProfileInfo> profile_list;
   if (!UninstallHelper::GetInstalledProfilesByLanguage(kLANGJaJP,
                                                        &profile_list)) {
     return false;
@@ -162,7 +162,7 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
       continue;
     }
 
-    const wstring id(profile.szId);
+    const std::wstring id(profile.szId);
     // A valid |profile.szId| should consists of language ID (LANGID) and
     // keyboard layout ID (KILD) as follows.
     //  <LangID 1>:<KLID 1>
@@ -195,7 +195,8 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
         return false;
       }
 
-      const wstring &profile = wstring(L"0x0411:") + clsid + profile_id;
+      const std::wstring &profile =
+          std::wstring(L"0x0411:") + clsid + profile_id;
       if (!::SetDefaultLayoutOrTip(profile.c_str(), 0)) {
         DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
         return false;

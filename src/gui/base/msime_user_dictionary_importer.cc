@@ -242,7 +242,7 @@ class MSIMEImportIterator
   }
 
  private:
-  vector<IMEWRD> buf_;
+  std::vector<IMEWRD> buf_;
   ScopedIFEDictionary dic_;
   map<int, string> pos_map_;
   HRESULT result_;

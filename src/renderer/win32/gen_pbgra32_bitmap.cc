@@ -60,7 +60,7 @@ const uint32 kMaxBitmapWidth = 16384;
 const uint32 kMaxBitmapHeight = 16384;
 
 bool ConvertMain() {
-  wstring wide_src;
+  std::wstring wide_src;
   mozc::Util::UTF8ToWide(FLAGS_src, &wide_src);
   std::unique_ptr<Gdiplus::Bitmap> image(
       Gdiplus::Bitmap::FromFile(wide_src.c_str()));

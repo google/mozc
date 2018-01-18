@@ -222,7 +222,8 @@ class GdiTextRenderer : public TextRenderer {
     }
   }
 
-  virtual Size MeasureString(FONT_TYPE font_type, const wstring &str) const {
+  virtual Size MeasureString(FONT_TYPE font_type,
+                             const std::wstring &str) const {
     const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
     CRect rect;
     mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
@@ -232,7 +233,7 @@ class GdiTextRenderer : public TextRenderer {
   }
 
   virtual Size MeasureStringMultiLine(
-      FONT_TYPE font_type, const wstring &str, const int width) const {
+      FONT_TYPE font_type, const std::wstring &str, const int width) const {
     const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
     CRect rect(0, 0, width, 0);
     mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
@@ -242,17 +243,18 @@ class GdiTextRenderer : public TextRenderer {
   }
 
   virtual void RenderText(CDCHandle dc,
-                          const wstring &text,
+                          const std::wstring &text,
                           const Rect &rect,
                           FONT_TYPE font_type) const {
-    vector<TextRenderingInfo> infolist;
+    std::vector<TextRenderingInfo> infolist;
     infolist.push_back(TextRenderingInfo(text, rect));
     RenderTextList(dc, infolist, font_type);
   }
 
-  virtual void RenderTextList(CDCHandle dc,
-                              const vector<TextRenderingInfo> &display_list,
-                              FONT_TYPE font_type) const {
+  virtual void RenderTextList(
+      CDCHandle dc,
+      const std::vector<TextRenderingInfo> &display_list,
+      FONT_TYPE font_type) const {
     const auto &render_info = render_info_[font_type];
     const auto old_font = dc.SelectFont(render_info.font);
     const auto previous_color = dc.SetTextColor(render_info.color);
@@ -273,7 +275,7 @@ class GdiTextRenderer : public TextRenderer {
     DWORD style;
     CFont font;
   };
-  unique_ptr<RenderInfo[]> render_info_;
+  std::unique_ptr<RenderInfo[]> render_info_;
   mutable CDC mem_dc_;
 
   DISALLOW_COPY_AND_ASSIGN(GdiTextRenderer);
@@ -350,25 +352,28 @@ class DirectWriteTextRenderer : public TextRenderer {
   }
 
   // Retrieves the bounding box for a given string.
-  virtual Size MeasureString(FONT_TYPE font_type, const wstring &str) const {
+  virtual Size MeasureString(FONT_TYPE font_type,
+                             const std::wstring &str) const {
     return MeasureStringImpl(font_type, str, 0, false);
   }
 
-  virtual Size MeasureStringMultiLine(FONT_TYPE font_type, const wstring &str,
+  virtual Size MeasureStringMultiLine(FONT_TYPE font_type,
+                                      const std::wstring &str,
                                       const int width) const {
     return MeasureStringImpl(font_type, str, width, true);
   }
 
-  virtual void RenderText(CDCHandle dc, const wstring &text,
+  virtual void RenderText(CDCHandle dc, const std::wstring &text,
                           const Rect &rect, FONT_TYPE font_type) const {
-    vector<TextRenderingInfo> infolist;
+    std::vector<TextRenderingInfo> infolist;
     infolist.push_back(TextRenderingInfo(text, rect));
     RenderTextList(dc, infolist, font_type);
   }
 
-  virtual void RenderTextList(CDCHandle dc,
-                              const vector<TextRenderingInfo> &display_list,
-                              FONT_TYPE font_type) const {
+  virtual void RenderTextList(
+      CDCHandle dc,
+      const std::vector<TextRenderingInfo> &display_list,
+      FONT_TYPE font_type) const {
     const size_t kMaxTrial = 3;
     size_t trial = 0;
     while (true) {
@@ -391,13 +396,13 @@ class DirectWriteTextRenderer : public TextRenderer {
   }
 
   HRESULT RenderTextListImpl(CDCHandle dc,
-                             const vector<TextRenderingInfo> &display_list,
+                             const std::vector<TextRenderingInfo> &display_list,
                              FONT_TYPE font_type) const {
     CRect total_rect;
     for (const auto &item : display_list) {
       const auto &item_rect = ToCRect(item.rect);
-      total_rect.right = max(total_rect.right, item_rect.right);
-      total_rect.bottom = max(total_rect.bottom, item_rect.bottom);
+      total_rect.right = std::max(total_rect.right, item_rect.right);
+      total_rect.bottom = std::max(total_rect.bottom, item_rect.bottom);
     }
     HRESULT hr = S_OK;
     hr = dc_render_target_->BindDC(dc, &total_rect);
@@ -435,7 +440,7 @@ class DirectWriteTextRenderer : public TextRenderer {
     return dc_render_target_->EndDraw();
   }
 
-  Size MeasureStringImpl(FONT_TYPE font_type, const wstring &str,
+  Size MeasureStringImpl(FONT_TYPE font_type, const std::wstring &str,
                          const int width, bool use_width) const {
     HRESULT hr = S_OK;
     const FLOAT kLayoutLimit = 100000.0f;
@@ -490,7 +495,7 @@ class DirectWriteTextRenderer : public TextRenderer {
       return nullptr;
     }
     length += 1;  // for NUL.
-    unique_ptr<wchar_t[]> family_name(new wchar_t[length]);
+    std::unique_ptr<wchar_t[]> family_name(new wchar_t[length]);
     hr = localized_family_names->GetString(0, family_name.get(), length);
     if (FAILED(hr)) {
       return nullptr;
@@ -550,7 +555,7 @@ class DirectWriteTextRenderer : public TextRenderer {
   CComPtr<IDWriteFactory> dwrite_factory_;
   mutable CComPtr<ID2D1DCRenderTarget> dc_render_target_;
   CComPtr<IDWriteGdiInterop> dwrite_interop_;
-  vector<RenderInfo> render_info_;
+  std::vector<RenderInfo> render_info_;
 
   DISALLOW_COPY_AND_ASSIGN(DirectWriteTextRenderer);
 };

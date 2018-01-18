@@ -109,11 +109,11 @@ class TipEditSession {
   // Begins a sync edit session to retrieve the text from |range|.
   static bool GetTextSync(TipTextService *text_service,
                           ITfRange *range,
-                          wstring *text);
+                          std::wstring *text);
 
   // Begins an async edit session to set |text| to |range|.
   static bool SetTextAsync(TipTextService *text_service,
-                           const wstring &text,
+                           const std::wstring &text,
                            ITfRange *range);
 
  private:

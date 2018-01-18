@@ -231,7 +231,7 @@ class IndicatorWindow::WindowImpl
         SetTimer(kTimerEventFading, kFadingOutInterval);
         break;
       case kTimerEventFading:
-        alpha_ = max(static_cast<int>(alpha_) - kFadingOutAlphaDelta, 0);
+        alpha_ = std::max(static_cast<int>(alpha_) - kFadingOutAlphaDelta, 0);
         if (alpha_ == 0) {
           KillTimer(kTimerEventFading);
         }
@@ -321,7 +321,7 @@ class IndicatorWindow::WindowImpl
   CPoint top_left_;
   BYTE alpha_;
   double dpi_scaling_;
-  vector<Sprite> sprites_;
+  std::vector<Sprite> sprites_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowImpl);
 };

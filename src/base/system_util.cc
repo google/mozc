@@ -151,9 +151,9 @@ class LocalAppDataDirectoryCache {
     if (FAILED(result)) {
       return result;
     }
-    wstring path = config;
-    const wstring::size_type local_pos = path.find(L"\\Packages\\");
-    if (local_pos == wstring::npos) {
+    std::wstring path = config;
+    const std::wstring::size_type local_pos = path.find(L"\\Packages\\");
+    if (local_pos == std::wstring::npos) {
       return E_FAIL;
     }
     path.erase(local_pos);
@@ -184,7 +184,7 @@ class LocalAppDataDirectoryCache {
       return E_UNEXPECTED;
     }
 
-    wstring wpath = task_mem_buffer;
+    std::wstring wpath = task_mem_buffer;
     ::CoTaskMemFree(task_mem_buffer);
 
     string path;

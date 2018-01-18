@@ -71,7 +71,7 @@ void MockJNIEnv::TearDownJNIEnv() {
 }
 
 void MockJNIEnv::ClearArrayMap() {
-  for (map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
+  for (std::map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
            byte_array_map_.begin();
        iter != byte_array_map_.end(); ++iter) {
     delete iter->first;

@@ -552,7 +552,7 @@ STDMETHODIMP TipLangBarButton::QueryInterfaceBase(
   return E_NOINTERFACE;
 }
 
-void TipLangBarButton::SetDescription(const wstring &description) {
+void TipLangBarButton::SetDescription(const std::wstring &description) {
   ::StringCchCopy(item_info_.szDescription,
                   arraysize(item_info_.szDescription),
                   description.c_str());

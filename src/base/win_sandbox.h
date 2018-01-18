@@ -49,8 +49,8 @@ class Sid {
   explicit Sid(WELL_KNOWN_SID_TYPE type);
   const SID *GetPSID() const;
   SID *GetPSID();
-  wstring GetName() const;
-  wstring GetAccountName() const;
+  std::wstring GetName() const;
+  std::wstring GetAccountName() const;
 
  private:
   BYTE sid_[SECURITY_MAX_SID_SIZE];
@@ -161,11 +161,11 @@ class WinSandbox {
   // |security_level|.  These methods emulates CreateRestrictedToken
   // method in the Chromium sandbox library.
   // http://src.chromium.org/viewvc/chrome/trunk/src/sandbox/src/restricted_token_utils.cc?view=markup
-  static vector<Sid> GetSidsToDisable(HANDLE effective_token,
+  static std::vector<Sid> GetSidsToDisable(HANDLE effective_token,
                                       TokenLevel security_level);
-  static vector<LUID> GetPrivilegesToDisable(HANDLE effective_token,
+  static std::vector<LUID> GetPrivilegesToDisable(HANDLE effective_token,
                                              TokenLevel security_level);
-  static vector<Sid> GetSidsToRestrict(HANDLE effective_token,
+  static std::vector<Sid> GetSidsToRestrict(HANDLE effective_token,
                                        TokenLevel security_level);
 
   // Returns true if a restricted token handle is successfully assigned into
@@ -192,14 +192,15 @@ class WinSandbox {
   //   - FILE_EXECUTE
   //   - READ_CONTROL
   //   - SYNCHRONIZE
-  static bool EnsureAllApplicationPackagesPermisssion(const wstring &file_name);
+  static bool EnsureAllApplicationPackagesPermisssion(
+      const std::wstring &file_name);
 
  protected:
   // Returns SDDL for given |shareble_object_type|.
   // This method is placed here for unit testing.
-  static wstring GetSDDL(ObjectSecurityType shareble_object_type,
-                         const wstring &token_user_sid,
-                         const wstring &token_primary_group_sid,
+  static std::wstring GetSDDL(ObjectSecurityType shareble_object_type,
+                         const std::wstring &token_user_sid,
+                         const std::wstring &token_primary_group_sid,
                          bool is_windows_8_or_later);
 
  private:

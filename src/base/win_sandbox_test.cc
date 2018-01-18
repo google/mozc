@@ -45,7 +45,7 @@ class TestableWinSandbox : public WinSandbox {
   DISALLOW_IMPLICIT_CONSTRUCTORS(TestableWinSandbox);
 };
 
-void VerifySidContained(const vector<Sid> sids,
+void VerifySidContained(const std::vector<Sid> sids,
                         WELL_KNOWN_SID_TYPE expected_well_known_sid) {
   Sid expected_sid(expected_well_known_sid);
   for (size_t i = 0; i < sids.size(); ++i) {
@@ -64,19 +64,19 @@ TEST(WinSandboxTest, GetSidsToDisable) {
                      &process_token_ret);
   ScopedHandle process_token(process_token_ret);
 
-  const vector<Sid> lockdown = WinSandbox::GetSidsToDisable(
+  const std::vector<Sid> lockdown = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_LOCKDOWN);
-  const vector<Sid> restricted = WinSandbox::GetSidsToDisable(
+  const std::vector<Sid> restricted = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_RESTRICTED);
-  const vector<Sid> limited = WinSandbox::GetSidsToDisable(
+  const std::vector<Sid> limited = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_LIMITED);
-  const vector<Sid> interactive = WinSandbox::GetSidsToDisable(
+  const std::vector<Sid> interactive = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_INTERACTIVE);
-  const vector<Sid> non_admin = WinSandbox::GetSidsToDisable(
+  const std::vector<Sid> non_admin = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_NON_ADMIN);
-  const vector<Sid> restricted_same_access = WinSandbox::GetSidsToDisable(
+  const std::vector<Sid> restricted_same_access = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_RESTRICTED_SAME_ACCESS);
-  const vector<Sid> unprotect = WinSandbox::GetSidsToDisable(
+  const std::vector<Sid> unprotect = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_UNPROTECTED);
 
   EXPECT_TRUE(restricted.size() == lockdown.size());
@@ -97,20 +97,20 @@ TEST(WinSandboxTest, GetPrivilegesToDisable) {
                      &process_token_ret);
   ScopedHandle process_token(process_token_ret);
 
-  const vector<LUID> lockdown = WinSandbox::GetPrivilegesToDisable(
+  const std::vector<LUID> lockdown = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_LOCKDOWN);
-  const vector<LUID> restricted = WinSandbox::GetPrivilegesToDisable(
+  const std::vector<LUID> restricted = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_RESTRICTED);
-  const vector<LUID> limited = WinSandbox::GetPrivilegesToDisable(
+  const std::vector<LUID> limited = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_LIMITED);
-  const vector<LUID> interactive = WinSandbox::GetPrivilegesToDisable(
+  const std::vector<LUID> interactive = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_INTERACTIVE);
-  const vector<LUID> non_admin = WinSandbox::GetPrivilegesToDisable(
+  const std::vector<LUID> non_admin = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_NON_ADMIN);
-  const vector<LUID> restricted_same_access =
+  const std::vector<LUID> restricted_same_access =
       WinSandbox::GetPrivilegesToDisable(
           process_token.get(), WinSandbox::USER_RESTRICTED_SAME_ACCESS);
-  const vector<LUID> unprotect = WinSandbox::GetPrivilegesToDisable(
+  const std::vector<LUID> unprotect = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_UNPROTECTED);
 
   EXPECT_EQ(0, restricted_same_access.size());
@@ -123,19 +123,19 @@ TEST(WinSandboxTest, GetSidsToRestrict) {
                      &process_token_ret);
   ScopedHandle process_token(process_token_ret);
 
-  const vector<Sid> lockdown = WinSandbox::GetSidsToRestrict(
+  const std::vector<Sid> lockdown = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_LOCKDOWN);
-  const vector<Sid> restricted = WinSandbox::GetSidsToRestrict(
+  const std::vector<Sid> restricted = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_RESTRICTED);
-  const vector<Sid> limited = WinSandbox::GetSidsToRestrict(
+  const std::vector<Sid> limited = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_LIMITED);
-  const vector<Sid> interactive = WinSandbox::GetSidsToRestrict(
+  const std::vector<Sid> interactive = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_INTERACTIVE);
-  const vector<Sid> non_admin = WinSandbox::GetSidsToRestrict(
+  const std::vector<Sid> non_admin = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_NON_ADMIN);
-  const vector<Sid> restricted_same_access = WinSandbox::GetSidsToRestrict(
+  const std::vector<Sid> restricted_same_access = WinSandbox::GetSidsToRestrict(
           process_token.get(), WinSandbox::USER_RESTRICTED_SAME_ACCESS);
-  const vector<Sid> unprotect = WinSandbox::GetSidsToRestrict(
+  const std::vector<Sid> unprotect = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_UNPROTECTED);
 
   EXPECT_EQ(1, lockdown.size());
@@ -149,12 +149,12 @@ TEST(WinSandboxTest, GetSidsToRestrict) {
 const wchar_t kDummyUserSID[] = L"S-8";
 const wchar_t kDummyGroupSID[] = L"S-9";
 
-wstring GetSDDLForVista(WinSandbox::ObjectSecurityType type) {
+std::wstring GetSDDLForVista(WinSandbox::ObjectSecurityType type) {
   return TestableWinSandbox::GetSDDL(
       type, kDummyUserSID, kDummyGroupSID, false);
 }
 
-wstring GetSDDLForWin8(WinSandbox::ObjectSecurityType type) {
+std::wstring GetSDDLForWin8(WinSandbox::ObjectSecurityType type) {
   return TestableWinSandbox::GetSDDL(
       type, kDummyUserSID, kDummyGroupSID, true);
 }

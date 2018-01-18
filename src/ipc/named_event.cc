@@ -102,7 +102,7 @@ const string NamedEventUtil::GetEventPath(const char *name) {
 #ifdef OS_WIN
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), handle_(NULL) {
-  wstring event_path;
+  std::wstring event_path;
   Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
 
   handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false,
@@ -220,7 +220,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
 
 NamedEventNotifier::NamedEventNotifier(const char *name)
     : handle_(NULL) {
-  wstring event_path;
+  std::wstring event_path;
   Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
   handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false,
                          event_path.c_str());

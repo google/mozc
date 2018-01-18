@@ -116,7 +116,7 @@ bool SetDefaultWin8() {
     return E_OUTOFMEMORY;
   }
 
-  const wstring &profile = wstring(L"0x0411:") + clsid + profile_id;
+  const std::wstring &profile = std::wstring(L"0x0411:") + clsid + profile_id;
   if (!::InstallLayoutOrTip(profile.c_str(), 0)) {
     DLOG(ERROR) << "InstallLayoutOrTip failed";
     return false;
@@ -168,7 +168,7 @@ bool ImeUtil::IsDefault() {
       return false;
     }
 
-    const wstring id(profile.szId);
+    const std::wstring id(profile.szId);
     // A valid |profile.szId| should consists of language ID (LANGID) and
     // keyboard layout ID (KILD) as follows.
     //  <LangID 1>:<KLID 1>
@@ -213,7 +213,7 @@ bool ImeUtil::SetDefault() {
     return false;
   }
 
-  const wstring &profile_list = L"0x0411:0x" + mozc_klid.ToString();
+  const std::wstring &profile_list = L"0x0411:0x" + mozc_klid.ToString();
   if (!::SetDefaultLayoutOrTip(profile_list.c_str(), 0)) {
     DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
     return false;
@@ -255,7 +255,7 @@ bool ImeUtil::ActivateForCurrentSession() {
 // Wait for "MSCTF.AsmCacheReady.<desktop name><session #>" event signal to
 // work around b/5765783.
 bool ImeUtil::WaitForAsmCacheReady(uint32 timeout_msec) {
-  wstring event_name;
+  std::wstring event_name;
   if (Util::UTF8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName(),
                        &event_name) == 0) {
     LOG(ERROR) << "Failed to compose event name.";

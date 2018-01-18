@@ -51,10 +51,10 @@ class CacheServiceManager {
   static const wchar_t *GetServiceName();
 
   // Return the unquoted path to the cache service exe file.
-  static wstring GetUnquotedServicePath();
+  static std::wstring GetUnquotedServicePath();
 
   // Return the quoted path to the cache service exe file.
-  static wstring GetQuotedServicePath();
+  static std::wstring GetQuotedServicePath();
 
   // Enable the autostart of the cache service.
   // Fails if the cache service is not installed.
@@ -79,7 +79,7 @@ class CacheServiceManager {
   static bool HasEnoughMemory();
 
   // Return true if the current status of the serivice is successfully
-  // serialized into the specified wstring instance.
+  // serialized into the specified std::wstring instance.
   // You can assume that the serialized data consists of ASCII printable
   // characters.
   // If the cache service is not installed, default settings is returned
@@ -87,9 +87,9 @@ class CacheServiceManager {
   static bool BackupStateAsString(wstring *buffer);
 
   // Return true if the previous status of the service is successfully
-  // restored from the specified wstring instance.
+  // restored from the specified std::wstring instance.
   // This function may start the service if needed.
-  static bool RestoreStateFromString(const wstring &buffer);
+  static bool RestoreStateFromString(const std::wstring &buffer);
 
   // Return true if:
   // - The cache service is not installed.

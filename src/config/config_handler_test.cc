@@ -284,7 +284,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
 #ifdef OS_WIN
     // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
-    wstring wdest_path;
+    std::wstring wdest_path;
     Util::UTF8ToWide(dest_path, &wdest_path);
     ::SetFileAttributesW(wdest_path.c_str(), FILE_ATTRIBUTE_NORMAL);
 #endif  // OS_WIN

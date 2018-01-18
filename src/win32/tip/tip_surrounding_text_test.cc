@@ -40,7 +40,7 @@ namespace {
 TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
   {
     const char kSource[] = "abcde";
-    wstring source;
+    std::wstring source;
     Util::UTF8ToWide(kSource, &source);
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
@@ -60,7 +60,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
   }
   {
     const char kSource[] = "𠮟咤";
-    wstring source;
+    std::wstring source;
     Util::UTF8ToWide(kSource, &source);
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(

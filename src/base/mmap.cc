@@ -81,7 +81,7 @@ bool Mmap::Open(const char *filename, const char *mode) {
     return false;
   }
 
-  wstring filename_wide;
+  std::wstring filename_wide;
   if (Util::UTF8ToWide(filename, &filename_wide) <= 0) {
     return false;
   }

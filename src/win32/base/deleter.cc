@@ -65,7 +65,7 @@ VKBackBasedDeleter::~VKBackBasedDeleter() {
 void VKBackBasedDeleter::BeginDeletion(int deletion_count,
                                        const mozc::commands::Output &output,
                                        const InputState &ime_state) {
-  vector<INPUT> inputs;
+  std::vector<INPUT> inputs;
 
   wait_queue_->clear();
   *pending_ime_state_ = InputState();

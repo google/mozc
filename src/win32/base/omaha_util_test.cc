@@ -63,7 +63,7 @@ const HKEY kHKLM64_ClientState_ReadWrite = INT2HKEY(4);
 const HKEY KRegKey_NotFound = INT2HKEY(100);
 #undef INT2HKEY
 
-bool IsEqualInLowercase(const wstring &lhs, const wstring &rhs) {
+bool IsEqualInLowercase(const std::wstring &lhs, const std::wstring &rhs) {
   return WinUtil::SystemEqualString(lhs, rhs, true);
 }
 
@@ -116,25 +116,25 @@ class RegistryEmulator {
       has_##field_name##_ = true;        \
       return &##field_name##_;           \
     }
-    DEFINE_FIELD(wstring, ap_value)
+    DEFINE_FIELD(std::wstring, ap_value)
     DEFINE_FIELD(DWORD, installer_result)
-    DEFINE_FIELD(wstring, installer_result_ui_string)
+    DEFINE_FIELD(std::wstring, installer_result_ui_string)
 #undef DEFINE_FIELD
 
    private:
     bool omaha_client_state_key_exists_;
     bool has_ap_value_;
-    wstring ap_value_;
+    std::wstring ap_value_;
     bool has_installer_result_;
     DWORD installer_result_;
     bool has_installer_result_ui_string_;
-    wstring installer_result_ui_string_;
+    std::wstring installer_result_ui_string_;
   };
 
   typedef PropertySelector<Id> Property;
 
   RegistryEmulator() {
-    vector<WinAPITestHelper::HookRequest> requests;
+    std::vector<WinAPITestHelper::HookRequest> requests;
     requests.push_back(
         DEFINE_HOOK("advapi32.dll", RegCreateKeyExW, TestRegCreateKeyExW));
     requests.push_back(
@@ -217,7 +217,7 @@ class RegistryEmulator {
 
   static LSTATUS UpdateString(const wchar_t *value_name,
                               const wchar_t *src, DWORD num_data) {
-    wstring *target = nullptr;
+    std::wstring *target = nullptr;
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
       target = property()->mutable_ap_value();
     } else if (IsEqualInLowercase(
@@ -235,7 +235,7 @@ class RegistryEmulator {
       const size_t null_char_index = total_size_in_tchar - 1;
       EXPECT_EQ(L'\0', src[null_char_index]);
       const size_t total_length_without_null = total_size_in_tchar - 1;
-      const wstring value(src, src + total_length_without_null);
+      const std::wstring value(src, src + total_length_without_null);
       target->assign(value);
     } else {
       target->assign(L"");
@@ -309,7 +309,7 @@ class RegistryEmulator {
 
   static LSTATUS QueryString(const wchar_t *value_name, DWORD *type,
                              wchar_t *dest, DWORD *num_data) {
-    wstring value;
+    std::wstring value;
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
       if (!property()->has_ap_value()) {
         return ERROR_FILE_NOT_FOUND;

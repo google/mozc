@@ -144,7 +144,7 @@ const wchar_t kWindowClassName[] = L"Mozc: Default Window Class Name";
   } while (false)
 
 WindowPositionEmulator *CreateWindowEmulator(
-    const wstring &class_name, const RECT &window_rect,
+    const std::wstring &class_name, const RECT &window_rect,
     const POINT &client_area_offset, const SIZE &client_area_size,
     double scale_factor, HWND *hwnd) {
   WindowPositionEmulator *emulator = WindowPositionEmulator::Create();
@@ -165,7 +165,7 @@ WindowPositionEmulator *CreateWindowEmulatorWithDPIScaling(
 }
 
 WindowPositionEmulator *CreateWindowEmulatorWithClassName(
-    const wstring &class_name, HWND *hwnd) {
+    const std::wstring &class_name, HWND *hwnd) {
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
   const CRect kWindowRect(500, 500, 2516, 1550);
@@ -285,7 +285,7 @@ class Win32RendererUtilTest : public testing::Test {
   }
 
   static CLogFont GetFont(bool is_proportional, bool is_vertical) {
-    wstring font_face;
+    std::wstring font_face;
     Util::UTF8ToWide((is_proportional ? GetPropotionalFontFaceForTest()
                                       : GetMonospacedFontFaceForTest()),
                      &font_face);
@@ -321,8 +321,8 @@ class Win32RendererUtilTest : public testing::Test {
     return SystemPreferenceFactory::CreateMock(font);
   }
 
-  static wstring GetTestMessageWithCompositeGlyph(int num_repeat) {
-    wstring message;
+  static std::wstring GetTestMessageWithCompositeGlyph(int num_repeat) {
+    std::wstring message;
     for (size_t i = 0; i < num_repeat; ++i) {
       // "ぱ"
       message += L'\u3071';
@@ -331,19 +331,19 @@ class Win32RendererUtilTest : public testing::Test {
     return message;
   }
 
-  static wstring GetTestMessageForMonospaced() {
-    wstring w_path;
+  static std::wstring GetTestMessageForMonospaced() {
+    std::wstring w_path;
     const char kMessage[] = "熊本県阿蘇郡南阿蘇村大字中松南阿蘇水の生まれる里白水高原駅";
-    wstring w_message;
+    std::wstring w_message;
     Util::UTF8ToWide(kMessage, &w_message);
     return w_message;
   }
 
-  static wstring GetTestMessageForProportional() {
-    wstring w_path;
+  static std::wstring GetTestMessageForProportional() {
+    std::wstring w_path;
     const char kMessage[] =
         "This open-source project originates from Google 日本語入力.";
-    wstring w_message;
+    std::wstring w_message;
     Util::UTF8ToWide(kMessage, &w_message);
     return w_message;
   }
@@ -1023,7 +1023,7 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
     EXPECT_EQ(kWindowRect.TopLeft() + kClientOffset, point);
 
-    wstring class_name;
+    std::wstring class_name;
     EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
     EXPECT_EQ(kWindowClassName, class_name);
   }
@@ -1054,7 +1054,7 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
     EXPECT_EQ(kWindowRect.TopLeft() + kClientOffset, point);
 
-    wstring class_name;
+    std::wstring class_name;
     EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
     EXPECT_EQ(kWindowClassName, class_name);
   }
@@ -1063,10 +1063,10 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
 TEST_F(Win32RendererUtilTest, HorizontalProportional) {
   const CLogFont &logfont = GetFont(true, false);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageForProportional();
+  const std::wstring &message = GetTestMessageForProportional();
 
   // Check if the |initial_offset| works as expected.
   result = LayoutManager::CalcLayoutWithTextWrapping(
@@ -1121,10 +1121,10 @@ TEST_F(Win32RendererUtilTest, HorizontalProportional) {
 TEST_F(Win32RendererUtilTest, VerticalProportional) {
   const CLogFont &logfont = GetFont(true, true);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageForProportional();
+  const std::wstring &message = GetTestMessageForProportional();
 
   // Check if the |initial_offset| works as expected.
   result = LayoutManager::CalcLayoutWithTextWrapping(
@@ -1179,10 +1179,10 @@ TEST_F(Win32RendererUtilTest, VerticalProportional) {
 TEST_F(Win32RendererUtilTest, HorizontalMonospaced) {
   const CLogFont &logfont = GetFont(false, false);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageForMonospaced();
+  const std::wstring &message = GetTestMessageForMonospaced();
 
   // Check if the |initial_offset| works as expected.
   result = LayoutManager::CalcLayoutWithTextWrapping(
@@ -1237,10 +1237,10 @@ TEST_F(Win32RendererUtilTest, HorizontalMonospaced) {
 TEST_F(Win32RendererUtilTest, VerticalMonospaced) {
   const CLogFont &logfont = GetFont(false, true);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageForMonospaced();
+  const std::wstring &message = GetTestMessageForMonospaced();
 
   // Check if the |initial_offset| works as expected.
   result = LayoutManager::CalcLayoutWithTextWrapping(
@@ -1295,10 +1295,10 @@ TEST_F(Win32RendererUtilTest, VerticalMonospaced) {
 TEST_F(Win32RendererUtilTest, HorizontalProportionalCompositeGlyph) {
   const CLogFont &logfont = GetFont(true, false);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageWithCompositeGlyph(1);
+  const std::wstring &message = GetTestMessageWithCompositeGlyph(1);
 
   result = LayoutManager::CalcLayoutWithTextWrapping(
       logfont, message, 200, 100, &line_layouts);
@@ -1315,10 +1315,10 @@ TEST_F(Win32RendererUtilTest, HorizontalProportionalCompositeGlyph) {
 TEST_F(Win32RendererUtilTest, VerticalProportionalCompositeGlyph) {
   const CLogFont &logfont = GetFont(true, true);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageWithCompositeGlyph(1);
+  const std::wstring &message = GetTestMessageWithCompositeGlyph(1);
   result = LayoutManager::CalcLayoutWithTextWrapping(
       logfont, message, 200, 100, &line_layouts);
   EXPECT_TRUE(result);
@@ -1334,10 +1334,10 @@ TEST_F(Win32RendererUtilTest, VerticalProportionalCompositeGlyph) {
 TEST_F(Win32RendererUtilTest, HorizontalMonospacedCompositeGlyph) {
   const CLogFont &logfont = GetFont(false, false);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageWithCompositeGlyph(1);
+  const std::wstring &message = GetTestMessageWithCompositeGlyph(1);
 
   result = LayoutManager::CalcLayoutWithTextWrapping(
       logfont, message, 200, 100, &line_layouts);
@@ -1354,10 +1354,10 @@ TEST_F(Win32RendererUtilTest, HorizontalMonospacedCompositeGlyph) {
 TEST_F(Win32RendererUtilTest, VerticalMonospacedCompositeGlyph) {
   const CLogFont &logfont = GetFont(false, true);
 
-  vector<mozc::renderer::win32::LineLayout> line_layouts;
+  std::vector<mozc::renderer::win32::LineLayout> line_layouts;
   bool result = true;
 
-  const wstring &message = GetTestMessageWithCompositeGlyph(1);
+  const std::wstring &message = GetTestMessageWithCompositeGlyph(1);
 
   result = LayoutManager::CalcLayoutWithTextWrapping(
       logfont, message, 200, 100, &line_layouts);
@@ -1380,7 +1380,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
 
   CLogFont logfont;
@@ -1407,7 +1407,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1425,7 +1425,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 646, 0, 647, 49, logfont, layout);
     {
       const char kMsg[] = "、Google日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1501,7 +1501,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -1527,7 +1527,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは、Go";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1551,7 +1551,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 540, 0, 541, 49, logfont, layout);
     {
       const char kMsg[] = "ogle日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1625,7 +1625,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -1653,7 +1653,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1671,7 +1671,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "、Google日本語入";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1695,7 +1695,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 270, 51, 271, logfont, layout);
     {
       const char kMsg[] = "力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1766,7 +1766,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -1794,7 +1794,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは、Goo";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1818,7 +1818,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "gle日本語入力のTe";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1842,7 +1842,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 127, 51, 128, logfont, layout);
     {
       const char kMsg[] = "stです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1910,7 +1910,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -1936,7 +1936,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -1954,7 +1954,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 646, 0, 647, 54, logfont, layout);
     {
       const char kMsg[] = "、Google日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2031,7 +2031,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -2057,7 +2057,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは、Go";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2081,7 +2081,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 539, 0, 540, 54, logfont, layout);
     {
       const char kMsg[] = "ogle日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2155,7 +2155,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -2183,7 +2183,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2201,7 +2201,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "、Google日本語入";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2225,7 +2225,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 269, 56, 270, logfont, layout);
     {
       const char kMsg[] = "力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2296,7 +2296,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -2324,7 +2324,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは、Go";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2348,7 +2348,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "ogle日本語入力のT";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2372,7 +2372,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 151, 56, 152, logfont, layout);
     {
       const char kMsg[] = "estです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2440,7 +2440,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -2466,7 +2466,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 781, 0, 782, 49, logfont, layout);
     {
       const char kMsg[] = "これは、Google日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2499,7 +2499,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -2525,7 +2525,7 @@ TEST_F(Win32RendererUtilTest,
                                      0, 0, 781, 0, 782, 54, logfont, layout);
     {
       const char kMsg[] = "これは、Google日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2558,7 +2558,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -2586,7 +2586,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは、Google日";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2613,7 +2613,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "本語入力のTestで";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2634,7 +2634,7 @@ TEST_F(Win32RendererUtilTest,
                                      51, 0, 0, 45, 51, 46, logfont, layout);
     {
       const char kMsg[] = "す";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2655,7 +2655,7 @@ TEST_F(Win32RendererUtilTest,
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -2683,7 +2683,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは、Google日";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2710,7 +2710,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "本語入力のTestで";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2731,7 +2731,7 @@ TEST_F(Win32RendererUtilTest,
                                      56, 0, 0, 45, 56, 46, logfont, layout);
     {
       const char kMsg[] = "す";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -2750,7 +2750,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -2781,7 +2781,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -2814,7 +2814,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -2846,7 +2846,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -2878,7 +2878,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -2917,7 +2917,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -2950,7 +2950,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -2985,7 +2985,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -3019,7 +3019,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -3053,7 +3053,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-    vector<CompositionWindowLayout> layouts;
+    std::vector<CompositionWindowLayout> layouts;
 
     RendererCommand command;
     CandidateWindowLayout candidate_layout;
@@ -3097,7 +3097,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesHorizontalPreedit) {
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -3132,7 +3132,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesVerticalPreedit) {
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   CLogFont logfont;
 
@@ -3164,7 +3164,7 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
 
   RendererCommand command;
   CandidateWindowLayout candidate_layout;
@@ -3203,7 +3203,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
 
   CLogFont logfont;
@@ -3233,7 +3233,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
                                      0, 0, 0, 0, 0, 0, logfont, layout);
     {
       const char kMsg[] = "これは";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3251,7 +3251,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
                                      0, 0, 646, 0, 647, 49, logfont, layout);
     {
       const char kMsg[] = "、Google日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3356,7 +3356,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
       command.mutable_application_info(), false, 0, 0, 0, 0, hwnd);
 
   CandidateWindowLayout candidate_layout;
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   bool result = false;
 
   layouts.clear();
@@ -3379,7 +3379,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
                                      0, 0, 0, 0, 0, 0, default_font, layout);
     {
       const char kMsg[] = "これは、Google日本語入力のTest";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3409,7 +3409,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
                                      0, 0, 30, 0, 31, 18, default_font, layout);
     {
       const char kMsg[] = "です";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3471,7 +3471,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
       false, 34, 0, 36, 14, hwnd);
 
   CandidateWindowLayout candidate_layout;
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   bool result = false;
 
   layouts.clear();
@@ -3494,7 +3494,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
                                      259, 0, 260, 18, default_font, layout);
     {
       const char kMsg[] = "これは、Google日本語入力のTestです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3586,7 +3586,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
       true, 2, 1, 3, 19, child_window);
 
   CandidateWindowLayout candidate_layout;
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   bool result = false;
 
   layouts.clear();
@@ -3609,7 +3609,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
                                      0, 0, 0, 0, default_font, layout);
     {
       const char kMsg[] = "これは、Google";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3633,7 +3633,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
                                      0, 0, 0, 0, default_font, layout);
     {
       const char kMsg[] = "日本語入力のTes";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3654,7 +3654,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
                                      35, 0, 36, 18, default_font, layout);
     {
       const char kMsg[] = "tです";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3687,7 +3687,7 @@ TEST_F(Win32RendererUtilTest,
   EXPECT_TRUE(mozc::win32::FontUtil::ToLOGFONT(
       command.application_info().composition_font(), &logfont));
 
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   EXPECT_TRUE(layout_mgr.LayoutCompositionWindow(
       command, &layouts, &candidate_layout));
@@ -3702,7 +3702,7 @@ TEST_F(Win32RendererUtilTest,
                                      layout);
     {
       const char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
@@ -3745,7 +3745,7 @@ TEST_F(Win32RendererUtilTest,
       command.application_info().composition_font(), &logfont));
   logfont.lfOrientation = 2700;
 
-  vector<CompositionWindowLayout> layouts;
+  std::vector<CompositionWindowLayout> layouts;
   CandidateWindowLayout candidate_layout;
   EXPECT_TRUE(layout_mgr.LayoutCompositionWindow(
       command, &layouts, &candidate_layout));
@@ -3760,7 +3760,7 @@ TEST_F(Win32RendererUtilTest,
         0, 360, 51, 361, logfont, layout);
     {
       const char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
-      wstring msg;
+      std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }

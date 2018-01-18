@@ -1648,7 +1648,7 @@ TEST(UtilTest, WideCharsLen) {
 
 TEST(UtilTest, UTF8ToWide) {
   const string input_utf8 = "abc";
-  wstring output_wide;
+  std::wstring output_wide;
   Util::UTF8ToWide(input_utf8, &output_wide);
 
   string output_utf8;
@@ -1664,7 +1664,7 @@ TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
   string output_utf8;
   Util::WideToUTF8(input_wide, &output_utf8);
 
-  wstring output_wide;
+  std::wstring output_wide;
   Util::UTF8ToWide(output_utf8, &output_wide);
 
   EXPECT_EQ("\360\240\256\237", output_utf8);

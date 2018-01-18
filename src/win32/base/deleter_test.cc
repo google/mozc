@@ -77,7 +77,7 @@ class KeyboardMock : public Win32KeyboardInterface {
         unicode_buffer_num_elements, flags);
   }
 
-  virtual UINT SendInput(const vector<INPUT> &inputs) {
+  virtual UINT SendInput(const std::vector<INPUT> &inputs) {
     last_send_input_data_ = inputs;
     return inputs.size();
   }
@@ -98,7 +98,7 @@ class KeyboardMock : public Win32KeyboardInterface {
     async_key_state_ = async_key_state;
   }
 
-  const vector<INPUT> &last_send_input_data() const {
+  const std::vector<INPUT> &last_send_input_data() const {
     return last_send_input_data_;
   }
 
@@ -109,7 +109,7 @@ class KeyboardMock : public Win32KeyboardInterface {
  private:
   KeyboardStatus key_state_;
   KeyboardStatus async_key_state_;
-  vector<INPUT> last_send_input_data_;
+  std::vector<INPUT> last_send_input_data_;
   DISALLOW_COPY_AND_ASSIGN(KeyboardMock);
 };
 
@@ -180,7 +180,7 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
   // Expect three pairs of VK_BACK [down/up] for deleting proceeding characters
   // and one pair of VK_BACK [down/up] as a sentinel key event where pending
   // output and ime state wiil be applied.
-  const vector<INPUT> inputs = keyboard_mock->last_send_input_data();
+  const std::vector<INPUT> inputs = keyboard_mock->last_send_input_data();
   EXPECT_EQ(8, inputs.size());
   EXPECT_EQ(VK_BACK, inputs[0].ki.wVk);
   EXPECT_EQ(VK_BACK, inputs[1].ki.wVk);

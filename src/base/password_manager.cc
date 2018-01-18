@@ -77,7 +77,7 @@ class ScopedReadWriteFile {
       return;
     }
 #ifdef OS_WIN
-    wstring wfilename;
+    std::wstring wfilename;
     Util::UTF8ToWide(filename_, &wfilename);
     if (!::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL)) {
       LOG(ERROR) << "Cannot make writable: " << filename_;

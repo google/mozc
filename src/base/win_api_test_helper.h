@@ -51,7 +51,7 @@ namespace mozc {
 //   recovery from such cases are not trivial.
 //
 // Example:
-//   vector<WinAPITestHelper::HookRequest> requests;
+//   std::vector<WinAPITestHelper::HookRequest> requests;
 //   requests.push_back(
 //       DEFINE_HOOK("kernel32.dll", GetVersion, GetVersionHook));
 //   requests.push_back(
@@ -101,7 +101,7 @@ class WinAPITestHelper {
   //   Since this code is designed to be used in unit test, this method
   //   causes critical failure and stops execution when something fails.
   static RestoreInfoHandle DoHook(HMODULE target_module,
-                                  const vector<HookRequest> &requests);
+                                  const std::vector<HookRequest> &requests);
 
   // Restores the API hooks. |backup_info| cannot be used after this method
   // is called.

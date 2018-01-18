@@ -44,7 +44,7 @@ WindowsSelectionHandler::WindowsSelectionHandler() {}
 WindowsSelectionHandler::~WindowsSelectionHandler() {}
 
 void WindowsSelectionHandler::Select(const QString &str) {
-  vector<INPUT> inputs;
+  std::vector<INPUT> inputs;
   for (int i = 0; i < str.size(); ++i) {
     INPUT input = { 0 };
     KEYBDINPUT kb = { 0 };

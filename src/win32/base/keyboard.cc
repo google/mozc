@@ -199,7 +199,7 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
   }
 
   // [Overrides]
-  virtual UINT SendInput(const vector<INPUT> &inputs) {
+  virtual UINT SendInput(const std::vector<INPUT> &inputs) {
     if (inputs.size() < 1) {
       return 0;
     }

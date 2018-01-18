@@ -74,7 +74,7 @@ class CandidateListCallbackImpl : public TipCandidateListCallback {
 
  private:
   // TipCandidateListCallback overrides:
-  virtual void OnFinalize(size_t index, const wstring &candidate) {
+  virtual void OnFinalize(size_t index, const std::wstring &candidate) {
     TipEditSession::SetTextAsync(text_service_, candidate, range_);
   }
 
@@ -170,7 +170,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
     }
 
     if (info.selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
-        wstring::npos) {
+        std::wstring::npos) {
       // embedded object is found.
       *convertable = FALSE;
       *new_range = nullptr;
@@ -196,7 +196,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
     if (!provider) {
       return E_FAIL;
     }
-    wstring query;
+    std::wstring query;
     if (!TipEditSession::GetTextSync(text_service_, range, &query)) {
       return E_FAIL;
     }

@@ -770,7 +770,7 @@ bool PepperFileSystem::UnRegisterMmap(MmapSyncInterface *mmap) {
 
 bool PepperFileSystem::SyncMmapToFile() {
   scoped_lock lock(&mutex_);
-  for (set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
+  for (std::set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
        it != mmap_set_.end(); ++it) {
     (*it)->SyncToFile();
   }

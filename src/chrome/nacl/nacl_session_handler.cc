@@ -404,7 +404,7 @@ class MozcSessionHandlerThread : public Thread {
   void GetPosList(Json::Value *response) {
     (*response)["event"]["posList"] = Json::Value(Json::arrayValue);
     Json::Value *pos_list = &(*response)["event"]["posList"];
-    vector<string> tmp_pos_vec;
+    std::vector<string> tmp_pos_vec;
     user_pos_->GetPOSList(&tmp_pos_vec);
     for (int i = 0; i < tmp_pos_vec.size(); ++i) {
       (*pos_list)[i] = Json::Value(Json::objectValue);

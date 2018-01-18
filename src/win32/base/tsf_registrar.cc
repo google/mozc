@@ -116,7 +116,7 @@ HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t *path, DWORD length) {
     return HRESULT_FROM_WIN32(result);
   }
 
-  wstring description;
+  std::wstring description;
   mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &description);
 
   result = key.SetStringValue(nullptr, description.c_str(), REG_SZ);
@@ -193,7 +193,7 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path,
   if (result == S_OK) {
     // We use English name here as culture-invariant description.
     // Localized name is specified later by SetLanguageProfileDisplayName.
-    wstring description;
+    std::wstring description;
     mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &description);
 
     result = profiles->AddLanguageProfile(TsfProfile::GetTextServiceGuid(),

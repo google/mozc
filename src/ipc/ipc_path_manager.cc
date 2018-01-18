@@ -71,10 +71,6 @@
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
 
-#ifdef OS_WIN
-using std::unique_ptr;
-#endif  // OS_WIn
-
 namespace mozc {
 namespace {
 
@@ -334,13 +330,13 @@ bool IPCPathManager::IsValidServer(uint32 pid,
 
 #ifdef OS_WIN
   {
-    wstring expected_server_ntpath;
-    const map<string, wstring>::const_iterator it =
+    std::wstring expected_server_ntpath;
+    const std::map<string, std::wstring>::const_iterator it =
         expected_server_ntpath_cache_.find(server_path);
     if (it != expected_server_ntpath_cache_.end()) {
       expected_server_ntpath = it->second;
     } else {
-      wstring wide_server_path;
+      std::wstring wide_server_path;
       Util::UTF8ToWide(server_path, &wide_server_path);
       if (WinUtil::GetNtPath(wide_server_path, &expected_server_ntpath)) {
         // Caches the relationship from |server_path| to
@@ -354,7 +350,7 @@ bool IPCPathManager::IsValidServer(uint32 pid,
       return false;
     }
 
-    wstring actual_server_ntpath;
+    std::wstring actual_server_ntpath;
     if (!WinUtil::GetProcessInitialNtPath(pid, &actual_server_ntpath)) {
       return false;
     }
@@ -465,7 +461,7 @@ bool IPCPathManager::LoadPathNameInternal() {
   // Special code for Windows,
   // we want to pass FILE_SHRED_DELETE flag for CreateFile.
 #ifdef OS_WIN
-  wstring wfilename;
+  std::wstring wfilename;
   Util::UTF8ToWide(filename, &wfilename);
 
   {
@@ -494,7 +490,7 @@ bool IPCPathManager::LoadPathNameInternal() {
       return false;
     }
 
-    unique_ptr<char[]> buf(new char[size]);
+    std::unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
     if (!::ReadFile(handle.get(), buf.get(),

@@ -86,7 +86,7 @@ class ImeLangBarMenuDataArray {
   size_t size() const;
   ImeLangBarMenuData* data(size_t i);
  private:
-  vector<ImeLangBarMenuData> data_;
+  std::vector<ImeLangBarMenuData> data_;
 };
 
 MIDL_INTERFACE(IIDSTR_IMozcLangBarMenu)

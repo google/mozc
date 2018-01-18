@@ -134,7 +134,7 @@ TEST_F(FileUtilTest, Unlink) {
     FILE_ATTRIBUTE_TEMPORARY,
   };
 
-  wstring wfilepath;
+  std::wstring wfilepath;
   Util::UTF8ToWide(filepath, &wfilepath);
   for (size_t i = 0; i < arraysize(kTestAttributeList); ++i) {
     SCOPED_TRACE(Util::StringPrintf("AttributeTest %zd", i));
@@ -157,7 +157,7 @@ TEST_F(FileUtilTest, HideFile) {
 
   EXPECT_FALSE(FileUtil::HideFile(filename));
 
-  wstring wfilename;
+  std::wstring wfilename;
   Util::UTF8ToWide(filename.c_str(), &wfilename);
 
   CreateTestFile(filename, "test data");
@@ -267,7 +267,7 @@ TEST_F(FileUtilTest, CopyFile) {
     CreateTestFile(from, test_label);
 
     const TestData &kData = kTestDataList[i];
-    wstring wfrom, wto;
+    std::wstring wfrom, wto;
     Util::UTF8ToWide(from.c_str(), &wfrom);
     Util::UTF8ToWide(to.c_str(), &wto);
     EXPECT_NE(FALSE,
@@ -356,7 +356,7 @@ TEST_F(FileUtilTest, AtomicRename) {
     CreateTestFile(from, test_label);
 
     const TestData &kData = kTestDataList[i];
-    wstring wfrom, wto;
+    std::wstring wfrom, wto;
     Util::UTF8ToWide(from.c_str(), &wfrom);
     Util::UTF8ToWide(to.c_str(), &wto);
     EXPECT_NE(FALSE,

@@ -197,7 +197,8 @@ class CompositionWindowListImpl : public CompositionWindowList {
     Destroy();
   }
 
-  virtual void UpdateLayout(const vector<CompositionWindowLayout> &layouts) {
+  virtual void UpdateLayout(
+      const std::vector<CompositionWindowLayout> &layouts) {
     // Create windows if needed.
     if (line_windows_.size() < layouts.size()) {
       const size_t num_windows = layouts.size() - line_windows_.size();
@@ -254,7 +255,7 @@ class CompositionWindowListImpl : public CompositionWindowList {
   }
 
  private:
-  vector<CompositionLineWindow *> line_windows_;
+  std::vector<CompositionLineWindow *> line_windows_;
   DISALLOW_COPY_AND_ASSIGN(CompositionWindowListImpl);
 };
 }  // namespace

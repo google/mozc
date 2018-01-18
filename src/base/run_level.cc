@@ -219,7 +219,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     // See http://b/2301066 for details.
     const string user_dir = SystemUtil::GetUserProfileDirectory();
 
-    wstring dir;
+    std::wstring dir;
     Util::UTF8ToWide(user_dir, &dir);
     ScopedHandle dir_handle(::CreateFile(dir.c_str(),
                                          READ_CONTROL | WRITE_DAC,

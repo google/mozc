@@ -157,7 +157,7 @@ class BalloonImage {
       const BalloonImageInfo &info,
       POINT *tail_offset,
       SIZE *size,
-      vector<ARGBColor> *arbg_buffer);
+      std::vector<ARGBColor> *arbg_buffer);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(BalloonImage);
@@ -246,7 +246,7 @@ class SubdivisionalPixel {
   static size_t GetIndex(const Fraction2D &offset);
 
   // A bit vector that indicates each sub-pixel is filled or not.
-  bitset<kTotalPixels> filled_;
+  std::bitset<kTotalPixels> filled_;
   std::unique_ptr<ColorType[]> colors_;
   ColorType single_color_;
 
@@ -285,7 +285,7 @@ class GaussianBlur {
     MatrixElement();
     MatrixElement(int x, int y, double c);
   };
-  typedef vector<MatrixElement> Matrix;
+  typedef std::vector<MatrixElement> Matrix;
 
   size_t GetMatrixLength() const;
 
@@ -325,7 +325,8 @@ class SafeFrameBuffer {
 // output the result to SubdivisionalPixel storage.
 class TextLabel {
  public:
-  typedef bitset<SubdivisionalPixel::kDivision * SubdivisionalPixel::kDivision>
+  typedef
+      std::bitset<SubdivisionalPixel::kDivision * SubdivisionalPixel::kDivision>
       BinarySubdivisionalPixel;
 
   TextLabel(double left,
@@ -346,7 +347,7 @@ class TextLabel {
   const Rect &bounding_rect() const;
 
  private:
-  const vector<BinarySubdivisionalPixel *> pixels_;
+  const std::vector<BinarySubdivisionalPixel *> pixels_;
   const Rect bounding_rect_;
   const RGBColor text_color_;
 

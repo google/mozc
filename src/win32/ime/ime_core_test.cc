@@ -128,7 +128,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
   bool start_server_called_;
   uint32 server_protocol_version_;
   string response_;
-  map<int, int> error_map_;
+  std::map<int, int> error_map_;
 };
 
 class MockClient : public client::Client {
@@ -381,10 +381,10 @@ const UIMessage kMsgCloseCandidate(WM_IME_NOTIFY,
 TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
   // "Hankaku/Zenkaku"
   {
-    vector<UIMessage> composition_messages;
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> composition_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              false,
@@ -400,13 +400,13 @@ TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
 
   // "(Shift +)G"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgStartComposition);
     composition_messages.push_back(kMsgCompositionUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -425,12 +425,12 @@ TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
 
   // "Hankaku/Zenkaku"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgCompositionResult);
     composition_messages.push_back(kMsgEndComposition);
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -453,10 +453,10 @@ TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
 TEST(ImeCoreTest, CompositionMessageOrderTest) {
   // "Hankaku/Zenkaku"
   {
-    vector<UIMessage> composition_messages;
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> composition_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              false,
@@ -472,13 +472,13 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
 
   // "(Shift +)G"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgStartComposition);
     composition_messages.push_back(kMsgCompositionUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -497,12 +497,12 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
 
   // "o"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgCompositionUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -519,13 +519,13 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
 
   // "Enter"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgCompositionResult);
     composition_messages.push_back(kMsgEndComposition);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -544,10 +544,10 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
 
   // "Hankaku/Zenkaku"
   {
-    vector<UIMessage> composition_messages;
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> composition_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -567,10 +567,10 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
 TEST(ImeCoreTest, CandidateMessageOrderTest) {
   // "Hankaku/Zenkaku"
   {
-    vector<UIMessage> composition_messages;
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> composition_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              false,
@@ -586,13 +586,13 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
 
   // "a"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgStartComposition);
     composition_messages.push_back(kMsgCompositionUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -610,12 +610,12 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
 
   // "Space"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgCompositionUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -632,13 +632,13 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
 
   // "Space"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgCompositionUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
     candidate_messages.push_back(kMsgOpenCandidate);
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -656,13 +656,13 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
 
   // "Space"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgCompositionUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
     candidate_messages.push_back(kMsgChangeCandidate);
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,
@@ -680,13 +680,13 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
 
   // "i"
   {
-    vector<UIMessage> composition_messages;
+    std::vector<UIMessage> composition_messages;
     composition_messages.push_back(kMsgCompositionResultAndUpdate);
 
-    vector<UIMessage> candidate_messages;
+    std::vector<UIMessage> candidate_messages;
     candidate_messages.push_back(kMsgCloseCandidate);
 
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     ImeCore::SortIMEMessages(composition_messages,
                              candidate_messages,
                              true,

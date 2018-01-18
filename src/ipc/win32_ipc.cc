@@ -61,7 +61,7 @@ const int kMaxSuccessiveConnectionFailureCount = 5;
 size_t GetNumberOfProcessors() {
   // thread-safety is not required.
   static size_t num = CPUStats().GetNumberOfProcessors();
-  return max(num, static_cast<size_t>(1));
+  return std::max(num, static_cast<size_t>(1));
 }
 
 // Least significant bit of OVERLAPPED::hEvent can be used for special
@@ -107,7 +107,7 @@ class IPCClientMutexBase {
     mutex_name += ".";
     mutex_name += ipc_channel_name;
     mutex_name += ".ipc";
-    wstring wmutex_name;
+    std::wstring wmutex_name;
     Util::UTF8ToWide(mutex_name, &wmutex_name);
 
     LPSECURITY_ATTRIBUTES security_attributes_ptr = nullptr;
@@ -484,7 +484,7 @@ IPCServer::IPCServer(const string &name,
   }
 
   // Create a named pipe.
-  wstring wserver_address;
+  std::wstring wserver_address;
   Util::UTF8ToWide(server_address, &wserver_address);
   HANDLE handle = ::CreateNamedPipe(wserver_address.c_str(),
                                     PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED |
@@ -716,7 +716,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
     if (!manager->LoadPathName() || !manager->GetPathName(&server_address)) {
       continue;
     }
-    wstring wserver_address;
+    std::wstring wserver_address;
     Util::UTF8ToWide(server_address, &wserver_address);
 
     if (GetNumberOfProcessors() == 1) {

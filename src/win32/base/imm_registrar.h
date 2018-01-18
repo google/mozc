@@ -46,37 +46,37 @@ class ImmRegistrar {
  public:
   // Installs module to the system as an IME.
   // Returns registered HKL to hkl.
-  static HRESULT Register(const wstring &ime_filename,
-                          const wstring &layout_name,
-                          const wstring &layout_display_name_resource_path,
+  static HRESULT Register(const std::wstring &ime_filename,
+                          const std::wstring &layout_name,
+                          const std::wstring &layout_display_name_resource_path,
                           int layout_display_name_resource_id,
                           HKL *hkl);
 
   // Uninstalls module from the system.
-  static HRESULT Unregister(const wstring &ime_filename);
+  static HRESULT Unregister(const std::wstring &ime_filename);
 
   // Returns true if given |hkl| is an IME which consists of |ime_filename|.
-  static bool IsIME(HKL hkl, const wstring &ime_filename);
+  static bool IsIME(HKL hkl, const std::wstring &ime_filename);
 
   // Returns a file name of the IME file.
-  static wstring GetFileNameForIME();
+  static std::wstring GetFileNameForIME();
 
   // Returns a full path to the IME file.
   // Returns an empty string if it fails to compose a fullpath.
-  static wstring GetFullPathForIME();
+  static std::wstring GetFullPathForIME();
 
   // Returns a KILD for the IME file.
   static KeyboardLayoutID GetKLIDForIME();
 
   // Returns a layout name of the IME file.
   // Returns an empty string if it fails to compose a layout name.
-  static wstring GetLayoutName();
+  static std::wstring GetLayoutName();
 
   // Returns a resource ID of a layout display name.
   static int GetLayoutDisplayNameResourceId();
 
   // Returns a KILD for the given ime file specified by |ime_file|
-  static KeyboardLayoutID GetKLIDFromFileName(const wstring &ime_file);
+  static KeyboardLayoutID GetKLIDFromFileName(const std::wstring &ime_file);
 
   // Add key to the preload if not exist.
   // Returns S_OK if operation completes successfully.

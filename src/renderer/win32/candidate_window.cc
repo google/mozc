@@ -159,10 +159,10 @@ int GetFocusedArrayIndex(const commands::Candidates &candidates) {
 
 // Retrieves the display string from the specified candidate for the specified
 // column and returns it.
-wstring GetDisplayStringByColumn(
+std::wstring GetDisplayStringByColumn(
     const commands::Candidates::Candidate &candidate,
     COLUMN_TYPE column_type) {
-  wstring display_string;
+  std::wstring display_string;
 
   switch (column_type) {
     case COLUMN_SHORTCUT:
@@ -180,12 +180,12 @@ wstring GetDisplayStringByColumn(
       if (candidate.has_annotation()) {
         const commands::Annotation &annotation = candidate.annotation();
         if (annotation.has_prefix()) {
-          wstring annotation_prefix;
+          std::wstring annotation_prefix;
           mozc::Util::UTF8ToWide(annotation.prefix(), &annotation_prefix);
           display_string = annotation_prefix + display_string;
         }
         if (annotation.has_suffix()) {
-          wstring annotation_suffix;
+          std::wstring annotation_suffix;
           mozc::Util::UTF8ToWide(annotation.suffix(), &annotation_suffix);
           display_string += annotation_suffix;
         }
@@ -476,51 +476,54 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
 
     // Calculate the size to display a label string.
     if (candidates_->footer().has_label()) {
-      wstring footer_label;
+      std::wstring footer_label;
       mozc::Util::UTF8ToWide(candidates_->footer().label(),
                              &footer_label);
       const Size label_string_size = text_renderer_->MeasureString(
           TextRenderer::FONTSET_FOOTER_LABEL,
           L" " + footer_label + L" ");
       footer_size.width += label_string_size.width;
-      footer_size.height = max(footer_size.height, label_string_size.height);
+      footer_size.height = std::max(footer_size.height,
+                                    label_string_size.height);
     } else if (candidates_->footer().has_sub_label()) {
       // Currently the sub label will not be shown unless (main) label is
       // absent.
       // TODO(yukawa): Refactor the layout system for the footer.
-      wstring footer_sub_label;
+      std::wstring footer_sub_label;
       mozc::Util::UTF8ToWide(candidates_->footer().sub_label(),
                              &footer_sub_label);
       const Size label_string_size = text_renderer_->MeasureString(
           TextRenderer::FONTSET_FOOTER_SUBLABEL,
           L" " + footer_sub_label + L" ");
       footer_size.width += label_string_size.width;
-      footer_size.height = max(footer_size.height, label_string_size.height);
+      footer_size.height = std::max(footer_size.height,
+                                    label_string_size.height);
     }
 
     // Calculate the size to display a index string.
     if (candidates_->footer().index_visible()) {
-      wstring index_guide_string;
+      std::wstring index_guide_string;
       mozc::Util::UTF8ToWide(GetIndexGuideString(*candidates_),
                              &index_guide_string);
       const Size index_guide_size = text_renderer_->MeasureString(
           TextRenderer::FONTSET_FOOTER_INDEX, index_guide_string);
       footer_size.width += index_guide_size.width;
-      footer_size.height = max(footer_size.height, index_guide_size.height);
+      footer_size.height = std::max(footer_size.height,
+                                    index_guide_size.height);
     }
 
     // Calculate the size to display a Footer logo.
     if (!footer_logo_.IsNull()) {
       if (candidates_->footer().logo_visible()) {
         footer_size.width += footer_logo_display_size_.width;
-        footer_size.height = max(footer_size.height,
-                                 footer_logo_display_size_.height);
+        footer_size.height = std::max(footer_size.height,
+                                      footer_logo_display_size_.height);
       } else if (footer_size.height > 0) {
         // Ensure the footer height is greater than the Footer logo height
         // even if the Footer logo is absent.  This hack prevents the footer
         // from changing its height too frequently.
-        footer_size.height = max(footer_size.height,
-                                 footer_logo_display_size_.height);
+        footer_size.height = std::max(footer_size.height,
+                                      footer_logo_display_size_.height);
       }
     }
 
@@ -528,7 +531,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
     // one page.
     if (candidates_->candidate_size() < candidates_->size()) {
       // We use FONTSET_CANDIDATE for calculating the minimum width.
-      wstring minimum_width_as_wstring;
+      std::wstring minimum_width_as_wstring;
       mozc::Util::UTF8ToWide(
           kMinimumCandidateAndDescriptionWidthAsString,
           &minimum_width_as_wstring);
@@ -558,15 +561,15 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
   for (size_t i = 0; i < candidates_->candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate =
         candidates_->candidate(i);
-    const wstring shortcut =
+    const std::wstring shortcut =
         GetDisplayStringByColumn(candidate, COLUMN_SHORTCUT);
-    const wstring description =
+    const std::wstring description =
         GetDisplayStringByColumn(candidate, COLUMN_DESCRIPTION);
-    const wstring candidate_string =
+    const std::wstring candidate_string =
         GetDisplayStringByColumn(candidate, COLUMN_CANDIDATE);
 
     if (!shortcut.empty()) {
-      wstring text;
+      std::wstring text;
       text.push_back(L' ');  // put a space for padding
       text.append(shortcut);
       text.push_back(L' ');  // put a space for padding
@@ -576,7 +579,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
     }
 
     if (!candidate_string.empty()) {
-      wstring text;
+      std::wstring text;
       text.append(candidate_string);
 
       const Size rendering_size = text_renderer_->MeasureString(
@@ -585,7 +588,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
     }
 
     if (!description.empty()) {
-      wstring text;
+      std::wstring text;
       text.append(description);
       text.push_back(L' ');  // put a space for padding
       const Size rendering_size = text_renderer_->MeasureString(
@@ -659,11 +662,11 @@ void CandidateWindow::DrawCells(CDCHandle dc) {
     const COLUMN_TYPE column_type = kColumnTypes[type_index];
     const TextRenderer::FONT_TYPE font_type = kFontTypes[type_index];
 
-    vector<TextRenderingInfo> display_list;
+    std::vector<TextRenderingInfo> display_list;
     for (size_t i = 0; i < candidates_->candidate_size(); ++i) {
       const commands::Candidates::Candidate &candidate =
           candidates_->candidate(i);
-      const wstring display_string =
+      const std::wstring display_string =
           GetDisplayStringByColumn(candidate, column_type);
       const Rect text_rect =
           table_layout_->GetCellRect(i, column_type);
@@ -788,7 +791,7 @@ void CandidateWindow::DrawFooter(CDCHandle dc) {
 
   int right_used = 0;
   if (candidates_->footer().index_visible()) {
-    wstring index_guide_string;
+    std::wstring index_guide_string;
     mozc::Util::UTF8ToWide(GetIndexGuideString(*candidates_),
                            &index_guide_string);
     const Size index_guide_size = text_renderer_->MeasureString(
@@ -807,21 +810,21 @@ void CandidateWindow::DrawFooter(CDCHandle dc) {
                           footer_content_rect.Top(),
                           footer_content_rect.Width() - left_used - right_used,
                           footer_content_rect.Height());
-    wstring footer_label;
+    std::wstring footer_label;
     mozc::Util::UTF8ToWide(candidates_->footer().label(), &footer_label);
     text_renderer_->RenderText(dc,
                                L" " + footer_label + L" ",
                                label_rect,
                                TextRenderer::FONTSET_FOOTER_LABEL);
   } else if (candidates_->footer().has_sub_label()) {
-    wstring footer_sub_label;
+    std::wstring footer_sub_label;
     mozc::Util::UTF8ToWide(candidates_->footer().sub_label(),
                            &footer_sub_label);
     const Rect label_rect(left_used,
                           footer_content_rect.Top(),
                           footer_content_rect.Width() - left_used - right_used,
                           footer_content_rect.Height());
-    const wstring text = L" " + footer_sub_label + L" ";
+    const std::wstring text = L" " + footer_sub_label + L" ";
     text_renderer_->RenderText(dc,
                                text,
                                label_rect,

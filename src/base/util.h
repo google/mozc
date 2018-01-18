@@ -229,9 +229,9 @@ class Util {
   static size_t WideCharsLen(StringPiece src);
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
-  static int UTF8ToWide(StringPiece input, wstring *output);
+  static int UTF8ToWide(StringPiece input, std::wstring *output);
   static int WideToUTF8(const wchar_t *input, string *output);
-  static int WideToUTF8(const wstring &input, string *output);
+  static int WideToUTF8(const std::wstring &input, string *output);
 #endif  // OS_WIN
 
   // Extracts a substring range, where both start and length are in terms of
