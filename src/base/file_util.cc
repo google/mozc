@@ -243,8 +243,8 @@ bool FileUtil::HideFileWithExtraAttributes(const string &filename,
 #endif  // OS_WIN
 
 bool FileUtil::CopyFile(const string &from, const string &to) {
-  Mmap input;
-  if (!input.Open(from.c_str(), "r")) {
+  InputFileStream ifs(from.c_str(), std::ios::binary);
+  if (!ifs) {
     LOG(ERROR) << "Can't open input file. " << from;
     return false;
   }
@@ -261,13 +261,12 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
     return false;
   }
 
-  // TOOD(taku): opening file with mmap could not be
-  // a best solution. Also, we have to check disk quota
-  // in advance.
-  if (!ofs.write(input.begin(), input.size()).good()) {
+  // TODO(taku): we have to check disk quota in advance.
+  if (!(ofs << ifs.rdbuf())) {
     LOG(ERROR) << "Can't write data.";
     return false;
   }
+  ifs.close();
   ofs.close();
 
 #ifdef OS_WIN
