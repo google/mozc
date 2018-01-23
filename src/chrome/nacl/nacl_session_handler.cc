@@ -156,7 +156,7 @@ class BlockingQueue {
   Condition condition_;
   int blocked_count_;
   bool is_stopped_;
-  queue<T> queue_;
+  std::queue<T> queue_;
 
   DISALLOW_COPY_AND_ASSIGN(BlockingQueue);
 };

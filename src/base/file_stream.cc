@@ -70,14 +70,14 @@ void InputFileStream::open(const char* filename, std::ios_base::openmode mode) {
 void InputFileStream::close() {}
 
 OutputFileStream::OutputFileStream()
-    : ostream(),
+    : std::ostream(),
       write_done_(false) {
   init(&string_buffer_);
 }
 
 OutputFileStream::OutputFileStream(const char* filename,
                                    std::ios_base::openmode mode)
-    : ostream(),
+    : std::ostream(),
       write_done_(false) {
   init(&string_buffer_);
   OutputFileStream::open(filename, mode);

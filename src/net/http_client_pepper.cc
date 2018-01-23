@@ -247,7 +247,7 @@ bool PepperURLLoader::AppendDataBytes(const char *buffer, int32 num_bytes) {
   if (num_bytes <= 0) {
     return true;
   }
-  num_bytes = min(kReadBufferSize, num_bytes);
+  num_bytes = std::min(kReadBufferSize, num_bytes);
   if (data_buffer_.size() + num_bytes > option_.max_data_size) {
     VLOG(2) << "PepperURLLoader::AppendDataBytes over flow :"
             << " option_.max_data_size: " << (option_.max_data_size)

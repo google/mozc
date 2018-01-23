@@ -635,7 +635,7 @@ class PepperFileSystem : public PepperFileSystemInterface {
   pp::CompletionCallbackFactory<PepperFileSystem> cc_factory_;
   UnnamedEvent event_;
   pp::Instance *instance_;
-  set<MmapSyncInterface*> mmap_set_;
+  std::set<MmapSyncInterface*> mmap_set_;
   Mutex mutex_;
   DISALLOW_COPY_AND_ASSIGN(PepperFileSystem);
 };
