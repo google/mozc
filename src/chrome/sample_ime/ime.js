@@ -58,8 +58,8 @@ sampleImeForImeExtensionApi.SampleIme = function() {
   this.engineID_ = '';
 
   // Some properties are initialized on
-  // {@code sampleImeForImeExtensionApi.SampleIme.clear_} and
-  // {@code sampleImeForImeExtensionApi.SampleIme.initializeMenuItems_}.
+  // `sampleImeForImeExtensionApi.SampleIme.clear_` and
+  // `sampleImeForImeExtensionApi.SampleIme.initializeMenuItems_`.
   this.clear_();
   this.initializeMenuItems_();
 
@@ -292,7 +292,7 @@ sampleImeForImeExtensionApi.SampleIme.prototype.clear_ = function() {
   /**
    * Commit text.
    * This is a volatile property, and will be cleared by
-   * {@code sampleImeForImeExtensionApi.SampleIme.updateCommitText_}.
+   * `sampleImeForImeExtensionApi.SampleIme.updateCommitText_`.
    * @type {?string}
    * @private
    */
@@ -338,7 +338,7 @@ sampleImeForImeExtensionApi.SampleIme.prototype.isImeEnabled_ = function() {
 
 /**
  * Appends a new empty segment on
- * {@code sampleImeForImeExtensionApi.SampleIme.segments}.
+ * `sampleImeForImeExtensionApi.SampleIme.segments`.
  * @private
  */
 sampleImeForImeExtensionApi.SampleIme.prototype.appendNewSegment_ = function() {
@@ -384,7 +384,7 @@ sampleImeForImeExtensionApi.SampleIme.prototype.getInputTextOnSegment_ =
 /**
  * Generates and sets candidates of the segment.
  * @param {number=} opt_segmentIndex Index of the segment you want to get a
- *     text. {@code sampleImeForImeExtensionApi.SampleIme.focusedSegmentIndex_}
+ *     text. `sampleImeForImeExtensionApi.SampleIme.focusedSegmentIndex_`
  *     is used as a default value.
  * @private
  */
@@ -575,8 +575,8 @@ sampleImeForImeExtensionApi.SampleIme.prototype.updateCandidates_ = function() {
 };
 
 /**
- * Updates commit text if {@code commitText_} isn't null.
- * This function clears {@code commitText_} since it is a volatile property.
+ * Updates commit text if `commitText_` isn't null.
+ * This function clears `commitText_` since it is a volatile property.
  * @private
  */
 sampleImeForImeExtensionApi.SampleIme.prototype.updateCommitText_ = function() {
