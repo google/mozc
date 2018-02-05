@@ -71,7 +71,7 @@ void MockJNIEnv::TearDownJNIEnv() {
 }
 
 void MockJNIEnv::ClearArrayMap() {
-  for (std::map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
+  for (std::map<jbyteArray, std::pair<jsize, jbyte*> >::iterator iter =
            byte_array_map_.begin();
        iter != byte_array_map_.end(); ++iter) {
     delete iter->first;
@@ -131,7 +131,7 @@ jbyteArray MockJNIEnv::NewByteArray(jsize size) {
 }
 
 jsize MockJNIEnv::GetArrayLength(jarray array) {
-  map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
+  std::map<jbyteArray, std::pair<jsize, jbyte*> >::iterator iter =
       byte_array_map_.find(static_cast<jbyteArray>(array));
   if (iter != byte_array_map_.end()) {
     return iter->second.first;
@@ -140,7 +140,7 @@ jsize MockJNIEnv::GetArrayLength(jarray array) {
 }
 
 jbyte *MockJNIEnv::GetByteArrayElements(jbyteArray array, jboolean *is_copy) {
-  map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
+  std::map<jbyteArray, std::pair<jsize, jbyte*> >::iterator iter =
       byte_array_map_.find(array);
   if (iter != byte_array_map_.end()) {
     if (is_copy) {

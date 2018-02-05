@@ -105,7 +105,7 @@ class MockJNIEnv {
 
  private:
   JNIEnv env_;
-  map<jbyteArray, pair<jsize, jbyte*> > byte_array_map_;
+  std::map<jbyteArray, std::pair<jsize, jbyte*> > byte_array_map_;
 
   // Http client's mock injecting point.
   std::unique_ptr<MockJavaHttpClient> mock_http_client_;

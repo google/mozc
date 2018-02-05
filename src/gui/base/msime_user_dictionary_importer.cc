@@ -198,7 +198,8 @@ class MSIMEImportIterator
       Util::WideToUTF8(buf_[index_].pwchDisplay, &entry->value);
 
       // set POS
-      map<int, string>::const_iterator it = pos_map_.find(buf_[index_].nPos1);
+      std::map<int, string>::const_iterator it =
+          pos_map_.find(buf_[index_].nPos1);
       if (it == pos_map_.end()) {
         ++index_;
         LOG(ERROR) << "Unknown POS id: " << buf_[index_].nPos1;
@@ -244,7 +245,7 @@ class MSIMEImportIterator
  private:
   std::vector<IMEWRD> buf_;
   ScopedIFEDictionary dic_;
-  map<int, string> pos_map_;
+  std::map<int, string> pos_map_;
   HRESULT result_;
   ULONG size_;
   ULONG index_;

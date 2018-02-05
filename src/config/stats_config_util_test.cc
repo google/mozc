@@ -116,13 +116,13 @@ class RegistryEmulator {
       usagestats_map_[key] = value;
     }
     DWORD get_entry_from_usagestats_map(HKEY key) const {
-      map<HKEY, DWORD>::const_iterator i = usagestats_map_.find(key);
+      std::map<HKEY, DWORD>::const_iterator i = usagestats_map_.find(key);
       if (i == usagestats_map_.end()) {
         return 0;
       }
       return i->second;
     }
-    map<HKEY, DWORD> & usagestats_map() const {
+    std::map<HKEY, DWORD> & usagestats_map() const {
       return usagestats_map_;
     }
     int run_level() const {
@@ -133,7 +133,7 @@ class RegistryEmulator {
     }
 
    private:
-    map<HKEY, DWORD> usagestats_map_;
+    std::map<HKEY, DWORD> usagestats_map_;
     int              run_level_;
   };
   typedef PropertySelector<Id> Property;

@@ -41,8 +41,8 @@ namespace mozc {
 namespace win32 {
 
 class VKBackBasedDeleterQueue
-    : public std::deque<pair<VKBackBasedDeleter::DeletionWaitState,
-                             VKBackBasedDeleter::ClientAction>> {
+    : public std::deque<std::pair<VKBackBasedDeleter::DeletionWaitState,
+                                  VKBackBasedDeleter::ClientAction>> {
 };
 
 VKBackBasedDeleter::VKBackBasedDeleter()
