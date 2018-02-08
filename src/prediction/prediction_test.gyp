@@ -66,6 +66,9 @@
       'variables': {
         'test_size': 'small',
       },
+      'cflags': [
+        '-Wno-inconsistent-missing-override',
+      ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
