@@ -126,7 +126,7 @@ jbyteArray MockJNIEnv::NewByteArray(jsize size) {
   // but this hack looks simpler.
   jbyteArray result = new _jbyteArray;
   jbyte *buf = new jbyte[size];
-  byte_array_map_[result] = make_pair(size, buf);
+  byte_array_map_[result] = std::make_pair(size, buf);
   return result;
 }
 

@@ -43,7 +43,7 @@ namespace tsf {
 namespace {
 
 template <typename T>
-void Dedup(vector<T> *container) {
+void Dedup(std::vector<T> *container) {
   sort(container->begin(), container->end());
   auto new_end = unique(container->begin(), container->end());
   container->erase(new_end, container->end());

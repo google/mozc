@@ -352,9 +352,9 @@ bool UsageStatsUploader::Send(void *data) {
   params.push_back(std::make_pair("os_ver", SystemUtil::GetOSVersionString()));
 #ifdef OS_ANDROID
   params.push_back(
-      make_pair("model",
-                AndroidUtil::GetSystemProperty(
-                    AndroidUtil::kSystemPropertyModel, "Unknown")));
+      std::make_pair("model",
+                     AndroidUtil::GetSystemProperty(
+                         AndroidUtil::kSystemPropertyModel, "Unknown")));
 #endif  // OS_ANDROID
 
   {

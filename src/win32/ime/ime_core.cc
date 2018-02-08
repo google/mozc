@@ -162,7 +162,7 @@ bool UpdateCompositionStringAndPushMessages(
     return true;
   }
 
-  for (vector<UIMessage>::const_iterator it = messages.begin();
+  for (std::vector<UIMessage>::const_iterator it = messages.begin();
        it != messages.end(); ++it) {
     if (UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
            it->message(), it->wparam(), it->lparam())) {
@@ -483,7 +483,7 @@ void ImeCore::SortIMEMessages(
 
   // Notify IMN_CLOSECANDIDATE.
   std::vector<UIMessage> other_candidate_messages;
-  for (vector<UIMessage>::const_iterator it = candidate_messages.begin();
+  for (std::vector<UIMessage>::const_iterator it = candidate_messages.begin();
        it != candidate_messages.end(); ++it) {
     const bool is_close_candidate = ((it->message() == WM_IME_NOTIFY) &&
                                      (it->wparam() == IMN_CLOSECANDIDATE));
@@ -497,7 +497,7 @@ void ImeCore::SortIMEMessages(
   // Notify all composition UI messages except for WM_IME_ENDCOMPOSITION.
   // Typically WM_IME_STARTCOMPOSITION / WM_IME_COMPOSITION will be handled.
   std::vector<UIMessage> end_composition_messages;
-  for (vector<UIMessage>::const_iterator it = composition_messages.begin();
+  for (std::vector<UIMessage>::const_iterator it = composition_messages.begin();
        it != composition_messages.end(); ++it) {
     if (it->message() == WM_IME_ENDCOMPOSITION) {
       end_composition_messages.push_back(*it);
@@ -508,7 +508,8 @@ void ImeCore::SortIMEMessages(
 
   // Notify all other candidate UI messages.
   // Typically IMN_OPENCANDIDATE and IMN_CHANGECANDIDATE will be handled.
-  for (vector<UIMessage>::const_iterator it = other_candidate_messages.begin();
+  for (std::vector<UIMessage>::const_iterator it =
+       other_candidate_messages.begin();
        it != other_candidate_messages.end(); ++it) {
     DCHECK(!((it->message() == WM_IME_NOTIFY) &&
              (it->wparam() == IMN_CLOSECANDIDATE)));
@@ -516,7 +517,8 @@ void ImeCore::SortIMEMessages(
   }
 
   // Notify WM_IME_ENDCOMPOSITION
-  for (vector<UIMessage>::const_iterator it = end_composition_messages.begin();
+  for (std::vector<UIMessage>::const_iterator it =
+       end_composition_messages.begin();
        it != end_composition_messages.end(); ++it) {
     DCHECK_EQ(WM_IME_ENDCOMPOSITION, it->message());
     sorted_messages->push_back(*it);
@@ -657,7 +659,7 @@ bool ImeCore::UpdateContextMain(HIMC himc,
     // Allow visibility trackers to track if each UI message will be
     UIVisibilityTracker *ui_visibility_tracker =
         private_context->ui_visibility_tracker;
-    for (vector<UIMessage>::const_iterator it = sorted_messages.begin();
+    for (std::vector<UIMessage>::const_iterator it = sorted_messages.begin();
          it != sorted_messages.end(); ++it) {
       if (UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
              it->message(), it->wparam(), it->lparam())) {

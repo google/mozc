@@ -286,7 +286,7 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
     const QString i18n_status = tr(statuses[i].toStdString().data());
     i18n_statuses.append(i18n_status);
     normalized_status_map_.insert(
-        make_pair(i18n_status.toStdString(), statuses[i].toStdString()));
+        std::make_pair(i18n_status.toStdString(), statuses[i].toStdString()));
   }
   status_delegate_->SetItemList(i18n_statuses);
 
@@ -297,7 +297,7 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
     const QString i18n_command = tr(commands[i].toStdString().data());
     i18n_commands.append(i18n_command);
     normalized_command_map_.insert(
-        make_pair(i18n_command.toStdString(), commands[i].toStdString()));
+        std::make_pair(i18n_command.toStdString(), commands[i].toStdString()));
   }
   i18n_commands.sort();
   commands_delegate_->SetItemList(i18n_commands);
