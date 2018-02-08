@@ -32,6 +32,8 @@
 
 #include <QtWidgets/QWidget>
 #include <string>
+
+#include "base/port_string.h"
 #include "gui/config_dialog/ui_generic_table_editor.h"
 
 class QAbstractButton;

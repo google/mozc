@@ -183,7 +183,7 @@ bool MacStatsConfigUtilImpl::IsEnabled() {
   scoped_lock l(&mutex_);
   const bool kDefaultValue = false;
 
-  ifstream ifs(config_file_.c_str(), ios::binary | ios::in);
+  ifstream ifs(config_file_.c_str(), std::ios::binary | std::ios::in);
 
   if (!ifs.is_open()) {
     return kDefaultValue;
@@ -213,7 +213,8 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
   if (FileUtil::FileExists(config_file_)) {
     ::chmod(config_file_.c_str(), S_IRUSR | S_IWUSR);  // read/write
   }
-  ofstream ofs(config_file_.c_str(), ios::binary | ios::out | ios::trunc);
+  ofstream ofs(config_file_.c_str(),
+               std::ios::binary | std::ios::out | std::ios::trunc);
   if (!ofs) {
     return false;
   }

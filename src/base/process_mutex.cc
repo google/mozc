@@ -151,7 +151,7 @@ class NamedLockManager {
   ~NamedLockManager() {}
   bool Lock(const string &filename, const string &message) {
     scoped_lock l(&mutex_);
-    return lock_map_.insert(make_pair(filename, message)).second;
+    return lock_map_.insert(std::make_pair(filename, message)).second;
   }
   void UnLock(const string &filename) {
     scoped_lock l(&mutex_);

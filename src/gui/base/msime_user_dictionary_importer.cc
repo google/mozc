@@ -150,7 +150,7 @@ class MSIMEImportIterator
     for (int i = 0; i < pos_size; ++i) {
       EncodingUtil::SJISToUTF8(
           reinterpret_cast<char *>(pos_table->szName), &name);
-      pos_map_.insert(make_pair(pos_table->nPos, name));
+      pos_map_.insert(std::make_pair(pos_table->nPos, name));
       ++pos_table;
     }
 
