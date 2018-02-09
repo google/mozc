@@ -381,7 +381,8 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
     // set longer timeout, when the duration is shorter.
     const int duration = static_cast<int>(unlock_time - lock_time);
     const int timeout =
-        unlock_time == 0 ? 0 : max(kMinTimeout, kMaxTimeout - max(0, duration));
+        unlock_time == 0 ? 0 : std::max(kMinTimeout,
+                                        kMaxTimeout - std::max(0, duration));
 
     const DWORD result = ::WaitForSingleObject(g_stop_event, timeout);
     switch (result) {

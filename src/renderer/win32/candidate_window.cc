@@ -132,7 +132,7 @@ string GetIndexGuideString(const commands::Candidates &candidates) {
   const int focused_index = candidates.focused_index();
   const int total_items = candidates.size();
 
-  stringstream footer_string;
+  std::stringstream footer_string;
   footer_string << focused_index + 1
                 << "/"
                 << total_items

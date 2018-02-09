@@ -201,7 +201,7 @@ bool IsServiceRunning(const ScopedSCHandle &service_handle) {
 }
 
 bool StartServiceInternal(const ScopedSCHandle &service_handle,
-                          const std::vector<wstring> &arguments) {
+                          const std::vector<std::wstring> &arguments) {
   if (arguments.size() <= 0) {
     if (!::StartService(service_handle.get(), 0, NULL)) {
       LOG(ERROR) << "StartService failed: " << ::GetLastError();
@@ -328,7 +328,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
   // load type is not DISABLED.
   if (state.running() && !now_running &&
       (state.load_type() != cache_service::Win32ServiceState::DISABLED)) {
-    std::vector<wstring> arguments(state.arguments_size());
+    std::vector<std::wstring> arguments(state.arguments_size());
     arguments.resize(state.arguments_size());
     for (size_t i = 0; i < state.arguments_size(); ++i) {
       if (Util::UTF8ToWide(state.arguments(i), &arguments[i]) <= 0) {
@@ -513,7 +513,7 @@ bool CacheServiceManager::RestartService() {
     ::Sleep(200);  // wait for 0.2sec
   }
 
-  return StartServiceInternal(service_handle, std::vector<wstring>());
+  return StartServiceInternal(service_handle, std::vector<std::wstring>());
 }
 
 bool CacheServiceManager::HasEnoughMemory() {
