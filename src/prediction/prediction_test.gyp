@@ -67,6 +67,7 @@
         'test_size': 'small',
       },
       'cflags': [
+        '-Wno-unknown-warning-option',
         '-Wno-inconsistent-missing-override',
       ],
     },
