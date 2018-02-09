@@ -160,7 +160,7 @@ AssertionResult ExpectCandidateString(ULONG expected_index,
 TEST(TipCandidateListTest, EmptyCandiate) {
   MockCallbackResult result;
 
-  std::vector<wstring> empty;
+  std::vector<std::wstring> empty;
   CComPtr<ITfCandidateList> candidate_list(
       TipCandidateList::New(empty, new MockCallback(&result)));
   ASSERT_NE(nullptr, candidate_list);
@@ -194,7 +194,7 @@ TEST(TipCandidateListTest, EmptyCandiate) {
 TEST(TipCandidateListTest, NonEmptyCandiates) {
   MockCallbackResult result;
 
-  std::vector<wstring> source;
+  std::vector<std::wstring> source;
   for (wchar_t c = L'A'; c < L'Z'; ++c) {
     source.push_back(std::wstring(c, 1));
   }

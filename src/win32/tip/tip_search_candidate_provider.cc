@@ -119,7 +119,7 @@ class SearchCandidateProviderImpl : public ITfFnSearchCandidateProvider {
     if (candidate_list == nullptr) {
       return E_INVALIDARG;
     }
-    std::vector<wstring> candidates;
+    std::vector<std::wstring> candidates;
     if (!provider_->Query(query, TipQueryProvider::kDefault, &candidates)) {
       return E_FAIL;
     }

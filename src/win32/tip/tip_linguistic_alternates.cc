@@ -131,7 +131,7 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
     if (!TipEditSession::GetTextSync(text_service_, range, &query)) {
       return E_FAIL;
     }
-    std::vector<wstring> candidates;
+    std::vector<std::wstring> candidates;
     if (!provider_->Query(query, TipQueryProvider::kDefault, &candidates)) {
       return E_FAIL;
     }

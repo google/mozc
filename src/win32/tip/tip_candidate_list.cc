@@ -119,7 +119,7 @@ class CandidateStringImpl : public ITfCandidateString {
 
 class EnumTfCandidatesImpl : public IEnumTfCandidates {
  public:
-  explicit EnumTfCandidatesImpl(const std::vector<wstring> &candidates)
+  explicit EnumTfCandidatesImpl(const std::vector<std::wstring> &candidates)
       : candidates_(candidates),
         current_(0) {
   }
@@ -210,7 +210,7 @@ class EnumTfCandidatesImpl : public IEnumTfCandidates {
 
   TipRefCount ref_count_;
 
-  std::vector<wstring> candidates_;
+  std::vector<std::wstring> candidates_;
   size_t current_;
 
   DISALLOW_COPY_AND_ASSIGN(EnumTfCandidatesImpl);
@@ -218,7 +218,7 @@ class EnumTfCandidatesImpl : public IEnumTfCandidates {
 
 class CandidateListImpl : public ITfCandidateList {
  public:
-  CandidateListImpl(const std::vector<wstring> &candidates,
+  CandidateListImpl(const std::vector<std::wstring> &candidates,
                     TipCandidateListCallback *callback)
       : candidates_(candidates),
         callback_(callback) {
@@ -306,7 +306,7 @@ class CandidateListImpl : public ITfCandidateList {
   }
 
   TipRefCount ref_count_;
-  std::vector<wstring> candidates_;
+  std::vector<std::wstring> candidates_;
   unique_ptr<TipCandidateListCallback> callback_;
 
   DISALLOW_COPY_AND_ASSIGN(CandidateListImpl);
@@ -318,8 +318,9 @@ TipCandidateListCallback::~TipCandidateListCallback() {
 }
 
 // static
-ITfCandidateList *TipCandidateList::New(const std::vector<wstring> &candidates,
-                                        TipCandidateListCallback *callback) {
+ITfCandidateList *TipCandidateList::New(
+    const std::vector<std::wstring> &candidates,
+    TipCandidateListCallback *callback) {
   return new CandidateListImpl(candidates, callback);
 }
 

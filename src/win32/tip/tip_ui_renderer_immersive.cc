@@ -123,7 +123,7 @@ int GetFocusedArrayIndex(const Candidates &candidates) {
 void CalcLayout(const Candidates &candidates,
                 const TextRenderer &text_renderer,
                 TableLayout *table_layout,
-                std::vector<wstring> *candidate_strings) {
+                std::vector<std::wstring> *candidate_strings) {
   table_layout->Initialize(candidates.candidate_size(), NUMBER_OF_COLUMNS);
 
   table_layout->SetWindowBorder(kWindowBorder);
@@ -180,7 +180,7 @@ void CalcLayout(const Candidates &candidates,
 CBitmapHandle RenderImpl(const Candidates &candidates,
                          const TableLayout &table_layout,
                          const TextRenderer &text_renderer,
-                         const std::vector<wstring> &candidate_strings) {
+                         const std::vector<std::wstring> &candidate_strings) {
   const int width = table_layout.GetTotalSize().width;
   const int height = table_layout.GetTotalSize().height;
 
@@ -274,7 +274,7 @@ HBITMAP TipUiRendererImmersive::Render(
     const renderer::win32::TextRenderer *text_renderer,
     renderer::TableLayout *table_layout,
     SIZE *size, int *left_align_offset) {
-  std::vector<wstring> candidate_strings;
+  std::vector<std::wstring> candidate_strings;
   CalcLayout(candidates, *text_renderer, table_layout, &candidate_strings);
 
   const Size &total_size = table_layout->GetTotalSize();

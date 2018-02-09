@@ -200,7 +200,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
     if (!TipEditSession::GetTextSync(text_service_, range, &query)) {
       return E_FAIL;
     }
-    std::vector<wstring> candidates;
+    std::vector<std::wstring> candidates;
     if (!provider->Query(query,
                          TipQueryProvider::kReconversion,
                          &candidates)) {

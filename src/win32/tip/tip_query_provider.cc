@@ -61,7 +61,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
   // The TipQueryProvider interface methods.
   virtual bool Query(const std::wstring &query,
                      QueryType type,
-                     std::vector<wstring> *result) {
+                     std::vector<std::wstring> *result) {
     if (type == kReconversion) {
       return ReconvertQuery(query, result);
     }
@@ -69,7 +69,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
   }
 
   bool SimpleQuery(const std::wstring &query,
-                   std::vector<wstring> *result) {
+                   std::vector<std::wstring> *result) {
     {
       KeyEvent key_event;
       string utf8_query;
@@ -104,7 +104,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
   }
 
   bool ReconvertQuery(const std::wstring &query,
-                      std::vector<wstring> *result) {
+                      std::vector<std::wstring> *result) {
     {
       string utf8_query;
       Util::WideToUTF8(query, &utf8_query);

@@ -60,7 +60,7 @@ class TipCandidateList {
   // is called with CAND_FINALIZED. TipCandidateList will take the
   // ownership of |callback|. |callback| can be nullptr.
   // Caller must maintain the reference count of the returned object.
-  static ITfCandidateList *New(const std::vector<wstring> &candidates,
+  static ITfCandidateList *New(const std::vector<std::wstring> &candidates,
                                TipCandidateListCallback *callback);
   static const IID& GetIID();
 

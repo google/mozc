@@ -248,7 +248,7 @@ HRESULT TipRangeUtil::GetTextExt(ITfContextView *context_view,
     // This is why we should carefully choose parameters passed to
     // ITfContextView::GetRangeFromPoint here.
     const POINT dummy_point = {
-       numeric_limits<LONG>::min(), numeric_limits<LONG>::min()
+       std::numeric_limits<LONG>::min(), std::numeric_limits<LONG>::min()
     };
     CComPtr<ITfRange> dummy_range;
     const HRESULT next_hr = context_view->GetRangeFromPoint(

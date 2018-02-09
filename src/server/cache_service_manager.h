@@ -84,7 +84,7 @@ class CacheServiceManager {
   // characters.
   // If the cache service is not installed, default settings is returned
   // with setting |installed| flag to false.
-  static bool BackupStateAsString(wstring *buffer);
+  static bool BackupStateAsString(std::wstring *buffer);
 
   // Return true if the previous status of the service is successfully
   // restored from the specified std::wstring instance.
