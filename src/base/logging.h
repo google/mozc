@@ -35,7 +35,6 @@
 #include <string>
 
 #include "base/flags.h"
-#include "base/namespace.h"
 #include "base/port.h"
 
 namespace mozc {

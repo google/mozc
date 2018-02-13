@@ -37,6 +37,8 @@
 #include <fstream>
 #endif  // MOZC_USE_PEPPER_FILE_IO
 
+#include "base/port_string.h"
+
 namespace mozc {
 
 #ifdef MOZC_USE_PEPPER_FILE_IO

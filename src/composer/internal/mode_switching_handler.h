@@ -37,6 +37,8 @@
 #include <string>
 #include <utility>
 
+#include "base/port_string.h"
+
 namespace mozc {
 namespace composer {
 
@@ -76,7 +78,7 @@ class ModeSwitchingHandler {
                const ModeSwitching display_mode,
                const ModeSwitching input_mode);
 
-  // map<key, pair<display_mode, input_mode> >.
+  // map<key, pair<display_mode, input_mode>>.
   std::map<string, std::pair<ModeSwitching, ModeSwitching>> patterns_;
 };
 

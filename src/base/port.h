@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_PORT_H_
 #define MOZC_BASE_PORT_H_
 
+#include "base/port_string.h"
+
 // Check duplicate OS_XXX definition.
 
 #ifdef OS_WIN

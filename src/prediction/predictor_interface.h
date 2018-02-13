@@ -32,6 +32,8 @@
 
 #include <string>
 
+#include "base/port_string.h"
+
 namespace mozc {
 
 class ConversionRequest;

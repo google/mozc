@@ -320,8 +320,6 @@
         'EnableFunctionLevelLinking': 'true',  # /Gy
         'EnableIntrinsicFunctions': 'true',    # /Oi
         'ExceptionHandling': '2',              # /EHs
-        'ForcedIncludeFiles': ['base/namespace.h'],
-                                               # /FI<header_file.h>
         'SuppressStartupBanner': 'true',       # /nologo
         'TreatWChar_tAsBuiltInType': 'false',  # /Zc:wchar_t-
         'WarningLevel': '3',                   # /W3

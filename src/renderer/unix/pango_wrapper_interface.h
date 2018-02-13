@@ -33,6 +33,8 @@
 #include <gtk/gtk.h>
 #include <string>
 
+#include "base/port_string.h"
+
 namespace mozc {
 
 struct Size;
