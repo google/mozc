@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -632,7 +633,9 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     dic->SetUserDictionaryName(filename);
 
     for (int i = 0; i < 32; ++i) {
-      std::random_shuffle(keys.begin(), keys.end());
+      std::random_device rd;
+      std::mt19937 urbg(rd());
+      std::shuffle(keys.begin(), keys.end(), urbg);
       dic->Reload();
       for (int i = 0; i < 1000; ++i) {
         CollectTokenCallback callback;

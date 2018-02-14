@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <random>
 #include <set>
 #include <string>
 #include <utility>
@@ -3045,7 +3046,9 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
     result->SetTypesAndTokenAttributes(TestableDictionaryPredictor::REALTIME,
                                        Token::NONE);
   }
-  std::random_shuffle(results.begin(), results.end());
+  std::random_device rd;
+  std::mt19937 urbg(rd());
+  std::shuffle(results.begin(), results.end(), urbg);
 
   Segments segments;
   MakeSegmentsForSuggestion("test", &segments);
