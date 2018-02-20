@@ -55,10 +55,15 @@
 #if !defined(MOZC_USE_CUSTOM_DATA_MANAGER)
 // Use plain DataManager, which needs to be manually initialized.
 using TargetDataManager = ::mozc::DataManager;
+constexpr bool kEmbeddedData = false;
+
+
 #else
 // Use OssDataManager, which is embedding data by default.
 #include "data_manager/oss/oss_data_manager.h"
 using TargetDataManager = ::mozc::oss::OssDataManager;
+constexpr bool kEmbeddedData = true;
+
 #endif
 
 namespace mozc {
@@ -125,6 +130,13 @@ string JstringToCcString(JNIEnv *env, jstring j_string) {
 
 std::unique_ptr<DataManager> CreateDataManager(JNIEnv *env,
                                                jstring j_data_file_path) {
+  if (kEmbeddedData) {
+    // If the data manager uses embedded data like OSS version,
+    // j_data_file_path is validly nullptr.
+    std::unique_ptr<DataManager> data_manager(new TargetDataManager());
+    return data_manager;
+  }
+
   if (j_data_file_path == nullptr) {
     return nullptr;
   }
