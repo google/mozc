@@ -30,7 +30,6 @@
 #include "gui/base/win_util.h"
 
 #ifdef OS_WIN
-#define NTDDI_VERSION NTDDI_WIN7  // for JumpList.
 #include <windows.h>
 #include <atlbase.h>
 #include <atlcom.h>
