@@ -31,12 +31,42 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#ifdef HAS_MSIME_HEADER
-#indlude <msime.h>
-#endif  // HAS_MSIME_HEADER
-#endif  // OS_WIN
 
-#if defined(OS_WIN) && defined(HAS_MSIME_HEADER)
+// In general, mixing different NTDDI_VERSION/_WIN32_WINNT values in a single
+// executable file is not safe, but <msime.h> requires NTDDI_WIN8 to use COM
+// interfaces and constants defined there, even though those APIs are available
+// on older platforms such as Windows 7.
+// To work around this limitation, here we intentionally re-define those macros.
+// TODO(yukawa): Remove the following hack when we stop supporting Windows 7.
+
+// Redefine NTDDI_VERSION with NTDDI_WIN8
+#ifdef NTDDI_VERSION
+#define MOZC_ORIGINAL_NTDDI_VERSION NTDDI_VERSION
+#undef NTDDI_VERSION
+#endif  // NTDDI_VERSION
+#define NTDDI_VERSION 0x06020000  // == NTDDI_WIN8
+
+// Redefine _WIN32_WINNT with WIN32_WINNT_WIN8
+#ifdef _WIN32_WINNT
+#define MOZC_ORIGINAL_WIN32_WINNT _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif  // MOZC_ORIGINAL_WIN32_WINNT
+#define _WIN32_WINNT 0x0602       // == WIN32_WINNT_WIN8
+
+#include <msime.h>
+
+// Restore NTDDI_VERSION
+#ifdef MOZC_ORIGINAL_NTDDI_VERSION
+#undef NTDDI_VERSION
+#define NTDDI_VERSION MOZC_ORIGINAL_NTDDI_VERSION
+#endif  // MOZC_ORIGINAL_NTDDI_VERSION
+
+// Restore _WIN32_WINNT
+#ifdef MOZC_ORIGINAL_WIN32_WINNT
+#undef _WIN32_WINNT
+#define _WIN32_WINNT MOZC_ORIGINAL_WIN32_WINNT
+#endif  // MOZC_ORIGINAL_WIN32_WINNT
+
 #include <algorithm>
 #include <map>
 #include <set>
@@ -263,7 +293,7 @@ MSIMEUserDictionarImporter::Create() {
 }  // namespace gui
 }  // namespace mozc
 
-#else  // OS_WIN && HAS_MSIME_HEADER
+#else  // OS_WIN
 
 namespace mozc {
 namespace gui {
@@ -276,4 +306,4 @@ MSIMEUserDictionarImporter::Create() {
 }  // namespace gui
 }  // namespace mozc
 
-#endif  // OS_WIN && HAS_MSIME_HEADER
+#endif  // OS_WIN
