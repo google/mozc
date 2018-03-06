@@ -36,7 +36,6 @@
 #include <set>
 #include <string>
 
-#include "base/namespace.h"
 #include "base/port.h"
 #include "protocol/commands.pb.h"
 
@@ -55,9 +54,10 @@ class KeyTranslator {
                  mozc::commands::KeyEvent *out_event) const;
 
  private:
-  typedef map<uint32, mozc::commands::KeyEvent::SpecialKey> SpecialKeyMap;
-  typedef map<uint32, mozc::commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef map<uint32, pair<string, string> > KanaMap;
+  typedef std::map<uint32, mozc::commands::KeyEvent::SpecialKey> SpecialKeyMap;
+  typedef std::map<uint32, mozc::commands::KeyEvent::ModifierKey>
+      ModifierKeyMap;
+  typedef std::map<uint32, std::pair<string, string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(KeySym keyval, uint32 keycode, KeyStates modifiers) const;

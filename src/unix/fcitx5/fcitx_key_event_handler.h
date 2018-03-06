@@ -62,13 +62,13 @@ class KeyEventHandler {
   bool ProcessModifiers(bool is_key_up, uint32 keyval,
                         mozc::commands::KeyEvent *key_event);
 
-  unique_ptr<KeyTranslator> key_translator_;
+  std::unique_ptr<KeyTranslator> key_translator_;
   // Non modifier key is pressed or not after all keys are released.
   bool is_non_modifier_key_pressed_;
   // Currently pressed modifier keys.  It is set of keyval.
-  set<uint32> currently_pressed_modifiers_;
+  std::set<uint32> currently_pressed_modifiers_;
   // Pending modifier keys.
-  set<mozc::commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
+  std::set<mozc::commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
 
   DISALLOW_COPY_AND_ASSIGN(KeyEventHandler);
 };

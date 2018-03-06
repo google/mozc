@@ -58,31 +58,40 @@ const struct CompositionMode {
   mozc::commands::CompositionMode mode;
 } kPropCompositionModes[] = {
     {
-        "mozc-direct.png", "A", N_("Direct"), mozc::commands::DIRECT,
+        "mozc-direct.png",
+        "A",
+        N_("Direct"),
+        mozc::commands::DIRECT,
     },
     {
         "mozc-hiragana.png",
         "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
-        N_("Hiragana"), mozc::commands::HIRAGANA,
+        N_("Hiragana"),
+        mozc::commands::HIRAGANA,
     },
     {
         "mozc-katakana_full.png",
         "\xe3\x82\xa2",  // Katakana letter A.
-        N_("Full Katakana"), mozc::commands::FULL_KATAKANA,
+        N_("Full Katakana"),
+        mozc::commands::FULL_KATAKANA,
     },
     {
-        "mozc-alpha_half.png", "A", N_("Half ASCII"),
+        "mozc-alpha_half.png",
+        "A",
+        N_("Half ASCII"),
         mozc::commands::HALF_ASCII,
     },
     {
         "mozc-alpha_full.png",
         "\xef\xbc\xa1",  // Full width ASCII letter A.
-        N_("Full ASCII"), mozc::commands::FULL_ASCII,
+        N_("Full ASCII"),
+        mozc::commands::FULL_ASCII,
     },
     {
         "mozc-katakana_half.png",
         "\xef\xbd\xb1",  // Half width Katakana letter A.
-        N_("Half Katakana"), mozc::commands::HALF_KATAKANA,
+        N_("Half Katakana"),
+        mozc::commands::HALF_KATAKANA,
     },
 };
 const size_t kNumCompositionModes = arraysize(kPropCompositionModes);
@@ -164,13 +173,13 @@ bool MozcState::TrySendKeyEvent(
     context.set_following_text(surrounding_text_info.following_text);
   }
 
-  VLOG(1) << "TrySendKeyEvent: " << endl << event.DebugString();
+  VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
   if (!client_->SendKeyWithContext(event, context, out)) {
     *out_error = "SendKey failed";
     VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << endl << out->DebugString();
+  VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 
@@ -211,13 +220,13 @@ bool MozcState::TrySendCommand(mozc::commands::SessionCommand::CommandType type,
 bool MozcState::TrySendRawCommand(const mozc::commands::SessionCommand& command,
                                   mozc::commands::Output* out,
                                   string* out_error) const {
-  VLOG(1) << "TrySendRawCommand: " << endl << command.DebugString();
+  VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
   if (!client_->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
     VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << endl << out->DebugString();
+  VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 

@@ -1,21 +1,21 @@
 /*
-* Copyright (C) 2017~2017 by CSSlayer
-* wengxt@gmail.com
-*
-* This library is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser General Public License as
-* published by the Free Software Foundation; either version 2 of the
-* License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this library; see the file COPYING. If not,
-* see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2017~2017 by CSSlayer
+ * wengxt@gmail.com
+ *
+ * This library is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; see the file COPYING. If not,
+ * see <http://www.gnu.org/licenses/>.
+ */
 
 #include "unix/fcitx5/mozc_engine.h"
 
@@ -42,34 +42,48 @@ const struct CompositionMode {
   mozc::commands::CompositionMode mode;
 } kPropCompositionModes[] = {
     {
-        "mozc-mode-direct", "mozc-direct.png", "A", N_("Direct"),
+        "mozc-mode-direct",
+        "mozc-direct.png",
+        "A",
+        N_("Direct"),
         mozc::commands::DIRECT,
     },
     {
-        "mozc-mode-hiragana", "mozc-hiragana.png",
+        "mozc-mode-hiragana",
+        "mozc-hiragana.png",
         "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
-        N_("Hiragana"), mozc::commands::HIRAGANA,
+        N_("Hiragana"),
+        mozc::commands::HIRAGANA,
     },
     {
-        "mozc-mode-katakana_full", "mozc-katakana_full.png",
+        "mozc-mode-katakana_full",
+        "mozc-katakana_full.png",
         "\xe3\x82\xa2",  // Katakana letter A.
-        N_("Full Katakana"), mozc::commands::FULL_KATAKANA,
+        N_("Full Katakana"),
+        mozc::commands::FULL_KATAKANA,
     },
     {
 
-        "mozc-mode-alpha_half", "mozc-alpha_half.png", "A", N_("Half ASCII"),
+        "mozc-mode-alpha_half",
+        "mozc-alpha_half.png",
+        "A",
+        N_("Half ASCII"),
         mozc::commands::HALF_ASCII,
     },
     {
 
-        "mozc-mode-alpha_full", "mozc-alpha_full.png",
+        "mozc-mode-alpha_full",
+        "mozc-alpha_full.png",
         "\xef\xbc\xa1",  // Full width ASCII letter A.
-        N_("Full ASCII"), mozc::commands::FULL_ASCII,
+        N_("Full ASCII"),
+        mozc::commands::FULL_ASCII,
     },
     {
-        "mozc-mode-katakana_full", "mozc-katakana_half.png",
+        "mozc-mode-katakana_full",
+        "mozc-katakana_half.png",
         "\xef\xbd\xb1",  // Half width Katakana letter A.
-        N_("Half Katakana"), mozc::commands::HALF_KATAKANA,
+        N_("Half Katakana"),
+        mozc::commands::HALF_KATAKANA,
     },
 };
 const size_t kNumCompositionModes = arraysize(kPropCompositionModes);
@@ -254,6 +268,6 @@ void MozcEngine::compositionModeUpdated(InputContext *ic) {
 }
 
 AddonInstance *MozcEngine::clipboardAddon() { return clipboard(); }
-}
+}  // namespace fcitx
 
 FCITX_ADDON_FACTORY(fcitx::MozcEngineFactory)

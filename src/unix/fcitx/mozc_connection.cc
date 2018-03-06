@@ -129,13 +129,13 @@ bool MozcConnection::TrySendKeyEvent(
     context.set_following_text(surrounding_text_info.following_text);
   }
 
-  VLOG(1) << "TrySendKeyEvent: " << endl << event.DebugString();
+  VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
   if (!client_->SendKeyWithContext(event, context, out)) {
     *out_error = "SendKey failed";
     VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << endl << out->DebugString();
+  VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 
@@ -182,13 +182,13 @@ bool MozcConnection::TrySendRawCommand(
     const mozc::commands::SessionCommand& command,
     mozc::commands::Output *out,
     string *out_error) const {
-  VLOG(1) << "TrySendRawCommand: " << endl << command.DebugString();
+  VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
   if (!client_->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
     VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << endl << out->DebugString();
+  VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 

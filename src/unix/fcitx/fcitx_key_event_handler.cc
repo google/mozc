@@ -51,27 +51,27 @@ class AdditionalModifiersData {
     data_[commands::KeyEvent::LEFT_SHIFT] = commands::KeyEvent::SHIFT;
     data_[commands::KeyEvent::RIGHT_SHIFT] = commands::KeyEvent::SHIFT;
   }
-  const map<uint32, commands::KeyEvent::ModifierKey> &data() {
+  const std::map<uint32, commands::KeyEvent::ModifierKey> &data() {
     return data_;
   }
 
  private:
-  map<uint32, commands::KeyEvent::ModifierKey> data_;
+  std::map<uint32, commands::KeyEvent::ModifierKey> data_;
 };
 
 // TODO(hsumita): Moves this function into member functions of
 // KeyEventHandler.
 void AddAdditionalModifiers(
-    set<commands::KeyEvent::ModifierKey> *modifier_keys_set) {
+    std::set<commands::KeyEvent::ModifierKey> *modifier_keys_set) {
   DCHECK(modifier_keys_set);
 
-  const map<uint32, commands::KeyEvent::ModifierKey> &data =
+  const std::map<uint32, commands::KeyEvent::ModifierKey> &data =
       Singleton<AdditionalModifiersData>::get()->data();
 
   // Adds MODIFIER if there are (LEFT|RIGHT)_MODIFIER like LEFT_SHIFT.
-  for (set<commands::KeyEvent::ModifierKey>::const_iterator it =
+  for (std::set<commands::KeyEvent::ModifierKey>::const_iterator it =
            modifier_keys_set->begin(); it != modifier_keys_set->end(); ++it) {
-    map<uint32, commands::KeyEvent::ModifierKey>::const_iterator item =
+    std::map<uint32, commands::KeyEvent::ModifierKey>::const_iterator item =
         data.find(*it);
     if (item != data.end()) {
       modifier_keys_set->insert(item->second);
@@ -206,7 +206,7 @@ bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint32 keyval,
 
     // Modifier key event fires
     key_event->mutable_modifier_keys()->Clear();
-    for (set<commands::KeyEvent::ModifierKey>::const_iterator it =
+    for (std::set<commands::KeyEvent::ModifierKey>::const_iterator it =
              modifiers_to_be_sent_.begin();
          it != modifiers_to_be_sent_.end();
          ++it) {

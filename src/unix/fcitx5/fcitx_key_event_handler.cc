@@ -53,29 +53,29 @@ class AdditionalModifiersData {
     data_[mozc::commands::KeyEvent::RIGHT_SHIFT] =
         mozc::commands::KeyEvent::SHIFT;
   }
-  const map<uint32, mozc::commands::KeyEvent::ModifierKey> &data() {
+  const std::map<uint32, mozc::commands::KeyEvent::ModifierKey> &data() {
     return data_;
   }
 
  private:
-  map<uint32, mozc::commands::KeyEvent::ModifierKey> data_;
+  std::map<uint32, mozc::commands::KeyEvent::ModifierKey> data_;
 };
 
 // TODO(hsumita): Moves this function into member functions of
 // KeyEventHandler.
 void AddAdditionalModifiers(
-    set<mozc::commands::KeyEvent::ModifierKey> *modifier_keys_set) {
+    std::set<mozc::commands::KeyEvent::ModifierKey> *modifier_keys_set) {
   DCHECK(modifier_keys_set);
 
-  const map<uint32, mozc::commands::KeyEvent::ModifierKey> &data =
+  const std::map<uint32, mozc::commands::KeyEvent::ModifierKey> &data =
       mozc::Singleton<AdditionalModifiersData>::get()->data();
 
   // Adds MODIFIER if there are (LEFT|RIGHT)_MODIFIER like LEFT_SHIFT.
-  for (set<mozc::commands::KeyEvent::ModifierKey>::const_iterator it =
+  for (std::set<mozc::commands::KeyEvent::ModifierKey>::const_iterator it =
            modifier_keys_set->begin();
        it != modifier_keys_set->end(); ++it) {
-    map<uint32, mozc::commands::KeyEvent::ModifierKey>::const_iterator item =
-        data.find(*it);
+    std::map<uint32, mozc::commands::KeyEvent::ModifierKey>::const_iterator
+        item = data.find(*it);
     if (item != data.end()) {
       modifier_keys_set->insert(item->second);
     }
@@ -209,7 +209,7 @@ bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint32 keyval,
 
     // Modifier key event fires
     key_event->mutable_modifier_keys()->Clear();
-    for (set<mozc::commands::KeyEvent::ModifierKey>::const_iterator it =
+    for (std::set<mozc::commands::KeyEvent::ModifierKey>::const_iterator it =
              modifiers_to_be_sent_.begin();
          it != modifiers_to_be_sent_.end(); ++it) {
       key_event->add_modifier_keys(*it);

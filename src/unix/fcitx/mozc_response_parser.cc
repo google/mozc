@@ -293,7 +293,7 @@ void MozcResponseParser::ParseCandidates(
         FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
     }
 
-    map<int32, pair<string, string> > usage_map;
+    std::map<int32, std::pair<string, string> > usage_map;
     if (candidates.has_usages()) {
         const commands::InformationList& usages = candidates.usages();
         for (size_t i = 0; i < usages.information().size(); ++i) {
@@ -358,7 +358,7 @@ void MozcResponseParser::ParseCandidates(
             type = MSG_FIRSTCAND;
 
             if (candidate.has_information_id()) {
-                map<int32, pair<string, string> >::iterator it =
+                std::map<int32, std::pair<string, string> >::iterator it =
                     usage_map.find(candidate.information_id());
                 if (it != usage_map.end()) {
                     fcitx_mozc->SetUsage(it->second.first, it->second.second);

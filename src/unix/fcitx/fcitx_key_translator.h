@@ -62,9 +62,9 @@ public:
                  mozc::commands::KeyEvent *out_event) const;
 
 private:
-  typedef map<uint32, commands::KeyEvent::SpecialKey> SpecialKeyMap;
-  typedef map<uint32, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef map<uint32, pair<string, string> > KanaMap;
+  typedef std::map<uint32, commands::KeyEvent::SpecialKey> SpecialKeyMap;
+  typedef std::map<uint32, commands::KeyEvent::ModifierKey> ModifierKeyMap;
+  typedef std::map<uint32, std::pair<string, string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(uint32 keyval,

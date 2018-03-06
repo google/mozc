@@ -398,9 +398,9 @@ void MozcResponseParser::ParseCandidates(
       if (!auxString.empty()) {
         auxString += " ";
       }
-      auxString += to_string(candidates.focused_index() + 1);
+      auxString += std::to_string(candidates.focused_index() + 1);
       auxString += "/";
-      auxString += to_string(candidates.size());
+      auxString += std::to_string(candidates.size());
     }
     mozc_state->SetAuxString(auxString);
   }
@@ -414,7 +414,7 @@ void MozcResponseParser::ParseCandidates(
   }
 
   if (focused_index >= 0) {
-    map<int32, pair<string, string>> usage_map;
+    std::map<int32, std::pair<string, string>> usage_map;
     if (candidates.has_usages()) {
       const mozc::commands::InformationList &usages = candidates.usages();
       for (size_t i = 0; i < usages.information().size(); ++i) {
@@ -431,7 +431,7 @@ void MozcResponseParser::ParseCandidates(
       const uint32 index = candidate.index();
       if (use_annotation_ && index == focused_index &&
           candidate.has_information_id()) {
-        map<int32, pair<string, string>>::iterator it =
+        std::map<int32, std::pair<string, string>>::iterator it =
             usage_map.find(candidate.information_id());
         if (it != usage_map.end()) {
           mozc_state->SetUsage(it->second.first, it->second.second);

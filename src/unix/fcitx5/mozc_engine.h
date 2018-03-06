@@ -1,21 +1,21 @@
 /*
-* Copyright (C) 2017~2017 by CSSlayer
-* wengxt@gmail.com
-*
-* This library is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser General Public License as
-* published by the Free Software Foundation; either version 2 of the
-* License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this library; see the file COPYING. If not,
-* see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2017~2017 by CSSlayer
+ * wengxt@gmail.com
+ *
+ * This library is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; see the file COPYING. If not,
+ * see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _FCITX_UNIX_FCITX5_MOZC_ENGINE_H_
 #define _FCITX_UNIX_FCITX5_MOZC_ENGINE_H_
 
@@ -26,7 +26,6 @@
 #include <fcitx/instance.h>
 #include <fcitx/menu.h>
 
-#include "base/namespace.h"
 #include "unix/fcitx5/mozc_state.h"
 
 namespace fcitx {
@@ -81,7 +80,7 @@ class MozcEngine final : public InputMethodEngine {
 
  private:
   Instance *instance_;
-  unique_ptr<MozcConnection> connection_;
+  std::unique_ptr<MozcConnection> connection_;
   FactoryFor<MozcState> factory_;
   MozcModeAction modeAction_;
   SimpleAction toolAction_;

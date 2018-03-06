@@ -50,10 +50,10 @@ bool SurroundingTextUtil::GetSafeDelta(uint from, uint to, int32 *delta) {
   static_assert(sizeof(int64) == sizeof(llabs(0)),
                 "|llabs(0)| must returns a 64-bit integer.");
   const int64 kInt32AbsMax =
-      llabs(static_cast<int64>(numeric_limits<int32>::max()));
+      llabs(static_cast<int64>(std::numeric_limits<int32>::max()));
   const int64 kInt32AbsMin =
-      llabs(static_cast<int64>(numeric_limits<int32>::min()));
-  const int64 kInt32SafeAbsMax = min(kInt32AbsMax, kInt32AbsMin);
+      llabs(static_cast<int64>(std::numeric_limits<int32>::min()));
+  const int64 kInt32SafeAbsMax = std::min(kInt32AbsMax, kInt32AbsMin);
 
   const int64 diff = static_cast<int64>(from) - static_cast<int64>(to);
   if (llabs(diff) > kInt32SafeAbsMax) {
@@ -206,8 +206,8 @@ bool GetSurroundingText(InputContext *ic, SurroundingTextInfo *info,
     return false;
   }
 
-  const size_t selection_start = min(cursor_pos, anchor_pos);
-  const size_t selection_length = abs(info->relative_selected_length);
+  const size_t selection_start = std::min(cursor_pos, anchor_pos);
+  const size_t selection_length = std::abs(info->relative_selected_length);
   Util::SubStringPiece(surrounding_text, 0, selection_start)
       .CopyToString(&info->preceding_text);
   Util::SubStringPiece(surrounding_text, selection_start, selection_length)

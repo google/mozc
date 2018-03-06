@@ -547,7 +547,7 @@ void FcitxMozc::SetUsage(const string& title_, const string& description_)
     description = description_;
 }
 
-pair< string, string > FcitxMozc::GetUsage()
+std::pair< string, string > FcitxMozc::GetUsage()
 {
     return make_pair(title, description);
 }
