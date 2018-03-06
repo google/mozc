@@ -32,7 +32,6 @@
 #ifndef MOZC_GUI_BASE_DEBUG_UTIL_H_
 #define MOZC_GUI_BASE_DEBUG_UTIL_H_
 
-#include <string>
 #include <QtGui/QGuiApplication>
 
 namespace mozc {

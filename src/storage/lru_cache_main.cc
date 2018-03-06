@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 
   string line;
   while (getline(cin, line)) {
-    vector<string> fields;
+    std::vector<string> fields;
     mozc::Util::SplitStringUsing(line, "\t ", &fields);
     if (fields[0] == "i") {
       cache.Insert(fields[1], fields[2]);

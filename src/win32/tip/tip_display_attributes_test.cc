@@ -49,7 +49,7 @@ class TestableTipDisplayAttribute : public TipDisplayAttribute {
  public:
   TestableTipDisplayAttribute(const GUID &guid,
                               const TF_DISPLAYATTRIBUTE &attribute,
-                              const wstring &description)
+                              const std::wstring &description)
       : TipDisplayAttribute(guid, attribute, description) {
   }
 };

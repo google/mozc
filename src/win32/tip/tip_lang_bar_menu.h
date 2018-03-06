@@ -96,7 +96,7 @@ class TipLangBarMenuDataArray {
   TipLangBarMenuData* data(size_t i);
 
  private:
-  vector<TipLangBarMenuData> data_;
+  std::vector<TipLangBarMenuData> data_;
 };
 
 MIDL_INTERFACE(IIDSTR_IMozcLangBarItem)
@@ -172,7 +172,7 @@ class TipLangBarButton
 
   // Update the item description. The caller is also responsible for calling
   // OnUpdate method to notify the change to the system.
-  void SetDescription(const wstring &description);
+  void SetDescription(const std::wstring &description);
 
   // Returns the i-th data in the language bar menu.
   // Returns NULL if i is out of bounds.
@@ -292,7 +292,7 @@ class TipLangBarToggleButton
   // Represents the index of the selected menu item.
   UINT menu_selected_;
   bool disabled_;
-  wstring description_for_enabled_;
+  std::wstring description_for_enabled_;
   TipLangBarMenuData menu_data_for_disabled_;
 };
 

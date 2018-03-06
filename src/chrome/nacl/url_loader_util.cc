@@ -269,7 +269,8 @@ void URLLoaderStreamToFileHandler::OnInputFileRead(int32_t bytes_read) {
   if (bytes_read == 0) {
     const int32_t ret = input_file_io_->Read(
         total_read_bytes_, tmp_buffer_.get(),
-        min(kReadBufferSize,
+        std::min(
+            kReadBufferSize,
             static_cast<int32_t>(input_file_info_.size - total_read_bytes_)),
         callback_factory_.NewCallback(
             &URLLoaderStreamToFileHandler::OnInputFileRead));
@@ -315,7 +316,8 @@ void URLLoaderStreamToFileHandler::OnOutputFileWrite(int32_t bytes_written) {
       // Read more
       const int32_t ret = input_file_io_->Read(
           total_read_bytes_, tmp_buffer_.get(),
-          min(kReadBufferSize,
+          std::min(
+              kReadBufferSize,
               static_cast<int32_t>(input_file_info_.size - total_read_bytes_)),
           callback_factory_.NewCallback(
               &URLLoaderStreamToFileHandler::OnInputFileRead));

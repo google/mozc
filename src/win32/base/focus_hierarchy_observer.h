@@ -55,8 +55,8 @@ class FocusHierarchyObserver {
 
   virtual void SyncFocusHierarchy() = 0;
   virtual bool IsAbailable() const = 0;
-  virtual vector<AccessibleObjectInfo> GetUIHierarchy() const = 0;
-  virtual vector<WindowInfo> GetWindowHierarchy() const = 0;
+  virtual std::vector<AccessibleObjectInfo> GetUIHierarchy() const = 0;
+  virtual std::vector<WindowInfo> GetWindowHierarchy() const = 0;
   virtual string GetRootWindowName() const = 0;
 
   static FocusHierarchyObserver *Create();

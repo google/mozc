@@ -103,7 +103,7 @@ bool FontUtil::ToLOGFONT(
   log_font->lfQuality = win_log_font.quality();
   log_font->lfPitchAndFamily = win_log_font.pitch_and_family();
 
-  wstring face_name;
+  std::wstring face_name;
   mozc::Util::UTF8ToWide(win_log_font.face_name(), &face_name);
 
   // Although the result of mozc::Util::UTF8ToWide never contains any null

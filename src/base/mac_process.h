@@ -32,6 +32,8 @@
 
 #include <string>
 
+#include "base/port_string.h"
+
 #ifdef OS_MACOSX
 namespace mozc {
 class MacProcess {

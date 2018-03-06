@@ -212,13 +212,13 @@ class ImeCore {
   // - [WM_IME_ENDCOMPOSITION]
   // - [IMN_SETOPENSTATUS for IME-Off]
   static void SortIMEMessages(
-      const vector<UIMessage> &composition_messages,
-      const vector<UIMessage> &candidate_messages,
+      const std::vector<UIMessage> &composition_messages,
+      const std::vector<UIMessage> &candidate_messages,
       bool previous_open_status,
       DWORD previous_conversion_mode,
       bool next_open_status,
       DWORD next_conversion_mode,
-      vector<UIMessage> *sorted_messages);
+      std::vector<UIMessage> *sorted_messages);
 
   // Internal use only.
   // This method implements main part of UpdateContext. Note that this method

@@ -40,6 +40,7 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 
+
 namespace mozc {
 
 // SplitIterator - Iteratively splits a StringPiece to sub-StringPieces.
@@ -229,9 +230,9 @@ class Util {
   static size_t WideCharsLen(StringPiece src);
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
-  static int UTF8ToWide(StringPiece input, wstring *output);
+  static int UTF8ToWide(StringPiece input, std::wstring *output);
   static int WideToUTF8(const wchar_t *input, string *output);
-  static int WideToUTF8(const wstring &input, string *output);
+  static int WideToUTF8(const std::wstring &input, string *output);
 #endif  // OS_WIN
 
   // Extracts a substring range, where both start and length are in terms of
@@ -254,14 +255,10 @@ class Util {
   }
 
   // Determines whether the beginning of |str| matches |prefix|.
-  static bool StartsWith(StringPiece str, StringPiece prefix) {
-    return str.starts_with(prefix);
-  }
+  static bool StartsWith(StringPiece str, StringPiece prefix);
 
   // Determines whether the end of |str| matches |suffix|.
-  static bool EndsWith(StringPiece str, StringPiece suffix) {
-    return str.ends_with(suffix);
-  }
+  static bool EndsWith(StringPiece str, StringPiece suffix);
 
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUTF8BOM(string *line);
@@ -273,10 +270,12 @@ class Util {
   // in the range of Android Emoji PUA.
   static bool IsAndroidPuaEmoji(StringPiece s);
 
+
   // C++ string version of sprintf.
   static string StringPrintf(const char *format, ...)
       // Tell the compiler to do printf format string checking.
       ABSL_PRINTF_ATTRIBUTE(1, 2);
+
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.

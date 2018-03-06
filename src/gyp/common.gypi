@@ -70,6 +70,9 @@
       '-Wno-deprecated-declarations',
       '-Wwrite-strings',
       '<@(extra_warning_cflags)',
+
+      '-Wno-unknown-warning-option',
+      '-Wno-inconsistent-missing-override',
     ],
 
     # gcc_cflags will be shared with Mac and Linux
@@ -77,7 +80,6 @@
       '-fmessage-length=0',
       '-fno-strict-aliasing',
       '-funsigned-char',
-      '-include base/namespace.h',
       '-pipe',
       '-pthread',
     ],

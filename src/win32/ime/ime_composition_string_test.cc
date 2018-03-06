@@ -66,7 +66,7 @@ string GetStringImpl(const CompositionString &composition,
   const BYTE *addr = reinterpret_cast<const BYTE*>(&composition);
   const wchar_t *string_start =
       reinterpret_cast<const wchar_t *>(addr + offset);
-  const wstring wstr(string_start, string_start + length);
+  const std::wstring wstr(string_start, string_start + length);
   string str;
   Util::WideToUTF8(wstr.c_str(), &str);
   return str;
@@ -487,7 +487,7 @@ TEST(ImeCompositionStringTest, StartCompositionTest) {
   segment->set_value("が");
   segment->set_value_length(1);
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
   EXPECT_EQ(2, messages.size());
 
@@ -541,7 +541,7 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionBecomesEmpty) {
   output.mutable_status()->set_activated(true);
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
   EXPECT_EQ(2, messages.size());
 
@@ -588,7 +588,7 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommited) {
   result->set_value("が");
   result->set_type(mozc::commands::Result::STRING);
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
   EXPECT_EQ(2, messages.size());
 
@@ -643,7 +643,7 @@ TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
   output.mutable_status()->set_activated(true);
   output.mutable_status()->set_mode(mozc::commands::HIRAGANA);
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
   EXPECT_EQ(3, messages.size());
 
@@ -708,7 +708,7 @@ TEST(ImeCompositionStringTest,
   segment->set_value("が");
   segment->set_value_length(1);
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
   EXPECT_EQ(1, messages.size());
 
@@ -752,7 +752,7 @@ TEST(ImeCompositionStringTest, Suggest) {
   CompositionString compstr;
   EXPECT_TRUE(compstr.Initialize());
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
   EXPECT_EQ(2, messages.size());
 
@@ -806,7 +806,7 @@ TEST(ImeCompositionStringTest, Predict) {
   CompositionString compstr;
   EXPECT_TRUE(compstr.Initialize());
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
   EXPECT_EQ(2, messages.size());
 
@@ -872,7 +872,7 @@ TEST(ImeCompositionStringTest, Convert) {
   // conversion.
   FillOutputForConversion(&output, 0, false);
   {
-    vector<UIMessage> messages;
+    std::vector<UIMessage> messages;
     EXPECT_TRUE(compstr.Update(output, &messages));
     EXPECT_EQ(2, messages.size());
 
@@ -931,7 +931,7 @@ TEST(ImeCompositionStringTest, Convert) {
   // Second conversion
   FillOutputForConversion(&output, 1, true);
   {
-    vector<UIMessage> messages;
+    std::vector<UIMessage> messages;
     EXPECT_TRUE(compstr.Update(output, &messages));
     EXPECT_EQ(1, messages.size());
 
@@ -1024,7 +1024,7 @@ TEST(ImeCompositionStringTest, SurrogatePairSupport) {
     status->set_mode(commands::HIRAGANA);
   }
 
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
 
   // Here, |focused_character_index_| != Preedit::highlighted_position()

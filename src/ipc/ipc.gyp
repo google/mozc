@@ -57,6 +57,11 @@
             'process_watch_dog.cc',
           ],
         }],
+        ['target_platform=="Windows"', {
+          'dependencies': [
+            '../base/base.gyp:obfuscator_support',
+          ],
+        }],
       ],
     },
     {

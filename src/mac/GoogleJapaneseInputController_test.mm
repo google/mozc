@@ -83,7 +83,7 @@
   NSString *insertedText_;
   NSString *overriddenLayout_;
   NSAttributedString *attributedString_;
-  map<string, int> *counters_;
+  std::map<string, int> *counters_;
 }
 @property(readwrite, assign) NSString *bundleIdentifier;
 @property(readwrite, assign) NSRect expectedCursor;
@@ -105,7 +105,7 @@
   self = [super init];
   self.bundleIdentifier = @"com.google.exampleBundle";
   expectedRange = NSMakeRange(NSNotFound, NSNotFound);
-  counters_ = new map<string, int>;
+  counters_ = new std::map<string, int>;
   selectedMode_ = new string;
   return self;
 }

@@ -73,7 +73,7 @@ void NotifyFatalMessageImpl(const string &msg) {
 }
 
 void NotifyFatalMessage(const string &msg, int line) {
-  ostringstream ostr;
+  std::ostringstream ostr;
   ostr << msg << " (line: " << line << ")";
   NotifyFatalMessageImpl(ostr.str());
 }

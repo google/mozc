@@ -173,8 +173,8 @@ class DictionaryPredictor::PredictiveLookupCallback
     // than 10.  Thus, this linear order algorithm is fast enough.
     // Theoretically, we can construct a trie of strings in |subsequent_chars_|
     // to get more performance but it's overkill here.
-    // TODO(noriyukit): vector<string> would be better than set<string>.  To
-    // this end, we need to fix Comopser as well.
+    // TODO(noriyukit): std::vector<string> would be better than set<string>.
+    // To this end, we need to fix Comopser as well.
     const StringPiece rest = ClippedSubstr(key, original_key_len_);
     for (const string &chr : *subsequent_chars_) {
       if (Util::StartsWith(rest, chr)) {

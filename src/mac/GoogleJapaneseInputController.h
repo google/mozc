@@ -30,6 +30,10 @@
 #import <InputMethodKit/InputMethodKit.h>
 #import "mac/common.h"
 
+#include <string>
+
+#include "base/port_string.h"
+
 // For mozc::commands::CompositionMode
 #include "protocol/renderer_command.pb.h"
 

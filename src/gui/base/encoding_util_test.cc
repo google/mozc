@@ -64,7 +64,7 @@ bool Convert(StringPiece input, string* output) {
     return false;
   }
 
-  unique_ptr<wchar_t[]> wide(new wchar_t[wide_length + 1]);
+  std::unique_ptr<wchar_t[]> wide(new wchar_t[wide_length + 1]);
   if (MultiByteToWideChar(CP_932, MB_ERR_INVALID_CHARS, input.data(),
                           input.size(), wide.get(),
                           wide_length + 1) != wide_length) {

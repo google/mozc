@@ -34,6 +34,8 @@
 #include <string>
 #include <vector>
 
+#include "base/port_string.h"
+
 namespace mozc {
 
 void OutputExistenceHeader(const std::vector<string> &entries,

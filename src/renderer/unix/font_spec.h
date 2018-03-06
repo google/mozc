@@ -57,7 +57,7 @@ class FontSpec : public FontSpecInterface {
  protected:
   void LoadFontSpec(const string &font_description);
   void ReleaseFontSpec();
-  vector<FontInfo> fonts_;
+  std::vector<FontInfo> fonts_;
   bool is_initialized_;
   std::unique_ptr<GtkWrapperInterface> gtk_;
 

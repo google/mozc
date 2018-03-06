@@ -55,7 +55,7 @@ string GetIndexGuideString(const commands::Candidates &candidates) {
   const int focused_index = candidates.focused_index();
   const int total_items = candidates.size();
 
-  stringstream footer_string;
+  std::stringstream footer_string;
   return Util::StringPrintf("%d/%d ", focused_index + 1, total_items);
 }
 
@@ -293,13 +293,13 @@ void CandidateWindow::UpdateFooterSize() {
         FontSpec::FONTSET_FOOTER_LABEL,
         candidates_.footer().label());
     footer_size.width += label_string_size.width;
-    footer_size.height = max(footer_size.height, label_string_size.height);
+    footer_size.height = std::max(footer_size.height, label_string_size.height);
   } else if (candidates_.footer().has_sub_label()) {
     const Size label_string_size = text_renderer_->GetPixelSize(
         FontSpec::FONTSET_FOOTER_LABEL,
         candidates_.footer().sub_label());
     footer_size.width += label_string_size.width;
-    footer_size.height = max(footer_size.height, label_string_size.height);
+    footer_size.height = std::max(footer_size.height, label_string_size.height);
   }
 
   if (candidates_.footer().index_visible()) {
@@ -307,7 +307,7 @@ void CandidateWindow::UpdateFooterSize() {
       FontSpec::FONTSET_FOOTER_INDEX,
       GetIndexGuideString(candidates_));
     footer_size.width += index_guide_size.width;
-    footer_size.height = max(footer_size.height, index_guide_size.height);
+    footer_size.height = std::max(footer_size.height, index_guide_size.height);
   }
 
   if (candidates_.candidate_size() < candidates_.size()) {

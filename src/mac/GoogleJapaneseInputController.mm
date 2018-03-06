@@ -75,13 +75,13 @@ using mozc::MacProcess;
 
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
-const set<string> *gNoOpenLinkApps = nullptr;
+const std::set<string> *gNoOpenLinkApps = nullptr;
 // The mapping from the CompositionMode enum to the actual id string
 // of composition modes.
-const map<CompositionMode, NSString *> *gModeIdMap = nullptr;
-const set<string> *gNoSelectedRangeApps = nullptr;
-const set<string> *gNoDisplayModeSwitchApps = nullptr;
-const set<string> *gNoSurroundingTextApps = nullptr;
+const std::map<CompositionMode, NSString *> *gModeIdMap = nullptr;
+const std::set<string> *gNoSelectedRangeApps = nullptr;
+const std::set<string> *gNoDisplayModeSwitchApps = nullptr;
+const std::set<string> *gNoSurroundingTextApps = nullptr;
 
 // TODO(horo): This value should be get from system configuration.
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
@@ -144,7 +144,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   return mozc::commands::DIRECT;
 }
 
-bool IsBannedApplication(const set<string>* bundleIdSet,
+bool IsBannedApplication(const std::set<string>* bundleIdSet,
                          const string& bundleId) {
   return bundleIdSet == nullptr || bundleId.empty() ||
       bundleIdSet->find(bundleId) != bundleIdSet->end();
@@ -188,7 +188,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     return self;
   }
   keyCodeMap_ = [[KeyCodeMap alloc] init];
-  clientBundle_ = new(nothrow) string;
+  clientBundle_ = new(std::nothrow) string;
   replacementRange_ = NSMakeRange(NSNotFound, 0);
   originalString_ = [[NSMutableString alloc] init];
   composedString_ = [[NSMutableAttributedString alloc] init];
@@ -197,8 +197,8 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   checkInputMode_ = YES;
   suppressSuggestion_ = NO;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
-  candidateController_ = new(nothrow) mozc::renderer::RendererClient;
-  rendererCommand_ = new(nothrow)RendererCommand;
+  candidateController_ = new(std::nothrow) mozc::renderer::RendererClient;
+  rendererCommand_ = new(std::nothrow)RendererCommand;
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   imkServer_ = reinterpret_cast<id<ServerCallback> >(server);
   imkClientForTest_ = nil;
@@ -258,15 +258,15 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 + (void)initializeConstants {
-  set<string> *noOpenlinkApps = new(nothrow) set<string>;
+  std::set<string> *noOpenlinkApps = new(std::nothrow) std::set<string>;
   if (noOpenlinkApps) {
     // should not open links during screensaver.
     noOpenlinkApps->insert("com.apple.securityagent");
     gNoOpenLinkApps = noOpenlinkApps;
   }
 
-  map<CompositionMode, NSString *> *newMap =
-      new(nothrow) map<CompositionMode, NSString *>;
+  std::map<CompositionMode, NSString *> *newMap =
+      new(std::nothrow) std::map<CompositionMode, NSString *>;
   if (newMap) {
     (*newMap)[mozc::commands::DIRECT] = GetLabelForSuffix("Roman");
     (*newMap)[mozc::commands::HIRAGANA] = GetLabelForSuffix("base");
@@ -278,7 +278,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     gModeIdMap = newMap;
   }
 
-  set<string> *noSelectedRangeApps = new(nothrow) set<string>;
+  std::set<string> *noSelectedRangeApps = new(std::nothrow) std::set<string>;
   if (noSelectedRangeApps) {
     // Do not call selectedRange: method for the following
     // applications because it could lead to application crash.
@@ -295,13 +295,14 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   // mode.  When the first composition character is alphanumeric (such
   // like pressing Shift-A at first), that character is directly
   // inserted into application instead of composition starting "A".
-  set<string> *noDisplayModeSwitchApps = new(nothrow) set<string>;
+  std::set<string> *noDisplayModeSwitchApps =
+      new(std::nothrow) std::set<string>;
   if (noDisplayModeSwitchApps) {
     noDisplayModeSwitchApps->insert("com.microsoft.Word");
     gNoDisplayModeSwitchApps = noDisplayModeSwitchApps;
   }
 
-  set<string> *noSurroundingTextApps = new(nothrow) set<string>;
+  std::set<string> *noSurroundingTextApps = new(std::nothrow) std::set<string>;
   if (noSurroundingTextApps) {
     // Disables the surrounding text feature for the following application
     // because calling attributedSubstringFromRange to it is very heavy.
@@ -480,7 +481,8 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     return;
   }
 
-  map<CompositionMode, NSString *>::const_iterator it = gModeIdMap->find(mode_);
+  std::map<CompositionMode, NSString *>::const_iterator it =
+      gModeIdMap->find(mode_);
   if (it == gModeIdMap->end()) {
     LOG(ERROR) << "mode: " << mode_ << " is invalid";
     return;

@@ -65,13 +65,13 @@ class TipDisplayAttribute
  protected:
   TipDisplayAttribute(const GUID &guid,
                       const TF_DISPLAYATTRIBUTE &attribute,
-                      const wstring &description);
+                      const std::wstring &description);
 
  private:
   TipRefCount ref_count_;
   GUID guid_;
   TF_DISPLAYATTRIBUTE original_attribute_;
-  wstring description_;
+  std::wstring description_;
   TF_DISPLAYATTRIBUTE attribute_;
 
   DISALLOW_COPY_AND_ASSIGN(TipDisplayAttribute);

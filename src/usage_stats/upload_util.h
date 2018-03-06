@@ -31,7 +31,7 @@
 // example:
 //
 // UploadUtil uploader;
-// vector<pair<string, string> > params;
+// std::vector<pair<string, string> > params;
 // params.push_back(make_pair("hl", "ja"));
 // params.push_back(make_pair("v", "0.0.0.0"));
 // uploader.SetHeader("Daily", 100, params);

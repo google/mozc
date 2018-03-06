@@ -123,22 +123,22 @@ static_assert(arraysize(mozc::kIMEUIWndClassName)
 const size_t kMaxCharsForRegisterWord = 64;
 
 // If given string is too long, returns an empty string instead.
-wstring GetStringIfWithinLimit(const wchar_t *src, size_t size_limit) {
+std::wstring GetStringIfWithinLimit(const wchar_t *src, size_t size_limit) {
   if (src == nullptr) {
-    return wstring();
+    return std::wstring();
   }
   for (size_t i = 0; i < size_limit; ++i) {
     if (src[i] == L'\0') {
-      return wstring(src, i);
+      return std::wstring(src, i);
     }
   }
-  return wstring();
+  return std::wstring();
 }
 
 void SetEnveronmentVariablesForWordRegisterDialog(
-    const wstring &word_value, const wstring &word_reading) {
-  wstring word_value_env_name;
-  wstring word_reading_env_name;
+    const std::wstring &word_value, const std::wstring &word_reading) {
+  std::wstring word_value_env_name;
+  std::wstring word_reading_env_name;
   mozc::Util::UTF8ToWide(
       mozc::kWordRegisterEnvironmentName, &word_value_env_name);
   mozc::Util::UTF8ToWide(
@@ -411,7 +411,7 @@ LRESULT WINAPI ImeEscape(HIMC himc, UINT sub_func, LPVOID data) {
       // According to the document, the buffer is guaranteed to be greater
       // than or equal to 64 characters in Windows NT.
       // http://msdn.microsoft.com/en-us/library/dd318166.aspx
-      wstring name;
+      std::wstring name;
       mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &name);
       wchar_t *dest = static_cast<wchar_t *>(data);
       const HRESULT result = ::StringCchCopyN(
@@ -1047,7 +1047,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   // Generate NotifyUpdateUI message if not exists.
   {
     bool has_ui_message = false;
-    const vector<TRANSMSG> &messages = message_queue.messages();
+    const std::vector<TRANSMSG> &messages = message_queue.messages();
     for (size_t i = 0; i < messages.size(); ++i) {
       const TRANSMSG &msg = messages[i];
       if (msg.message == WM_IME_NOTIFY &&
@@ -1094,9 +1094,9 @@ BOOL WINAPI ImeConfigure(HKL hkl, HWND wnd, DWORD mode, LPVOID data) {
 
     // Retrieves word registration data.
     const REGISTERWORD *reg_word = static_cast<REGISTERWORD *>(data);
-    const wstring word = GetStringIfWithinLimit(reg_word->lpWord,
+    const std::wstring word = GetStringIfWithinLimit(reg_word->lpWord,
                                                 kMaxCharsForRegisterWord);
-    const wstring reading = GetStringIfWithinLimit(reg_word->lpReading,
+    const std::wstring reading = GetStringIfWithinLimit(reg_word->lpReading,
                                                    kMaxCharsForRegisterWord);
 
     SetEnveronmentVariablesForWordRegisterDialog(word, reading);

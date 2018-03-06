@@ -1239,7 +1239,7 @@ class TipTextServiceImpl
       return;
     }
     // Transfer the ownership.
-    unique_ptr<TipPrivateContext> private_context(it->second);
+    std::unique_ptr<TipPrivateContext> private_context(it->second);
     private_context_map_.erase(it);
     if (private_context.get() == nullptr) {
       return;
@@ -1795,7 +1795,7 @@ class TipTextServiceImpl
                                                CComPtrHash<ITfContext>>;
   PrivateContextMap private_context_map_;
   PreservedKeyMap preserved_key_map_;
-  unique_ptr<TipThreadContext> thread_context_;
+  std::unique_ptr<TipThreadContext> thread_context_;
   HWND task_window_handle_;
   HWND renderer_callback_window_handle_;
 

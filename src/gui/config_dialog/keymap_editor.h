@@ -32,6 +32,7 @@
 
 #include <QtWidgets/QWidget>
 
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -67,22 +68,22 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   virtual string GetDefaultFilename() const {
     return "keymap.txt";
   }
-  virtual bool LoadFromStream(istream *is);
+  virtual bool LoadFromStream(std::istream *is);
   virtual bool Update();
 
  private:
   string invisible_keymap_table_;
   // This is used for deciding whether the user has changed the settings that
   // are valid only for new applications.
-  set<string> direct_mode_commands_;
+  std::set<string> direct_mode_commands_;
   std::unique_ptr<QAction *[]> actions_;
   std::unique_ptr<QAction *[]> import_actions_;
   std::unique_ptr<ComboBoxDelegate> status_delegate_;
   std::unique_ptr<ComboBoxDelegate> commands_delegate_;
   std::unique_ptr<KeyBindingEditorDelegate> keybinding_delegate_;
 
-  map<string, string> normalized_command_map_;
-  map<string, string> normalized_status_map_;
+  std::map<string, string> normalized_command_map_;
+  std::map<string, string> normalized_status_map_;
 };
 
 }  // namespace gui

@@ -31,7 +31,11 @@
 #define MOZC_RENDERER_MAC_MAC_VIEW_UTIL_H_
 
 #import <Cocoa/Cocoa.h>
+
+#include <string>
+
 #include "base/coordinates.h"
+#include "base/port_string.h"
 #include "protocol/renderer_style.pb.h"
 
 namespace mozc {

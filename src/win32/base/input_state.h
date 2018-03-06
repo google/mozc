@@ -60,7 +60,7 @@ struct InputBehavior {
   bool prefer_kana_input;
   bool use_mode_indicator;
   bool use_romaji_key_to_toggle_input_style;
-  vector<KeyInformation> direct_mode_keys;
+  std::vector<KeyInformation> direct_mode_keys;
   InputBehavior();
 };
 

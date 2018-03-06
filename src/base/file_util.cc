@@ -87,7 +87,7 @@ void StripWritePreventingAttributesIfExists(const string &filename) {
   if (!FileUtil::FileExists(filename)) {
     return;
   }
-  wstring wide_filename;
+  std::wstring wide_filename;
   Util::UTF8ToWide(filename, &wide_filename);
   const DWORD kDropAttributes =
       FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY;
@@ -102,7 +102,7 @@ void StripWritePreventingAttributesIfExists(const string &filename) {
 
 bool FileUtil::CreateDirectory(const string &path) {
 #if defined(OS_WIN)
-  wstring wide;
+  std::wstring wide;
   return (Util::UTF8ToWide(path, &wide) > 0 &&
           ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
 #elif defined(OS_NACL)  // OS_WIN
@@ -114,7 +114,7 @@ bool FileUtil::CreateDirectory(const string &path) {
 
 bool FileUtil::RemoveDirectory(const string &dirname) {
 #ifdef OS_WIN
-  wstring wide;
+  std::wstring wide;
   return (Util::UTF8ToWide(dirname, &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
 #elif defined(OS_NACL)  // OS_WIN
@@ -127,7 +127,7 @@ bool FileUtil::RemoveDirectory(const string &dirname) {
 bool FileUtil::Unlink(const string &filename) {
 #ifdef OS_WIN
   StripWritePreventingAttributesIfExists(filename);
-  wstring wide;
+  std::wstring wide;
   return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::DeleteFileW(wide.c_str()) != 0);
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
@@ -139,7 +139,7 @@ bool FileUtil::Unlink(const string &filename) {
 
 bool FileUtil::FileExists(const string &filename) {
 #ifdef OS_WIN
-  wstring wide;
+  std::wstring wide;
   return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::GetFileAttributesW(wide.c_str()) != -1);
 #elif defined(MOZC_USE_PEPPER_FILE_IO)
@@ -152,7 +152,7 @@ bool FileUtil::FileExists(const string &filename) {
 
 bool FileUtil::DirectoryExists(const string &dirname) {
 #ifdef OS_WIN
-  wstring wide;
+  std::wstring wide;
   if (Util::UTF8ToWide(dirname, &wide) <= 0) {
     return false;
   }
@@ -171,7 +171,7 @@ bool FileUtil::DirectoryExists(const string &dirname) {
 #ifdef OS_WIN
 namespace {
 
-bool TransactionalMoveFile(const wstring &from, const wstring &to) {
+bool TransactionalMoveFile(const std::wstring &from, const std::wstring &to) {
   const DWORD kTimeout = 5000;  // 5 sec.
   ScopedHandle handle(::CreateTransaction(
       nullptr, 0, 0, 0, 0, kTimeout, nullptr));
@@ -229,7 +229,7 @@ bool FileUtil::HideFileWithExtraAttributes(const string &filename,
     return false;
   }
 
-  wstring wfilename;
+  std::wstring wfilename;
   Util::UTF8ToWide(filename, &wfilename);
 
   const DWORD original_attributes = ::GetFileAttributesW(wfilename.c_str());
@@ -243,14 +243,14 @@ bool FileUtil::HideFileWithExtraAttributes(const string &filename,
 #endif  // OS_WIN
 
 bool FileUtil::CopyFile(const string &from, const string &to) {
-  Mmap input;
-  if (!input.Open(from.c_str(), "r")) {
+  InputFileStream ifs(from.c_str(), std::ios::binary);
+  if (!ifs) {
     LOG(ERROR) << "Can't open input file. " << from;
     return false;
   }
 
 #ifdef OS_WIN
-  wstring wto;
+  std::wstring wto;
   Util::UTF8ToWide(to, &wto);
   StripWritePreventingAttributesIfExists(to);
 #endif  // OS_WIN
@@ -261,17 +261,16 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
     return false;
   }
 
-  // TOOD(taku): opening file with mmap could not be
-  // a best solution. Also, we have to check disk quota
-  // in advance.
-  if (!ofs.write(input.begin(), input.size()).good()) {
+  // TODO(taku): we have to check disk quota in advance.
+  if (!(ofs << ifs.rdbuf())) {
     LOG(ERROR) << "Can't write data.";
     return false;
   }
+  ifs.close();
   ofs.close();
 
 #ifdef OS_WIN
-  wstring wfrom;
+  std::wstring wfrom;
   Util::UTF8ToWide(from, &wfrom);
   ::SetFileAttributesW(wto.c_str(), ::GetFileAttributesW(wfrom.c_str()));
 #endif  // OS_WIN
@@ -302,7 +301,7 @@ bool FileUtil::IsEqualFile(const string &filename1,
 
 bool FileUtil::AtomicRename(const string &from, const string &to) {
 #ifdef OS_WIN
-  wstring fromw, tow;
+  std::wstring fromw, tow;
   Util::UTF8ToWide(from, &fromw);
   Util::UTF8ToWide(to, &tow);
 
@@ -385,7 +384,7 @@ string FileUtil::NormalizeDirectorySeparator(const string &path) {
 bool FileUtil::GetModificationTime(const string &filename,
                                    FileTimeStamp *modified_at) {
 #if defined (OS_WIN)
-  wstring wide;
+  std::wstring wide;
   if (!Util::UTF8ToWide(filename, &wide)) {
     return false;
   }

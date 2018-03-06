@@ -41,8 +41,8 @@ namespace mozc {
 namespace win32 {
 
 class VKBackBasedDeleterQueue
-    : public std::deque<pair<VKBackBasedDeleter::DeletionWaitState,
-                             VKBackBasedDeleter::ClientAction>> {
+    : public std::deque<std::pair<VKBackBasedDeleter::DeletionWaitState,
+                                  VKBackBasedDeleter::ClientAction>> {
 };
 
 VKBackBasedDeleter::VKBackBasedDeleter()
@@ -65,7 +65,7 @@ VKBackBasedDeleter::~VKBackBasedDeleter() {
 void VKBackBasedDeleter::BeginDeletion(int deletion_count,
                                        const mozc::commands::Output &output,
                                        const InputState &ime_state) {
-  vector<INPUT> inputs;
+  std::vector<INPUT> inputs;
 
   wait_queue_->clear();
   *pending_ime_state_ = InputState();
@@ -78,25 +78,25 @@ void VKBackBasedDeleter::BeginDeletion(int deletion_count,
   *pending_ime_state_ = ime_state;
   pending_output_->CopyFrom(output);
 
-  wait_queue_->push_back(make_pair(
+  wait_queue_->push_back(std::make_pair(
       WAIT_INITIAL_VK_BACK_TESTDOWN, SEND_KEY_TO_APPLICATION));
-  wait_queue_->push_back(make_pair(
+  wait_queue_->push_back(std::make_pair(
       WAIT_VK_BACK_TESTUP, SEND_KEY_TO_APPLICATION));
 
   for (int i = 1; i < deletion_count; ++i) {
-    wait_queue_->push_back(make_pair(
+    wait_queue_->push_back(std::make_pair(
         WAIT_VK_BACK_TESTDOWN, SEND_KEY_TO_APPLICATION));
-    wait_queue_->push_back(make_pair(
+    wait_queue_->push_back(std::make_pair(
         WAIT_VK_BACK_TESTUP, SEND_KEY_TO_APPLICATION));
   }
 
-  wait_queue_->push_back(make_pair(
+  wait_queue_->push_back(std::make_pair(
       WAIT_VK_BACK_TESTDOWN, CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER));
-  wait_queue_->push_back(make_pair(
+  wait_queue_->push_back(std::make_pair(
       WAIT_VK_BACK_DOWN, APPLY_PENDING_STATUS));
-  wait_queue_->push_back(make_pair(
+  wait_queue_->push_back(std::make_pair(
       WAIT_VK_BACK_TESTUP, CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER));
-  wait_queue_->push_back(make_pair(
+  wait_queue_->push_back(std::make_pair(
       WAIT_VK_BACK_UP,
       CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER));
 
@@ -129,7 +129,7 @@ VKBackBasedDeleter::ClientAction VKBackBasedDeleter::OnKeyEvent(
   }
 
   // Hereafter, auto-deletion is ongoing.
-  const pair<DeletionWaitState, ClientAction> next =
+  const std::pair<DeletionWaitState, ClientAction> next =
       wait_queue_->front();
   if (next.first == WAIT_INITIAL_VK_BACK_TESTDOWN) {
     if ((vk == VK_BACK) && is_keydown && is_test_key) {

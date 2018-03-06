@@ -83,7 +83,7 @@ TEST(FontUtilTest, ToWinLogFontWithTooLongFaceName) {
   win_log_font.set_pitch_and_family(FF_SCRIPT);
 
   LOGFONT log_font = { };
-  wstring too_long_face_name(L' ', arraysize(log_font.lfFaceName));
+  std::wstring too_long_face_name(L' ', arraysize(log_font.lfFaceName));
   string face_name;
   mozc::Util::WideToUTF8(too_long_face_name, &face_name);
   win_log_font.set_face_name(face_name);

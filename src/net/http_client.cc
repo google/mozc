@@ -235,7 +235,7 @@ bool RequestInternal(HTTPMethodType type,
   uc.dwUrlPathLength   = sizeof(UrlPath);
   uc.dwExtraInfoLength = sizeof(ExtraInfo);
 
-  wstring wurl;
+  std::wstring wurl;
   Util::UTF8ToWide(url, &wurl);
 
   if (!::InternetCrackUrlW(wurl.c_str(), 0, 0, &uc)) {
@@ -265,7 +265,7 @@ bool RequestInternal(HTTPMethodType type,
     return false;
   }
 
-  wstring uri = UrlPath;
+  std::wstring uri = UrlPath;
   if (uc.dwExtraInfoLength != 0) {
     uri += uc.lpszExtraInfo;
   }
@@ -296,7 +296,7 @@ bool RequestInternal(HTTPMethodType type,
 
   for (size_t i = 0; i < option.headers.size(); ++i) {
     const string header = option.headers[i] + "\r\n";
-    wstring wheader;
+    std::wstring wheader;
     Util::UTF8ToWide(header, &wheader);
     if (!::HttpAddRequestHeadersW(handle.get(), wheader.c_str(), -1,
                                   HTTP_ADDREQ_FLAG_ADD |

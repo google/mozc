@@ -50,12 +50,12 @@ class CodecTest : public ::testing::Test {
   CodecTest() : test_file_(FLAGS_test_tmpdir + "testfile.txt") {}
 
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     DictionaryFileCodecFactory::SetCodec(NULL);
     FileUtil::Unlink(test_file_);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     // Reset to default setting
     DictionaryFileCodecFactory::SetCodec(NULL);
     FileUtil::Unlink(test_file_);
@@ -185,10 +185,10 @@ TEST_F(CodecTest, DefaultTest) {
   EXPECT_TRUE(CheckValue(sections[index], "Value 1 test test"));
 }
 
-TEST_F(CodecTest, CodecTest) {
-  std::unique_ptr<DictionaryFileCodec> default_codec(
+TEST_F(CodecTest, RandomizedCodecTest) {
+  std::unique_ptr<DictionaryFileCodec> internal_codec(
       new DictionaryFileCodec);
-  DictionaryFileCodecFactory::SetCodec(default_codec.get());
+  DictionaryFileCodecFactory::SetCodec(internal_codec.get());
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
   EXPECT_TRUE(codec != NULL);
@@ -221,7 +221,6 @@ TEST_F(CodecTest, CodecTest) {
   EXPECT_TRUE(FindSection(codec, sections, "Section 1", &index));
   EXPECT_TRUE(CheckValue(sections[index], "Value 1 test test"));
 }
-
 
 }  // namespace
 }  // namespace dictionary

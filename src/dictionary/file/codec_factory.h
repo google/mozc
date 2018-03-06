@@ -38,7 +38,6 @@
 namespace mozc {
 namespace dictionary {
 
-
 class DictionaryFileCodecFactory {
  public:
   // Returns the singleton instance.

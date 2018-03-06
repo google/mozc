@@ -47,14 +47,14 @@ class WinUtil {
   // If the function succeeds, the return value is a handle to the module.
   // You should call FreeLibrary with the handle.
   // If the function fails, the return value is NULL.
-  static HMODULE LoadSystemLibrary(const wstring &base_filename);
+  static HMODULE LoadSystemLibrary(const std::wstring &base_filename);
 
   // Load a DLL which has the specified base-name and is located in the
   // Mozc server directory.
   // If the function succeeds, the return value is a handle to the module.
   // You should call FreeLibrary with the handle.
   // If the function fails, the return value is NULL.
-  static HMODULE LoadMozcLibrary(const wstring &base_filename);
+  static HMODULE LoadMozcLibrary(const std::wstring &base_filename);
 
   // If a DLL which has the specified base-name and located in the system
   // directory is loaded in the caller process, retrieve its module handle.
@@ -62,12 +62,12 @@ class WinUtil {
   // without incrementing its reference count so that you should not call
   // FreeLibrary with the handle.
   // If the function fails, the return value is NULL.
-  static HMODULE GetSystemModuleHandle(const wstring &base_filename);
+  static HMODULE GetSystemModuleHandle(const std::wstring &base_filename);
 
   // A variant ot GetSystemModuleHandle except that this method increments
   // reference count of the target DLL.
   static HMODULE GetSystemModuleHandleAndIncrementRefCount(
-      const wstring &base_filename);
+      const std::wstring &base_filename);
 
   // Retrieve whether the calling thread hold loader lock or not.
   // Return true if the state is retrieved successfully.
@@ -87,7 +87,7 @@ class WinUtil {
   // Although this function ignores the rest part of given string when NUL
   // character is found, you should not pass such a string in principle.
   static bool SystemEqualString(
-      const wstring &lhs, const wstring &rhs, bool ignore_case);
+      const std::wstring &lhs, const std::wstring &rhs, bool ignore_case);
 
   // Returns true if succeeds to determine whether the current process has
   // a process token which seems to be one for service process.  Otherwise,
@@ -124,26 +124,26 @@ class WinUtil {
 
   // Returns true if |info| is filled with a valid file information that
   // describes |path|. |path| can be a directory or a file.
-  static bool GetFileSystemInfoFromPath(const wstring &path,
+  static bool GetFileSystemInfoFromPath(const std::wstring &path,
                                         BY_HANDLE_FILE_INFORMATION *info);
 
   // Returns true if |left_path| and |right_path| are the same file system
   // object. This method takes hard-link into consideration.
   // Returns false if either |left_path| or |right_path| does not exist even
   // when |left_path| == |right_path|.
-  static bool AreEqualFileSystemObject(const wstring &left_path,
-                                       const wstring &right_path);
+  static bool AreEqualFileSystemObject(const std::wstring &left_path,
+                                       const std::wstring &right_path);
 
   // Returns true if the file or directory specified by |dos_path| exists and
   // its NT path is retrieved as |nt_path|. This function can work only on
   // Vista and later.
-  static bool GetNtPath(const wstring &dos_path, wstring *nt_path);
+  static bool GetNtPath(const std::wstring &dos_path, std::wstring *nt_path);
 
   // Returns true if the process specified by |pid| exists and its *initial*
   // NT path is retrieved as |nt_path|. Note that even when the process path is
   // renamed after the process is launched, the *initial* path is retrieved.
   // This is important when MSI changes paths of executables.
-  static bool GetProcessInitialNtPath(DWORD pid, wstring *nt_path);
+  static bool GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path);
 
   // Returns true if input settings is shared among applications on Windows 8.
   // Returns false otherwise.

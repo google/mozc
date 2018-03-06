@@ -66,9 +66,9 @@ class KeyEventHandler {
   // Non modifier key is pressed or not after all keys are released.
   bool is_non_modifier_key_pressed_;
   // Currently pressed modifier keys.  It is set of keyval.
-  set<guint> currently_pressed_modifiers_;
+  std::set<guint> currently_pressed_modifiers_;
   // Pending modifier keys.
-  set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
+  std::set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
 
   DISALLOW_COPY_AND_ASSIGN(KeyEventHandler);
 };

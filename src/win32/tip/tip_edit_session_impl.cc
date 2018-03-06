@@ -87,7 +87,7 @@ HRESULT SetReadingProperties(ITfContext *context,
     return result;
   }
 
-  const wstring &canonical_reading_string =
+  const std::wstring &canonical_reading_string =
       StringUtil::KeyToReading(reading_string_utf8);
   CComVariant reading(CComBSTR(canonical_reading_string.c_str()));
   result = reading_property->SetValue(write_cookie, range, &reading);
@@ -178,10 +178,10 @@ CComPtr<ITfComposition> CommitText(TipTextService *text_service,
     return nullptr;
   }
 
-  wstring result_text;
+  std::wstring result_text;
   Util::UTF8ToWide(output.result().value(), &result_text);
 
-  wstring composition_text;
+  std::wstring composition_text;
   TipRangeUtil::GetText(composition_range, write_cookie, &composition_text);
 
   // Make sure that |composition_text| begins with |result_text| so that
@@ -250,7 +250,7 @@ HRESULT UpdateComposition(TipTextService *text_service,
       return result;
     }
     if (is_empty != TRUE) {
-      wstring str;
+      std::wstring str;
       TipRangeUtil::GetText(composition_range, write_cookie, &str);
       result = composition_range->SetText(write_cookie, 0, L"", 0);
       if (FAILED(result)) {
@@ -298,7 +298,7 @@ HRESULT UpdateComposition(TipTextService *text_service,
   }
 
   const Preedit &preedit = output.preedit();
-  const wstring &preedit_text = StringUtil::ComposePreeditText(preedit);
+  const std::wstring &preedit_text = StringUtil::ComposePreeditText(preedit);
   result = composition_range->SetText(
       write_cookie, 0, preedit_text.c_str(), preedit_text.size());
   if (FAILED(result)) {
@@ -360,7 +360,8 @@ HRESULT UpdateComposition(TipTextService *text_service,
     var.lVal = attribute;
     result = display_attribute->SetValue(write_cookie, segment_range, &var);
     if (segment.has_key()) {
-      const wstring &reading_string = StringUtil::KeyToReading(segment.key());
+      const std::wstring &reading_string =
+          StringUtil::KeyToReading(segment.key());
       CComVariant reading(CComBSTR(reading_string.c_str()));
       result = reading_property->SetValue(
           write_cookie, segment_range, &reading);
@@ -521,7 +522,7 @@ HRESULT OnEndEditImpl(TipTextService *text_service,
     if (FAILED(result)) {
       return result;
     }
-    vector<InputScope> input_scopes;
+    std::vector<InputScope> input_scopes;
     result = TipRangeUtil::GetInputScopes(
         selection_range, write_cookie, &input_scopes);
     TipInputModeManager *input_mode_manager =

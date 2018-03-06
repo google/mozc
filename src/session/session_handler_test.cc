@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -209,7 +210,9 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       clock.PutClockForward(interval_time, 0);
     }
 
-    std::random_shuffle(ids.begin(), ids.end());
+    std::random_device rd;
+    std::mt19937 urbg(rd());
+    std::shuffle(ids.begin(), ids.end(), urbg);
     const uint64 oldest_id = ids[0];
     for (size_t i = 0; i < session_size; ++i) {
       EXPECT_TRUE(IsGoodSession(&handler, ids[i]));

@@ -29,28 +29,21 @@
 
 #include "dictionary/file/codec_factory.h"
 
-
 #include "base/singleton.h"
 #include "dictionary/file/codec.h"
 #include "dictionary/file/codec_interface.h"
 
-
 namespace mozc {
 namespace dictionary {
-
-
 namespace {
 DictionaryFileCodecInterface *g_dictionary_file_codec = nullptr;
 }  // namespace
 
-typedef DictionaryFileCodec DefaultCodec;
-
 DictionaryFileCodecInterface *DictionaryFileCodecFactory::GetCodec() {
   if (g_dictionary_file_codec == nullptr) {
-    return Singleton<DefaultCodec>::get();
-  } else {
-    return g_dictionary_file_codec;
+    return Singleton<DictionaryFileCodec>::get();
   }
+  return g_dictionary_file_codec;
 }
 
 void DictionaryFileCodecFactory::SetCodec(DictionaryFileCodecInterface *codec) {

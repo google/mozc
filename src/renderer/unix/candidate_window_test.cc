@@ -1025,7 +1025,7 @@ TEST_F(CandidateWindowTest, DrawFooterIndexTest) {
     Rect original_footer_content_area(100, 200, 300, 400);
     const int focused_index = 3;
     const int total_items = 7;
-    stringstream footer_string;
+    std::stringstream footer_string;
     footer_string << focused_index + 1 << "/" << total_items << " ";
     const string index_guide_string = footer_string.str();
     const Size index_guide_size(10, 20);
@@ -1219,7 +1219,7 @@ TEST_F(CandidateWindowTest, UpdateCandidatesSizeTest) {
       const string expected_value = GetExpectedValue(i, true, true);
 
       // Shortcut string is padded with one spacing character.
-      stringstream shortcut_stream;
+      std::stringstream shortcut_stream;
       shortcut_stream << " " << GetExpectedShortcut(i) << " ";
 
       const string expected_shortcut = shortcut_stream.str();
@@ -1259,7 +1259,7 @@ TEST_F(CandidateWindowTest, UpdateCandidatesSizeTest) {
       const string expected_value = GetExpectedValue(i, true, true);
 
       // Description string is end-padded with one spacing character.
-      stringstream description_stream;
+      std::stringstream description_stream;
       description_stream << GetExpectedDescription(i) << " ";
 
       const string expected_description = description_stream.str();
@@ -1299,12 +1299,12 @@ TEST_F(CandidateWindowTest, UpdateCandidatesSizeTest) {
       const string expected_value = GetExpectedValue(i, true, true);
 
       // Shortcut string is padded with one spacing character.
-      stringstream shortcut_stream;
+      std::stringstream shortcut_stream;
       shortcut_stream << " " << GetExpectedShortcut(i) << " ";
       const string expected_shortcut = shortcut_stream.str();
 
       // Description string is end-padded with one spacing character.
-      stringstream description_stream;
+      std::stringstream description_stream;
       description_stream << GetExpectedDescription(i) << " ";
       const string expected_description = description_stream.str();
 

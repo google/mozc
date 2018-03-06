@@ -178,7 +178,7 @@ namespace {
 int g_counter = 0;
 string DebugString() {
   ++g_counter;
-  ostringstream os;
+  std::ostringstream os;
   os << g_counter << " test!";
   return os.str();
 }

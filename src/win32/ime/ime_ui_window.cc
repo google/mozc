@@ -202,7 +202,7 @@ void UpdateCommand(const UIContext &context,
   const bool show_suggest_window =
       ui_visibility_tracker.IsSuggestWindowVisible();
 
-  vector<wstring> candidate_list;
+  std::vector<std::wstring> candidate_list;
   DWORD focused_index = 0;
   if (!context.IsEmpty() && context.GetOpenStatus()) {
     // Copy the last output.
@@ -350,7 +350,7 @@ class LangBarCallbackImpl : public LangBarCallback {
 
   virtual ULONG AddRef() {
     const LONG count = ::InterlockedIncrement(&reference_count_);
-    return static_cast<ULONG>(max(count, static_cast<LONG>(0)));
+    return static_cast<ULONG>(std::max(count, static_cast<LONG>(0)));
   }
 
   virtual ULONG Release() {

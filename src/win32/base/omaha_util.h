@@ -48,12 +48,12 @@ class OmahaUtil {
  public:
   // Writes the channel name specified by |value| for Omaha.
   // Returns true if the operation completed successfully.
-  static bool WriteChannel(const wstring &value);
+  static bool WriteChannel(const std::wstring &value);
 
   // Reads the channel name for Omaha.
   // Returns an empty string if there is no entry or fails to retrieve the
   // channel name.
-  static wstring ReadChannel();
+  static std::wstring ReadChannel();
 
   // Clears the registry entry to specify error message for Omaha.
   // Returns true if the operation completed successfully.
@@ -61,7 +61,8 @@ class OmahaUtil {
 
   // Writes the registry entry for Omaha to show some error messages.
   // Returns true if the operation completed successfully.
-  static bool WriteOmahaError(const wstring &ui_message, const wstring &header);
+  static bool WriteOmahaError(const std::wstring &ui_message,
+                              const std::wstring &header);
 
   // Clears the registry entry for the channel name.
   // Returns true if the operation completed successfully.

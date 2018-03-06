@@ -71,7 +71,7 @@ void MockJNIEnv::TearDownJNIEnv() {
 }
 
 void MockJNIEnv::ClearArrayMap() {
-  for (map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
+  for (std::map<jbyteArray, std::pair<jsize, jbyte*> >::iterator iter =
            byte_array_map_.begin();
        iter != byte_array_map_.end(); ++iter) {
     delete iter->first;
@@ -126,12 +126,12 @@ jbyteArray MockJNIEnv::NewByteArray(jsize size) {
   // but this hack looks simpler.
   jbyteArray result = new _jbyteArray;
   jbyte *buf = new jbyte[size];
-  byte_array_map_[result] = make_pair(size, buf);
+  byte_array_map_[result] = std::make_pair(size, buf);
   return result;
 }
 
 jsize MockJNIEnv::GetArrayLength(jarray array) {
-  map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
+  std::map<jbyteArray, std::pair<jsize, jbyte*> >::iterator iter =
       byte_array_map_.find(static_cast<jbyteArray>(array));
   if (iter != byte_array_map_.end()) {
     return iter->second.first;
@@ -140,7 +140,7 @@ jsize MockJNIEnv::GetArrayLength(jarray array) {
 }
 
 jbyte *MockJNIEnv::GetByteArrayElements(jbyteArray array, jboolean *is_copy) {
-  map<jbyteArray, pair<jsize, jbyte*> >::iterator iter =
+  std::map<jbyteArray, std::pair<jsize, jbyte*> >::iterator iter =
       byte_array_map_.find(array);
   if (iter != byte_array_map_.end()) {
     if (is_copy) {

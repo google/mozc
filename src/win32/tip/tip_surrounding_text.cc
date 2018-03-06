@@ -278,7 +278,7 @@ class PrecedingTextDeleter : public ITfEditSession {
                                             &halt_cond))) {
       return E_FAIL;
     }
-    wstring total_string;
+    std::wstring total_string;
     if (FAILED(TipRangeUtil::GetText(
             preceeding_range, edit_cookie, &total_string))) {
       return E_FAIL;
@@ -354,11 +354,11 @@ bool PrepareForReconversionIMM32(ITfContext *context,
     return false;
   }
 
-  wstring preceding_text;
-  wstring preceding_composition;
-  wstring target;
-  wstring following_composition;
-  wstring following_text;
+  std::wstring preceding_text;
+  std::wstring preceding_composition;
+  std::wstring target;
+  std::wstring following_composition;
+  std::wstring following_text;
   if (!ReconvertString::Decompose(
           reconvert_string, &preceding_text, &preceding_composition, &target,
           &following_composition, &following_text)) {
@@ -514,7 +514,7 @@ bool TipSurroundingText::DeletePrecedingText(
 }
 
 bool TipSurroundingTextUtil::MeasureCharactersBackward(
-    const wstring &text,
+    const std::wstring &text,
     size_t characters_in_ucs4,
     size_t *characters_in_utf16) {
   if (characters_in_utf16 == nullptr) {

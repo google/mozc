@@ -29,8 +29,7 @@
 
 #include "dictionary/file/codec.h"
 
-#include <climits>
-
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -41,44 +40,75 @@
 namespace mozc {
 namespace dictionary {
 
-DictionaryFileCodec::DictionaryFileCodec() : filemagic_(20110701) {}
+DictionaryFileCodec::DictionaryFileCodec()
+    : seed_(2135654146), filemagic_(20110701) {}
 
-DictionaryFileCodec::~DictionaryFileCodec() {}
+DictionaryFileCodec::~DictionaryFileCodec() = default;
 
 void DictionaryFileCodec::WriteSections(
     const std::vector<DictionaryFileSection> &sections,
     std::ostream *ofs) const {
   DCHECK(ofs);
   WriteHeader(ofs);
-  for (size_t i = 0; i < sections.size(); ++i) {
-    WriteSection(sections[i], ofs);
+
+  if (sections.size() == 4) {
+    // In production, the number of sections equals 4.  In this case, write the
+    // sections in the following deterministic order.  This order was determined
+    // by random shuffle for engine version 24 but it's now made deterministic
+    // to obsolte DictionaryFileCodec.
+    for (size_t i : {0, 2, 1, 3}) {
+      WriteSection(sections[i], ofs);
+    }
+  } else {
+    // Some tests don't have four sections.  In this case, simply write sections
+    // in given order.
+    for (const auto &section : sections) {
+      WriteSection(section, ofs);
+    }
   }
+
   filecodec_util::WriteInt(0, ofs);
 }
 
 void DictionaryFileCodec::WriteHeader(std::ostream *ofs) const {
   DCHECK(ofs);
   filecodec_util::WriteInt(filemagic_, ofs);
+  filecodec_util::WriteInt(seed_, ofs);
 }
 
 void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
                                        std::ostream *ofs) const {
   DCHECK(ofs);
-  const string &name = GetSectionName(section.name);
-  VLOG(1) << "section=" << name << " length=" << section.len;
+  const string &name = section.name;
+  // name should be encoded
+  // uint64 needs just 8 bytes.
+  DCHECK_EQ(8, name.size());
+  string escaped;
+  Util::Escape(name, &escaped);
+  VLOG(1) << "section=" << escaped << " length=" << section.len;
   filecodec_util::WriteInt(section.len, ofs);
-
-  const int name_len = name.size() + 1;  // including '\0'
-  ofs->write(name.data(), name_len);
-  Pad4(name_len, ofs);
+  ofs->write(name.data(), name.size());
 
   ofs->write(section.ptr, section.len);
   Pad4(section.len, ofs);
 }
 
+void DictionaryFileCodec::Pad4(int length, std::ostream *ofs) {
+  DCHECK(ofs);
+  for (int i = length; (i % 4) != 0; ++i) {
+    (*ofs) << '\0';
+  }
+}
+
 string DictionaryFileCodec::GetSectionName(const string &name) const {
-  // Use the given string as is
-  return name;
+  VLOG(1) << "seed\t" << seed_;
+  const uint64 name_fp = Hash::FingerprintWithSeed(name, seed_);
+  const string fp_string(reinterpret_cast<const char *>(&name_fp),
+                         sizeof(name_fp));
+  string escaped;
+  Util::Escape(fp_string, &escaped);
+  VLOG(1) << "Section name for " << name << ": " << escaped;
+  return fp_string;
 }
 
 bool DictionaryFileCodec::ReadSections(
@@ -87,18 +117,21 @@ bool DictionaryFileCodec::ReadSections(
   DCHECK(sections);
   const char *ptr = image;
   const int filemagic = filecodec_util::ReadInt(ptr);
-  CHECK(filemagic == filemagic_) <<
-      "invalid dictionary file magic (recompile dictionary?)";
+  CHECK(filemagic == filemagic_)
+      << "invalid dictionary file magic (recompile dictionary?)";
   ptr += sizeof(filemagic);
-
+  seed_ = filecodec_util::ReadInt(ptr);
+  ptr += sizeof(seed_);
   int size;
   while ((size = filecodec_util::ReadInt(ptr))) {
     ptr += sizeof(size);
-    const string name(ptr);
-    VLOG(1) << "section=" << name << " length=" << size;
-    const int name_len = name.size() + 1;
-    ptr += name_len;
-    ptr += filecodec_util::Rup4(name_len);
+    // finger print name
+    const string name(ptr, sizeof(uint64));
+    ptr += sizeof(uint64);
+
+    string escaped;
+    Util::Escape(name, &escaped);
+    VLOG(1) << "section=" << escaped << " length=" << size;
 
     sections->push_back(DictionaryFileSection(ptr, size, name));
 
@@ -109,14 +142,6 @@ bool DictionaryFileCodec::ReadSections(
     }
   }
   return true;
-}
-
-// Write padding
-void DictionaryFileCodec::Pad4(int length, std::ostream *ofs) {
-  DCHECK(ofs);
-  for (int i = length; (i % 4) != 0; ++i) {
-    (*ofs) << static_cast<char>(Util::Random(CHAR_MAX));
-  }
 }
 
 }  // namespace dictionary

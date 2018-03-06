@@ -68,18 +68,18 @@ class Mapping(object):
 // than KeyCodeMap.mm
 
 namespace {
-static map<%(key_type)s, %(result_type)s> *k%(mapname)s = nullptr;
-static map<%(key_type)s, %(result_type)s> *k%(mapname)sShift = nullptr;
+static std::map<%(key_type)s, %(result_type)s> *k%(mapname)s = nullptr;
+static std::map<%(key_type)s, %(result_type)s> *k%(mapname)sShift = nullptr;
 static once_t kOnceFor%(mapname)s = MOZC_ONCE_INIT;
 void Init%(mapname)s() {
   if (k%(mapname)s != nullptr || k%(mapname)sShift != nullptr) {
     return;
   }
-  k%(mapname)s = new(nothrow)map<%(key_type)s, %(result_type)s>;
+  k%(mapname)s = new(std::nothrow)std::map<%(key_type)s, %(result_type)s>;
   if (k%(mapname)s == nullptr) {
     return;
   }
-  k%(mapname)sShift = new(nothrow)map<%(key_type)s, %(result_type)s>;
+  k%(mapname)sShift = new(std::nothrow)std::map<%(key_type)s, %(result_type)s>;
   if (k%(mapname)sShift == nullptr) {
     delete k%(mapname)s;
     k%(mapname)s = nullptr;

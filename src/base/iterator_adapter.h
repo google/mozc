@@ -68,12 +68,12 @@ namespace mozc {
 //       return iter->first;
 //     }
 //   };
-//   vector<pair<int, double> > data;
+//   std::vector<pair<int, double> > data;
 //     :
 //   // To find the first element whose first is 5.
 //   typedef IteratorAdapter<vector<pair<int, double> >, FirstAdapter>
 //       FirstIterator;
-//   vector<pair<int, double> >::const_iterator iter =
+//   std::vector<pair<int, double> >::const_iterator iter =
 //     find(FirstIterator(data.begin()), FirstIterator(data.end()), 5).base();
 //
 // Below, two utilities are provided, AdapterBase class and MakeIteratorAdapter
@@ -86,8 +86,8 @@ namespace mozc {
 //       return iter->first;
 //     }
 //   };
-//   vector<pair<int, double> > data;
-//   vector<pair<int, double> >::const_iterator iter =
+//   std::vector<pair<int, double> > data;
+//   std::vector<pair<int, double> >::const_iterator iter =
 //     find(MakeIteratorAdapter(data.begin(), FirstAdapter()),
 //          MakeIteratorAdapter(data.end(), FirstAdapter()), 5).base();
 //

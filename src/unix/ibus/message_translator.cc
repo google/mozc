@@ -81,7 +81,7 @@ string NullMessageTranslator::MaybeTranslate(const string &message) const {
 LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
     const string &locale_name) {
   // Currently we support ja_JP.UTF-8 and ja_JP.utf8 only.
-  vector<string> tokens;
+  std::vector<string> tokens;
   Util::SplitStringUsing(locale_name, ".", &tokens);
   if (tokens.size() != 2) {
     return;
@@ -108,7 +108,7 @@ LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
 
 string LocaleBasedMessageTranslator::MaybeTranslate(
     const string &message) const {
-  map<string, string>::const_iterator itr =
+  std::map<string, string>::const_iterator itr =
       utf8_japanese_map_.find(message);
   if (itr == utf8_japanese_map_.end()) {
     return message;

@@ -67,57 +67,7 @@
 #include "base/port.h"
 #include "base/string_piece.h"
 
-namespace {
 
-// Lower-level routine that takes a va_list and appends to a specified
-// string.  All other routines of sprintf family are just convenience
-// wrappers around it.
-void StringAppendV(string *dst, const char *format, va_list ap) {
-  // First try with a small fixed size buffer
-  char space[1024];
-
-  // It's possible for methods that use a va_list to invalidate
-  // the data in it upon use.  The fix is to make a copy
-  // of the structure before using it and use that copy instead.
-  va_list backup_ap;
-  va_copy(backup_ap, ap);
-  int result = vsnprintf(space, sizeof(space), format, backup_ap);
-  va_end(backup_ap);
-
-  if ((result >= 0) && (result < sizeof(space))) {
-    // It fit
-    dst->append(space, result);
-    return;
-  }
-
-  // Repeatedly increase buffer size until it fits
-  int length = sizeof(space);
-  while (true) {
-    if (result < 0) {
-      // Older behavior: just try doubling the buffer size
-      length *= 2;
-    } else {
-      // We need exactly "result+1" characters
-      length = result+1;
-    }
-    char *buf = new char[length];
-
-    // Restore the va_list before we use it again
-    va_copy(backup_ap, ap);
-    result = vsnprintf(buf, length, format, backup_ap);
-    va_end(backup_ap);
-
-    if ((result >= 0) && (result < length)) {
-      // It fit
-      dst->append(buf, result);
-      delete[] buf;
-      return;
-    }
-    delete[] buf;
-  }
-}
-
-}   // namespace
 
 namespace mozc {
 
@@ -803,7 +753,7 @@ size_t Util::WideCharsLen(StringPiece src) {
   return num_chars;
 }
 
-int Util::UTF8ToWide(StringPiece input, wstring *output) {
+int Util::UTF8ToWide(StringPiece input, std::wstring *output) {
   const size_t output_length = WideCharsLen(input);
   if (output_length == 0) {
     return 0;
@@ -837,7 +787,7 @@ int Util::WideToUTF8(const wchar_t *input, string *output) {
   return result;
 }
 
-int Util::WideToUTF8(const wstring &input, string *output) {
+int Util::WideToUTF8(const std::wstring &input, string *output) {
   return WideToUTF8(input.c_str(), output);
 }
 #endif  // OS_WIN
@@ -872,6 +822,14 @@ void Util::SubString(StringPiece src, size_t start, size_t length,
   result->assign(substr.data(), substr.size());
 }
 
+bool Util::StartsWith(StringPiece str, StringPiece prefix) {
+  return str.starts_with(prefix);
+}
+
+bool Util::EndsWith(StringPiece str, StringPiece suffix) {
+  return str.ends_with(suffix);
+}
+
 void Util::StripUTF8BOM(string *line) {
   static const char kUTF8BOM[] = "\xef\xbb\xbf";
   if (line->substr(0, 3) == kUTF8BOM) {
@@ -903,6 +861,58 @@ bool Util::IsAndroidPuaEmoji(StringPiece s) {
           kUtf8MinGooglePuaEmoji <= s && s <= kUtf8MaxGooglePuaEmoji);
 }
 
+namespace {
+
+// Lower-level routine that takes a va_list and appends to a specified
+// string.  All other routines of sprintf family are just convenience
+// wrappers around it.
+void StringAppendV(string *dst, const char *format, va_list ap) {
+  // First try with a small fixed size buffer
+  char space[1024];
+
+  // It's possible for methods that use a va_list to invalidate
+  // the data in it upon use.  The fix is to make a copy
+  // of the structure before using it and use that copy instead.
+  va_list backup_ap;
+  va_copy(backup_ap, ap);
+  int result = vsnprintf(space, sizeof(space), format, backup_ap);
+  va_end(backup_ap);
+
+  if ((result >= 0) && (result < sizeof(space))) {
+    // It fit
+    dst->append(space, result);
+    return;
+  }
+
+  // Repeatedly increase buffer size until it fits
+  int length = sizeof(space);
+  while (true) {
+    if (result < 0) {
+      // Older behavior: just try doubling the buffer size
+      length *= 2;
+    } else {
+      // We need exactly "result+1" characters
+      length = result+1;
+    }
+    char *buf = new char[length];
+
+    // Restore the va_list before we use it again
+    va_copy(backup_ap, ap);
+    result = vsnprintf(buf, length, format, backup_ap);
+    va_end(backup_ap);
+
+    if ((result >= 0) && (result < length)) {
+      // It fit
+      dst->append(buf, result);
+      delete[] buf;
+      return;
+    }
+    delete[] buf;
+  }
+}
+
+}   // namespace
+
 string Util::StringPrintf(const char *format, ...) {
   va_list ap;
   va_start(ap, format);
@@ -911,6 +921,8 @@ string Util::StringPrintf(const char *format, ...) {
   va_end(ap);
   return result;
 }
+
+
 
 bool Util::ChopReturns(string *line) {
   const string::size_type line_end = line->find_last_not_of("\r\n");

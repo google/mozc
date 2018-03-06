@@ -589,8 +589,8 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   SET_CHECKBOX(dictionarySuggestCheckBox, use_dictionary_suggest);
   SET_CHECKBOX(realtimeConversionCheckBox, use_realtime_conversion);
 
-  suggestionsSizeSpinBox->setValue
-      (max(1, min(9, static_cast<int>(config.suggestions_size()))));
+  suggestionsSizeSpinBox->setValue(
+      std::max(1, std::min(9, static_cast<int>(config.suggestions_size()))));
 
   // tab5
   SetSendStatsCheckBox();
@@ -806,16 +806,16 @@ void ConfigDialog::EditUserDictionary() {
 void ConfigDialog::EditKeymap() {
   string current_keymap_table = "";
   const QString keymap_name = keymapSettingComboBox->currentText();
-  const map<QString, config::Config::SessionKeymap>::const_iterator itr =
+  const std::map<QString, config::Config::SessionKeymap>::const_iterator itr =
       keymapname_sessionkeymap_map_.find(keymap_name);
   if (itr != keymapname_sessionkeymap_map_.end()) {
     // Load from predefined mapping file.
     const char *keymap_file =
         keymap::KeyMapManager::GetKeyMapFileName(itr->second);
-    std::unique_ptr<istream> ifs(
+    std::unique_ptr<std::istream> ifs(
         ConfigFileStream::LegacyOpen(keymap_file));
     CHECK(ifs.get() != NULL);  // should never happen
-    stringstream buffer;
+    std::stringstream buffer;
     buffer << ifs->rdbuf();
     current_keymap_table = buffer.str();
   } else {

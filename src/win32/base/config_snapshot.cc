@@ -85,7 +85,7 @@ StaticConfigSnapshot GetConfigSnapshotForNonSandboxedProcess() {
   const auto &direct_mode_keys =
       KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   const size_t size_to_be_copied =
-      min(direct_mode_keys.size(), kMaxDirectModeKeys);
+      std::min(direct_mode_keys.size(), kMaxDirectModeKeys);
   snapshot.num_direct_mode_keys = size_to_be_copied;
   for (size_t i = 0; i < size_to_be_copied; ++i) {
     snapshot.direct_mode_keys[i] = direct_mode_keys[i];

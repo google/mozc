@@ -32,6 +32,8 @@
 
 #include <QtWidgets/QWidget>
 #include <string>
+
+#include "base/port_string.h"
 #include "gui/config_dialog/ui_generic_table_editor.h"
 
 class QAbstractButton;
@@ -75,7 +77,7 @@ class GenericTableEditorDialog : public QDialog,
 
   // implements a method which loads
   // internal data from istream
-  virtual bool LoadFromStream(istream *is) = 0;
+  virtual bool LoadFromStream(std::istream *is) = 0;
 
   // implements a method which called when
   // the current view is updated.

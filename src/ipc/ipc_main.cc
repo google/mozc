@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
     server_thread_main.SetJoinable(true);
     server_thread_main.Start("IpcMain");
 
-    vector<mozc::MultiConnections> cons(FLAGS_num_threads);
+    std::vector<mozc::MultiConnections> cons(FLAGS_num_threads);
     for (size_t i = 0; i < cons.size(); ++i) {
       cons[i].SetJoinable(true);
       cons[i].Start("MultiConnections");

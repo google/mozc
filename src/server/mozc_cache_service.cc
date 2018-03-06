@@ -64,7 +64,7 @@ void LogMessageImpl(
     LogMessageImpl(_T(__FILE__), __LINE__, message, ::GetLastError())
 #endif
 
-wstring GetMappedFileNameByAddress(LPVOID address) {
+std::wstring GetMappedFileNameByAddress(LPVOID address) {
   wchar_t path[MAX_PATH];
   const int length = ::GetMappedFileName(::GetCurrentProcess(), address,
                                          path, arraysize(path));
@@ -72,12 +72,12 @@ wstring GetMappedFileNameByAddress(LPVOID address) {
     LOG_WIN32_ERROR(L"GetMappedFileName failed.");
     return L"";
   }
-  return wstring(path, length);
+  return std::wstring(path, length);
 }
 
 // This function scans each section of a given mapped image section and
 // changes memory protection attribute to read-only.
-// Retruns true if all sections are changed to one read-only region.
+// Returns true if all sections are changed to one read-only region.
 // |result_info| contains the memory block information of the combined
 // region if succeeds.
 bool MakeReadOnlyForMappedModule(
@@ -92,7 +92,7 @@ bool MakeReadOnlyForMappedModule(
   // MEMORY_BASIC_INFORMATION::Type should be MEM_IMAGE.
 
   // Store the source filename.
-  const wstring &filename = ::GetMappedFileNameByAddress(address);
+  const std::wstring &filename = ::GetMappedFileNameByAddress(address);
   if (filename.empty()) {
     return false;
   }
@@ -180,7 +180,7 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
 // See http://b/2470180 for the whole story.
 bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
   bool verify_privilege = false;
-  const wstring test_mode = L"--verify_privilege_restriction";
+  const std::wstring test_mode = L"--verify_privilege_restriction";
   for (size_t i = 0; i < dwArgc; ++i) {
     if (test_mode == lpszArgv[i]) {
       verify_privilege = true;
@@ -194,7 +194,7 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
   const string temp_path =
       mozc::FileUtil::JoinPath(mozc::SystemUtil::GetServerDirectory(),
                                "delete_me.txt");
-  wstring wtemp_path;
+  std::wstring wtemp_path;
   mozc::Util::UTF8ToWide(temp_path, &wtemp_path);
   const HANDLE temp_file = ::CreateFileW(
       wtemp_path.c_str(),
@@ -273,7 +273,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
 
-  wstring server_path;
+  std::wstring server_path;
   mozc::Util::UTF8ToWide(mozc::SystemUtil::GetServerPath(), &server_path);
 
   mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(),
@@ -381,7 +381,8 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
     // set longer timeout, when the duration is shorter.
     const int duration = static_cast<int>(unlock_time - lock_time);
     const int timeout =
-        unlock_time == 0 ? 0 : max(kMinTimeout, kMaxTimeout - max(0, duration));
+        unlock_time == 0 ? 0 : std::max(kMinTimeout,
+                                        kMaxTimeout - std::max(0, duration));
 
     const DWORD result = ::WaitForSingleObject(g_stop_event, timeout);
     switch (result) {

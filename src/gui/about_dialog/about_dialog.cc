@@ -118,8 +118,8 @@ void AboutDialog::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   const QRect image_rect = product_image_->rect();
   // allow clipping on right / bottom borders
-  const QRect draw_rect(max(5, width() - image_rect.width() - 15),
-                        max(0, color_frame->y() - image_rect.height()),
+  const QRect draw_rect(std::max(5, width() - image_rect.width() - 15),
+                        std::max(0, color_frame->y() - image_rect.height()),
                         image_rect.width(), image_rect.height());
   painter.drawImage(draw_rect, *product_image_.get());
 }

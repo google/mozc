@@ -48,17 +48,13 @@
 #include "gui/base/win_util.h"
 #include "ipc/window_info.pb.h"
 
-#ifdef OS_WIN
-using std::unique_ptr;
-#endif  // OS_WIN
-
 namespace mozc {
 namespace gui {
 namespace {
 bool ReadWindowInfo(const string &lock_name,
                     ipc::WindowInfo *window_info) {
 #ifdef OS_WIN
-  wstring wfilename;
+  std::wstring wfilename;
   mozc::Util::UTF8ToWide(lock_name, &wfilename);
   {
     mozc::ScopedHandle handle(
@@ -83,7 +79,7 @@ bool ReadWindowInfo(const string &lock_name,
       return false;
     }
 
-    unique_ptr<char[]> buf(new char[size]);
+    std::unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
     if (!::ReadFile(handle.get(), buf.get(),
@@ -103,7 +99,7 @@ bool ReadWindowInfo(const string &lock_name,
     }
   }
 #else
-  InputFileStream is(lock_name.c_str(), ios::binary|ios::in);
+  InputFileStream is(lock_name.c_str(), std::ios::binary|std::ios::in);
   if (!is) {
     LOG(ERROR) << "cannot open: " << lock_name;
     return false;

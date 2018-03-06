@@ -865,7 +865,7 @@ bool Client::LaunchTool(const string &mode, const string &extra_arg) {
   if (mode == "administration_dialog") {
 #ifdef OS_WIN
     const string &path = mozc::SystemUtil::GetToolPath();
-    wstring wpath;
+    std::wstring wpath;
     Util::UTF8ToWide(path, &wpath);
     wpath = L"\"" + wpath + L"\"";
     // Run administration dialog with UAC.

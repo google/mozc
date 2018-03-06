@@ -68,13 +68,13 @@ TEST(GenericStorageManagerFactoryTest, GetStorage) {
 TEST(GenericLruStorageTest, BasicOperations) {
   const int kValueSize = 12;
   const int kSize = 10;
-  const string kPrinfFormat = Util::StringPrintf("%%%dlu", kValueSize);
+  constexpr const char *kPrintFormat = "%12zu";  // 12 = kValueSize
 
   GenericLruStorage storage(
       GetTemporaryFilePath().data(), kValueSize, kSize, 123);
   // Inserts (kSize + 1) entries.
   for (size_t i = 0; i < kSize + 1; ++i) {
-    const string value = Util::StringPrintf(kPrinfFormat.data(), i);
+    const string value = Util::StringPrintf(kPrintFormat, i);
     const string key = string("key") + value;
     storage.Insert(key, value.data());
     // Check the existence.
@@ -84,7 +84,7 @@ TEST(GenericLruStorageTest, BasicOperations) {
   // First inserted entry is already pushed out.
   EXPECT_EQ(NULL, storage.Lookup("0"));
   for (size_t i = 1; i < kSize + 1; ++i) {
-    const string value = Util::StringPrintf(kPrinfFormat.data(), i);
+    const string value = Util::StringPrintf(kPrintFormat, i);
     const string key = string("key") + value;
     EXPECT_EQ(value, string(storage.Lookup(key), kValueSize));
   }
@@ -94,8 +94,7 @@ TEST(GenericLruStorageTest, BasicOperations) {
   storage.GetAllValues(&values);
   EXPECT_EQ(kSize, values.size());
   for (size_t i = 1; i < kSize + 1; ++i) {
-    EXPECT_EQ(Util::StringPrintf(kPrinfFormat.data(), i),
-              values.at(kSize - i));
+    EXPECT_EQ(Util::StringPrintf(kPrintFormat, i), values.at(kSize - i));
   }
 
   // Clean

@@ -57,6 +57,9 @@
 #include "base/const.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#ifdef OS_WIN
+#include "base/unverified_sha1.h"
+#endif  // OS_WIN
 #include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/mutex.h"
@@ -70,10 +73,6 @@
 #include "base/win_util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
-
-#ifdef OS_WIN
-using std::unique_ptr;
-#endif  // OS_WIn
 
 namespace mozc {
 namespace {
@@ -112,22 +111,15 @@ bool IsValidKey(const string &name) {
   return true;
 }
 
-void CreateIPCKey(char *value) {
-  char buf[16];   // key is 128 bit
+string CreateIPCKey() {
+  char buf[16] = {};   // key is 128 bit
+  char value[kKeySize + 1] = {};
 
 #ifdef OS_WIN
-  // LUID guaranties uniqueness
-  LUID luid = { 0 };   // LUID is 64bit value
-
-  DCHECK_EQ(sizeof(luid), sizeof(uint64));
-
-  // first 64 bit is random sequence and last 64 bit is LUID
-  if (::AllocateLocallyUniqueId(&luid)) {
-    Util::GetRandomSequence(buf, sizeof(buf) / 2);
-    ::memcpy(buf + sizeof(buf) / 2, &luid, sizeof(buf) / 2);
-  } else {
-    // use random value for failsafe
-    Util::GetRandomSequence(buf, sizeof(buf));
+  const string sid = SystemUtil::GetUserSidAsString();
+  const string sha1 = internal::UnverifiedSHA1::MakeDigest(sid);
+  for (int i = 0; i < sizeof(buf) && i < sha1.size(); ++i) {
+    buf[i] = sha1.at(i);
   }
 #else
   // get 128 bit key: Note that collision will happen.
@@ -143,6 +135,7 @@ void CreateIPCKey(char *value) {
   }
 
   value[kKeySize] = '\0';
+  return string(value);
 }
 
 class IPCPathManagerMap {
@@ -195,9 +188,7 @@ IPCPathManager *IPCPathManager::GetIPCPathManager(const string &name) {
 bool IPCPathManager::CreateNewPathName() {
   scoped_lock l(mutex_.get());
   if (ipc_path_info_->key().empty()) {
-    char ipc_key[kKeySize + 1];
-    CreateIPCKey(ipc_key);
-    ipc_path_info_->set_key(ipc_key);
+    ipc_path_info_->set_key(CreateIPCKey());
   }
   return true;
 }
@@ -248,13 +239,30 @@ bool IPCPathManager::LoadPathName() {
   // On Windows, ShouldReload() always returns false.
   // On other platform, it returns true when timestamp of the file is different
   // from that of previous one.
-  if (ShouldReload() || ipc_path_info_->key().empty()) {
-    if (!LoadPathNameInternal()) {
-      LOG(ERROR) << "LoadPathName failed";
-      return false;
-    }
+  const bool should_load = (ShouldReload() || ipc_path_info_->key().empty());
+  if (!should_load) {
+    return true;
   }
+
+  if (LoadPathNameInternal()) {
+    return true;
+  }
+
+#if defined(OS_WIN)
+  // Fill the default values as fallback.
+  // Applications conerted by Desktop App Converter (DAC) does not read
+  // a file of ipc session name in the LocalLow directory.
+  // For a workaround, let applications to connect the named pipe directly.
+  // See: b/71338191.
+  CreateNewPathName();
+  DCHECK(!ipc_path_info_->key().empty());
+  ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
+  ipc_path_info_->set_product_version(Version::GetMozcVersion());
   return true;
+#else
+  LOG(ERROR) << "LoadPathName failed";
+  return false;
+#endif
 }
 
 bool IPCPathManager::GetPathName(string *ipc_name) const {
@@ -334,13 +342,13 @@ bool IPCPathManager::IsValidServer(uint32 pid,
 
 #ifdef OS_WIN
   {
-    wstring expected_server_ntpath;
-    const map<string, wstring>::const_iterator it =
+    std::wstring expected_server_ntpath;
+    const std::map<string, std::wstring>::const_iterator it =
         expected_server_ntpath_cache_.find(server_path);
     if (it != expected_server_ntpath_cache_.end()) {
       expected_server_ntpath = it->second;
     } else {
-      wstring wide_server_path;
+      std::wstring wide_server_path;
       Util::UTF8ToWide(server_path, &wide_server_path);
       if (WinUtil::GetNtPath(wide_server_path, &expected_server_ntpath)) {
         // Caches the relationship from |server_path| to
@@ -354,7 +362,7 @@ bool IPCPathManager::IsValidServer(uint32 pid,
       return false;
     }
 
-    wstring actual_server_ntpath;
+    std::wstring actual_server_ntpath;
     if (!WinUtil::GetProcessInitialNtPath(pid, &actual_server_ntpath)) {
       return false;
     }
@@ -465,7 +473,7 @@ bool IPCPathManager::LoadPathNameInternal() {
   // Special code for Windows,
   // we want to pass FILE_SHRED_DELETE flag for CreateFile.
 #ifdef OS_WIN
-  wstring wfilename;
+  std::wstring wfilename;
   Util::UTF8ToWide(filename, &wfilename);
 
   {
@@ -494,7 +502,7 @@ bool IPCPathManager::LoadPathNameInternal() {
       return false;
     }
 
-    unique_ptr<char[]> buf(new char[size]);
+    std::unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
     if (!::ReadFile(handle.get(), buf.get(),

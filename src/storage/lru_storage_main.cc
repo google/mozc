@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
   LOG(INFO) << "value_size=" << s.value_size();
 
   string line;
-  vector<string> fields;
+  std::vector<string> fields;
   while (getline(cin, line)) {
     fields.clear();
     mozc::Util::SplitStringUsing(line, "\t ", &fields);

@@ -53,16 +53,16 @@ class UpdateUtilTestWin : public testing::Test {
 
     HKEY created_key;
     bool reg_create_key_ex_called;
-    wstring created_key_path;
+    std::wstring created_key_path;
     bool reg_set_value_ex_called;
-    wstring written_value_name;
-    wstring written_value;
+    std::wstring written_value_name;
+    std::wstring written_value;
     DWORD written_type;
     bool reg_close_key_called;
   };
 
   static void SetUpTestCase() {
-    vector<WinAPITestHelper::HookRequest> requests;
+    std::vector<WinAPITestHelper::HookRequest> requests;
     requests.push_back(
         DEFINE_HOOK("advapi32.dll", RegCreateKeyExW, HookRegCreateKeyExW));
     requests.push_back(
@@ -111,7 +111,7 @@ class UpdateUtilTestWin : public testing::Test {
     call_result_->reg_set_value_ex_called = true;
     call_result_->written_value_name = value_name;
     call_result_->written_value =
-        wstring(reinterpret_cast<const wchar_t*>(data));
+        std::wstring(reinterpret_cast<const wchar_t*>(data));
     call_result_->written_type = type;
     return ERROR_SUCCESS;
   }

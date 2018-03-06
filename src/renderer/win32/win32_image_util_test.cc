@@ -107,10 +107,10 @@ class BalloonImageTest : public ::testing::Test,
 
   static void BalloonImageTest::SaveTestImage(
       const TestableBalloonImage::BalloonImageInfo &info,
-      const wstring filename) {
+      const std::wstring filename) {
     CPoint tail_offset;
     CSize size;
-    vector<ARGBColor> buffer;
+    std::vector<ARGBColor> buffer;
     CBitmap dib = TestableBalloonImage::CreateInternal(
         info, &tail_offset, &size, &buffer);
 
@@ -191,7 +191,7 @@ class BalloonImageTest : public ::testing::Test,
   }
 
  private:
-  static bool GetEncoderClsid(const wstring format, CLSID *clsid) {
+  static bool GetEncoderClsid(const std::wstring format, CLSID *clsid) {
     UINT num_codecs = 0;
     UINT codecs_buffer_size = 0;
     Gdiplus::GetImageEncodersSize(&num_codecs, &codecs_buffer_size);
@@ -199,7 +199,7 @@ class BalloonImageTest : public ::testing::Test,
       return false;
     }
 
-    unique_ptr<uint8[]> codesc_buffer(new uint8[codecs_buffer_size]);
+    std::unique_ptr<uint8[]> codesc_buffer(new uint8[codecs_buffer_size]);
     Gdiplus::ImageCodecInfo *codecs =
         reinterpret_cast<Gdiplus::ImageCodecInfo *>(codesc_buffer.get());
 
@@ -305,14 +305,14 @@ TEST_P(BalloonImageTest, TestImpl) {
 
   CPoint actual_tail_offset;
   CSize actual_size;
-  vector<ARGBColor> actual_buffer;
+  std::vector<ARGBColor> actual_buffer;
   CBitmap dib = TestableBalloonImage::CreateInternal(
       info, &actual_tail_offset, &actual_size, &actual_buffer);
 
   EXPECT_EQ(tail["output"]["tail_offset_x"].asInt(), actual_tail_offset.x);
   EXPECT_EQ(tail["output"]["tail_offset_y"].asInt(), actual_tail_offset.y);
 
-  wstring wide_path;
+  std::wstring wide_path;
   Util::UTF8ToWide(expected_image_path, &wide_path);
 
   Gdiplus::Bitmap bitmap(wide_path.c_str());

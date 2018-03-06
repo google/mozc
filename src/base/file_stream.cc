@@ -51,33 +51,33 @@ InputFileStream::InputFileStream()
 }
 
 InputFileStream::InputFileStream(const char* filename,
-                                 ios_base::openmode mode)
+                                 std::ios_base::openmode mode)
     : std::istream(nullptr) {
   init(&string_buffer_);
   InputFileStream::open(filename, mode);
 }
 
-void InputFileStream::open(const char* filename, ios_base::openmode mode) {
+void InputFileStream::open(const char* filename, std::ios_base::openmode mode) {
   string buffer;
   const bool ret = PepperFileUtil::ReadBinaryFile(filename, &buffer);
   if (ret) {
     string_buffer_.sputn(buffer.c_str(), buffer.length());
   } else {
-    setstate(ios_base::failbit);
+    setstate(std::ios_base::failbit);
   }
 }
 
 void InputFileStream::close() {}
 
 OutputFileStream::OutputFileStream()
-    : ostream(),
+    : std::ostream(),
       write_done_(false) {
   init(&string_buffer_);
 }
 
 OutputFileStream::OutputFileStream(const char* filename,
-                                   ios_base::openmode mode)
-    : ostream(),
+                                   std::ios_base::openmode mode)
+    : std::ostream(),
       write_done_(false) {
   init(&string_buffer_);
   OutputFileStream::open(filename, mode);
@@ -87,7 +87,8 @@ OutputFileStream::~OutputFileStream() {
   close();
 }
 
-void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
+void OutputFileStream::open(const char* filename,
+                            std::ios_base::openmode mode) {
   filename_ = filename;
 }
 
@@ -108,7 +109,7 @@ void OutputFileStream::close() {
 namespace {
 
 #ifdef OS_WIN
-wstring ToPlatformString(const char* filename) {
+std::wstring ToPlatformString(const char* filename) {
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |filename| from UTF-8 to UTF-16.
   // NOTE: To avoid circular dependency, |Util::UTF8ToWide| shouldn't be used
@@ -127,22 +128,23 @@ string ToPlatformString(const char* filename) {
 InputFileStream::InputFileStream() {}
 
 InputFileStream::InputFileStream(const char* filename,
-                                 ios_base::openmode mode) {
+                                 std::ios_base::openmode mode) {
   InputFileStream::open(filename, mode);
 }
 
-void InputFileStream::open(const char* filename, ios_base::openmode mode) {
+void InputFileStream::open(const char* filename, std::ios_base::openmode mode) {
   std::ifstream::open(ToPlatformString(filename), mode);
 }
 
 OutputFileStream::OutputFileStream() {}
 
 OutputFileStream::OutputFileStream(const char* filename,
-                                   ios_base::openmode mode) {
+                                   std::ios_base::openmode mode) {
   OutputFileStream::open(filename, mode);
 }
 
-void OutputFileStream::open(const char* filename, ios_base::openmode mode) {
+void OutputFileStream::open(const char* filename,
+                            std::ios_base::openmode mode) {
   std::ofstream::open(ToPlatformString(filename), mode);
 }
 #endif  // MOZC_USE_PEPPER_FILE_IO

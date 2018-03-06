@@ -46,13 +46,14 @@ namespace dictionary {
 class DictionaryFileCodec : public DictionaryFileCodecInterface {
  public:
   DictionaryFileCodec();
-  virtual ~DictionaryFileCodec();
+  ~DictionaryFileCodec() override;
 
-  virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
-                             std::ostream *ofs) const;
-  virtual bool ReadSections(const char *image, int length,
-                            std::vector<DictionaryFileSection> *sections) const;
-  virtual string GetSectionName(const string &name) const;
+  void WriteSections(const std::vector<DictionaryFileSection> &sections,
+                     std::ostream *ofs) const override;
+  bool ReadSections(
+      const char *image, int length,
+      std::vector<DictionaryFileSection> *sections) const override;
+  string GetSectionName(const string &name) const override;
 
  private:
   void WriteHeader(std::ostream *ofs) const;
@@ -61,6 +62,9 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
 
   static void Pad4(int length, std::ostream *ofs);
 
+  // Seed value for name string finger print
+  // Made it mutable for reading sections.
+  mutable int seed_;
   // Magic value for simple file validation
   const int filemagic_;
 

@@ -37,7 +37,6 @@
 
 #include <algorithm>  // for unique
 #include <cctype>
-#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -140,12 +139,12 @@ QMenu *GenericTableEditorDialog::mutable_edit_menu() {
 }
 
 bool GenericTableEditorDialog::LoadFromString(const string &str) {
-  istringstream istr(str);
+  std::istringstream istr(str);
   return LoadFromStream(&istr);
 }
 
 void GenericTableEditorDialog::DeleteSelectedItems() {
-  vector<int> rows;
+  std::vector<int> rows;
   QList<QTableWidgetItem *> selected =
       editorTableWidget->selectedItems();
 
@@ -158,7 +157,7 @@ void GenericTableEditorDialog::DeleteSelectedItems() {
     rows.push_back(selected[i]->row());
   }
 
-  vector<int>::iterator last = unique(rows.begin(), rows.end());
+  std::vector<int>::iterator last = unique(rows.begin(), rows.end());
   rows.erase(last, rows.end());
 
   if (rows.empty()) {
@@ -361,7 +360,7 @@ size_t GenericTableEditorDialog::max_entry_size() const {
   return kMaxEntrySize;
 }
 
-bool GenericTableEditorDialog::LoadFromStream(istream *is) {
+bool GenericTableEditorDialog::LoadFromStream(std::istream *is) {
   return true;
 }
 

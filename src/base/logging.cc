@@ -205,7 +205,7 @@ class LogStreamImpl {
   void Reset();
 
   int verbose_level() const {
-    return max(FLAGS_v, config_verbose_level_);
+    return std::max(FLAGS_v, config_verbose_level_);
   }
 
   void set_verbose_level(int level) {
@@ -284,12 +284,12 @@ void LogStreamImpl::Init(const string &log_file_path) {
   DCHECK_NE(log_file_path.size(), 0);
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
   real_log_stream_ = new std::ofstream(
-      utf8_to_wide.from_bytes(log_file_path).c_str(), ios::app);
+      utf8_to_wide.from_bytes(log_file_path).c_str(), std::ios::app);
 #elif !defined(OS_ANDROID)
   // On non-Android platform, change file mode in addition.
   // Android uses logcat instead of log file.
   DCHECK_NE(log_file_path.size(), 0);
-  real_log_stream_ = new std::ofstream(log_file_path.c_str(), ios::app);
+  real_log_stream_ = new std::ofstream(log_file_path.c_str(), std::ios::app);
   ::chmod(log_file_path.c_str(), 0600);
 #endif  // OS_ANDROID
   DCHECK(!use_cerr_ || !real_log_stream_);

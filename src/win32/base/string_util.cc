@@ -43,7 +43,7 @@ namespace {
 const size_t kMaxReadingChars = 512;
 
 void UTF8ToSJIS(StringPiece input, string *output) {
-  wstring utf16;
+  std::wstring utf16;
   Util::UTF8ToWide(input, &utf16);
   if (utf16.empty()) {
     output->clear();
@@ -74,7 +74,7 @@ void UTF8ToSJIS(StringPiece input, string *output) {
 
 }  // namespace
 
-wstring StringUtil::KeyToReading(StringPiece key) {
+std::wstring StringUtil::KeyToReading(StringPiece key) {
   string katakana;
   Util::HiraganaToKatakana(key, &katakana);
 
@@ -120,7 +120,7 @@ wstring StringUtil::KeyToReading(StringPiece key) {
   if (output_length_without_null != actual_output_length_without_null) {
     return L"";
   }
-  return wstring(wide_output.get(), actual_output_length_without_null);
+  return std::wstring(wide_output.get(), actual_output_length_without_null);
 }
 
 string StringUtil::KeyToReadingA(StringPiece key) {
@@ -129,10 +129,10 @@ string StringUtil::KeyToReadingA(StringPiece key) {
   return ret;
 }
 
-wstring StringUtil::ComposePreeditText(const commands::Preedit &preedit) {
-  wstring value;
+std::wstring StringUtil::ComposePreeditText(const commands::Preedit &preedit) {
+  std::wstring value;
   for (int i = 0; i < preedit.segment_size(); ++i) {
-    wstring segment_value;
+    std::wstring segment_value;
     mozc::Util::UTF8ToWide(preedit.segment(i).value(), &segment_value);
     value.append(segment_value);
   }

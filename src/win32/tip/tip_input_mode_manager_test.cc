@@ -62,7 +62,7 @@ const DWORD kNativeHalfAlpha = IME_CMODE_ROMAN;
 TEST(TipInputModeManagerImplTest, GetOverriddenState) {
   // Check if input scopes for turning off IME temporarily.
   {
-    vector<InputScope> input_scope_off;
+    std::vector<InputScope> input_scope_off;
     input_scope_off.push_back(IS_NUMBER);
     input_scope_off.push_back(IS_EMAIL_SMTPEMAILADDRESS);
     {
@@ -85,7 +85,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
 
   // Check if input scopes for turning on IME temporarily.
   {
-    vector<InputScope> input_scope_full_hiragana;
+    std::vector<InputScope> input_scope_full_hiragana;
     input_scope_full_hiragana.push_back(IS_HIRAGANA);
     {
       const StatePair state =
@@ -117,7 +117,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
   // If there are multiple input scopes and they are not aggregatable, use the
   // original state as is.
   {
-    vector<InputScope> input_scope_invalid;
+    std::vector<InputScope> input_scope_invalid;
     input_scope_invalid.push_back(IS_HIRAGANA);
     input_scope_invalid.push_back(IS_KATAKANA_FULLWIDTH);
     {
@@ -156,7 +156,7 @@ TEST(TipInputModeManagerTest, IgnoreConversionModeByGlobalConfig_Issue8583505) {
   input_mode_manager.OnInitialize(false, kNativeHiragana);
 
   // SetFocus (Off + Hiragana)
-  vector<InputScope> input_scope_empty;
+  std::vector<InputScope> input_scope_empty;
   auto action = input_mode_manager.OnSetFocus(
       false, kNativeHiragana, input_scope_empty);
   EXPECT_EQ(TipInputModeManager::kDoNothing, action);
@@ -193,7 +193,7 @@ TEST(TipInputModeManagerTest, HonorConversionMode_Issue8583505) {
   input_mode_manager.OnInitialize(false, kNativeHiragana);
 
   // SetFocus (Off + Hiragana)
-  vector<InputScope> input_scope_empty;
+  std::vector<InputScope> input_scope_empty;
   auto action = input_mode_manager.OnSetFocus(
       false, kNativeHiragana, input_scope_empty);
   EXPECT_EQ(TipInputModeManager::kDoNothing, action);
@@ -228,7 +228,7 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
   input_mode_manager.OnInitialize(false, kNativeHiragana);
 
   // SetFocus (Off + Hiragana)
-  vector<InputScope> input_scope_empty;
+  std::vector<InputScope> input_scope_empty;
   auto action = input_mode_manager.OnSetFocus(
       false, kNativeHiragana, input_scope_empty);
   EXPECT_EQ(TipInputModeManager::kDoNothing, action);
@@ -237,7 +237,7 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
   EXPECT_EQ(TipInputModeManager::kHiragana,
             input_mode_manager.GetEffectiveConversionMode());
 
-  vector<InputScope> input_scope_full_katakana;
+  std::vector<InputScope> input_scope_full_katakana;
   input_scope_full_katakana.push_back(IS_KATAKANA_FULLWIDTH);
 
   // InputScope: IS_KATAKANA_FULLWIDTH
@@ -254,7 +254,7 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
 
   // InputScope: IS_EMAIL_SMTPEMAILADDRESS
   // This should change the mode and make indicator visible.
-  vector<InputScope> input_scope_email;
+  std::vector<InputScope> input_scope_email;
   input_scope_email.push_back(IS_EMAIL_SMTPEMAILADDRESS);
   action = input_mode_manager.OnChangeInputScope(input_scope_email);
   EXPECT_EQ(TipInputModeManager::kUpdateUI, action);
@@ -270,7 +270,7 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
 
   // InputScope: IS_NUMBER
   // This should not change the mode and keep indicator invisible.
-  vector<InputScope> input_scope_number;
+  std::vector<InputScope> input_scope_number;
   input_scope_number.push_back(IS_NUMBER);
   action = input_mode_manager.OnChangeInputScope(input_scope_number);
   EXPECT_EQ(TipInputModeManager::kDoNothing, action);

@@ -256,7 +256,7 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
     }
     info->offsets.push_back(offset);
 
-    wstring value;
+    std::wstring value;
     if (mozc::Util::UTF8ToWide(candidate_list.candidates(i).value(), &value) ==
         0) {
       value.clear();
@@ -365,7 +365,7 @@ HIMCC CandidateInfoUtil::Initialize(HIMCC current_handle) {
 
 HIMCC CandidateInfoUtil::Update(HIMCC current_handle,
                                 const mozc::commands::Output &output,
-                                vector<UIMessage> *messages) {
+                                std::vector<UIMessage> *messages) {
   CandidateInfo info;
   Convert(output, &info);
 

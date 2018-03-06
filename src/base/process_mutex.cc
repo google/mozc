@@ -94,7 +94,7 @@ bool ProcessMutex::LockAndWrite(const string &message) {
     return false;
   }
 
-  wstring wfilename;
+  std::wstring wfilename;
   Util::UTF8ToWide(filename_, &wfilename);
   const DWORD kAttribute =
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
@@ -151,7 +151,7 @@ class NamedLockManager {
   ~NamedLockManager() {}
   bool Lock(const string &filename, const string &message) {
     scoped_lock l(&mutex_);
-    return lock_map_.insert(make_pair(filename, message)).second;
+    return lock_map_.insert(std::make_pair(filename, message)).second;
   }
   void UnLock(const string &filename) {
     scoped_lock l(&mutex_);
@@ -161,7 +161,7 @@ class NamedLockManager {
 
  private:
   Mutex mutex_;
-  map<string, string> lock_map_;
+  std::map<string, string> lock_map_;
   DISALLOW_COPY_AND_ASSIGN(NamedLockManager);
 };
 

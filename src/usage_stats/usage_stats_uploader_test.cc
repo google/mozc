@@ -191,9 +191,9 @@ class UsageStatsUploaderTest : public ::testing::Test {
         std::make_pair("os_ver", SystemUtil::GetOSVersionString()));
 #ifdef OS_ANDROID
     params.push_back(
-        make_pair("model",
-                  AndroidUtil::GetSystemProperty(
-                      AndroidUtil::kSystemPropertyModel, "Unknown")));
+        std::make_pair("model",
+                       AndroidUtil::GetSystemProperty(
+                           AndroidUtil::kSystemPropertyModel, "Unknown")));
 #endif  // OS_ANDROID
 
     string url = string(kBaseUrl) + "?";

@@ -50,14 +50,15 @@ class StringUtil {
   // http://msdn.microsoft.com/en-us/library/ms629017(VS.85).aspx
   // This function only supports conversion of Japanese characters (characters
   // covered by code page 932).
-  static wstring KeyToReading(StringPiece key);
+  static std::wstring KeyToReading(StringPiece key);
 
   // Returns a UTF8 string converted from the result of KeyToReading.
   // This function is mainly for unittest.
   static string KeyToReadingA(StringPiece key);
 
   // Joins all segment strings in |preedit| and returns it.
-  static wstring ComposePreeditText(const mozc::commands::Preedit &preedit);
+  static std::wstring ComposePreeditText(
+      const mozc::commands::Preedit &preedit);
 };
 
 }  // namespace win32

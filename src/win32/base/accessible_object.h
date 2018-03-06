@@ -52,7 +52,7 @@ class AccessibleObject {
   AccessibleObject(ATL::CComPtr<IAccessible> container, int32 child_id);
 
   AccessibleObjectInfo GetInfo() const;
-  vector<AccessibleObject> GetChildren() const;
+  std::vector<AccessibleObject> GetChildren() const;
   AccessibleObject GetParent() const;
   AccessibleObject GetFocus() const;
   bool GetWindowHandle(HWND *window_handle) const;

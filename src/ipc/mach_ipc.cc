@@ -33,7 +33,6 @@
 #include "ipc/ipc.h"
 
 #include <map>
-#include <vector>
 
 #include <launch.h>
 #include <mach/mach.h>
@@ -135,7 +134,7 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
 class DefaultServerMachPortManager : public MachPortManagerInterface {
  public:
   ~DefaultServerMachPortManager() {
-    for (map<string, mach_port_t>::const_iterator it = mach_ports_.begin();
+    for (std::map<string, mach_port_t>::const_iterator it = mach_ports_.begin();
          it != mach_ports_.end(); ++it) {
       mach_port_destroy(mach_task_self(), it->second);
     }
@@ -151,7 +150,8 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
 
     DLOG(INFO) << "\"" << port_name << "\"";
 
-    map<string, mach_port_t>::const_iterator it = mach_ports_.find(port_name);
+    std::map<string, mach_port_t>::const_iterator it =
+        mach_ports_.find(port_name);
     if (it != mach_ports_.end()) {
       *port = it->second;
       return true;
@@ -170,7 +170,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
   }
 
  private:
-  map<string, mach_port_t> mach_ports_;
+  std::map<string, mach_port_t> mach_ports_;
 };
 
 struct mach_ipc_send_message {

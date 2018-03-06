@@ -129,7 +129,7 @@ CIconHandle CreateMonochromeIconInternal(
       logfont.lfCharSet = DEFAULT_CHARSET;
       logfont.lfHeight = bitmap_height;
       logfont.lfQuality = NONANTIALIASED_QUALITY;
-      wstring wide_fontname;
+      std::wstring wide_fontname;
       Util::UTF8ToWide(fontname, &wide_fontname);
       const errno_t error = wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
       if (error != 0) {
@@ -147,7 +147,7 @@ CIconHandle CreateMonochromeIconInternal(
     dc.SetBkMode(OPAQUE);
     dc.SetBkColor(kBackgroundColor);
     dc.SetTextColor(kForegroundColor);
-    wstring wide_text;
+    std::wstring wide_text;
     Util::UTF8ToWide(text, &wide_text);
     CRect rect(0, 0, bitmap_width, bitmap_height);
     dc.FillSolidRect(rect, kBackgroundColor);
@@ -217,7 +217,7 @@ CIconHandle CreateMonochromeIconInternal(
     // 4-byte alignment. Here we need to do alignment conversion.
     const size_t mask_buffer_stride = (bitmap_width + 0x0f) / 16 * 2;
     const size_t mask_buffer_size = mask_buffer_stride * bitmap_width;
-    unique_ptr<uint8[]> mask_buffer(new uint8[mask_buffer_size]);
+    std::unique_ptr<uint8[]> mask_buffer(new uint8[mask_buffer_size]);
     for (size_t y = 0; y < bitmap_height; ++y) {
       for (size_t x = 0; x < bitmap_width; ++x) {
         const uint8 *src_line_start =

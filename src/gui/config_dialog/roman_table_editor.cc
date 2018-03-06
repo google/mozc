@@ -89,10 +89,11 @@ RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
 RomanTableEditorDialog::~RomanTableEditorDialog() {}
 
 string RomanTableEditorDialog::GetDefaultRomanTable() {
-  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
+  std::unique_ptr<std::istream> ifs(
+      ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
   string line, result;
-  vector<string> fields;
+  std::vector<string> fields;
   while (getline(*ifs.get(), line)) {
     if (line.empty()) {
       continue;
@@ -116,10 +117,10 @@ string RomanTableEditorDialog::GetDefaultRomanTable() {
   return result;
 }
 
-bool RomanTableEditorDialog::LoadFromStream(istream *is) {
+bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
   CHECK(is);
   string line;
-  vector<string> fields;
+  std::vector<string> fields;
   mutable_table_widget()->setRowCount(0);
   mutable_table_widget()->verticalHeader()->hide();
 
@@ -169,7 +170,8 @@ bool RomanTableEditorDialog::LoadFromStream(istream *is) {
 }
 
 bool RomanTableEditorDialog::LoadDefaultRomanTable() {
-  std::unique_ptr<istream> ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
+  std::unique_ptr<std::istream>
+      ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
   CHECK(LoadFromStream(ifs.get()));
   return true;

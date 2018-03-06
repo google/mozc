@@ -50,14 +50,14 @@ using ATL::CWindow;
 using ATL::CStringW;
 using std::unique_ptr;
 
-wstring SafeGetWindowText(HWND window_handle) {
+std::wstring SafeGetWindowText(HWND window_handle) {
   if (!::IsWindow(window_handle)) {
-    return wstring();
+    return std::wstring();
   }
 
   const int text_len_without_null = GetWindowTextLength(window_handle);
   if (text_len_without_null <= 0) {
-    return wstring();
+    return std::wstring();
   }
 
   const size_t buffer_len = text_len_without_null + 1;
@@ -67,15 +67,15 @@ wstring SafeGetWindowText(HWND window_handle) {
       window_handle, buffer.get(), buffer_len);
 
   if (copied_len_without_null <= 0) {
-    return wstring();
+    return std::wstring();
   }
 
-  return wstring(buffer.get(), copied_len_without_null);
+  return std::wstring(buffer.get(), copied_len_without_null);
 }
 
 }  // namespace
 
-wstring WindowUtil::GetWindowClassName(HWND window_handle) {
+std::wstring WindowUtil::GetWindowClassName(HWND window_handle) {
   // Maximum length of WindowClass is assumed to be 256.
   // http://msdn.microsoft.com/en-us/library/ms633576.aspx
   wchar_t buffer[256 + 1] = {};
@@ -84,7 +84,7 @@ wstring WindowUtil::GetWindowClassName(HWND window_handle) {
   if (num_copied_without_null + 1 >= arraysize(buffer)) {
     return L"";
   }
-  return wstring(buffer, num_copied_without_null);
+  return std::wstring(buffer, num_copied_without_null);
 }
 
 // static

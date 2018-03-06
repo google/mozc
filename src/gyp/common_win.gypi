@@ -285,8 +285,6 @@
       'PSAPI_VERSION=2',
       'UNICODE',
       'WIN32',
-      'WIN32_IE=0x0800',
-      'WINVER=0x0601',
       'WIN32_LEAN_AND_MEAN',
       '_ATL_ALL_WARNINGS',
       '_ATL_ALLOW_CHAR_UNSIGNED',
@@ -297,7 +295,6 @@
       '_STL_MSVC',
       '_UNICODE',
       '_WIN32',
-      '_WIN32_WINDOWS=0x0601',
       '_WIN32_WINNT=0x0601',
       '_WINDOWS',
     ],
@@ -320,8 +317,6 @@
         'EnableFunctionLevelLinking': 'true',  # /Gy
         'EnableIntrinsicFunctions': 'true',    # /Oi
         'ExceptionHandling': '2',              # /EHs
-        'ForcedIncludeFiles': ['base/namespace.h'],
-                                               # /FI<header_file.h>
         'SuppressStartupBanner': 'true',       # /nologo
         'TreatWChar_tAsBuiltInType': 'false',  # /Zc:wchar_t-
         'WarningLevel': '3',                   # /W3

@@ -134,7 +134,7 @@ class IPCPathManager {
   uint32 server_pid_;    // cache for pid of server_path
   time_t last_modified_;
 #ifdef OS_WIN
-  map<string, wstring> expected_server_ntpath_cache_;
+  std::map<string, std::wstring> expected_server_ntpath_cache_;
 #endif  // OS_WIN
 };
 

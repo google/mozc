@@ -43,7 +43,7 @@ namespace tsf {
 namespace {
 
 template <typename T>
-void Dedup(vector<T> *container) {
+void Dedup(std::vector<T> *container) {
   sort(container->begin(), container->end());
   auto new_end = unique(container->begin(), container->end());
   container->erase(new_end, container->end());
@@ -62,11 +62,11 @@ TipInputModeManagerImpl::StatePair::StatePair(
 
 TipInputModeManagerImpl::StatePair TipInputModeManagerImpl::GetOverriddenState(
     const StatePair &base_state,
-    const vector<InputScope> &input_scopes) {
+    const std::vector<InputScope> &input_scopes) {
   if (input_scopes.empty()) {
     return base_state;
   }
-  vector<ConversionMode> states;
+  std::vector<ConversionMode> states;
   for (size_t i = 0; i < input_scopes.size(); ++i) {
     const InputScope input_scope = input_scopes[i];
     switch (input_scope) {
@@ -133,7 +133,7 @@ class TipInputModeManager::InternalState {
   StatePair mozc_state;
   StatePair tsf_state;
   IndicatorVisibilityTracker indicator_visibility_tracker;
-  vector<InputScope> input_scope;
+  std::vector<InputScope> input_scope;
 };
 
 // For Mode Indicator.
@@ -234,12 +234,12 @@ void TipInputModeManager::OnInitialize(bool system_open_close_mode,
 TipInputModeManager::Action TipInputModeManager::OnSetFocus(
     bool system_open_close_mode,
     DWORD system_conversion_mode,
-    const vector<InputScope> &input_scopes) {
+    const std::vector<InputScope> &input_scopes) {
   const StatePair prev_effective = state_->mozc_state;
 
   state_->indicator_visibility_tracker.OnMoveFocusedWindow();
 
-  vector<InputScope> new_input_scopes = input_scopes;
+  std::vector<InputScope> new_input_scopes = input_scopes;
   Dedup(&new_input_scopes);
 
   state_->tsf_state.open_close = system_open_close_mode;
@@ -308,10 +308,10 @@ TipInputModeManager::OnChangeConversionMode(DWORD new_conversion_mode) {
 
 TipInputModeManager::Action
 TipInputModeManager::OnChangeInputScope(
-    const vector<InputScope> &input_scopes) {
+    const std::vector<InputScope> &input_scopes) {
   const StatePair prev_effective = state_->mozc_state;
 
-  vector<InputScope> new_input_scopes = input_scopes;
+  std::vector<InputScope> new_input_scopes = input_scopes;
   Dedup(&new_input_scopes);
   if (new_input_scopes == state_->input_scope) {
     // The same input scope is specified. Use the previous mode.

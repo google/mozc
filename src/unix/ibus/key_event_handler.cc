@@ -29,8 +29,6 @@
 
 #include "unix/ibus/key_event_handler.h"
 
-#include <map>
-
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -167,7 +165,7 @@ bool KeyEventHandler::ProcessModifiers(bool is_key_up, guint keyval,
 
     // Modifier key event fires
     key_event->mutable_modifier_keys()->Clear();
-    for (set<commands::KeyEvent::ModifierKey>::const_iterator it =
+    for (std::set<commands::KeyEvent::ModifierKey>::const_iterator it =
              modifiers_to_be_sent_.begin();
          it != modifiers_to_be_sent_.end();
          ++it) {

@@ -204,7 +204,7 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
-    vector<InputScope> input_scopes;
+    std::vector<InputScope> input_scopes;
     CComPtr<ITfRange> selection_range;
     TfActiveSelEnd active_sel_end = TF_AE_NONE;
     if (SUCCEEDED(TipRangeUtil::GetDefaultSelection(
@@ -727,7 +727,7 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
     return S_OK;
   }
 
-  const wstring &text() const {
+  const std::wstring &text() const {
     return text_;
   }
 
@@ -735,7 +735,7 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfRange> range_;
-  wstring text_;
+  std::wstring text_;
 
   DISALLOW_COPY_AND_ASSIGN(SyncGetTextEditSessionImpl);
 };
@@ -746,7 +746,7 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
 class AsyncSetTextEditSessionImpl : public ITfEditSession {
  public:
   AsyncSetTextEditSessionImpl(TipTextService *text_service,
-                              const wstring &text,
+                              const std::wstring &text,
                               ITfRange *range)
       : text_service_(text_service),
         text_(text),
@@ -782,7 +782,7 @@ class AsyncSetTextEditSessionImpl : public ITfEditSession {
  private:
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
-  const wstring text_;
+  const std::wstring text_;
   CComPtr<ITfRange> range_;
 
   DISALLOW_COPY_AND_ASSIGN(AsyncSetTextEditSessionImpl);
@@ -1021,7 +1021,7 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
   // Stop reconversion when any embedded object is found because we cannot
   // easily restore it. See b/3406434
   if (info.selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
-      wstring::npos) {
+      std::wstring::npos) {
     // embedded object is found.
     return false;
   }
@@ -1094,7 +1094,7 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
 
 bool TipEditSession::GetTextSync(TipTextService *text_service,
                                  ITfRange *range,
-                                 wstring *text) {
+                                 std::wstring *text) {
   CComPtr<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;
@@ -1117,7 +1117,7 @@ bool TipEditSession::GetTextSync(TipTextService *text_service,
 
 // static
 bool TipEditSession::SetTextAsync(TipTextService *text_service,
-                                  const wstring &text,
+                                  const std::wstring &text,
                                   ITfRange *range) {
   CComPtr<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {

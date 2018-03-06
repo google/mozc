@@ -41,7 +41,7 @@ DWORD WINAPI GetVersionHook() {
 }
 
 TEST(WinAPITestHelperTest, BasicTest) {
-  vector<WinAPITestHelper::HookRequest> requests;
+  std::vector<WinAPITestHelper::HookRequest> requests;
   requests.push_back(DEFINE_HOOK("kernel32.dll", GetVersion, GetVersionHook));
 
   auto restore_info = WinAPITestHelper::DoHook(

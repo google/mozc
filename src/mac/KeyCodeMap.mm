@@ -168,12 +168,12 @@ static const unichar kYenMark = 0xA5;
   unsigned short keyCode = [event keyCode];
   unichar inputChar = [((nsModifiers == NSShiftKeyMask) ?
                         inputString : inputStringRaw) characterAtIndex:0];
-  map<unsigned short, KeyEvent::SpecialKey>::const_iterator sp_iter =
+  std::map<unsigned short, KeyEvent::SpecialKey>::const_iterator sp_iter =
       kSpecialKeyMap->find(keyCode);
   if (sp_iter != kSpecialKeyMap->end()) {
     keyEvent->set_special_key(sp_iter->second);
   } else {
-    map<unichar, KeyEvent::SpecialKey>::const_iterator spc_iter =
+    std::map<unichar, KeyEvent::SpecialKey>::const_iterator spc_iter =
         kSpecialCharMap->find(inputChar);
     if (spc_iter != kSpecialCharMap->end()) {
       keyEvent->set_special_key(spc_iter->second);
@@ -185,7 +185,7 @@ static const unichar kYenMark = 0xA5;
 
     // fill kana "key_string" if mode is kana.
     if (inputMode_ == KANA && !keyEvent->has_special_key()) {
-      map<unsigned short, const char *>::const_iterator kana_iter;
+      std::map<unsigned short, const char *>::const_iterator kana_iter;
       if (nsModifiers == NSShiftKeyMask && kKanaMapShift &&
           (kana_iter = kKanaMapShift->find(keyCode)) != kKanaMapShift->end()) {
         keyEvent->set_key_string(kana_iter->second);

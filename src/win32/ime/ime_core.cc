@@ -126,7 +126,7 @@ HIMCC EnsureHIMCCSize(HIMCC himcc, DWORD size) {
 
 bool UpdateCompositionString(HIMC himc,
                              const commands::Output &output,
-                             vector<UIMessage> *messages) {
+                             std::vector<UIMessage> *messages) {
   ScopedHIMC<InputContext> context(himc);
 
   // When the string is inserted from Tablet Input Panel, MSCTF shrinks the
@@ -151,7 +151,7 @@ bool UpdateCompositionStringAndPushMessages(
     MessageQueue *message_queue) {
   ScopedHIMC<InputContext> context(himc);
   ScopedHIMCC<PrivateContext> private_context(context->hPrivate);
-  vector<UIMessage> messages;
+  std::vector<UIMessage> messages;
 
   if (!UpdateCompositionString(himc, output, &messages)) {
     return false;
@@ -162,7 +162,7 @@ bool UpdateCompositionStringAndPushMessages(
     return true;
   }
 
-  for (vector<UIMessage>::const_iterator it = messages.begin();
+  for (std::vector<UIMessage>::const_iterator it = messages.begin();
        it != messages.end(); ++it) {
     if (UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
            it->message(), it->wparam(), it->lparam())) {
@@ -184,9 +184,9 @@ bool GetReconvertString(const RECONVERTSTRING *reconvert_string,
     return false;
   }
 
-  wstring preceding_composition;
-  wstring target_text;
-  wstring following_composition;
+  std::wstring preceding_composition;
+  std::wstring target_text;
+  std::wstring following_composition;
   if (!ReconvertString::Decompose(
           reconvert_string, nullptr, &preceding_composition,
           &target_text, &following_composition, nullptr)) {
@@ -194,14 +194,15 @@ bool GetReconvertString(const RECONVERTSTRING *reconvert_string,
     return false;
   }
 
-  const wstring total_composition =
+  const std::wstring total_composition =
       preceding_composition + target_text + following_composition;
 
   // Like other Japanese IMEs (MS-IME, ATOK), Mozc does not support
   // reconversion when the composition string contains any embedded object
   // because it is too complicated to restore the original state when the
   // reconversion is canceled. See b/3406434 for details.
-  if (total_composition.find(kObjectReplacementCharacter) != wstring::npos) {
+  if (total_composition.find(kObjectReplacementCharacter) !=
+      std::wstring::npos) {
     return false;
   }
 
@@ -215,8 +216,8 @@ bool GetReconvertString(const RECONVERTSTRING *reconvert_string,
 }
 
 bool QueryDocumentFeed(HIMC himc,
-                       wstring *preceding_text,
-                       wstring *following_text) {
+                       std::wstring *preceding_text,
+                       std::wstring *following_text) {
   LRESULT result = ::ImmRequestMessageW(himc, IMR_DOCUMENTFEED, 0);
   if (result == 0) {
     // IMR_DOCUMENTFEED is not supported.
@@ -256,8 +257,8 @@ void ImeCore::UpdateContextWithSurroundingText(HIMC himc,
   }
   context->clear_preceding_text();
   context->clear_following_text();
-  wstring preceding_text;
-  wstring following_text;
+  std::wstring preceding_text;
+  std::wstring following_text;
   if (!QueryDocumentFeed(himc, &preceding_text, &following_text)) {
     return;
   }
@@ -454,13 +455,13 @@ bool ImeCore::IsInputContextInitialized(HIMC himc) {
 }
 
 void ImeCore::SortIMEMessages(
-    const vector<UIMessage> &composition_messages,
-    const vector<UIMessage> &candidate_messages,
+    const std::vector<UIMessage> &composition_messages,
+    const std::vector<UIMessage> &candidate_messages,
     bool previous_open_status,
     DWORD previous_conversion_mode,
     bool next_open_status,
     DWORD next_conversion_mode,
-    vector<UIMessage> *sorted_messages) {
+    std::vector<UIMessage> *sorted_messages) {
   DCHECK(sorted_messages);
   sorted_messages->clear();
 
@@ -481,8 +482,8 @@ void ImeCore::SortIMEMessages(
   }
 
   // Notify IMN_CLOSECANDIDATE.
-  vector<UIMessage> other_candidate_messages;
-  for (vector<UIMessage>::const_iterator it = candidate_messages.begin();
+  std::vector<UIMessage> other_candidate_messages;
+  for (std::vector<UIMessage>::const_iterator it = candidate_messages.begin();
        it != candidate_messages.end(); ++it) {
     const bool is_close_candidate = ((it->message() == WM_IME_NOTIFY) &&
                                      (it->wparam() == IMN_CLOSECANDIDATE));
@@ -495,8 +496,8 @@ void ImeCore::SortIMEMessages(
 
   // Notify all composition UI messages except for WM_IME_ENDCOMPOSITION.
   // Typically WM_IME_STARTCOMPOSITION / WM_IME_COMPOSITION will be handled.
-  vector<UIMessage> end_composition_messages;
-  for (vector<UIMessage>::const_iterator it = composition_messages.begin();
+  std::vector<UIMessage> end_composition_messages;
+  for (std::vector<UIMessage>::const_iterator it = composition_messages.begin();
        it != composition_messages.end(); ++it) {
     if (it->message() == WM_IME_ENDCOMPOSITION) {
       end_composition_messages.push_back(*it);
@@ -507,7 +508,8 @@ void ImeCore::SortIMEMessages(
 
   // Notify all other candidate UI messages.
   // Typically IMN_OPENCANDIDATE and IMN_CHANGECANDIDATE will be handled.
-  for (vector<UIMessage>::const_iterator it = other_candidate_messages.begin();
+  for (std::vector<UIMessage>::const_iterator it =
+       other_candidate_messages.begin();
        it != other_candidate_messages.end(); ++it) {
     DCHECK(!((it->message() == WM_IME_NOTIFY) &&
              (it->wparam() == IMN_CLOSECANDIDATE)));
@@ -515,7 +517,8 @@ void ImeCore::SortIMEMessages(
   }
 
   // Notify WM_IME_ENDCOMPOSITION
-  for (vector<UIMessage>::const_iterator it = end_composition_messages.begin();
+  for (std::vector<UIMessage>::const_iterator it =
+       end_composition_messages.begin();
        it != end_composition_messages.end(); ++it) {
     DCHECK_EQ(WM_IME_ENDCOMPOSITION, it->message());
     sorted_messages->push_back(*it);
@@ -627,12 +630,12 @@ bool ImeCore::UpdateContextMain(HIMC himc,
   context->fOpen = next_state.open ? TRUE : FALSE;
   context->fdwConversion = next_state.logical_conversion_mode;
 
-  vector<UIMessage> composition_messages;
+  std::vector<UIMessage> composition_messages;
   if (!UpdateCompositionString(himc, output, &composition_messages)) {
     return false;
   }
 
-  vector<UIMessage> candidate_messages;
+  std::vector<UIMessage> candidate_messages;
   context->hCandInfo =
       mozc::win32::CandidateInfoUtil::Update(context->hCandInfo,
                                              output, &candidate_messages);
@@ -644,7 +647,7 @@ bool ImeCore::UpdateContextMain(HIMC himc,
     // In order to minimize the risk of application compatibility problem,
     // we might want to send these messages in the the same order to MS-IME.
     // See b/3488848 for details.
-    vector<UIMessage> sorted_messages;
+    std::vector<UIMessage> sorted_messages;
     SortIMEMessages(composition_messages,
                     candidate_messages,
                     previous_open,
@@ -656,7 +659,7 @@ bool ImeCore::UpdateContextMain(HIMC himc,
     // Allow visibility trackers to track if each UI message will be
     UIVisibilityTracker *ui_visibility_tracker =
         private_context->ui_visibility_tracker;
-    for (vector<UIMessage>::const_iterator it = sorted_messages.begin();
+    for (std::vector<UIMessage>::const_iterator it = sorted_messages.begin();
          it != sorted_messages.end(); ++it) {
       if (UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
              it->message(), it->wparam(), it->lparam())) {

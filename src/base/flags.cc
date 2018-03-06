@@ -125,7 +125,7 @@ FlagRegister::FlagRegister(const char *name,
   flag_->storage = storage;
   flag_->default_storage = default_storage;
   flag_->help = help;
-  GetFlagMap()->insert(make_pair(string(name), flag_));
+  GetFlagMap()->insert(std::make_pair(string(name), flag_));
 }
 
 FlagRegister::~FlagRegister() {

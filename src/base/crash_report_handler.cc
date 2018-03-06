@@ -142,8 +142,8 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
 
 // Returns the pipe name of the GoogleCrashHandler.exe or
 // GoogleCrashHandler64.exe running as a system user.
-wstring GetCrashHandlerPipeName() {
-  wstring pipe_name = kGoogleCrashHandlerPipePrefix;
+std::wstring GetCrashHandlerPipeName() {
+  std::wstring pipe_name = kGoogleCrashHandlerPipePrefix;
   pipe_name.append(kSystemPrincipalSid);
   pipe_name.append(kGoogleCrashHandlerPipePostfix);
   return pipe_name;
@@ -269,7 +269,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
       FileUtil::CreateDirectory(acrashdump_directory);
     }
 
-    wstring crashdump_directory;
+    std::wstring crashdump_directory;
     Util::UTF8ToWide(acrashdump_directory, &crashdump_directory);
 
     google_breakpad::ExceptionHandler::FilterCallback filter_callback =

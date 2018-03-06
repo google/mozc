@@ -225,7 +225,7 @@ class Balloon {
   // Returns PixelType as a quick determination. If kUnknown is returned, you
   // need to investigate the pixel type more precisely.
   PixelType GetPixelTypeInternalFast(int x, int y) const {
-    const double frame = max(corner_radius_, frame_thickness_);
+    const double frame = std::max(corner_radius_, frame_thickness_);
     if ((left_ + frame) < x &&
         (x + 1) < (left_ + width_ - frame) &&
         (top_ + frame) < y &&
@@ -375,7 +375,7 @@ Rect GetBoundingRect(double left, double top, double width, double height) {
 
 // Core logic to render 1-bit text glyphs for sub-pixel rendering. Caller takes
 // the ownerships of the returned pointers.
-vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
+std::vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
     double left,
     double top,
     double width,
@@ -389,7 +389,7 @@ vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
   const int pix_width = bounding_rect.Width();
   const int pix_height = bounding_rect.Height();
 
-  vector<TextLabel::BinarySubdivisionalPixel *> pixels;
+  std::vector<TextLabel::BinarySubdivisionalPixel *> pixels;
   pixels.resize(pix_width * pix_height, nullptr);
   if (text.empty()) {
     return pixels;
@@ -427,7 +427,7 @@ vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
   dc.CreateCompatibleDC(nullptr);
   CBitmapHandle old_bitmap = dc.SelectBitmap(dib);
 
-  wstring wide_fontname;
+  std::wstring wide_fontname;
   Util::UTF8ToWide(fontname, &wide_fontname);
   CLogFont logfont;
   logfont.lfWeight = FW_NORMAL;
@@ -452,7 +452,7 @@ vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
   CRect rect(lefttop, size);
   dc.SetBkMode(TRANSPARENT);
   dc.SetTextColor(RGB(255, 255, 255));
-  wstring wide_text;
+  std::wstring wide_text;
   Util::UTF8ToWide(text, &wide_text);
   dc.DrawTextW(wide_text.c_str(), wide_text.size(), &rect,
                DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CENTER);
@@ -574,15 +574,16 @@ HBITMAP BalloonImage::Create(const BalloonImageInfo &info, POINT *tail_offset) {
 HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
                                      POINT *tail_offset,
                                      SIZE *size,
-                                     vector<ARGBColor> *arbg_buffer) {
+                                     std::vector<ARGBColor> *arbg_buffer) {
   // Base point. You can set arbitrary position.
   const double kLeft = 10.0;
   const double kTop = 10.0;
 
   const Balloon balloon(
-      kLeft, kTop, max(info.rect_width, 0.0), max(info.rect_height, 0.0),
-      max(info.frame_thickness, 0.0), max(info.corner_radius, 0.0),
-      max(info.tail_height, 0.0), max(info.tail_width, 0.0),
+      kLeft, kTop,
+      std::max(info.rect_width, 0.0), std::max(info.rect_height, 0.0),
+      std::max(info.frame_thickness, 0.0), std::max(info.corner_radius, 0.0),
+      std::max(info.tail_height, 0.0), std::max(info.tail_width, 0.0),
       info.frame_color, info.inside_color, info.tail_direction);
 
   const TextLabel label(kLeft + info.frame_thickness,
@@ -617,13 +618,13 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
   GaussianBlur blur(info.blur_sigma);
 
   const int begin_x =
-      rect.Left() - max(blur.cutoff_length() - info.blur_offset_x, 0);
+      rect.Left() - std::max(blur.cutoff_length() - info.blur_offset_x, 0);
   const int begin_y =
-      rect.Top() - max(blur.cutoff_length() - info.blur_offset_y, 0);
+      rect.Top() - std::max(blur.cutoff_length() - info.blur_offset_y, 0);
   const int end_x =
-      rect.Right() + max(blur.cutoff_length() + info.blur_offset_x, 0);
+      rect.Right() + std::max(blur.cutoff_length() + info.blur_offset_x, 0);
   const int end_y =
-      rect.Bottom() + max(blur.cutoff_length() + info.blur_offset_y, 0);
+      rect.Bottom() + std::max(blur.cutoff_length() + info.blur_offset_y, 0);
 
   const int bmp_width = end_x - begin_x;
   const int bmp_height = end_y - begin_y;
@@ -681,7 +682,8 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
     const int offset_y_;
   };
 
-  const double normalized_blur_alpha = min(max(info.blur_alpha, 0.0), 1.0);
+  const double normalized_blur_alpha =
+      std::min(std::max(info.blur_alpha, 0.0), 1.0);
   Accessor accessor(frame_buffer, -info.blur_offset_x, -info.blur_offset_y);
   for (int y = begin_y; y < begin_y + bmp_height; ++y) {
     for (int x = begin_x; x < begin_x + bmp_width; ++x) {

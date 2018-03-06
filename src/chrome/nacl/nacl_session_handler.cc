@@ -156,7 +156,7 @@ class BlockingQueue {
   Condition condition_;
   int blocked_count_;
   bool is_stopped_;
-  queue<T> queue_;
+  std::queue<T> queue_;
 
   DISALLOW_COPY_AND_ASSIGN(BlockingQueue);
 };
@@ -404,7 +404,7 @@ class MozcSessionHandlerThread : public Thread {
   void GetPosList(Json::Value *response) {
     (*response)["event"]["posList"] = Json::Value(Json::arrayValue);
     Json::Value *pos_list = &(*response)["event"]["posList"];
-    vector<string> tmp_pos_vec;
+    std::vector<string> tmp_pos_vec;
     user_pos_->GetPOSList(&tmp_pos_vec);
     for (int i = 0; i < tmp_pos_vec.size(); ++i) {
       (*pos_list)[i] = Json::Value(Json::objectValue);

@@ -635,7 +635,7 @@ class PepperFileSystem : public PepperFileSystemInterface {
   pp::CompletionCallbackFactory<PepperFileSystem> cc_factory_;
   UnnamedEvent event_;
   pp::Instance *instance_;
-  set<MmapSyncInterface*> mmap_set_;
+  std::set<MmapSyncInterface*> mmap_set_;
   Mutex mutex_;
   DISALLOW_COPY_AND_ASSIGN(PepperFileSystem);
 };
@@ -770,7 +770,7 @@ bool PepperFileSystem::UnRegisterMmap(MmapSyncInterface *mmap) {
 
 bool PepperFileSystem::SyncMmapToFile() {
   scoped_lock lock(&mutex_);
-  for (set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
+  for (std::set<MmapSyncInterface*>::iterator it = mmap_set_.begin();
        it != mmap_set_.end(); ++it) {
     (*it)->SyncToFile();
   }

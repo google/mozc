@@ -180,7 +180,7 @@ void HandWritingCanvas::recognize() {
 }
 
 void HandWritingCanvas::listUpdated() {
-  vector<string> candidates;
+  std::vector<string> candidates;
   recognizer_thread_.GetCandidates(&candidates);
 
   list_widget_->clear();
@@ -202,7 +202,7 @@ void HandWritingCanvas::mousePressEvent(QMouseEvent *event) {
   strokes_.resize(strokes_.size() + 1);
   const float x = static_cast<float>(event->pos().x()) / width();
   const float y = static_cast<float>(event->pos().y()) / height();
-  strokes_.back().push_back(make_pair(x, y));
+  strokes_.back().push_back(std::make_pair(x, y));
   is_drawing_ = true;
   update();
 }
@@ -214,7 +214,7 @@ void HandWritingCanvas::mouseMoveEvent(QMouseEvent *event) {
 
   const float x = static_cast<float>(event->pos().x()) / width();
   const float y = static_cast<float>(event->pos().y()) / height();
-  strokes_.back().push_back(make_pair(x, y));
+  strokes_.back().push_back(std::make_pair(x, y));
   update();
 }
 

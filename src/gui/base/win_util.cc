@@ -30,7 +30,6 @@
 #include "gui/base/win_util.h"
 
 #ifdef OS_WIN
-#define NTDDI_VERSION NTDDI_WIN7  // for JumpList.
 #include <windows.h>
 #include <atlbase.h>
 #include <atlcom.h>
@@ -69,7 +68,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
   }
 
   {
-    wstring mozc_tool_path_wide;
+    std::wstring mozc_tool_path_wide;
     Util::UTF8ToWide(SystemUtil::GetToolPath(), &mozc_tool_path_wide);
     hr = link->SetPath(mozc_tool_path_wide.c_str());
     if (FAILED(hr)) {
@@ -79,7 +78,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
   }
 
   {
-    wstring argument_wide;
+    std::wstring argument_wide;
     Util::UTF8ToWide(argument, &argument_wide);
     hr = link->SetArguments(argument_wide.c_str());
     if (FAILED(hr)) {
@@ -95,7 +94,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
   }
 
   {
-    wstring item_title_wide;
+    std::wstring item_title_wide;
     Util::UTF8ToWide(item_title, &item_title_wide);
     PROPVARIANT prop_variant;
     hr = ::InitPropVariantFromString(item_title_wide.c_str(), &prop_variant);
@@ -253,7 +252,7 @@ void WinUtil::ActivateWindow(uint32 process_id) {
     LOG(ERROR) << "Could not find the exsisting window.";
   }
   const CWindow window(info.found_window_handle);
-  wstring window_title_wide;
+  std::wstring window_title_wide;
   {
     CString buf;
     window.GetWindowTextW(buf);
@@ -311,7 +310,7 @@ bool WinUtil::GetIMEHotKeyDisabled() {
   // can return |true|
   if (ERROR_SUCCESS == result &&
       num_chars < arraysize(data) &&
-      wstring(data) == kIMEHotKeyEntryData) {
+      std::wstring(data) == kIMEHotKeyEntryData) {
     return true;
   }
 

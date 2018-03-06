@@ -86,8 +86,8 @@ bool IsProcessSandboxedImpl() {
 
 }  // namespace
 
-HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
-  wstring fullpath = SystemUtil::GetSystemDir();
+HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
+  std::wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
 
@@ -103,8 +103,8 @@ HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
   return module;
 }
 
-HMODULE WinUtil::LoadMozcLibrary(const wstring &base_filename) {
-  wstring fullpath;
+HMODULE WinUtil::LoadMozcLibrary(const std::wstring &base_filename) {
+  std::wstring fullpath;
   Util::UTF8ToWide(SystemUtil::GetServerDirectory(), &fullpath);
   fullpath += L"\\";
   fullpath += base_filename;
@@ -121,8 +121,8 @@ HMODULE WinUtil::LoadMozcLibrary(const wstring &base_filename) {
   return module;
 }
 
-HMODULE WinUtil::GetSystemModuleHandle(const wstring &base_filename) {
-  wstring fullpath = SystemUtil::GetSystemDir();
+HMODULE WinUtil::GetSystemModuleHandle(const std::wstring &base_filename) {
+  std::wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
 
@@ -138,8 +138,8 @@ HMODULE WinUtil::GetSystemModuleHandle(const wstring &base_filename) {
 }
 
 HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
-    const wstring &base_filename) {
-  wstring fullpath = SystemUtil::GetSystemDir();
+    const std::wstring &base_filename) {
+  std::wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
 
@@ -182,19 +182,19 @@ HWND WinUtil::DecodeWindowHandle(uint32 window_handle_value) {
 }
 
 bool WinUtil::SystemEqualString(
-      const wstring &lhs, const wstring &rhs, bool ignore_case) {
+      const std::wstring &lhs, const std::wstring &rhs, bool ignore_case) {
   // We assume a string instance never contains NUL character in principle.
   // So we will raise an error to notify the unexpected situation in debug
   // builds.  In production, however, we will admit such an instance and
   // silently trim it at the first NUL character.
-  const wstring::size_type lhs_null_pos = lhs.find_first_of(L'\0');
-  const wstring::size_type rhs_null_pos = rhs.find_first_of(L'\0');
+  const std::wstring::size_type lhs_null_pos = lhs.find_first_of(L'\0');
+  const std::wstring::size_type rhs_null_pos = rhs.find_first_of(L'\0');
   DCHECK_EQ(lhs.npos, lhs_null_pos)
       << "|lhs| should not contain NUL character.";
   DCHECK_EQ(rhs.npos, rhs_null_pos)
       << "|rhs| should not contain NUL character.";
-  const wstring &lhs_null_trimmed = lhs.substr(0, lhs_null_pos);
-  const wstring &rhs_null_trimmed = rhs.substr(0, rhs_null_pos);
+  const std::wstring &lhs_null_trimmed = lhs.substr(0, lhs_null_pos);
+  const std::wstring &rhs_null_trimmed = rhs.substr(0, rhs_null_pos);
 
   const int compare_result = ::CompareStringOrdinal(
       lhs_null_trimmed.data(), lhs_null_trimmed.size(),
@@ -418,7 +418,7 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
 }
 
 bool WinUtil::GetFileSystemInfoFromPath(
-    const wstring &path, BY_HANDLE_FILE_INFORMATION *info) {
+    const std::wstring &path, BY_HANDLE_FILE_INFORMATION *info) {
   // no read access is required.
   ScopedHandle handle(::CreateFileW(
       path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -433,8 +433,8 @@ bool WinUtil::GetFileSystemInfoFromPath(
   return !!::GetFileInformationByHandle(handle.get(), info);
 }
 
-bool WinUtil::AreEqualFileSystemObject(const wstring &left_path,
-                                       const wstring &right_path) {
+bool WinUtil::AreEqualFileSystemObject(const std::wstring &left_path,
+                                       const std::wstring &right_path) {
   BY_HANDLE_FILE_INFORMATION left_info = {};
   if (!GetFileSystemInfoFromPath(left_path, &left_info)) {
     return false;
@@ -447,7 +447,7 @@ bool WinUtil::AreEqualFileSystemObject(const wstring &left_path,
          (left_info.nFileIndexHigh == right_info.nFileIndexHigh);
 }
 
-bool WinUtil::GetNtPath(const wstring &dos_path, wstring *nt_path) {
+bool WinUtil::GetNtPath(const std::wstring &dos_path, std::wstring *nt_path) {
   if (nt_path == nullptr) {
     return false;
   }
@@ -484,7 +484,7 @@ bool WinUtil::GetNtPath(const wstring &dos_path, wstring *nt_path) {
   return true;
 }
 
-bool WinUtil::GetProcessInitialNtPath(DWORD pid, wstring *nt_path) {
+bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
   if (nt_path == nullptr) {
     return false;
   }
