@@ -45,7 +45,7 @@ env:
   - TARGET_PLATFORM=Android_x86
   - TARGET_PLATFORM=Android_x86_64
   - TARGET_PLATFORM=Linux
-  - TARGET_PLATFORM=NaCl
+    # - TARGET_PLATFORM=NaCl
   - TARGET_PLATFORM=Mac
 
 before_install:
