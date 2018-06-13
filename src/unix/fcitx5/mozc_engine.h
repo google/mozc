@@ -84,14 +84,7 @@ class MozcEngine final : public InputMethodEngine {
   FactoryFor<MozcState> factory_;
   MozcModeAction modeAction_;
   SimpleAction toolAction_;
-  MozcModeSubAction modeActions_[mozc::commands::NUM_OF_COMPOSITIONS] = {
-      {this, mozc::commands::DIRECT},
-      {this, mozc::commands::HIRAGANA},
-      {this, mozc::commands::FULL_KATAKANA},
-      {this, mozc::commands::FULL_ASCII},
-      {this, mozc::commands::HALF_ASCII},
-      {this, mozc::commands::HALF_KATAKANA},
-  };
+  std::vector<std::unique_ptr<MozcModeSubAction>> modeActions_;
 
   SimpleAction configToolAction_, dictionaryToolAction_, handWritingAction_,
       characterPaletteAction_, addWordAction_, aboutAction_;

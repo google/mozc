@@ -88,7 +88,7 @@ const struct CompositionMode {
 };
 const size_t kNumCompositionModes = arraysize(kPropCompositionModes);
 
-std::string MozcModeAction::shortText(InputContext *ic) const {
+std::string MozcModeAction::shortText(InputContext *) const {
   return _("Composition Mode");
 }
 
@@ -145,6 +145,12 @@ MozcEngine::MozcEngine(Instance *instance)
         return new MozcState(&ic, connection_->CreateClient(), this);
       }),
       modeAction_(this) {
+  for (auto command :
+       {mozc::commands::DIRECT, mozc::commands::HIRAGANA,
+        mozc::commands::FULL_KATAKANA, mozc::commands::FULL_ASCII,
+        mozc::commands::HALF_ASCII, mozc::commands::HALF_KATAKANA}) {
+    modeActions_.push_back(std::make_unique<MozcModeSubAction>(this, command));
+  }
   instance_->inputContextManager().registerProperty("mozcState", &factory_);
   instance_->userInterfaceManager().registerAction("mozc-mode", &modeAction_);
   instance_->userInterfaceManager().registerAction("mozc-tool", &toolAction_);
@@ -157,8 +163,8 @@ MozcEngine::MozcEngine(Instance *instance)
   int i = 0;
   for (auto &modeAction : modeActions_) {
     instance_->userInterfaceManager().registerAction(
-        kPropCompositionModes[i].name, &modeAction);
-    modeMenu_.addAction(&modeAction);
+        kPropCompositionModes[i].name, modeAction.get());
+    modeMenu_.addAction(modeAction.get());
     i++;
   }
 
@@ -226,7 +232,7 @@ void MozcEngine::activate(const fcitx::InputMethodEntry &,
   ic->statusArea().addAction(StatusGroup::InputMethod, &modeAction_);
   ic->statusArea().addAction(StatusGroup::InputMethod, &toolAction_);
 }
-void MozcEngine::deactivate(const fcitx::InputMethodEntry &entry,
+void MozcEngine::deactivate(const fcitx::InputMethodEntry &,
                             fcitx::InputContextEvent &event) {
   auto ic = event.inputContext();
   auto mozc_state = mozcState(ic);
@@ -262,8 +268,8 @@ MozcState *MozcEngine::mozcState(InputContext *ic) {
 
 void MozcEngine::compositionModeUpdated(InputContext *ic) {
   modeAction_.update(ic);
-  for (auto &modeAction : modeActions_) {
-    modeAction.update(ic);
+  for (const auto &modeAction : modeActions_) {
+    modeAction->update(ic);
   }
 }
 
