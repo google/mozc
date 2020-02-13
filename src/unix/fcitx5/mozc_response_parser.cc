@@ -160,7 +160,7 @@ class MozcCandidateList final : public CandidateList,
         DCHECK_NE(kBadCandidateId, id) << "Unexpected id is passed.";
       }
       candidateWords_.emplace_back(
-          std::make_shared<MozcCandidateWord>(id, value, engine));
+          std::make_unique<MozcCandidateWord>(id, value, engine));
     }
   }
 
@@ -169,9 +169,9 @@ class MozcCandidateList final : public CandidateList,
     return labels_[idx];
   }
 
-  std::shared_ptr<const CandidateWord> candidate(int idx) const override {
+  const CandidateWord& candidate(int idx) const override {
     checkIndex(idx);
-    return candidateWords_[idx];
+    return *candidateWords_[idx];
   }
   int size() const override { return candidateWords_.size(); }
 
@@ -206,7 +206,7 @@ class MozcCandidateList final : public CandidateList,
   bool hasNext_ = false;
   CandidateLayoutHint layout_ = CandidateLayoutHint::Vertical;
   int cursor_ = -1;
-  std::vector<std::shared_ptr<CandidateWord>> candidateWords_;
+  std::vector<std::unique_ptr<CandidateWord>> candidateWords_;
 };
 
 }  // namespace

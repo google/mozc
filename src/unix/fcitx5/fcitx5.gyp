@@ -112,7 +112,7 @@
         'fcitx5_build_environment',
       ],
       'cflags_cc': [
-        '-std=c++14',
+        '-std=c++17',
       ],
       'cflags_cc!': [
         '-std=gnu++0x'
