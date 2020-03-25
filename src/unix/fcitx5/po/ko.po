@@ -4,13 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
+# MarongHappy <daemul72@gmail.com>, 2020
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-12-12 09:52-0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
+"POT-Creation-Date: 2020-03-25 00:01-0700\n"
+"PO-Revision-Date: 2017-11-23 05:28+0000\n"
+"Last-Translator: MarongHappy <daemul72@gmail.com>, 2020\n"
 "Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -18,62 +20,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: mozc_engine.cc:174
+#: mozc_engine.cc:194
 msgid "Character Palette"
 msgstr "글자 팔레트"
 
-#: mozc_engine.cc:78
+#: mozc_engine.cc:92
 msgid "Composition Mode"
 msgstr "조합 모드"
 
-#: mozc_engine.cc:153
+#: mozc_engine.cc:173
 msgid "Configuration Tool"
-msgstr "설정 도구"
+msgstr "환경설정 도구"
 
-#: mozc_engine.cc:160
+#: mozc_engine.cc:180
 msgid "Dictionary Tool"
 msgstr "사전 도구"
 
-#: mozc_state.cc:61 mozc_engine.cc:45
+#: mozc_state.cc:63 mozc_engine.cc:48
 msgid "Direct"
 msgstr "직접입력"
 
 #. Full width ASCII letter A.
-#: mozc_state.cc:80 mozc_engine.cc:67
+#: mozc_state.cc:87 mozc_engine.cc:78
 msgid "Full ASCII"
 msgstr "전각 아스키"
 
 #. Katakana letter A.
-#: mozc_state.cc:71 mozc_engine.cc:56
+#: mozc_state.cc:75 mozc_engine.cc:62
 msgid "Full Katakana"
 msgstr "전각 가타가나"
 
-#: mozc_state.cc:74 mozc_engine.cc:60
+#: mozc_state.cc:81 mozc_engine.cc:70
 msgid "Half ASCII"
 msgstr "반각 아스키"
 
 #. Half width Katakana letter A.
-#: mozc_state.cc:85 mozc_engine.cc:72
+#: mozc_state.cc:93 mozc_engine.cc:85
 msgid "Half Katakana"
 msgstr "반각 가타가나"
 
-#: mozc_engine.cc:167
+#: mozc_engine.cc:187
 msgid "Hand Writing"
 msgstr "손 글씨"
 
 #. Hiragana letter A in UTF-8.
-#: mozc_state.cc:66 mozc_engine.cc:51
+#: mozc_state.cc:69 mozc_engine.cc:55
 msgid "Hiragana"
 msgstr "히라가나"
 
 #: mozc_response_parser.cc:144
 msgid "Press Ctrl+Alt+H to show usages."
-msgstr "사용법을 보려면 Ctrl+Alt+H를 누르세요."
+msgstr "사용법을 보려면 Ctrl+Alt+H를 누르십시오."
 
-#: mozc_state.cc:426
+#: mozc_state.cc:435
 msgid "Press Escape to go back"
 msgstr "돌아가려면 ESC를 누르세요"
 
-#: mozc_engine.cc:137 mozc_engine.cc:138
+#: mozc_engine.cc:157 mozc_engine.cc:158
 msgid "Tool"
 msgstr "도구"
