@@ -4,13 +4,14 @@
 #
 # Translators:
 # Bon Keun Seo <scobyseo@gmail.com>, 2017
+# MarongHappy <daemul72@gmail.com>, 2020
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-07-15 14:20-0700\n"
-"PO-Revision-Date: 2017-07-09 21:58+0000\n"
-"Last-Translator: Bon Keun Seo <scobyseo@gmail.com>\n"
+"POT-Creation-Date: 2020-03-26 00:02-0700\n"
+"PO-Revision-Date: 2020-03-24 16:54+0000\n"
+"Last-Translator: MarongHappy <daemul72@gmail.com>\n"
 "Language-Team: Korean (http://www.transifex.com/fcitx/fcitx/language/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -60,7 +61,7 @@ msgstr "Mozc 도구"
 
 #: ../fcitx_mozc.cc:494
 msgid "Configuration Tool"
-msgstr "설정 도구"
+msgstr "환경설정 도구"
 
 #: ../fcitx_mozc.cc:495
 msgid "Dictionary Tool"
@@ -84,4 +85,4 @@ msgstr "Mozc에 대해"
 
 #: ../mozc_response_parser.cc:366
 msgid "Press Ctrl+Alt+H to show usages."
-msgstr "사용법을 보려면 Ctrl+Alt+H를 누르세요."
+msgstr "사용법을 보려면 Ctrl+Alt+H를 누르십시오."
