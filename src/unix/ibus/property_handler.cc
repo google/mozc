@@ -339,6 +339,7 @@ void PropertyHandler::UpdateCompositionModeIcon(
                              GetIconPath(entry->icon).c_str());
       // Update the radio menu item.
       ibus_property_set_state(prop, PROP_STATE_CHECKED);
+      ibus_engine_update_property(engine, prop);
     } else {
       ibus_property_set_state(prop, PROP_STATE_UNCHECKED);
     }
