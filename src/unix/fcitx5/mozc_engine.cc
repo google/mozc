@@ -25,6 +25,7 @@
 #include <fcitx/inputcontext.h>
 #include <fcitx/inputcontextmanager.h>
 #include <fcitx/userinterfacemanager.h>
+
 #include <vector>
 
 #include "base/init_mozc.h"
@@ -198,14 +199,14 @@ MozcEngine::MozcEngine(Instance *instance)
 
   instance_->userInterfaceManager().registerAction("mozc-tool-add",
                                                    &addWordAction_);
-  addWordAction_.setShortText("Add Word");
+  addWordAction_.setShortText(_("Add Word"));
   addWordAction_.connect<SimpleAction::Activated>([](InputContext *) {
     mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=word_register_dialog");
   });
 
   instance_->userInterfaceManager().registerAction("mozc-tool-about",
                                                    &aboutAction_);
-  aboutAction_.setShortText("About Mozc");
+  aboutAction_.setShortText(_("About Mozc"));
   aboutAction_.connect<SimpleAction::Activated>([](InputContext *) {
     mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=about_dialog");
   });

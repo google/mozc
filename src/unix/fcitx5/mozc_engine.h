@@ -19,6 +19,9 @@
 #ifndef _FCITX_UNIX_FCITX5_MOZC_ENGINE_H_
 #define _FCITX_UNIX_FCITX5_MOZC_ENGINE_H_
 
+#include <fcitx-config/configuration.h>
+#include <fcitx-utils/i18n.h>
+#include <fcitx-utils/stringutils.h>
 #include <fcitx/action.h>
 #include <fcitx/addonfactory.h>
 #include <fcitx/addonmanager.h>
@@ -26,6 +29,8 @@
 #include <fcitx/instance.h>
 #include <fcitx/menu.h>
 
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "unix/fcitx5/mozc_state.h"
 
 namespace fcitx {
@@ -33,6 +38,26 @@ namespace fcitx {
 class MozcConnection;
 class MozcResponseParser;
 class MozcEngine;
+
+FCITX_CONFIGURATION(
+    MozcEngineConfig, const std::string toolPath_ = mozc::FileUtil::JoinPath(
+                          mozc::SystemUtil::GetServerDirectory(), "mozc_tool");
+    std::string toolCommand(const char *arg) {
+      return stringutils::concat(toolPath_, " ", arg);
+    }
+
+    ExternalOption configTool{this, "ConfigTool", _("Configuration Tool"),
+                              toolCommand("--mode=config_dialog")};
+    ExternalOption dictTool{this, "Dictionary Tool", _("Dictionary Tool"),
+                            toolCommand("--mode=dictionary_tool")};
+    ExternalOption handWriting{this, "Hand Writing", _("Hand Writing"),
+                               toolCommand("--mode=hand_writing")};
+    ExternalOption charTool{this, "Character Palette", _("Character Palette"),
+                            toolCommand("--mode=character_palette")};
+    ExternalOption addTool{this, "Add Word", _("Add Word"),
+                           toolCommand("--mode=word_register_dialog")};
+    ExternalOption aboutTool{this, "About Mozc", _("About Mozc"),
+                             toolCommand("--mode=about_dialog")};);
 
 class MozcModeAction : public Action {
  public:
@@ -72,6 +97,7 @@ class MozcEngine final : public InputMethodEngine {
   void save() override;
   std::string subMode(const fcitx::InputMethodEntry &,
                       fcitx::InputContext &) override;
+  const Configuration *getConfig() const override { return &config_; }
 
   MozcState *mozcState(InputContext *ic);
   AddonInstance *clipboardAddon();
@@ -90,6 +116,7 @@ class MozcEngine final : public InputMethodEngine {
       characterPaletteAction_, addWordAction_, aboutAction_;
   Menu toolMenu_;
   Menu modeMenu_;
+  MozcEngineConfig config_;
 
   FCITX_ADDON_DEPENDENCY_LOADER(clipboard, instance_->addonManager());
 };
