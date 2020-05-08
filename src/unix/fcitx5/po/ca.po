@@ -3,15 +3,16 @@
 # This file is distributed under the same license as the fcitx5-mozc package.
 #
 # Translators:
-# Robert Antoni Buj Gelonch <rbuj@fedoraproject.org>, 2017
 # csslayer <wengxt@gmail.com>, 2017
+# Robert Antoni Buj Gelonch <rbuj@fedoraproject.org>, 2017
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2017-12-20 00:01-0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
+"POT-Creation-Date: 2020-05-08 00:01-0700\n"
+"PO-Revision-Date: 2017-11-23 05:28+0000\n"
+"Last-Translator: Robert Antoni Buj Gelonch <rbuj@fedoraproject.org>, 2017\n"
 "Language-Team: Catalan (https://www.transifex.com/fcitx/teams/12005/ca/)\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -19,51 +20,59 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mozc_engine.cc:174
+#: mozc_engine.cc:209 mozc_engine.h:59
+msgid "About Mozc"
+msgstr ""
+
+#: mozc_engine.cc:202 mozc_engine.h:57
+msgid "Add Word"
+msgstr ""
+
+#: mozc_engine.cc:195 mozc_engine.h:55
 msgid "Character Palette"
 msgstr "Paleta de caràcters"
 
-#: mozc_engine.cc:78
+#: mozc_engine.cc:93
 msgid "Composition Mode"
 msgstr "Mode de composició"
 
-#: mozc_engine.cc:153
+#: mozc_engine.cc:174 mozc_engine.h:49
 msgid "Configuration Tool"
 msgstr "Eina de configuració"
 
-#: mozc_engine.cc:160
+#: mozc_engine.cc:181 mozc_engine.h:51
 msgid "Dictionary Tool"
 msgstr "Eina de diccionari"
 
-#: mozc_state.cc:61 mozc_engine.cc:45
+#: mozc_state.cc:63 mozc_engine.cc:49
 msgid "Direct"
 msgstr "Directe"
 
 #. Full width ASCII letter A.
-#: mozc_state.cc:80 mozc_engine.cc:67
+#: mozc_state.cc:87 mozc_engine.cc:79
 msgid "Full ASCII"
 msgstr "ASCII complet"
 
 #. Katakana letter A.
-#: mozc_state.cc:71 mozc_engine.cc:56
+#: mozc_state.cc:75 mozc_engine.cc:63
 msgid "Full Katakana"
 msgstr "Katakana complet"
 
-#: mozc_state.cc:74 mozc_engine.cc:60
+#: mozc_state.cc:81 mozc_engine.cc:71
 msgid "Half ASCII"
 msgstr "ASCII mig"
 
 #. Half width Katakana letter A.
-#: mozc_state.cc:85 mozc_engine.cc:72
+#: mozc_state.cc:93 mozc_engine.cc:86
 msgid "Half Katakana"
 msgstr "Mig katakana"
 
-#: mozc_engine.cc:167
+#: mozc_engine.cc:188 mozc_engine.h:53
 msgid "Hand Writing"
 msgstr "Escriptura a mà"
 
 #. Hiragana letter A in UTF-8.
-#: mozc_state.cc:66 mozc_engine.cc:51
+#: mozc_state.cc:69 mozc_engine.cc:56
 msgid "Hiragana"
 msgstr "Hiragana"
 
@@ -71,10 +80,10 @@ msgstr "Hiragana"
 msgid "Press Ctrl+Alt+H to show usages."
 msgstr "Premeu Ctrl+Alt+H per mostrar els usos."
 
-#: mozc_state.cc:426
+#: mozc_state.cc:435
 msgid "Press Escape to go back"
 msgstr "Premeu Esc per tornar"
 
-#: mozc_engine.cc:137 mozc_engine.cc:138
+#: mozc_engine.cc:158 mozc_engine.cc:159
 msgid "Tool"
 msgstr "Eina"

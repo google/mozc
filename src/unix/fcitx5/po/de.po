@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2019-10-22 01:03-0700\n"
+"POT-Creation-Date: 2020-05-08 00:01-0700\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: mar well <m.wellendorf@gmx.de>, 2018\n"
 "Language-Team: German (https://www.transifex.com/fcitx/teams/12005/de/)\n"
@@ -20,51 +20,59 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mozc_engine.cc:188
+#: mozc_engine.cc:209 mozc_engine.h:59
+msgid "About Mozc"
+msgstr ""
+
+#: mozc_engine.cc:202 mozc_engine.h:57
+msgid "Add Word"
+msgstr ""
+
+#: mozc_engine.cc:195 mozc_engine.h:55
 msgid "Character Palette"
 msgstr "Palette Zeichen"
 
-#: mozc_engine.cc:92
+#: mozc_engine.cc:93
 msgid "Composition Mode"
 msgstr "Kompositionsmodus"
 
-#: mozc_engine.cc:167
+#: mozc_engine.cc:174 mozc_engine.h:49
 msgid "Configuration Tool"
 msgstr "Konfigurationswerkzeug"
 
-#: mozc_engine.cc:174
+#: mozc_engine.cc:181 mozc_engine.h:51
 msgid "Dictionary Tool"
 msgstr "Wörterbuchwerkzeug"
 
-#: mozc_state.cc:63 mozc_engine.cc:48
+#: mozc_state.cc:63 mozc_engine.cc:49
 msgid "Direct"
 msgstr "Direkt"
 
 #. Full width ASCII letter A.
-#: mozc_state.cc:87 mozc_engine.cc:78
+#: mozc_state.cc:87 mozc_engine.cc:79
 msgid "Full ASCII"
 msgstr "7-Bit ASCII (Full ASCII)"
 
 #. Katakana letter A.
-#: mozc_state.cc:75 mozc_engine.cc:62
+#: mozc_state.cc:75 mozc_engine.cc:63
 msgid "Full Katakana"
 msgstr "Normalbreite Katakana"
 
-#: mozc_state.cc:81 mozc_engine.cc:70
+#: mozc_state.cc:81 mozc_engine.cc:71
 msgid "Half ASCII"
 msgstr "6-Bit ASCII (Half ASCII)"
 
 #. Half width Katakana letter A.
-#: mozc_state.cc:93 mozc_engine.cc:85
+#: mozc_state.cc:93 mozc_engine.cc:86
 msgid "Half Katakana"
 msgstr "Halbbreite Katakana"
 
-#: mozc_engine.cc:181
+#: mozc_engine.cc:188 mozc_engine.h:53
 msgid "Hand Writing"
 msgstr "Eingabe Handschrift"
 
 #. Hiragana letter A in UTF-8.
-#: mozc_state.cc:69 mozc_engine.cc:55
+#: mozc_state.cc:69 mozc_engine.cc:56
 msgid "Hiragana"
 msgstr "Hiragana"
 
@@ -76,6 +84,6 @@ msgstr "Ctrl+Alt+H um die Hilfe anzuzeigen"
 msgid "Press Escape to go back"
 msgstr "ESC drücken um zurückzukehren"
 
-#: mozc_engine.cc:151 mozc_engine.cc:152
+#: mozc_engine.cc:158 mozc_engine.cc:159
 msgid "Tool"
 msgstr "Werkzeug"
