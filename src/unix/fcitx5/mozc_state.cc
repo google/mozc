@@ -241,7 +241,7 @@ bool MozcState::ProcessKeyEvent(KeySym sym, uint32 keycode, KeyStates state,
 
     if (normalized_key.check(Key(FcitxKey_Escape))) {
       displayUsage_ = false;
-      ProcessKeyEvent(FcitxKey_VoidSymbol, 0, KeyState::None, layout_is_jp,
+      ProcessKeyEvent(FcitxKey_VoidSymbol, 0, KeyState::NoState, layout_is_jp,
                       false);
     }
     return true;
