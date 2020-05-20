@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-05-08 00:01-0700\n"
+"POT-Creation-Date: 2020-05-20 00:02-0700\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: MarongHappy <daemul72@gmail.com>, 2020\n"
 "Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
@@ -22,11 +22,11 @@ msgstr ""
 
 #: mozc_engine.cc:209 mozc_engine.h:59
 msgid "About Mozc"
-msgstr ""
+msgstr "Mozc 정보"
 
 #: mozc_engine.cc:202 mozc_engine.h:57
 msgid "Add Word"
-msgstr ""
+msgstr "단어 추가"
 
 #: mozc_engine.cc:195 mozc_engine.h:55
 msgid "Character Palette"
