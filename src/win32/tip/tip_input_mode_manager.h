@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #ifndef MOZC_WIN32_TIP_TIP_INPUT_MODE_MANAGER_H_
 #define MOZC_WIN32_TIP_TIP_INPUT_MODE_MANAGER_H_
 
-#include <Windows.h>
 #include <InputScope.h>
+#include <Windows.h>
 
 #include <memory>
 #include <vector>
@@ -65,8 +65,7 @@ class TipInputModeManagerImpl {
 
  protected:
   static StatePair GetOverriddenState(
-      const StatePair &base_state,
-      const std::vector<InputScope> &input_scopes);
+      const StatePair &base_state, const std::vector<InputScope> &input_scopes);
 };
 
 // In TSF, IME open/close mode and conversion mode are managed per thread not
@@ -85,11 +84,11 @@ class TipInputModeManager : public TipInputModeManagerImpl {
  public:
   enum Action {
     kDoNothing = 0,
-    kUpdateUI  = 1,
+    kUpdateUI = 1,
   };
   enum NotifyAction {
-    kNotifyNothing              = 0,
-    kNotifySystemOpenClose      = (1 << 0),
+    kNotifyNothing = 0,
+    kNotifySystemOpenClose = (1 << 0),
     kNotifySystemConversionMode = (1 << 1),
   };
   class Config {
@@ -109,13 +108,11 @@ class TipInputModeManager : public TipInputModeManagerImpl {
   Action OnMoveFocusedWindow();
   bool IsIndicatorVisible() const;
 
-  void OnInitialize(bool system_open_close_mode,
-                    DWORD system_conversion_mode);
+  void OnInitialize(bool system_open_close_mode, DWORD system_conversion_mode);
   NotifyActionSet OnReceiveCommand(bool mozc_open_close_mode,
                                    DWORD mozc_logical_mode,
                                    DWORD mozc_visible_mode);
-  Action OnSetFocus(bool system_open_close_mode,
-                    DWORD system_conversion_mode,
+  Action OnSetFocus(bool system_open_close_mode, DWORD system_conversion_mode,
                     const std::vector<InputScope> &input_scopes);
   Action OnChangeOpenClose(bool new_open_close_mode);
   Action OnChangeConversionMode(DWORD new_conversion_mode);

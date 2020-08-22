@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,9 @@ extern const char *kUserAgent;
 extern const int kOKResponseCode;
 
 enum HTTPMethodType {
-  HTTP_GET, HTTP_HEAD, HTTP_POST,
+  HTTP_GET,
+  HTTP_HEAD,
+  HTTP_POST,
 };
 }  // namespace mozc
 #endif  // MOZC_NET_HTTP_CLIENT_COMMON_H_

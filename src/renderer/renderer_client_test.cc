@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,20 +40,22 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 
 namespace renderer {
 
 namespace {
-const string UpdateVersion(int diff) {
-  std::vector<string> tokens;
+const std::string UpdateVersion(int diff) {
+  std::vector<std::string> tokens;
   Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
   EXPECT_EQ(tokens.size(), 4);
   char buf[64];
-  snprintf(buf, sizeof(buf), "%d", NumberUtil::SimpleAtoi(tokens[3]) + diff);
+  absl::SNPrintF(buf, sizeof(buf), "%d",
+                 NumberUtil::SimpleAtoi(tokens[3]) + diff);
   tokens[3] = buf;
-  string output;
+  std::string output;
   Util::JoinStrings(tokens, ".", &output);
   return output;
 }
@@ -61,61 +63,41 @@ const string UpdateVersion(int diff) {
 int g_counter = 0;
 bool g_connected = false;
 uint32 g_server_protocol_version = IPC_PROTOCOL_VERSION;
-string g_server_product_version;
+std::string g_server_product_version;
 
 class TestIPCClient : public IPCClientInterface {
  public:
-  TestIPCClient() {
-    g_server_product_version = Version::GetMozcVersion();
-  }
+  TestIPCClient() { g_server_product_version = Version::GetMozcVersion(); }
   ~TestIPCClient() {}
 
-  bool Connected() const {
-    return g_connected;
-  }
+  bool Connected() const { return g_connected; }
 
-  uint32 GetServerProtocolVersion() const {
-    return g_server_protocol_version;
-  }
+  uint32 GetServerProtocolVersion() const { return g_server_protocol_version; }
 
-  const string &GetServerProductVersion() const {
+  const std::string &GetServerProductVersion() const {
     return g_server_product_version;
   }
 
-
-  uint32 GetServerProcessId() const {
-    return 0;
-  }
+  uint32 GetServerProcessId() const { return 0; }
 
   // just count up how many times Call is called.
-  virtual bool Call(const char *request,
-                    size_t request_size,
-                    char *response,
-                    size_t *response_size,
-                    int32 timeout) {
+  virtual bool Call(const char *request, size_t request_size, char *response,
+                    size_t *response_size, int32 timeout) {
     g_counter++;
     return true;
   }
 
-  static void set_connected(bool connected) {
-    g_connected = connected;
-  }
+  static void set_connected(bool connected) { g_connected = connected; }
 
-  static void Reset() {
-    g_counter = 0;
-  }
+  static void Reset() { g_counter = 0; }
 
-  static int counter() {
-    return g_counter;
-  }
+  static int counter() { return g_counter; }
 
   static void set_server_protocol_version(uint32 version) {
     g_server_protocol_version = version;
   }
 
-  virtual IPCErrorType GetLastIPCError() const {
-    return IPC_NO_ERROR;
-  }
+  virtual IPCErrorType GetLastIPCError() const { return IPC_NO_ERROR; }
 };
 
 class TestIPCClientFactory : public IPCClientFactoryInterface {
@@ -123,12 +105,12 @@ class TestIPCClientFactory : public IPCClientFactoryInterface {
   TestIPCClientFactory() {}
   ~TestIPCClientFactory() {}
 
-  virtual IPCClientInterface *NewClient(const string &name,
-                                        const string &path_name) {
+  virtual IPCClientInterface *NewClient(const std::string &name,
+                                        const std::string &path_name) {
     return new TestIPCClient;
   }
 
-  virtual IPCClientInterface *NewClient(const string &name) {
+  virtual IPCClientInterface *NewClient(const std::string &name) {
     return new TestIPCClient;
   }
 };
@@ -138,45 +120,37 @@ class TestRendererLauncher : public RendererLauncherInterface {
   TestRendererLauncher()
       : start_renderer_called_(false),
         force_terminate_renderer_called_(false),
-        available_(false), can_connect_(false) {}
+        available_(false),
+        can_connect_(false) {}
   ~TestRendererLauncher() {}
 
   // implement StartServer.
   // return true if server can launched successfully.
-  void StartRenderer(const string &name,
-                     const string &renderer_path,
+  void StartRenderer(const std::string &name, const std::string &renderer_path,
                      bool disable_renderer_path_check,
                      IPCClientFactoryInterface *ipc_client_factory_interface) {
     start_renderer_called_ = true;
     LOG(INFO) << name << " " << renderer_path;
   }
 
-  bool ForceTerminateRenderer(const string &name) {
+  bool ForceTerminateRenderer(const std::string &name) {
     force_terminate_renderer_called_ = true;
     return true;
   }
 
-  void OnFatal(RendererErrorType type) {
-    LOG(ERROR) << static_cast<int>(type);
-  }
+  void OnFatal(RendererErrorType type) { LOG(ERROR) << static_cast<int>(type); }
 
   // return true if the renderer is running
-  virtual bool IsAvailable() const {
-    return available_;
-  }
+  virtual bool IsAvailable() const { return available_; }
 
   // return true if client can make a IPC connection.
-  virtual bool CanConnect() const {
-    return can_connect_;
-  }
+  virtual bool CanConnect() const { return can_connect_; }
 
-  virtual void SetPendingCommand(
-      const commands::RendererCommand &command) {
+  virtual void SetPendingCommand(const commands::RendererCommand &command) {
     set_pending_command_called_ = true;
   }
 
-  virtual void set_suppress_error_dialog(bool suppress) {
-  }
+  virtual void set_suppress_error_dialog(bool suppress) {}
 
   void Reset() {
     start_renderer_called_ = false;
@@ -186,17 +160,11 @@ class TestRendererLauncher : public RendererLauncherInterface {
     set_pending_command_called_ = false;
   }
 
-  void set_available(bool available) {
-    available_ = available;
-  }
+  void set_available(bool available) { available_ = available; }
 
-  void set_can_connect(bool can_connect) {
-    can_connect_ = can_connect;
-  }
+  void set_can_connect(bool can_connect) { can_connect_ = can_connect; }
 
-  bool is_start_renderer_called() const {
-    return start_renderer_called_;
-  }
+  bool is_start_renderer_called() const { return start_renderer_called_; }
 
   bool is_force_terminate_renderer_called() const {
     return force_terminate_renderer_called_;

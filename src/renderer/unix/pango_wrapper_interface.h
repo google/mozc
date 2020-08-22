@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,6 @@
 #include <gtk/gtk.h>
 #include <string>
 
-#include "base/port_string.h"
-
 namespace mozc {
 
 struct Size;
@@ -47,7 +45,7 @@ class PangoLayoutWrapperInterface {
   PangoLayoutWrapperInterface() {}
   virtual ~PangoLayoutWrapperInterface() {}
 
-  virtual void SetText(const string &text) = 0;
+  virtual void SetText(const std::string &text) = 0;
   virtual void SetAlignment(PangoAlignment align) = 0;
   virtual void SetAttributes(PangoAttrList *attr) = 0;
   virtual void SetFontDescription(
@@ -62,8 +60,8 @@ class PangoWrapperInterface {
  public:
   PangoWrapperInterface() {}
   virtual ~PangoWrapperInterface() {}
-  virtual void RendererDrawLayout(PangoLayoutWrapperInterface *layout,
-                                  int x, int y) = 0;
+  virtual void RendererDrawLayout(PangoLayoutWrapperInterface *layout, int x,
+                                  int y) = 0;
   virtual PangoAttrList *CopyAttributes(PangoAttrList *attr) = 0;
   virtual void AttributesUnref(PangoAttrList *attr) = 0;
   virtual PangoContext *GetContext() = 0;

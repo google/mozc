@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "win32/ime/ime_ui_context.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
@@ -36,6 +37,7 @@
 #include <atlstr.h>
 #include <atlmisc.h>
 #include <CommCtrl.h>  // for CCSIZEOF_STRUCT
+// clang-format on
 
 #include <strsafe.h>
 
@@ -60,15 +62,13 @@ typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 namespace {
 const size_t kSizeOfImeCharPositionV1 =
     CCSIZEOF_STRUCT(IMECHARPOSITION, rcDocument);
-const size_t kSizeOfGUIThreadInfoV1 =
-    CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
+const size_t kSizeOfGUIThreadInfoV1 = CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
 
 HIMCC GetPrivateContextHandle(const INPUTCONTEXT *input_context) {
   if (input_context == nullptr) {
     return nullptr;
   }
-  if (!PrivateContextUtil::IsValidPrivateContext(
-           input_context->hPrivate)) {
+  if (!PrivateContextUtil::IsValidPrivateContext(input_context->hPrivate)) {
     return nullptr;
   }
   return input_context->hPrivate;
@@ -118,16 +118,13 @@ HWND UIContext::GetAttachedWindow() const {
   return input_context_->hWnd;
 }
 
-bool UIContext::IsEmpty() const {
-  return (context_handle_ == nullptr);
-}
+bool UIContext::IsEmpty() const { return (context_handle_ == nullptr); }
 
 bool UIContext::IsCompositionStringEmpty() const {
   if (input_context_.get() == nullptr) {
     return true;
   }
-  ScopedHIMCC<COMPOSITIONSTRING> composition_string(
-      input_context_->hCompStr);
+  ScopedHIMCC<COMPOSITIONSTRING> composition_string(input_context_->hCompStr);
   if (composition_string.get() == nullptr) {
     return true;
   }
@@ -147,12 +144,10 @@ bool UIContext::GetFocusedCharacterIndexInComposition(DWORD *index) const {
   if (input_context_->hCompStr == nullptr) {
     return false;
   }
-  if (::ImmGetIMCCSize(input_context_->hCompStr) !=
-      sizeof(CompositionString)) {
+  if (::ImmGetIMCCSize(input_context_->hCompStr) != sizeof(CompositionString)) {
     return false;
   }
-  ScopedHIMCC<CompositionString> composition_string(
-      input_context_->hCompStr);
+  ScopedHIMCC<CompositionString> composition_string(input_context_->hCompStr);
   if (composition_string.get() == nullptr) {
     return false;
   }
@@ -174,8 +169,8 @@ bool UIContext::GetCompositionForm(COMPOSITIONFORM *composition_form) const {
   return true;
 }
 
-bool UIContext::GetCandidateForm(
-    DWORD form_index, CANDIDATEFORM *candidate_form) const {
+bool UIContext::GetCandidateForm(DWORD form_index,
+                                 CANDIDATEFORM *candidate_form) const {
   if (input_context_.get() == nullptr) {
     return false;
   }
@@ -357,7 +352,6 @@ IndicatorVisibilityTracker *UIContext::indicator_visibility_tracker() const {
   return private_context_->indicator_visibility_tracker;
 }
 
-
 bool UIContext::FillCompositionForm(ApplicationInfo *info) const {
   COMPOSITIONFORM composition_form = {0};
   if (!GetCompositionForm(&composition_form)) {
@@ -430,8 +424,7 @@ bool UIContext::FillCharPosition(ApplicationInfo *info) const {
   IMECHARPOSITION position = {};
   position.dwSize = kSizeOfImeCharPositionV1;
   position.dwCharPos = target_char_index;
-  if (::ImmRequestMessageW(context_handle_,
-                           IMR_QUERYCHARPOSITION,
+  if (::ImmRequestMessageW(context_handle_, IMR_QUERYCHARPOSITION,
                            reinterpret_cast<LPARAM>(&position)) == 0) {
     return false;
   }
@@ -458,8 +451,8 @@ bool UIContext::FillCaretInfo(ApplicationInfo *info) const {
   rect->set_right(thread_info.rcCaret.right);
   rect->set_bottom(thread_info.rcCaret.bottom);
 
-  caret->set_target_window_handle(WinUtil::EncodeWindowHandle(
-      thread_info.hwndCaret));
+  caret->set_target_window_handle(
+      WinUtil::EncodeWindowHandle(thread_info.hwndCaret));
 
   return true;
 }
@@ -470,8 +463,7 @@ bool UIContext::FillFontInfo(ApplicationInfo *info) const {
     return false;
   }
 
-  FontUtil::ToWinLogFont(composition_font,
-                         info->mutable_composition_font());
+  FontUtil::ToWinLogFont(composition_font, info->mutable_composition_font());
   return true;
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -342,8 +342,8 @@ TEST(OutputUtilTest, GetCandidateIndexById) {
 
   // Not existing ID.
   candidate_index = 0;
-  EXPECT_FALSE(OutputUtil::GetCandidateIndexById(
-      output, 100, &candidate_index));
+  EXPECT_FALSE(
+      OutputUtil::GetCandidateIndexById(output, 100, &candidate_index));
 }
 
 TEST(OutputUtilTest, GetCandidateIdByIndex) {
@@ -357,8 +357,7 @@ TEST(OutputUtilTest, GetCandidateIdByIndex) {
 
   // Not existing index.
   candidate_id = 0;
-  EXPECT_FALSE(OutputUtil::GetCandidateIdByIndex(
-      output, 100, &candidate_id));
+  EXPECT_FALSE(OutputUtil::GetCandidateIdByIndex(output, 100, &candidate_id));
 }
 
 TEST(OutputUtilTest, GetFocusedCandidateId) {

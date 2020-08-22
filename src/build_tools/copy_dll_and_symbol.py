@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,8 @@
 
 """Utilitis for copying dependent files for Windows build."""
 
-__author__ = "yukawa"
+from __future__ import absolute_import
+from __future__ import print_function
 
 import datetime
 import logging
@@ -98,7 +99,7 @@ def DeployMain(full_filename, src_paths, target_absdir):
     if _GetLastModifiedTime(src) <= target_file_mtime:
       # Older file found. Ignore.
       continue
-    print 'Copying %s to %s' % (src, target_file_abspath)
+    print('Copying %s to %s' % (src, target_file_abspath))
     shutil.copy2(src, target_file_abspath)
     break
 

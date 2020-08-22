@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Builds package file from .pkgproj and sings it.
+r"""Builds package file from .pkgproj and sings it.
 
 Typical usage:
 
@@ -59,6 +59,8 @@ def ParseOption():
   return opts
 
 
+
+
 def main():
   opt = ParseOption()
 
@@ -68,7 +70,7 @@ def main():
 
 
   # Make sure Packages is installed
-  packagesbuild_path = ""
+  packagesbuild_path = ''
   if os.path.exists('/usr/local/bin/packagesbuild'):
     packagesbuild_path = '/usr/local/bin/packagesbuild'
   elif os.path.exists('/usr/bin/packagesbuild'):

@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,15 +53,6 @@
       ],
       'dependencies': [
         'config_handler',
-      ],
-      'conditions': [
-        ['(target_platform=="Android") or '
-         '(target_platform=="NaCl" and _toolset=="target")', {
-          'dependencies': [
-            'config_handler',
-            '../protocol/protocol.gyp:config_proto',
-          ],
-        }],
       ],
     },
     {

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,6 @@ from build_tools.util import CheckFileOrDie
 from build_tools.util import ColoredLoggingFilter
 from build_tools.util import ColoredText
 from build_tools.util import CopyFile
-from build_tools.util import FindFileFromPath
 from build_tools.util import GetNumberOfProcessors
 from build_tools.util import GetRelPath
 from build_tools.util import IsLinux
@@ -64,11 +63,6 @@ from build_tools.util import RemoveDirectoryRecursively
 from build_tools.util import RemoveFile
 from build_tools.util import RunOrDie
 from build_tools.util import RunOrDieError
-
-if not IsWindows():
-  # android_util depends on fcntl module which doesn't exist in Windows.
-  # pylint: disable=g-import-not-at-top
-  from build_tools.android_util import Emulator
 
 SRC_DIR = '.'
 # We need to obtain the absolute path of this script before change directory.
@@ -102,8 +96,7 @@ def GetBuildShortBaseName(target_platform):
       'Windows': 'out_win',
       'Mac': 'out_mac',
       'Linux': 'out_linux',
-      'Android': 'out_android',
-      'NaCl': 'out_nacl'
+      'iOS': 'out_ios',
   }
 
   if target_platform not in platform_dict:
@@ -142,12 +135,6 @@ def GetGypFileNames(options):
   exclude_top_dirs = []
   mozc_top_level_names = glob.glob('%s/*' % SRC_DIR)
 
-  # Exclude gyp files for Android unless the target platform is Android so as
-  # not to generate unnecessary files under android directory when you are
-  # building Mozc for other platforms.
-  if options.target_platform != 'Android':
-    exclude_top_dirs.append('android')
-
   mozc_top_level_names = [x for x in mozc_top_level_names if
                           os.path.basename(x) not in exclude_top_dirs]
 
@@ -173,54 +160,8 @@ def GetGypFileNames(options):
     if not PkgExists('ibus-1.0 >= 1.4.1'):
       logging.info('removing ibus.gyp.')
       gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
-  elif options.target_platform == 'NaCl':
-    # Add chrome NaCl Mozc gyp scripts.
-    gyp_file_names.append('%s/chrome/nacl/nacl_extension.gyp' % SRC_DIR)
-  elif options.target_platform == 'Android':
-    # Add Android Mozc gyp scripts.
-    gyp_file_names.extend(glob.glob('%s/android/*/*.gyp' % SRC_DIR))
   gyp_file_names.sort()
   return gyp_file_names
-
-
-def GetAndroidHome(options):
-  """Gets the root directory of the SDK from options, ANDROID_HOME or PATH."""
-
-  if options.android_home:
-    logging.info('Android home is set from  '
-                 '--android_home option: %s', options.android_home)
-    return options.android_home
-  else:
-    # If --android_home is not set, find the SDK directory from
-    # ANDROID_HOME or PATH.
-    if os.environ.get('ANDROID_HOME'):
-      logging.info('Android home is set from ANDROID_HOME: %s',
-                   os.environ['ANDROID_HOME'])
-      return os.environ['ANDROID_HOME']
-    for command_name in ['android',  # for ANDROID_HOME/tools
-                         'adb']:  # for ANDROID_HOME/platform-tools
-      command_path = FindFileFromPath(command_name)
-      if command_path:
-        android_home = os.path.abspath(os.path.join(
-            os.path.dirname(command_path), '..'))
-        logging.info('Android home is set from PATH: %s', android_home)
-        return android_home
-  return None
-
-
-def GetAndroidNdkHome(options):
-  if options.android_ndk_home:
-    logging.info('Android NDK home is set from  '
-                 '--android_ndk_home option: %s', options.android_ndk_home)
-    return options.android_ndk_home
-  else:
-    command_path = FindFileFromPath('ndk-build')
-    if command_path:
-      android_ndk_home = os.path.abspath(os.path.dirname(command_path))
-      logging.info('Android NDK home is set from PATH: %s', android_ndk_home)
-      return android_ndk_home
-    else:
-      return None
 
 
 def AddCommonOptions(parser):
@@ -236,11 +177,8 @@ def ParseVerbose(unused_option, unused_opt_str, unused_value, unused_parser):
   logging.getLogger().setLevel(logging.DEBUG)
 
 
+# TODO(b/68382821): Remove this method. We no longer need --target_platform.
 def AddTargetPlatformOption(parser):
-  # Linux environment can build for Linux, Android and NaCl.
-  # --target_platform option enables this script to know which build
-  # should be done. If you want NaCl build, specify "NaCl".
-  # If you want Android build, specify "Android".
   if IsLinux():
     default_target = 'Linux'
   elif IsWindows():
@@ -249,11 +187,8 @@ def AddTargetPlatformOption(parser):
     default_target = 'Mac'
   parser.add_option('--target_platform', dest='target_platform',
                     default=default_target,
-                    help=('Linux environment can build for Linux, Android  and '
-                          'NaCl. This option enables this script to know '
-                          'which build should be done. '
-                          'If you want Android build, specify "Android". '
-                          'If you want NaCl build, specify "NaCl".'))
+                    help=('This option enables this script to know which build'
+                          'should be done.'))
 
 
 def GetDefaultWixPath():
@@ -289,85 +224,6 @@ def ParseGypOptions(args):
                     help='A path to the directory where the server executable'
                     'is installed. This option is used only on Linux.')
 
-  # Android
-  parser.add_option('--android_arch', dest='android_arch',
-                    type='choice',
-                    choices=('arm', 'x86', 'mips', 'arm64', 'x86_64', 'mips64'),
-                    default='arm',
-                    help='[Android build only] Android architecture '
-                    '(arm, x86, mips)')
-  parser.add_option('--android_application_id', dest='android_application_id',
-                    default='org.mozc.android.inputmethod.japanese',
-                    help='[Android build only] Android\'s application id'
-                    ' (==package ID). '
-                    'If set, On Android2.1 preference screen works '
-                    'incorrectly and some Java test cases failes because of '
-                    'test framework\'s update.')
-  parser.add_option('--android_home', dest='android_home', default=None,
-                    help='[Android build only] A path to the Android SDK Home. '
-                    'If not specified, automatically detected from ANDROID_HOME'
-                    ' or PATH.')
-  parser.add_option('--android_ndk_home', dest='android_ndk_home', default=None,
-                    help='[Android build only] A path to the Android NDK Home. '
-                    'If not specified, automatically detected from PATH.')
-  parser.add_option('--android_hide_icon', action='store_true',
-                    dest='android_hide_icon', default=False)
-  parser.add_option('--android_release_icon', action='store_true',
-                    dest='android_release_icon', default=False)
-
-  # NaCl
-  parser.add_option('--nacl_sdk_root', dest='nacl_sdk_root', default='',
-                    help='A path to the root directory of Native Client SDK. '
-                    'This is used when NaCl module build.')
-
-  def AddFeatureOption(option_parser, feature_name, macro_name,
-                       option_name):
-    """Defines options like '--enable_foober' and '--disable_foober'.
-
-    This function defines options like --enable_foober and --disable_foobar
-    based on given parameters.
-
-    Args:
-      option_parser: An option parser to which options should be added.
-      feature_name: A name of the feature. Will be used for option's help.
-      macro_name: A macro name which will be defined when this feature is
-          enabled. Will be used for option's help.
-          Note that the macro is not automatically set.
-          Do this by yourself (typically on common.gypi).
-      option_name: A base name of the option. If 'foobar' is specified,
-          --enable_foobar and --disable_foobar will be defined.
-
-    Raises:
-      ValueError: An error occurred when any name parameter is empty.
-    """
-    if not feature_name:
-      raise ValueError('"feature_name" should be specified')
-    if not option_name:
-      raise ValueError('"option_name" should be specified')
-    if not macro_name:
-      raise ValueError('"macro_name" should be specified')
-    params = {'feature_name': feature_name,
-              'option_name': option_name,
-              'macro_name': macro_name}
-    help_template = ('Intentionally enable or disable %(feature_name)s '
-                     'feature with the %(macro_name)s macro defined in code. '
-                     '--enable_%(option_name)s enables it, and '
-                     '--disable_%(option_name)s disables it. If both options '
-                     'are not set, enables the %(feature_name)s feature '
-                     'according to the target environment and branding.')
-    option_parser.add_option('--enable_%(option_name)s' % params,
-                             action='store_true',
-                             dest=('enable_%(option_name)s' % params),
-                             help=help_template % params)
-    option_parser.add_option('--disable_%(option_name)s' % params,
-                             action='store_false',
-                             dest=('enable_%(option_name)s' % params),
-                             help=help_template % params)
-
-  AddFeatureOption(parser, feature_name='cloud handwriting',
-                   macro_name='ENABLE_CLOUD_HANDWRITING',
-                   option_name='cloud_handwriting')
-
   if IsWindows():
     parser.add_option('--wix_dir', dest='wix_dir',
                       default=GetDefaultWixPath(),
@@ -402,9 +258,7 @@ def ExpandMetaTarget(options, meta_target_name):
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
 
-  if target_platform == 'Android':
-    targets = [SRC_DIR + '/android/android.gyp:apk']
-  elif target_platform == 'Linux':
+  if target_platform == 'Linux':
     targets = [SRC_DIR + '/server/server.gyp:mozc_server',
                SRC_DIR + '/renderer/renderer.gyp:mozc_renderer',
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
@@ -418,8 +272,6 @@ def ExpandMetaTarget(options, meta_target_name):
       targets += ['out_win/%sDynamic:mozc_win32_build32_dynamic'
                   % options.configuration]
     targets.append('out_win/%s_x64:mozc_win32_build64' % options.configuration)
-  elif target_platform == 'NaCl':
-    targets = [SRC_DIR + '/chrome/nacl/nacl_extension.gyp:nacl_mozc']
 
   return targets
 
@@ -451,14 +303,6 @@ def ParseRunTestsOptions(args):
   parser.add_option('--test_size', dest='test_size', default='small')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
-  parser.add_option('--android_home', dest='android_home', default=None,
-                    help='[Android build only] A path to the Android SDK Home. '
-                    'If not specified, automatically detected from ANDROID_HOME'
-                    ' or PATH.')
-  parser.add_option('--android_device', dest='android_device',
-                    help='[Android build only] specify which emulator/device '
-                    'you test on. '
-                    'If not specified emulators are launched and used.')
 
   return parser.parse_args(args)
 
@@ -501,13 +345,12 @@ def GypMain(options, unused_args):
   logging.info('Generating version definition file...')
   template_path = '%s/%s' % (SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
-  if options.noqt or options.target_platform in ['Android', 'NaCl']:
+  if options.noqt:
     qt_version = ''
   else:
     qt_version = '5'
   GenerateVersionFile(template_path, version_path, options.target_platform,
-                      options.android_application_id,
-                      options.android_arch, qt_version)
+                      qt_version)
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
   logging.info('Version string is %s', version.GetVersionString())
@@ -582,7 +425,7 @@ def GypMain(options, unused_args):
     gyp_options.extend(['-D', 'branding=%s' % options.branding])
 
   # Qt configurations
-  if options.noqt or target_platform in ['Android', 'NaCl']:
+  if options.noqt:
     gyp_options.extend(['-D', 'use_qt=NO'])
     gyp_options.extend(['-D', 'qt_dir='])
   elif target_platform == 'Linux':
@@ -607,35 +450,6 @@ def GypMain(options, unused_args):
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
 
-  # Android
-  if target_platform == 'Android':
-    android_home = GetAndroidHome(options)
-    android_ndk_home = GetAndroidNdkHome(options)
-    if not android_home or not os.path.isdir(android_home):
-      raise ValueError(
-          'Android Home was not found. '
-          'Use --android_home option or make the home direcotry '
-          'be included in PATH environment variable.')
-    if not android_ndk_home or not os.path.isdir(android_ndk_home):
-      raise ValueError(
-          'Android NDK Home was not found. '
-          'Use --android_ndk_home option or make the home direcotry '
-          'be included in PATH environment variable.')
-
-    gyp_options.extend(['-D', 'android_home=%s' % android_home])
-    gyp_options.extend(['-D', 'android_arch=%s' % options.android_arch])
-    gyp_options.extend(['-D', 'android_ndk_home=%s' % android_ndk_home])
-    gyp_options.extend(['-D', 'android_application_id=%s' %
-                        options.android_application_id])
-    if options.android_hide_icon:
-      gyp_options.extend(['-D', 'android_hide_icon=1'])
-    else:
-      gyp_options.extend(['-D', 'android_hide_icon=0'])
-    if options.android_release_icon:
-      gyp_options.extend(['-D', 'android_release_icon=1'])
-    else:
-      gyp_options.extend(['-D', 'android_release_icon=0'])
-
   gyp_options.extend(['-D', 'build_base=%s' %
                       GetBuildBaseName(target_platform)])
   gyp_options.extend(['-D', 'build_short_base=%s' %
@@ -649,54 +463,6 @@ def GypMain(options, unused_args):
   if version.IsDevChannel():
     gyp_options.extend(['-D', 'channel_dev=1'])
 
-  def SetCommandLineForFeature(option_name, windows=False, mac=False,
-                               linux=False, android=False, nacl=False):
-    """Updates an option like '--enable_foober' and add a -D argument for gyp.
-
-    This function ensures an option like '--enable_foober' exists and it has a
-    default boolean for each platform based on givem parameters. This
-    function also sets a '-D' command line option for gyp as
-    '-D enable_foober=0' or '-D enable_foober=1' depending on the actual value
-    of the target option.
-
-    Args:
-      option_name: A base name of the option. If 'foobar' is given,
-          '--enable_foober' option will be checked.
-      windows: A boolean which replesents the default value of the target
-          option on Windows platform.
-      mac: A boolean which replesents the default value of the target option
-          on MacOS X platform.
-      linux: A boolean which replesents the default value of the target option
-          on Linux platform.
-      android: A boolean which replesents the default value of the target
-          option on Android platform.
-      nacl: A boolean which replesents the default value of the target
-          option on NaCl.
-
-    Raises:
-      ValueError: An error occurred when 'option_name' is empty.
-    """
-    if not option_name:
-      raise ValueError('"option_name" should be specified')
-
-    default_enabled = {'Windows': windows,
-                       'Mac': mac,
-                       'Linux': linux,
-                       'Android': android,
-                       'NaCl': nacl}.get(target_platform, False)
-    enable_option_name = 'enable_%s' % option_name
-    enabled = options.ensure_value(enable_option_name, default_enabled)
-    gyp_options.extend(['-D',
-                        '%s=%s' % (enable_option_name, 1 if enabled else 0)])
-
-  is_official = (options.branding == 'GoogleJapaneseInput')
-  is_official_dev = (is_official and version.IsDevChannel())
-
-  SetCommandLineForFeature(option_name='cloud_handwriting',
-                           linux=is_official_dev,
-                           windows=is_official_dev,
-                           mac=is_official_dev)
-
   target_platform_value = target_platform
   gyp_options.extend(['-D', 'target_platform=%s' % target_platform_value])
 
@@ -706,17 +472,6 @@ def GypMain(options, unused_args):
   if (target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
     gyp_options.extend(['-D', 'use_libibus=1'])
-
-  if target_platform == 'NaCl':
-    if options.nacl_sdk_root:
-      nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
-    else:
-      nacl_sdk_root = os.path.abspath(os.path.join(EXT_THIRD_PARTY_DIR,
-                                                   'nacl_sdk', 'pepper_40'))
-    if not os.path.isdir(nacl_sdk_root):
-      PrintErrorAndExit('The nacl_sdk_root directory (%s) does not exist.'
-                        % options.nacl_sdk_root)
-    gyp_options.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
 
   if options.server_dir:
     gyp_options.extend([
@@ -815,10 +570,6 @@ def GetNinjaTargetName(target):
 
 def BuildWithNinja(options, targets):
   """Build the targets with Ninja."""
-  if hasattr(options, 'android_device'):
-    # Only for android testing.
-    os.environ['ANDROID_DEVICES'] = options.android_device
-
   short_basename = GetBuildShortBaseName(GetMozcVersion().GetTargetPlatform())
   build_arg = '%s/%s' % (short_basename, options.configuration)
 
@@ -877,13 +628,33 @@ def RunTest(binary_path, output_dir, options):
   RemoveFile(tmp_xml_path)
 
 
+def RunTestOnIos(binary_path, output_dir, _):
+  """Run test with options.
+
+  Args:
+    binary_path: The path of unittest.
+    output_dir: The directory of output resutls.
+    _: Unused arg for the compatibility with RunTest.
+  """
+  iossim = '%s/third_party/iossim/iossim' % MOZC_ROOT
+  binary_filename = os.path.basename(binary_path)
+  tmp_xml_path = os.path.join(output_dir, '%s.xml.running' % binary_filename)
+  env_options = [
+      '-e', 'GUNIT_OUTPUT=xml:%s' % tmp_xml_path,
+      '-e', 'GTEST_OUTPUT=xml:%s' % tmp_xml_path,
+  ]
+  RunOrDie([iossim] + env_options + [binary_path])
+
+  xml_path = os.path.join(output_dir, '%s.xml' % binary_filename)
+  CopyFile(tmp_xml_path, xml_path)
+  RemoveFile(tmp_xml_path)
 
 
 def RunTests(target_platform, configuration, parallel_num):
   """Run built tests actually.
 
   Args:
-    target_platform: The build target ('Android', 'Windows', etc.)
+    target_platform: The build target ('Linux', 'Windows', etc.)
     configuration: build configuration ('Release' or 'Debug')
     parallel_num: allows specified jobs at once.
 
@@ -908,6 +679,10 @@ def RunTests(target_platform, configuration, parallel_num):
   test_function = RunTest
   if target_platform == 'Windows':
     executable_suffix = '.exe'
+  elif target_platform == 'iOS':
+    executable_suffix = '.app'
+    test_function = RunTestOnIos
+    parallel_num = 1
 
   test_binaries = glob.glob(
       os.path.join(base_path, '*_test' + executable_suffix))
@@ -957,117 +732,6 @@ def RunTests(target_platform, configuration, parallel_num):
     raise RunOrDieError('\n'.join([error_text] + failed_tests))
 
 
-def RunTestsOnAndroid(options, build_args):
-  """Run a test suite for the Android version."""
-  try:
-    emulators = []
-    serialnumbers = []
-    if options.android_device:
-      serialnumbers.append(options.android_device)
-    else:
-      # Temporary AVDs are created beneath android_sdk_home.
-      android_sdk_home = os.path.join(
-          GetBuildBaseName(GetMozcVersion().GetTargetPlatform()),
-          options.configuration,
-          'android_sdk_home')
-      android_home = GetAndroidHome(options)
-
-      android_arch = GetMozcVersion().GetAndroidArch()
-      if android_arch == 'arm':
-        avd_configs = [
-            {'--name': 'Nexus5-Api21-arm-WVGA800',
-             '--target': 'android-21',
-             '--abi': 'default/armeabi-v7a',
-             '--device': 'Nexus 5',
-             '--skin': 'WVGA800'},
-            {'--name': 'Nexus10-Api21-arm-WXGA800',
-             '--target': 'android-21',
-             '--abi': 'default/armeabi-v7a',
-             '--device': 'Nexus 10',
-             '--skin': 'WXGA800'},]
-      elif android_arch == 'x86':
-        avd_configs = [
-            {'--name': 'Nexus5-Api21-x86-WVGA800',
-             '--target': 'android-21',
-             '--abi': 'default/x86',
-             '--device': 'Nexus 5',
-             '--skin': 'WVGA800'},
-            {'--name': 'Nexus10-Api21-x86-WXGA800',
-             '--target': 'android-21',
-             '--abi': 'default/x86',
-             '--device': 'Nexus 10',
-             '--skin': 'WXGA800'},]
-      elif android_arch == 'mips':
-        avd_configs = [
-            {'--name': 'NexusS-Api15-mips-WVGA800',
-             '--target': 'android-15',
-             '--abi': 'default/mips',
-             '--device': 'Nexus S',
-             '--skin': 'WVGA800'},
-            # As of 2014-05-27, the latest target of MIPS is 17.
-            {'--name': 'Nexus5-Api17-mips-WVGA800',
-             '--target': 'android-17',
-             '--abi': 'default/mips',
-             '--device': 'Nexus 5',
-             '--skin': 'WVGA800'},
-            {'--name': 'Nexus10-Api17-mips-WXGA800',
-             '--target': 'android-17',
-             '--abi': 'default/mips',
-             '--device': 'Nexus 10',
-             '--skin': 'WXGA800'},]
-      else:
-        avd_configs = []
-
-      emulators = Emulator.LaunchAll(android_sdk_home, avd_configs,
-                                     android_home)
-      serialnumbers.extend([emulator.serial for emulator in emulators])
-
-    # Run native and Java tests.
-    # If --configuration is Release, Java tests are skipped.
-    if options.configuration == 'Release':
-      targets = ['run_native_test']
-      logging.info('As this is Relase configuration, Java tests are skipped.')
-    else:
-      # run_java_test must be executed after run_native_test
-      # because package manager, which is mandatory to run Java tests,
-      # requires minutes to get ready.
-      targets = ['run_native_test', 'run_java_test']
-
-    android_gyp = os.path.join(SRC_DIR, 'android', 'android.gyp')
-    for target in targets:
-      (build_options, build_targets) = ParseBuildOptions(
-          build_args + ['%s:%s' % (android_gyp, target)])
-      # Injects android_device attribute to build_options.
-      # The attribute will be used as Makefile parameter.
-      # Q: Why setattr?
-      # A: BuildMain is invoked from build command and the command
-      # does not need 'android_device' option.
-      # So ParseBuildOption method doesn't accept --android_device
-      # argument. Thus build_options doesn't have android_device attribute
-      # but we need the option here becuase there is no other way to specifiy
-      # Makefile parameter.
-      setattr(build_options, 'android_device', ','.join(serialnumbers))
-      logging.info('build_options=%s', build_options)
-      BuildMain(build_options, build_targets)
-  finally:
-    # Terminate the emulators.
-    for emulator in emulators:
-      emulator.Terminate()
-
-
-def RunTestsOnNaCl(targets, build_args):
-  """Run a test suite for the NaCl version."""
-  # Currently we can only run the limited test set which is defined as
-  # nacl_test_targets in nacl_extension.gyp.
-  if targets:
-    PrintErrorAndExit('Targets [%s] are not supported.' % ', '.join(targets))
-  nacl_gyp = os.path.join(SRC_DIR, 'chrome', 'nacl', 'nacl_extension.gyp')
-  (build_options, build_targets) = ParseBuildOptions(
-      build_args + [nacl_gyp + ':run_nacl_test'])
-  # Run the test suite in NaCl.
-  BuildMain(build_options, build_targets)
-
-
 def RunTestsMain(options, args):
   """The main function for 'runtests' command."""
   # extracting test targets and build flags.  To avoid parsing build
@@ -1105,8 +769,6 @@ def RunTestsMain(options, args):
     build_options.extend(['-c', options.configuration])
 
   target_platform = GetMozcVersion().GetTargetPlatform()
-  if target_platform == 'NaCl':
-    return RunTestsOnNaCl(targets, build_options)
 
   if not targets:
     # TODO(yukawa): Change the notation rule of 'targets' to reduce the gap
@@ -1115,18 +777,13 @@ def RunTestsMain(options, args):
       targets.append('out_win/%s:unittests' % options.configuration)
     else:
       targets.append('%s/gyp/tests.gyp:unittests' % SRC_DIR)
-    if target_platform == 'Android' and options.configuration != 'Release':
-      targets.append('%s/android/android.gyp:build_java_test' % SRC_DIR)
 
   # Build the test targets
   (build_opts, build_args) = ParseBuildOptions(build_options + targets)
   BuildMain(build_opts, build_args)
 
   # Run tests actually
-  if target_platform == 'Android':
-    RunTestsOnAndroid(options, build_options)
-  else:
-    RunTests(target_platform, options.configuration, options.test_jobs)
+  RunTests(target_platform, options.configuration, options.test_jobs)
 
 
 def CleanMain(options, unused_args):
@@ -1159,26 +816,6 @@ def CleanMain(options, unused_args):
     build_base = GetBuildBaseName(GetMozcVersion().GetTargetPlatform())
     if build_base:
       directory_names.append(build_base)
-
-  if IsLinux():
-    # Remove auto-generated files.
-    file_names.append(os.path.join(SRC_DIR, 'android', 'AndroidManifest.xml'))
-    file_names.append(os.path.join(
-        SRC_DIR, 'android', 'tests', 'AndroidManifest.xml'))
-    # Remove a symbolic link to android/resources/res
-    file_names.append(os.path.join(SRC_DIR, 'android', 'resources', 'res'))
-    directory_names.append(os.path.join(SRC_DIR, 'android', 'assets'))
-    # Delete files/dirs generated by Android SDK/NDK.
-    android_library_projects = [
-        '',
-        'resources',
-        'tests',
-        ]
-    android_generated_dirs = ['bin', 'gen', 'obj', 'libs', 'gen_for_adt']
-    for project in android_library_projects:
-      for directory in android_generated_dirs:
-        directory_names.append(
-            os.path.join(SRC_DIR, 'android', project, directory))
 
   # Remove files.
   for file_name in file_names:

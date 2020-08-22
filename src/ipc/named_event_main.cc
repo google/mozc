@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,20 +42,18 @@ DEFINE_int32(pid, -1, "process id");
 DEFINE_string(name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (FLAGS_notifier) {
     mozc::NamedEventNotifier notifier(FLAGS_name.c_str());
-    CHECK(notifier.IsAvailable())
-        << "NamedEventNotifier is not available";
+    CHECK(notifier.IsAvailable()) << "NamedEventNotifier is not available";
 
     notifier.Notify();
     LOG(INFO) << "Notification has been sent";
 
   } else if (FLAGS_listener) {
     mozc::NamedEventListener listener(FLAGS_name.c_str());
-    CHECK(listener.IsAvailable())
-      << "NamedEventListener is not available";
+    CHECK(listener.IsAvailable()) << "NamedEventListener is not available";
 
     LOG_IF(INFO, listener.IsOwner()) << "This instance owns event handle";
 

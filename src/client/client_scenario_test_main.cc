@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,11 +63,11 @@ namespace {
 
 // Parses key events.  If |input| gets EOF, returns false.
 bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
-              string *answer) {
+              std::string *answer) {
   keys->clear();
   answer->clear();
 
-  string line;
+  std::string line;
   while (getline(*input, line)) {
     Util::ChopReturns(&line);
     if (line.size() > 1 && line[0] == '#' && line[1] == '#') {
@@ -105,12 +105,12 @@ int Loop(std::istream *input) {
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
-#if defined(OS_WIN) || defined(OS_MACOSX)
+#if defined(OS_WIN) || defined(__APPLE__)
 #ifdef OS_WIN
-    renderer_command.mutable_application_info()->set_process_id
-        (::GetCurrentProcessId());
-    renderer_command.mutable_application_info()->set_thread_id
-        (::GetCurrentThreadId());
+    renderer_command.mutable_application_info()->set_process_id(
+        ::GetCurrentProcessId());
+    renderer_command.mutable_application_info()->set_thread_id(
+        ::GetCurrentThreadId());
 #endif
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
@@ -126,7 +126,7 @@ int Loop(std::istream *input) {
   commands::Command command;
   commands::Output output;
   std::vector<commands::KeyEvent> keys;
-  string answer;
+  std::string answer;
 
   // TODO(tok): Stop the test if server is crashed.  Currently, we cannot
   // detect the server crash out of client library, as client automatically
@@ -169,7 +169,7 @@ int Loop(std::istream *input) {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (!FLAGS_profile_dir.empty()) {
     mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);

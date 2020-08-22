@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -157,8 +157,8 @@ class TableLayout : public TableLayoutInterface {
   Rect GetHeaderRect() const;
   Rect GetFooterRect() const;
   Rect GetVScrollBarRect() const;
-  Rect GetVScrollIndicatorRect(
-      int begin_index, int end_index, int candidates_total) const;
+  Rect GetVScrollIndicatorRect(int begin_index, int end_index,
+                               int candidates_total) const;
 
   // Get the rect which is bounding the specified row.
   // This rect includes RowRectPadding.

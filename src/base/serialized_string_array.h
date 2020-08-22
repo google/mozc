@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -58,7 +58,8 @@ namespace mozc {
 // At runtime, we can access array contents just by loading a binary image,
 // e.g., from a file, onto memory where the first address must be aligned at
 // 4-byte boundary.  For array access, a similar interface to
-// vector<StringPiece> is available; e.g., operator[], size(), and iterator.
+// vector<absl::string_view> is available; e.g., operator[], size(), and
+// iterator.
 //
 // * Binary format
 // The former block of size 4 + 8 * N bytes is an array of uint32 (in little
@@ -105,10 +106,10 @@ class SerializedStringArray {
  public:
   class iterator {
    public:
-    using value_type = StringPiece;
+    using value_type = absl::string_view;
     using difference_type = ptrdiff_t;
-    using pointer = const StringPiece *;
-    using reference = const StringPiece &;
+    using pointer = const absl::string_view *;
+    using reference = const absl::string_view &;
     using iterator_category = std::random_access_iterator_tag;
 
     iterator() : array_(nullptr), index_(0) {}
@@ -117,9 +118,9 @@ class SerializedStringArray {
     iterator(const iterator &x) = default;
 
     size_t index() const { return index_; }
-    StringPiece operator*() { return (*array_)[index_]; }
-    StringPiece operator*() const { return (*array_)[index_]; }
-    StringPiece operator[](difference_type n) const {
+    absl::string_view operator*() { return (*array_)[index_]; }
+    absl::string_view operator*() const { return (*array_)[index_]; }
+    absl::string_view operator[](difference_type n) const {
       return (*array_)[index_ + n];
     }
 
@@ -223,10 +224,10 @@ class SerializedStringArray {
 
   // Initializes the array from given memory block.  The block must be aligned
   // at 4 byte boundary.  Returns false when the data is invalid.
-  bool Init(StringPiece data_aligned_at_4byte_boundary);
+  bool Init(absl::string_view data_aligned_at_4byte_boundary);
 
   // Initializes the array from given memory block without verifying data.
-  void Set(StringPiece data_aligned_at_4byte_boundary);
+  void Set(absl::string_view data_aligned_at_4byte_boundary);
 
   uint32 size() const {
     // The first 4 bytes of data stores the number of elements in this array in
@@ -234,7 +235,7 @@ class SerializedStringArray {
     return *reinterpret_cast<const uint32 *>(data_.data());
   }
 
-  StringPiece operator[](size_t i) const {
+  absl::string_view operator[](size_t i) const {
     const uint32 *ptr = reinterpret_cast<const uint32 *>(data_.data()) + 1;
     const uint32 offset = ptr[2 * i];
     const uint32 len = ptr[2 * i + 1];
@@ -242,7 +243,7 @@ class SerializedStringArray {
   }
 
   bool empty() const { return size() == 0; }
-  StringPiece data() const { return data_; }
+  absl::string_view data() const { return data_; }
   void clear();
 
   iterator begin() { return iterator(this, 0); }
@@ -251,19 +252,20 @@ class SerializedStringArray {
   const_iterator end() const { return const_iterator(this, size()); }
 
   // Checks if the data is a valid array image.
-  static bool VerifyData(StringPiece data);
+  static bool VerifyData(absl::string_view data);
 
   // Creates a byte image of |strs| in |buffer| and returns the memory block in
   // |buffer| pointing to the image.  Note that uint32 array is used for buffer
   // to align data at 4 byte boundary.
-  static StringPiece SerializeToBuffer(const std::vector<StringPiece> &strs,
-                                       std::unique_ptr<uint32[]> *buffer);
+  static absl::string_view SerializeToBuffer(
+      const std::vector<absl::string_view> &strs,
+      std::unique_ptr<uint32[]> *buffer);
 
-  static void SerializeToFile(const std::vector<StringPiece> &strs,
-                              const string &filepath);
+  static void SerializeToFile(const std::vector<absl::string_view> &strs,
+                              const std::string &filepath);
 
  private:
-  StringPiece data_;
+  absl::string_view data_;
 
   DISALLOW_COPY_AND_ASSIGN(SerializedStringArray);
 };

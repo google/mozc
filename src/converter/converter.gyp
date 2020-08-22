@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
         'converter.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../composer/composer.gyp:composer',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction.gyp:prediction',

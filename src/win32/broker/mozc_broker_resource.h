@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,10 +39,10 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        105
-#define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         1000
-#define _APS_NEXT_SYMED_VALUE           102
+#define _APS_NEXT_RESOURCE_VALUE 105
+#define _APS_NEXT_COMMAND_VALUE 40002
+#define _APS_NEXT_CONTROL_VALUE 1000
+#define _APS_NEXT_SYMED_VALUE 102
 #endif
 #endif
 

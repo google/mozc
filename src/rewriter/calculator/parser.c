@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@
 /* First off, code is included that follows the "include" declaration
 ** in the input grammar file. */
 #include <stdio.h>
+#include "absl/strings/str_format.h"
 #line 7 "parser.y"
 
 #include <assert.h>
@@ -480,9 +481,8 @@ static int yy_pop_parser_stack(yyParser *pParser){
   if( pParser->yyidx<0 ) return 0;
 #ifndef NDEBUG
   if( yyTraceFILE && pParser->yyidx>=0 ){
-    fprintf(yyTraceFILE,"%sPopping %s\n",
-      yyTracePrompt,
-      yyTokenName[yytos->major]);
+    absl::FPrintF(yyTraceFILE, "%sPopping %s\n", yyTracePrompt,
+                  yyTokenName[yytos->major]);
   }
 #endif
   yymajor = yytos->major;
@@ -634,7 +634,7 @@ static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
    yypParser->yyidx--;
 #ifndef NDEBUG
    if( yyTraceFILE ){
-     fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
+     absl::FPrintF(yyTraceFILE, "%sStack Overflow!\n", yyTracePrompt);
    }
 #endif
    while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
@@ -684,11 +684,12 @@ static void yy_shift(
 #ifndef NDEBUG
   if( yyTraceFILE && yypParser->yyidx>0 ){
     int i;
-    fprintf(yyTraceFILE,"%sShift %d\n",yyTracePrompt,yyNewState);
-    fprintf(yyTraceFILE,"%sStack:",yyTracePrompt);
+    absl::FPrintF(yyTraceFILE, "%sShift %d\n", yyTracePrompt, yyNewState);
+    absl::FPrintF(yyTraceFILE, "%sStack:", yyTracePrompt);
     for(i=1; i<=yypParser->yyidx; i++)
-      fprintf(yyTraceFILE," %s",yyTokenName[yypParser->yystack[i].major]);
-    fprintf(yyTraceFILE,"\n");
+      absl::FPrintF(yyTraceFILE, " %s",
+                    yyTokenName[yypParser->yystack[i].major]);
+    absl::FPrintF(yyTraceFILE, "\n");
   }
 #endif
 }
@@ -733,8 +734,8 @@ static void yy_reduce(
 #ifndef NDEBUG
   if( yyTraceFILE && yyruleno>=0 
         && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ){
-    fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
-      yyRuleName[yyruleno]);
+    absl::FPrintF(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
+                  yyRuleName[yyruleno]);
   }
 #endif /* NDEBUG */
 
@@ -889,7 +890,7 @@ static void yy_parse_failed(
   ParseARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
-    fprintf(yyTraceFILE,"%sFail!\n",yyTracePrompt);
+    absl::FPrintF(yyTraceFILE, "%sFail!\n", yyTracePrompt);
   }
 #endif
   while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
@@ -929,7 +930,7 @@ static void yy_accept(
   ParseARG_FETCH;
 #ifndef NDEBUG
   if( yyTraceFILE ){
-    fprintf(yyTraceFILE,"%sAccept!\n",yyTracePrompt);
+    absl::FPrintF(yyTraceFILE, "%sAccept!\n", yyTracePrompt);
   }
 #endif
   while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
@@ -999,7 +1000,8 @@ void Parse(
 
 #ifndef NDEBUG
   if( yyTraceFILE ){
-    fprintf(yyTraceFILE,"%sInput %s\n",yyTracePrompt,yyTokenName[yymajor]);
+    absl::FPrintF(yyTraceFILE, "%sInput %s\n", yyTracePrompt,
+                  yyTokenName[yymajor]);
   }
 #endif
 
@@ -1019,7 +1021,7 @@ void Parse(
 #endif
 #ifndef NDEBUG
       if( yyTraceFILE ){
-        fprintf(yyTraceFILE,"%sSyntax Error!\n",yyTracePrompt);
+        absl::FPrintF(yyTraceFILE, "%sSyntax Error!\n", yyTracePrompt);
       }
 #endif
 #ifdef YYERRORSYMBOL

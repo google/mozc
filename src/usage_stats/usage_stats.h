@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,26 +44,26 @@ class UsageStats {
  public:
   // Updates count value
   // Increments val to current value
-  static void IncrementCountBy(const string &name, uint32 val);
-  static void IncrementCount(const string &name) {
+  static void IncrementCountBy(const std::string &name, uint32 val);
+  static void IncrementCount(const std::string &name) {
     IncrementCountBy(name, 1);
   }
 
   // Updates timing value
   // Updates current value using given val
-  static void UpdateTiming(const string &name, uint32 val);
+  static void UpdateTiming(const std::string &name, uint32 val);
 
   // Sets integer value
   // Replaces old value with val
-  static void SetInteger(const string &name, int val);
+  static void SetInteger(const std::string &name, int val);
 
   // Sets boolean value
   // Replaces old value with val
-  static void SetBoolean(const string &name, bool val);
+  static void SetBoolean(const std::string &name, bool val);
 
   // Returns true if given stats name is in the stats list
   // (for debugging)
-  static bool IsListed(const string &name);
+  static bool IsListed(const std::string &name);
 
   // Stores virtual keyboard touch event stats.
   // The map "touch_stats" structure is as following
@@ -74,8 +74,8 @@ class UsageStats {
   //                        source_id_2 : TouchEventStats,
   //                        source_id_3 : TouchEventStats))
   static void StoreTouchEventStats(
-      const string &name,
-      const std::map<string, TouchEventStatsMap> &touch_stats);
+      const std::string &name,
+      const std::map<std::string, TouchEventStatsMap> &touch_stats);
 
   // Synchronizes (writes) usage data into disk. Returns false on failure.
   static bool Sync();
@@ -84,27 +84,27 @@ class UsageStats {
   static void ClearStats();
 
   // Clears all data.
-  static void ClearAllStatsForTest();
+  static void ClearAllStats();
+
+  static void ClearAllStatsForTest() { ClearAllStats(); }
 
   // NOTE: These methods are for unit tests.
   // Reads a value from registry, and sets it in the value.
   // Returns true if all steps go successfully.
   // NULL pointers are accetable for the target arguments of GetTimingForTest().
-  static bool GetCountForTest(const string &name, uint32 *value);
-  static bool GetIntegerForTest(const string &name, int32 *value);
-  static bool GetBooleanForTest(const string &name, bool *value);
-  static bool GetTimingForTest(const string &name,
-                               uint64 *total_time,
-                               uint32 *num_timings,
-                               uint32 *avg_time,
-                               uint32 *min_time,
-                               uint32 *max_time);
-  static bool GetVirtualKeyboardForTest(const string &name, Stats *stats);
+  static bool GetCountForTest(const std::string &name, uint32 *value);
+  static bool GetIntegerForTest(const std::string &name, int32 *value);
+  static bool GetBooleanForTest(const std::string &name, bool *value);
+  static bool GetTimingForTest(const std::string &name, uint64 *total_time,
+                               uint32 *num_timings, uint32 *avg_time,
+                               uint32 *min_time, uint32 *max_time);
+  static bool GetVirtualKeyboardForTest(const std::string &name, Stats *stats);
   // This method doesn't check type of the stats.
-  static bool GetStatsForTest(const string &name, Stats *stats);
+  static bool GetStatsForTest(const std::string &name, Stats *stats);
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UsageStats);
+  UsageStats() = delete;
+  UsageStats(const UsageStats &) = delete;
+  UsageStats &operator=(const UsageStats &) = delete;
 };
 }  // namespace usage_stats
 }  // namespace mozc

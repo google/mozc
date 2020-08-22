@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -134,7 +134,7 @@ TEST(WinSandboxTest, GetSidsToRestrict) {
   const std::vector<Sid> non_admin = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_NON_ADMIN);
   const std::vector<Sid> restricted_same_access = WinSandbox::GetSidsToRestrict(
-          process_token.get(), WinSandbox::USER_RESTRICTED_SAME_ACCESS);
+      process_token.get(), WinSandbox::USER_RESTRICTED_SAME_ACCESS);
   const std::vector<Sid> unprotect = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_UNPROTECTED);
 
@@ -150,13 +150,12 @@ const wchar_t kDummyUserSID[] = L"S-8";
 const wchar_t kDummyGroupSID[] = L"S-9";
 
 std::wstring GetSDDLForVista(WinSandbox::ObjectSecurityType type) {
-  return TestableWinSandbox::GetSDDL(
-      type, kDummyUserSID, kDummyGroupSID, false);
+  return TestableWinSandbox::GetSDDL(type, kDummyUserSID, kDummyGroupSID,
+                                     false);
 }
 
 std::wstring GetSDDLForWin8(WinSandbox::ObjectSecurityType type) {
-  return TestableWinSandbox::GetSDDL(
-      type, kDummyUserSID, kDummyGroupSID, true);
+  return TestableWinSandbox::GetSDDL(type, kDummyUserSID, kDummyGroupSID, true);
 }
 
 TEST(WinSandboxTest, GetSDDLForSharablePipe) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,21 +60,16 @@ namespace {
 
 class KeyMapFactoryTest : public testing::Test {
  protected:
-  virtual void SetUp() {
-    TestKeyMapFactoryProxy::Clear();
-  }
+  virtual void SetUp() { TestKeyMapFactoryProxy::Clear(); }
 
-  virtual void TearDown() {
-    TestKeyMapFactoryProxy::Clear();
-  }
+  virtual void TearDown() { TestKeyMapFactoryProxy::Clear(); }
 };
 
 }  // namespace
 
 TEST_F(KeyMapFactoryTest, KeyMapFactoryTest) {
   {  // KeyMapFactory returns correct instance.
-    KeyMapManager *atok =
-        KeyMapFactory::GetKeyMapManager(config::Config::ATOK);
+    KeyMapManager *atok = KeyMapFactory::GetKeyMapManager(config::Config::ATOK);
     KeyMapManager *msime =
         KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
     KeyMapManager *kotoeri =
@@ -85,28 +80,24 @@ TEST_F(KeyMapFactoryTest, KeyMapFactoryTest) {
         KeyMapFactory::GetKeyMapManager(config::Config::MOBILE);
 
     // GetKeyMapFactory() returns the same instance when argument is the same
-    EXPECT_EQ(atok,
-              KeyMapFactory::GetKeyMapManager(config::Config::ATOK));
-    EXPECT_EQ(msime,
-              KeyMapFactory::GetKeyMapManager(config::Config::MSIME));
+    EXPECT_EQ(atok, KeyMapFactory::GetKeyMapManager(config::Config::ATOK));
+    EXPECT_EQ(msime, KeyMapFactory::GetKeyMapManager(config::Config::MSIME));
     EXPECT_EQ(kotoeri,
               KeyMapFactory::GetKeyMapManager(config::Config::KOTOERI));
-    EXPECT_EQ(custom,
-              KeyMapFactory::GetKeyMapManager(config::Config::CUSTOM));
-    EXPECT_EQ(mobile,
-              KeyMapFactory::GetKeyMapManager(config::Config::MOBILE));
+    EXPECT_EQ(custom, KeyMapFactory::GetKeyMapManager(config::Config::CUSTOM));
+    EXPECT_EQ(mobile, KeyMapFactory::GetKeyMapManager(config::Config::MOBILE));
 
     // GetKeyMapFactory() does not return the same instance
     // when argument is not the same
     KeyMapManager *keymap_array[] = {
-      atok, msime, kotoeri, custom, mobile,
+        atok, msime, kotoeri, custom, mobile,
     };
     const int array_size = arraysize(keymap_array);
     for (int i = 0; i < array_size; ++i) {
       for (int j = 0; j < array_size; ++j) {
         if (i != j) {
-          EXPECT_NE(keymap_array[i], keymap_array[j]) <<
-              "current_index = (" << i << "," << j << ")";
+          EXPECT_NE(keymap_array[i], keymap_array[j])
+              << "current_index = (" << i << "," << j << ")";
         }
       }
     }
@@ -124,8 +115,8 @@ TEST_F(KeyMapFactoryTest, ReloadWhenGetInstance) {
         "Conversion\tSpace\tConvertNext\n";
     config.set_custom_keymap_table(kCustomTableConvertNext);
 
-    KeyMapManager *keymap = KeyMapFactory::GetKeyMapManager(
-        config::Config::CUSTOM);
+    KeyMapManager *keymap =
+        KeyMapFactory::GetKeyMapManager(config::Config::CUSTOM);
     keymap->ReloadConfig(config);
     ConversionState::Commands key_command;
     keymap->GetCommandConversion(key, &key_command);
@@ -138,8 +129,8 @@ TEST_F(KeyMapFactoryTest, ReloadWhenGetInstance) {
       "Conversion\tSpace\tConvertPrev\n";
   config.set_custom_keymap_table(kCustomTableConvertPrev);
 
-  KeyMapManager *keymap = KeyMapFactory::GetKeyMapManager(
-      config::Config::CUSTOM);
+  KeyMapManager *keymap =
+      KeyMapFactory::GetKeyMapManager(config::Config::CUSTOM);
   keymap->ReloadConfig(config);
   ConversionState::Commands key_command;
   keymap->GetCommandConversion(key, &key_command);

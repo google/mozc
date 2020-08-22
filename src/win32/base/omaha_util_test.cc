@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// clang-format off
 #include <windows.h>
 #include <strsafe.h>
+// clang-format on
 
 #include <clocale>
 
@@ -69,10 +71,10 @@ bool IsEqualInLowercase(const std::wstring &lhs, const std::wstring &rhs) {
 
 // Win32 registry emulator for unit testing.  To separate internal state,
 // set unique id at the template parameter.
-template<int Id>
+template <int Id>
 class RegistryEmulator {
  public:
-  template<int Id>
+  template <int Id>
   class PropertySelector {
    public:
     PropertySelector()
@@ -92,30 +94,26 @@ class RegistryEmulator {
       installer_result_ui_string_.clear();
     }
 
-    bool omaha_key_exists() const {
-      return omaha_client_state_key_exists_;
-    }
+    bool omaha_key_exists() const { return omaha_client_state_key_exists_; }
     void set_omaha_key_exists(bool exist) {
       omaha_client_state_key_exists_ = exist;
     }
 
     // Field definitions.
-#define DEFINE_FIELD(type, field_name)   \
-    type field_name() const {            \
-      DCHECK(has_##field_name##_);       \
-      return field_name##_;              \
-    }                                    \
-    void clear_##field_name##() {        \
-      has_##field_name##_ = false;       \
-      field_name##_ = type();            \
-    }                                    \
-    bool has_##field_name() const {      \
-      return has_##field_name##_;        \
-    }                                    \
-    type * mutable_##field_name() {      \
-      has_##field_name##_ = true;        \
-      return &##field_name##_;           \
-    }
+#define DEFINE_FIELD(type, field_name)                          \
+  type field_name() const {                                     \
+    DCHECK(has_##field_name##_);                                \
+    return field_name##_;                                       \
+  }                                                             \
+  void clear_##field_name##() {                                 \
+    has_##field_name##_ = false;                                \
+    field_name##_ = type();                                     \
+  }                                                             \
+  bool has_##field_name() const { return has_##field_name##_; } \
+  type *mutable_##field_name() {                                \
+    has_##field_name##_ = true;                                 \
+    return &##field_name##_;                                    \
+  }
     DEFINE_FIELD(std::wstring, ap_value)
     DEFINE_FIELD(DWORD, installer_result)
     DEFINE_FIELD(std::wstring, installer_result_ui_string)
@@ -147,8 +145,8 @@ class RegistryEmulator {
         DEFINE_HOOK("advapi32.dll", RegQueryValueExW, TestRegQueryValueExW));
     requests.push_back(
         DEFINE_HOOK("advapi32.dll", RegDeleteValueW, TestRegDeleteValueW));
-    restore_info_ = WinAPITestHelper::DoHook(
-        ::GetModuleHandle(nullptr), requests);
+    restore_info_ =
+        WinAPITestHelper::DoHook(::GetModuleHandle(nullptr), requests);
   }
 
   ~RegistryEmulator() {
@@ -156,9 +154,7 @@ class RegistryEmulator {
     restore_info_ = nullptr;
   }
 
-  static Property *property() {
-    return Singleton<Property>::get();
-  }
+  static Property *property() { return Singleton<Property>::get(); }
 
   static HKEY GetClientStateKey(REGSAM regsam) {
     const REGSAM kReadWrite = (KEY_WRITE | KEY_READ);
@@ -170,8 +166,8 @@ class RegistryEmulator {
       const bool contain_wow64_32_key =
           ((regsam & KEY_WOW64_32KEY) == KEY_WOW64_32KEY);
 
-      EXPECT_TRUE(contain_wow64_32_key) <<
-          "KEY_WOW64_32KEY should be specified just in case.";
+      EXPECT_TRUE(contain_wow64_32_key)
+          << "KEY_WOW64_32KEY should be specified just in case.";
 
       if ((regsam & kReadWrite) == kReadWrite) {
         return contain_wow64_64_key ? kHKLM64_ClientState_ReadWrite
@@ -215,13 +211,13 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS UpdateString(const wchar_t *value_name,
-                              const wchar_t *src, DWORD num_data) {
+  static LSTATUS UpdateString(const wchar_t *value_name, const wchar_t *src,
+                              DWORD num_data) {
     std::wstring *target = nullptr;
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
       target = property()->mutable_ap_value();
-    } else if (IsEqualInLowercase(
-                   value_name, kRegEntryNameForInstallerResultUIString)) {
+    } else if (IsEqualInLowercase(value_name,
+                                  kRegEntryNameForInstallerResultUIString)) {
       target = property()->mutable_installer_result_ui_string();
     }
 
@@ -243,8 +239,8 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS UpdateDWORD(const wchar_t *value_name,
-                             const DWORD *src, DWORD num_data) {
+  static LSTATUS UpdateDWORD(const wchar_t *value_name, const DWORD *src,
+                             DWORD num_data) {
     DWORD *target = nullptr;
     if (IsEqualInLowercase(value_name, kRegEntryNameForInstallerResult)) {
       target = property()->mutable_installer_result();
@@ -257,9 +253,9 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS WINAPI TestRegSetValueExW(
-      HKEY key, LPCWSTR value_name, DWORD reserved, DWORD type,
-      const BYTE *data, DWORD num_data) {
+  static LSTATUS WINAPI TestRegSetValueExW(HKEY key, LPCWSTR value_name,
+                                           DWORD reserved, DWORD type,
+                                           const BYTE *data, DWORD num_data) {
     if (key != kHKLM32_ClientState_ReadWrite) {
       EXPECT_TRUE(false) << "Unexpected key is specified.";
       return ERROR_ACCESS_DENIED;
@@ -267,11 +263,11 @@ class RegistryEmulator {
     const wchar_t *src = reinterpret_cast<const wchar_t *>(data);
     switch (type) {
       case REG_SZ:
-        return UpdateString(
-            value_name, reinterpret_cast<const wchar_t *>(data), num_data);
+        return UpdateString(value_name, reinterpret_cast<const wchar_t *>(data),
+                            num_data);
       case REG_DWORD:
-        return UpdateDWORD(
-            value_name, reinterpret_cast<const DWORD *>(data), num_data);
+        return UpdateDWORD(value_name, reinterpret_cast<const DWORD *>(data),
+                           num_data);
       default:
         return ERROR_FILE_NOT_FOUND;
     }
@@ -286,8 +282,9 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS WINAPI TestRegOpenKeyExW(
-      HKEY key, LPCWSTR sub_key, DWORD options, REGSAM sam, PHKEY result) {
+  static LSTATUS WINAPI TestRegOpenKeyExW(HKEY key, LPCWSTR sub_key,
+                                          DWORD options, REGSAM sam,
+                                          PHKEY result) {
     if (key != HKEY_LOCAL_MACHINE) {
       return ERROR_FILE_NOT_FOUND;
     }
@@ -315,8 +312,8 @@ class RegistryEmulator {
         return ERROR_FILE_NOT_FOUND;
       }
       value = property()->ap_value();
-    } else if (IsEqualInLowercase(
-                   value_name, kRegEntryNameForInstallerResultUIString)) {
+    } else if (IsEqualInLowercase(value_name,
+                                  kRegEntryNameForInstallerResultUIString)) {
       if (!property()->has_installer_result_ui_string()) {
         return ERROR_FILE_NOT_FOUND;
       }
@@ -344,9 +341,8 @@ class RegistryEmulator {
       return ERROR_INSUFFICIENT_BUFFER;
     }
 
-    const HRESULT result = ::StringCbCopyN(
-        dest, dest_buffer_size, value.c_str(),
-        value_length_in_byte);
+    const HRESULT result = ::StringCbCopyN(dest, dest_buffer_size,
+                                           value.c_str(), value_length_in_byte);
     EXPECT_HRESULT_SUCCEEDED(result);
     *num_data = value_length_in_byte;
 
@@ -356,8 +352,8 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS QueryDWORD(const wchar_t *value_name, DWORD *type,
-                            DWORD *dest, DWORD *num_data) {
+  static LSTATUS QueryDWORD(const wchar_t *value_name, DWORD *type, DWORD *dest,
+                            DWORD *num_data) {
     DWORD value = 0;
     if (IsEqualInLowercase(value_name, kRegEntryNameForInstallerResult)) {
       if (!property()->has_installer_result()) {
@@ -393,9 +389,9 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS WINAPI TestRegQueryValueExW(
-      HKEY key, LPCWSTR value_name, LPDWORD reserved, LPDWORD type,
-      LPBYTE data, LPDWORD num_data) {
+  static LSTATUS WINAPI TestRegQueryValueExW(HKEY key, LPCWSTR value_name,
+                                             LPDWORD reserved, LPDWORD type,
+                                             LPBYTE data, LPDWORD num_data) {
     if ((kHKLM32_ClientState_Read != key) &&
         (kHKLM32_ClientState_ReadWrite != key)) {
       EXPECT_TRUE(false) << "Unexpected key is specified.";
@@ -403,16 +399,16 @@ class RegistryEmulator {
     }
 
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
-      return QueryString(value_name, type,
-                         reinterpret_cast<wchar_t *>(data), num_data);
-    } else if (IsEqualInLowercase(
-                   value_name, kRegEntryNameForInstallerResultUIString)) {
-      return QueryString(value_name, type,
-                         reinterpret_cast<wchar_t *>(data), num_data);
-    } else if (IsEqualInLowercase(
-                   value_name, kRegEntryNameForInstallerResult)) {
-      return QueryDWORD(value_name, type,
-                        reinterpret_cast<DWORD *>(data), num_data);
+      return QueryString(value_name, type, reinterpret_cast<wchar_t *>(data),
+                         num_data);
+    } else if (IsEqualInLowercase(value_name,
+                                  kRegEntryNameForInstallerResultUIString)) {
+      return QueryString(value_name, type, reinterpret_cast<wchar_t *>(data),
+                         num_data);
+    } else if (IsEqualInLowercase(value_name,
+                                  kRegEntryNameForInstallerResult)) {
+      return QueryDWORD(value_name, type, reinterpret_cast<DWORD *>(data),
+                        num_data);
     }
     return ERROR_FILE_NOT_FOUND;
   }
@@ -428,15 +424,15 @@ class RegistryEmulator {
       }
       property()->clear_ap_value();
       return ERROR_SUCCESS;
-    } else if (IsEqualInLowercase(
-                   value_name, kRegEntryNameForInstallerResultUIString)) {
+    } else if (IsEqualInLowercase(value_name,
+                                  kRegEntryNameForInstallerResultUIString)) {
       if (!property()->has_installer_result_ui_string()) {
         return ERROR_FILE_NOT_FOUND;
       }
       property()->clear_installer_result_ui_string();
       return ERROR_SUCCESS;
-    } else if (IsEqualInLowercase(
-                   value_name, kRegEntryNameForInstallerResult)) {
+    } else if (IsEqualInLowercase(value_name,
+                                  kRegEntryNameForInstallerResult)) {
       if (!property()->has_installer_result()) {
         return ERROR_FILE_NOT_FOUND;
       }

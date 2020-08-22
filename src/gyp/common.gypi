@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,9 +46,12 @@
     'compiler_host_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
     # Versioning stuff for Mac.
-    'mac_sdk%': '10.13',
+    'mac_sdk%': '10.14',
     'mac_deployment_target%': '10.9',
 
+    # Flag to specify if the build target is for simulator or not.
+    # This is used for iOS simulator so far.
+    'simulator_build%': '0',
 
     # 'conditions' is put inside of 'variables' so that we can use
     # another 'conditions' in this gyp element level later. Note that
@@ -83,18 +86,12 @@
       '-pipe',
       '-pthread',
     ],
-    # linux_cflags will be used in Linux except for NaCl.
+    # linux_cflags will be used in Linux.
     'linux_cflags': [
       '<@(gcc_cflags)',
       '-fno-omit-frame-pointer',
       '-fstack-protector',
       '--param=ssp-buffer-size=4',
-    ],
-    # nacl_cflags will be used for NaCl.
-    # -fno-omit-frame-pointer flag does not work correctly.
-    #   http://code.google.com/p/chromium/issues/detail?id=122623
-    'nacl_cflags': [
-      '<@(gcc_cflags)',
     ],
     # mac_cflags will be used in Mac.
     # Xcode 4.5 which we are currently using does not support ssp-buffer-size.
@@ -104,9 +101,11 @@
       '<@(gcc_cflags)',
       '-fno-omit-frame-pointer',
       '-fstack-protector',
+      '-fobjc-arc',
     ],
     # Libraries for GNU/Linux environment.
     'linux_ldflags': [
+      '-lc++',
       '-pthread',
     ],
 
@@ -120,12 +119,6 @@
       ['target_platform=="Android"', {
         'compiler_target': 'clang',
         'compiler_target_version_int': 308,  # Clang 3.8 or higher
-        'compiler_host': 'clang',
-        'compiler_host_version_int': 304,  # Clang 3.4 or higher
-      }],
-      ['target_platform=="NaCl"', {
-        'compiler_target': 'clang',
-        'compiler_target_version_int': 304,  # Clang 3.4 or higher
         'compiler_host': 'clang',
         'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
@@ -173,18 +166,13 @@
               }],
             ],
           }],
-          ['target_platform=="NaCl"', {
-            'ldflags': [
-              '-L<(nacl_sdk_root)/lib/pnacl/Debug',
-            ],
-          }],
         ],
       },
       'Release': {
         'defines': [
           'NDEBUG',
           'QT_NO_DEBUG',
-          'NO_LOGGING',
+          'MOZC_NO_LOGGING',
           'IGNORE_HELP_FLAG',
           'IGNORE_INVALID_FLAG'
         ],
@@ -199,11 +187,6 @@
               '<@(release_extra_cflags)',
             ],
           }],
-          ['target_platform=="NaCl"', {
-            'ldflags': [
-              '-L<(nacl_sdk_root)/lib/pnacl/Release',
-            ],
-          }],
         ],
       },
     },
@@ -211,6 +194,7 @@
     'include_dirs': [
       '<(abs_depth)',
       '<(SHARED_INTERMEDIATE_DIR)',
+      '<(absl_dir)',
     ],
     'mac_framework_headers': [],
     'target_conditions': [
@@ -224,12 +208,12 @@
               '-Wno-covered-switch-default',
               '-Wno-unnamed-type-template-args',
               '-Wno-c++11-narrowing',
-              '-std=gnu++0x',
             ],
           }],
           ['compiler_target=="clang" or compiler_target=="gcc"', {
             'cflags_cc': [
-              '-std=gnu++0x',
+              '-std=c++17',
+              '-stdlib=libc++',
             ],
           }],
         ],
@@ -244,12 +228,12 @@
               '-Wno-covered-switch-default',
               '-Wno-unnamed-type-template-args',
               '-Wno-c++11-narrowing',
-              '-std=gnu++0x',
             ],
           }],
           ['compiler_host=="clang" or compiler_host=="gcc"', {
             'cflags_cc': [
-              '-std=gnu++0x',
+              '-std=c++17',
+              '-stdlib=libc++',
             ],
           }],
         ],
@@ -261,6 +245,7 @@
           '<@(linux_ldflags)',
         ],
         'cflags': [
+          '<@(linux_cflags)',
           '<@(warning_cflags)',
           '-fPIC',
           '-fno-exceptions',
@@ -331,51 +316,11 @@
               }],
             ],
           }],
-          ['target_platform!="NaCl"', {
-            'cflags': [
-              '<@(linux_cflags)',
-            ],
-          }],
-          ['target_platform=="NaCl"', {
-            'target_conditions' : [
-              ['_toolset=="host"', {
-                'defines': ['OS_LINUX',],
-                'cflags': [
-                  '<@(linux_cflags)',
-                ],
-              }],
-              ['_toolset=="target"', {
-                'cflags': [
-                  '<@(nacl_cflags)',
-                ],
-                'ldflags!': [  # Remove all libraries for GNU/Linux.
-                  '<@(linux_ldflags)',
-                ],
-                'defines': [
-                  'MOZC_USE_PEPPER_FILE_IO',
-                  'OS_NACL',
-                  # For the ambiguity of wcsstr.
-                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-                ],
-                'include_dirs': [
-                  '<(nacl_sdk_root)/include',
-                ],
-              }],
-              ['_toolset=="target" and _type=="static_library"', {
-                # PNaCl's artools.py doesn't handle some thin archive files
-                # correctly. (crbug/463026)
-                # But GYP creates thin archive files for static_library.
-                # To avoid this issue we turn on this flag.
-                # TODO(hsumita): Remove this hack when the bug in SDK is fixed.
-                'standalone_static_library': 1,
-              }],
-            ]
-          }],
         ],
       }],
       ['OS=="mac"', {
         'defines': [
-          'OS_MACOSX',
+          '__APPLE__',
         ],
         'make_global_settings': [
           ['CC', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang'],
@@ -384,6 +329,40 @@
           ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
         ],
         'conditions': [
+          ['target_platform=="iOS"', {
+            'target_conditions': [
+              ['_toolset=="target"', {
+                # OS_IOS and __APPLE__ should be exclusive
+                # when iOS is fully supported.
+                'defines': ['OS_IOS'],
+                'xcode_settings': {
+                  'SDKROOT': 'iphoneos',
+                  'IPHONEOS_DEPLOYMENT_TARGET': '7.0',
+                },
+              }],
+              ['_toolset=="host"', {
+                'xcode_settings': {
+                  # TODO(komatsu): If it is possible to remove the setting of
+                  # MACOSX_DEPLOYMENT_TARGET when _toolset is "target"
+                  # we should do it rather than setting it here and the
+                  # next condition.
+                  'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
+                },
+              }],
+            ],
+            'link_settings': {
+              'target_conditions': [
+                ['_toolset=="target"', {
+                  'libraries': [
+                    '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
+                  ],
+                  'libraries!': [
+                    '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+                  ],
+                }],
+              ],
+            },
+          }],
           ['target_platform=="Mac"', {
             'xcode_settings': {
               'ARCHS': ['x86_64'],
@@ -407,7 +386,7 @@
             '-Wno-covered-switch-default',
             '-Wno-unnamed-type-template-args',
           ],
-          'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
+          'CLANG_CXX_LANGUAGE_STANDARD': 'c++17',
           'CLANG_CXX_LIBRARY': 'libc++',
           'OTHER_CPLUSPLUSFLAGS': [
             '$(inherited)',
@@ -428,22 +407,6 @@
     ],
   },
   'conditions': [
-    ['target_platform=="NaCl"', {
-      'make_global_settings': [
-        ['AR', '<(pnacl_bin_dir)/pnacl-ar'],
-        ['CC', '<(pnacl_bin_dir)/pnacl-clang'],
-        ['CXX', '<(pnacl_bin_dir)/pnacl-clang++'],
-        ['LD', '<(pnacl_bin_dir)/pnacl-ld'],
-        ['NM', '<(pnacl_bin_dir)/pnacl-nm'],
-        ['READELF', '<(pnacl_bin_dir)/pnacl-readelf'],
-        ['AR.host', '<!(which ar)'],
-        ['CC.host', '<!(which clang)'],
-        ['CXX.host', '<!(which clang++)'],
-        ['LD.host', '<!(which ld)'],
-        ['NM.host', '<!(which nm)'],
-        ['READELF.host', '<!(which readelf)'],
-      ],
-    }],
     ['target_platform=="Linux"', {
       'make_global_settings': [
         ['AR', '<!(which ar)'],

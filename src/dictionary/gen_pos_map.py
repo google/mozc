@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,11 @@
 """A script to generate a C++ header file for the POS conversion map.
 """
 
-__author__ = "keni"
-
+from __future__ import absolute_import
 import optparse
 import sys
+
+import six  # pylint: disable=g-import-not-at-top
 
 from build_tools import code_generator_util
 
@@ -78,7 +79,7 @@ def GeneratePosMap(third_party_pos_map_file, user_pos_file):
       result[third_party_pos_name] = mozc_pos
 
   # Create mozc_pos to mozc_pos map.
-  for key, value in user_pos_map.iteritems():
+  for key, value in six.iteritems(user_pos_map):
     if key in result:
       assert (result[key] == value)
       continue

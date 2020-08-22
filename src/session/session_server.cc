@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,9 +51,9 @@ namespace {
 // On Windows, multiple processes can create named pipe objects whose names are
 // the same. To reduce the potential risk of DOS, we limit the maximum number
 // of pipe instances to 1 here.
-const int kNumConnections   = 1;
+const int kNumConnections = 1;
 #else
-const int kNumConnections   = 10;
+const int kNumConnections = 10;
 #endif  // OS_WIN
 
 const int kTimeOut = 5000;  // 5000msec
@@ -68,22 +68,11 @@ SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
       usage_observer_(new session::SessionUsageObserver()),
       session_handler_(new SessionHandler(
-      std::unique_ptr<Engine>(EngineFactory::Create()))) {
+          std::unique_ptr<Engine>(EngineFactory::Create()))) {
   using usage_stats::UsageStatsUploader;
   // start session watch dog timer
   session_handler_->StartWatchDog();
   session_handler_->AddObserver(usage_observer_.get());
-
-  // start usage stats timer
-  // send usage stats within 6 min later
-  Scheduler::AddJob(Scheduler::JobSetting(
-      "UsageStatsTimer",
-      UsageStatsUploader::kDefaultScheduleInterval,
-      UsageStatsUploader::kDefaultScheduleMaxInterval,
-      UsageStatsUploader::kDefaultSchedulerDelay,
-      UsageStatsUploader::kDefaultSchedulerRandomDelay,
-      &UsageStatsUploader::Send,
-      nullptr));
 
   // Send a notification event to the UI.
   NamedEventNotifier notifier(kEventName);
@@ -95,21 +84,18 @@ SessionServer::SessionServer()
 SessionServer::~SessionServer() = default;
 
 bool SessionServer::Connected() const {
-  return (session_handler_ &&
-          session_handler_->IsAvailable() &&
+  return (session_handler_ && session_handler_->IsAvailable() &&
           IPCServer::Connected());
 }
 
-bool SessionServer::Process(const char *request,
-                            size_t request_size,
-                            char *response,
-                            size_t *response_size) {
+bool SessionServer::Process(const char *request, size_t request_size,
+                            char *response, size_t *response_size) {
   if (!session_handler_) {
     LOG(WARNING) << "handler is not available";
-    return false;   // shutdown the server if handler doesn't exist
+    return false;  // shutdown the server if handler doesn't exist
   }
 
-  commands::Command command;   // can define as a private member?
+  commands::Command command;  // can define as a private member?
   if (!command.mutable_input()->ParseFromArray(request, request_size)) {
     LOG(WARNING) << "Invalid request";
     *response_size = 0;
@@ -122,7 +108,7 @@ bool SessionServer::Process(const char *request,
     return false;
   }
 
-  string output;
+  std::string output;
   if (!command.output().SerializeToString(&output)) {
     LOG(WARNING) << "SerializeToString() failed";
     *response_size = 0;

@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -272,11 +272,9 @@
             '../client/client.gyp:client',
             '../config/config.gyp:stats_config_util',
             '../gui/gui.gyp:about_dialog_mac',
-            '../gui/gui.gyp:character_palette_mac',
             '../gui/gui.gyp:config_dialog_mac',
             '../gui/gui.gyp:dictionary_tool_mac',
             '../gui/gui.gyp:error_message_dialog_mac',
-            '../gui/gui.gyp:hand_writing_mac',
             '../gui/gui.gyp:prelauncher_mac',
             '../gui/gui.gyp:word_register_dialog_mac',
             '../renderer/renderer.gyp:mozc_renderer',
@@ -313,11 +311,9 @@
                 '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
                 '<(PRODUCT_DIR)/<(branding)Renderer.app',
                 '<(PRODUCT_DIR)/AboutDialog.app',
-                '<(PRODUCT_DIR)/CharacterPalette.app',
                 '<(PRODUCT_DIR)/ConfigDialog.app',
                 '<(PRODUCT_DIR)/DictionaryTool.app',
                 '<(PRODUCT_DIR)/ErrorMessageDialog.app',
-                '<(PRODUCT_DIR)/HandWriting.app',
                 '<(PRODUCT_DIR)/WordRegisterDialog.app',
               ],
               'destination': '<(PRODUCT_DIR)/<(branding).app/Contents/Resources',

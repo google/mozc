@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@
 
 #include <memory>
 
-#include "base/string_piece.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -41,9 +41,9 @@ class ConversionRequest;
 class Segments;
 
 // A very simple rewriter to put version candidates for some segments.
-class VersionRewriter : public RewriterInterface  {
+class VersionRewriter : public RewriterInterface {
  public:
-  explicit VersionRewriter(StringPiece data_version);
+  explicit VersionRewriter(absl::string_view data_version);
   ~VersionRewriter() override;
 
   int capability(const ConversionRequest &request) const override;

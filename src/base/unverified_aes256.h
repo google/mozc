@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,15 +50,13 @@ class UnverifiedAES256 {
   // Does AES256 CBC transformation.
   // CAVEATS: See the above comment.
   static void TransformCBC(const uint8 (&key)[kKeyBytes],
-                           const uint8 (&iv)[kBlockBytes],
-                           uint8 *buffer,
+                           const uint8 (&iv)[kBlockBytes], uint8 *buffer,
                            size_t block_count);
 
   // Does AES256 CBC inverse transformation.
   // CAVEATS: See the above comment.
   static void InverseTransformCBC(const uint8 (&key)[kKeyBytes],
-                                  const uint8 (&iv)[kBlockBytes],
-                                  uint8 *buffer,
+                                  const uint8 (&iv)[kBlockBytes], uint8 *buffer,
                                   size_t block_count);
 
  protected:

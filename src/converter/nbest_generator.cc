@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ namespace mozc {
 namespace {
 
 const int kFreeListSize = 512;
-const int kCostDiff = 3453;   // log prob of 1/1000
+const int kCostDiff = 3453;  // log prob of 1/1000
 
 }  // namespace
 
@@ -68,12 +68,8 @@ struct NBestGenerator::QueueElement {
 };
 
 const NBestGenerator::QueueElement *NBestGenerator::CreateNewElement(
-    const Node *node,
-    const QueueElement *next,
-    int32 fx,
-    int32 gx,
-    int32 structure_gx,
-    int32 w_gx) {
+    const Node *node, const QueueElement *next, int32 fx, int32 gx,
+    int32 structure_gx, int32 w_gx) {
   QueueElement *elm = freelist_.Alloc();
   DCHECK(elm);
   elm->node = node;
@@ -114,13 +110,16 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const SuggestionFilter *suggestion_filter,
                                bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dic),
-      segmenter_(segmenter), connector_(connector), pos_matcher_(pos_matcher),
+      segmenter_(segmenter),
+      connector_(connector),
+      pos_matcher_(pos_matcher),
       lattice_(lattice),
-      begin_node_(NULL), end_node_(NULL),
+      begin_node_(NULL),
+      end_node_(NULL),
       freelist_(kFreeListSize),
-      filter_(new CandidateFilter(
-          suppression_dic, pos_matcher, suggestion_filter,
-          apply_suggestion_filter_for_exact_match)),
+      filter_(new CandidateFilter(suppression_dic, pos_matcher,
+                                  suggestion_filter,
+                                  apply_suggestion_filter_for_exact_match)),
       viterbi_result_checked_(false),
       check_mode_(STRICT),
       boundary_checker_(NULL) {
@@ -135,8 +134,7 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
   agenda_.Reserve(kFreeListSize);
 }
 
-NBestGenerator::~NBestGenerator() {
-}
+NBestGenerator::~NBestGenerator() {}
 
 void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
                            const BoundaryCheckMode mode) {
@@ -149,12 +147,11 @@ void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
   begin_node_ = begin_node;
   end_node_ = end_node;
 
-  for (Node *node = lattice_->begin_nodes(end_node_->begin_pos);
-       node != NULL; node = node->bnext) {
-    if (node == end_node_ ||
-        (node->lid != end_node_->lid &&
-         node->cost - end_node_->cost <= kCostDiff &&
-         node->prev != end_node_->prev)) {
+  for (Node *node = lattice_->begin_nodes(end_node_->begin_pos); node != NULL;
+       node = node->bnext) {
+    if (node == end_node_ || (node->lid != end_node_->lid &&
+                              node->cost - end_node_->cost <= kCostDiff &&
+                              node->prev != end_node_->prev)) {
       // Push "EOS" nodes.
       agenda_.Push(CreateNewElement(node, NULL, node->cost, 0, 0, 0));
     }
@@ -218,6 +215,9 @@ void NBestGenerator::MakeCandidate(
     if (node->attributes & Node::USER_DICTIONARY) {
       candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
     }
+    if (node->attributes & Node::SUFFIX_DICTIONARY) {
+      candidate->attributes |= Segment::Candidate::SUFFIX_DICTIONARY;
+    }
   }
 
   if (candidate->content_value.empty() || candidate->content_key.empty()) {
@@ -268,12 +268,12 @@ void NBestGenerator::MakeCandidate(
         content_value_len += rnode->value.size();
       }
     }
-    candidate->PushBackInnerSegmentBoundary(
-        key_len, value_len, content_key_len, content_value_len);
+    candidate->PushBackInnerSegmentBoundary(key_len, value_len, content_key_len,
+                                            content_value_len);
   }
 }
 
-bool NBestGenerator::Next(const string &original_key,
+bool NBestGenerator::Next(const std::string &original_key,
                           Segment::Candidate *candidate,
                           Segments::RequestType request_type) {
   DCHECK(begin_node_);
@@ -338,25 +338,23 @@ bool NBestGenerator::Next(const string &original_key,
     const Node *rnode = top->node;
     CHECK(rnode);
 
-    if (num_trials++ > KMaxTrial) {   // too many trials
-      VLOG(2) <<  "too many trials: " << num_trials;
+    if (num_trials++ > KMaxTrial) {  // too many trials
+      VLOG(2) << "too many trials: " << num_trials;
       return false;
     }
 
     // reached to the goal.
     if (rnode->end_pos == begin_node_->end_pos) {
       nodes_.clear();
-      for (const QueueElement *elm = top->next;
-           elm->next != NULL; elm = elm->next) {
+      for (const QueueElement *elm = top->next; elm->next != NULL;
+           elm = elm->next) {
         nodes_.push_back(elm->node);
       }
       CHECK(!nodes_.empty());
 
       MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes_);
-      const int filter_result = filter_->FilterCandidate(original_key,
-                                                         candidate,
-                                                         nodes_,
-                                                         request_type);
+      const int filter_result = filter_->FilterCandidate(
+          original_key, candidate, nodes_, request_type);
       nodes_.clear();
 
       switch (filter_result) {
@@ -379,8 +377,8 @@ bool NBestGenerator::Next(const string &original_key,
       // begin/end node regardless of its value.
       const bool is_edge = (is_right_edge || is_left_edge);
 
-      for (Node *lnode = lattice_->end_nodes(rnode->begin_pos);
-           lnode != NULL; lnode = lnode->enext) {
+      for (Node *lnode = lattice_->end_nodes(rnode->begin_pos); lnode != NULL;
+           lnode = lnode->enext) {
         // is_invalid_position is true if the lnode's location is invalid
         //  1.   |<-- begin_node_-->|
         //                    |<--lnode-->|  <== overlapped.
@@ -418,8 +416,8 @@ bool NBestGenerator::Next(const string &original_key,
         }
 
         DCHECK(this->boundary_checker_ != NULL);
-        BoundaryCheckResult boundary_result = (this->*boundary_checker_)(
-            lnode, rnode, is_edge);
+        BoundaryCheckResult boundary_result =
+            (this->*boundary_checker_)(lnode, rnode, is_edge);
         if (boundary_result == INVALID) {
           continue;
         }
@@ -442,7 +440,7 @@ bool NBestGenerator::Next(const string &original_key,
           // use |lnode->cost - begin_node_->cost| is an approximation
           // of marginalized word cost.
           cost_diff = transition_cost + rnode->wcost +
-              (lnode->cost - begin_node_->cost);
+                      (lnode->cost - begin_node_->cost);
           structure_cost_diff = 0;
           wcost_diff = rnode->wcost;
         } else {
@@ -453,7 +451,7 @@ bool NBestGenerator::Next(const string &original_key,
         }
 
         if (boundary_result == VALID_WEAK_CONNECTED) {
-          const int kWeakConnectedPenalty = 3453;   // log prob of 1/1000
+          const int kWeakConnectedPenalty = 3453;  // log prob of 1/1000
           cost_diff += kWeakConnectedPenalty;
           structure_cost_diff += kWeakConnectedPenalty / 2;
           wcost_diff += kWeakConnectedPenalty / 2;
@@ -471,12 +469,12 @@ bool NBestGenerator::Next(const string &original_key,
           // be identical. Here, we simply use the best left edge node.
           // This hack reduces the number of redundant calls of pop().
           if (best_left_elm == NULL || best_left_elm->fx > fx) {
-            best_left_elm = CreateNewElement(
-                lnode, top, fx, gx, structure_gx, w_gx);
+            best_left_elm =
+                CreateNewElement(lnode, top, fx, gx, structure_gx, w_gx);
           }
         } else {
-          agenda_.Push(CreateNewElement(
-              lnode, top, fx, gx, structure_gx, w_gx));
+          agenda_.Push(
+              CreateNewElement(lnode, top, fx, gx, structure_gx, w_gx));
         }
       }
 
@@ -525,9 +523,8 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
 
   // is_boundary is true if there is a grammer-based boundary
   // between lnode and rnode
-  const bool is_boundary = (
-      lnode->node_type == Node::HIS_NODE ||
-      segmenter_->IsBoundary(*lnode, *rnode, true));
+  const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
+                            segmenter_->IsBoundary(*lnode, *rnode, true));
   if (is_edge != is_boundary) {
     // on the edge, have a boudnary.
     // not on the edge, not the case.
@@ -547,9 +544,8 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
 
   // is_boundary is true if there is a grammer-based boundary
   // between lnode and rnode
-  const bool is_boundary = (
-      lnode->node_type == Node::HIS_NODE ||
-      segmenter_->IsBoundary(*lnode, *rnode, false));
+  const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
+                            segmenter_->IsBoundary(*lnode, *rnode, false));
 
   if (is_edge != is_boundary) {
     // on the edge, have a boudnary.
@@ -560,13 +556,13 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
   }
 }
 
-int NBestGenerator::InsertTopResult(const string &original_key,
+int NBestGenerator::InsertTopResult(const std::string &original_key,
                                     Segment::Candidate *candidate,
                                     Segments::RequestType request_type) {
   nodes_.clear();
   int total_wcost = 0;
-  for (const Node *node = begin_node_->next;
-       node != end_node_; node = node->next) {
+  for (const Node *node = begin_node_->next; node != end_node_;
+       node = node->next) {
     nodes_.push_back(node);
     if (node != begin_node_->next) {
       total_wcost += node->wcost;
@@ -574,12 +570,11 @@ int NBestGenerator::InsertTopResult(const string &original_key,
   }
   DCHECK(!nodes_.empty());
 
-  const int cost = end_node_->cost -
-      begin_node_->cost - end_node_->wcost;
-  const int structure_cost = end_node_->prev->cost -
-      begin_node_->next->cost - total_wcost;
-  const int wcost = end_node_->prev->cost -
-      begin_node_->next->cost + begin_node_->next->wcost;
+  const int cost = end_node_->cost - begin_node_->cost - end_node_->wcost;
+  const int structure_cost =
+      end_node_->prev->cost - begin_node_->next->cost - total_wcost;
+  const int wcost = end_node_->prev->cost - begin_node_->next->cost +
+                    begin_node_->next->wcost;
 
   MakeCandidate(candidate, cost, structure_cost, wcost, nodes_);
 
@@ -588,8 +583,8 @@ int NBestGenerator::InsertTopResult(const string &original_key,
   }
 
   viterbi_result_checked_ = true;
-  const int result = filter_->FilterCandidate(
-      original_key, candidate, nodes_, request_type);
+  const int result =
+      filter_->FilterCandidate(original_key, candidate, nodes_, request_type);
   nodes_.clear();
   return result;
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,8 +53,7 @@ class CollocationRewriter : public RewriterInterface {
   bool IsName(const Segment::Candidate &cand) const;
   bool RewriteFromPrevSegment(const Segment::Candidate &prev_cand,
                               Segment *seg) const;
-  bool RewriteUsingNextSegment(Segment *next_seg,
-                               Segment *seg) const;
+  bool RewriteUsingNextSegment(Segment *next_seg, Segment *seg) const;
   bool RewriteCollocation(Segments *segments) const;
 
   const dictionary::POSMatcher pos_matcher_;

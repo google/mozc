@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,16 +53,13 @@ TipInputModeManager::Config GetConfig() {
 
 class TipThreadContext::InternalState {
  public:
-  InternalState()
-      : input_mode_manager(GetConfig()),
-        focus_revision(0) {}
+  InternalState() : input_mode_manager(GetConfig()), focus_revision(0) {}
   TipInputModeManager input_mode_manager;
   unique_ptr<FocusHierarchyObserver> focus_hierarchy_observer;
   int32 focus_revision;
 };
 
-TipThreadContext::TipThreadContext()
-    : state_(new InternalState) {}
+TipThreadContext::TipThreadContext() : state_(new InternalState) {}
 
 TipThreadContext::~TipThreadContext() {}
 
@@ -70,8 +67,8 @@ TipInputModeManager *TipThreadContext::GetInputModeManager() {
   return &state_->input_mode_manager;
 }
 
-const FocusHierarchyObserver *
-TipThreadContext::GetFocusHierarchyObserver() const {
+const FocusHierarchyObserver *TipThreadContext::GetFocusHierarchyObserver()
+    const {
   return state_->focus_hierarchy_observer.get();
 }
 

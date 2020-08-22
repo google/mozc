@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,9 +49,7 @@ class ClientInterface;
 class SessionWatchDog : public Thread {
  public:
   // return the interval sec of watch dog timer
-  int32 interval() const {
-    return interval_sec_;
-  }
+  int32 interval() const { return interval_sec_; }
 
   // Set client interface. This method doesn't take the owership.
   // mainly for unittesting.
@@ -71,15 +69,13 @@ class SessionWatchDog : public Thread {
   // start watch dog timer and return immediately
   // virtual void Start();
 
-
   // return true if watch dog can send CleanupCommand:
   // |cpu_loads|: An array of cpu loads.
   // |cpu_load_index|: the size of cpu loads
   // |last_cleanup_time|: the last UTC time cleanup is executed
   // TODO(taku): want to define it inside private with FRIEND_TEST
   bool CanSendCleanupCommand(const volatile float *cpu_loads,
-                             int cpu_load_index,
-                             uint64 current_time,
+                             int cpu_load_index, uint64 current_time,
                              uint64 last_cleanup_time) const;
 
  private:

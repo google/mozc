@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@ KeyMapManager *KeyMapFactory::GetKeyMapManager(
   return manager;
 }
 
-void KeyMapFactory::ReloadConfig(const Config& config) {
+void KeyMapFactory::ReloadConfig(const Config &config) {
   KeyMapManagerMap::iterator iter = keymaps_.find(Config::CUSTOM);
   if (iter == keymaps_.end()) {
     return;
@@ -68,7 +68,6 @@ void KeyMapFactory::ReloadConfig(const Config& config) {
 
   iter->second->ReloadConfig(config);
 }
-
 
 }  // namespace keymap
 }  // namespace mozc

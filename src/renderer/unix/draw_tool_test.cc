@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "renderer/unix/draw_tool.h"
 #include "base/coordinates.h"
 #include "renderer/unix/cairo_wrapper_mock.h"
 #include "renderer/unix/const.h"
-#include "renderer/unix/draw_tool.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
@@ -67,12 +67,12 @@ TEST(DrawToolTest, FillRectTest) {
   const RGBA color = {0x10, 0x20, 0x30, 0x40};
   const Rect rect(10, 20, 30, 40);
 
-  Expectation set_source_rgba_expectation = EXPECT_CALL(*mock, SetSourceRGBA(
-      color.red/255.0, color.green/255.0,
-      color.blue/255.0, color.alpha/255.0));
-  Expectation rectangle_expectation
-      = EXPECT_CALL(*mock, Rectangle(rect.origin.x, rect.origin.y,
-                                     rect.size.width, rect.size.height));
+  Expectation set_source_rgba_expectation = EXPECT_CALL(
+      *mock, SetSourceRGBA(color.red / 255.0, color.green / 255.0,
+                           color.blue / 255.0, color.alpha / 255.0));
+  Expectation rectangle_expectation =
+      EXPECT_CALL(*mock, Rectangle(rect.origin.x, rect.origin.y,
+                                   rect.size.width, rect.size.height));
   EXPECT_CALL(*mock, Fill())
       .After(rectangle_expectation)
       .After(set_source_rgba_expectation);
@@ -89,14 +89,14 @@ TEST(DrawToolTest, FrameRectTest) {
   const Rect rect(10, 20, 30, 40);
   const uint32 line_width = 3;
 
-  Expectation set_source_rgba_expectation = EXPECT_CALL(*mock, SetSourceRGBA(
-      color.red/255.0, color.green/255.0,
-      color.blue/255.0, color.alpha/255.0));
-  Expectation set_line_width_expectation = EXPECT_CALL(
-      *mock, SetLineWidth(static_cast<double>(line_width)));
-  Expectation rectangle_expectation
-      = EXPECT_CALL(*mock, Rectangle(rect.origin.x, rect.origin.y,
-                                     rect.size.width, rect.size.height));
+  Expectation set_source_rgba_expectation = EXPECT_CALL(
+      *mock, SetSourceRGBA(color.red / 255.0, color.green / 255.0,
+                           color.blue / 255.0, color.alpha / 255.0));
+  Expectation set_line_width_expectation =
+      EXPECT_CALL(*mock, SetLineWidth(static_cast<double>(line_width)));
+  Expectation rectangle_expectation =
+      EXPECT_CALL(*mock, Rectangle(rect.origin.x, rect.origin.y,
+                                   rect.size.width, rect.size.height));
   EXPECT_CALL(*mock, Stroke())
       .After(rectangle_expectation)
       .After(set_line_width_expectation)
@@ -115,16 +115,14 @@ TEST(DrawToolTest, DrawLineTest) {
   const Point from(10, 20);
   const Point to(15, 25);
 
-  Expectation set_source_rgba_expectation = EXPECT_CALL(*mock, SetSourceRGBA(
-      color.red/255.0, color.green/255.0,
-      color.blue/255.0, color.alpha/255.0));
-  Expectation set_line_width_expectation = EXPECT_CALL(
-      *mock, SetLineWidth(static_cast<double>(line_width)));
-  Expectation move_to_expectation = EXPECT_CALL(
-      *mock, MoveTo(from.x, from.y));
-  Expectation line_to_expectation
-      = EXPECT_CALL(*mock, LineTo(to.x, to.y))
-          .After(move_to_expectation);
+  Expectation set_source_rgba_expectation = EXPECT_CALL(
+      *mock, SetSourceRGBA(color.red / 255.0, color.green / 255.0,
+                           color.blue / 255.0, color.alpha / 255.0));
+  Expectation set_line_width_expectation =
+      EXPECT_CALL(*mock, SetLineWidth(static_cast<double>(line_width)));
+  Expectation move_to_expectation = EXPECT_CALL(*mock, MoveTo(from.x, from.y));
+  Expectation line_to_expectation =
+      EXPECT_CALL(*mock, LineTo(to.x, to.y)).After(move_to_expectation);
   EXPECT_CALL(*mock, Stroke())
       .After(line_to_expectation)
       .After(set_line_width_expectation)

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,13 @@
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
-#include "base/win_util.h"
 #include "gui/base/locale_util.h"
+#include "gui/base/util.h"
 #include "gui/post_install_dialog/post_install_dialog.h"
+
+#ifdef OS_WIN
+#include "base/win_util.h"
+#endif  // OS_WIN
 
 int RunPostInstallDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_post_install_dialog);
@@ -60,10 +64,11 @@ int RunPostInstallDialog(int argc, char *argv[]) {
   mozc::ScopedCOMInitializer com_initializer;
 #endif
 
+  mozc::gui::Util::InitQt();
   QApplication app(argc, argv);
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont
-      ("post_install_dialog");
+  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
+      "post_install_dialog");
 
   mozc::gui::PostInstallDialog dialog;
   dialog.exec();

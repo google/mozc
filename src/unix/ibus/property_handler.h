@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ class PropertyHandler : public PropertyHandlerInterface {
   void AppendToolPropertyToPanel();
   // Appends switch properties into panel
   void UpdateCompositionModeIcon(
-      IBusEngine* engine, const commands::CompositionMode new_composition_mode);
+      IBusEngine *engine, const commands::CompositionMode new_composition_mode);
   void SetCompositionMode(IBusEngine *engine,
                           commands::CompositionMode composition_mode);
 

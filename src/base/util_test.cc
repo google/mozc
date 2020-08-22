@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,9 +52,9 @@ namespace {
 // Disabled on NaCl since it uses a mock file system.
 void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
   CHECK(test_map);
-  const string &path = testing::GetSourceFileOrDie({
-      "data", "test", "character_set", "character_set.tsv"});
-  std::map<string, Util::CharacterSet> character_set_type_map;
+  const std::string &path = testing::GetSourceFileOrDie(
+      {"data", "test", "character_set", "character_set.tsv"});
+  std::map<std::string, Util::CharacterSet> character_set_type_map;
   character_set_type_map["ASCII"] = Util::ASCII;
   character_set_type_map["JISX0201"] = Util::JISX0201;
   character_set_type_map["JISX0208"] = Util::JISX0208;
@@ -67,18 +67,18 @@ void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
   InputFileStream finput(path.c_str());
 
   // Read tsv file.
-  string line;
+  std::string line;
   while (!getline(finput, line).fail()) {
     if (Util::StartsWith(line, "#")) {
       // Skip comment line.
       continue;
     }
 
-    std::vector<string> col;
+    std::vector<std::string> col;
     mozc::Util::SplitStringUsing(line, "\t", &col);
     CHECK_GE(col.size(), 2) << "format error: " << line;
     const char32 ucs4 = NumberUtil::SimpleAtoi(col[0]);
-    std::map<string, Util::CharacterSet>::const_iterator itr =
+    std::map<std::string, Util::CharacterSet>::const_iterator itr =
         character_set_type_map.find(col[1]);
     // We cannot use CHECK_NE here because of overload resolution.
     CHECK(character_set_type_map.end() != itr)
@@ -89,8 +89,7 @@ void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
 #endif  // !OS_NACL
 
 Util::CharacterSet GetExpectedCharacterSet(
-    const std::map<char32, Util::CharacterSet> &test_map,
-    char32 ucs4) {
+    const std::map<char32, Util::CharacterSet> &test_map, char32 ucs4) {
   std::map<char32, Util::CharacterSet>::const_iterator itr =
       test_map.find(ucs4);
   if (test_map.find(ucs4) == test_map.end()) {
@@ -104,45 +103,29 @@ Util::CharacterSet GetExpectedCharacterSet(
 }  // namespace
 
 TEST(UtilTest, JoinStrings) {
-  std::vector<string> input;
-  input.push_back("ab");
-  input.push_back("cdef");
-  input.push_back("ghr");
-  string output;
+  std::vector<std::string> input = {"ab", "cdef", "ghr"};
+  std::string output;
   Util::JoinStrings(input, ":", &output);
   EXPECT_EQ("ab:cdef:ghr", output);
 }
 
-TEST(UtilTest, JoinStringPieces) {
+TEST(UtilTest, JoinStrings2) {
   {
-    std::vector<StringPiece> input;
-    input.push_back("ab");
-    string output;
-    Util::JoinStringPieces(input, ":", &output);
-    EXPECT_EQ("ab", output);
+    const std::vector<absl::string_view> input = {"ab"};
+    EXPECT_EQ("ab", Util::JoinStrings(input, ":"));
   }
   {
-    std::vector<StringPiece> input;
-    input.push_back("ab");
-    input.push_back("cdef");
-    input.push_back("ghr");
-    string output;
-    Util::JoinStringPieces(input, ":", &output);
-    EXPECT_EQ("ab:cdef:ghr", output);
+    const std::vector<absl::string_view> input = {"ab", "cdef", "ghr"};
+    EXPECT_EQ("ab:cdef:ghr", Util::JoinStrings(input, ":"));
   }
   {
-    std::vector<StringPiece> input;
-    input.push_back("ab");
-    input.push_back("cdef");
-    input.push_back("ghr");
-    string output;
-    Util::JoinStringPieces(input, "::", &output);
-    EXPECT_EQ("ab::cdef::ghr", output);
+    const std::vector<absl::string_view> input = {"ab", "cdef", "ghr"};
+    EXPECT_EQ("ab::cdef::ghr", Util::JoinStrings(input, "::"));
   }
 }
 
 TEST(UtilTest, ConcatStrings) {
-  string s;
+  std::string s;
 
   Util::ConcatStrings("", "", &s);
   EXPECT_TRUE(s.empty());
@@ -158,8 +141,8 @@ TEST(UtilTest, ConcatStrings) {
 }
 
 TEST(UtilTest, AppendStringWithDelimiter) {
-  string result;
-  string input;
+  std::string result;
+  std::string input;
   const char kDelemiter[] = ":";
 
   {
@@ -188,7 +171,7 @@ TEST(UtilTest, SplitIterator_SingleDelimiter_SkipEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    SplitIterator iter(StringPiece(), " ");
+    SplitIterator iter(absl::string_view(), " ");
     EXPECT_TRUE(iter.Done());
   }
   {
@@ -220,7 +203,7 @@ TEST(UtilTest, SplitIterator_SingleDelimiter_SkipEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    StringPiece s("a b  cde ", 5);
+    absl::string_view s("a b  cde ", 5);
     SplitIterator iter(s, " ");
     EXPECT_FALSE(iter.Done());
     EXPECT_EQ("a", iter.Get());
@@ -239,7 +222,7 @@ TEST(UtilTest, SplitIterator_MultiDelimiter_SkipEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    SplitIterator iter(StringPiece(), ",.");
+    SplitIterator iter(absl::string_view(), ",.");
     EXPECT_TRUE(iter.Done());
   }
   {
@@ -287,7 +270,7 @@ TEST(UtilTest, SplitIterator_SingleDelimiter_AllowEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    SplitIterator iter(StringPiece(), " ");
+    SplitIterator iter(absl::string_view(), " ");
     EXPECT_TRUE(iter.Done());
   }
   {
@@ -328,7 +311,7 @@ TEST(UtilTest, SplitIterator_SingleDelimiter_AllowEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    StringPiece s("a b  cde ", 5);
+    absl::string_view s("a b  cde ", 5);
     SplitIterator iter(s, " ");
     EXPECT_FALSE(iter.Done());
     EXPECT_EQ("a", iter.Get());
@@ -353,7 +336,7 @@ TEST(UtilTest, SplitIterator_MultiDelimiter_AllowEmpty) {
     EXPECT_TRUE(iter.Done());
   }
   {
-    SplitIterator iter(StringPiece(), ",.");
+    SplitIterator iter(absl::string_view(), ",.");
     EXPECT_TRUE(iter.Done());
   }
   {
@@ -402,8 +385,8 @@ TEST(UtilTest, SplitIterator_MultiDelimiter_AllowEmpty) {
 
 TEST(UtilTest, SplitStringUsing) {
   {
-    const string input = "a b  c def";
-    std::vector<string> output;
+    const std::string input = "a b  c def";
+    std::vector<std::string> output;
     Util::SplitStringUsing(input, " ", &output);
     EXPECT_EQ(output.size(), 4);
     EXPECT_EQ("a", output[0]);
@@ -412,8 +395,8 @@ TEST(UtilTest, SplitStringUsing) {
     EXPECT_EQ("def", output[3]);
   }
   {
-    const string input = " a b  c";
-    std::vector<string> output;
+    const std::string input = " a b  c";
+    std::vector<std::string> output;
     Util::SplitStringUsing(input, " ", &output);
     EXPECT_EQ(output.size(), 3);
     EXPECT_EQ("a", output[0]);
@@ -421,8 +404,8 @@ TEST(UtilTest, SplitStringUsing) {
     EXPECT_EQ("c", output[2]);
   }
   {
-    const string input = "a b  c ";
-    std::vector<string> output;
+    const std::string input = "a b  c ";
+    std::vector<std::string> output;
     Util::SplitStringUsing(input, " ", &output);
     EXPECT_EQ(output.size(), 3);
     EXPECT_EQ("a", output[0]);
@@ -430,8 +413,8 @@ TEST(UtilTest, SplitStringUsing) {
     EXPECT_EQ("c", output[2]);
   }
   {
-    const string input = "a:b  cd ";
-    std::vector<string> output;
+    const std::string input = "a:b  cd ";
+    std::vector<std::string> output;
     Util::SplitStringUsing(input, ": ", &output);
     EXPECT_EQ(output.size(), 3);
     EXPECT_EQ("a", output[0]);
@@ -439,8 +422,8 @@ TEST(UtilTest, SplitStringUsing) {
     EXPECT_EQ("cd", output[2]);
   }
   {
-    const string input = "Empty delimiter";
-    std::vector<string> output;
+    const std::string input = "Empty delimiter";
+    std::vector<std::string> output;
     Util::SplitStringUsing(input, "", &output);
     EXPECT_EQ(output.size(), 1);
     EXPECT_EQ(input, output[0]);
@@ -449,8 +432,8 @@ TEST(UtilTest, SplitStringUsing) {
 
 TEST(UtilTest, SplitStringAllowEmpty) {
   {
-    const string input = "a b  c def";
-    std::vector<string> output;
+    const std::string input = "a b  c def";
+    std::vector<std::string> output;
     Util::SplitStringAllowEmpty(input, " ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("a", output[0]);
@@ -460,8 +443,8 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("def", output[4]);
   }
   {
-    const string input = " a b  c";
-    std::vector<string> output;
+    const std::string input = " a b  c";
+    std::vector<std::string> output;
     Util::SplitStringAllowEmpty(input, " ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("", output[0]);
@@ -471,8 +454,8 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("c", output[4]);
   }
   {
-    const string input = "a b  c ";
-    std::vector<string> output;
+    const std::string input = "a b  c ";
+    std::vector<std::string> output;
     Util::SplitStringAllowEmpty(input, " ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("a", output[0]);
@@ -482,8 +465,8 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("", output[4]);
   }
   {
-    const string input = "a:b  c ";
-    std::vector<string> output;
+    const std::string input = "a:b  c ";
+    std::vector<std::string> output;
     Util::SplitStringAllowEmpty(input, ": ", &output);
     EXPECT_EQ(output.size(), 5);
     EXPECT_EQ("a", output[0]);
@@ -493,8 +476,8 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("", output[4]);
   }
   {
-    const string input = "Empty delimiter";
-    std::vector<string> output;
+    const std::string input = "Empty delimiter";
+    std::vector<std::string> output;
     Util::SplitStringAllowEmpty(input, "", &output);
     EXPECT_EQ(output.size(), 1);
     EXPECT_EQ(input, output[0]);
@@ -504,56 +487,56 @@ TEST(UtilTest, SplitStringAllowEmpty) {
 TEST(UtilTest, StripWhiteSpaces) {
   // basic scenario.
   {
-    const string input = "  foo   ";
-    string output;
+    const std::string input = "  foo   ";
+    std::string output;
     Util::StripWhiteSpaces(input, &output);
     EXPECT_EQ("foo", output);
   }
 
   // no space means just copy.
   {
-    const string input = "foo";
-    string output;
+    const std::string input = "foo";
+    std::string output;
     Util::StripWhiteSpaces(input, &output);
     EXPECT_EQ("foo", output);
   }
 
   // tabs and linebreaks are also spaces.
   {
-    const string input = " \tfoo\n";
-    string output;
+    const std::string input = " \tfoo\n";
+    std::string output;
     Util::StripWhiteSpaces(input, &output);
     EXPECT_EQ("foo", output);
   }
 
   // spaces in the middle remains.
   {
-    const string input = " foo bar baz ";
-    string output;
+    const std::string input = " foo bar baz ";
+    std::string output;
     Util::StripWhiteSpaces(input, &output);
     EXPECT_EQ("foo bar baz", output);
   }
 
   // all spaces means clear out output.
   {
-    const string input = " \v \r ";
-    string output;
+    const std::string input = " \v \r ";
+    std::string output;
     Util::StripWhiteSpaces(input, &output);
     EXPECT_TRUE(output.empty());
   }
 
   // empty input.
   {
-    const string input = "";
-    string output;
+    const std::string input = "";
+    std::string output;
     Util::StripWhiteSpaces(input, &output);
     EXPECT_TRUE(output.empty());
   }
 
   // one character.
   {
-    const string input = "a";
-    string output;
+    const std::string input = "a";
+    std::string output;
     Util::StripWhiteSpaces(input, &output);
     EXPECT_EQ("a", output);
   }
@@ -561,21 +544,21 @@ TEST(UtilTest, StripWhiteSpaces) {
 
 TEST(UtilTest, SplitStringToUtf8Chars) {
   {
-    std::vector<string> output;
+    std::vector<std::string> output;
     Util::SplitStringToUtf8Chars("", &output);
     EXPECT_EQ(0, output.size());
   }
 
   {
-    const string kInputs[] = {
+    const std::string kInputs[] = {
         "a", "あ", "亜", "\n", "a",
     };
-    string joined_string;
+    std::string joined_string;
     for (int i = 0; i < arraysize(kInputs); ++i) {
       joined_string += kInputs[i];
     }
 
-    std::vector<string> output;
+    std::vector<std::string> output;
     Util::SplitStringToUtf8Chars(joined_string, &output);
     EXPECT_EQ(arraysize(kInputs), output.size());
 
@@ -586,18 +569,17 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
 }
 
 TEST(UtilTest, SplitCSV) {
-  std::vector<string> answer_vector;
+  std::vector<std::string> answer_vector;
 
-  Util::SplitCSV(
-      "Google,x,\"Buchheit, Paul\",\"string with \"\" quote in it\"",
-      &answer_vector);
+  Util::SplitCSV("Google,x,\"Buchheit, Paul\",\"string with \"\" quote in it\"",
+                 &answer_vector);
   CHECK_EQ(answer_vector.size(), 4);
   CHECK_EQ(answer_vector[0], "Google");
   CHECK_EQ(answer_vector[1], "x");
   CHECK_EQ(answer_vector[2], "Buchheit, Paul");
   CHECK_EQ(answer_vector[3], "string with \" quote in it");
 
-  Util::SplitCSV("Google,hello,",  &answer_vector);
+  Util::SplitCSV("Google,hello,", &answer_vector);
   CHECK_EQ(answer_vector.size(), 3);
   CHECK_EQ(answer_vector[0], "Google");
   CHECK_EQ(answer_vector[1], "hello");
@@ -640,8 +622,8 @@ TEST(UtilTest, SplitCSV) {
 }
 
 TEST(UtilTest, ReplaceString) {
-  const string input = "foobarfoobar";
-  string output;
+  const std::string input = "foobarfoobar";
+  std::string output;
   Util::StringReplace(input, "bar", "buz", true, &output);
   EXPECT_EQ("foobuzfoobuz", output);
 
@@ -651,31 +633,31 @@ TEST(UtilTest, ReplaceString) {
 }
 
 TEST(UtilTest, LowerString) {
-  string s = "TeSTtest";
+  std::string s = "TeSTtest";
   Util::LowerString(&s);
   EXPECT_EQ("testtest", s);
 
-  string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
+  std::string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
   Util::LowerString(&s2);
   EXPECT_EQ("ｔｅｓｔ＠ａｂｃｘｙｚ［｀ａｂｃｘｙｚ｛", s2);
 }
 
 TEST(UtilTest, UpperString) {
-  string s = "TeSTtest";
+  std::string s = "TeSTtest";
   Util::UpperString(&s);
   EXPECT_EQ("TESTTEST", s);
 
-  string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
+  std::string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
   Util::UpperString(&s2);
   EXPECT_EQ("ＴＥＳＴ＠ＡＢＣＸＹＺ［｀ＡＢＣＸＹＺ｛", s2);
 }
 
 TEST(UtilTest, CapitalizeString) {
-  string s = "TeSTtest";
+  std::string s = "TeSTtest";
   Util::CapitalizeString(&s);
   EXPECT_EQ("Testtest", s);
 
-  string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
+  std::string s2 = "ＴｅＳＴ＠ＡＢＣＸＹＺ［｀ａｂｃｘｙｚ｛";
   Util::CapitalizeString(&s2);
   EXPECT_EQ("Ｔｅｓｔ＠ａｂｃｘｙｚ［｀ａｂｃｘｙｚ｛", s2);
 }
@@ -730,7 +712,7 @@ TEST(UtilTest, IsUpperOrCapitalizedAscii) {
   EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
-void VerifyUTF8ToUCS4(const string &text, char32 expected_ucs4,
+void VerifyUTF8ToUCS4(const std::string &text, char32 expected_ucs4,
                       size_t expected_len) {
   const char *begin = text.data();
   const char *end = begin + text.size();
@@ -754,7 +736,7 @@ TEST(UtilTest, UTF8ToUCS4) {
 }
 
 TEST(UtilTest, UCS4ToUTF8) {
-  string output;
+  std::string output;
 
   // Do nothing if |c| is NUL. Previous implementation of UCS4ToUTF8 worked like
   // this even though the reason is unclear.
@@ -805,101 +787,101 @@ TEST(UtilTest, UCS4ToUTF8) {
 }
 
 TEST(UtilTest, CharsLen) {
-  const string src = "私の名前は中野です";
+  const std::string src = "私の名前は中野です";
   EXPECT_EQ(Util::CharsLen(src.c_str(), src.size()), 9);
 }
 
-TEST(UtilTest, SubStringPiece) {
-  const string src = "私の名前は中野です";
-  StringPiece result;
+TEST(UtilTest, Utf8SubString) {
+  const absl::string_view src = "私の名前は中野です";
+  absl::string_view result;
 
-  result = Util::SubStringPiece(src, 0, 2);
+  result = Util::Utf8SubString(src, 0, 2);
   EXPECT_EQ("私の", result);
   // |result|'s data should point to the same memory block as src.
   EXPECT_LE(src.data(), result.data());
 
-  result = Util::SubStringPiece(src, 4, 1);
+  result = Util::Utf8SubString(src, 4, 1);
   EXPECT_EQ("は", result);
   EXPECT_LE(src.data(), result.data());
 
-  result = Util::SubStringPiece(src, 5, 3);
+  result = Util::Utf8SubString(src, 5, 3);
   EXPECT_EQ("中野で", result);
   EXPECT_LE(src.data(), result.data());
 
-  result = Util::SubStringPiece(src, 6, 10);
+  result = Util::Utf8SubString(src, 6, 10);
   EXPECT_EQ("野です", result);
   EXPECT_LE(src.data(), result.data());
 
-  result = Util::SubStringPiece(src, 4, 2);
+  result = Util::Utf8SubString(src, 4, 2);
   EXPECT_EQ("は中", result);
   EXPECT_LE(src.data(), result.data());
 
-  result = Util::SubStringPiece(src, 2, string::npos);
+  result = Util::Utf8SubString(src, 2, std::string::npos);
   EXPECT_EQ("名前は中野です", result);
   EXPECT_LE(src.data(), result.data());
 
-  result = Util::SubStringPiece(src, 5, string::npos);
+  result = Util::Utf8SubString(src, 5, std::string::npos);
   EXPECT_EQ("中野です", result);
   EXPECT_LE(src.data(), result.data());
 }
 
-TEST(UtilTest, SubStringPiece2) {
-  const string src = "私はGoogleです";
+TEST(UtilTest, Utf8SubString2) {
+  const absl::string_view src = "私はGoogleです";
 
-  StringPiece result;
+  absl::string_view result;
 
-  result = Util::SubStringPiece(src, 0);
+  result = Util::Utf8SubString(src, 0);
   EXPECT_EQ(src, result);
 
-  result = Util::SubStringPiece(src, 5);
+  result = Util::Utf8SubString(src, 5);
   EXPECT_EQ("gleです", result);
 
-  result = Util::SubStringPiece(src, 10);
+  result = Util::Utf8SubString(src, 10);
   EXPECT_TRUE(result.empty());
 
-  result = Util::SubStringPiece(src, 13);
+  result = Util::Utf8SubString(src, 13);
   EXPECT_TRUE(result.empty());
 }
 
-TEST(UtilTest, SubString) {
-  const string src = "私の名前は中野です";
-  string result;
+TEST(UtilTest, Utf8SubString3) {
+  const absl::string_view src = "私の名前は中野です";
+  std::string result;
 
   result.clear();
-  Util::SubString(src, 0, 2, &result);
+  Util::Utf8SubString(src, 0, 2, &result);
   EXPECT_EQ(result, "私の");
 
   result.clear();
-  Util::SubString(src, 4, 1, &result);
+  Util::Utf8SubString(src, 4, 1, &result);
   EXPECT_EQ(result, "は");
 
   result.clear();
-  Util::SubString(src, 5, 3, &result);
+  Util::Utf8SubString(src, 5, 3, &result);
   EXPECT_EQ(result, "中野で");
 
   result.clear();
-  Util::SubString(src, 6, 10, &result);
+  Util::Utf8SubString(src, 6, 10, &result);
   EXPECT_EQ(result, "野です");
 
   result.clear();
-  Util::SubString(src, 4, 2, &result);
+  Util::Utf8SubString(src, 4, 2, &result);
   EXPECT_EQ(result, "は中");
 
   result.clear();
-  Util::SubString(src, 2, string::npos, &result);
+  Util::Utf8SubString(src, 2, std::string::npos, &result);
   EXPECT_EQ(result, "名前は中野です");
 
   result.clear();
-  Util::SubString(src, 5, string::npos, &result);
+  Util::Utf8SubString(src, 5, std::string::npos, &result);
   EXPECT_EQ(result, "中野です");
 
-  // Doesn't clear result and call Util::SubString
-  Util::SubString(src, 5, string::npos, &result);
+  // Doesn't clear result and call Util::Utf8SubString
+  Util::Utf8SubString(src, 5, std::string::npos, &result);
   EXPECT_EQ(result, "中野です");
 }
 
 TEST(UtilTest, StartsWith) {
-  const string str = "abcdefg";
+  const std::string str = "abcdefg";
   EXPECT_TRUE(Util::StartsWith(str, ""));
   EXPECT_TRUE(Util::StartsWith(str, "a"));
   EXPECT_TRUE(Util::StartsWith(str, "abc"));
@@ -909,7 +891,7 @@ TEST(UtilTest, StartsWith) {
 }
 
 TEST(UtilTest, EndsWith) {
-  const string str = "abcdefg";
+  const std::string str = "abcdefg";
   EXPECT_TRUE(Util::EndsWith(str, ""));
   EXPECT_TRUE(Util::EndsWith(str, "g"));
   EXPECT_TRUE(Util::EndsWith(str, "fg"));
@@ -920,10 +902,12 @@ TEST(UtilTest, EndsWith) {
 }
 
 TEST(UtilTest, StripUTF8BOM) {
-  string line;
+  std::string line;
 
   // Should be stripped.
-  line = "\xef\xbb\xbf" "abc";
+  line =
+      "\xef\xbb\xbf"
+      "abc";
   Util::StripUTF8BOM(&line);
   EXPECT_EQ("abc", line);
 
@@ -933,14 +917,26 @@ TEST(UtilTest, StripUTF8BOM) {
   EXPECT_EQ("", line);
 
   // BOM in the middle of text. Shouldn't be stripped.
-  line = "a" "\xef\xbb\xbf" "bc";
+  line =
+      "a"
+      "\xef\xbb\xbf"
+      "bc";
   Util::StripUTF8BOM(&line);
-  EXPECT_EQ("a" "\xef\xbb\xbf" "bc", line);
+  EXPECT_EQ(
+      "a"
+      "\xef\xbb\xbf"
+      "bc",
+      line);
 
   // Incomplete BOM. Shouldn't be stripped.
-  line = "\xef\xbb" "abc";
+  line =
+      "\xef\xbb"
+      "abc";
   Util::StripUTF8BOM(&line);
-  EXPECT_EQ("\xef\xbb" "abc", line);
+  EXPECT_EQ(
+      "\xef\xbb"
+      "abc",
+      line);
 
   // String shorter than the BOM. Do nothing.
   line = "a";
@@ -970,7 +966,7 @@ TEST(UtilTest, IsAndroidPuaEmoji) {
   EXPECT_FALSE(Util::IsAndroidPuaEmoji("A"));
   EXPECT_FALSE(Util::IsAndroidPuaEmoji("a"));
 
-  string str;
+  std::string str;
   Util::UCS4ToUTF8(0xFDFFF, &str);
   EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
   Util::UCS4ToUTF8(0xFE000, &str);
@@ -988,61 +984,13 @@ TEST(UtilTest, IsAndroidPuaEmoji) {
   EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
 }
 
-TEST(UtilTest, StringPrintf) {
-  // On GCC, |EXPECT_EQ("", Util::StringPrintf(""))| may cause
-  // "warning: zero-length printf format string" so we disable this check.
-  MOZC_GCC_DISABLE_WARNING_INLINE(format-zero-length);
-
-  // strings
-  EXPECT_EQ("", Util::StringPrintf(""));
-  EXPECT_EQ("", Util::StringPrintf("%s", ""));
-  EXPECT_EQ("hello, world", Util::StringPrintf("hello, world"));
-  EXPECT_EQ("hello, world", Util::StringPrintf("%s", "hello, world"));
-  EXPECT_EQ("hello, world", Util::StringPrintf("%s, %s", "hello", "world"));
-  EXPECT_EQ("はろー世界", Util::StringPrintf("%s", "はろー世界"));
-
-  // 32-bit integers
-  EXPECT_EQ("-2147483648", Util::StringPrintf("%d", kint32min));
-  EXPECT_EQ("2147483647", Util::StringPrintf("%d", kint32max));
-  EXPECT_EQ("4294967295", Util::StringPrintf("%u", kuint32max));
-  EXPECT_EQ("80000000", Util::StringPrintf("%x", kint32min));
-  EXPECT_EQ("7fffffff", Util::StringPrintf("%x", kint32max));
-  EXPECT_EQ("FFFFFFFF", Util::StringPrintf("%X", kuint32max));
-
-  // 64-bit integers
-  EXPECT_EQ("-9223372036854775808",
-            Util::StringPrintf("%" MOZC_PRId64, kint64min));
-  EXPECT_EQ("9223372036854775807",
-            Util::StringPrintf("%" MOZC_PRId64, kint64max));
-  EXPECT_EQ("18446744073709551615",
-            Util::StringPrintf("%" MOZC_PRIu64, kuint64max));
-  EXPECT_EQ("8000000000000000",
-            Util::StringPrintf("%" MOZC_PRIx64, kint64min));
-  EXPECT_EQ("7fffffffffffffff",
-            Util::StringPrintf("%" MOZC_PRIx64, kint64max));
-  EXPECT_EQ("FFFFFFFFFFFFFFFF",
-            Util::StringPrintf("%" MOZC_PRIX64, kuint64max));
-
-  // Simple test for floating point numbers
-  EXPECT_EQ("-1.75", Util::StringPrintf("%.2f", -1.75));
-
-  // 4096 is greater than a temporary buffer size (1024 bytes)
-  // which is used in StringPrintf().
-  const string kLongStrA(4096, '.');
-  const string kLongStrB(4096, '_');
-  const string& result = Util::StringPrintf("%s\t%s\n",
-                                            kLongStrA.c_str(),
-                                            kLongStrB.c_str());
-  EXPECT_EQ(kLongStrA + "\t" + kLongStrB + "\n", result);
-}
-
 TEST(UtilTest, HiraganaToKatakana) {
   {
-    const string input =
+    const std::string input =
         "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
         "だぢづでどっなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよゃ"
         "ゅょらりるれろわゎをんゔ";
-    string output;
+    std::string output;
     Util::HiraganaToKatakana(input, &output);
     EXPECT_EQ(
         "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
@@ -1051,14 +999,14 @@ TEST(UtilTest, HiraganaToKatakana) {
         output);
   }
   {
-    const string input = "わたしのなまえはなかのですうまーよろしゅう";
-    string output;
+    const std::string input = "わたしのなまえはなかのですうまーよろしゅう";
+    std::string output;
     Util::HiraganaToKatakana(input, &output);
     EXPECT_EQ("ワタシノナマエハナカノデスウマーヨロシュウ", output);
   }
   {
-    const string input = "グーグル工藤よろしくabc";
-    string output;
+    const std::string input = "グーグル工藤よろしくabc";
+    std::string output;
     Util::HiraganaToKatakana(input, &output);
     EXPECT_EQ("グーグル工藤ヨロシクabc", output);
   }
@@ -1066,11 +1014,11 @@ TEST(UtilTest, HiraganaToKatakana) {
 
 TEST(UtilTest, KatakanaToHiragana) {
   {
-    const string input =
+    const std::string input =
         "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
         "ダヂヅデドッナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨャ"
         "ュョラリルレロワヮヲンヰヱヴ";
-    string output;
+    std::string output;
     Util::KatakanaToHiragana(input, &output);
     EXPECT_EQ(
         "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
@@ -1079,14 +1027,14 @@ TEST(UtilTest, KatakanaToHiragana) {
         output);
   }
   {
-    const string input = "ワタシノナマエハナカノデスウマーヨロシュウ";
-    string output;
+    const std::string input = "ワタシノナマエハナカノデスウマーヨロシュウ";
+    std::string output;
     Util::KatakanaToHiragana(input, &output);
     EXPECT_EQ("わたしのなまえはなかのですうまーよろしゅう", output);
   }
   {
-    const string input = "グーグル工藤ヨロシクabc";
-    string output;
+    const std::string input = "グーグル工藤ヨロシクabc";
+    std::string output;
     Util::KatakanaToHiragana(input, &output);
     EXPECT_EQ("ぐーぐる工藤よろしくabc", output);
   }
@@ -1104,15 +1052,15 @@ TEST(UtilTest, RomanjiToHiragana) {
       {"xyz", "xyz"},
   };
   for (size_t i = 0; i < arraysize(kTestCases); ++i) {
-    string actual;
+    std::string actual;
     Util::RomanjiToHiragana(kTestCases[i].input, &actual);
     EXPECT_EQ(kTestCases[i].expected, actual);
   }
 }
 
 TEST(UtilTest, NormalizeVoicedSoundMark) {
-  const string input = "僕のう゛ぁいおりん";
-  string output;
+  const std::string input = "僕のう゛ぁいおりん";
+  std::string output;
   Util::NormalizeVoicedSoundMark(input, &output);
   EXPECT_EQ("僕のゔぁいおりん", output);
 }
@@ -1136,7 +1084,7 @@ TEST(UtilTest, IsHalfWidthKatakanaSymbol) {
 }
 
 TEST(UtilTest, FullWidthAndHalfWidth) {
-  string output;
+  std::string output;
 
   Util::FullWidthToHalfWidth("", &output);
   EXPECT_EQ("", output);
@@ -1191,24 +1139,14 @@ TEST(UtilTest, BracketTest) {
     const char *open_bracket;
     const char *close_bracket;
   } kBracketType[] = {
-      { "（", "）" },
-      { "〔", "〕" },
-      { "［", "］" },
-      { "｛", "｝" },
-      { "〈", "〉" },
-      { "《", "》" },
-      { "「", "」" },
-      { "『", "』" },
-      { "【", "】" },
-      { "〘", "〙" },
-      { "〚", "〛" },
-      { nullptr, nullptr },  // sentinel
+      {"（", "）"}, {"〔", "〕"}, {"［", "］"}, {"｛", "｝"},
+      {"〈", "〉"}, {"《", "》"}, {"「", "」"}, {"『", "』"},
+      {"【", "】"}, {"〘", "〙"}, {"〚", "〛"}, {nullptr, nullptr},  // sentinel
   };
 
-  string pair;
-  for (size_t i = 0;
-       (kBracketType[i].open_bracket != nullptr ||
-        kBracketType[i].close_bracket != nullptr);
+  std::string pair;
+  for (size_t i = 0; (kBracketType[i].open_bracket != nullptr ||
+                      kBracketType[i].close_bracket != nullptr);
        ++i) {
     EXPECT_TRUE(Util::IsOpenBracket(kBracketType[i].open_bracket, &pair));
     EXPECT_EQ(kBracketType[i].close_bracket, pair);
@@ -1235,7 +1173,7 @@ TEST(UtilTest, IsEnglishTransliteration) {
 }
 
 TEST(UtilTest, ChopReturns) {
-  string line = "line\n";
+  std::string line = "line\n";
   EXPECT_TRUE(Util::ChopReturns(&line));
   EXPECT_EQ("line", line);
 
@@ -1261,7 +1199,7 @@ TEST(UtilTest, ChopReturns) {
 }
 
 TEST(UtilTest, EncodeURI) {
-  string encoded;
+  std::string encoded;
   Util::EncodeURI("もずく", &encoded);
   EXPECT_EQ("%E3%82%82%E3%81%9A%E3%81%8F", encoded);
 
@@ -1275,7 +1213,7 @@ TEST(UtilTest, EncodeURI) {
 }
 
 TEST(UtilTest, DecodeURI) {
-  string decoded;
+  std::string decoded;
   Util::DecodeURI("%E3%82%82%E3%81%9A%E3%81%8F", &decoded);
   EXPECT_EQ("もずく", decoded);
 
@@ -1289,8 +1227,8 @@ TEST(UtilTest, DecodeURI) {
 }
 
 TEST(UtilTest, AppendCGIParams) {
-  std::vector<std::pair<string, string> > params;
-  string url;
+  std::vector<std::pair<std::string, std::string> > params;
+  std::string url;
   Util::AppendCGIParams(params, &url);
   EXPECT_TRUE(url.empty());
 
@@ -1306,13 +1244,13 @@ TEST(UtilTest, AppendCGIParams) {
 }
 
 TEST(UtilTest, Escape) {
-  string escaped;
+  std::string escaped;
   Util::Escape("らむだ", &escaped);
   EXPECT_EQ("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0", escaped);
 }
 
 TEST(UtilTest, Unescape) {
-  string unescaped;
+  std::string unescaped;
   EXPECT_TRUE(Util::Unescape("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0",
                              &unescaped));
   EXPECT_EQ("らむだ", unescaped);
@@ -1322,36 +1260,17 @@ TEST(UtilTest, Unescape) {
 
   // A binary sequence (upper case)
   EXPECT_TRUE(Util::Unescape("\\x00\\x01\\xEF\\xFF", &unescaped));
-  EXPECT_EQ(string("\x00\x01\xEF\xFF", 4), unescaped);
+  EXPECT_EQ(std::string("\x00\x01\xEF\xFF", 4), unescaped);
 
   // A binary sequence (lower case)
   EXPECT_TRUE(Util::Unescape("\\x00\\x01\\xef\\xff", &unescaped));
-  EXPECT_EQ(string("\x00\x01\xEF\xFF", 4), unescaped);
+  EXPECT_EQ(std::string("\x00\x01\xEF\xFF", 4), unescaped);
 
   EXPECT_TRUE(Util::Unescape("", &unescaped));
   EXPECT_TRUE(unescaped.empty());
 
   EXPECT_FALSE(Util::Unescape("\\AB\\CD\\EFG", &unescaped));
   EXPECT_FALSE(Util::Unescape("\\01\\XY", &unescaped));
-}
-
-TEST(UtilTest, EscapeUrl) {
-  string escaped;
-  Util::EscapeUrl("らむだ", &escaped);
-  EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0", escaped);
-  EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0", Util::EscapeUrl("らむだ"));
-}
-
-TEST(UtilTest, EscapeHtml) {
-  string escaped;
-  Util::EscapeHtml("<>&'\"abc", &escaped);
-  EXPECT_EQ("&lt;&gt;&amp;&#39;&quot;abc", escaped);
-}
-
-TEST(UtilTest, EscapeCss) {
-  string escaped;
-  Util::EscapeCss("<>&'\"abc", &escaped);
-  EXPECT_EQ("&lt;>&'\"abc", escaped);
 }
 
 TEST(UtilTest, ScriptType) {
@@ -1640,10 +1559,10 @@ TEST(UtilTest, WideCharsLen) {
   // "að ®b"
   const string input_utf8 = "a\360\240\256\237b";
   EXPECT_EQ(4, Util::WideCharsLen(input_utf8));
-  EXPECT_EQ(0, Util::WideCharsLen(Util::SubString(input_utf8, 0, 0)));
-  EXPECT_EQ(1, Util::WideCharsLen(Util::SubString(input_utf8, 0, 1)));
-  EXPECT_EQ(3, Util::WideCharsLen(Util::SubString(input_utf8, 0, 2)));
-  EXPECT_EQ(4, Util::WideCharsLen(Util::SubString(input_utf8, 0, 3)));
+  EXPECT_EQ(0, Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 0)));
+  EXPECT_EQ(1, Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 1)));
+  EXPECT_EQ(3, Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 2)));
+  EXPECT_EQ(4, Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 3)));
 }
 
 TEST(UtilTest, UTF8ToWide) {
@@ -1673,8 +1592,8 @@ TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
 #endif  // OS_WIN
 
 TEST(UtilTest, IsKanaSymbolContained) {
-  const string kFullstop("。");
-  const string kSpace(" ");
+  const std::string kFullstop("。");
+  const std::string kSpace(" ");
   EXPECT_TRUE(Util::IsKanaSymbolContained(kFullstop));
   EXPECT_TRUE(Util::IsKanaSymbolContained(kSpace + kFullstop));
   EXPECT_TRUE(Util::IsKanaSymbolContained(kFullstop + kSpace));
@@ -1694,17 +1613,17 @@ TEST(UtilTest, RandomSeedTest) {
 }
 
 TEST(UtilTest, SplitFirstChar32) {
-  StringPiece rest;
+  absl::string_view rest;
   char32 c = 0;
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_FALSE(Util::SplitFirstChar32("", &c, &rest));
   EXPECT_EQ(0, c);
   EXPECT_TRUE(rest.empty());
 
   // Allow nullptr to ignore the matched value.
-  rest = StringPiece();
+  rest = absl::string_view();
   EXPECT_TRUE(Util::SplitFirstChar32("01", nullptr, &rest));
   EXPECT_EQ("1", rest);
 
@@ -1713,73 +1632,73 @@ TEST(UtilTest, SplitFirstChar32) {
   EXPECT_TRUE(Util::SplitFirstChar32("01", &c, nullptr));
   EXPECT_EQ('0', c);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\x01 ", &c, &rest));
   EXPECT_EQ(1, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\x7F ", &c, &rest));
   EXPECT_EQ(0x7F, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xC2\x80 ", &c, &rest));
   EXPECT_EQ(0x80, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xDF\xBF ", &c, &rest));
   EXPECT_EQ(0x7FF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xE0\xA0\x80 ", &c, &rest));
   EXPECT_EQ(0x800, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xEF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0xFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xF0\x90\x80\x80 ", &c, &rest));
   EXPECT_EQ(0x10000, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xF7\xBF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0x1FFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xF8\x88\x80\x80\x80 ", &c, &rest));
   EXPECT_EQ(0x200000, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xFB\xBF\xBF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0x3FFFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xFC\x84\x80\x80\x80\x80 ", &c, &rest));
   EXPECT_EQ(0x4000000, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitFirstChar32("\xFD\xBF\xBF\xBF\xBF\xBF ", &c, &rest));
   EXPECT_EQ(0x7FFFFFFF, c);
@@ -1841,10 +1760,10 @@ TEST(UtilTest, SplitFirstChar32) {
 }
 
 TEST(UtilTest, SplitLastChar32) {
-  StringPiece rest;
+  absl::string_view rest;
   char32 c = 0;
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_FALSE(Util::SplitLastChar32("", &rest, &c));
   EXPECT_EQ(0, c);
@@ -1856,77 +1775,77 @@ TEST(UtilTest, SplitLastChar32) {
   EXPECT_EQ('1', c);
 
   // Allow nullptr to ignore the matched value.
-  rest = StringPiece();
+  rest = absl::string_view();
   EXPECT_TRUE(Util::SplitLastChar32("01", &rest, nullptr));
   EXPECT_EQ("0", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \x01", &rest, &c));
   EXPECT_EQ(1, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \x7F", &rest, &c));
   EXPECT_EQ(0x7F, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xC2\x80", &rest, &c));
   EXPECT_EQ(0x80, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xDF\xBF", &rest, &c));
   EXPECT_EQ(0x7FF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xE0\xA0\x80", &rest, &c));
   EXPECT_EQ(0x800, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xEF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0xFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xF0\x90\x80\x80", &rest, &c));
   EXPECT_EQ(0x10000, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xF7\xBF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0x1FFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xF8\x88\x80\x80\x80", &rest, &c));
   EXPECT_EQ(0x200000, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xFB\xBF\xBF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0x3FFFFFF, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xFC\x84\x80\x80\x80\x80", &rest, &c));
   EXPECT_EQ(0x4000000, c);
   EXPECT_EQ(" ", rest);
 
-  rest = StringPiece();
+  rest = absl::string_view();
   c = 0;
   EXPECT_TRUE(Util::SplitLastChar32(" \xFD\xBF\xBF\xBF\xBF\xBF", &rest, &c));
   EXPECT_EQ(0x7FFFFFFF, c);
@@ -1987,22 +1906,45 @@ TEST(UtilTest, SplitLastChar32) {
   }
 }
 
+TEST(UtilTest, IsValidUtf8) {
+  EXPECT_TRUE(Util::IsValidUtf8(""));
+  EXPECT_TRUE(Util::IsValidUtf8("abc"));
+  EXPECT_TRUE(Util::IsValidUtf8("あいう"));
+  EXPECT_TRUE(Util::IsValidUtf8("aあbいcう"));
+
+  EXPECT_FALSE(Util::IsValidUtf8("\xC2 "));
+  EXPECT_FALSE(Util::IsValidUtf8("\xC2\xC2 "));
+  EXPECT_FALSE(Util::IsValidUtf8("\xE0 "));
+  EXPECT_FALSE(Util::IsValidUtf8("\xE0\xE0\xE0 "));
+  EXPECT_FALSE(Util::IsValidUtf8("\xF0 "));
+  EXPECT_FALSE(Util::IsValidUtf8("\xF0\xF0\xF0\xF0 "));
+
+  // BOM should be treated as invalid byte.
+  EXPECT_FALSE(Util::IsValidUtf8("\xFF "));
+  EXPECT_FALSE(Util::IsValidUtf8("\xFE "));
+
+  // Redundant encoding with U+002F is invalid.
+  EXPECT_FALSE(Util::IsValidUtf8("\xC0\xAF"));
+  EXPECT_FALSE(Util::IsValidUtf8("\xE0\x80\xAF"));
+  EXPECT_FALSE(Util::IsValidUtf8("\xF0\x80\x80\xAF"));
+}
+
 TEST(UtilTest, SerializeAndDeserializeUint64) {
   struct {
-    const char* str;
+    const char *str;
     uint64 value;
   } kCorrectPairs[] = {
-    {"\x00\x00\x00\x00\x00\x00\x00\x00", 0},
-    {"\x00\x00\x00\x00\x00\x00\x00\xFF", kuint8max},
-    {"\x00\x00\x00\x00\x00\x00\xFF\xFF", kuint16max},
-    {"\x00\x00\x00\x00\xFF\xFF\xFF\xFF", kuint32max},
-    {"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", kuint64max},
-    {"\x01\x23\x45\x67\x89\xAB\xCD\xEF", 0x0123456789ABCDEF},
-    {"\xFE\xDC\xBA\x98\x76\x54\x32\x10", 0xFEDCBA9876543210},
+      {"\x00\x00\x00\x00\x00\x00\x00\x00", 0},
+      {"\x00\x00\x00\x00\x00\x00\x00\xFF", kuint8max},
+      {"\x00\x00\x00\x00\x00\x00\xFF\xFF", kuint16max},
+      {"\x00\x00\x00\x00\xFF\xFF\xFF\xFF", kuint32max},
+      {"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", kuint64max},
+      {"\x01\x23\x45\x67\x89\xAB\xCD\xEF", 0x0123456789ABCDEF},
+      {"\xFE\xDC\xBA\x98\x76\x54\x32\x10", 0xFEDCBA9876543210},
   };
 
   for (size_t i = 0; i < arraysize(kCorrectPairs); ++i) {
-    const string serialized(kCorrectPairs[i].str, 8);
+    const std::string serialized(kCorrectPairs[i].str, 8);
     EXPECT_EQ(serialized, Util::SerializeUint64(kCorrectPairs[i].value));
 
     uint64 v;
@@ -2011,10 +1953,10 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
   }
 
   // Invalid patterns for DeserializeUint64.
-  const char* kFalseCases[] = {
-    "",
-    "abc",
-    "helloworld",
+  const char *kFalseCases[] = {
+      "",
+      "abc",
+      "helloworld",
   };
   for (size_t i = 0; i < arraysize(kFalseCases); ++i) {
     uint64 v;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 #include "ipc/ipc.h"
 
 namespace mozc {
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 // Mach port manager for testing: it allocates a mach port locally and
 // shares it among client-server.
 class TestMachPortManager : public mozc::MachPortManagerInterface {
@@ -51,27 +51,24 @@ class TestMachPortManager : public mozc::MachPortManagerInterface {
 };
 #endif
 
-
 // An IPCClientFactory which holds an onmemory port instead of actual
 // connections.  It is only available for Mac.  Otherwise it is same
 // as a normal IPCClientFactory.
 class IPCClientFactoryOnMemory : public IPCClientFactoryInterface {
  public:
-  IPCClientFactoryOnMemory() { }
+  IPCClientFactoryOnMemory() {}
 
-  virtual IPCClientInterface *NewClient(
-      const string &name, const string &port_name);
+  virtual IPCClientInterface *NewClient(const std::string &name,
+                                        const std::string &port_name);
 
-  virtual IPCClientInterface *NewClient(const string &name);
+  virtual IPCClientInterface *NewClient(const std::string &name);
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   // Returns MachPortManager to share the mach port between client and server.
-  MachPortManagerInterface *OnMemoryPortManager() {
-    return &mach_manager_;
-  }
+  MachPortManagerInterface *OnMemoryPortManager() { return &mach_manager_; }
 #endif
  private:
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   TestMachPortManager mach_manager_;
 #endif
   DISALLOW_COPY_AND_ASSIGN(IPCClientFactoryOnMemory);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,11 +37,13 @@ namespace mozc {
 namespace renderer {
 class RendererMock : public RendererInterface {
  public:
-  MOCK_METHOD0(Activate, bool());
-  MOCK_CONST_METHOD0(IsAvailable, bool());
-  MOCK_METHOD1(ExecCommand, bool(const commands::RendererCommand &command));
-  MOCK_METHOD1(SetSendCommandInterface,
-               void(client::SendCommandInterface *send_command_interface));
+  MOCK_METHOD(bool, Activate, (), (override));
+  MOCK_METHOD(bool, IsAvailable, (), (const, override));
+  MOCK_METHOD(bool, ExecCommand, (const commands::RendererCommand &command),
+              (override));
+  MOCK_METHOD(void, SetSendCommandInterface,
+              (client::SendCommandInterface* send_command_interface),
+              (override));
 };
 
 }  // namespace renderer

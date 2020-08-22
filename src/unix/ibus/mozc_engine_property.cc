@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,87 +38,75 @@ namespace ibus {
 namespace {
 // The list of properties used in ibus-mozc.
 const MozcEngineProperty kMozcEnginePropertiesArray[] = {
-  {
-    commands::DIRECT,
-    "InputMode.Direct",
-    "Direct input",
-    "A",
-    "direct.png",
-  },
-  {
-    commands::HIRAGANA,
-    "InputMode.Hiragana",
-    "Hiragana",
-    "あ",
-    "hiragana.png",
-  },
-  {
-    commands::FULL_KATAKANA,
-    "InputMode.Katakana",
-    "Katakana",
-    "ア",
-    "katakana_full.png",
-  },
-  {
-    commands::HALF_ASCII,
-    "InputMode.Latin",
-    "Latin",
-    "_A",
-    "alpha_half.png",
-  },
-  {
-    commands::FULL_ASCII,
-    "InputMode.WideLatin",
-    "Wide Latin",
-    "Ａ",
-    "alpha_full.png",
-  },
-  {
-    commands::HALF_KATAKANA,
-    "InputMode.HalfWidthKatakana",
-    "Half width katakana",
-    "_ｱ",
-    "katakana_half.png",
-  },
+    {
+        commands::DIRECT,
+        "InputMode.Direct",
+        "Direct input",
+        "A",
+        "direct.png",
+    },
+    {
+        commands::HIRAGANA,
+        "InputMode.Hiragana",
+        "Hiragana",
+        "あ",
+        "hiragana.png",
+    },
+    {
+        commands::FULL_KATAKANA,
+        "InputMode.Katakana",
+        "Katakana",
+        "ア",
+        "katakana_full.png",
+    },
+    {
+        commands::HALF_ASCII,
+        "InputMode.Latin",
+        "Latin",
+        "_A",
+        "alpha_half.png",
+    },
+    {
+        commands::FULL_ASCII,
+        "InputMode.WideLatin",
+        "Wide Latin",
+        "Ａ",
+        "alpha_full.png",
+    },
+    {
+        commands::HALF_KATAKANA,
+        "InputMode.HalfWidthKatakana",
+        "Half width katakana",
+        "_ｱ",
+        "katakana_half.png",
+    },
 };
 
 const MozcEngineToolProperty kMozcEngineToolPropertiesArray[] = {
-  {
-    "Tool.ConfigDialog",
-    "config_dialog",
-    "Properties",
-    "properties.png",
-  },
-  {
-    "Tool.DictionaryTool",
-    "dictionary_tool",
-    "Dictionary Tool",
-    "dictionary.png",
-  },
-  {
-    "Tool.WordRegisterDialog",
-    "word_register_dialog",
-    "Add Word",
-    "word_register.png",
-  },
-  {
-    "Tool.HandWriting",
-    "hand_writing",
-    "Handwriting",
-    "hand_writing.png",
-  },
-  {
-    "Tool.CharacterPalette",
-    "character_palette",
-    "Character Palette",
-    "character_palette.png",
-  },
-  {
-    "Tool.AboutDialog",
-    "about_dialog",
-    "About Mozc",
-    NULL,
-  },
+    {
+        "Tool.ConfigDialog",
+        "config_dialog",
+        "Properties",
+        "properties.png",
+    },
+    {
+        "Tool.DictionaryTool",
+        "dictionary_tool",
+        "Dictionary Tool",
+        "dictionary.png",
+    },
+    {
+        "Tool.WordRegisterDialog",
+        "word_register_dialog",
+        "Add Word",
+        "word_register.png",
+    },
+    {
+        "Tool.AboutDialog",
+        "about_dialog",
+        "About Mozc",
+        NULL,
+    },
 };
 }  // namespace
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,12 +36,9 @@ namespace renderer {
 namespace gtk {
 
 PangoLayoutWrapper::PangoLayoutWrapper(PangoContext *context)
-  : layout_(pango_layout_new(context)) {
-}
+    : layout_(pango_layout_new(context)) {}
 
-PangoLayoutWrapper::~PangoLayoutWrapper() {
-  g_object_unref(layout_);
-}
+PangoLayoutWrapper::~PangoLayoutWrapper() { g_object_unref(layout_); }
 
 void PangoLayoutWrapper::SetText(const string &text) {
   pango_layout_set_text(layout_, text.c_str(), text.length());
@@ -74,9 +71,7 @@ Size PangoLayoutWrapper::GetPixelSize() const {
   return actual_size;
 }
 
-PangoLayout *PangoLayoutWrapper::GetPangoLayout() {
-  return layout_;
-}
+PangoLayout *PangoLayoutWrapper::GetPangoLayout() { return layout_; }
 
 void PangoWrapper::RendererDrawLayout(PangoLayoutWrapperInterface *layout,
                                       int x, int y) {
@@ -91,12 +86,9 @@ void PangoWrapper::AttributesUnref(PangoAttrList *attribute) {
   pango_attr_list_unref(attribute);
 }
 
-PangoContext *PangoWrapper::GetContext() {
-  return context_;
-}
+PangoContext *PangoWrapper::GetContext() { return context_; }
 
-PangoWrapper::PangoWrapper(GdkDrawable *drawable)
-  : gc_(gdk_gc_new(drawable)) {
+PangoWrapper::PangoWrapper(GdkDrawable *drawable) : gc_(gdk_gc_new(drawable)) {
   GdkScreen *screen = gdk_drawable_get_screen(drawable);
   renderer_ = gdk_pango_renderer_new(screen);
   gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(renderer_), drawable);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 #include <vector>
 
 #include "base/mmap.h"
-#include "base/port.h"
+#include "base/status.h"
 #include "dictionary/file/codec_interface.h"
 
 namespace mozc {
@@ -51,16 +51,18 @@ class DictionaryFile {
   explicit DictionaryFile(const DictionaryFileCodecInterface *file_codec);
   ~DictionaryFile();
 
-  // Open from file
-  bool OpenFromFile(const string &file);
+  DictionaryFile(const DictionaryFile &) = delete;
+  DictionaryFile &operator=(const DictionaryFile &) = delete;
 
-  // Open from memory
-  bool OpenFromImage(const char* image, int len);
+  // Opens from a file.
+  mozc::Status OpenFromFile(const std::string &file);
 
-  // Get pointer section from name
-  // Image size is set to |len|
-  // Return NULL when not found
-  const char *GetSection(const string &section_name, int *len) const;
+  // Opens from a memory block.
+  mozc::Status OpenFromImage(const char *image, int len);
+
+  // Gets a pointer to the section having |section_name|. Image size is set to
+  // |len|. Returns nullptr when not found.
+  const char *GetSection(const std::string &section_name, int *len) const;
 
  private:
   // DictionaryFile does not take the ownership of |file_codec_|.
@@ -68,8 +70,6 @@ class DictionaryFile {
   // This will be nullptr if the mapping source is given as a pointer.
   std::unique_ptr<Mmap> mapping_;
   std::vector<DictionaryFileSection> sections_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryFile);
 };
 
 }  // namespace dictionary

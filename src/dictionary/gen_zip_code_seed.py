@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@
  "南三条西","１１丁目","0608612","060  ","札幌",0,0,0
 """
 
+from __future__ import print_function
 __author__ = "toshiyuki"
 
 import optparse
@@ -83,7 +84,7 @@ class ZipEntry(object):
     address = unicodedata.normalize('NFKC', self.address)
     line = '\t'.join([zip_code, '0', '0', str(ZIP_CODE_COST),
                       address, ZIP_CODE_LABEL])
-    print line.encode('utf-8')
+    print(line.encode('utf-8'))
 
 
 def ProcessZipCodeCSV(file_name):

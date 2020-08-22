@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,9 @@
 #include <Windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <Ctffunc.h>
 #include <atlbase.h>
 #include <atlcom.h>
-#include <Ctffunc.h>
 
 #include <memory>
 #include <vector>
@@ -56,8 +56,7 @@ namespace tsf {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kSearchCandidateProviderName[] =
-    L"Google Japanese Input";
+const wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 #else
 const wchar_t kSearchCandidateProviderName[] = L"Mozc";
 #endif
@@ -66,9 +65,7 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
  public:
   GetLinguisticAlternatesImpl(TipTextService *text_service,
                               TipQueryProvider *provider)
-      : text_service_(text_service),
-        provider_(provider) {
-  }
+      : text_service_(text_service), provider_(provider) {}
 
  private:
   // The IUnknown interface methods.
@@ -95,9 +92,7 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
     return S_OK;
   }
 
-  virtual ULONG STDMETHODCALLTYPE AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
 
   virtual ULONG STDMETHODCALLTYPE Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -117,9 +112,8 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
   }
 
   // The ITfFnGetLinguisticAlternates interface method.
-  virtual HRESULT STDMETHODCALLTYPE GetAlternates(
-      ITfRange *range,
-      ITfCandidateList **candidate_list) {
+  virtual HRESULT STDMETHODCALLTYPE
+  GetAlternates(ITfRange *range, ITfCandidateList **candidate_list) {
     if (range == nullptr) {
       return E_INVALIDARG;
     }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,10 @@
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
 #ifdef OS_WIN
+// clang-format off
 #include <windows.h>
 #include <CommCtrl.h>  // for CCSIZEOF_STRUCT
+// clang-format on
 #endif
 
 #include <QtGui/QGuiApplication>
@@ -102,8 +104,8 @@ TranslationDataImpl::TranslationDataImpl() {
       QLibraryInfo::location(QLibraryInfo::TranslationsPath), ".qm");
   if (!loaded) {
     // Load ":/qt_<lang>.qm" from a qrc file.
-    loaded = default_translator_.load(
-        QLocale::system(), "qt", "_", ":/", ".qm");
+    loaded =
+        default_translator_.load(QLocale::system(), "qt", "_", ":/", ".qm");
   }
 
   if (loaded) {
@@ -128,10 +130,9 @@ void TranslationDataImpl::InstallTranslationMessageAndFont(
 
 }  // namespace
 
-void LocaleUtil::InstallTranslationMessageAndFont(
-    const char *resource_name) {
-  Singleton<TranslationDataImpl>::get()->InstallTranslationMessageAndFont
-      (resource_name);
+void LocaleUtil::InstallTranslationMessageAndFont(const char *resource_name) {
+  Singleton<TranslationDataImpl>::get()->InstallTranslationMessageAndFont(
+      resource_name);
 }
 }  // namespace gui
 }  // namespace mozc

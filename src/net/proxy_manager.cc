@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,20 +31,20 @@
 
 #include <string>
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <CFNetwork/CFNetwork.h>
 #include <SystemConfiguration/SystemConfiguration.h>
-#include "base/scoped_cftyperef.h"
 #include "base/mac_util.h"
+#include "base/scoped_cftyperef.h"
 #endif
 
-#include "base/port.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 
 namespace mozc {
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 namespace {
 // Helper functions for proxy configuration for Mac.
 
@@ -53,8 +53,8 @@ namespace {
 // location.
 // The implementation is inspired by
 // http://developer.apple.com/samplecode/CFProxySupportTool/
-static void PACResultCallback(
-    void * client, CFArrayRef proxies, CFErrorRef error) {
+static void PACResultCallback(void *client, CFArrayRef proxies,
+                              CFErrorRef error) {
   DCHECK((proxies == NULL && error != NULL) ||
          (proxies != NULL && error == NULL));
   CFTypeRef *result = static_cast<CFTypeRef *>(client);
@@ -98,16 +98,14 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
               script_url, cfurl, PACResultCallback, &context));
       const string label = MacUtil::GetLabelForSuffix("ProxyResolverMac");
       scoped_cftyperef<CFStringRef> private_runloop_mode(
-          CFStringCreateWithBytes(
-              NULL, reinterpret_cast<const UInt8 *>(label.data()),
-              label.size(), kCFStringEncodingUTF8, false));
-      CFRunLoopAddSource(
-          CFRunLoopGetCurrent(), runloop_source.get(),
-          private_runloop_mode.get());
+          CFStringCreateWithBytes(NULL,
+                                  reinterpret_cast<const UInt8 *>(label.data()),
+                                  label.size(), kCFStringEncodingUTF8, false));
+      CFRunLoopAddSource(CFRunLoopGetCurrent(), runloop_source.get(),
+                         private_runloop_mode.get());
       CFRunLoopRunInMode(private_runloop_mode.get(), 1.0e10, false);
-      CFRunLoopRemoveSource(
-          CFRunLoopGetCurrent(), runloop_source.get(),
-          private_runloop_mode.get());
+      CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runloop_source.get(),
+                            private_runloop_mode.get());
 
       // resolving PAC succeeds
       if (result != NULL && CFGetTypeID(result) == CFArrayGetTypeID() &&
@@ -143,16 +141,21 @@ class MacProxyManager : public ProxyManagerInterface {
   bool GetProxyData(const string &url, string *hostdata, string *authdata) {
     DCHECK(hostdata);
     DCHECK(authdata);
+#ifdef OS_IOS
+    scoped_cftyperef<CFDictionaryRef> proxy_settings(
+        CFNetworkCopySystemProxySettings());
+#else
     scoped_cftyperef<CFDictionaryRef> proxy_settings(
         SCDynamicStoreCopyProxies(NULL));
+#endif  // OS_IOS
     if (!proxy_settings.Verify(CFDictionaryGetTypeID())) {
       LOG(ERROR) << "Failed to create proxy setting";
       return false;
     }
 
-    scoped_cftyperef<CFURLRef> cfurl(CFURLCreateWithBytes(
-        NULL, reinterpret_cast<const UInt8 *>(url.data()), url.size(),
-        kCFStringEncodingUTF8, NULL));
+    scoped_cftyperef<CFURLRef> cfurl(
+        CFURLCreateWithBytes(NULL, reinterpret_cast<const UInt8 *>(url.data()),
+                             url.size(), kCFStringEncodingUTF8, NULL));
     if (!cfurl.Verify(CFURLGetTypeID())) {
       LOG(ERROR) << "Failed to create URL object from the specified URL";
       return false;
@@ -167,9 +170,9 @@ class MacProxyManager : public ProxyManagerInterface {
 
     bool proxy_available = false;
     if (CFArrayGetCount(proxies.get()) > 0) {
-      scoped_cftyperef<CFDictionaryRef> proxy(
-          RetainOrExpandPacFile(cfurl.get(), reinterpret_cast<CFDictionaryRef>(
-              CFArrayGetValueAtIndex(proxies.get(), 0))));
+      scoped_cftyperef<CFDictionaryRef> proxy(RetainOrExpandPacFile(
+          cfurl.get(), reinterpret_cast<CFDictionaryRef>(
+                           CFArrayGetValueAtIndex(proxies.get(), 0))));
 
       CFStringRef proxy_type = static_cast<CFStringRef>(
           CFDictionaryGetValue(proxy.get(), kCFProxyTypeKey));
@@ -186,8 +189,8 @@ class MacProxyManager : public ProxyManagerInterface {
         if (host.Verify(CFStringGetTypeID())) {
           scoped_cftyperef<CFStringRef> host_desc;
           if (port.Verify(CFNumberGetTypeID())) {
-            host_desc.reset(CFStringCreateWithFormat(
-                NULL, NULL, CFSTR("%@:%@"), host.get(), port.get()));
+            host_desc.reset(CFStringCreateWithFormat(NULL, NULL, CFSTR("%@:%@"),
+                                                     host.get(), port.get()));
           } else {
             host_desc.reset(reinterpret_cast<CFStringRef>(host.get()));
             CFRetain(host.get());
@@ -205,8 +208,7 @@ class MacProxyManager : public ProxyManagerInterface {
             LOG(ERROR) << "Invalid proxy spec: no host is specified";
           }
         }
-        if (proxy_available &&
-            username.Verify(CFStringGetTypeID()) &&
+        if (proxy_available && username.Verify(CFStringGetTypeID()) &&
             password.Verify(CFStringGetTypeID())) {
           scoped_cftyperef<CFStringRef> auth_desc(CFStringCreateWithFormat(
               NULL, NULL, CFSTR("%@:%@"), username.get(), password.get()));
@@ -224,10 +226,11 @@ class MacProxyManager : public ProxyManagerInterface {
     return proxy_available;
   }
 };
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
-bool DummyProxyManager::GetProxyData(
-    const string &url, string *hostdata, string *authdata) {
+bool DummyProxyManager::GetProxyData(const std::string &url,
+                                     std::string *hostdata,
+                                     std::string *authdata) {
   return false;
 }
 
@@ -238,7 +241,7 @@ ProxyManagerInterface *g_proxy_manager = NULL;
 
 ProxyManagerInterface *GetProxyManager() {
   if (g_proxy_manager == NULL) {
-#ifdef OS_MACOSX
+#ifdef __APPLE__
     return Singleton<MacProxyManager>::get();
 #else
     return Singleton<DummyProxyManager>::get();
@@ -249,19 +252,16 @@ ProxyManagerInterface *GetProxyManager() {
 }
 }  // namespace
 
-void ProxyManager::SetProxyManager(
-    ProxyManagerInterface *proxy_manager) {
+void ProxyManager::SetProxyManager(ProxyManagerInterface *proxy_manager) {
   g_proxy_manager = proxy_manager;
 }
 
-bool ProxyManager::GetProxyData(
-    const string &url, string *hostdata, string *authdata) {
+bool ProxyManager::GetProxyData(const std::string &url, std::string *hostdata,
+                                std::string *authdata) {
   return GetProxyManager()->GetProxyData(url, hostdata, authdata);
 }
 
-ProxyManagerInterface::ProxyManagerInterface() {
-}
+ProxyManagerInterface::ProxyManagerInterface() {}
 
-ProxyManagerInterface::~ProxyManagerInterface() {
-}
+ProxyManagerInterface::~ProxyManagerInterface() {}
 }  // namespace mozc

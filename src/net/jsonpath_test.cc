@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,18 +41,16 @@ class JsonPathTest : public testing::Test {
  public:
   virtual void SetUp() {}
 
-  string Parse(const string &json, const string &jsonpath) {
+  std::string Parse(const std::string &json, const std::string &jsonpath) {
     Json::Reader reader;
     Json::Value root;
     EXPECT_TRUE(reader.parse(json, root))
-        << reader.getFormattedErrorMessages()
-        << " "
-        << json;
+        << reader.getFormattedErrorMessages() << " " << json;
     std::vector<const Json::Value *> output;
     if (!JsonPath::Parse(root, jsonpath, &output)) {
       return "ERROR";
     }
-    string result;
+    std::string result;
     for (size_t i = 0; i < output.size(); ++i) {
       const Json::Value *value = output[i];
       if (!value->isNull() && !value->isArray() && !value->isObject()) {
@@ -69,7 +67,8 @@ class JsonPathTest : public testing::Test {
 };
 
 TEST_F(JsonPathTest, BasicTest) {
-  const char kInput[] = "{"
+  const char kInput[] =
+      "{"
       "\"books\": ["
       "    {\"title\":\"foo1\",\"author\":\"bar1\"},"
       "    {\"title\":\"foo2\",\"author\":\"bar2\"},"
@@ -121,12 +120,9 @@ TEST_F(JsonPathTest, BasicTest) {
   EXPECT_EQ("10 11 2011", Parse(kInput, "$.papers.*"));
   EXPECT_EQ("10", Parse(kInput, "$.papers.date"));
 
-  EXPECT_EQ("hello foo1 foo2 foo3 Foo1 Foo2 Foo3",
-            Parse(kInput, "$..title"));
-  EXPECT_EQ("Foo1 Foo2 Foo3",
-            Parse(kInput, "$.papers..title"));
-  EXPECT_EQ("bar1 foo1 bar2 foo2 bar3 foo3",
-            Parse(kInput, "$.books..*"));
+  EXPECT_EQ("hello foo1 foo2 foo3 Foo1 Foo2 Foo3", Parse(kInput, "$..title"));
+  EXPECT_EQ("Foo1 Foo2 Foo3", Parse(kInput, "$.papers..title"));
+  EXPECT_EQ("bar1 foo1 bar2 foo2 bar3 foo3", Parse(kInput, "$.books..*"));
 
   // Bracket expression
   EXPECT_EQ("hello", Parse(kInput, "$.['title']"));
@@ -143,23 +139,18 @@ TEST_F(JsonPathTest, BasicTest) {
   EXPECT_EQ("bar3 foo3", Parse(kInput, "$['books'][-1][*]"));
 
   EXPECT_EQ("Foo1", Parse(kInput, "$['papers']['list'][0]['title']"));
-  EXPECT_EQ("Foo1 Foo2 Foo3",
-            Parse(kInput, "$['papers']['list'][*]['title']"));
+  EXPECT_EQ("Foo1 Foo2 Foo3", Parse(kInput, "$['papers']['list'][*]['title']"));
   EXPECT_EQ("Foo1", Parse(kInput, "$['papers'][*][0]['title']"));
   EXPECT_EQ("10 11 2011", Parse(kInput, "$['papers'][*]"));
   EXPECT_EQ("10", Parse(kInput, "$['papers']['date']"));
 
   EXPECT_EQ("hello foo1 foo2 foo3 Foo1 Foo2 Foo3",
             Parse(kInput, "$..['title']"));
-  EXPECT_EQ("Foo1 Foo2 Foo3",
-            Parse(kInput, "$['papers']..['title']"));
-  EXPECT_EQ("bar1 foo1 bar2 foo2 bar3 foo3",
-            Parse(kInput, "$['books']..[*]"));
+  EXPECT_EQ("Foo1 Foo2 Foo3", Parse(kInput, "$['papers']..['title']"));
+  EXPECT_EQ("bar1 foo1 bar2 foo2 bar3 foo3", Parse(kInput, "$['books']..[*]"));
 
-  EXPECT_EQ("2011 11 10",
-            Parse(kInput, "$['papers']['year','month','date']"));
-  EXPECT_EQ("11",
-            Parse(kInput, "$['papers']['foo','month','bar']"));
+  EXPECT_EQ("2011 11 10", Parse(kInput, "$['papers']['year','month','date']"));
+  EXPECT_EQ("11", Parse(kInput, "$['papers']['foo','month','bar']"));
 }
 
 TEST_F(JsonPathTest, SliceTest) {

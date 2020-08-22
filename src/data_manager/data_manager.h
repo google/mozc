@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,8 @@
 
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "data_manager/data_manager_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -60,7 +60,7 @@ class DataManager : public DataManagerInterface {
     UNKNOWN = 5,
   };
 
-  static string StatusCodeToString(Status code);
+  static std::string StatusCodeToString(Status code);
 
   DataManager();
   ~DataManager() override;
@@ -68,26 +68,28 @@ class DataManager : public DataManagerInterface {
   // Parses |array| and extracts byte blocks of data set.  The |array| must
   // outlive this instance.  The second version specifies a custom magic number
   // to expect (e.g., mock data set has a different magic number).
-  Status InitFromArray(StringPiece array);
-  Status InitFromArray(StringPiece array, StringPiece magic);
+  Status InitFromArray(absl::string_view array);
+  Status InitFromArray(absl::string_view array, absl::string_view magic);
 
   // The same as above InitFromArray() but the data is loaded using mmap, which
   // is owned in this instance.
-  Status InitFromFile(const string &path);
-  Status InitFromFile(const string &path, StringPiece magic);
+  Status InitFromFile(const std::string &path);
+  Status InitFromFile(const std::string &path, absl::string_view magic);
 
   // The same as above InitFromArray() but only parses data set for user pos
   // manager.  For mozc runtime modules, use InitFromArray() because this method
   // is only for build tools, e.g., rewriter/dictionary_generator.cc (some build
   // tools depend on user pos data to create outputs, so we need to handle
   // partial data set).
-  Status InitUserPosManagerDataFromArray(StringPiece array, StringPiece magic);
-  Status InitUserPosManagerDataFromFile(const string &path, StringPiece magic);
+  Status InitUserPosManagerDataFromArray(absl::string_view array,
+                                         absl::string_view magic);
+  Status InitUserPosManagerDataFromFile(const std::string &path,
+                                        absl::string_view magic);
 
   // Implementation of DataManagerInterface.
   const uint16 *GetPOSMatcherData() const override;
-  void GetUserPOSData(StringPiece *token_array_data,
-                      StringPiece *string_array_data) const override;
+  void GetUserPOSData(absl::string_view *token_array_data,
+                      absl::string_view *string_array_data) const override;
   void GetConnectorData(const char **data, size_t *size) const override;
   void GetSystemDictionaryData(const char **data, int *size) const override;
   void GetCollocationData(const char **array, size_t *size) const override;
@@ -101,94 +103,96 @@ class DataManager : public DataManagerInterface {
                         const uint16 **boundary_data) const override;
   void GetCounterSuffixSortedArray(const char **array,
                                    size_t *size) const override;
-  void GetSuffixDictionaryData(StringPiece *key_array_data,
-                               StringPiece *value_array_data,
+  void GetSuffixDictionaryData(absl::string_view *key_array_data,
+                               absl::string_view *value_array_data,
                                const uint32 **token_array) const override;
   void GetReadingCorrectionData(
-      StringPiece *value_array_data, StringPiece *error_array_data,
-      StringPiece *correction_array_data) const override;
-  void GetSymbolRewriterData(StringPiece *token_array_data,
-                             StringPiece *string_array_data) const override;
-  void GetEmoticonRewriterData(StringPiece *token_array_data,
-                               StringPiece *string_array_data) const override;
-  void GetEmojiRewriterData(StringPiece *token_array_data,
-                            StringPiece *string_array_data) const override;
+      absl::string_view *value_array_data, absl::string_view *error_array_data,
+      absl::string_view *correction_array_data) const override;
+  void GetSymbolRewriterData(
+      absl::string_view *token_array_data,
+      absl::string_view *string_array_data) const override;
+  void GetEmoticonRewriterData(
+      absl::string_view *token_array_data,
+      absl::string_view *string_array_data) const override;
+  void GetEmojiRewriterData(
+      absl::string_view *token_array_data,
+      absl::string_view *string_array_data) const override;
   void GetSingleKanjiRewriterData(
-      StringPiece *token_array_data,
-      StringPiece *string_array_data,
-      StringPiece *variant_type_array_data,
-      StringPiece *variant_token_array_data,
-      StringPiece *variant_string_array_data,
-      StringPiece *noun_prefix_token_array_data,
-      StringPiece *noun_prefix_string_array_data) const override;
+      absl::string_view *token_array_data, absl::string_view *string_array_data,
+      absl::string_view *variant_type_array_data,
+      absl::string_view *variant_token_array_data,
+      absl::string_view *variant_string_array_data,
+      absl::string_view *noun_prefix_token_array_data,
+      absl::string_view *noun_prefix_string_array_data) const override;
   void GetZeroQueryData(
-      StringPiece *zero_query_token_array_data,
-      StringPiece *zero_query_string_array_data,
-      StringPiece *zero_query_number_token_array_data,
-      StringPiece *zero_query_number_string_array_data) const override;
+      absl::string_view *zero_query_token_array_data,
+      absl::string_view *zero_query_string_array_data,
+      absl::string_view *zero_query_number_token_array_data,
+      absl::string_view *zero_query_number_string_array_data) const override;
 
 #ifndef NO_USAGE_REWRITER
   void GetUsageRewriterData(
-      StringPiece *base_conjugation_suffix_data,
-      StringPiece *conjugation_suffix_data,
-      StringPiece *conjugation_index_data,
-      StringPiece *usage_items_data,
-      StringPiece *string_array_data) const override;
+      absl::string_view *base_conjugation_suffix_data,
+      absl::string_view *conjugation_suffix_data,
+      absl::string_view *conjugation_index_data,
+      absl::string_view *usage_items_data,
+      absl::string_view *string_array_data) const override;
 #endif  // NO_USAGE_REWRITER
 
-  StringPiece GetTypingModel(const string &name) const override;
-  StringPiece GetDataVersion() const override;
+  absl::string_view GetTypingModel(const std::string &name) const override;
+  absl::string_view GetDataVersion() const override;
 
  private:
   Status InitFromReader(const DataSetReader &reader);
 
   Mmap mmap_;
-  StringPiece pos_matcher_data_;
-  StringPiece user_pos_token_array_data_;
-  StringPiece user_pos_string_array_data_;
-  StringPiece connection_data_;
-  StringPiece dictionary_data_;
-  StringPiece suggestion_filter_data_;
-  StringPiece collocation_data_;
-  StringPiece collocation_suppression_data_;
-  StringPiece pos_group_data_;
-  StringPiece boundary_data_;
+  absl::string_view pos_matcher_data_;
+  absl::string_view user_pos_token_array_data_;
+  absl::string_view user_pos_string_array_data_;
+  absl::string_view connection_data_;
+  absl::string_view dictionary_data_;
+  absl::string_view suggestion_filter_data_;
+  absl::string_view collocation_data_;
+  absl::string_view collocation_suppression_data_;
+  absl::string_view pos_group_data_;
+  absl::string_view boundary_data_;
   size_t segmenter_compressed_lsize_;
   size_t segmenter_compressed_rsize_;
-  StringPiece segmenter_ltable_;
-  StringPiece segmenter_rtable_;
-  StringPiece segmenter_bitarray_;
-  StringPiece counter_suffix_data_;
-  StringPiece suffix_key_array_data_;
-  StringPiece suffix_value_array_data_;
-  StringPiece suffix_token_array_data_;
-  StringPiece reading_correction_value_array_data_;
-  StringPiece reading_correction_error_array_data_;
-  StringPiece reading_correction_correction_array_data_;
-  StringPiece symbol_token_array_data_;
-  StringPiece symbol_string_array_data_;
-  StringPiece emoticon_token_array_data_;
-  StringPiece emoticon_string_array_data_;
-  StringPiece emoji_token_array_data_;
-  StringPiece emoji_string_array_data_;
-  StringPiece single_kanji_token_array_data_;
-  StringPiece single_kanji_string_array_data_;
-  StringPiece single_kanji_variant_type_data_;
-  StringPiece single_kanji_variant_token_array_data_;
-  StringPiece single_kanji_variant_string_array_data_;
-  StringPiece single_kanji_noun_prefix_token_array_data_;
-  StringPiece single_kanji_noun_prefix_string_array_data_;
-  StringPiece zero_query_token_array_data_;
-  StringPiece zero_query_string_array_data_;
-  StringPiece zero_query_number_token_array_data_;
-  StringPiece zero_query_number_string_array_data_;
-  StringPiece usage_base_conjugation_suffix_data_;
-  StringPiece usage_conjugation_suffix_data_;
-  StringPiece usage_conjugation_index_data_;
-  StringPiece usage_items_data_;
-  StringPiece usage_string_array_data_;
-  std::vector<std::pair<string, StringPiece>> typing_model_data_;
-  StringPiece data_version_;
+  absl::string_view segmenter_ltable_;
+  absl::string_view segmenter_rtable_;
+  absl::string_view segmenter_bitarray_;
+  absl::string_view counter_suffix_data_;
+  absl::string_view suffix_key_array_data_;
+  absl::string_view suffix_value_array_data_;
+  absl::string_view suffix_token_array_data_;
+  absl::string_view reading_correction_value_array_data_;
+  absl::string_view reading_correction_error_array_data_;
+  absl::string_view reading_correction_correction_array_data_;
+  absl::string_view symbol_token_array_data_;
+  absl::string_view symbol_string_array_data_;
+  absl::string_view emoticon_token_array_data_;
+  absl::string_view emoticon_string_array_data_;
+  absl::string_view emoji_token_array_data_;
+  absl::string_view emoji_string_array_data_;
+  absl::string_view single_kanji_token_array_data_;
+  absl::string_view single_kanji_string_array_data_;
+  absl::string_view single_kanji_variant_type_data_;
+  absl::string_view single_kanji_variant_token_array_data_;
+  absl::string_view single_kanji_variant_string_array_data_;
+  absl::string_view single_kanji_noun_prefix_token_array_data_;
+  absl::string_view single_kanji_noun_prefix_string_array_data_;
+  absl::string_view zero_query_token_array_data_;
+  absl::string_view zero_query_string_array_data_;
+  absl::string_view zero_query_number_token_array_data_;
+  absl::string_view zero_query_number_string_array_data_;
+  absl::string_view usage_base_conjugation_suffix_data_;
+  absl::string_view usage_conjugation_suffix_data_;
+  absl::string_view usage_conjugation_index_data_;
+  absl::string_view usage_items_data_;
+  absl::string_view usage_string_array_data_;
+  std::vector<std::pair<std::string, absl::string_view>> typing_model_data_;
+  absl::string_view data_version_;
 
   DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

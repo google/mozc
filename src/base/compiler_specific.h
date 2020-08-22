@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,30 +37,28 @@
 #if defined(_MSC_VER)
 #define MOZC_MSVC_VERSION_GE(major, minor) (_MSC_VER >= major * 100 + minor)
 #define MOZC_MSVC_VERSION_LT(major, minor) (_MSC_VER < major * 100 + minor)
-#else   // not _MSC_VER
+#else  // not _MSC_VER
 #define MOZC_MSVC_VERSION_GE(major, minor) (0)
 #define MOZC_MSVC_VERSION_LT(major, minor) (0)
 #endif  // _MSC_VER
 
 #if defined(__GNUC__)
-#define MOZC_GCC_VERSION_GE(major, minor)                    \
-    (__GNUC__ > (major) ||                                   \
-     (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor)))
-#define MOZC_GCC_VERSION_LT(major, minor)                    \
-    (__GNUC__ < (major) ||                                   \
-     (__GNUC__ == (major) && __GNUC_MINOR__ < (minor)))
-#else   // not __GNUC__
+#define MOZC_GCC_VERSION_GE(major, minor) \
+  (__GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor)))
+#define MOZC_GCC_VERSION_LT(major, minor) \
+  (__GNUC__ < (major) || (__GNUC__ == (major) && __GNUC_MINOR__ < (minor)))
+#else  // not __GNUC__
 #define MOZC_GCC_VERSION_GE(major, minor) (0)
 #define MOZC_GCC_VERSION_LT(major, minor) (0)
 #endif  // __GNUC__
 
 #if defined(__clang_major__)
-#define MOZC_CLANG_VERSION_GE(major, minor)                  \
-    (__clang_major__ > (major) ||                            \
-     (__clang_major__ == (major) && __clang_minor__ >= (minor)))
-#define MOZC_CLANG_VERSION_LT(major, minor)                  \
-    (__clang_major__ < (major) ||                            \
-     (__clang_major__ == (major) && __clang_minor__ < (minor)))
+#define MOZC_CLANG_VERSION_GE(major, minor) \
+  (__clang_major__ > (major) ||             \
+   (__clang_major__ == (major) && __clang_minor__ >= (minor)))
+#define MOZC_CLANG_VERSION_LT(major, minor) \
+  (__clang_major__ < (major) ||             \
+   (__clang_major__ == (major) && __clang_minor__ < (minor)))
 #else  // not __clang_major__
 #define MOZC_CLANG_VERSION_GE(major, minor) (0)
 #define MOZC_CLANG_VERSION_LT(major, minor) (0)
@@ -74,10 +72,9 @@
 #elif defined(__clang__) || defined(__GNUC__)
 #define MOZC_DO_PRAGMA_IMPL(s) _Pragma(#s) MOZC_SWALLOWING_SEMICOLON_HACK
 #else
-#define MOZC_DO_PRAGMA_IMPL(s)             MOZC_SWALLOWING_SEMICOLON_HACK
+#define MOZC_DO_PRAGMA_IMPL(s) MOZC_SWALLOWING_SEMICOLON_HACK
 #endif
 // === End inline pragma macro definitions ===
-
 
 // === Begin warning control macro definitions ===
 // MOZC_MSVC_DISABLE_WARNING(n)
@@ -132,7 +129,7 @@
 //     -> Clang version of MOZC_GCC_DISABLE_WARNING_INLINE
 
 #if defined(_MSC_VER)
-#define MOZC_MSVC_DISABLE_WARNING(n) MOZC_DO_PRAGMA_IMPL(warning(disable:n))
+#define MOZC_MSVC_DISABLE_WARNING(n) MOZC_DO_PRAGMA_IMPL(warning(disable : n))
 #define MOZC_MSVC_PUSH_WARNING() MOZC_DO_PRAGMA_IMPL(warning(push))
 #define MOZC_MSVC_POP_WARNING() MOZC_DO_PRAGMA_IMPL(warning(pop))
 #else  // not _MSC_VER
@@ -142,20 +139,19 @@
 #endif  // _MSC_VER
 
 // Utility macros
-#define MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(compiler, s)  \
-    MOZC_DO_PRAGMA_IMPL(compiler diagnostic ignored #s)
+#define MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(compiler, s) \
+  MOZC_DO_PRAGMA_IMPL(compiler diagnostic ignored #s)
 
 #if MOZC_GCC_VERSION_GE(4, 2)
-#define MOZC_GCC_DISABLE_WARNING_FILELEVEL(type)         \
-    MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(GCC, -W ## type)
+#define MOZC_GCC_DISABLE_WARNING_FILELEVEL(type) \
+  MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(GCC, -W##type)
 #else  // GCC<4.2
-#define MOZC_GCC_DISABLE_WARNING_FILELEVEL(type)         \
-    MOZC_SWALLOWING_SEMICOLON_HACK
+#define MOZC_GCC_DISABLE_WARNING_FILELEVEL(type) MOZC_SWALLOWING_SEMICOLON_HACK
 #endif  // GCC versions
 
 #if MOZC_GCC_VERSION_GE(4, 6)
-#define MOZC_GCC_DISABLE_WARNING_INLINE(type)            \
-    MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(GCC, -W ## type)
+#define MOZC_GCC_DISABLE_WARNING_INLINE(type) \
+  MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(GCC, -W##type)
 #define MOZC_GCC_POP_WARNING() MOZC_DO_PRAGMA_IMPL(GCC diagnostic pop)
 #define MOZC_GCC_PUSH_WARNING() MOZC_DO_PRAGMA_IMPL(GCC diagnostic push)
 #else  // GCC<4.6
@@ -165,8 +161,8 @@
 #endif  // GCC versions
 
 #if defined(__clang__)
-#define MOZC_CLANG_DISABLE_WARNING(type)                 \
-    MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(clang, -W ## type)
+#define MOZC_CLANG_DISABLE_WARNING(type) \
+  MOZC_CLANG_GCC_DISABLE_WARNING_IMPL(clang, -W##type)
 #define MOZC_CLANG_POP_WARNING() MOZC_DO_PRAGMA_IMPL(clang diagnostic pop)
 #define MOZC_CLANG_PUSH_WARNING() MOZC_DO_PRAGMA_IMPL(clang diagnostic push)
 #else  // !__clang__
@@ -186,7 +182,7 @@
 
 // Utility macros
 #if defined(_MSC_VER)
-#define MOZC_COMPILE_MESSAGE(s) MOZC_DO_PRAGMA_IMPL(message (s))
+#define MOZC_COMPILE_MESSAGE(s) MOZC_DO_PRAGMA_IMPL(message(s))
 #elif MOZC_GCC_VERSION_GE(4, 4) || MOZC_CLANG_VERSION_GE(2, 8)
 #define MOZC_COMPILE_MESSAGE(s) MOZC_DO_PRAGMA_IMPL(message s)
 #else
@@ -202,8 +198,7 @@
 #endif
 
 #if defined(__clang__)
-#define MOZC_CLANG_HAS_WARNING(type)         \
-    MOZC_CLANG_HAS_WARNING_IMPL(-W ## type)
+#define MOZC_CLANG_HAS_WARNING(type) MOZC_CLANG_HAS_WARNING_IMPL(-W##type)
 #else  // !__clang__
 #define MOZC_CLANG_HAS_WARNING(type) (0)
 #endif  // __clang__ or !__clang__
@@ -218,10 +213,9 @@
 //   example:
 //     Foo::Foo() : x(NULL), ALLOW_THIS_IN_INITIALIZER_LIST(y(this)) {}
 #if defined(_MSC_VER)
-#define ALLOW_THIS_IN_INITIALIZER_LIST(code)                 \
-    __pragma(warning(push)) __pragma(warning(disable:4355))  \
-    code                                                     \
-    __pragma(warning(pop))
+#define ALLOW_THIS_IN_INITIALIZER_LIST(code)                \
+  __pragma(warning(push)) __pragma(warning(disable : 4355)) \
+      code __pragma(warning(pop))
 #else
 #define ALLOW_THIS_IN_INITIALIZER_LIST(code) code
 #endif  // _MSC_VER or !_MSC_VER

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,7 @@ class PropertyHandlerInterface {
   virtual void UpdateContentType(IBusEngine *engine) = 0;
 
   // Update properties.
-  virtual void Update(IBusEngine *engine,
-                      const commands::Output &output) = 0;
+  virtual void Update(IBusEngine *engine, const commands::Output &output) = 0;
 
   virtual void ProcessPropertyActivate(IBusEngine *engine,
                                        const gchar *property_name,

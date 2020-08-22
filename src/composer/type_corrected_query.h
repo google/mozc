@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,8 @@ namespace composer {
 struct TypeCorrectedQuery {
   // |base| and |expanded| are the same as Composer::GetQueryForPrediction().
   // |cost| is a penalty for this query.
-  string base;
-  std::set<string> expanded;
+  std::string base;
+  std::set<std::string> expanded;
   int cost;
 };
 

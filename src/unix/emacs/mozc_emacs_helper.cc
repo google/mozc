@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,6 @@
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/protobuf/descriptor.h"
-#include "base/protobuf/message.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "client/client.h"
@@ -42,9 +40,9 @@
 #include "protocol/commands.pb.h"
 #include "unix/emacs/client_pool.h"
 #include "unix/emacs/mozc_emacs_helper_lib.h"
+#include "absl/strings/str_format.h"
 
-DEFINE_bool(suppress_stderr, false,
-            "Discards all the output to stderr.");
+DEFINE_bool(suppress_stderr, false, "Discards all the output to stderr.");
 
 namespace {
 
@@ -62,11 +60,11 @@ void PrintGreetingMessage() {
       break;
   }
 
-  fprintf(stdout,
-          "((mozc-emacs-helper . t)(version . %s)"
-          "(config . ((preedit-method . %s))))\n",
-          mozc::emacs::QuoteString(mozc::Version::GetMozcVersion()).c_str(),
-          preedit_method);
+  absl::FPrintF(stdout,
+                "((mozc-emacs-helper . t)(version . %s)"
+                "(config . ((preedit-method . %s))))\n",
+                mozc::emacs::QuoteString(mozc::Version::GetMozcVersion()),
+                preedit_method);
   fflush(stdout);
 }
 
@@ -77,7 +75,7 @@ void ProcessLoop() {
 
   mozc::emacs::ClientPool client_pool;
   mozc::commands::Command command;
-  string line;
+  std::string line;
 
   while (getline(std::cin, line)) {
     command.clear_input();
@@ -100,8 +98,7 @@ void ProcessLoop() {
         std::shared_ptr<mozc::client::Client> client =
             client_pool.GetClient(session_id);
         CHECK(client.get());
-        if (!client->SendKey(command.input().key(),
-                              command.mutable_output())) {
+        if (!client->SendKey(command.input().key(), command.mutable_output())) {
           ErrorExit(mozc::emacs::kErrSessionError, "Session failed");
         }
         break;
@@ -113,22 +110,21 @@ void ProcessLoop() {
     mozc::emacs::RemoveUsageData(command.mutable_output());
 
     // Output results.
-    std::vector<string> buffer;
+    std::vector<std::string> buffer;
     mozc::emacs::PrintMessage(command.output(), &buffer);
-    string output;
+    std::string output;
     mozc::Util::JoinStrings(buffer, "", &output);
-    fprintf(stdout,
-            "((emacs-event-id . %u)(emacs-session-id . %u)(output . %s))\n",
-            event_id, session_id, output.c_str());
+    absl::FPrintF(
+        stdout, "((emacs-event-id . %u)(emacs-session-id . %u)(output . %s))\n",
+        event_id, session_id, output);
     fflush(stdout);
   }
 }
 
 }  // namespace
 
-
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
   if (FLAGS_suppress_stderr) {
 #ifdef OS_WIN
     const char path[] = "NUL";

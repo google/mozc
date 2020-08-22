@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,16 @@
 
 #include "ipc/named_event.h"
 
+#include "absl/strings/str_format.h"
+
 #ifdef OS_WIN
-#include <Windows.h>
 #include <Sddl.h>
+#include <Windows.h>
 #else
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/types.h>
 #endif
@@ -74,9 +76,9 @@ bool IsProcessAlive(pid_t pid) {
 #endif  // !OS_WIN
 }  // namespace
 
-const string NamedEventUtil::GetEventPath(const char *name) {
+const std::string NamedEventUtil::GetEventPath(const char *name) {
   name = (name == NULL) ? "NULL" : name;
-  string event_name = kEventPathPrefix;
+  std::string event_name = kEventPathPrefix;
   event_name += SystemUtil::GetUserSidAsString();
   event_name += ".";
   event_name += name;
@@ -93,8 +95,8 @@ const string NamedEventUtil::GetEventPath(const char *name) {
   //  character."
   const size_t kEventPathLength = 14;
   char buf[32];
-  snprintf(buf, kEventPathLength, "/%" MOZC_PRIx64,
-           Hash::Fingerprint(event_name));
+  absl::SNPrintF(buf, kEventPathLength, "/%x",
+                 static_cast<uint64>(Hash::Fingerprint(event_name)));
   return buf;
 #endif
 }
@@ -105,8 +107,7 @@ NamedEventListener::NamedEventListener(const char *name)
   std::wstring event_path;
   Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
 
-  handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false,
-                         event_path.c_str());
+  handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false, event_path.c_str());
 
   if (handle_ == NULL) {
     SECURITY_ATTRIBUTES security_attributes;
@@ -116,9 +117,8 @@ NamedEventListener::NamedEventListener(const char *name)
       return;
     }
 
-    handle_ = ::CreateEventW(&security_attributes,
-                             true, false,
-                             event_path.c_str());
+    handle_ =
+        ::CreateEventW(&security_attributes, true, false, event_path.c_str());
     ::LocalFree(security_attributes.lpSecurityDescriptor);
     if (handle_ == NULL) {
       LOG(ERROR) << "CreateEvent() failed: " << ::GetLastError();
@@ -138,9 +138,7 @@ NamedEventListener::~NamedEventListener() {
   handle_ = NULL;
 }
 
-bool NamedEventListener::IsAvailable() const {
-  return (handle_ != NULL);
-}
+bool NamedEventListener::IsAvailable() const { return (handle_ != NULL); }
 
 bool NamedEventListener::IsOwner() const {
   return (IsAvailable() && is_owner_);
@@ -170,8 +168,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
     return TIMEOUT;
   }
 
-  HANDLE handle = ::OpenProcess(SYNCHRONIZE,
-                                FALSE, static_cast<DWORD>(pid));
+  HANDLE handle = ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid));
   if (NULL == handle) {
     LOG(ERROR) << "OpenProcess: failed() " << ::GetLastError() << " " << pid;
     if (::GetLastError() == ERROR_INVALID_PARAMETER) {
@@ -184,14 +181,12 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
     msec = INFINITE;
   }
 
-  HANDLE handles[2] = { handle_, handle };
+  HANDLE handles[2] = {handle_, handle};
 
   const DWORD handles_size = (handle == NULL) ? 1 : 2;
 
-  const DWORD ret = ::WaitForMultipleObjects(handles_size,
-                                             handles,
-                                             FALSE,
-                                             msec);
+  const DWORD ret =
+      ::WaitForMultipleObjects(handles_size, handles, FALSE, msec);
   int result = TIMEOUT;
   switch (ret) {
     case WAIT_OBJECT_0:
@@ -218,12 +213,10 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
   return result;
 }
 
-NamedEventNotifier::NamedEventNotifier(const char *name)
-    : handle_(NULL) {
+NamedEventNotifier::NamedEventNotifier(const char *name) : handle_(NULL) {
   std::wstring event_path;
   Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
-  handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false,
-                         event_path.c_str());
+  handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false, event_path.c_str());
   if (handle_ == NULL) {
     LOG(ERROR) << "Cannot open Event name: " << name;
     return;
@@ -237,9 +230,7 @@ NamedEventNotifier::~NamedEventNotifier() {
   handle_ = NULL;
 }
 
-bool NamedEventNotifier::IsAvailable() const {
-  return handle_ != NULL;
-}
+bool NamedEventNotifier::IsAvailable() const { return handle_ != NULL; }
 
 bool NamedEventNotifier::Notify() {
   if (!IsAvailable()) {
@@ -255,7 +246,7 @@ bool NamedEventNotifier::Notify() {
   return true;
 }
 
-#else   // OS_WIN
+#else  // OS_WIN
 
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), sem_(SEM_FAILED) {
@@ -270,8 +261,8 @@ NamedEventListener::NamedEventListener(const char *name)
   }
 
   if (sem_ == SEM_FAILED) {
-    LOG(ERROR) << "sem_open() failed "
-               << key_filename_ << " " << ::strerror(errno);
+    LOG(ERROR) << "sem_open() failed " << key_filename_ << " "
+               << ::strerror(errno);
     return;
   }
 
@@ -286,9 +277,7 @@ NamedEventListener::~NamedEventListener() {
   sem_ = SEM_FAILED;
 }
 
-bool NamedEventListener::IsAvailable() const {
-  return sem_ != SEM_FAILED;
-}
+bool NamedEventListener::IsAvailable() const { return sem_ != SEM_FAILED; }
 
 bool NamedEventListener::IsOwner() const {
   return (IsAvailable() && is_owner_);
@@ -296,7 +285,7 @@ bool NamedEventListener::IsOwner() const {
 
 bool NamedEventListener::Wait(int msec) {
   return WaitEventOrProcess(msec, kInvalidPid /* don't check pid */) ==
-      NamedEventListener::EVENT_SIGNALED;
+         NamedEventListener::EVENT_SIGNALED;
 }
 
 int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
@@ -334,9 +323,8 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
   return NamedEventListener::TIMEOUT;
 }
 
-NamedEventNotifier::NamedEventNotifier(const char *name)
-    : sem_(SEM_FAILED) {
-  const string key_filename = NamedEventUtil::GetEventPath(name);
+NamedEventNotifier::NamedEventNotifier(const char *name) : sem_(SEM_FAILED) {
+  const std::string key_filename = NamedEventUtil::GetEventPath(name);
   sem_ = ::sem_open(key_filename.c_str(), 0);
   if (sem_ == SEM_FAILED) {
     LOG(ERROR) << "sem_open failed: " << ::strerror(errno);
@@ -350,9 +338,7 @@ NamedEventNotifier::~NamedEventNotifier() {
   sem_ = SEM_FAILED;
 }
 
-bool NamedEventNotifier::IsAvailable() const {
-  return sem_ != SEM_FAILED;
-}
+bool NamedEventNotifier::IsAvailable() const { return sem_ != SEM_FAILED; }
 
 bool NamedEventNotifier::Notify() {
   if (!IsAvailable()) {

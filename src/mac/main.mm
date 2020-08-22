@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,13 +50,12 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
 #endif
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   IMKServer *imkServer = [GoogleJapaneseInputServer getServer];
   if (!imkServer) {
@@ -74,7 +73,6 @@ int main(int argc, char *argv[]) {
     client->PingServer();
   }
   NSApplicationMain(argc, (const char **)argv);
-  [pool drain];
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   mozc::CrashReportHandler::Uninitialize();
 #endif

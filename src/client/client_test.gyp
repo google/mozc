@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,13 +53,6 @@
       'type': 'none',
       'dependencies': [
         'client_test',
-      ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          'dependencies!': [
-            'client_test',
-          ],
-        }],
       ],
     },
   ],

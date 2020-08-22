@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,8 +59,8 @@ class ValueDictionaryTest : public ::testing::Test {
     louds_trie_builder_.reset();
   }
 
-  void AddValue(const string &value) {
-    string encoded;
+  void AddValue(const std::string &value) {
+    std::string encoded;
     SystemDictionaryCodecFactory::GetCodec()->EncodeValue(value, &encoded);
     louds_trie_builder_->Add(encoded);
   }
@@ -72,7 +72,7 @@ class ValueDictionaryTest : public ::testing::Test {
     return new ValueDictionary(pos_matcher_, louds_trie_.get());
   }
 
-  void InitToken(const string &value, Token *token) const {
+  void InitToken(const std::string &value, Token *token) const {
     token->key = token->value = value;
     token->cost = 10000;
     token->lid = token->rid = pos_matcher_.GetSuggestOnlyWordId();

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,8 +59,7 @@ const int32_t kReadBufferSize = 32768;
 
 class URLLoaderStreamToFileHandler {
  public:
-  URLLoaderStreamToFileHandler(pp::Instance *instance,
-                               const string &url,
+  URLLoaderStreamToFileHandler(pp::Instance *instance, const string &url,
                                const string &file_name,
                                pp::CompletionCallback callback);
   void Start();
@@ -104,9 +103,7 @@ class URLLoaderStreamToFileHandler {
 };
 
 URLLoaderStreamToFileHandler::URLLoaderStreamToFileHandler(
-    pp::Instance *instance,
-    const string &url,
-    const string &file_name,
+    pp::Instance *instance, const string &url, const string &file_name,
     pp::CompletionCallback callback)
     : instance_(instance),
       url_(url),
@@ -114,11 +111,9 @@ URLLoaderStreamToFileHandler::URLLoaderStreamToFileHandler(
       callback_(callback),
       total_read_bytes_(0),
       total_written_bytes_(0),
-      buffer_written_bytes_(0) {
-}
+      buffer_written_bytes_(0) {}
 
-URLLoaderStreamToFileHandler::~URLLoaderStreamToFileHandler() {
-}
+URLLoaderStreamToFileHandler::~URLLoaderStreamToFileHandler() {}
 
 void URLLoaderStreamToFileHandler::Start() {
   callback_factory_.Initialize(this);
@@ -141,9 +136,8 @@ void URLLoaderStreamToFileHandler::StartImpl(int32_t result) {
   url_request_->SetURL(url_);
   url_request_->SetMethod("GET");
   url_request_->SetStreamToFile(true);
-  url_loader_->Open(*url_request_,
-                    callback_factory_.NewCallback(
-                        &URLLoaderStreamToFileHandler::OnOpen));
+  url_loader_->Open(*url_request_, callback_factory_.NewCallback(
+                                       &URLLoaderStreamToFileHandler::OnOpen));
 }
 
 void URLLoaderStreamToFileHandler::OnOpen(int32 result) {
@@ -159,9 +153,8 @@ void URLLoaderStreamToFileHandler::OnOpen(int32 result) {
     Complete(false);
     return;
   }
-  url_loader_->FinishStreamingToFile(
-      callback_factory_.NewCallback(
-          &URLLoaderStreamToFileHandler::OnStreamComplete));
+  url_loader_->FinishStreamingToFile(callback_factory_.NewCallback(
+      &URLLoaderStreamToFileHandler::OnStreamComplete));
   url_response_ = url_loader_->GetResponseInfo();
   body_file_ref_ = url_response_.GetBodyAsFileRef();
 }
@@ -173,10 +166,10 @@ void URLLoaderStreamToFileHandler::OnStreamComplete(int32 result) {
     return;
   }
   input_file_io_.reset(new pp::FileIO(instance_));
-  const int32_t ret = input_file_io_->Open(
-      body_file_ref_, PP_FILEOPENFLAG_READ,
-      callback_factory_.NewCallback(
-          &URLLoaderStreamToFileHandler::OnInputFileOpen));
+  const int32_t ret =
+      input_file_io_->Open(body_file_ref_, PP_FILEOPENFLAG_READ,
+                           callback_factory_.NewCallback(
+                               &URLLoaderStreamToFileHandler::OnInputFileOpen));
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
     DLOG(ERROR) << "input_file_io_->Open error";
     Complete(false);
@@ -191,9 +184,8 @@ void URLLoaderStreamToFileHandler::OnInputFileOpen(int32_t result) {
     return;
   }
   const int32_t ret = input_file_io_->Query(
-      &input_file_info_,
-      callback_factory_.NewCallback(
-          &URLLoaderStreamToFileHandler::OnInputFileQuery));
+      &input_file_info_, callback_factory_.NewCallback(
+                             &URLLoaderStreamToFileHandler::OnInputFileQuery));
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
     DLOG(ERROR) << "input_file_io_->Query error";
     Complete(false);
@@ -208,10 +200,10 @@ void URLLoaderStreamToFileHandler::OnInputFileQuery(int32_t result) {
   }
   file_system_.reset(
       new pp::FileSystem(instance_, PP_FILESYSTEMTYPE_LOCALPERSISTENT));
-  const int32_t ret = file_system_->Open(
-      input_file_info_.size,
-      callback_factory_.NewCallback(
-          &URLLoaderStreamToFileHandler::OnFileSystemOpen));
+  const int32_t ret =
+      file_system_->Open(input_file_info_.size,
+                         callback_factory_.NewCallback(
+                             &URLLoaderStreamToFileHandler::OnFileSystemOpen));
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
     DLOG(ERROR) << "file_system_->Open error";
     Complete(false);
@@ -226,9 +218,8 @@ void URLLoaderStreamToFileHandler::OnFileSystemOpen(int32_t result) {
     return;
   }
   output_file_ref_.reset(new pp::FileRef(*file_system_, file_name_.c_str()));
-  const int32_t ret = output_file_ref_->Delete(
-      callback_factory_.NewCallback(
-          &URLLoaderStreamToFileHandler::OnDeleteOutputFile));
+  const int32_t ret = output_file_ref_->Delete(callback_factory_.NewCallback(
+      &URLLoaderStreamToFileHandler::OnDeleteOutputFile));
   if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
     DLOG(ERROR) << "output_file_ref_->Delete error";
     Complete(false);
@@ -269,9 +260,8 @@ void URLLoaderStreamToFileHandler::OnInputFileRead(int32_t bytes_read) {
   if (bytes_read == 0) {
     const int32_t ret = input_file_io_->Read(
         total_read_bytes_, tmp_buffer_.get(),
-        std::min(
-            kReadBufferSize,
-            static_cast<int32_t>(input_file_info_.size - total_read_bytes_)),
+        std::min(kReadBufferSize, static_cast<int32_t>(input_file_info_.size -
+                                                       total_read_bytes_)),
         callback_factory_.NewCallback(
             &URLLoaderStreamToFileHandler::OnInputFileRead));
     if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
@@ -304,9 +294,8 @@ void URLLoaderStreamToFileHandler::OnOutputFileWrite(int32_t bytes_written) {
   if (total_read_bytes_ == total_written_bytes_) {
     if (total_read_bytes_ == input_file_info_.size) {
       // Finish writing
-      const int32_t ret = output_file_io_->Flush(
-          callback_factory_.NewCallback(
-              &URLLoaderStreamToFileHandler::OnOutputFileFlush));
+      const int32_t ret = output_file_io_->Flush(callback_factory_.NewCallback(
+          &URLLoaderStreamToFileHandler::OnOutputFileFlush));
       if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
         DLOG(ERROR) << "output_file_io_->Flush error";
         Complete(false);
@@ -316,9 +305,8 @@ void URLLoaderStreamToFileHandler::OnOutputFileWrite(int32_t bytes_written) {
       // Read more
       const int32_t ret = input_file_io_->Read(
           total_read_bytes_, tmp_buffer_.get(),
-          std::min(
-              kReadBufferSize,
-              static_cast<int32_t>(input_file_info_.size - total_read_bytes_)),
+          std::min(kReadBufferSize, static_cast<int32_t>(input_file_info_.size -
+                                                         total_read_bytes_)),
           callback_factory_.NewCallback(
               &URLLoaderStreamToFileHandler::OnInputFileRead));
       if ((ret != PP_OK_COMPLETIONPENDING) && (ret != PP_OK)) {
@@ -330,8 +318,7 @@ void URLLoaderStreamToFileHandler::OnOutputFileWrite(int32_t bytes_written) {
   } else {
     // Writes more
     const int32_t ret = output_file_io_->Write(
-        total_written_bytes_,
-        &tmp_buffer_[buffer_written_bytes_],
+        total_written_bytes_, &tmp_buffer_[buffer_written_bytes_],
         total_read_bytes_ - total_written_bytes_,
         callback_factory_.NewCallback(
             &URLLoaderStreamToFileHandler::OnOutputFileWrite));
@@ -364,10 +351,7 @@ void URLLoaderUtil::StartDownloadToFile(pp::Instance *instance,
                                         const string &file_name,
                                         pp::CompletionCallback callback) {
   URLLoaderStreamToFileHandler *handler =
-      new URLLoaderStreamToFileHandler(instance,
-                                       url,
-                                       file_name,
-                                       callback);
+      new URLLoaderStreamToFileHandler(instance, url, file_name, callback);
   DCHECK(handler);
   handler->Start();
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -109,14 +109,14 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
     AddRewriter(new UserSegmentHistoryRewriter(&pos_matcher_, pos_group));
   }
 
-  AddRewriter(new DateRewriter);
+  AddRewriter(new DateRewriter(dictionary));
   AddRewriter(new FortuneRewriter);
-#ifndef OS_ANDROID
-  // CommandRewriter is not tested well on Android.
+#if !(defined(OS_ANDROID) || defined(OS_IOS))
+  // CommandRewriter is not tested well on Android or iOS.
   // So we temporarily disable it.
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(new CommandRewriter);
-#endif  // !OS_ANDROID
+#endif  // !(OS_ANDROID || OS_IOS)
 #ifndef NO_USAGE_REWRITER
   AddRewriter(new UsageRewriter(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,6 @@ class ConfirmationDialog {
   static bool Show();
 };
 
-}  // namespace mozc::gui
+}  // namespace gui
 }  // namespace mozc
 #endif  // MOZC_GUI_CONFIRMATION_DIALOG_H_

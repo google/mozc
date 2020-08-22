@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   int result = 0;
 #ifdef OS_WIN

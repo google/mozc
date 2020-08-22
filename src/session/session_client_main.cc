@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ void Loop(std::istream *input, std::ostream *output) {
   std::unique_ptr<session::Session> session(new session::Session(engine.get()));
 
   commands::Command command;
-  string line;
+  std::string line;
   while (getline(*input, line)) {
     Util::ChopReturns(&line);
     if (line.size() > 1 && line[0] == '#' && line[1] == '#') {
@@ -64,9 +64,7 @@ void Loop(std::istream *input, std::ostream *output) {
     }
     if (line.empty()) {
       session.reset(new session::Session(engine.get()));
-      *output << std::endl
-              << "## New session" << std::endl
-              << std::endl;
+      *output << std::endl << "## New session" << std::endl << std::endl;
       continue;
     }
 
@@ -89,7 +87,7 @@ void Loop(std::istream *input, std::ostream *output) {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
   std::unique_ptr<mozc::InputFileStream> input_file;
   std::unique_ptr<mozc::OutputFileStream> output_file;
   std::istream *input = NULL;

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,10 @@
 
 """Generate a binary image of SerializedStringArray."""
 
+from __future__ import absolute_import
+from __future__ import print_function
 import struct
+from six.moves import range
 
 
 def SerializeToFile(strings, filename):
@@ -58,11 +61,11 @@ def SerializeToFile(strings, filename):
     f.write(struct.pack('<I', array_size))
 
     # Offset and length array of (4 + 4) * array_size bytes.
-    for i in xrange(array_size):
+    for i in range(array_size):
       f.write(struct.pack('<I', offsets[i]))
       f.write(struct.pack('<I', lengths[i]))
 
     # Strings chunk.
-    for i in xrange(array_size):
+    for i in range(array_size):
       f.write(strings[i])
       f.write('\0')

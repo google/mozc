@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,7 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-BitStream::BitStream() : num_bits_(0) {
-}
+BitStream::BitStream() : num_bits_(0) {}
 
 void BitStream::PushBit(int bit) {
   DCHECK(bit == 0 || bit == 1);

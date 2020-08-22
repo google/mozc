@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,7 @@ class SetupUtil;
 // Shows additional information to the user after installation.
 // This dialog also set Mozc as the default IME if it is closed
 // with the check box marekd.
-class PostInstallDialog : public QDialog,
-                          private Ui::PostInstallDialog {
+class PostInstallDialog : public QDialog, private Ui::PostInstallDialog {
   Q_OBJECT;
 
  public:

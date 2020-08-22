@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,25 +41,22 @@
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace emacs {
 
 namespace {
 // forward declaration
-void PrintField(
-    const protobuf::Message &message,
-    const protobuf::Reflection &reflection,
-    const protobuf::FieldDescriptor &field,
-    std::vector<string>* output);
-void PrintFieldValue(
-    const protobuf::Message &message,
-    const protobuf::Reflection &reflection,
-    const protobuf::FieldDescriptor &field,
-    int index,
-    std::vector<string>* output);
+void PrintField(const protobuf::Message &message,
+                const protobuf::Reflection &reflection,
+                const protobuf::FieldDescriptor &field,
+                std::vector<std::string> *output);
+void PrintFieldValue(const protobuf::Message &message,
+                     const protobuf::Reflection &reflection,
+                     const protobuf::FieldDescriptor &field, int index,
+                     std::vector<std::string> *output);
 }  // namespace
-
 
 // Parses a line, which must be a single complete command in form of:
 //     '(' EVENT_ID COMMAND [ARGUMENT]... ')'
@@ -70,14 +67,13 @@ void PrintFieldValue(
 // ARGUMENTs depend on a command.
 // An input line must be surrounded by a pair of parentheses,
 // like a S-expression.
-void ParseInputLine(
-    const string &line, uint32 *event_id, uint32 *session_id,
-    mozc::commands::Input *input) {
+void ParseInputLine(const std::string &line, uint32 *event_id,
+                    uint32 *session_id, mozc::commands::Input *input) {
   CHECK(event_id);
   CHECK(session_id);
   CHECK(input);
 
-  std::vector<string> tokens;
+  std::vector<std::string> tokens;
   if (!TokenizeSExpr(line, &tokens) ||
       tokens.size() < 4 ||  // Must be at least '(' EVENT_ID COMMAND ')'.
       tokens.front() != "(" || tokens.back() != ")") {
@@ -90,7 +86,7 @@ void ParseInputLine(
   }
 
   // Read a command.
-  const string &func = tokens[2];
+  const std::string &func = tokens[2];
   if (func == "SendKey") {  // SendKey is a most-frequently-used command.
     input->set_type(mozc::commands::Input::SEND_KEY);
   } else if (func == "CreateSession") {
@@ -132,8 +128,8 @@ void ParseInputLine(
         ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
       }
       // Parse keys.
-      std::vector<string> keys;
-      string key_string;
+      std::vector<std::string> keys;
+      std::string key_string;
       for (int i = 4; i < tokens.size() - 1; ++i) {
         if (isdigit(tokens[i][0])) {  // Numeric key code
           uint32 key_code;
@@ -141,7 +137,7 @@ void ParseInputLine(
               key_code > 255) {
             ErrorExit(kErrWrongTypeArgument, "Wrong character code");
           }
-          keys.push_back(string(1, static_cast<char>(key_code)));
+          keys.push_back(std::string(1, static_cast<char>(key_code)));
         } else if (tokens[i][0] == '\"') {  // String literal
           if (!key_string.empty()) {
             ErrorExit(kErrWrongTypeArgument, "Wrong number of key strings");
@@ -169,7 +165,6 @@ void ParseInputLine(
   }
 }
 
-
 // Prints the content of a protocol buffer in S-expression.
 // - 'message' and 'group' are mapped to alist (associative list)
 // - 'repeated' is expressed as a list
@@ -179,13 +174,12 @@ void ParseInputLine(
 // 'output' is a text buffer to output 'message'.
 //
 // This function never outputs newlines except for ones in strings.
-void PrintMessage(
-    const protobuf::Message &message,
-    std::vector<string>* output) {
+void PrintMessage(const protobuf::Message &message,
+                  std::vector<std::string> *output) {
   DCHECK(output);
 
   const protobuf::Reflection *reflection = message.GetReflection();
-  std::vector<const protobuf::FieldDescriptor*> fields;
+  std::vector<const protobuf::FieldDescriptor *> fields;
   reflection->ListFields(message, &fields);
 
   output->push_back("(");
@@ -195,14 +189,13 @@ void PrintMessage(
   output->push_back(")");
 }
 
-
 // Utilities
 
 // Normalizes a symbol with the following rules:
 // - all alphabets are converted to lowercase
 // - underscore('_') is converted to dash('-')
-string NormalizeSymbol(const string &symbol) {
-  string s = symbol;
+std::string NormalizeSymbol(const std::string &symbol) {
+  std::string s = symbol;
   mozc::Util::LowerString(&s);
   std::replace(s.begin(), s.end(), '_', '-');
   return s;
@@ -213,8 +206,8 @@ string NormalizeSymbol(const string &symbol) {
 // - backslash is converted to backslash + backslash
 //
 // Control characters, including newline('\n'), in a given string remain as is.
-string QuoteString(const string &str) {
-  string tmp, escaped_body;
+std::string QuoteString(const std::string &str) {
+  std::string tmp, escaped_body;
   mozc::Util::StringReplace(str, "\\", "\\\\", true, &tmp);
   mozc::Util::StringReplace(tmp, "\"", "\\\"", true, &escaped_body);
   return "\"" + escaped_body + "\"";
@@ -222,34 +215,53 @@ string QuoteString(const string &str) {
 
 // Unquotes and unescapes a double-quoted string.
 // The input string must begin and end with double quotes.
-bool UnquoteString(const string &input, string *output) {
+bool UnquoteString(const std::string &input, std::string *output) {
   DCHECK(output);
   output->clear();
 
-  if (input.length() < 2 ||
-      *input.begin() != '\"' || *input.rbegin() != '\"') {
+  if (input.length() < 2 || *input.begin() != '\"' || *input.rbegin() != '\"') {
     return false;  // wrong format
   }
 
-  string result;
+  std::string result;
   result.reserve(input.size());
 
   bool escape = false;
-  for (string::const_iterator i = ++input.begin(), e = --input.end();
+  for (std::string::const_iterator i = ++input.begin(), e = --input.end();
        i != e; ++i) {
     if (escape) {
       char c = *i;
       switch (*i) {
-        case 'a': c = '\x07'; break;  // control-g
-        case 'b': c = '\x08'; break;  // backspace
-        case 't': c = '\x09'; break;  // tab
-        case 'n': c = '\x0a'; break;  // newline
-        case 'v': c = '\x0b'; break;  // vertical tab
-        case 'f': c = '\x0c'; break;  // formfeed
-        case 'r': c = '\x0d'; break;  // carriage return
-        case 'e': c = '\x1b'; break;  // escape
-        case 's': c = '\x20'; break;  // space
-        case 'd': c = '\x7f'; break;  // delete
+        case 'a':
+          c = '\x07';
+          break;  // control-g
+        case 'b':
+          c = '\x08';
+          break;  // backspace
+        case 't':
+          c = '\x09';
+          break;  // tab
+        case 'n':
+          c = '\x0a';
+          break;  // newline
+        case 'v':
+          c = '\x0b';
+          break;  // vertical tab
+        case 'f':
+          c = '\x0c';
+          break;  // formfeed
+        case 'r':
+          c = '\x0d';
+          break;  // carriage return
+        case 'e':
+          c = '\x1b';
+          break;  // escape
+        case 's':
+          c = '\x20';
+          break;  // space
+        case 'd':
+          c = '\x7f';
+          break;  // delete
       }
       result.push_back(c);
       escape = false;
@@ -276,13 +288,15 @@ bool UnquoteString(const string &input, string *output) {
 // This function implements very simple tokenization and is NOT conforming to
 // the definition of S expression.  For example, this function does not return
 // an error for the input "\'".
-bool TokenizeSExpr(const string &input, std::vector<string> *output) {
+bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
   DCHECK(output);
 
-  std::vector<string> results;
+  std::vector<std::string> results;
 
-  for (string::const_iterator i = input.begin(); i != input.end(); ++i) {
-    if (isspace(*i)) { continue; }  // Skip white space.
+  for (std::string::const_iterator i = input.begin(); i != input.end(); ++i) {
+    if (isspace(*i)) {
+      continue;
+    }  // Skip white space.
 
     if (!isgraph(*i)) {
       return false;  // unrecognized control character
@@ -290,17 +304,21 @@ bool TokenizeSExpr(const string &input, std::vector<string> *output) {
 
     switch (*i) {
       case ';':  // comment
-        while (i != input.end() && *i != '\n') { ++i; }
+        while (i != input.end() && *i != '\n') {
+          ++i;
+        }
         break;
-      case '(': case ')':  // list parantheses
-      case '[': case ']':  // vector parantheses
+      case '(':
+      case ')':  // list parantheses
+      case '[':
+      case ']':   // vector parantheses
       case '\'':  // quote
-      case '`':  // quasiquote
-        results.push_back(string(1, *i));
+      case '`':   // quasiquote
+        results.push_back(std::string(1, *i));
         break;
       case '\"': {  // string
-        string::const_iterator start = i++;
-        for (bool escape = false; ; ++i) {
+        std::string::const_iterator start = i++;
+        for (bool escape = false;; ++i) {
           if (i == input.end()) {
             return false;  // unexpected end of string
           }
@@ -312,11 +330,11 @@ bool TokenizeSExpr(const string &input, std::vector<string> *output) {
             break;
           }
         }
-        results.push_back(string(start, i + 1));
+        results.push_back(std::string(start, i + 1));
         break;
       }
       default: {  // must be atom
-        string::const_iterator start = i++;
+        std::string::const_iterator start = i++;
         for (;; ++i) {
           if (i == input.end()) {
             break;
@@ -327,10 +345,12 @@ bool TokenizeSExpr(const string &input, std::vector<string> *output) {
           bool is_special_char = false;
           switch (*i) {
             case ';':  // comment
-            case '(': case ')':  // list parantheses
-            case '[': case ']':  // vector parantheses
+            case '(':
+            case ')':  // list parantheses
+            case '[':
+            case ']':   // vector parantheses
             case '\'':  // quote
-            case '`':  // quasiquote
+            case '`':   // quasiquote
             case '\"':  // string
               is_special_char = true;
           }
@@ -338,7 +358,7 @@ bool TokenizeSExpr(const string &input, std::vector<string> *output) {
             break;
           }
         }
-        results.push_back(string(start, i));
+        results.push_back(std::string(start, i));
         --i;  // Put the last char back.
         break;
       }
@@ -350,9 +370,9 @@ bool TokenizeSExpr(const string &input, std::vector<string> *output) {
 }
 
 // Prints an error message in S-expression and terminates with status code 1.
-void ErrorExit(const string &error, const string &message) {
-  fprintf(stdout, "((error . %s)(message . %s))\n",
-          error.c_str(), QuoteString(message).c_str());
+void ErrorExit(const std::string &error, const std::string &message) {
+  absl::FPrintF(stdout, "((error . %s)(message . %s))\n", error,
+                QuoteString(message));
   exit(1);
 }
 
@@ -377,11 +397,10 @@ namespace {
 // a field descriptor in 'message' to be output.  'field' can have both of
 // a single value and repeated values.
 // 'output' is a pseudo output stream to output field's key and value(s).
-void PrintField(
-    const protobuf::Message &message,
-    const protobuf::Reflection &reflection,
-    const protobuf::FieldDescriptor &field,
-    std::vector<string>* output) {
+void PrintField(const protobuf::Message &message,
+                const protobuf::Reflection &reflection,
+                const protobuf::FieldDescriptor &field,
+                std::vector<std::string> *output) {
   output->push_back("(");
   output->push_back(NormalizeSymbol(field.name()));
 
@@ -417,24 +436,22 @@ void PrintField(
 // a single value and repeated values.  If 'field' has repeated values,
 // 'index' specifies its index to be output.  Otherwise, 'index' is ignored.
 // 'output' is a pseudo output stream to output the value.
-void PrintFieldValue(
-    const protobuf::Message &message,
-    const protobuf::Reflection &reflection,
-    const protobuf::FieldDescriptor &field,
-    int index,
-    std::vector<string>* output) {
-#define GET_FIELD_VALUE(METHOD_TYPE)                                \
-    (field.is_repeated() ?                                          \
-     reflection.GetRepeated##METHOD_TYPE(message, &field, index) :  \
-     reflection.Get##METHOD_TYPE(message, &field))
+void PrintFieldValue(const protobuf::Message &message,
+                     const protobuf::Reflection &reflection,
+                     const protobuf::FieldDescriptor &field, int index,
+                     std::vector<std::string> *output) {
+#define GET_FIELD_VALUE(METHOD_TYPE)                                 \
+  (field.is_repeated()                                               \
+       ? reflection.GetRepeated##METHOD_TYPE(message, &field, index) \
+       : reflection.Get##METHOD_TYPE(message, &field))
 
   switch (field.cpp_type()) {
     // Number (integer and floating point)
-#define PRINT_FIELD_VALUE(PROTO_CPP_TYPE, METHOD_TYPE, CPP_TYPE, FORMAT)    \
-    case protobuf::FieldDescriptor::CPPTYPE_##PROTO_CPP_TYPE:               \
-        output->push_back(mozc::Util::StringPrintf(                         \
-            FORMAT, static_cast<CPP_TYPE>(GET_FIELD_VALUE(METHOD_TYPE))));  \
-        break;
+#define PRINT_FIELD_VALUE(PROTO_CPP_TYPE, METHOD_TYPE, CPP_TYPE, FORMAT) \
+  case protobuf::FieldDescriptor::CPPTYPE_##PROTO_CPP_TYPE:              \
+    output->push_back(mozc::Util::StringPrintf(                          \
+        FORMAT, static_cast<CPP_TYPE>(GET_FIELD_VALUE(METHOD_TYPE))));   \
+    break;
 
     // Since Emacs does not support 64-bit integers, it supports only
     // 60-bit integers on 64-bit version, and 28-bit on 32-bit version,
@@ -442,11 +459,9 @@ void PrintFieldValue(
     // We don't need any 64-bit values on Emacs so far, and 32-bit
     // integer values have never got over 28-bit yet.
     PRINT_FIELD_VALUE(INT32, Int32, int32, "%d");
-    PRINT_FIELD_VALUE(INT64, Int64, int64,
-                      "\"%" MOZC_PRId64 "\"");  // as a string
+    PRINT_FIELD_VALUE(INT64, Int64, int64, "\"%d\"");  // as a string
     PRINT_FIELD_VALUE(UINT32, UInt32, uint32, "%u");
-    PRINT_FIELD_VALUE(UINT64, UInt64, uint64,
-                      "\"%" MOZC_PRIu64 "\"");  // as a string
+    PRINT_FIELD_VALUE(UINT64, UInt64, uint64, "\"%u\"");  // as a string
     PRINT_FIELD_VALUE(DOUBLE, Double, double, "%f");
     PRINT_FIELD_VALUE(FLOAT, Float, float, "%f");
 #undef PRINT_FIELD_VALUE
@@ -460,11 +475,11 @@ void PrintFieldValue(
       break;
 
     case protobuf::FieldDescriptor::CPPTYPE_STRING: {  // string
-      string str;
-      str = field.is_repeated() ?
-            reflection.GetRepeatedStringReference(
-                message, &field, index, &str) :
-            reflection.GetStringReference(message, &field, &str);
+      std::string str;
+      str = field.is_repeated()
+                ? reflection.GetRepeatedStringReference(message, &field, index,
+                                                        &str)
+                : reflection.GetStringReference(message, &field, &str);
       output->push_back(QuoteString(str));
       break;
     }

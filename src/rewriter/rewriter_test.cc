@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,15 +71,11 @@ class RewriterTest : public ::testing::Test {
     const testing::MockDataManager data_manager;
     pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
     const DictionaryInterface *kNullDictionary = nullptr;
-    rewriter_.reset(new RewriterImpl(converter_mock_.get(),
-                                     &data_manager,
-                                     pos_group_.get(),
-                                     kNullDictionary));
+    rewriter_.reset(new RewriterImpl(converter_mock_.get(), &data_manager,
+                                     pos_group_.get(), kNullDictionary));
   }
 
-  const RewriterInterface *GetRewriter() const {
-    return rewriter_.get();
-  }
+  const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
 
   std::unique_ptr<ConverterMock> converter_mock_;
   std::unique_ptr<const PosGroup> pos_group_;

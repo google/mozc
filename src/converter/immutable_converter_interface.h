@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,25 +51,11 @@ class ImmutableConverterInterface {
   // However, to keep the backward compatibility untill the deprecation of
   // Conversion method, we provide the default implementation.
   // Please see the .cc file.
-  virtual bool ConvertForRequest(
-      const ConversionRequest &request, Segments *segments) const;
+  virtual bool ConvertForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
 
  protected:
   ImmutableConverterInterface() {}
-};
-
-class ImmutableConverterFactory {
- public:
-  // return singleton object
-  static ImmutableConverterInterface *GetImmutableConverter();
-
-  // dependency injection for unittesting
-  static void SetImmutableConverter(ImmutableConverterInterface
-                                    *immutable_converter);
-
- private:
-  ImmutableConverterFactory() {}
-  ~ImmutableConverterFactory() {}
 };
 }  // namespace mozc
 

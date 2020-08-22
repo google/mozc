@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,11 +41,10 @@ namespace composer {
 // ========================================
 // Converter
 // ========================================
-Converter::Converter(const Table& table)
-  : table_(table) {}
+Converter::Converter(const Table& table) : table_(table) {}
 
-void Converter::Convert(const string& input, string* output) const {
-  string key = input;
+void Converter::Convert(const std::string& input, std::string* output) const {
+  std::string key = input;
   output->clear();  // equivalent to output->assign("")
   while (!key.empty()) {
     size_t key_length;

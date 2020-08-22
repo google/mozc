@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <stdlib.h>
 #include "base/singleton.h"
+#include <stdlib.h>
 #include "base/thread.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
@@ -40,9 +40,7 @@ static int g_counter = 0;
 
 class TestInstance {
  public:
-  TestInstance() {
-    ++g_counter;
-  }
+  TestInstance() { ++g_counter; }
 };
 
 class ThreadInstance {
@@ -50,20 +48,16 @@ class ThreadInstance {
   ThreadInstance() {
     // Wait two secs to test the singleton
     // can safely block the initialization procedure.
-    Util::Sleep(2000);   // wait 2sec
+    Util::Sleep(2000);  // wait 2sec
     ++g_counter;
   }
 };
 
 class ThreadTest : public Thread {
  public:
-  void Run() {
-    instance_ = Singleton<ThreadInstance>::get();
-  }
+  void Run() { instance_ = Singleton<ThreadInstance>::get(); }
 
-  ThreadInstance *get() {
-    return instance_;
-  }
+  ThreadInstance *get() { return instance_; }
 
   ThreadTest() : instance_(NULL) {}
 

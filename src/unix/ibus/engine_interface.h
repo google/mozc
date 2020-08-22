@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,7 @@ class EngineInterface {
   virtual ~EngineInterface() {}
 
   // The interface function for the "candidate-clicked" signal
-  virtual void CandidateClicked(IBusEngine *engine,
-                                guint index,
-                                guint button,
+  virtual void CandidateClicked(IBusEngine *engine, guint index, guint button,
                                 guint state) = 0;
 
   // The interface function for the "cursor-down" signal
@@ -75,41 +73,31 @@ class EngineInterface {
   virtual void PageUp(IBusEngine *engine) = 0;
 
   // The interface function for the "process-key-event" signal
-  virtual gboolean ProcessKeyEvent(IBusEngine *engine,
-                                   guint keyval,
-                                   guint keycode,
-                                   guint state) = 0;
+  virtual gboolean ProcessKeyEvent(IBusEngine *engine, guint keyval,
+                                   guint keycode, guint state) = 0;
 
   // The interface function for the "property-activate" signal
-  virtual void PropertyActivate(IBusEngine *engine,
-                                const gchar *property_name,
+  virtual void PropertyActivate(IBusEngine *engine, const gchar *property_name,
                                 guint property_state) = 0;
 
   // The interface function for the "property-hide" signal
-  virtual void PropertyHide(IBusEngine *engine,
-                            const gchar *property_name) = 0;
+  virtual void PropertyHide(IBusEngine *engine, const gchar *property_name) = 0;
 
   // The interface function for the "property-show" signal
-  virtual void PropertyShow(IBusEngine *engine,
-                            const gchar *property_name) = 0;
+  virtual void PropertyShow(IBusEngine *engine, const gchar *property_name) = 0;
 
   // The interface function for the "reset" signal
   virtual void Reset(IBusEngine *engine) = 0;
 
   // The interface function for the "set-capabilities" signal
-  virtual void SetCapabilities(IBusEngine *engine,
-                               guint capabilities) = 0;
+  virtual void SetCapabilities(IBusEngine *engine, guint capabilities) = 0;
 
   // The interface function for the "set-cursor-location" signal
-  virtual void SetCursorLocation(IBusEngine *engine,
-                                 gint x,
-                                 gint y,
-                                 gint w,
+  virtual void SetCursorLocation(IBusEngine *engine, gint x, gint y, gint w,
                                  gint h) = 0;
 
   // The interface function for the "set-content-type" signal
-  virtual void SetContentType(IBusEngine *engine,
-                              guint purpose,
+  virtual void SetContentType(IBusEngine *engine, guint purpose,
                               guint hints) = 0;
 };
 

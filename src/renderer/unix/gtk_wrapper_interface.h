@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,23 +46,19 @@ class GtkWrapperInterface {
   virtual GSource *GSourceNew(GSourceFuncs *source_funcs,
                               guint struct_size) = 0;
   virtual GdkScreen *GtkWindowGetScreen(GtkWidget *window) = 0;
-  virtual gint GdkScreenGetMonitorAtPoint(
-      GdkScreen *screen, gint x, gint y) = 0;
-  virtual void GdkScreenGetMonitorGeometry(
-      GdkScreen *screen, gint monitor, GdkRectangle *rectangle) = 0;
+  virtual gint GdkScreenGetMonitorAtPoint(GdkScreen *screen, gint x,
+                                          gint y) = 0;
+  virtual void GdkScreenGetMonitorGeometry(GdkScreen *screen, gint monitor,
+                                           GdkRectangle *rectangle) = 0;
   virtual GtkWidget *GtkDrawingAreaNew() = 0;
   virtual GtkWidget *GtkWindowNew(GtkWindowType type) = 0;
   virtual void GObjectUnref(gpointer object) = 0;
-  virtual void GSignalConnect(gpointer instance,
-                              const gchar *signal,
-                              GCallback handler,
-                              gpointer data) = 0;
+  virtual void GSignalConnect(gpointer instance, const gchar *signal,
+                              GCallback handler, gpointer data) = 0;
   virtual void GSourceAddPoll(GSource *source, GPollFD *fd) = 0;
   virtual void GSourceAttach(GSource *source, GMainContext *context) = 0;
-  virtual void GSourceSetCallback(GSource *source,
-                                  GSourceFunc func,
-                                  gpointer data,
-                                  GDestroyNotify notify) = 0;
+  virtual void GSourceSetCallback(GSource *source, GSourceFunc func,
+                                  gpointer data, GDestroyNotify notify) = 0;
   virtual void GSourceSetCanRecurse(GSource *source, gboolean can_recurse) = 0;
   virtual void GdkThreadsEnter() = 0;
   virtual void GdkThreadsLeave() = 0;
@@ -70,11 +66,8 @@ class GtkWrapperInterface {
   virtual void GtkMain() = 0;
   virtual void GtkMainQuit() = 0;
   virtual void GtkWidgetHideAll(GtkWidget *widget) = 0;
-  virtual void GtkWidgetQueueDrawArea(GtkWidget *widget,
-                                      int x,
-                                      int y,
-                                      int width,
-                                      int height) = 0;
+  virtual void GtkWidgetQueueDrawArea(GtkWidget *widget, int x, int y,
+                                      int width, int height) = 0;
   virtual void GtkWidgetShowAll(GtkWidget *widget) = 0;
   virtual void GtkWindowGetPosition(GtkWidget *window, int *x, int *y) = 0;
   virtual void GtkWindowGetSize(GtkWidget *window, int *width, int *height) = 0;

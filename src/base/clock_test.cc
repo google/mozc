@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,7 @@ TEST(ClockTest, TimeTestWithMock) {
   Clock::SetClockForUnitTest(&clock_mock);
 
   // GetTime
-  {
-    EXPECT_EQ(kTestSeconds, Clock::GetTime());
-  }
+  { EXPECT_EQ(kTestSeconds, Clock::GetTime()); }
 
   // GetTimeOfDay
   {
@@ -64,12 +62,12 @@ TEST(ClockTest, TimeTestWithMock) {
     tm current_tm;
     Clock::GetCurrentTm(&current_tm);
     EXPECT_EQ(120, current_tm.tm_year);
-    EXPECT_EQ(11,  current_tm.tm_mon);
-    EXPECT_EQ(23,  current_tm.tm_mday);
-    EXPECT_EQ(13,  current_tm.tm_hour);
-    EXPECT_EQ(24,  current_tm.tm_min);
-    EXPECT_EQ(35,  current_tm.tm_sec);
-    EXPECT_EQ(3,   current_tm.tm_wday);
+    EXPECT_EQ(11, current_tm.tm_mon);
+    EXPECT_EQ(23, current_tm.tm_mday);
+    EXPECT_EQ(13, current_tm.tm_hour);
+    EXPECT_EQ(24, current_tm.tm_min);
+    EXPECT_EQ(35, current_tm.tm_sec);
+    EXPECT_EQ(3, current_tm.tm_wday);
   }
 
   // GetTmWithoutOffsetSecond
@@ -79,12 +77,12 @@ TEST(ClockTest, TimeTestWithMock) {
     tm offset_tm;
     Clock::GetTmWithOffsetSecond(&offset_tm, offset_seconds);
     EXPECT_EQ(124, offset_tm.tm_year);
-    EXPECT_EQ(1,   offset_tm.tm_mon);
-    EXPECT_EQ(23,  offset_tm.tm_mday);
-    EXPECT_EQ(23,  offset_tm.tm_hour);
-    EXPECT_EQ(11,  offset_tm.tm_min);
-    EXPECT_EQ(15,  offset_tm.tm_sec);
-    EXPECT_EQ(5,   offset_tm.tm_wday);
+    EXPECT_EQ(1, offset_tm.tm_mon);
+    EXPECT_EQ(23, offset_tm.tm_mday);
+    EXPECT_EQ(23, offset_tm.tm_hour);
+    EXPECT_EQ(11, offset_tm.tm_min);
+    EXPECT_EQ(15, offset_tm.tm_sec);
+    EXPECT_EQ(5, offset_tm.tm_wday);
   }
 
   // GetFrequency / GetTicks

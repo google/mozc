@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,19 +41,20 @@ namespace mozc {
 namespace dictionary {
 
 DictionaryFileBuilder::DictionaryFileBuilder(
-    DictionaryFileCodecInterface *file_codec) : file_codec_(file_codec) {
+    DictionaryFileCodecInterface *file_codec)
+    : file_codec_(file_codec) {
   DCHECK(file_codec_);
 }
 
 DictionaryFileBuilder::~DictionaryFileBuilder() {
   for (std::vector<DictionaryFileSection>::iterator itr = sections_.begin();
        itr != sections_.end(); itr++) {
-    delete [] itr->ptr;
+    delete[] itr->ptr;
   }
 }
 
-bool DictionaryFileBuilder::AddSectionFromFile(
-    const string &section_name, const string &file_name) {
+bool DictionaryFileBuilder::AddSectionFromFile(const std::string &section_name,
+                                               const std::string &file_name) {
   if (added_.find(section_name) != added_.end()) {
     DLOG(INFO) << "Already added: " << section_name;
     return false;
@@ -76,7 +77,8 @@ bool DictionaryFileBuilder::AddSectionFromFile(
   return true;
 }
 
-void DictionaryFileBuilder::WriteImageToFile(const string &file_name) const {
+void DictionaryFileBuilder::WriteImageToFile(
+    const std::string &file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
   OutputFileStream ofs(file_name.c_str(), std::ios::binary);
   file_codec_->WriteSections(sections_, &ofs);

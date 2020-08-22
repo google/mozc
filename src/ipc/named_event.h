@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -90,7 +90,7 @@ class NamedEventUtil {
   // return real event name
   // Windows: <kEventPathPrefix>.<sid>.<name>
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.<name>.event
-  static const string GetEventPath(const char *name);
+  static const std::string GetEventPath(const char *name);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NamedEventUtil);
@@ -137,7 +137,7 @@ class NamedEventListener {
   HANDLE handle_;
 #else
   sem_t *sem_;
-  string key_filename_;
+  std::string key_filename_;
 #endif
 };
 

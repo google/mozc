@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,10 @@ namespace nacl {
 class URLLoaderUtil {
  public:
   // Downloads the file from url to file_name on HTML5 filesystem.
-  static void StartDownloadToFile(pp::Instance *instance,
-                                  const string &url,
+  static void StartDownloadToFile(pp::Instance *instance, const string &url,
                                   const string &file_name,
                                   pp::CompletionCallback callback);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(URLLoaderUtil);
 };

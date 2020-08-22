@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ namespace renderer {
 class RendererStyle;
 
 // this is pure static class
-class RendererStyleHandler{
+class RendererStyleHandler {
  public:
   // return current Style
   static bool GetRendererStyle(RendererStyle *style);
@@ -56,7 +56,7 @@ class RendererStyleHandler{
   virtual ~RendererStyleHandler() {}
 };
 
-} // renderer
-} // mozc
+}  // namespace renderer
+}  // namespace mozc
 
-#endif // MOZC_RENDERER_RENDERER_STYLE_HANDLER_H_
+#endif  // MOZC_RENDERER_RENDERER_STYLE_HANDLER_H_

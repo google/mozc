@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@
 namespace mozc {
 namespace {
 
-void AddCandidateWithValue(const string &value, Segment *segment) {
+void AddCandidateWithValue(const std::string &value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   candidate->key = segment->key();
@@ -54,7 +54,7 @@ void AddCandidateWithValue(const string &value, Segment *segment) {
 }
 
 // Returns -1 if not found.
-int GetCandidateIndexByValue(const string &value, const Segment &segment) {
+int GetCandidateIndexByValue(const std::string &value, const Segment &segment) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == value) {
       return i;
@@ -92,8 +92,7 @@ class KatakanaPromotionRewriterTest : public ::testing::Test {
 TEST_F(KatakanaPromotionRewriterTest, Capability) {
   KatakanaPromotionRewriter rewriter;
 
-  EXPECT_EQ(RewriterInterface::ALL,
-            rewriter.capability(mobile_conv_request_));
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(mobile_conv_request_));
 
   EXPECT_EQ(RewriterInterface::NOT_AVAILABLE,
             rewriter.capability(desktop_conv_request_));
@@ -155,8 +154,7 @@ TEST_F(KatakanaPromotionRewriterTest, PromoteKatakana) {
   AddCandidateWithValue("京", segment);
   AddCandidateWithValue("キョウ", segment);
 
-  const int katakana_index = GetCandidateIndexByValue(
-      "キョウ", *segment);
+  const int katakana_index = GetCandidateIndexByValue("キョウ", *segment);
   EXPECT_EQ(katakana_index, 7);
 
   Segment::Candidate *katakana_candidate =
@@ -223,14 +221,14 @@ TEST_F(KatakanaPromotionRewriterTest, PromoteKatakanaForMultiSegments) {
 
   EXPECT_EQ(
       -1, GetCandidateIndexByValue("キョウハ", segments.conversion_segment(0)));
-  EXPECT_EQ(
-      -1, GetCandidateIndexByValue("ハレ", segments.conversion_segment(1)));
+  EXPECT_EQ(-1,
+            GetCandidateIndexByValue("ハレ", segments.conversion_segment(1)));
 
   EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
   EXPECT_EQ(
       5, GetCandidateIndexByValue("キョウハ", segments.conversion_segment(0)));
-  EXPECT_EQ(
-      5, GetCandidateIndexByValue("ハレ", segments.conversion_segment(1)));
+  EXPECT_EQ(5,
+            GetCandidateIndexByValue("ハレ", segments.conversion_segment(1)));
 }
 
 TEST_F(KatakanaPromotionRewriterTest, NoNeedToPromote) {

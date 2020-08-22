@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,25 +45,25 @@ class LoudsTrieBuilder {
 
   // Adds the word to the builder. It is necessary to call this method,
   // before Build invocation.
-  void Add(const string &word);
+  void Add(const std::string &word);
 
   // Builds the trie image.
   void Build();
 
   // Returns the binary image of the trie.
-  const string &image() const;
+  const std::string &image() const;
 
   // Returns the key_id for the word (-1 if not found).
   // Note: in Mozc, the key_id will be used to build additional data
   // related to the built LoudsTrie.
-  int GetId(const string &word) const;
+  int GetId(const std::string &word) const;
 
  private:
   bool built_;
 
-  std::vector<string> word_list_;
+  std::vector<std::string> word_list_;
   std::vector<int> id_list_;
-  string image_;
+  std::string image_;
 
   DISALLOW_COPY_AND_ASSIGN(LoudsTrieBuilder);
 };

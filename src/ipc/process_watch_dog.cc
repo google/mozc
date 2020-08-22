@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@
 #ifdef OS_WIN
 #include <windows.h>
 #else
-#include <signal.h>
 #include <errno.h>
+#include <signal.h>
 #endif
 
 #include "base/logging.h"
@@ -178,8 +178,8 @@ void ProcessWatchDog::Run() {
       ++size;
     }
 
-    const DWORD result = ::WaitForMultipleObjects(
-        size, handles, FALSE, timeout);
+    const DWORD result =
+        ::WaitForMultipleObjects(size, handles, FALSE, timeout);
     SignalType result_type = ProcessWatchDog::UNKNOWN_SIGNALED;
     switch (result) {
       case WAIT_OBJECT_0:
@@ -208,12 +208,12 @@ void ProcessWatchDog::Run() {
 
     if (result_type != ProcessWatchDog::UNKNOWN_SIGNALED) {
       VLOG(1) << "Sending signal: " << static_cast<int>(result_type);
-      Signaled(result_type);   // call signal handler
+      Signaled(result_type);  // call signal handler
     }
   }
 }
 
-#else  // OS_WIN
+#else   // OS_WIN
 
 ProcessWatchDog::ProcessWatchDog()
     : process_id_(UnknownProcessID),
@@ -229,8 +229,7 @@ ProcessWatchDog::~ProcessWatchDog() {
 }
 
 bool ProcessWatchDog::SetID(ProcessWatchDog::ProcessID process_id,
-                            ProcessWatchDog::ThreadID thread_id,
-                            int timeout) {
+                            ProcessWatchDog::ThreadID thread_id, int timeout) {
   if (process_id_ == process_id && thread_id_ == thread_id &&
       timeout_ == timeout) {
     // don't repeat if we are checking the same thread/process

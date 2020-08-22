@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,13 +91,12 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
   const bool open = input_mode_manager->GetEffectiveOpenClose();
   const CompositionMode mozc_mode =
       open ? static_cast<CompositionMode>(
-                input_mode_manager->GetEffectiveConversionMode())
+                 input_mode_manager->GetEffectiveConversionMode())
            : commands::DIRECT;
   text_service->UpdateLangbar(!disabled, static_cast<uint32>(mozc_mode));
 }
 
-bool UpdateInternal(TipTextService *text_service,
-                    ITfContext *context,
+bool UpdateInternal(TipTextService *text_service, ITfContext *context,
                     TfEditCookie read_cookie) {
   if (text_service->IsImmersiveUI()) {
     return TipUiHandlerImmersive::Update(text_service, context, read_cookie);
@@ -108,15 +107,12 @@ bool UpdateInternal(TipTextService *text_service,
 
 }  // namespace
 
-ITfUIElement *TipUiHandler::CreateUI(UiType type,
-                                     TipTextService *text_service,
+ITfUIElement *TipUiHandler::CreateUI(UiType type, TipTextService *text_service,
                                      ITfContext *context) {
   if (text_service->IsImmersiveUI()) {
-    return TipUiHandlerImmersive::CreateUI(
-        type, text_service, context);
+    return TipUiHandlerImmersive::CreateUI(type, text_service, context);
   } else {
-    return TipUiHandlerConventional::CreateUI(
-        type, text_service, context);
+    return TipUiHandlerConventional::CreateUI(type, text_service, context);
   }
 }
 
@@ -153,17 +149,16 @@ void TipUiHandler::OnDocumentMgrChanged(TipTextService *text_service,
 void TipUiHandler::OnFocusChange(TipTextService *text_service,
                                  ITfDocumentMgr *focused_document_manager) {
   if (text_service->IsImmersiveUI()) {
-    TipUiHandlerImmersive::OnFocusChange(
-        text_service, focused_document_manager);
+    TipUiHandlerImmersive::OnFocusChange(text_service,
+                                         focused_document_manager);
   } else {
-    TipUiHandlerConventional::OnFocusChange(
-        text_service, focused_document_manager);
+    TipUiHandlerConventional::OnFocusChange(text_service,
+                                            focused_document_manager);
   }
   UpdateLanguageBarOnFocusChange(text_service, focused_document_manager);
 }
 
-bool TipUiHandler::Update(TipTextService *text_service,
-                          ITfContext *context,
+bool TipUiHandler::Update(TipTextService *text_service, ITfContext *context,
                           TfEditCookie read_cookie) {
   const TipInputModeManager *input_mode_manager =
       text_service->GetThreadContext()->GetInputModeManager();

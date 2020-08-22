@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,14 @@
 //  // here main() is automatically converted to WinMain
 //  int main(int argc,  char *argv[]) { .. }
 #ifdef OS_WIN
+// clang-format off
 #include <Windows.h>
 #include <ShellAPI.h>  // for CommandLineToArgvW
+// clang-format on
 
+#include "base/const.h"
 #include "base/port.h"
 #include "base/util.h"
-#include "base/const.h"
 
 namespace {
 // Wrapper Class for WinMain Command Line:
@@ -59,13 +61,13 @@ namespace {
 // program name into standard argc/argv parameters.
 class WinCommandLine {
  public:
-  WinCommandLine(): argc_(0), argv_(NULL) {
+  WinCommandLine() : argc_(0), argv_(NULL) {
     LPWSTR *argvw = ::CommandLineToArgvW(::GetCommandLineW(), &argc_);
     if (argvw == NULL) {
       return;
     }
 
-    argv_ = new char * [argc_];
+    argv_ = new char *[argc_];
     for (int i = 0; i < argc_; ++i) {
       string str;
       mozc::Util::WideToUTF8(argvw[i], &str);
@@ -79,13 +81,13 @@ class WinCommandLine {
 
   virtual ~WinCommandLine() {
     for (int i = 0; i < argc_; ++i) {
-      delete [] argv_[i];
+      delete[] argv_[i];
     }
-    delete [] argv_;
+    delete[] argv_;
     argv_ = NULL;
   }
 
-  int argc() const    { return argc_; }
+  int argc() const { return argc_; }
   char **argv() const { return argv_; }
 
  private:
@@ -104,11 +106,9 @@ int WinMainToMain(int argc, char *argv[]);
 // in order to disable the entiry point main()
 #define main(argc, argv) WinMainToMain(argc, argv)
 
-int WINAPI WinMain(HINSTANCE hInstance,
-                   HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine,
-                   int nCmdShow) {
-#ifndef NO_LOGGING
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine, int nCmdShow) {
+#ifndef MOZC_NO_LOGGING
   {
     // Load debug_sleep_time from registry.
     // With this parameter, developer can inject a debugger
@@ -116,18 +116,13 @@ int WINAPI WinMain(HINSTANCE hInstance,
     DWORD sleep_time = 0;
     DWORD size = sizeof(sleep_time);
     DWORD vt = 0;
-    HKEY  hKey = 0;
-    if (ERROR_SUCCESS ==
-        ::RegOpenKeyExW(
-            HKEY_CURRENT_USER, mozc::kMozcRegKey,
-            NULL, KEY_READ, &hKey)) {
-      if (ERROR_SUCCESS ==
-          ::RegQueryValueExW(hKey, L"debug_sleep_time",
-                             NULL, &vt,
-                             reinterpret_cast<BYTE *>(&sleep_time),
-                             &size) &&
-          vt == REG_DWORD &&
-          sleep_time > 0){
+    HKEY hKey = 0;
+    if (ERROR_SUCCESS == ::RegOpenKeyExW(HKEY_CURRENT_USER, mozc::kMozcRegKey,
+                                         NULL, KEY_READ, &hKey)) {
+      if (ERROR_SUCCESS == ::RegQueryValueExW(
+                               hKey, L"debug_sleep_time", NULL, &vt,
+                               reinterpret_cast<BYTE *>(&sleep_time), &size) &&
+          vt == REG_DWORD && sleep_time > 0) {
         ::Sleep(sleep_time * 1000);
       }
       ::RegCloseKey(hKey);

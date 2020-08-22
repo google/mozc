@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ namespace mozc {
 namespace {
 
 struct Result {
-  string test_name;
+  std::string test_name;
   std::vector<uint32> operations_times;
 };
 
@@ -72,7 +72,7 @@ class TestSentenceGenerator {
     size = std::min(static_cast<size_t>(200), size);
 
     for (size_t i = 0; i < size; ++i) {
-      string output;
+      std::string output;
       Util::HiraganaToRomanji(sentences[i], &output);
       std::vector<commands::KeyEvent> tmp;
       for (ConstChar32Iterator iter(output); !iter.Done(); iter.Next()) {
@@ -148,7 +148,7 @@ class TestScenarioInterface {
   commands::Output output_;
 };
 
-string GetBasicStats(const std::vector<uint32> times) {
+std::string GetBasicStats(const std::vector<uint32> times) {
   uint32 total_time = 0;
   uint32 avg_time = 0;
   uint32 max_time = 0;
@@ -183,13 +183,8 @@ string GetBasicStats(const std::vector<uint32> times) {
 
   return Util::StringPrintf(
       "size=%d total=%d avg=%d max=%d min=%d st=%d med=%d",
-      static_cast<int>(times.size()),
-      total_time,
-      avg_time,
-      max_time,
-      min_time,
-      sd_time,
-      med_time);
+      static_cast<int>(times.size()), total_time, avg_time, max_time, min_time,
+      sd_time, med_time);
 }
 
 class PreeditCommon : public TestScenarioInterface {
@@ -212,7 +207,7 @@ class PreeditCommon : public TestScenarioInterface {
   }
 };
 
-class PreeditWithoutSuggestion : public  PreeditCommon {
+class PreeditWithoutSuggestion : public PreeditCommon {
  public:
   virtual void Run(Result *result) {
     result->test_name = "preedit_without_suggestion";
@@ -238,31 +233,27 @@ class PreeditWithSuggestion : public PreeditCommon {
   }
 };
 
-enum PredictionRequestType {
-  ONE_CHAR,
-  TWO_CHARS
-};
+enum PredictionRequestType { ONE_CHAR, TWO_CHARS };
 
 void CreatePredictionKeys(PredictionRequestType type,
-                          std::vector <string> *request_keys) {
+                          std::vector<std::string> *request_keys) {
   CHECK(request_keys);
   request_keys->clear();
 
-  const char *kVoels[] = { "a", "i", "u", "e", "o" };
-  const char *kConsonant[] = { "k", "s", "t", "n", "h",
-                               "m", "y", "r", "w" };
-  std::vector<string> one_chars;
+  const char *kVoels[] = {"a", "i", "u", "e", "o"};
+  const char *kConsonant[] = {"k", "s", "t", "n", "h", "m", "y", "r", "w"};
+  std::vector<std::string> one_chars;
   for (size_t i = 0; i < arraysize(kVoels); ++i) {
     one_chars.push_back(kVoels[i]);
   }
 
   for (size_t i = 0; i < arraysize(kConsonant); ++i) {
     for (size_t j = 0; j < arraysize(kVoels); ++j) {
-      one_chars.push_back(string(kConsonant[i]) + string(kVoels[j]));
+      one_chars.push_back(std::string(kConsonant[i]) + std::string(kVoels[j]));
     }
   }
 
-  std::vector<string> two_chars;
+  std::vector<std::string> two_chars;
   for (size_t i = 0; i < one_chars.size(); ++i) {
     for (size_t j = 0; j < one_chars.size(); ++j) {
       two_chars.push_back(one_chars[i] + one_chars[j]);
@@ -284,16 +275,16 @@ void CreatePredictionKeys(PredictionRequestType type,
   CHECK(!request_keys->empty());
 }
 
-class PredictionCommon: public TestScenarioInterface {
+class PredictionCommon : public TestScenarioInterface {
  protected:
   void RunTest(PredictionRequestType type, Result *result) {
     IMEOn();
     ResetConfig();
     DisableSuggestion();
-    std::vector<string> request_keys;
+    std::vector<std::string> request_keys;
     CreatePredictionKeys(type, &request_keys);
     for (size_t i = 0; i < request_keys.size(); ++i) {
-      const string &keys = request_keys[i];
+      const std::string &keys = request_keys[i];
       for (size_t j = 0; j < keys.size(); ++j) {
         commands::KeyEvent key;
         key.set_key_code(static_cast<int>(keys[j]));
@@ -366,7 +357,7 @@ class Conversion : public TestScenarioInterface {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   std::vector<mozc::TestScenarioInterface *> tests;
   std::vector<mozc::Result *> results;

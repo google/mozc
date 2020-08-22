@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -164,16 +164,16 @@ void WindowManager::UpdateLayoutIMM32(
        ApplicationInfo::ShowCandidateWindow);
   bool show_suggest =
       ((app_info.ui_visibilities() & ApplicationInfo::ShowSuggestWindow) ==
-        ApplicationInfo::ShowSuggestWindow);
+       ApplicationInfo::ShowSuggestWindow);
   const bool show_composition =
       ((app_info.ui_visibilities() & ApplicationInfo::ShowCompositionWindow) ==
-        ApplicationInfo::ShowCompositionWindow);
+       ApplicationInfo::ShowCompositionWindow);
 
   CandidateWindowLayout candidate_layout;
   std::vector<CompositionWindowLayout> layouts;
   if (show_composition) {
-    if (!layout_manager_->LayoutCompositionWindow(
-             command, &layouts, &candidate_layout)) {
+    if (!layout_manager_->LayoutCompositionWindow(command, &layouts,
+                                                  &candidate_layout)) {
       candidate_layout.Clear();
       layouts.clear();
       show_candidate = false;
@@ -246,11 +246,11 @@ void WindowManager::UpdateLayoutIMM32(
   if (!candidate_layout.initialized()) {
     candidate_layout.Clear();
     if (is_suggest) {
-      layout_manager_->LayoutCandidateWindowForSuggestion(
-          app_info, &candidate_layout);
+      layout_manager_->LayoutCandidateWindowForSuggestion(app_info,
+                                                          &candidate_layout);
     } else if (is_convert_or_predict) {
-      layout_manager_->LayoutCandidateWindowForConversion(
-          app_info, &candidate_layout);
+      layout_manager_->LayoutCandidateWindowForConversion(app_info,
+                                                          &candidate_layout);
     }
   }
 
@@ -310,19 +310,14 @@ void WindowManager::UpdateLayoutIMM32(
             new_target_point, preedit_rect, main_window_size,
             main_window_zero_point, working_area, vertical);
   } else {
-    main_window_rect =
-        WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
-            target_point, main_window_size, main_window_zero_point,
-            working_area);
+    main_window_rect = WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
+        target_point, main_window_size, main_window_zero_point, working_area);
   }
 
   const DWORD set_windows_pos_flags = SWP_NOACTIVATE | SWP_SHOWWINDOW;
-  main_window_->SetWindowPos(HWND_TOPMOST,
-                             main_window_rect.Left(),
-                             main_window_rect.Top(),
-                             main_window_rect.Width(),
-                             main_window_rect.Height(),
-                             set_windows_pos_flags);
+  main_window_->SetWindowPos(HWND_TOPMOST, main_window_rect.Left(),
+                             main_window_rect.Top(), main_window_rect.Width(),
+                             main_window_rect.Height(), set_windows_pos_flags);
   // This trick ensures that the window is certainly shown as 'inactivated'
   // in terms of visual effect on DWM-enabled desktop.
   main_window_->SendMessageW(WM_NCACTIVATE, FALSE);
@@ -349,16 +344,13 @@ void WindowManager::UpdateLayoutIMM32(
     }
 
     // Align infolist window
-    const Rect infolist_rect =
-        WindowUtil::GetWindowRectForInfolistWindow(
-            infolist_window_->GetLayoutSize(),
-            main_window_rect, working_area);
-    infolist_window_->MoveWindow(infolist_rect.Left(),
-                                 infolist_rect.Top(),
-                                 infolist_rect.Width(),
-                                 infolist_rect.Height(),
+    const Rect infolist_rect = WindowUtil::GetWindowRectForInfolistWindow(
+        infolist_window_->GetLayoutSize(), main_window_rect, working_area);
+    infolist_window_->MoveWindow(infolist_rect.Left(), infolist_rect.Top(),
+                                 infolist_rect.Width(), infolist_rect.Height(),
                                  TRUE);
-    infolist_window_->SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
+    infolist_window_->SetWindowPos(
+        HWND_TOPMOST, 0, 0, 0, 0,
         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
     const int mode = layout_manager_->GetCompatibilityMode(app_info);
@@ -374,12 +366,12 @@ void WindowManager::UpdateLayoutIMM32(
     const uint32 hide_window_delay = std::min(maximum_delay, kHideWindowDelay);
     if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
       const int focused_row =
-        candidates.focused_index() - candidates.candidate(0).index();
+          candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
         const uint32 raw_delay =
             std::max(static_cast<uint32>(0),
-                command.output().candidates().usages().delay());
+                     command.output().candidates().usages().delay());
         const uint32 delay = std::min(maximum_delay, raw_delay);
         infolist_window_->DelayShow(delay);
       } else {
@@ -421,12 +413,10 @@ void WindowManager::UpdateLayoutIMM32(
             selected_row_with_window_border, cascading_window_size,
             cascading_window_zero_point, working_area);
 
-    cascading_window_->SetWindowPos(HWND_TOPMOST,
-                                    cascading_window_rect.Left(),
-                                    cascading_window_rect.Top(),
-                                    cascading_window_rect.Width(),
-                                    cascading_window_rect.Height(),
-                                    set_windows_pos_flags);
+    cascading_window_->SetWindowPos(
+        HWND_TOPMOST, cascading_window_rect.Left(), cascading_window_rect.Top(),
+        cascading_window_rect.Width(), cascading_window_rect.Height(),
+        set_windows_pos_flags);
     // This trick ensures that the window is certainly shown as 'inactivated'
     // in terms of visual effect on DWM-enabled desktop.
     cascading_window_->SendMessageW(WM_NCACTIVATE, FALSE);
@@ -450,8 +440,7 @@ void WindowManager::UpdateLayoutTSF(const commands::RendererCommand &command) {
 }
 
 bool WindowManager::IsAvailable() const {
-  return main_window_->IsWindow() &&
-         cascading_window_->IsWindow() &&
+  return main_window_->IsWindow() && cascading_window_->IsWindow() &&
          infolist_window_->IsWindow();
 }
 
@@ -480,9 +469,9 @@ void WindowManager::PreTranslateMessage(const MSG &message) {
   const CPoint cursor_pos_in_client_coords(GET_X_LPARAM(message.lParam),
                                            GET_Y_LPARAM(message.lParam));
   CPoint cursor_pos_in_logical_coords;
-  if (layout_manager_->ClientPointToScreen(
-          message.hwnd, cursor_pos_in_client_coords,
-          &cursor_pos_in_logical_coords)) {
+  if (layout_manager_->ClientPointToScreen(message.hwnd,
+                                           cursor_pos_in_client_coords,
+                                           &cursor_pos_in_logical_coords)) {
     // Since the renderer process is DPI-aware, we can safely use this
     // (logical) coordinates as if it is real (physical) screen coordinates.
     if (cursor_pos_in_logical_coords == last_position_) {

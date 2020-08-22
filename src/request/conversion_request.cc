@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,9 +57,7 @@ ConversionRequest::ConversionRequest(const composer::Composer *c,
 
 ConversionRequest::~ConversionRequest() {}
 
-bool ConversionRequest::has_composer() const {
-  return composer_ != NULL;
-}
+bool ConversionRequest::has_composer() const { return composer_ != NULL; }
 
 const composer::Composer &ConversionRequest::composer() const {
   DCHECK(composer_);

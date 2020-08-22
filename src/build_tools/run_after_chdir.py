@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,8 @@
 The example above is to run ls command in / directory.
 """
 
-__author__ = "satorux"
+from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import subprocess
@@ -57,7 +58,7 @@ def main():
     sys.argv.insert(0, sys.executable)  # Inject the python interpreter path.
   # We don't capture stdout and stderr from Popen. The output will just
   # be emitted to a terminal or console.
-  print sys.argv
+  print(sys.argv)
   sys.exit(subprocess.call(sys.argv))
 
 if __name__ == '__main__':

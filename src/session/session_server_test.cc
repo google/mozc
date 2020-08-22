@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,12 +43,12 @@ namespace {
 class JobRecorder : public Scheduler::SchedulerInterface {
  public:
   void RemoveAllJobs() {}
-  bool RemoveJob(const string &name) { return true; }
+  bool RemoveJob(const std::string &name) { return true; }
   bool AddJob(const Scheduler::JobSetting &job_setting) {
     job_settings_.push_back(job_setting);
     return true;
   }
-  bool HasJob(const string &name) const {
+  bool HasJob(const std::string &name) const {
     for (size_t i = 0; i < job_settings_.size(); ++i) {
       if (job_settings_[i].name() == name) {
         return true;
@@ -66,18 +66,18 @@ class JobRecorder : public Scheduler::SchedulerInterface {
 }  // namespace
 class SessionServerTest : public testing::Test {
  protected:
-  void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };
 
 TEST_F(SessionServerTest, SetSchedulerJobTest) {
+  // No job is added because we have stopped sending usage stats to the server
+  // by policy change.
   std::unique_ptr<JobRecorder> job_recorder(new JobRecorder);
   Scheduler::SetSchedulerHandler(job_recorder.get());
   std::unique_ptr<SessionServer> session_server(new SessionServer);
-  EXPECT_LE(2, job_recorder->job_settings().size());
-  EXPECT_TRUE(job_recorder->HasJob("UsageStatsTimer"));
-  EXPECT_TRUE(job_recorder->HasJob("SaveCachedStats"));
+  EXPECT_EQ(0, job_recorder->job_settings().size());
   Scheduler::SetSchedulerHandler(NULL);
 }
 }  // namespace mozc

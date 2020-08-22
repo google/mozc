@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,8 +61,7 @@ class TipTransitoryExtension {
 
   // Returns the parent (full-text-store) context if exists.
   // Returns |context| otherwise.
-  static ATL::CComPtr<ITfContext> ToParentContextIfExists(
-      ITfContext *context);
+  static ATL::CComPtr<ITfContext> ToParentContextIfExists(ITfContext *context);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipTransitoryExtension);

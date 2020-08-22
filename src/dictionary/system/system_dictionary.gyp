@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
+        '../../base/base.gyp:status',
       ],
     },
     {
@@ -56,6 +57,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
+        '../../base/base.gyp:status',
         '../../request/request.gyp:conversion_request',
         '../../storage/louds/louds.gyp:bit_vector_based_array',
         '../../storage/louds/louds.gyp:louds_trie',

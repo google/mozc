@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -218,7 +218,7 @@
         'defines': [
           'NDEBUG',
           'QT_NO_DEBUG',
-          'NO_LOGGING',
+          'MOZC_NO_LOGGING',
           'IGNORE_HELP_FLAG',
           'IGNORE_INVALID_FLAG'
         ],
@@ -301,6 +301,7 @@
     'include_dirs': [
       '<(abs_depth)',
       '<(SHARED_INTERMEDIATE_DIR)',
+      '<(absl_dir)',
       '<@(msvs_includes)',
       '<(wtl_dir)/include',
     ],
@@ -318,7 +319,6 @@
         'EnableIntrinsicFunctions': 'true',    # /Oi
         'ExceptionHandling': '2',              # /EHs
         'SuppressStartupBanner': 'true',       # /nologo
-        'TreatWChar_tAsBuiltInType': 'false',  # /Zc:wchar_t-
         'WarningLevel': '3',                   # /W3
         'OmitFramePointers': 'false',          # /Oy-
         'AdditionalOptions': [

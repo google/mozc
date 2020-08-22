@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "engine/engine_interface.h"
-#include "engine/user_data_manager_mock.h"
 
 using mozc::dictionary::SuppressionDictionary;
 
@@ -59,11 +58,9 @@ SuppressionDictionary *MockConverterEngine::GetSuppressionDictionary() {
   return nullptr;
 }
 
-bool MockConverterEngine::Reload() {
-  return true;
-}
+bool MockConverterEngine::Reload() { return true; }
 
-UserDataManagerInterface *MockConverterEngine::GetUserDataManager() {
+UserDataManagerMock *MockConverterEngine::GetUserDataManager() {
   return user_data_manager_mock_.get();
 }
 
@@ -71,7 +68,7 @@ void MockConverterEngine::SetUserDataManager(UserDataManagerMock *manager) {
   return user_data_manager_mock_.reset(manager);
 }
 
-ConverterMock* MockConverterEngine::mutable_converter_mock() {
+ConverterMock *MockConverterEngine::mutable_converter_mock() {
   return converter_mock_.get();
 }
 

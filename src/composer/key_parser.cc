@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,21 +47,15 @@ using commands::KeyEvent;
 
 namespace {
 
-typedef std::map<string, KeyEvent::SpecialKey> SpecialKeysMap;
-typedef std::multimap<string, KeyEvent::ModifierKey> ModifiersMap;
+typedef std::map<std::string, KeyEvent::SpecialKey> SpecialKeysMap;
+typedef std::multimap<std::string, KeyEvent::ModifierKey> ModifiersMap;
 
 class KeyParserData {
  public:
-  KeyParserData() {
-    InitData();
-  }
+  KeyParserData() { InitData(); }
 
-  const SpecialKeysMap &keycode_map() {
-    return keycode_map_;
-  }
-  const ModifiersMap &modifiers_map() {
-    return modifiers_map_;
-  }
+  const SpecialKeysMap &keycode_map() { return keycode_map_; }
+  const ModifiersMap &modifiers_map() { return modifiers_map_; }
 
  private:
   void InitData() {
@@ -116,7 +110,7 @@ class KeyParserData {
     keycode_map_["home"] = KeyEvent::HOME;
     keycode_map_["end"] = KeyEvent::END;
     keycode_map_["space"] = KeyEvent::SPACE;
-    keycode_map_["ascii"] = KeyEvent::TEXT_INPUT;    // deprecated
+    keycode_map_["ascii"] = KeyEvent::TEXT_INPUT;  // deprecated
     keycode_map_["textinput"] = KeyEvent::TEXT_INPUT;
     keycode_map_["tab"] = KeyEvent::TAB;
     keycode_map_["pageup"] = KeyEvent::PAGE_UP;
@@ -188,9 +182,8 @@ class KeyParserData {
 };
 }  // namespace
 
-bool KeyParser::ParseKey(const string &key_string,
-                         KeyEvent *key_event) {
-  std::vector<string> keys;
+bool KeyParser::ParseKey(const std::string &key_string, KeyEvent *key_event) {
+  std::vector<std::string> keys;
   Util::SplitStringUsing(key_string, " ", &keys);
   if (keys.empty()) {
     LOG(ERROR) << "keys is empty";
@@ -199,14 +192,14 @@ bool KeyParser::ParseKey(const string &key_string,
   return KeyParser::ParseKeyVector(keys, key_event);
 }
 
-bool KeyParser::ParseKeyVector(const std::vector<string> &keys,
+bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
                                KeyEvent *key_event) {
   CHECK(key_event);
 
   const ModifiersMap &modifiers_map =
-    Singleton<KeyParserData>::get()->modifiers_map();
+      Singleton<KeyParserData>::get()->modifiers_map();
   const SpecialKeysMap &keycode_map =
-    Singleton<KeyParserData>::get()->keycode_map();
+      Singleton<KeyParserData>::get()->keycode_map();
 
   key_event->Clear();
   std::set<commands::KeyEvent::ModifierKey> modifiers_set;
@@ -218,7 +211,7 @@ bool KeyParser::ParseKeyVector(const std::vector<string> &keys,
         key_event->set_key_code(key_code);
       }
     } else {
-      string key = keys[i];
+      std::string key = keys[i];
       Util::LowerString(&key);
 
       if (modifiers_map.count(key) > 0) {
@@ -238,7 +231,8 @@ bool KeyParser::ParseKeyVector(const std::vector<string> &keys,
   }
 
   for (std::set<commands::KeyEvent::ModifierKey>::iterator iter =
-           modifiers_set.begin(); iter != modifiers_set.end(); ++iter) {
+           modifiers_set.begin();
+       iter != modifiers_set.end(); ++iter) {
     key_event->add_modifier_keys(*iter);
   }
 

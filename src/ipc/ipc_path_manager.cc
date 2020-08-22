@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 #include "ipc/ipc_path_manager.h"
 
+#include "absl/strings/str_format.h"
+
 #if defined(OS_ANDROID) || defined(OS_NACL)
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_NACL
@@ -36,16 +38,18 @@
 #include <errno.h>
 
 #ifdef OS_WIN
+// clang-format off
 #include <windows.h>
-#include <psapi.h>   // GetModuleFileNameExW
+#include <psapi.h>  // GetModuleFileNameExW
+// clang-format on
 #else
 // For stat system call
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <sys/sysctl.h>
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 #endif  // OS_WIN
 
 #include <cstdlib>
@@ -61,7 +65,9 @@
 #include "base/unverified_sha1.h"
 #endif  // OS_WIN
 #include "base/logging.h"
+#if defined(__APPLE__) || defined(OS_IOS)
 #include "base/mac_util.h"
+#endif  // __APPLE__ || OS_IOS
 #include "base/mutex.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
@@ -70,7 +76,9 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
+#ifdef OS_WIN
 #include "base/win_util.h"
+#endif  // OS_WIN
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
 
@@ -82,17 +90,17 @@ const size_t kKeySize = 32;
 
 // Do not use ConfigFileStream, since client won't link
 // to the embedded resource files
-string GetIPCKeyFileName(const string &name) {
+std::string GetIPCKeyFileName(const std::string &name) {
 #ifdef OS_WIN
   string basename;
 #else
-  string basename = ".";    // hidden file
+  std::string basename = ".";  // hidden file
 #endif
   basename += name + ".ipc";
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
 
-bool IsValidKey(const string &name) {
+bool IsValidKey(const std::string &name) {
   if (kKeySize != name.size()) {
     LOG(ERROR) << "IPCKey is invalid length";
     return false;
@@ -111,8 +119,8 @@ bool IsValidKey(const string &name) {
   return true;
 }
 
-string CreateIPCKey() {
-  char buf[16] = {};   // key is 128 bit
+std::string CreateIPCKey() {
+  char buf[16] = {};  // key is 128 bit
   char value[kKeySize + 1] = {};
 
 #ifdef OS_WIN
@@ -130,19 +138,19 @@ string CreateIPCKey() {
   for (size_t i = 0; i < sizeof(buf); ++i) {
     const int hi = ((static_cast<int>(buf[i]) & 0xF0) >> 4);
     const int lo = (static_cast<int>(buf[i]) & 0x0F);
-    value[2 * i]     = static_cast<char>(hi >= 10 ? hi - 10 + 'a' : hi + '0');
+    value[2 * i] = static_cast<char>(hi >= 10 ? hi - 10 + 'a' : hi + '0');
     value[2 * i + 1] = static_cast<char>(lo >= 10 ? lo - 10 + 'a' : lo + '0');
   }
 
   value[kKeySize] = '\0';
-  return string(value);
+  return std::string(value);
 }
 
 class IPCPathManagerMap {
  public:
-  IPCPathManager *GetIPCPathManager(const string &name) {
+  IPCPathManager *GetIPCPathManager(const std::string &name) {
     scoped_lock l(&mutex_);
-    std::map<string, IPCPathManager *>::const_iterator it =
+    std::map<std::string, IPCPathManager *>::const_iterator it =
         manager_map_.find(name);
     if (it != manager_map_.end()) {
       return it->second;
@@ -156,7 +164,8 @@ class IPCPathManagerMap {
 
   ~IPCPathManagerMap() {
     scoped_lock l(&mutex_);
-    for (std::map<string, IPCPathManager *>::iterator it = manager_map_.begin();
+    for (std::map<std::string, IPCPathManager *>::iterator it =
+             manager_map_.begin();
          it != manager_map_.end(); ++it) {
       delete it->second;
     }
@@ -164,13 +173,13 @@ class IPCPathManagerMap {
   }
 
  private:
-  std::map<string, IPCPathManager *> manager_map_;
+  std::map<std::string, IPCPathManager *> manager_map_;
   Mutex mutex_;
 };
 
 }  // namespace
 
-IPCPathManager::IPCPathManager(const string &name)
+IPCPathManager::IPCPathManager(const std::string &name)
     : mutex_(new Mutex),
       ipc_path_info_(new ipc::IPCPathInfo),
       name_(name),
@@ -179,7 +188,7 @@ IPCPathManager::IPCPathManager(const string &name)
 
 IPCPathManager::~IPCPathManager() {}
 
-IPCPathManager *IPCPathManager::GetIPCPathManager(const string &name) {
+IPCPathManager *IPCPathManager::GetIPCPathManager(const std::string &name) {
   IPCPathManagerMap *manager_map = Singleton<IPCPathManagerMap>::get();
   DCHECK(manager_map != NULL);
   return manager_map->GetIPCPathManager(name);
@@ -218,7 +227,7 @@ bool IPCPathManager::SavePathName() {
   ipc_path_info_->set_thread_id(0);
 #endif
 
-  string buf;
+  std::string buf;
   if (!ipc_path_info_->SerializeToString(&buf)) {
     LOG(ERROR) << "SerializeToString failed";
     return false;
@@ -265,7 +274,7 @@ bool IPCPathManager::LoadPathName() {
 #endif
 }
 
-bool IPCPathManager::GetPathName(string *ipc_name) const {
+bool IPCPathManager::GetPathName(std::string *ipc_name) const {
   if (ipc_name == NULL) {
     LOG(ERROR) << "ipc_name is NULL";
     return false;
@@ -278,9 +287,9 @@ bool IPCPathManager::GetPathName(string *ipc_name) const {
 
 #ifdef OS_WIN
   *ipc_name = mozc::kIPCPrefix;
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
   ipc_name->assign(MacUtil::GetLabelForSuffix(""));
-#else  // not OS_WIN nor OS_MACOSX
+#else   // not OS_WIN nor __APPLE__
   // GetUserIPCName("<name>") => "/tmp/.mozc.<key>.<name>"
   const char kIPCPrefix[] = "/tmp/.mozc.";
   *ipc_name = kIPCPrefix;
@@ -302,7 +311,7 @@ uint32 IPCPathManager::GetServerProtocolVersion() const {
   return ipc_path_info_->protocol_version();
 }
 
-const string &IPCPathManager::GetServerProductVersion() const {
+const std::string &IPCPathManager::GetServerProductVersion() const {
   return ipc_path_info_->product_version();
 }
 
@@ -315,8 +324,7 @@ void IPCPathManager::Clear() {
   ipc_path_info_->Clear();
 }
 
-bool IPCPathManager::IsValidServer(uint32 pid,
-                                   const string &server_path) {
+bool IPCPathManager::IsValidServer(uint32 pid, const std::string &server_path) {
   scoped_lock l(mutex_.get());
   if (pid == 0) {
     // For backward compatibility.
@@ -378,29 +386,27 @@ bool IPCPathManager::IsValidServer(uint32 pid,
   }
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
-  int name[] = { CTL_KERN, KERN_PROCARGS, pid };
+#ifdef __APPLE__
+  int name[] = {CTL_KERN, KERN_PROCARGS, static_cast<int>(pid)};
   size_t data_len = 0;
-  if (sysctl(name, arraysize(name), NULL,
-             &data_len, NULL, 0) < 0) {
+  if (sysctl(name, arraysize(name), NULL, &data_len, NULL, 0) < 0) {
     LOG(ERROR) << "sysctl KERN_PROCARGS failed";
     return false;
   }
 
   server_path_.resize(data_len);
-  if (sysctl(name, arraysize(name), &server_path_[0],
-             &data_len, NULL, 0) < 0) {
+  if (sysctl(name, arraysize(name), &server_path_[0], &data_len, NULL, 0) < 0) {
     LOG(ERROR) << "sysctl KERN_PROCARGS failed";
     return false;
   }
   server_pid_ = pid;
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
 #ifdef OS_LINUX
   // load from /proc/<pid>/exe
   char proc[128];
   char filename[512];
-  snprintf(proc, sizeof(proc) - 1, "/proc/%u/exe", pid);
+  absl::SNPrintF(proc, sizeof(proc) - 1, "/proc/%u/exe", pid);
   const ssize_t size = readlink(proc, filename, sizeof(filename) - 1);
   if (size == -1) {
     LOG(ERROR) << "readlink failed: " << strerror(errno);
@@ -454,7 +460,7 @@ time_t IPCPathManager::GetIPCFileTimeStamp() const {
   // just returns -1 at this time.
   return static_cast<time_t>(-1);
 #else
-  const string filename = GetIPCKeyFileName(name_);
+  const std::string filename = GetIPCKeyFileName(name_);
   struct stat filestat;
   if (::stat(filename.c_str(), &filestat) == -1) {
     VLOG(2) << "stat(2) failed.  Skipping reload";
@@ -468,7 +474,7 @@ bool IPCPathManager::LoadPathNameInternal() {
   scoped_lock l(mutex_.get());
 
   // try the new file name first.
-  const string filename = GetIPCKeyFileName(name_);
+  const std::string filename = GetIPCKeyFileName(name_);
 
   // Special code for Windows,
   // we want to pass FILE_SHRED_DELETE flag for CreateFile.
@@ -477,11 +483,10 @@ bool IPCPathManager::LoadPathNameInternal() {
   Util::UTF8ToWide(filename, &wfilename);
 
   {
-    ScopedHandle handle
-        (::CreateFileW(wfilename.c_str(),
-                       GENERIC_READ,
-                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                       NULL, OPEN_EXISTING, 0, NULL));
+    ScopedHandle handle(
+        ::CreateFileW(wfilename.c_str(), GENERIC_READ,
+                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                      NULL, OPEN_EXISTING, 0, NULL));
 
     // ScopedHandle does not receive INVALID_HANDLE_VALUE and
     // NULL check is appropriate here.
@@ -505,8 +510,7 @@ bool IPCPathManager::LoadPathNameInternal() {
     std::unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
-    if (!::ReadFile(handle.get(), buf.get(),
-                    size, &read_size, NULL)) {
+    if (!::ReadFile(handle.get(), buf.get(), size, &read_size, NULL)) {
       LOG(ERROR) << "ReadFile failed: " << ::GetLastError();
       return false;
     }

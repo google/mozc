@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,9 @@
 #include <Windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <Ctffunc.h>
 #include <atlbase.h>
 #include <atlcom.h>
-#include <Ctffunc.h>
 
 #include "win32/tip/tip_ref_count.h"
 
@@ -57,8 +57,7 @@ const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
 class GetPreferredTouchKeyboardLayoutImpl
     : public ITfFnGetPreferredTouchKeyboardLayout {
  public:
-  GetPreferredTouchKeyboardLayoutImpl() {
-  }
+  GetPreferredTouchKeyboardLayoutImpl() {}
 
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
@@ -85,9 +84,7 @@ class GetPreferredTouchKeyboardLayoutImpl
     return S_OK;
   }
 
-  virtual ULONG STDMETHODCALLTYPE AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
 
   virtual ULONG STDMETHODCALLTYPE Release() {
     const ULONG count = ref_count_.ReleaseImpl();

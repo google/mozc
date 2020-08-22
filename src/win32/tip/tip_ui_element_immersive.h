@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,14 +47,12 @@ class TipUiElementImmersive {
  public:
   // Returns a ITfUIElement object based of the given parameters. Caller must
   // maintain the reference count of the object returned.
-  static ITfUIElement *New(TipTextService *text_service,
-                           ITfContext *contxt,
+  static ITfUIElement *New(TipTextService *text_service, ITfContext *contxt,
                            HWND *window_handle);
 
   static void OnActivate();
   static void OnDeactivate();
-  static bool OnDllProcessAttach(HINSTANCE module_handle,
-                                 bool static_loading);
+  static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
 
@@ -65,6 +63,5 @@ class TipUiElementImmersive {
 }  // namespace tsf
 }  // namespace win32
 }  // namespace mozc
-
 
 #endif  // MOZC_WIN32_TIP_TIP_UI_ELEMENT_IMMERSIVE_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef MOZC_ENGINE_OSS_ENGINE_FACTORY_H_
 #define MOZC_ENGINE_OSS_ENGINE_FACTORY_H_
 
+#include "base/logging.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
 
@@ -42,7 +43,12 @@ class OssEngineFactory {
   // Creates an instance of Engine class. The caller is responsible for deleting
   // the returned object.
   static Engine *Create() {
-    return Engine::CreateMobileEngineHelper<oss::OssDataManager>().release();
+    auto engine = Engine::CreateMobileEngineHelper<oss::OssDataManager>();
+    if (!engine.ok()) {
+      LOG(ERROR) << engine.status();
+      return nullptr;
+    }
+    return engine->release();
   }
 };
 

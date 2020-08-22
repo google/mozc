@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -119,6 +119,7 @@
             'win32_window_util.cc',
           ],
           'dependencies': [
+            '../../base/absl.gyp:absl_strings',
             '../../base/base.gyp:base',
             '../../config/config.gyp:config_handler',
             '../../protocol/protocol.gyp:commands_proto',
@@ -204,6 +205,7 @@
             'text_icon.cc',
           ],
           'dependencies': [
+            '../../base/absl.gyp:absl_strings',
             '../../base/base.gyp:base',
           ],
         },

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,21 +45,17 @@ namespace renderer {
 
 class RendererLauncherInterface {
  public:
-  enum RendererErrorType {
-    RENDERER_VERSION_MISMATCH,
-    RENDERER_FATAL
-  };
+  enum RendererErrorType { RENDERER_VERSION_MISMATCH, RENDERER_FATAL };
 
   // implement StartRenderer
   virtual void StartRenderer(
-      const string &name,
-      const string &renderer_path,
+      const std::string &name, const std::string &renderer_path,
       bool disable_renderer_path_check,
       IPCClientFactoryInterface *client_factory_intarface) = 0;
 
   // force to terminate the renderer
   // do not use this method unless protocol version mismatch
-  virtual bool ForceTerminateRenderer(const string &name) = 0;
+  virtual bool ForceTerminateRenderer(const std::string &name) = 0;
 
   // called when fatal error occured
   virtual void OnFatal(RendererErrorType type) = 0;
@@ -72,8 +68,7 @@ class RendererLauncherInterface {
 
   // |command| is sent to the server just after
   // renderer is launched.
-  virtual void SetPendingCommand(
-      const commands::RendererCommand &command) = 0;
+  virtual void SetPendingCommand(const commands::RendererCommand &command) = 0;
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
@@ -89,12 +84,12 @@ class RendererClient : public RendererInterface {
   virtual ~RendererClient();
 
   // set IPC factory
-  void SetIPCClientFactory(IPCClientFactoryInterface
-                           *ipc_client_factory_interface);
+  void SetIPCClientFactory(
+      IPCClientFactoryInterface *ipc_client_factory_interface);
 
   // set StartRendererInterface
-  void SetRendererLauncherInterface(RendererLauncherInterface
-                                    *renderer_launcher_interface);
+  void SetRendererLauncherInterface(
+      RendererLauncherInterface *renderer_launcher_interface);
 
   // send_command_interface is not used in the client.
   // Currently, mouse handling must be implemented in each
@@ -129,9 +124,9 @@ class RendererClient : public RendererInterface {
 
   bool is_window_visible_;
   bool disable_renderer_path_check_;
-  int  version_mismatch_nums_;
-  string name_;
-  string renderer_path_;
+  int version_mismatch_nums_;
+  std::string name_;
+  std::string renderer_path_;
 
   IPCClientFactoryInterface *ipc_client_factory_interface_;
 

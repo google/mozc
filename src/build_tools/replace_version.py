@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 See mozc_version.py for the detailed information for version.txt.
 """
 
-__author__ = "mukai"
+from __future__ import absolute_import
 
 import logging
 import optparse

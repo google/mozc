@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 
 #include "net/http_client.h"
 #include "net/http_client_mock.h"
-#include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
 
@@ -65,7 +65,7 @@ class HTTPClientMockTest : public testing::Test {
 TEST_F(HTTPClientMockTest, GetTest) {
   SetDefaultOption();
 
-  string output;
+  std::string output;
   HTTPClient::Option option;
   option.headers.push_back("header0");
   EXPECT_FALSE(client_.Get("url", option, &output));
@@ -82,7 +82,7 @@ TEST_F(HTTPClientMockTest, GetTest) {
 TEST_F(HTTPClientMockTest, HeadTest) {
   SetDefaultOption();
 
-  string output;
+  std::string output;
   HTTPClient::Option option;
 
   option.headers.push_back("header0");
@@ -102,7 +102,7 @@ TEST_F(HTTPClientMockTest, HeadTest) {
 TEST_F(HTTPClientMockTest, PostTest) {
   SetDefaultOption();
 
-  string output;
+  std::string output;
   HTTPClient::Option option;
   option.include_header = true;
   option.headers.push_back("header0");

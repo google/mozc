@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include "base/port.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -54,11 +55,11 @@ class ConverterInterface {
   // Start conversion with key.
   // key is a request written in Hiragana sequence
   virtual bool StartConversion(Segments *segments,
-                               const string &key) const = 0;
+                               const std::string &key) const = 0;
 
   // Start reverse conversion with key.
   virtual bool StartReverseConversion(Segments *segments,
-                                      const string &key) const = 0;
+                                      const std::string &key) const = 0;
 
   // Starts prediction for given request.
   virtual bool StartPredictionForRequest(const ConversionRequest &request,
@@ -66,7 +67,7 @@ class ConverterInterface {
 
   // Start prediction with key (request_type = PREDICTION)
   virtual bool StartPrediction(Segments *segments,
-                               const string &key) const = 0;
+                               const std::string &key) const = 0;
 
   // Starts suggestion for given request.
   virtual bool StartSuggestionForRequest(const ConversionRequest &request,
@@ -74,7 +75,7 @@ class ConverterInterface {
 
   // Start suggestion with key (request_type = SUGGESTION)
   virtual bool StartSuggestion(Segments *segments,
-                               const string &key) const = 0;
+                               const std::string &key) const = 0;
 
   // Starts partial prediction for given request.
   virtual bool StartPartialPredictionForRequest(
@@ -82,7 +83,7 @@ class ConverterInterface {
 
   // Start prediction with key (request_type = PARTIAL_PREDICTION)
   virtual bool StartPartialPrediction(Segments *segments,
-                                      const string &key) const = 0;
+                                      const std::string &key) const = 0;
 
   // Starts partial suggestion for given request.
   virtual bool StartPartialSuggestionForRequest(
@@ -90,7 +91,7 @@ class ConverterInterface {
 
   // Start suggestion with key (request_type = PARTIAL_SUGGESTION)
   virtual bool StartPartialSuggestion(Segments *segments,
-                                      const string &key) const = 0;
+                                      const std::string &key) const = 0;
 
   // Finish conversion.
   // Segments are cleared. Context is not cleared
@@ -108,20 +109,18 @@ class ConverterInterface {
 
   // Reconstruct history segments from given preceding text.
   virtual bool ReconstructHistory(Segments *segments,
-                                  const string &preceding_text) const = 0;
+                                  const std::string &preceding_text) const = 0;
 
   // Expand the bunsetsu-segment at "segment_index" by candidate_size
   // DEPRECATED: This method doesn't take any effect.
   // TODO(taku): remove this method.
-  virtual bool GetCandidates(Segments *segments,
-                             size_t segment_index,
+  virtual bool GetCandidates(Segments *segments, size_t segment_index,
                              size_t candidate_size) const {
     return true;
   }
 
   // Commit candidate
-  virtual bool CommitSegmentValue(Segments *segments,
-                                  size_t segment_index,
+  virtual bool CommitSegmentValue(Segments *segments, size_t segment_index,
                                   int candidate_index) const = 0;
   // Commit candidate for partial suggestion.
   // current_segment_key : key for submitted segment.
@@ -134,19 +133,16 @@ class ConverterInterface {
   //   - {key_ : "いれた",  segment_type_ : SUBMITTED}
   //   - {key_ : "てのおちゃ", segment_type_ : FREE}
   virtual bool CommitPartialSuggestionSegmentValue(
-      Segments *segments,
-      size_t segment_index,
-      int candidate_index,
-      const string &current_segment_key,
-      const string &new_segment_key) const = 0;
+      Segments *segments, size_t segment_index, int candidate_index,
+      absl::string_view current_segment_key,
+      absl::string_view new_segment_key) const = 0;
   // Focus the candidate.
   // This method is mainly called when user puts SPACE key
   // and changes the focused candidate.
   // In this method, Converter will find bracketing matching.
   // e.g., when user selects "「",  corresponding closing bracket "」"
   // is chosen in the preedit.
-  virtual bool FocusSegmentValue(Segments *segments,
-                                 size_t segment_index,
+  virtual bool FocusSegmentValue(Segments *segments, size_t segment_index,
                                  int candidate_index) const = 0;
 
   // Revert the operation of CommitSegment
@@ -166,16 +162,14 @@ class ConverterInterface {
   // offset_lenth can be negative.
   virtual bool ResizeSegment(Segments *segments,
                              const ConversionRequest &request,
-                             size_t segment_index,
-                             int offset_length) const = 0;
+                             size_t segment_index, int offset_length) const = 0;
 
   // Resize [start_segment_index, start_segment_index + segment_size]
   // segments with the new size in new_size_array.
   // size of new_size_array is specified in 'array_size'
   virtual bool ResizeSegment(Segments *segments,
                              const ConversionRequest &request,
-                             size_t start_segment_index,
-                             size_t segments_size,
+                             size_t start_segment_index, size_t segments_size,
                              const uint8 *new_size_array,
                              size_t array_size) const = 0;
 

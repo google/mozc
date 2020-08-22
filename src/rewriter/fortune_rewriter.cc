@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,20 +45,20 @@ namespace mozc {
 namespace {
 
 enum FortuneType {
-  FORTUNE_TYPE_EXCELLENT_LUCK  = 0,
-  FORTUNE_TYPE_LUCK            = 1,
-  FORTUNE_TYPE_MIDDLE_LUCK     = 2,
-  FORTUNE_TYPE_LITTLE_LUCK     = 3,
+  FORTUNE_TYPE_EXCELLENT_LUCK = 0,
+  FORTUNE_TYPE_LUCK = 1,
+  FORTUNE_TYPE_MIDDLE_LUCK = 2,
+  FORTUNE_TYPE_LITTLE_LUCK = 3,
   FORTUNE_TYPE_LUCK_AT_THE_END = 4,
-  FORTUNE_TYPE_MISFORTUNE      = 5,
-  NUM_FORTUNE_TYPES            = 6,
+  FORTUNE_TYPE_MISFORTUNE = 5,
+  NUM_FORTUNE_TYPES = 6,
 };
 
 const int kMaxLevel = 100;
-const int kNormalLevels[]     = { 20, 40, 60, 80, 90 };
-const int kNewYearLevels[]    = { 30, 60, 80, 90, 95 };
-const int kMyBirthdayLevels[] = { 30, 60, 80, 90, 95 };
-const int kFriday13Levels[]   = { 10, 25, 40, 55, 70 };
+const int kNormalLevels[] = {20, 40, 60, 80, 90};
+const int kNewYearLevels[] = {30, 60, 80, 90, 95};
+const int kMyBirthdayLevels[] = {30, 60, 80, 90, 95};
+const int kFriday13Levels[] = {10, 25, 40, 55, 70};
 
 bool IsValidFortuneType(FortuneType fortune_type) {
   return (fortune_type >= 0 && fortune_type < NUM_FORTUNE_TYPES);
@@ -118,15 +118,14 @@ class FortuneData {
 // Insert Fortune message into the |segment|
 // Only one fortune indicated by fortune_type is inserted at
 // |insert_pos|. Return false if insersion is failed.
-bool InsertCandidate(FortuneType fortune_type,
-                     size_t insert_pos,
+bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
                      Segment *segment) {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return false;
   }
 
-  const Segment::Candidate& base_candidate = segment->candidate(0);
+  const Segment::Candidate &base_candidate = segment->candidate(0);
   size_t offset = std::min(insert_pos, segment->candidates_size());
 
   Segment::Candidate *c = segment->insert_candidate(offset);
@@ -136,7 +135,7 @@ bool InsertCandidate(FortuneType fortune_type,
   }
   const Segment::Candidate &trigger_c = segment->candidate(offset - 1);
 
-  string value;
+  std::string value;
   switch (fortune_type) {
     case FORTUNE_TYPE_EXCELLENT_LUCK:
       value = "大吉";
@@ -188,7 +187,7 @@ bool FortuneRewriter::Rewrite(const ConversionRequest &request,
   }
 
   const Segment &segment = segments->conversion_segment(0);
-  const string &key = segment.key();
+  const std::string &key = segment.key();
   if (key.empty()) {
     LOG(ERROR) << "Key is empty";
     return false;

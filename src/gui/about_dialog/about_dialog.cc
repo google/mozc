@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 
 #include <string>
 
-#include "base/const.h"
 #include "base/file_util.h"
 #include "base/process.h"
 #include "base/run_level.h"
@@ -47,16 +46,16 @@ namespace {
 
 void defaultLinkActivated(const QString &str) {
   QByteArray utf8 = str.toUtf8();
-  Process::OpenBrowser(string(utf8.data(), utf8.length()));
+  Process::OpenBrowser(std::string(utf8.data(), utf8.length()));
 }
 
 // set document file paths by adding <server_path>/documents/ to file name.
-bool AddLocalPath(string *str) {
-  const char *filenames[] = { "credits_en.html" };
+bool AddLocalPath(std::string *str) {
+  const char *filenames[] = {"credits_en.html"};
   for (size_t i = 0; i < arraysize(filenames); ++i) {
-    if (str->find(filenames[i]) != string::npos) {
-      string tmp;
-      const string file_path =
+    if (str->find(filenames[i]) != std::string::npos) {
+      std::string tmp;
+      const std::string file_path =
           FileUtil::JoinPath(SystemUtil::GetDocumentDirectory(), filenames[i]);
       Util::StringReplace(*str, filenames[i], file_path, false, &tmp);
       *str = tmp;
@@ -67,7 +66,7 @@ bool AddLocalPath(string *str) {
 }
 
 void SetLabelText(QLabel *label) {
-  string label_text = label->text().toStdString();
+  std::string label_text = label->text().toStdString();
   if (AddLocalPath(&label_text)) {
     label->setText(QString::fromStdString(label_text));
   }
@@ -75,9 +74,7 @@ void SetLabelText(QLabel *label) {
 
 }  // namespace
 
-AboutDialog::AboutDialog(QWidget *parent)
-    : QDialog(parent),
-      callback_(NULL) {
+AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent), callback_(NULL) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
   setWindowModality(Qt::NonModal);
@@ -101,9 +98,9 @@ AboutDialog::AboutDialog(QWidget *parent)
   font.setPointSize(22);
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   font.setPointSize(26);
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
   label->setFont(font);
 

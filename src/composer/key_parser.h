@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,9 @@ class KeyEvent;
 
 class KeyParser {
  public:
-  static bool ParseKey(const string &key_string,
+  static bool ParseKey(const std::string &key_string,
                        commands::KeyEvent *key_event);
-  static bool ParseKeyVector(const std::vector<string> &keys,
+  static bool ParseKeyVector(const std::vector<std::string> &keys,
                              commands::KeyEvent *key_event);
 
  private:

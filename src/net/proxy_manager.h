@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,8 @@ class ProxyManager {
   // username / password to "authdata" (username:password format).
   // Returns true if the system actually uses a proxy.  Returns false
   // otherwise.
-  static bool GetProxyData(
-      const string &url, string *hostdata, string *authdata);
+  static bool GetProxyData(const std::string &url, std::string *hostdata,
+                           std::string *authdata);
 
   // Inject a dependency for unittesting
   static void SetProxyManager(ProxyManagerInterface *proxy_manager);
@@ -62,8 +62,8 @@ class ProxyManager {
 // Implements ProxyManager implementation.
 class ProxyManagerInterface {
  public:
-  virtual bool GetProxyData(
-      const string &url, string *hostdata, string *authdata) = 0;
+  virtual bool GetProxyData(const std::string &url, std::string *hostdata,
+                            std::string *authdata) = 0;
 
   ProxyManagerInterface();
   virtual ~ProxyManagerInterface();
@@ -73,8 +73,8 @@ class ProxyManagerInterface {
 // class is the default proxy manager for Windows/Linux.
 class DummyProxyManager : public ProxyManagerInterface {
  public:
-  virtual bool GetProxyData(
-      const string &url, string *hostdata, string *authdata);
+  virtual bool GetProxyData(const std::string &url, std::string *hostdata,
+                            std::string *authdata);
 };
 
 }  // namespace mozc

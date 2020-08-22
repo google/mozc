@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,10 @@
 #ifndef MOZC_WIN32_IME_IME_COMPOSITION_STRING_H_
 #define MOZC_WIN32_IME_IME_COMPOSITION_STRING_H_
 
+// clang-format off
 #include <windows.h>
 #include <ime.h>
+// clang-format on
 
 #include <vector>
 

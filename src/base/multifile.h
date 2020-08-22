@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,19 +45,19 @@ namespace mozc {
 class InputMultiFile {
  public:
   // filenames must be separated by comma(s), e.g., "foo.txt,hoge.txt".
-  explicit InputMultiFile(const string& filenames,
+  explicit InputMultiFile(const std::string& filenames,
                           std::ios_base::openmode mode = std::ios_base::in);
   ~InputMultiFile();
 
   // Reads one line. Returns false after reading all the lines.
-  bool ReadLine(string* line);
+  bool ReadLine(std::string* line);
 
  private:
   bool OpenNext();
 
-  std::vector<string> filenames_;
+  std::vector<std::string> filenames_;
   const std::ios_base::openmode mode_;
-  std::vector<string>::iterator next_iter_;
+  std::vector<std::string>::iterator next_iter_;
   std::unique_ptr<InputFileStream> ifs_;
 
   DISALLOW_COPY_AND_ASSIGN(InputMultiFile);

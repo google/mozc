@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,7 @@ namespace {
 
 using ::mozc::storage::louds::BitStream;
 
-class BitStreamTest : public ::testing::Test {
-};
+class BitStreamTest : public ::testing::Test {};
 
 TEST_F(BitStreamTest, Pattern1) {
   BitStream bit_stream;
@@ -47,7 +46,7 @@ TEST_F(BitStreamTest, Pattern1) {
     EXPECT_EQ(i / 4 + 1, bit_stream.ByteSize());
   }
 
-  EXPECT_EQ(string(32, '\xAA'), bit_stream.image());
+  EXPECT_EQ(std::string(32, '\xAA'), bit_stream.image());
 }
 
 TEST_F(BitStreamTest, Pattern2) {
@@ -61,7 +60,7 @@ TEST_F(BitStreamTest, Pattern2) {
     EXPECT_EQ(i / 2 + 1, bit_stream.ByteSize());
   }
 
-  EXPECT_EQ(string(64, '\xCC'), bit_stream.image());
+  EXPECT_EQ(std::string(64, '\xCC'), bit_stream.image());
 }
 
 TEST_F(BitStreamTest, FillPadding32) {
@@ -72,7 +71,7 @@ TEST_F(BitStreamTest, FillPadding32) {
 
   bit_stream.PushBit(1);
   bit_stream.FillPadding32();
-  EXPECT_EQ(string("\x01\x00\x00\x00", 4), bit_stream.image());
+  EXPECT_EQ(std::string("\x01\x00\x00\x00", 4), bit_stream.image());
 }
 
 }  // namespace

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,11 +41,11 @@ namespace {
 const char kSurveyBaseURL[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
 
-bool FindEncodedParam(const std::vector<string> &params,
-                      const string &key, const string &value) {
-  string encoded;
+bool FindEncodedParam(const std::vector<std::string> &params,
+                      const std::string &key, const std::string &value) {
+  std::string encoded;
   Util::EncodeURI(value, &encoded);
-  const string param = key + "=" + encoded;
+  const std::string param = key + "=" + encoded;
   for (size_t i = 0; i < params.size(); ++i) {
     if (params[i] == param) {
       return true;
@@ -55,13 +55,13 @@ bool FindEncodedParam(const std::vector<string> &params,
 }
 
 TEST(URLTest, UninstallationSurveyURL) {
-  string url;
+  std::string url;
   URL::GetUninstallationSurveyURL("0.1.2.3", &url);
-  std::vector<string> url_and_params;
+  std::vector<std::string> url_and_params;
   Util::SplitStringUsing(url, "?", &url_and_params);
   EXPECT_EQ(2, url_and_params.size());
   EXPECT_EQ(kSurveyBaseURL, url_and_params[0]);
-  std::vector<string> params;
+  std::vector<std::string> params;
   Util::SplitStringUsing(url_and_params[1], "&", &params);
   EXPECT_EQ(4, params.size());
   EXPECT_TRUE(FindEncodedParam(params, "contact_type", "surveyime"));
@@ -71,13 +71,13 @@ TEST(URLTest, UninstallationSurveyURL) {
 }
 
 TEST(URLTest, UninstallationSurveyURLWithNoVersion) {
-  string url;
+  std::string url;
   URL::GetUninstallationSurveyURL("", &url);
-  std::vector<string> url_and_params;
+  std::vector<std::string> url_and_params;
   Util::SplitStringUsing(url, "?", &url_and_params);
   EXPECT_EQ(2, url_and_params.size());
   EXPECT_EQ(kSurveyBaseURL, url_and_params[0]);
-  std::vector<string> params;
+  std::vector<std::string> params;
   Util::SplitStringUsing(url_and_params[1], "&", &params);
   EXPECT_EQ(3, params.size());
   EXPECT_TRUE(FindEncodedParam(params, "contact_type", "surveyime"));

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ DEFINE_bool(include_header, false, "include header in output");
 DEFINE_bool(use_proxy, true, "use the proxy or not");
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::HTTPClient::Option option;
   option.include_header = FLAGS_include_header;
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
   }
 
   bool ret = false;
-  string output;
+  std::string output;
   if (FLAGS_method == "GET") {
     ret = mozc::HTTPClient::Get(FLAGS_url, option, &output);
   } else if (FLAGS_method == "HEAD") {

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,8 +48,7 @@ class CalculatorMock : public CalculatorInterface {
 
   // Injects the behavior that CalculateString converts |key| to |value| and
   // returns |return_value|.
-  void SetCalculatePair(const string &key,
-                        const string &value,
+  void SetCalculatePair(const std::string &key, const std::string &value,
                         bool return_value);
 
   // The number that CalculateString() has been called.
@@ -58,10 +57,11 @@ class CalculatorMock : public CalculatorInterface {
   // If |key| has been set by SetCalculatePair, then sets |*result| to the
   // corresponding value and returns |return_value|, otherwise clear |*result|
   // and returns false.
-  virtual bool CalculateString(const string &key, string *result) const;
+  virtual bool CalculateString(const std::string &key,
+                               std::string *result) const;
 
  private:
-  typedef std::map<string, std::pair<string, bool> > CalculationMap;
+  typedef std::map<std::string, std::pair<std::string, bool> > CalculationMap;
 
   CalculationMap calculation_map_;
   mutable int calculation_counter_;

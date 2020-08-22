@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@
 // Here we use a private copy instead to avoid dependency on
 // <gtest/gtest_prod.h> from production code.
 #ifndef FRIEND_TEST
-#define FRIEND_TEST(test_case_name, test_name)  \
-friend class test_case_name##_##test_name##_Test
+#define FRIEND_TEST(test_case_name, test_name) \
+  friend class test_case_name##_##test_name##_Test
 #endif  // FRIEND_TEST
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_

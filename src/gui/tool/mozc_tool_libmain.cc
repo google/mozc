@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,25 +35,30 @@
 
 #include <QtGui/QtGui>
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <cstdlib>
 #ifndef IGNORE_INVALID_FLAG
 #include <iostream>
 #endif  // IGNORE_INVALID_FLAG
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
-#include "base/const.h"
 #include "base/crash_report_handler.h"
 #include "base/file_util.h"
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/password_manager.h"
 #include "base/run_level.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
 #include "gui/base/debug_util.h"
+
+#ifdef __APPLE__
+#include "base/const.h"
+#endif  // __APPLE__
+
+#ifdef OS_WIN
 #include "gui/base/win_util.h"
+#endif  // OS_WIN
 
 DEFINE_string(mode, "about_dialog", "mozc_tool mode");
 
@@ -63,8 +68,6 @@ int RunConfigDialog(int argc, char *argv[]);
 int RunDictionaryTool(int argc, char *argv[]);
 int RunWordRegisterDialog(int argc, char *argv[]);
 int RunErrorMessageDialog(int argc, char *argv[]);
-int RunCharacterPalette(int argc, char *argv[]);
-int RunHandWriting(int argc, char *argv[]);
 
 #ifdef OS_WIN
 // (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
@@ -73,13 +76,13 @@ int RunPostInstallDialog(int argc, char *argv[]);
 int RunAdministrationDialog(int argc, char *argv[]);
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 // Confirmation Dialog is used for the update dialog on Mac only.
 int RunConfirmationDialog(int argc, char *argv[]);
 int RunPrelaunchProcesses(int argc, char *argv[]);
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 namespace {
 
 void SetFlagFromEnv(const string &key) {
@@ -96,23 +99,23 @@ void SetFlagFromEnv(const string &key) {
 }
 
 }  // namespace
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
 int RunMozcTool(int argc, char *argv[]) {
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   // OSX's app won't accept command line flags.  Here we preset flags from
   // environment variables.
   SetFlagFromEnv("mode");
   SetFlagFromEnv("error_type");
   SetFlagFromEnv("confirmation_type");
   SetFlagFromEnv("register_prelauncher");
-#endif  // OS_MACOSX
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+#endif  // __APPLE__
+  mozc::InitMozc(argv[0], &argc, &argv);
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   // In Mac, we shares the same binary but changes the application
   // name.
   string binary_name = mozc::FileUtil::Basename(argv[0]);
@@ -122,7 +125,7 @@ int RunMozcTool(int argc, char *argv[]) {
     FLAGS_mode = "config_dialog";
   } else if (binary_name == "DictionaryTool") {
     FLAGS_mode = "dictionary_tool";
-  } else if (binary_name =="ErrorMessageDialog") {
+  } else if (binary_name == "ErrorMessageDialog") {
     FLAGS_mode = "error_message_dialog";
   } else if (binary_name == "WordRegisterDialog") {
     FLAGS_mode = "word_register_dialog";
@@ -131,10 +134,6 @@ int RunMozcTool(int argc, char *argv[]) {
     // "System Preferences" -> "Accounts" -> "Login items".
     // So we set kProductPrefix to the binary name.
     FLAGS_mode = "prelauncher";
-  } else if (binary_name == "HandWriting") {
-    FLAGS_mode = "hand_writing";
-  } else if (binary_name == "CharacterPalette") {
-    FLAGS_mode = "character_palette";
   }
 #endif
 
@@ -161,10 +160,6 @@ int RunMozcTool(int argc, char *argv[]) {
     return RunErrorMessageDialog(argc, argv);
   } else if (FLAGS_mode == "about_dialog") {
     return RunAboutDialog(argc, argv);
-  } else if (FLAGS_mode == "character_palette") {
-    return RunCharacterPalette(argc, argv);
-  } else if (FLAGS_mode == "hand_writing") {
-    return RunHandWriting(argc, argv);
 #ifdef OS_WIN
   } else if (FLAGS_mode == "set_default_dialog") {
     // set_default_dialog is used on Windows only.
@@ -176,14 +171,14 @@ int RunMozcTool(int argc, char *argv[]) {
     // administration_dialog is used on Windows only.
     return RunAdministrationDialog(argc, argv);
 #endif  // OS_WIN
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   } else if (FLAGS_mode == "confirmation_dialog") {
     // Confirmation Dialog is used for the update dialog on Mac only.
     return RunConfirmationDialog(argc, argv);
   } else if (FLAGS_mode == "prelauncher") {
     // Prelauncher is used on Mac only.
     return RunPrelaunchProcesses(argc, argv);
-#endif  // OS_MACOSX
+#endif  // __APPLE__
   } else {
     LOG(ERROR) << "Unknown mode: " << FLAGS_mode;
     return -1;

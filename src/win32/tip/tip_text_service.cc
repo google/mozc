@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <objbase.h>
+#include <VersionHelpers.h>
 
 #include <memory>
 #include <string>
@@ -97,7 +98,6 @@ volatile DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 
 const UINT kUpdateUIMessage = WM_USER;
 
-
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 const char kHelpUrl[] = "http://www.google.com/support/ime/japanese";
@@ -107,23 +107,31 @@ const wchar_t kTaskWindowClassName[] =
 
 // {67526BED-E4BE-47CA-97F8-3C84D5B408DA}
 const GUID kTipPreservedKey_Kanji = {
-  0x67526bed, 0xe4be, 0x47ca, {0x97, 0xf8, 0x3c, 0x84, 0xd5, 0xb4, 0x08, 0xda}
-};
+    0x67526bed,
+    0xe4be,
+    0x47ca,
+    {0x97, 0xf8, 0x3c, 0x84, 0xd5, 0xb4, 0x08, 0xda}};
 
 // {B62565AA-288A-432B-B517-EC333E0F99F3}
 const GUID kTipPreservedKey_F10 = {
-  0xb62565aa, 0x288a, 0x432b, {0xb5, 0x17, 0xec, 0x33, 0x3e, 0xf, 0x99, 0xf3}
-};
+    0xb62565aa,
+    0x288a,
+    0x432b,
+    {0xb5, 0x17, 0xec, 0x33, 0x3e, 0xf, 0x99, 0xf3}};
 
 // {CF6E26FB-1A11-4D81-BD92-52FA852A42EB}
 const GUID kTipPreservedKey_Romaji = {
-  0xcf6e26fb, 0x1a11, 0x4d81, {0xbd, 0x92, 0x52, 0xfa, 0x85, 0x2a, 0x42, 0xeb}
-};
+    0xcf6e26fb,
+    0x1a11,
+    0x4d81,
+    {0xbd, 0x92, 0x52, 0xfa, 0x85, 0x2a, 0x42, 0xeb}};
 
 // {EEBABC50-7FEC-4A08-9E1D-0BEF628B5F0E}
 const GUID kTipFunctionProvider = {
-  0xeebabc50, 0x7fec, 0x4a08, {0x9e, 0x1d, 0xb, 0xef, 0x62, 0x8b, 0x5f, 0x0e}
-};
+    0xeebabc50,
+    0x7fec,
+    0x4a08,
+    {0x9e, 0x1d, 0xb, 0xef, 0x62, 0x8b, 0x5f, 0x0e}};
 
 #else
 
@@ -133,23 +141,31 @@ const wchar_t kTaskWindowClassName[] = L"Mozc Immersive Task Message Window";
 
 // {F16B7D92-84B0-4AC6-A35B-06EA77180A18}
 const GUID kTipPreservedKey_Kanji = {
-  0xf16b7d92, 0x84b0, 0x4ac6, {0xa3, 0x5b, 0x6, 0xea, 0x77, 0x18, 0x0a, 0x18}
-};
+    0xf16b7d92,
+    0x84b0,
+    0x4ac6,
+    {0xa3, 0x5b, 0x6, 0xea, 0x77, 0x18, 0x0a, 0x18}};
 
 // {80DAD291-1981-46FA-998D-B84D6C1BA02C}
 const GUID kTipPreservedKey_F10 = {
-  0x80dad291, 0x1981, 0x46fa, {0x99, 0x8d, 0xb8, 0x4d, 0x6c, 0x1b, 0xa0, 0x2c}
-};
+    0x80dad291,
+    0x1981,
+    0x46fa,
+    {0x99, 0x8d, 0xb8, 0x4d, 0x6c, 0x1b, 0xa0, 0x2c}};
 
 // {95571C08-B05A-4ABA-B038-F3DEAE532F91}
 const GUID kTipPreservedKey_Romaji = {
-  0x95571c08, 0xb05a, 0x4aba, {0xb0, 0x38, 0xf3, 0xde, 0xae, 0x53, 0x2f, 0x91}
-};
+    0x95571c08,
+    0xb05a,
+    0x4aba,
+    {0xb0, 0x38, 0xf3, 0xde, 0xae, 0x53, 0x2f, 0x91}};
 
 // {ECFB2528-E7D2-4CA0-BBE4-32FE08C148F4}
 const GUID kTipFunctionProvider = {
-  0xecfb2528, 0xe7d2, 0x4ca0, {0xbb, 0xe4, 0x32, 0xfe, 0x8, 0xc1, 0x48, 0xf4}
-};
+    0xecfb2528,
+    0xe7d2,
+    0x4ca0,
+    {0xbb, 0xe4, 0x32, 0xfe, 0x8, 0xc1, 0x48, 0xf4}};
 
 #endif
 
@@ -191,12 +207,6 @@ string GetMozcToolCommand(TipLangBarCallback::ItemId menu_id) {
     case TipLangBarCallback::kWordRegister:
       // Open the word register dialog.
       return "word_register_dialog";
-    case TipLangBarCallback::kHandWriting:
-      // Open the Hand Writing Tool.
-      return "hand_writing";
-    case TipLangBarCallback::kCharacterPalette:
-      // Open the Character Palette dialog.
-      return "character_palette";
     case TipLangBarCallback::kAbout:
       // Open the about dialog.
       return "about_dialog";
@@ -224,7 +234,7 @@ CComPtr<ITfCategoryMgr> GetCategoryMgr() {
   if (function == nullptr) {
     return nullptr;
   }
-  typedef HRESULT (WINAPI *FPTF_CreateCategoryMgr)(ITfCategoryMgr **object);
+  typedef HRESULT(WINAPI * FPTF_CreateCategoryMgr)(ITfCategoryMgr * *object);
   CComPtr<ITfCategoryMgr> ptr;
   const HRESULT result =
       reinterpret_cast<FPTF_CreateCategoryMgr>(function)(&ptr);
@@ -265,9 +275,7 @@ struct GuidHash {
 class CompositionSinkImpl : public ITfCompositionSink {
  public:
   CompositionSinkImpl(TipTextService *text_service, ITfContext *context)
-      : text_service_(text_service),
-        context_(context) {
-  }
+      : text_service_(text_service), context_(context) {}
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -290,9 +298,7 @@ class CompositionSinkImpl : public ITfCompositionSink {
     return S_OK;
   }
 
-  virtual ULONG STDMETHODCALLTYPE AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
 
   virtual ULONG STDMETHODCALLTYPE Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -335,10 +341,10 @@ void CloseUIElement(ITfUIElementMgr *ui_element_mgr, DWORD id) {
 }
 
 // Represents preserved keys used by this class.
-const wchar_t kTipKeyTilde[]   = L"OnOff";
-const wchar_t kTipKeyKanji[]   = L"Kanji";
-const wchar_t kTipKeyF10[]     = L"Function 10";
-const wchar_t kTipKeyRoman[]   = L"Roman";
+const wchar_t kTipKeyTilde[] = L"OnOff";
+const wchar_t kTipKeyKanji[] = L"Kanji";
+const wchar_t kTipKeyF10[] = L"Function 10";
+const wchar_t kTipKeyRoman[] = L"Roman";
 const wchar_t kTipKeyNoRoman[] = L"NoRoman";
 
 struct PreserveKeyItem {
@@ -350,41 +356,35 @@ struct PreserveKeyItem {
 };
 
 const PreserveKeyItem kPreservedKeyItems[] = {
-  {
-    kTipPreservedKey_Kanji,
-    { VK_OEM_3, TF_MOD_ALT },
-    VK_OEM_3,
-    &kTipKeyTilde[0],
-    arraysize(kTipKeyTilde) - 1
-  }, {
-    kTipPreservedKey_Kanji,
-    { VK_KANJI, TF_MOD_IGNORE_ALL_MODIFIER },
-    // KeyEventHandler maps VK_KANJI to KeyEvent::NO_SPECIALKEY instead of
-    // KeyEvent::KANJI because of an anomaly of IMM32 behavior. So, in TSF
-    // mode, we treat VK_KANJI as if it was VK_DBE_DBCSCHAR. See b/7592743 and
-    // b/7970379 about what happened.
-    VK_DBE_DBCSCHAR,
-    &kTipKeyKanji[0],
-    arraysize(kTipKeyKanji) - 1
-  }, {
-    kTipPreservedKey_Romaji,
-    { VK_DBE_ROMAN, TF_MOD_IGNORE_ALL_MODIFIER },
-    VK_DBE_ROMAN,
-    &kTipKeyRoman[0],
-    arraysize(kTipKeyRoman) - 1
-  }, {
-    kTipPreservedKey_Romaji,
-    { VK_DBE_NOROMAN, TF_MOD_IGNORE_ALL_MODIFIER },
-    VK_DBE_NOROMAN,
-    &kTipKeyNoRoman[0],
-    arraysize(kTipKeyNoRoman) - 1
-  }, {
-    kTipPreservedKey_F10,
-    { VK_F10, 0 },
-    VK_F10,
-    &kTipKeyF10[0],
-    arraysize(kTipKeyF10) - 1
-  },
+    {kTipPreservedKey_Kanji,
+     {VK_OEM_3, TF_MOD_ALT},
+     VK_OEM_3,
+     &kTipKeyTilde[0],
+     arraysize(kTipKeyTilde) - 1},
+    {kTipPreservedKey_Kanji,
+     {VK_KANJI, TF_MOD_IGNORE_ALL_MODIFIER},
+     // KeyEventHandler maps VK_KANJI to KeyEvent::NO_SPECIALKEY instead of
+     // KeyEvent::KANJI because of an anomaly of IMM32 behavior. So, in TSF
+     // mode, we treat VK_KANJI as if it was VK_DBE_DBCSCHAR. See b/7592743 and
+     // b/7970379 about what happened.
+     VK_DBE_DBCSCHAR,
+     &kTipKeyKanji[0],
+     arraysize(kTipKeyKanji) - 1},
+    {kTipPreservedKey_Romaji,
+     {VK_DBE_ROMAN, TF_MOD_IGNORE_ALL_MODIFIER},
+     VK_DBE_ROMAN,
+     &kTipKeyRoman[0],
+     arraysize(kTipKeyRoman) - 1},
+    {kTipPreservedKey_Romaji,
+     {VK_DBE_NOROMAN, TF_MOD_IGNORE_ALL_MODIFIER},
+     VK_DBE_NOROMAN,
+     &kTipKeyNoRoman[0],
+     arraysize(kTipKeyNoRoman) - 1},
+    {kTipPreservedKey_F10,
+     {VK_F10, 0},
+     VK_F10,
+     &kTipKeyF10[0],
+     arraysize(kTipKeyF10) - 1},
 };
 
 class UpdateUiEditSessionImpl : public ITfEditSession {
@@ -414,9 +414,7 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
     return S_OK;
   }
 
-  virtual ULONG STDMETHODCALLTYPE AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
 
   virtual ULONG STDMETHODCALLTYPE Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -438,23 +436,19 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
     // per object.
-    CComPtr<ITfEditSession> edit_session(new UpdateUiEditSessionImpl(
-        text_service, context));
+    CComPtr<ITfEditSession> edit_session(
+        new UpdateUiEditSessionImpl(text_service, context));
 
     HRESULT edit_session_result = S_OK;
     const HRESULT result = context->RequestEditSession(
-        text_service->GetClientID(),
-        edit_session,
+        text_service->GetClientID(), edit_session,
         TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
     return SUCCEEDED(result);
   }
 
  private:
-  UpdateUiEditSessionImpl(TipTextService *text_service,
-                          ITfContext *context)
-      : text_service_(text_service),
-        context_(context) {
-  }
+  UpdateUiEditSessionImpl(TipTextService *text_service, ITfContext *context)
+      : text_service_(text_service), context_(context) {}
 
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
@@ -463,10 +457,8 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
   DISALLOW_COPY_AND_ASSIGN(UpdateUiEditSessionImpl);
 };
 
-
-bool RegisterWindowClass(
-    HINSTANCE module_handle, const wchar_t *class_name,
-    WNDPROC window_procedure) {
+bool RegisterWindowClass(HINSTANCE module_handle, const wchar_t *class_name,
+                         WNDPROC window_procedure) {
   WNDCLASSEXW wc = {};
   wc.cbSize = sizeof(WNDCLASSEX);
   wc.style = 0;
@@ -478,44 +470,42 @@ bool RegisterWindowClass(
   return atom != INVALID_ATOM;
 }
 
-class TipTextServiceImpl
-    : public ITfTextInputProcessorEx,
-      public ITfDisplayAttributeProvider,
-      public ITfThreadMgrEventSink,
-      public ITfThreadFocusSink,
-      public ITfTextEditSink,
-      public ITfTextLayoutSink,
-      public ITfKeyEventSink,
-      public ITfFnConfigure,
-      public ITfFunctionProvider,
-      public ITfCompartmentEventSink,
-      public TipLangBarCallback,
-      public TipTextService {
+class TipTextServiceImpl : public ITfTextInputProcessorEx,
+                           public ITfDisplayAttributeProvider,
+                           public ITfThreadMgrEventSink,
+                           public ITfThreadFocusSink,
+                           public ITfTextEditSink,
+                           public ITfTextLayoutSink,
+                           public ITfKeyEventSink,
+                           public ITfFnConfigure,
+                           public ITfFunctionProvider,
+                           public ITfCompartmentEventSink,
+                           public TipLangBarCallback,
+                           public TipTextService {
  public:
   TipTextServiceImpl()
-    : client_id_(TF_CLIENTID_NULL),
-      activate_flags_(0),
-      thread_mgr_cookie_(TF_INVALID_COOKIE),
-      thread_focus_cookie_(TF_INVALID_COOKIE),
-      keyboard_openclose_cookie_(TF_INVALID_COOKIE),
-      keyboard_disabled_cookie_(TF_INVALID_COOKIE),
-      keyboard_inputmode_conversion_cookie_(TF_INVALID_COOKIE),
-      empty_context_cookie_(TF_INVALID_COOKIE),
-      input_attribute_(TF_INVALID_GUIDATOM),
-      converted_attribute_(TF_INVALID_GUIDATOM),
-      thread_context_(nullptr),
-      task_window_handle_(nullptr),
-      renderer_callback_window_handle_(nullptr) {}
+      : client_id_(TF_CLIENTID_NULL),
+        activate_flags_(0),
+        thread_mgr_cookie_(TF_INVALID_COOKIE),
+        thread_focus_cookie_(TF_INVALID_COOKIE),
+        keyboard_openclose_cookie_(TF_INVALID_COOKIE),
+        keyboard_disabled_cookie_(TF_INVALID_COOKIE),
+        keyboard_inputmode_conversion_cookie_(TF_INVALID_COOKIE),
+        empty_context_cookie_(TF_INVALID_COOKIE),
+        input_attribute_(TF_INVALID_GUIDATOM),
+        converted_attribute_(TF_INVALID_GUIDATOM),
+        thread_context_(nullptr),
+        task_window_handle_(nullptr),
+        renderer_callback_window_handle_(nullptr) {}
 
   static bool OnDllProcessAttach(HMODULE module_handle) {
-    if (!RegisterWindowClass(
-            module_handle, kTaskWindowClassName, TaskWindowProc)) {
+    if (!RegisterWindowClass(module_handle, kTaskWindowClassName,
+                             TaskWindowProc)) {
       return false;
     }
 
-    if (!RegisterWindowClass(
-            module_handle, kMessageReceiverClassName,
-            RendererCallbackWidnowProc)) {
+    if (!RegisterWindowClass(module_handle, kMessageReceiverClassName,
+                             RendererCallbackWidnowProc)) {
       return false;
     }
     return true;
@@ -530,16 +520,16 @@ class TipTextServiceImpl
   virtual ~TipTextServiceImpl() {}
 
   // IUnknown
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(
-      REFIID interface_id, void **object) {
+  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
+                                                   void **object) {
     if (object == nullptr) {
       return E_INVALIDARG;
     }
 
     // Find a matching interface from the ones implemented by this object.
     if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(
-          static_cast<ITfTextInputProcessorEx *>(this));
+      *object =
+          static_cast<IUnknown *>(static_cast<ITfTextInputProcessorEx *>(this));
     } else if (::IsEqualIID(interface_id, IID_ITfTextInputProcessor)) {
       *object = static_cast<ITfTextInputProcessor *>(this);
     } else if (::IsEqualIID(interface_id, IID_ITfTextInputProcessorEx)) {
@@ -572,9 +562,7 @@ class TipTextServiceImpl
     AddRef();
     return S_OK;
   }
-  virtual ULONG STDMETHODCALLTYPE AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
   virtual ULONG STDMETHODCALLTYPE Release() {
     const ULONG count = ref_count_.ReleaseImpl();
     if (count == 0) {
@@ -584,8 +572,8 @@ class TipTextServiceImpl
   }
 
   // ITfTextInputProcessorEx
-  virtual HRESULT STDMETHODCALLTYPE Activate(
-      ITfThreadMgr *thread_mgr, TfClientId client_id) {
+  virtual HRESULT STDMETHODCALLTYPE Activate(ITfThreadMgr *thread_mgr,
+                                             TfClientId client_id) {
     return ActivateEx(thread_mgr, client_id, 0);
   }
   virtual HRESULT STDMETHODCALLTYPE Deactivate() {
@@ -638,8 +626,9 @@ class TipTextServiceImpl
 
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE ActivateEx(
-      ITfThreadMgr *thread_mgr, TfClientId client_id, DWORD flags) {
+  virtual HRESULT STDMETHODCALLTYPE ActivateEx(ITfThreadMgr *thread_mgr,
+                                               TfClientId client_id,
+                                               DWORD flags) {
     if (TipDllModule::IsUnloaded()) {
       // Crash report indicates that this method is called after the DLL is
       // unloaded. In such case, we can do nothing safely. b/7915484.
@@ -764,8 +753,8 @@ class TipTextServiceImpl
 
     // Copy the initial mode.
     DWORD native_mode = 0;
-    if (TipStatus::GetInputModeConversion(
-            thread_mgr, client_id, &native_mode)) {
+    if (TipStatus::GetInputModeConversion(thread_mgr, client_id,
+                                          &native_mode)) {
       GetThreadContext()->GetInputModeManager()->OnInitialize(
           TipStatus::IsOpen(thread_mgr), native_mode);
     }
@@ -800,8 +789,8 @@ class TipTextServiceImpl
   }
 
   // ITfDisplayAttributeProvider
-  virtual HRESULT STDMETHODCALLTYPE EnumDisplayAttributeInfo(
-      IEnumTfDisplayAttributeInfo **attributes) {
+  virtual HRESULT STDMETHODCALLTYPE
+  EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **attributes) {
     if (attributes == nullptr) {
       return E_INVALIDARG;
     }
@@ -810,8 +799,8 @@ class TipTextServiceImpl
     (*attributes)->AddRef();
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE GetDisplayAttributeInfo(
-      REFGUID guid, ITfDisplayAttributeInfo **attribute) {
+  virtual HRESULT STDMETHODCALLTYPE
+  GetDisplayAttributeInfo(REFGUID guid, ITfDisplayAttributeInfo **attribute) {
     if (attribute == nullptr) {
       return E_INVALIDARG;
     }
@@ -832,14 +821,14 @@ class TipTextServiceImpl
   }
 
   // ITfThreadMgrEventSink
-  virtual HRESULT STDMETHODCALLTYPE OnInitDocumentMgr(
-      ITfDocumentMgr *document) {
+  virtual HRESULT STDMETHODCALLTYPE
+  OnInitDocumentMgr(ITfDocumentMgr *document) {
     // In order to defer the initialization timing of TipPrivateContext,
     // we won't call OnDocumentMgrChanged against |document| here.
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE OnUninitDocumentMgr(
-      ITfDocumentMgr *document) {
+  virtual HRESULT STDMETHODCALLTYPE
+  OnUninitDocumentMgr(ITfDocumentMgr *document) {
     // Usually |document| no longer has any context here: all the contexts are
     // likely to be destroyed through ITfThreadMgrEventSink::OnPushContext.
     // We enumerate remaining contexts just in case.
@@ -918,30 +907,27 @@ class TipTextServiceImpl
   }
 
   // ITfTextEditSink
-  virtual HRESULT STDMETHODCALLTYPE OnEndEdit(
-      ITfContext *context,
-      TfEditCookie edit_cookie,
-      ITfEditRecord *edit_record) {
+  virtual HRESULT STDMETHODCALLTYPE OnEndEdit(ITfContext *context,
+                                              TfEditCookie edit_cookie,
+                                              ITfEditRecord *edit_record) {
     HRESULT result = S_OK;
 
-    return TipEditSessionImpl::OnEndEdit(
-        this, context, edit_cookie, edit_record);
+    return TipEditSessionImpl::OnEndEdit(this, context, edit_cookie,
+                                         edit_record);
   }
 
-  virtual HRESULT STDMETHODCALLTYPE OnLayoutChange(
-      ITfContext *context,
-      TfLayoutCode layout_code,
-      ITfContextView *context_view) {
+  virtual HRESULT STDMETHODCALLTYPE
+  OnLayoutChange(ITfContext *context, TfLayoutCode layout_code,
+                 ITfContextView *context_view) {
     TipEditSession::OnLayoutChangedAsync(this, context);
     return S_OK;
   }
 
   // ITfKeyEventSink
-  virtual HRESULT STDMETHODCALLTYPE OnSetFocus(BOOL foreground) {
-    return S_OK;
-  }
-  virtual HRESULT STDMETHODCALLTYPE OnTestKeyDown(
-      ITfContext *context, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
+  virtual HRESULT STDMETHODCALLTYPE OnSetFocus(BOOL foreground) { return S_OK; }
+  virtual HRESULT STDMETHODCALLTYPE OnTestKeyDown(ITfContext *context,
+                                                  WPARAM wparam, LPARAM lparam,
+                                                  BOOL *eaten) {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -952,18 +938,20 @@ class TipTextServiceImpl
   }
 
   // ITfKeyEventSink
-  virtual HRESULT STDMETHODCALLTYPE OnTestKeyUp(
-      ITfContext *context, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
+  virtual HRESULT STDMETHODCALLTYPE OnTestKeyUp(ITfContext *context,
+                                                WPARAM wparam, LPARAM lparam,
+                                                BOOL *eaten) {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
     }
     *eaten = FALSE;
-    return TipKeyeventHandler::OnTestKeyUp(
-        this, context, wparam, lparam, eaten);
+    return TipKeyeventHandler::OnTestKeyUp(this, context, wparam, lparam,
+                                           eaten);
   }
-  virtual HRESULT STDMETHODCALLTYPE OnKeyDown(
-      ITfContext *context, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
+  virtual HRESULT STDMETHODCALLTYPE OnKeyDown(ITfContext *context,
+                                              WPARAM wparam, LPARAM lparam,
+                                              BOOL *eaten) {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -971,8 +959,8 @@ class TipTextServiceImpl
     *eaten = FALSE;
     return TipKeyeventHandler::OnKeyDown(this, context, wparam, lparam, eaten);
   }
-  virtual HRESULT STDMETHODCALLTYPE OnKeyUp(
-      ITfContext *context, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
+  virtual HRESULT STDMETHODCALLTYPE OnKeyUp(ITfContext *context, WPARAM wparam,
+                                            LPARAM lparam, BOOL *eaten) {
     HRESULT result = S_OK;
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
@@ -981,8 +969,8 @@ class TipTextServiceImpl
     *eaten = FALSE;
     return TipKeyeventHandler::OnKeyUp(this, context, wparam, lparam, eaten);
   }
-  virtual HRESULT STDMETHODCALLTYPE OnPreservedKey(
-      ITfContext *context, REFGUID guid, BOOL *eaten) {
+  virtual HRESULT STDMETHODCALLTYPE OnPreservedKey(ITfContext *context,
+                                                   REFGUID guid, BOOL *eaten) {
     HRESULT result = S_OK;
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
@@ -1017,8 +1005,8 @@ class TipTextServiceImpl
     *name = ::SysAllocString(kConfigurationDisplayname);
     return (*name != nullptr) ? S_OK : E_FAIL;
   }
-  virtual HRESULT STDMETHODCALLTYPE Show(
-      HWND parent, LANGID langid, REFGUID profile) {
+  virtual HRESULT STDMETHODCALLTYPE Show(HWND parent, LANGID langid,
+                                         REFGUID profile) {
     return SpawnTool("config_dialog");
   }
 
@@ -1037,8 +1025,9 @@ class TipTextServiceImpl
     *description = CComBSTR().Detach();
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE GetFunction(
-      const GUID &guid, const IID &iid, IUnknown **unknown) {
+  virtual HRESULT STDMETHODCALLTYPE GetFunction(const GUID &guid,
+                                                const IID &iid,
+                                                IUnknown **unknown) {
     if (unknown == nullptr) {
       return E_INVALIDARG;
     }
@@ -1086,8 +1075,6 @@ class TipTextServiceImpl
       case TipLangBarCallback::kProperty:
       case TipLangBarCallback::kDictionary:
       case TipLangBarCallback::kWordRegister:
-      case TipLangBarCallback::kHandWriting:
-      case TipLangBarCallback::kCharacterPalette:
       case TipLangBarCallback::kAbout:
         return SpawnTool(GetMozcToolCommand(menu_id));
       case TipLangBarCallback::kHelp:
@@ -1102,8 +1089,8 @@ class TipTextServiceImpl
     const bool open =
         thread_context_->GetInputModeManager()->GetEffectiveOpenClose();
     if (open) {
-      return TipStatus::SetIMEOpen(thread_mgr_, client_id_, false)
-             ? S_OK : E_FAIL;
+      return TipStatus::SetIMEOpen(thread_mgr_, client_id_, false) ? S_OK
+                                                                   : E_FAIL;
     }
 
     // Like MSIME 2012, switch to Hiragana mode when the LangBar button is
@@ -1112,15 +1099,9 @@ class TipTextServiceImpl
   }
 
   // TipTextService
-  virtual TfClientId GetClientID() const {
-    return client_id_;
-  }
-  virtual ITfThreadMgr *GetThreadManager() const {
-    return thread_mgr_;
-  }
-  virtual TfGuidAtom input_attribute() const {
-    return input_attribute_;
-  }
+  virtual TfClientId GetClientID() const { return client_id_; }
+  virtual ITfThreadMgr *GetThreadManager() const { return thread_mgr_; }
+  virtual TfGuidAtom input_attribute() const { return input_attribute_; }
   virtual TfGuidAtom converted_attribute() const {
     return converted_attribute_;
   }
@@ -1128,12 +1109,15 @@ class TipTextServiceImpl
     return renderer_callback_window_handle_;
   }
 
-  virtual ITfCompositionSink *CreateCompositionSink(
-      ITfContext *context) {
+  virtual ITfCompositionSink *CreateCompositionSink(ITfContext *context) {
     return new CompositionSinkImpl(this, context);
   }
   virtual bool IsImmersiveUI() const {
-    return (activate_flags_ & TF_TMF_IMMERSIVEMODE) == TF_TMF_IMMERSIVEMODE;
+    // On Windows 10 and later, we assume that Mozc Renderer can overlap the IME
+    // client app even if TF_TMF_IMMERSIVEMODE is specified.
+    // See b/132702301 and crbug.com/962310 for more background.
+    return !::IsWindows10OrGreater() &&
+        (activate_flags_ & TF_TMF_IMMERSIVEMODE) == TF_TMF_IMMERSIVEMODE;
   }
   virtual TipPrivateContext *GetPrivateContext(ITfContext *context) {
     if (context == nullptr) {
@@ -1145,9 +1129,7 @@ class TipTextServiceImpl
     }
     return it->second;
   }
-  virtual TipThreadContext *GetThreadContext() {
-    return thread_context_.get();
-  }
+  virtual TipThreadContext *GetThreadContext() { return thread_context_.get(); }
   virtual void PostUIUpdateMessage() {
     if (!::IsWindow(task_window_handle_)) {
       return;
@@ -1159,9 +1141,7 @@ class TipTextServiceImpl
     langbar_.UpdateMenu(enabled, mozc_mode);
   }
 
-  virtual bool IsLangbarInitialized() const {
-    return langbar_.IsInitialized();
-  }
+  virtual bool IsLangbarInitialized() const { return langbar_.IsInitialized(); }
 
   // Following functions are private utilities.
   static void StorePointerForCurrentThread(TipTextServiceImpl *impl) {
@@ -1226,8 +1206,8 @@ class TipTextServiceImpl
           }
         }
       }
-      private_context_map_[context] = new TipPrivateContext(
-          text_edit_sink_cookie, text_layout_sink_cookie);
+      private_context_map_[context] =
+          new TipPrivateContext(text_edit_sink_cookie, text_layout_sink_cookie);
     }
     return;
   }
@@ -1321,13 +1301,9 @@ class TipTextServiceImpl
     return result;
   }
 
-  HRESULT InitLanguageBar() {
-    return langbar_.InitLangBar(this);
-  }
+  HRESULT InitLanguageBar() { return langbar_.InitLangBar(this); }
 
-  HRESULT UninitLanguageBar() {
-    return langbar_.UninitLangBar();
-  }
+  HRESULT UninitLanguageBar() { return langbar_.UninitLangBar(); }
 
   HRESULT InitKeyEventSink() {
     HRESULT result = S_OK;
@@ -1369,17 +1345,15 @@ class TipTextServiceImpl
       return result;
     }
 
-    result = AdviseCompartmentEventSink(
-        manager,
-        GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
-        &keyboard_openclose_cookie_);
+    result =
+        AdviseCompartmentEventSink(manager, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
+                                   &keyboard_openclose_cookie_);
     if (FAILED(result)) {
       return result;
     }
 
     result = AdviseCompartmentEventSink(
-        manager,
-        GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
+        manager, GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
         &keyboard_inputmode_conversion_cookie_);
     if (FAILED(result)) {
       return result;
@@ -1401,20 +1375,17 @@ class TipTextServiceImpl
       return result;
     }
 
-    UnadviseCompartmentEventSink(
-        manager,
-        GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
-        &keyboard_openclose_cookie_);
-    UnadviseCompartmentEventSink(
-        manager,
-        GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
-        &keyboard_inputmode_conversion_cookie_);
+    UnadviseCompartmentEventSink(manager, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
+                                 &keyboard_openclose_cookie_);
+    UnadviseCompartmentEventSink(manager,
+                                 GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
+                                 &keyboard_inputmode_conversion_cookie_);
 
     return result;
   }
 
-  HRESULT AdviseCompartmentEventSink(
-    ITfCompartmentMgr *manager, REFGUID guid, DWORD *cookie) {
+  HRESULT AdviseCompartmentEventSink(ITfCompartmentMgr *manager, REFGUID guid,
+                                     DWORD *cookie) {
     HRESULT result = S_OK;
 
     if (manager == nullptr || cookie == nullptr) {
@@ -1431,16 +1402,15 @@ class TipTextServiceImpl
     if (FAILED(result)) {
       return result;
     }
-    result = source->AdviseSink(
-        IID_ITfCompartmentEventSink,
-        static_cast<ITfCompartmentEventSink*>(this),
-        cookie);
+    result = source->AdviseSink(IID_ITfCompartmentEventSink,
+                                static_cast<ITfCompartmentEventSink *>(this),
+                                cookie);
 
     return result;
   }
 
-  HRESULT UnadviseCompartmentEventSink(
-    ITfCompartmentMgr *manager, REFGUID guid, DWORD *cookie) {
+  HRESULT UnadviseCompartmentEventSink(ITfCompartmentMgr *manager, REFGUID guid,
+                                       DWORD *cookie) {
     HRESULT result = S_OK;
 
     if (manager == nullptr || cookie == nullptr) {
@@ -1484,8 +1454,8 @@ class TipTextServiceImpl
     for (size_t i = 0; i < arraysize(kPreservedKeyItems); ++i) {
       const PreserveKeyItem &item = kPreservedKeyItems[i];
       // Register a hot key to the keystroke manager.
-      result = keystroke->PreserveKey(
-          client_id_, item.guid, &item.key, item.description, item.length);
+      result = keystroke->PreserveKey(client_id_, item.guid, &item.key,
+                                      item.description, item.length);
       if (SUCCEEDED(result)) {
         preserved_key_map_[item.guid] = item.mapped_vkey;
       }
@@ -1568,9 +1538,8 @@ class TipTextServiceImpl
       return E_FAIL;
     }
 
-    return source->AdviseSingleSink(
-        client_id_, IID_ITfFunctionProvider,
-        static_cast<ITfFunctionProvider *>(this));
+    return source->AdviseSingleSink(client_id_, IID_ITfFunctionProvider,
+                                    static_cast<ITfFunctionProvider *>(this));
   }
 
   HRESULT UninitFunctionProvider() {
@@ -1594,13 +1563,13 @@ class TipTextServiceImpl
 
     // register the display attribute for input strings and the one for
     // converted strings.
-    result = category_->RegisterGUID(
-        TipDisplayAttributeInput::guid(), &input_attribute_);
+    result = category_->RegisterGUID(TipDisplayAttributeInput::guid(),
+                                     &input_attribute_);
     if (FAILED(result)) {
       return result;
     }
-    result = category_->RegisterGUID(
-        TipDisplayAttributeConverted::guid(), &converted_attribute_);
+    result = category_->RegisterGUID(TipDisplayAttributeConverted::guid(),
+                                     &converted_attribute_);
     return result;
   }
 
@@ -1608,16 +1577,9 @@ class TipTextServiceImpl
     if (::IsWindow(task_window_handle_)) {
       return S_FALSE;
     }
-    task_window_handle_ = ::CreateWindowExW(
-        0,
-        kTaskWindowClassName,
-        L"",
-        0,
-        0, 0, 0, 0,
-        HWND_MESSAGE,
-        nullptr,
-        g_module,
-        nullptr);
+    task_window_handle_ =
+        ::CreateWindowExW(0, kTaskWindowClassName, L"", 0, 0, 0, 0, 0,
+                          HWND_MESSAGE, nullptr, g_module, nullptr);
     if (!::IsWindow(task_window_handle_)) {
       return E_FAIL;
     }
@@ -1633,10 +1595,8 @@ class TipTextServiceImpl
     return S_OK;
   }
 
-  static LRESULT WINAPI TaskWindowProc(HWND window_handle,
-                                       UINT message,
-                                       WPARAM wparam,
-                                       LPARAM lparam) {
+  static LRESULT WINAPI TaskWindowProc(HWND window_handle, UINT message,
+                                       WPARAM wparam, LPARAM lparam) {
     TipTextServiceImpl *self = Self();
     if (self == nullptr) {
       return ::DefWindowProcW(window_handle, message, wparam, lparam);
@@ -1677,16 +1637,9 @@ class TipTextServiceImpl
     if (::IsWindow(renderer_callback_window_handle_)) {
       return S_FALSE;
     }
-    renderer_callback_window_handle_ = ::CreateWindowExW(
-        0,
-        kMessageReceiverClassName,
-        L"",
-        0,
-        0, 0, 0, 0,
-        HWND_MESSAGE,
-        nullptr,
-        g_module,
-        nullptr);
+    renderer_callback_window_handle_ =
+        ::CreateWindowExW(0, kMessageReceiverClassName, L"", 0, 0, 0, 0, 0,
+                          HWND_MESSAGE, nullptr, g_module, nullptr);
     if (!::IsWindow(renderer_callback_window_handle_)) {
       return E_FAIL;
     }
@@ -1695,8 +1648,8 @@ class TipTextServiceImpl
     static UINT renderer_callback_message =
         ::RegisterWindowMessage(mozc::kMessageReceiverMessageName);
 
-    if (!WindowUtil::ChangeMessageFilter(
-            renderer_callback_window_handle_, renderer_callback_message)) {
+    if (!WindowUtil::ChangeMessageFilter(renderer_callback_window_handle_,
+                                         renderer_callback_message)) {
       ::DestroyWindow(renderer_callback_window_handle_);
       renderer_callback_window_handle_ = nullptr;
       return E_FAIL;
@@ -1718,8 +1671,7 @@ class TipTextServiceImpl
   }
 
   static LRESULT WINAPI RendererCallbackWidnowProc(HWND window_handle,
-                                                   UINT message,
-                                                   WPARAM wparam,
+                                                   UINT message, WPARAM wparam,
                                                    LPARAM lparam) {
     TipTextServiceImpl *self = Self();
     if (self == nullptr) {
@@ -1790,9 +1742,9 @@ class TipTextServiceImpl
   TipLangBar langbar_;
 
   using PreservedKeyMap = std::unordered_map<GUID, UINT, GuidHash>;
-  using PrivateContextMap = std::unordered_map<CComPtr<ITfContext>,
-                                               TipPrivateContext *,
-                                               CComPtrHash<ITfContext>>;
+  using PrivateContextMap =
+      std::unordered_map<CComPtr<ITfContext>, TipPrivateContext *,
+                         CComPtrHash<ITfContext>>;
   PrivateContextMap private_context_map_;
   PreservedKeyMap preserved_key_map_;
   std::unique_ptr<TipThreadContext> thread_context_;

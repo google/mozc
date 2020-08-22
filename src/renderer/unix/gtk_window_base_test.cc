@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,11 @@
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
+using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 using ::testing::StrEq;
-using ::testing::_;
 
 namespace mozc {
 namespace renderer {
@@ -46,9 +46,9 @@ namespace gtk {
 namespace {
 // Following variable is used testing and it is contant but due to API
 // restriction, can not modify const modifier.
-GtkWidget *kDummyWindow = reinterpret_cast<GtkWidget*>(0x12345678);
-GtkWidget *kDummyCanvas = reinterpret_cast<GtkWidget*>(0x87654321);
-GdkWindow *kDummyGdkWindow = reinterpret_cast<GdkWindow*>(0x29828374);
+GtkWidget *kDummyWindow = reinterpret_cast<GtkWidget *>(0x12345678);
+GtkWidget *kDummyCanvas = reinterpret_cast<GtkWidget *>(0x87654321);
+GdkWindow *kDummyGdkWindow = reinterpret_cast<GdkWindow *>(0x29828374);
 
 MATCHER_P(PointEq, expected_point, "The expected point does not match") {
   return (arg.x == expected_point.x) && (arg.y == expected_point.y);
@@ -65,22 +65,22 @@ class GtkWindowBaseTest : public testing::Test {
     EXPECT_CALL(*mock, GtkWindowNew(GTK_WINDOW_POPUP))
         .WillOnce(Return(kDummyWindow));
     EXPECT_CALL(*mock, GtkDrawingAreaNew()).WillOnce(Return(kDummyCanvas));
-    EXPECT_CALL(*mock, GSignalConnect(
-        kDummyWindow, StrEq("destroy"),
-        G_CALLBACK(GtkWindowBase::OnDestroyThunk), _));
-    EXPECT_CALL(*mock, GSignalConnect(
-        kDummyWindow, StrEq("button-press-event"),
-        G_CALLBACK(GtkWindowBase::OnMouseDownThunk), _));
-    EXPECT_CALL(*mock, GSignalConnect(
-        kDummyWindow, StrEq("button-release-event"),
-        G_CALLBACK(GtkWindowBase::OnMouseUpThunk), _));
-    EXPECT_CALL(*mock, GSignalConnect(
-        kDummyCanvas, StrEq("expose-event"),
-        G_CALLBACK(GtkWindowBase::OnPaintThunk), _));
+    EXPECT_CALL(*mock,
+                GSignalConnect(kDummyWindow, StrEq("destroy"),
+                               G_CALLBACK(GtkWindowBase::OnDestroyThunk), _));
+    EXPECT_CALL(*mock,
+                GSignalConnect(kDummyWindow, StrEq("button-press-event"),
+                               G_CALLBACK(GtkWindowBase::OnMouseDownThunk), _));
+    EXPECT_CALL(*mock,
+                GSignalConnect(kDummyWindow, StrEq("button-release-event"),
+                               G_CALLBACK(GtkWindowBase::OnMouseUpThunk), _));
+    EXPECT_CALL(*mock,
+                GSignalConnect(kDummyCanvas, StrEq("expose-event"),
+                               G_CALLBACK(GtkWindowBase::OnPaintThunk), _));
     EXPECT_CALL(*mock, GtkContainerAdd(kDummyWindow, kDummyCanvas));
     EXPECT_CALL(*mock, GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_PRESS_MASK));
-    EXPECT_CALL(*mock, GtkWidgetAddEvents(kDummyWindow,
-                                          GDK_BUTTON_RELEASE_MASK));
+    EXPECT_CALL(*mock,
+                GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_RELEASE_MASK));
     EXPECT_CALL(*mock, GtkWidgetRealize(kDummyWindow));
     EXPECT_CALL(*mock, GdkWindowSetTypeHint(kDummyWindow,
                                             GDK_WINDOW_TYPE_HINT_POPUP_MENU));
@@ -124,9 +124,9 @@ TEST_F(GtkWindowBaseTest, GetWindowPosTest) {
 
   const Point expected_pos(10, 20);
 
-  EXPECT_CALL(*mock, GtkWindowGetPosition(kDummyWindow, _, _)).
-      WillOnce(DoAll(SetArgPointee<1>(expected_pos.x),
-                     SetArgPointee<2>(expected_pos.y)));
+  EXPECT_CALL(*mock, GtkWindowGetPosition(kDummyWindow, _, _))
+      .WillOnce(DoAll(SetArgPointee<1>(expected_pos.x),
+                      SetArgPointee<2>(expected_pos.y)));
 
   GtkWindowBase window(mock);
   Point actual_pos = window.GetWindowPos();
@@ -139,9 +139,9 @@ TEST_F(GtkWindowBaseTest, GetWindowSizeTest) {
 
   const Size expected_size(15, 25);
 
-  EXPECT_CALL(*mock, GtkWindowGetSize(kDummyWindow, _, _)).
-      WillOnce(DoAll(SetArgPointee<1>(expected_size.width),
-                     SetArgPointee<2>(expected_size.height)));
+  EXPECT_CALL(*mock, GtkWindowGetSize(kDummyWindow, _, _))
+      .WillOnce(DoAll(SetArgPointee<1>(expected_size.width),
+                      SetArgPointee<2>(expected_size.height)));
 
   GtkWindowBase window(mock);
   Size actual_size = window.GetWindowSize();
@@ -155,13 +155,13 @@ TEST_F(GtkWindowBaseTest, GetWindowRectTest) {
 
   const Rect expected_rect(10, 20, 15, 25);
 
-  EXPECT_CALL(*mock, GtkWindowGetPosition(kDummyWindow, _, _)).
-      WillOnce(DoAll(SetArgPointee<1>(expected_rect.origin.x),
-                     SetArgPointee<2>(expected_rect.origin.y)));
+  EXPECT_CALL(*mock, GtkWindowGetPosition(kDummyWindow, _, _))
+      .WillOnce(DoAll(SetArgPointee<1>(expected_rect.origin.x),
+                      SetArgPointee<2>(expected_rect.origin.y)));
 
-  EXPECT_CALL(*mock, GtkWindowGetSize(kDummyWindow, _, _)).
-      WillOnce(DoAll(SetArgPointee<1>(expected_rect.size.width),
-                     SetArgPointee<2>(expected_rect.size.height)));
+  EXPECT_CALL(*mock, GtkWindowGetSize(kDummyWindow, _, _))
+      .WillOnce(DoAll(SetArgPointee<1>(expected_rect.size.width),
+                      SetArgPointee<2>(expected_rect.size.height)));
 
   GtkWindowBase window(mock);
   Rect actual_rect = window.GetWindowRect();
@@ -207,14 +207,12 @@ TEST_F(GtkWindowBaseTest, RedrawTest) {
 
   const Size expected_size(15, 25);
 
-  EXPECT_CALL(*mock, GtkWindowGetSize(kDummyWindow, _, _)).
-      WillOnce(DoAll(SetArgPointee<1>(expected_size.width),
-                     SetArgPointee<2>(expected_size.height)));
-  EXPECT_CALL(*mock, GtkWidgetQueueDrawArea(kDummyWindow,
-                                            0,
-                                            0,
-                                            expected_size.width,
-                                            expected_size.height));
+  EXPECT_CALL(*mock, GtkWindowGetSize(kDummyWindow, _, _))
+      .WillOnce(DoAll(SetArgPointee<1>(expected_size.width),
+                      SetArgPointee<2>(expected_size.height)));
+  EXPECT_CALL(*mock,
+              GtkWidgetQueueDrawArea(kDummyWindow, 0, 0, expected_size.width,
+                                     expected_size.height));
 
   GtkWindowBase window(mock);
   window.Redraw();
@@ -224,10 +222,10 @@ class OverriddenCallTestableGtkWindowBase : public GtkWindowBase {
  public:
   explicit OverriddenCallTestableGtkWindowBase(GtkWrapperInterface *gtk)
       : GtkWindowBase(gtk) {}
-  MOCK_METHOD1(OnMouseLeftDown, void(const Point &pos));
-  MOCK_METHOD1(OnMouseLeftUp, void(const Point &pos));
-  MOCK_METHOD1(OnMouseRightDown, void(const Point &pos));
-  MOCK_METHOD1(OnMouseRightUp, void(const Point &pos));
+  MOCK_METHOD(void, OnMouseLeftDown, (const Point &pos));
+  MOCK_METHOD(void, OnMouseLeftUp, (const Point &pos));
+  MOCK_METHOD(void, OnMouseRightDown, (const Point &pos));
+  MOCK_METHOD(void, OnMouseRightUp, (const Point &pos));
 };
 
 TEST_F(GtkWindowBaseTest, LeftRightTest) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ class KeyboardStatus {
   const BYTE *status() const;
   BYTE *mutable_status();
   size_t status_size() const;
+
  private:
   BYTE status_[256];
 };
@@ -70,6 +71,7 @@ class LParamKeyInfo {
   // to ImeProcessKey callback.
   bool IsKeyDownInImeProcessKey() const;
   LPARAM lparam() const;
+
  private:
   LPARAM lparam_;
 };
@@ -123,13 +125,10 @@ class Win32KeyboardInterface {
   virtual bool AsyncIsKeyPressed(int virtual_key) = 0;
 
   // Injection point for ToUnicode API.
-  virtual int ToUnicode(
-    __in UINT wVirtKey,
-    __in UINT wScanCode,
-    __in_bcount_opt(256) CONST BYTE *lpKeyState,
-    __out_ecount(cchBuff) LPWSTR pwszBuff,
-    __in int cchBuff,
-    __in UINT wFlags) = 0;
+  virtual int ToUnicode(__in UINT wVirtKey, __in UINT wScanCode,
+                        __in_bcount_opt(256) CONST BYTE *lpKeyState,
+                        __out_ecount(cchBuff) LPWSTR pwszBuff, __in int cchBuff,
+                        __in UINT wFlags) = 0;
 
   // Injection point for SendInput API.
   virtual UINT SendInput(const std::vector<INPUT> &inputs) = 0;
@@ -141,23 +140,21 @@ class JapaneseKeyboardLayoutEmulator {
  public:
   // This methods emulates ToUnicode API as if the current keyboard layout was
   // Japanese keyboard.  Currently this emulation ignores |scan_code|.
-  static int ToUnicode(
-    __in UINT virtual_key,
-    __in UINT scan_code,
-    __in_bcount_opt(256) CONST BYTE *key_state,
-    __out_ecount(character_buffer_size) LPWSTR character_buffer,
-    __in int character_buffer_size,
-    __in UINT flags);
+  static int ToUnicode(__in UINT virtual_key, __in UINT scan_code,
+                       __in_bcount_opt(256) CONST BYTE *key_state,
+                       __out_ecount(character_buffer_size)
+                           LPWSTR character_buffer,
+                       __in int character_buffer_size, __in UINT flags);
 
   // Returns generated character for Japanese keyboard layout based on the
   // given keyboard state.  Returns '\0' if no character is generated.
   // Note that built-in Japanese keyboard layout generates at most 1 character
   // for any key combination, and there is no key to generate '\0', as far as
   // we have observed with the built-in layout on Windows Vista.
-  static wchar_t GetCharacterForKeyDown(
-    BYTE virtual_key,
-    const BYTE keyboard_state[256],
-    bool is_menu_active);
+  static wchar_t GetCharacterForKeyDown(BYTE virtual_key,
+                                        const BYTE keyboard_state[256],
+                                        bool is_menu_active);
+
  private:
   DISALLOW_COPY_AND_ASSIGN(JapaneseKeyboardLayoutEmulator);
 };

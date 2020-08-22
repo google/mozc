@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,10 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
-
 DEFINE_bool(test_deterministic, true,
-             "if true, srand() is initialized by \"test_srand_seed\"."
-             "if false, srand() is initialized by current time "
-             "and \"test_srand_seed\" is ignored");
+            "if true, srand() is initialized by \"test_srand_seed\"."
+            "if false, srand() is initialized by current time "
+            "and \"test_srand_seed\" is ignored");
 
 DEFINE_int32(test_srand_seed, 0,
              "seed number for srand(). "
@@ -80,14 +78,14 @@ class SessionConverterStressTest : public ::testing::Test {
 };
 
 namespace {
-void GenerateRandomInput(
-    size_t length, char min_code, char max_code, string* output) {
+void GenerateRandomInput(size_t length, char min_code, char max_code,
+                         std::string* output) {
   output->reserve(length);
   char tmp[2];
   tmp[1] = '\0';
   for (int i = 0; i < length; ++i) {
-    tmp[0] = static_cast<unsigned char>(
-        min_code + Util::Random(max_code - min_code + 1));
+    tmp[0] = static_cast<unsigned char>(min_code +
+                                        Util::Random(max_code - min_code + 1));
     output->append(tmp);
   }
 }
@@ -104,7 +102,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
       {'a', 'z'},  // Alphabets
   };
 
-  const string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
+  const std::string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
   const commands::Request request;
   config::Config config;
 
@@ -115,7 +113,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   table.LoadFromFile(kRomajiHiraganaTable.c_str());
   composer::Composer composer(&table, &request, &config);
   commands::Output output;
-  string input;
+  std::string input;
 
   for (int test = 0; test < kTestCaseSize; ++test) {
     const int kLoopLimit = 100;
@@ -127,18 +125,17 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
 
       // Limited by kMaxCharLength in immutable_converter.cc
       const int kInputStringLength = 32;
-      GenerateRandomInput(
-          kInputStringLength, kTestCases[test].min, kTestCases[test].max,
-          &input);
+      GenerateRandomInput(kInputStringLength, kTestCases[test].min,
+                          kTestCases[test].max, &input);
 
       composer.InsertCharacterPreedit(input);
       sconverter.ConvertToTransliteration(composer,
                                           transliteration::HALF_ASCII);
       sconverter.FillOutput(composer, &output);
 
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(input, conversion.segment(0).value()) <<
-          input << "\t" << conversion.segment(0).value();
+      const commands::Preedit& conversion = output.preedit();
+      EXPECT_EQ(input, conversion.segment(0).value())
+          << input << "\t" << conversion.segment(0).value();
     }
   }
 }

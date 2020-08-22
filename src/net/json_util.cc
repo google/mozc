@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,11 +38,11 @@
 #include "base/protobuf/descriptor.h"
 #include "net/jsoncpp.h"
 
-using mozc::protobuf::Message;
 using mozc::protobuf::Descriptor;
 using mozc::protobuf::EnumValueDescriptor;
-using mozc::protobuf::Reflection;
 using mozc::protobuf::FieldDescriptor;
+using mozc::protobuf::Message;
+using mozc::protobuf::Reflection;
 
 // <WinUser.h> defines GetMessage as a macro, which eventually
 // conflicts with mozc::protobuf::Reflection::GetMessage.
@@ -54,28 +54,28 @@ namespace mozc {
 namespace net {
 namespace {
 
-bool ProtobufRepeatedFieldValueToJsonValue(
-    const Message &message, const Reflection &reflection,
-    const FieldDescriptor &field, int index, Json::Value *value) {
+bool ProtobufRepeatedFieldValueToJsonValue(const Message &message,
+                                           const Reflection &reflection,
+                                           const FieldDescriptor &field,
+                                           int index, Json::Value *value) {
   switch (field.cpp_type()) {
     case FieldDescriptor::CPPTYPE_INT32: {
-      *value = Json::Value(
-                   reflection.GetRepeatedInt32(message, &field, index));
+      *value = Json::Value(reflection.GetRepeatedInt32(message, &field, index));
       return true;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
       *value = Json::Value(std::to_string(static_cast<int64>(
-                   reflection.GetRepeatedInt64(message, &field, index))));
+          reflection.GetRepeatedInt64(message, &field, index))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT32: {
-      *value = Json::Value(
-                   reflection.GetRepeatedUInt32(message, &field, index));
+      *value =
+          Json::Value(reflection.GetRepeatedUInt32(message, &field, index));
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
       *value = Json::Value(std::to_string(static_cast<uint64>(
-                   reflection.GetRepeatedUInt64(message, &field, index))));
+          reflection.GetRepeatedUInt64(message, &field, index))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_FLOAT: {
@@ -83,8 +83,8 @@ bool ProtobufRepeatedFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_DOUBLE: {
-      *value = Json::Value(
-                   reflection.GetRepeatedDouble(message, &field, index));
+      *value =
+          Json::Value(reflection.GetRepeatedDouble(message, &field, index));
       return true;
     }
     case FieldDescriptor::CPPTYPE_BOOL: {
@@ -97,9 +97,9 @@ bool ProtobufRepeatedFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_STRING: {
-      string scratch;
-      const string &str = reflection.GetRepeatedStringReference(
-                message, &field, index, &scratch);
+      std::string scratch;
+      const std::string &str = reflection.GetRepeatedStringReference(
+          message, &field, index, &scratch);
       *value = Json::Value(str);
       return true;
     }
@@ -115,17 +115,18 @@ bool ProtobufRepeatedFieldValueToJsonValue(
   return false;
 }
 
-bool ProtobufFieldValueToJsonValue(
-    const Message &message, const Reflection &reflection,
-    const FieldDescriptor &field, Json::Value *value) {
+bool ProtobufFieldValueToJsonValue(const Message &message,
+                                   const Reflection &reflection,
+                                   const FieldDescriptor &field,
+                                   Json::Value *value) {
   switch (field.cpp_type()) {
     case FieldDescriptor::CPPTYPE_INT32: {
       *value = Json::Value(reflection.GetInt32(message, &field));
       return true;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
-      *value = Json::Value(std::to_string(static_cast<int64>(
-                   reflection.GetInt64(message, &field))));
+      *value = Json::Value(std::to_string(
+          static_cast<int64>(reflection.GetInt64(message, &field))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT32: {
@@ -133,8 +134,8 @@ bool ProtobufFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
-      *value = Json::Value(std::to_string(static_cast<uint64>(
-                   reflection.GetUInt64(message, &field))));
+      *value = Json::Value(std::to_string(
+          static_cast<uint64>(reflection.GetUInt64(message, &field))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_FLOAT: {
@@ -154,8 +155,8 @@ bool ProtobufFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_STRING: {
-      string scratch;
-      const string &str =
+      std::string scratch;
+      const std::string &str =
           reflection.GetStringReference(message, &field, &scratch);
       *value = Json::Value(str);
       return true;
@@ -172,9 +173,10 @@ bool ProtobufFieldValueToJsonValue(
   return false;
 }
 
-bool JsonValueToProtobufFieldValue(
-    const Json::Value &value, const FieldDescriptor *field,
-    const Reflection *reflection, Message *message) {
+bool JsonValueToProtobufFieldValue(const Json::Value &value,
+                                   const FieldDescriptor *field,
+                                   const Reflection *reflection,
+                                   Message *message) {
   DCHECK(!field->is_repeated());
   switch (field->cpp_type()) {
     case FieldDescriptor::CPPTYPE_INT32: {
@@ -261,8 +263,7 @@ bool JsonValueToProtobufFieldValue(
       const EnumValueDescriptor *enum_value =
           field->enum_type()->FindValueByName(value.asString());
       if (!enum_value) {
-        DLOG(ERROR) << "value is not enum: "
-                    << Json::FastWriter().write(value);
+        DLOG(ERROR) << "value is not enum: " << Json::FastWriter().write(value);
         return false;
       }
       reflection->SetEnum(message, field, enum_value);
@@ -295,9 +296,10 @@ bool JsonValueToProtobufFieldValue(
   return true;
 }
 
-bool JsonValueToProtobufRepeatedFieldValue(
-    const Json::Value &value, const FieldDescriptor *field,
-    const Reflection *reflection, Message *message) {
+bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
+                                           const FieldDescriptor *field,
+                                           const Reflection *reflection,
+                                           Message *message) {
   DCHECK(field->is_repeated());
   DCHECK(value.isArray());
   bool result = true;
@@ -437,7 +439,7 @@ bool JsonValueToProtobufRepeatedFieldValue(
           result = false;
         } else {
           if (!JsonUtil::JsonValueToProtobufMessage(
-                   value[i], reflection->AddMessage(message, field, NULL))) {
+                  value[i], reflection->AddMessage(message, field, NULL))) {
             result = false;
           }
         }
@@ -454,8 +456,8 @@ bool JsonValueToProtobufRepeatedFieldValue(
 
 }  // namespace
 
-bool JsonUtil::ProtobufMessageToJsonValue(
-    const Message &message, Json::Value *value) {
+bool JsonUtil::ProtobufMessageToJsonValue(const Message &message,
+                                          Json::Value *value) {
   *value = Json::Value(Json::objectValue);
   const Descriptor *descriptor = message.GetDescriptor();
   const Reflection *reflection = message.GetReflection();
@@ -472,19 +474,14 @@ bool JsonUtil::ProtobufMessageToJsonValue(
       *items = Json::Value(Json::arrayValue);
       const int count = reflection->FieldSize(message, field);
       for (int j = 0; j < count; ++j) {
-        if (!ProtobufRepeatedFieldValueToJsonValue(message,
-                                                   *reflection,
-                                                   *field,
-                                                   j,
-                                                   &(*items)[j])) {
+        if (!ProtobufRepeatedFieldValueToJsonValue(message, *reflection, *field,
+                                                   j, &(*items)[j])) {
           result = false;
         }
       }
     } else {
       if (reflection->HasField(message, field) || field->is_required()) {
-        if (!ProtobufFieldValueToJsonValue(message,
-                                           *reflection,
-                                           *field,
+        if (!ProtobufFieldValueToJsonValue(message, *reflection, *field,
                                            &(*value)[field->name()])) {
           result = false;
         }
@@ -494,8 +491,8 @@ bool JsonUtil::ProtobufMessageToJsonValue(
   return result;
 }
 
-bool JsonUtil::JsonValueToProtobufMessage(
-    const Json::Value &value, Message *message) {
+bool JsonUtil::JsonValueToProtobufMessage(const Json::Value &value,
+                                          Message *message) {
   const Descriptor *descriptor = message->GetDescriptor();
   const Reflection *reflection = message->GetReflection();
   const Json::Value::Members &members = value.getMemberNames();
@@ -524,8 +521,8 @@ bool JsonUtil::JsonValueToProtobufMessage(
     } else {
       if (!JsonValueToProtobufFieldValue(value[members[i]], field, reflection,
                                          message)) {
-        DLOG(ERROR) << "JsonValueToProtobufFieldValue error: \""
-                    << members[i] << "\"";
+        DLOG(ERROR) << "JsonValueToProtobufFieldValue error: \"" << members[i]
+                    << "\"";
         result = false;
       }
     }

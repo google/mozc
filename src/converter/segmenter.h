@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,10 +43,9 @@ class Segmenter {
       const DataManagerInterface &data_manager);
 
   // This class does not take the ownership of pointer parameters.
-  Segmenter(size_t l_num_elements, size_t r_num_elements,
-            const uint16 *l_table, const uint16 *r_table,
-            size_t bitarray_num_bytes, const char *bitarray_data,
-            const uint16 *boundary_data);
+  Segmenter(size_t l_num_elements, size_t r_num_elements, const uint16 *l_table,
+            const uint16 *r_table, size_t bitarray_num_bytes,
+            const char *bitarray_data, const uint16 *boundary_data);
   ~Segmenter();
 
   bool IsBoundary(const Node &lnode, const Node &rnode,

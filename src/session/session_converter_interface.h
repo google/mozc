@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ namespace commands {
 class Context;
 class Output;
 class Request;
-}
+}  // namespace commands
 
 namespace composer {
 class Composer;
@@ -101,8 +101,11 @@ class SessionConverterInterface {
   virtual const ConversionPreferences &conversion_preferences() const = 0;
 
   // Gets the selected candidate. If no candidate is selected, returns NULL.
-  virtual const Segment::Candidate *
-  GetSelectedCandidateOfFocusedSegment() const = 0;
+  virtual const Segment::Candidate *GetSelectedCandidateOfFocusedSegment()
+      const = 0;
+
+  // Gets the candidate specified by id. If id is invalid, nullptr is returned.
+  virtual const Segment::Candidate *GetCandidateById(int id) const = 0;
 
   // Send a conversion request to the converter.
   virtual bool Convert(const composer::Composer &composer) = 0;
@@ -111,7 +114,7 @@ class SessionConverterInterface {
       const ConversionPreferences &preferences) = 0;
 
   // Get reading text (e.g. from "猫" to "ねこ").
-  virtual bool GetReadingText(const string &str, string *reading) = 0;
+  virtual bool GetReadingText(const std::string &str, std::string *reading) = 0;
 
   // Send a transliteration request to the converter.
   virtual bool ConvertToTransliteration(
@@ -158,19 +161,16 @@ class SessionConverterInterface {
 
   // Fix the suggestion candidate.  True is returned if the selected
   // candidate is successfully committed.
-  virtual bool CommitSuggestionByIndex(
-      size_t index,
-      const composer::Composer &composer,
-      const commands::Context &context,
-      size_t *committed_key_size) = 0;
+  virtual bool CommitSuggestionByIndex(size_t index,
+                                       const composer::Composer &composer,
+                                       const commands::Context &context,
+                                       size_t *committed_key_size) = 0;
 
   // Select a candidate and commit the selected candidate.  True is
   // returned if the selected candidate is successfully committed.
-  virtual bool CommitSuggestionById(
-      int id,
-      const composer::Composer &composer,
-      const commands::Context &context,
-      size_t *committed_key_size) = 0;
+  virtual bool CommitSuggestionById(int id, const composer::Composer &composer,
+                                    const commands::Context &context,
+                                    size_t *committed_key_size) = 0;
 
   // Fix only the conversion of the first segment, and keep the rest.
   // The caller should delete characters from composer based on returned
@@ -182,10 +182,9 @@ class SessionConverterInterface {
   // Fix only the [0, focused] conversion segments, and keep the rest.
   // The caller should delete characters from composer based on returned
   // |committed_key_size|.
-  virtual void CommitHeadToFocusedSegments(
-      const composer::Composer &composer,
-      const commands::Context &context,
-      size_t *committed_key_size) = 0;
+  virtual void CommitHeadToFocusedSegments(const composer::Composer &composer,
+                                           const commands::Context &context,
+                                           size_t *committed_key_size) = 0;
 
   // Commit the preedit string represented by Composer.
   virtual void CommitPreedit(const composer::Composer &composer,
@@ -194,8 +193,7 @@ class SessionConverterInterface {
   // Commit prefix of the preedit string represented by Composer.
   // The caller should delete characters from composer based on returned
   // |commited_size|.
-  virtual void CommitHead(size_t count,
-                          const composer::Composer &composer,
+  virtual void CommitHead(size_t count, const composer::Composer &composer,
                           size_t *commited_size) = 0;
 
   // Revert the last "Commit" operation
@@ -217,8 +215,8 @@ class SessionConverterInterface {
   virtual void CandidatePrev() = 0;
   virtual void CandidatePrevPage() = 0;
   // Move the focus to the candidate represented by the id.
-  virtual void CandidateMoveToId(
-      int id, const composer::Composer &composer) = 0;
+  virtual void CandidateMoveToId(int id,
+                                 const composer::Composer &composer) = 0;
   // Move the focus to the index from the beginning of the current page.
   virtual void CandidateMoveToPageIndex(size_t index) = 0;
   // Move the focus to the candidate represented by the shortcut.  If
@@ -229,13 +227,12 @@ class SessionConverterInterface {
   virtual void SetCandidateListVisible(bool visible) = 0;
 
   // Fill protocol buffers and update internal status.
-  virtual void PopOutput(
-      const composer::Composer &composer, commands::Output *output) = 0;
+  virtual void PopOutput(const composer::Composer &composer,
+                         commands::Output *output) = 0;
 
   // Fill protocol buffers
-  virtual void FillOutput(
-      const composer::Composer &composer,
-      commands::Output *output) const = 0;
+  virtual void FillOutput(const composer::Composer &composer,
+                          commands::Output *output) const = 0;
 
   // Set setting by the request.
   // Currently this is especially for SessionConverter.

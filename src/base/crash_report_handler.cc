@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 
 #if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
-#include <Windows.h>
 #include <ShellAPI.h>  // for CommandLineToArgvW
+#include <Windows.h>
 
 #include <cstdlib>
 #include <string>
@@ -53,7 +53,7 @@ const wchar_t kGoogleCrashHandlerPipePrefix[] =
     L"\\\\.\\pipe\\GoogleCrashServices\\";
 
 // This is the well known SID for the system principal.
-const wchar_t kSystemPrincipalSid[] =L"S-1-5-18";
+const wchar_t kSystemPrincipalSid[] = L"S-1-5-18";
 
 // The postfix of the pipe name which GoogleCrashHandler.exe opens for clients
 // to register them.
@@ -62,10 +62,10 @@ const wchar_t kSystemPrincipalSid[] =L"S-1-5-18";
 #if defined(_M_X64)
 // x64 crash handler expects the postfix "-64".
 // See b/5166654 or http://crbug.com/89730 for the background info.
-const wchar_t kGoogleCrashHandlerPipePostfix[] =L"-x64";
+const wchar_t kGoogleCrashHandlerPipePostfix[] = L"-x64";
 #elif defined(_M_IX86)
 // No postfix for the x86 crash handler.
-const wchar_t kGoogleCrashHandlerPipePostfix[] =L"";
+const wchar_t kGoogleCrashHandlerPipePostfix[] = L"";
 #else
 #error "unsupported platform"
 #endif
@@ -84,7 +84,7 @@ google_breakpad::ExceptionHandler *g_handler = NULL;
 
 // Returns the name of the build mode.
 std::wstring GetBuildMode() {
-#if defined(NO_LOGGING)
+#if defined(MOZC_NO_LOGGING)
   return L"rel";
 #elif defined(DEBUG)
   return L"dbg";
@@ -101,15 +101,15 @@ std::wstring GetBuildMode() {
 std::wstring TrimToBreakpadMax(const std::wstring &str) {
   std::wstring shorter(str);
   return shorter.substr(0,
-      google_breakpad::CustomInfoEntry::kValueMaxLength - 1);
+                        google_breakpad::CustomInfoEntry::kValueMaxLength - 1);
 }
 
 // Returns the custom info structure based on the dll in parameter and the
 // process type.
-google_breakpad::CustomClientInfo* GetCustomInfo() {
+google_breakpad::CustomClientInfo *GetCustomInfo() {
   // Common entries.
-  google_breakpad::CustomInfoEntry ver_entry(L"ver",
-      mozc::Version::GetMozcVersionW().c_str());
+  google_breakpad::CustomInfoEntry ver_entry(
+      L"ver", mozc::Version::GetMozcVersionW().c_str());
   google_breakpad::CustomInfoEntry prod_entry(L"prod", kProductNameInCrash);
   google_breakpad::CustomInfoEntry buildmode_entry(L"Build Mode",
                                                    GetBuildMode().c_str());
@@ -119,7 +119,7 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
   google_breakpad::CustomInfoEntry switch2(L"switch-2", L"");
   {
     int num_args = 0;
-    wchar_t** args = ::CommandLineToArgvW(::GetCommandLineW(), &num_args);
+    wchar_t **args = ::CommandLineToArgvW(::GetCommandLineW(), &num_args);
     if (args != NULL) {
       if (num_args > 1) {
         switch1.set_value(TrimToBreakpadMax(args[1]).c_str());
@@ -132,10 +132,10 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
     }
   }
 
-  static google_breakpad::CustomInfoEntry entries[] =
-      {ver_entry, prod_entry, buildmode_entry, switch1, switch2};
-  static google_breakpad::CustomClientInfo custom_info =
-      {entries, arraysize(entries)};
+  static google_breakpad::CustomInfoEntry entries[] = {
+      ver_entry, prod_entry, buildmode_entry, switch1, switch2};
+  static google_breakpad::CustomClientInfo custom_info = {entries,
+                                                          arraysize(entries)};
 
   return &custom_info;
 }
@@ -152,10 +152,10 @@ std::wstring GetCrashHandlerPipeName() {
 class ScopedCriticalSection {
  public:
   explicit ScopedCriticalSection(CRITICAL_SECTION *critical_section)
-    : critical_section_(critical_section) {
-      if (critical_section_ != NULL) {
-        EnterCriticalSection(critical_section_);
-      }
+      : critical_section_(critical_section) {
+    if (critical_section_ != NULL) {
+      EnterCriticalSection(critical_section_);
+    }
   }
   ~ScopedCriticalSection() {
     if (critical_section_ != NULL) {
@@ -213,17 +213,11 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
 #error "unsupported platform"
 #endif
 
-  while (StackWalk64(IMAGE_FILE_MACHINE_I386,
-                     GetCurrentProcess(),
-                     GetCurrentThread(),
-                     &stack,
-                     context,
-                     0,
-                     SymFunctionTableAccess64,
-                     SymGetModuleBase64,
-                     0)) {
+  while (StackWalk64(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(),
+                     GetCurrentThread(), &stack, context, 0,
+                     SymFunctionTableAccess64, SymGetModuleBase64, 0)) {
     if (IsAddressInCurrentModule(
-        reinterpret_cast<void*>(stack.AddrPC.Offset))) {
+            reinterpret_cast<void *>(stack.AddrPC.Offset))) {
       return true;
     }
   }
@@ -234,7 +228,7 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
                    MDRawAssertionInfo *assertion) {
   if (exinfo == NULL) {
     // We do not catch CRT error in release build.
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
     return false;
 #else
     return true;
@@ -254,7 +248,6 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
 }
 
 }  // namespace
-
 
 namespace mozc {
 
@@ -277,14 +270,11 @@ bool CrashReportHandler::Initialize(bool check_address) {
     const auto kCrashDumpType = static_cast<MINIDUMP_TYPE>(
         MiniDumpWithUnloadedModules | MiniDumpWithProcessThreadData);
     g_handler = new google_breakpad::ExceptionHandler(
-        crashdump_directory.c_str(),
-        filter_callback,
+        crashdump_directory.c_str(), filter_callback,
         NULL,  // MinidumpCallback
         NULL,  // callback_context
-        google_breakpad::ExceptionHandler::HANDLER_ALL,
-        kCrashDumpType,
-        GetCrashHandlerPipeName().c_str(),
-        GetCustomInfo());
+        google_breakpad::ExceptionHandler::HANDLER_ALL, kCrashDumpType,
+        GetCrashHandlerPipeName().c_str(), GetCustomInfo());
 
 #ifdef DEBUG
     g_handler->set_handle_debug_exceptions(true);
@@ -324,22 +314,15 @@ namespace mozc {
 
 // Null implementation for platforms where we do not want to enable breakpad.
 
-bool CrashReportHandler::Initialize(bool check_address) {
-  return false;
-}
+bool CrashReportHandler::Initialize(bool check_address) { return false; }
 
-bool CrashReportHandler::IsInitialized() {
-  return false;
-}
+bool CrashReportHandler::IsInitialized() { return false; }
 
-bool CrashReportHandler::Uninitialize() {
-  return false;
-}
+bool CrashReportHandler::Uninitialize() { return false; }
 
 #ifdef OS_WIN
 void CrashReportHandler::SetCriticalSection(
-    CRITICAL_SECTION *critical_section) {
-}
+    CRITICAL_SECTION *critical_section) {}
 #endif  // OS_WIN
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -85,7 +85,7 @@ template <typename T>
 once_t Singleton<T>::once_ = MOZC_ONCE_INIT;
 
 template <typename T>
-T* Singleton<T>::instance_ = NULL;
+T *Singleton<T>::instance_ = NULL;
 }  // namespace mozc
 
 #endif  // MOZC_BASE_SINGLETON_H_

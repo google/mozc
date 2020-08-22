@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,10 +54,8 @@
         'usage_stats_test.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:stats_config_util',
         '../testing/testing.gyp:gtest_main',
         'usage_stats_base.gyp:usage_stats',
-        'usage_stats_base.gyp:usage_stats_protocol',
       ],
       'variables': {
         'test_size': 'small',
@@ -67,17 +65,11 @@
       'target_name': 'usage_stats_uploader_test',
       'type': 'executable',
       'sources': [
-        'upload_util_test.cc',
         'usage_stats_uploader_test.cc',
-        'usage_stats_updater_test.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:config_handler',
-        '../net/net.gyp:http_client_mock',
-        '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:gtest_main',
-        'usage_stats.gyp:usage_stats_uploader',
-        'usage_stats_base.gyp:usage_stats_protocol',
+        'usage_stats_base.gyp:usage_stats_uploader',
         'usage_stats_testing_util',
       ],
       'variables': {

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #ifndef MOZC_RENDERER_UNIX_FONT_SPEC_H_
 #define MOZC_RENDERER_UNIX_FONT_SPEC_H_
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "base/port.h"
 #include "renderer/unix/font_spec_interface.h"

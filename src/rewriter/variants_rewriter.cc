@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,44 +34,22 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/string_piece.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-
-using mozc::config::CharacterFormManager;
-using mozc::dictionary::POSMatcher;
+#include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
 
-#ifndef OS_ANDROID
-const char *VariantsRewriter::kHiragana = "ひらがな";
-const char *VariantsRewriter::kKatakana = "カタカナ";
-const char *VariantsRewriter::kNumber = "数字";
-const char *VariantsRewriter::kAlphabet = "アルファベット";
-const char *VariantsRewriter::kKanji = "漢字";
-const char *VariantsRewriter::kFullWidth = "[全]";
-const char *VariantsRewriter::kHalfWidth = "[半]";
-const char *VariantsRewriter::kPlatformDependent = "<機種依存文字>";
-const char *VariantsRewriter::kDidYouMean = "<もしかして>";
-const char *VariantsRewriter::kYenKigou = "円記号";
-#else   // OS_ANDROID
-const char *VariantsRewriter::kHiragana = "";
-const char *VariantsRewriter::kKatakana = "";
-const char *VariantsRewriter::kNumber = "";
-const char *VariantsRewriter::kAlphabet = "";
-const char *VariantsRewriter::kKanji = "";
-const char *VariantsRewriter::kFullWidth = "[全]";
-const char *VariantsRewriter::kHalfWidth = "[半]";
-const char *VariantsRewriter::kPlatformDependent = "<機種依存>";
-const char *VariantsRewriter::kDidYouMean = "<もしかして>";
-const char *VariantsRewriter::kYenKigou = "円記号";
-#endif  // OS_ANDROID
+using ::mozc::config::CharacterFormManager;
+using ::mozc::dictionary::POSMatcher;
 
 // Append |src| to |dst| with a separator ' '.
-void AppendString(StringPiece src, string *dst) {
+void AppendString(absl::string_view src, std::string *dst) {
   DCHECK(dst);
   if (!src.empty()) {
     if (!dst->empty()) {
@@ -88,7 +66,7 @@ void AppendString(StringPiece src, string *dst) {
 // "&-()" => true (all symbol and all half)
 // "&-（）" => false (all symbol but contains both full/half width)
 // "google" => false (not symbol)
-bool HasCharacterFormDescription(const string &value) {
+bool HasCharacterFormDescription(const std::string &value) {
   if (value.empty()) {
     return false;
   }
@@ -108,45 +86,62 @@ bool HasCharacterFormDescription(const string &value) {
   return true;
 }
 
+}  // namespace
+
+#ifdef OS_ANDROID
+const char *VariantsRewriter::kHiragana = "";
+const char *VariantsRewriter::kKatakana = "";
+const char *VariantsRewriter::kNumber = "";
+const char *VariantsRewriter::kAlphabet = "";
+const char *VariantsRewriter::kKanji = "";
+const char *VariantsRewriter::kFullWidth = "[全]";
+const char *VariantsRewriter::kHalfWidth = "[半]";
+const char *VariantsRewriter::kPlatformDependent = "<機種依存>";
+const char *VariantsRewriter::kDidYouMean = "<もしかして>";
+const char *VariantsRewriter::kYenKigou = "円記号";
+#else   // OS_ANDROID
+const char *VariantsRewriter::kHiragana = "ひらがな";
+const char *VariantsRewriter::kKatakana = "カタカナ";
+const char *VariantsRewriter::kNumber = "数字";
+const char *VariantsRewriter::kAlphabet = "アルファベット";
+const char *VariantsRewriter::kKanji = "漢字";
+const char *VariantsRewriter::kFullWidth = "[全]";
+const char *VariantsRewriter::kHalfWidth = "[半]";
+const char *VariantsRewriter::kPlatformDependent = "<機種依存文字>";
+const char *VariantsRewriter::kDidYouMean = "<もしかして>";
+const char *VariantsRewriter::kYenKigou = "円記号";
+#endif  // OS_ANDROID
+
 VariantsRewriter::VariantsRewriter(const POSMatcher pos_matcher)
     : pos_matcher_(pos_matcher) {}
 
-VariantsRewriter::~VariantsRewriter() {}
+VariantsRewriter::~VariantsRewriter() = default;
 
 // static
 void VariantsRewriter::SetDescriptionForCandidate(
-    const POSMatcher &pos_matcher,
-    Segment::Candidate *candidate) {
+    const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
-                 FULL_HALF_WIDTH |
-                 CHARACTER_FORM |
-                 PLATFORM_DEPENDENT_CHARACTER |
-                 ZIPCODE |
-                 SPELLING_CORRECTION,
+                 FULL_HALF_WIDTH | CHARACTER_FORM |
+                     PLATFORM_DEPENDENT_CHARACTER | ZIPCODE |
+                     SPELLING_CORRECTION,
                  candidate);
 }
 
 // static
 void VariantsRewriter::SetDescriptionForTransliteration(
-    const POSMatcher &pos_matcher,
-    Segment::Candidate *candidate) {
+    const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
-                 FULL_HALF_WIDTH |
-                 FULL_HALF_WIDTH_WITH_UNKNOWN |
-                 CHARACTER_FORM |
-                 PLATFORM_DEPENDENT_CHARACTER |
-                 SPELLING_CORRECTION,
+                 FULL_HALF_WIDTH | FULL_HALF_WIDTH_WITH_UNKNOWN |
+                     CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER |
+                     SPELLING_CORRECTION,
                  candidate);
 }
 
 // static
 void VariantsRewriter::SetDescriptionForPrediction(
-    const POSMatcher &pos_matcher,
-    Segment::Candidate *candidate) {
+    const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
-                 PLATFORM_DEPENDENT_CHARACTER |
-                 ZIPCODE |
-                 SPELLING_CORRECTION,
+                 PLATFORM_DEPENDENT_CHARACTER | ZIPCODE | SPELLING_CORRECTION,
                  candidate);
 }
 
@@ -154,7 +149,7 @@ void VariantsRewriter::SetDescriptionForPrediction(
 void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
                                       int description_type,
                                       Segment::Candidate *candidate) {
-  StringPiece character_form_message;
+  absl::string_view character_form_message;
 
   // Add Character form.
   if (description_type & CHARACTER_FORM) {
@@ -162,22 +157,22 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
         Util::GetScriptTypeWithoutSymbols(candidate->value);
     switch (type) {
       case Util::HIRAGANA:
-        character_form_message = StringPiece(kHiragana);
+        character_form_message = absl::string_view(kHiragana);
         // don't need to set full/half, because hiragana only has
         // full form
         description_type &= ~FULL_HALF_WIDTH;
         break;
       case Util::KATAKANA:
         // character_form_message = "カタカナ";
-        character_form_message = StringPiece(kKatakana);
+        character_form_message = absl::string_view(kKatakana);
         break;
       case Util::NUMBER:
         // character_form_message = "数字";
-        character_form_message = StringPiece(kNumber);
+        character_form_message = absl::string_view(kNumber);
         break;
       case Util::ALPHABET:
         // character_form_message = "アルファベット";
-        character_form_message = StringPiece(kAlphabet);
+        character_form_message = absl::string_view(kAlphabet);
         break;
       case Util::KANJI:
       case Util::EMOJI:
@@ -185,7 +180,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
         // since it's obvious
         description_type &= ~FULL_HALF_WIDTH;
         break;
-      case Util::UNKNOWN_SCRIPT:   // mixed character
+      case Util::UNKNOWN_SCRIPT:  // mixed character
         if ((description_type & FULL_HALF_WIDTH_WITH_UNKNOWN) ||
             HasCharacterFormDescription(candidate->value)) {
           description_type |= FULL_HALF_WIDTH;
@@ -203,10 +198,10 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   // Currently, character_form_message is treated as a "default"
   // description.
   if (!candidate->description.empty()) {
-    character_form_message = StringPiece();
+    character_form_message = absl::string_view();
   }
 
-  string description;
+  std::string description;
   // full/half char description
   if (description_type & FULL_HALF_WIDTH) {
     const Util::FormType form = Util::GetFormType(candidate->value);
@@ -258,8 +253,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   // The follwoing description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Zipcode description
-  if ((description_type & ZIPCODE) &&
-      pos_matcher.IsZipcode(candidate->lid) &&
+  if ((description_type & ZIPCODE) && pos_matcher.IsZipcode(candidate->lid) &&
       candidate->lid == candidate->rid) {
     description = candidate->content_key;
     // Append default description because it may contain extra description.
@@ -303,8 +297,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   }
 
   // Regular Candidate
-  string default_value, alternative_value;
-  string default_content_value, alternative_content_value;
+  std::string default_value, alternative_value;
+  std::string default_content_value, alternative_content_value;
   std::vector<uint32> default_inner_segment_boundary;
   std::vector<uint32> alternative_inner_segment_boundary;
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
@@ -323,10 +317,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
-    if (!GenerateAlternatives(*original_candidate,
-                              &default_value,
-                              &alternative_value,
-                              &default_content_value,
+    if (!GenerateAlternatives(*original_candidate, &default_value,
+                              &alternative_value, &default_content_value,
                               &alternative_content_value,
                               &default_inner_segment_boundary,
                               &alternative_inner_segment_boundary)) {
@@ -334,23 +326,21 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
-    CharacterFormManager::FormType default_form
-        = CharacterFormManager::UNKNOWN_FORM;
-    CharacterFormManager::FormType alternative_form
-        = CharacterFormManager::UNKNOWN_FORM;
+    CharacterFormManager::FormType default_form =
+        CharacterFormManager::UNKNOWN_FORM;
+    CharacterFormManager::FormType alternative_form =
+        CharacterFormManager::UNKNOWN_FORM;
 
     int default_description_type =
-        (CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER |
-         ZIPCODE | SPELLING_CORRECTION);
+        (CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER | ZIPCODE |
+         SPELLING_CORRECTION);
 
     int alternative_description_type =
-        (CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER |
-         ZIPCODE | SPELLING_CORRECTION);
+        (CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER | ZIPCODE |
+         SPELLING_CORRECTION);
 
     if (CharacterFormManager::GetFormTypesFromStringPair(
-            default_value,
-            &default_form,
-            alternative_value,
+            default_value, &default_form, alternative_value,
             &alternative_form)) {
       if (default_form == CharacterFormManager::HALF_WIDTH) {
         default_description_type |= HALF_WIDTH;
@@ -363,7 +353,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
         alternative_description_type |= FULL_WIDTH;
       }
     } else {
-      default_description_type     |= FULL_HALF_WIDTH;
+      default_description_type |= FULL_HALF_WIDTH;
       alternative_description_type |= FULL_HALF_WIDTH;
     }
 
@@ -378,17 +368,23 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       new_candidate->value = default_value;
       new_candidate->content_key = original_candidate->content_key;
       new_candidate->content_value = default_content_value;
+      new_candidate->consumed_key_size = original_candidate->consumed_key_size;
       new_candidate->cost = original_candidate->cost;
       new_candidate->structure_cost = original_candidate->structure_cost;
       new_candidate->lid = original_candidate->lid;
       new_candidate->rid = original_candidate->rid;
       new_candidate->description = original_candidate->description;
+      new_candidate->inner_segment_boundary.swap(
+          default_inner_segment_boundary);
+      new_candidate->attributes = original_candidate->attributes;
       SetDescription(pos_matcher_, default_description_type, new_candidate);
 
       original_candidate->value = alternative_value;
       original_candidate->content_value = alternative_content_value;
-      SetDescription(pos_matcher_,
-                     alternative_description_type, original_candidate);
+      original_candidate->inner_segment_boundary.swap(
+          alternative_inner_segment_boundary);
+      SetDescription(pos_matcher_, alternative_description_type,
+                     original_candidate);
       ++i;  // skip inserted candidate
     } else if (type == SELECT_VARIANT) {
       // Rewrite original to default
@@ -396,8 +392,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       original_candidate->content_value = default_content_value;
       original_candidate->inner_segment_boundary.swap(
           default_inner_segment_boundary);
-      SetDescription(pos_matcher_,
-                     default_description_type, original_candidate);
+      SetDescription(pos_matcher_, default_description_type,
+                     original_candidate);
     }
     modified = true;
   }
@@ -407,11 +403,9 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 // Try generating default and alternative character forms.  Inner segment
 // boundary is taken into account.  When no rewrite happens, false is returned.
 bool VariantsRewriter::GenerateAlternatives(
-    const Segment::Candidate &original,
-    string *default_value,
-    string *alternative_value,
-    string *default_content_value,
-    string *alternative_content_value,
+    const Segment::Candidate &original, std::string *default_value,
+    std::string *alternative_value, std::string *default_content_value,
+    std::string *alternative_content_value,
     std::vector<uint32> *default_inner_segment_boundary,
     std::vector<uint32> *alternative_inner_segment_boundary) const {
   default_value->clear();
@@ -432,9 +426,8 @@ bool VariantsRewriter::GenerateAlternatives(
   const bool is_valid = original.IsValid();
   VLOG_IF(2, !is_valid) << "Invalid candidate: " << original.DebugString();
   if (original.inner_segment_boundary.empty() || !is_valid) {
-    if (!manager->ConvertConversionStringWithAlternative(original.value,
-                                                         default_value,
-                                                         alternative_value)) {
+    if (!manager->ConvertConversionStringWithAlternative(
+            original.value, default_value, alternative_value)) {
       return false;
     }
     if (original.value != original.content_value) {
@@ -452,10 +445,10 @@ bool VariantsRewriter::GenerateAlternatives(
   // least one inner segment is rewritten, the whole segment is considered
   // rewritten.
   bool at_least_one_modified = false;
-  string tmp, inner_default_value, inner_alternative_value;
-  string inner_default_content_value, inner_alternative_content_value;
-  for (Segment::Candidate::InnerSegmentIterator iter(&original);
-       !iter.Done(); iter.Next()) {
+  std::string tmp, inner_default_value, inner_alternative_value;
+  std::string inner_default_content_value, inner_alternative_content_value;
+  for (Segment::Candidate::InnerSegmentIterator iter(&original); !iter.Done();
+       iter.Next()) {
     tmp.assign(iter.GetValue().data(), iter.GetValue().size());
     inner_default_value.clear();
     inner_alternative_value.clear();
@@ -473,8 +466,7 @@ bool VariantsRewriter::GenerateAlternatives(
       inner_alternative_content_value.clear();
       tmp.assign(iter.GetContentValue().data(), iter.GetContentValue().size());
       manager->ConvertConversionStringWithAlternative(
-          tmp, &inner_default_content_value,
-          &inner_alternative_content_value);
+          tmp, &inner_default_content_value, &inner_alternative_content_value);
     } else {
       inner_default_content_value = inner_default_value;
       inner_alternative_content_value = inner_alternative_value;
@@ -483,16 +475,12 @@ bool VariantsRewriter::GenerateAlternatives(
     alternative_value->append(inner_alternative_value);
     default_content_value->append(inner_default_content_value);
     alternative_content_value->append(inner_alternative_content_value);
-    default_inner_segment_boundary->push_back(
-        Segment::Candidate::EncodeLengths(
-            iter.GetKey().size(),
-            inner_default_value.size(),
-            iter.GetContentKey().size(),
-            inner_default_content_value.size()));
+    default_inner_segment_boundary->push_back(Segment::Candidate::EncodeLengths(
+        iter.GetKey().size(), inner_default_value.size(),
+        iter.GetContentKey().size(), inner_default_content_value.size()));
     alternative_inner_segment_boundary->push_back(
         Segment::Candidate::EncodeLengths(
-            iter.GetKey().size(),
-            inner_alternative_value.size(),
+            iter.GetKey().size(), inner_alternative_value.size(),
             iter.GetContentKey().size(),
             inner_alternative_content_value.size()));
   }
@@ -501,7 +489,8 @@ bool VariantsRewriter::GenerateAlternatives(
 
 void VariantsRewriter::Finish(const ConversionRequest &request,
                               Segments *segments) {
-  if (segments->request_type() != Segments::CONVERSION) {
+  if (!request.request().mixed_conversion() &&
+      segments->request_type() != Segments::CONVERSION) {
     return;
   }
 
@@ -511,7 +500,7 @@ void VariantsRewriter::Finish(const ConversionRequest &request,
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
-        Segment::Candidate::NO_HISTORY_LEARNING) {
+            Segment::Candidate::NO_HISTORY_LEARNING) {
       continue;
     }
 
@@ -523,19 +512,36 @@ void VariantsRewriter::Finish(const ConversionRequest &request,
     switch (candidate.style) {
       case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
         // treat NUMBER_SEPARATED_ARABIC as half_width num
-        CharacterFormManager::GetCharacterFormManager()->
-            SetCharacterForm("0", config::Config::HALF_WIDTH);
-        break;
+        CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
+            "0", config::Config::HALF_WIDTH);
+        continue;
       case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
         // treat NUMBER_SEPARATED_WIDE_ARABIC as full_width num
-        CharacterFormManager::GetCharacterFormManager()->
-            SetCharacterForm("0", config::Config::FULL_WIDTH);
-        break;
+        CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
+            "0", config::Config::FULL_WIDTH);
+        continue;
       default:
-        CharacterFormManager::GetCharacterFormManager()->
-            GuessAndSetCharacterForm(candidate.value);
         break;
     }
+    // Special handling for number compounds like 3時.  Note:
+    // GuessAndSetCharacterForm() below this if-block cannot guess the
+    // character form for number compounds.  Since this module adds
+    // annotation in the description for character width, using it is
+    // more reliable than guessing from |candidate.value|.
+    if (Util::GetFirstScriptType(candidate.value) == Util::NUMBER) {
+      if (candidate.description.find(kHalfWidth) != std::string::npos) {
+        CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
+            "0", config::Config::HALF_WIDTH);
+        continue;
+      }
+      if (candidate.description.find(kFullWidth) != std::string::npos) {
+        CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
+            "0", config::Config::FULL_WIDTH);
+        continue;
+      }
+    }
+    CharacterFormManager::GetCharacterFormManager()->GuessAndSetCharacterForm(
+        candidate.value);
   }
 }
 
@@ -548,8 +554,14 @@ bool VariantsRewriter::Rewrite(const ConversionRequest &request,
   CHECK(segments);
   bool modified = false;
 
-  const RewriteType type = ((segments->request_type() == Segments::SUGGESTION) ?
-                            SELECT_VARIANT : EXPAND_VARIANT);
+  RewriteType type;
+  if (request.request().mixed_conversion()) {  // For mobile.
+    type = EXPAND_VARIANT;
+  } else if (segments->request_type() == Segments::SUGGESTION) {
+    type = SELECT_VARIANT;
+  } else {
+    type = EXPAND_VARIANT;
+  }
 
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {

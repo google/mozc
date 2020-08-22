@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,12 +39,12 @@ namespace mozc {
 TEST(AndroidUtilTest, GetSystemProperty) {
   // Valid cases
   EXPECT_NE("", AndroidUtil::GetSystemProperty(
-      AndroidUtil::kSystemPropertyOsVersion, ""));
+                    AndroidUtil::kSystemPropertyOsVersion, ""));
   // Check cache
   EXPECT_NE("", AndroidUtil::GetSystemProperty(
-      AndroidUtil::kSystemPropertyOsVersion, ""));
+                    AndroidUtil::kSystemPropertyOsVersion, ""));
   EXPECT_NE("", AndroidUtil::GetSystemProperty(
-      AndroidUtil::kSystemPropertyModel, ""));
+                    AndroidUtil::kSystemPropertyModel, ""));
 
   // Invalid cases.
   EXPECT_EQ("", AndroidUtil::GetSystemProperty("INVALID_KEY", ""));
@@ -68,11 +68,8 @@ TEST(AndroidUtilTest, ParseLine_valid) {
   };
   // Valid patterns.
   const TestCase testcases[] = {
-    {"1=2 ", "1", "2 "},
-    {"1=2=3", "1", "2=3"},
-    {" 1=2\n", "1", "2"},
-    {"\t 1=#2\n", "1", "#2"},
-    {"1 = 2\n", "1 ", " 2"},
+      {"1=2 ", "1", "2 "},      {"1=2=3", "1", "2=3"},   {" 1=2\n", "1", "2"},
+      {"\t 1=#2\n", "1", "#2"}, {"1 = 2\n", "1 ", " 2"},
   };
   string lhs;
   string rhs;
@@ -89,7 +86,7 @@ TEST(AndroidUtilTest, ParseLine_valid) {
 
 TEST(AndroidUtilTest, ParseLine_invalid) {
   const char *testcases[] = {
-    "1", "123", "=2", " \n", "", "#", " # 1=2\n",
+      "1", "123", "=2", " \n", "", "#", " # 1=2\n",
   };
   string lhs;
   string rhs;
@@ -100,4 +97,4 @@ TEST(AndroidUtilTest, ParseLine_invalid) {
   }
 }
 
-}  // namespace
+}  // namespace mozc

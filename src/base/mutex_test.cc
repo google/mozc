@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,9 +36,9 @@
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/thread.h"
-#include "base/thread_annotations.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
+#include "absl/base/thread_annotations.h"
 
 namespace mozc {
 namespace {
@@ -69,7 +69,7 @@ class IncrementThread : public Thread {
   const int max_loop_;
   std::atomic<bool> stop_requested_;
   Mutex *mutex_;
-  int *counter_ PT_GUARDED_BY(mutex_);
+  int *counter_ ABSL_PT_GUARDED_BY(mutex_);
 };
 
 TEST(MutexTest, LockTest) {
@@ -93,7 +93,7 @@ TEST(MutexTest, LockTest) {
 
 // Marked as NO_THREAD_SAFETY_ANALYSIS to avoid the compiler warning "acquiring
 // mutex 'mutex' that is already held".
-TEST(MutexTest, RecursiveLockTest) NO_THREAD_SAFETY_ANALYSIS {
+TEST(MutexTest, RecursiveLockTest) ABSL_NO_THREAD_SAFETY_ANALYSIS {
   const int kNumLocks = 5;
   Mutex mutex;
   for (int i = 0; i < kNumLocks; ++i) {
@@ -135,7 +135,7 @@ class HoldLockThread : public Thread {
 
 // Marked as NO_THREAD_SAFETY_ANALYSIS to avoid the error: "releasing mutex
 // 'mutex' that was not held".
-void TryLockThenUnlock(Mutex *mutex) NO_THREAD_SAFETY_ANALYSIS {
+void TryLockThenUnlock(Mutex *mutex) ABSL_NO_THREAD_SAFETY_ANALYSIS {
   EXPECT_TRUE(mutex->TryLock());
   mutex->Unlock();
 }
@@ -220,7 +220,7 @@ class ReaderThread : public Thread {
 
  private:
   ReaderWriterMutex *mutex_;
-  int *counter_ PT_GUARDED_BY(mutex_);
+  int *counter_ ABSL_PT_GUARDED_BY(mutex_);
   std::atomic<int> read_value_;
   std::atomic<bool> stop_requested_;
 };

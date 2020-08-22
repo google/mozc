@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,15 +39,16 @@ namespace gtk {
 
 class TextRendererMock : public TextRendererInterface {
  public:
-  MOCK_METHOD1(Initialize, void(GdkDrawable *drawable));
-  MOCK_METHOD2(GetPixelSize, Size(FontSpecInterface::FONT_TYPE font_type,
-                                  const string &str));
-  MOCK_METHOD3(GetMultiLinePixelSize,
-               Size(FontSpecInterface::FONT_TYPE font_type,
-                    const string &str, const int width));
-  MOCK_METHOD3(RenderText, void(const string &text, const Rect &rect,
-                                FontSpecInterface::FONT_TYPE font_type));
-  MOCK_METHOD1(ReloadFontConfig, void(const string &font_description));
+  MOCK_METHOD(void, Initialize, (GdkDrawable* drawable));
+  MOCK_METHOD(Size, GetPixelSize,
+              (FontSpecInterface::FONT_TYPE font_type, const string &str));
+  MOCK_METHOD(Size, GetMultiLinePixelSize,
+              (FontSpecInterface::FONT_TYPE font_type, const string &str,
+               const int width));
+  MOCK_METHOD(void, RenderText,
+              (const string &text, const Rect &rect,
+               FontSpecInterface::FONT_TYPE font_type));
+  MOCK_METHOD(void, ReloadFontConfig, (const string &font_description));
 };
 
 }  // namespace gtk

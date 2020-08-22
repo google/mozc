@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,11 +60,9 @@ string GetIndexGuideString(const commands::Candidates &candidates) {
 }
 
 int GetCandidateArrayIndexByCandidateIndex(
-    const commands::Candidates &candidates,
-    int candidate_index) {
+    const commands::Candidates &candidates, int candidate_index) {
   for (size_t i = 0; i < candidates.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate =
-        candidates.candidate(i);
+    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
     if (candidate.index() == candidate_index) {
       return i;
     }
@@ -73,22 +71,20 @@ int GetCandidateArrayIndexByCandidateIndex(
 }
 }  // namespace
 
-CandidateWindow::CandidateWindow(
-    TableLayoutInterface *table_layout,
-    TextRendererInterface *text_renderer,
-    DrawToolInterface *draw_tool,
-    GtkWrapperInterface *gtk,
-    CairoFactoryInterface *cairo_factory)
+CandidateWindow::CandidateWindow(TableLayoutInterface *table_layout,
+                                 TextRendererInterface *text_renderer,
+                                 DrawToolInterface *draw_tool,
+                                 GtkWrapperInterface *gtk,
+                                 CairoFactoryInterface *cairo_factory)
     : GtkWindowBase(gtk),
       table_layout_(table_layout),
       text_renderer_(text_renderer),
       draw_tool_(draw_tool),
-      cairo_factory_(cairo_factory) {
-}
+      cairo_factory_(cairo_factory) {}
 
-bool CandidateWindow::OnPaint(GtkWidget *widget, GdkEventExpose* event) {
-  draw_tool_->Reset(cairo_factory_->CreateCairoInstance(
-      GetCanvasWidget()->window));
+bool CandidateWindow::OnPaint(GtkWidget *widget, GdkEventExpose *event) {
+  draw_tool_->Reset(
+      cairo_factory_->CreateCairoInstance(GetCanvasWidget()->window));
 
   DrawBackground();
   DrawShortcutBackground();
@@ -144,8 +140,7 @@ void CandidateWindow::DrawSelectedRect() {
 
 void CandidateWindow::DrawCells() {
   for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate
-        = candidates_.candidate(i);
+    const commands::Candidates::Candidate &candidate = candidates_.candidate(i);
     string shortcut, value, description;
 
     GetDisplayString(candidate, &shortcut, &value, &description);
@@ -158,15 +153,13 @@ void CandidateWindow::DrawCells() {
 
     if (!value.empty()) {
       text_renderer_->RenderText(
-          value,
-          table_layout_->GetCellRect(i, COLUMN_CANDIDATE),
+          value, table_layout_->GetCellRect(i, COLUMN_CANDIDATE),
           FontSpec::FONTSET_CANDIDATE);
     }
 
     if (!description.empty()) {
       text_renderer_->RenderText(
-          description,
-          table_layout_->GetCellRect(i, COLUMN_DESCRIPTION),
+          description, table_layout_->GetCellRect(i, COLUMN_DESCRIPTION),
           FontSpec::FONTSET_DESCRIPTION);
     }
   }
@@ -179,9 +172,7 @@ void CandidateWindow::DrawInformationIcon() {
     }
     const Rect row_rect = table_layout_->GetRowRect(i);
     const Rect usage_information_indicator_rect(
-        row_rect.origin.x + row_rect.size.width - 6,
-        row_rect.origin.y + 2,
-        4,
+        row_rect.origin.x + row_rect.size.width - 6, row_rect.origin.y + 2, 4,
         row_rect.size.height - 4);
 
     draw_tool_->FillRect(usage_information_indicator_rect, kIndicatorColor);
@@ -206,8 +197,7 @@ void CandidateWindow::DrawFooterSeparator(Rect *footer_content_area) {
 
 void CandidateWindow::DrawFooterIndex(Rect *footer_content_rect) {
   DCHECK(footer_content_rect);
-  if (!candidates_.has_footer() ||
-      !candidates_.footer().index_visible() ||
+  if (!candidates_.has_footer() || !candidates_.footer().index_visible() ||
       !candidates_.has_focused_index()) {
     return;
   }
@@ -217,11 +207,9 @@ void CandidateWindow::DrawFooterIndex(Rect *footer_content_rect) {
       FontSpec::FONTSET_FOOTER_INDEX, index_guide_string);
   // Render as right-aligned.
   Rect index_rect(footer_content_rect->Right() - index_guide_size.width,
-                  footer_content_rect->Top(),
-                  index_guide_size.width,
+                  footer_content_rect->Top(), index_guide_size.width,
                   footer_content_rect->Height());
-  text_renderer_->RenderText(index_guide_string,
-                             index_rect,
+  text_renderer_->RenderText(index_guide_string, index_rect,
                              FontSpec::FONTSET_FOOTER_INDEX);
   footer_content_rect->size.width -= index_guide_size.width;
 }
@@ -290,32 +278,29 @@ void CandidateWindow::UpdateFooterSize() {
 
   if (candidates_.footer().has_label()) {
     const Size label_string_size = text_renderer_->GetPixelSize(
-        FontSpec::FONTSET_FOOTER_LABEL,
-        candidates_.footer().label());
+        FontSpec::FONTSET_FOOTER_LABEL, candidates_.footer().label());
     footer_size.width += label_string_size.width;
     footer_size.height = std::max(footer_size.height, label_string_size.height);
   } else if (candidates_.footer().has_sub_label()) {
     const Size label_string_size = text_renderer_->GetPixelSize(
-        FontSpec::FONTSET_FOOTER_LABEL,
-        candidates_.footer().sub_label());
+        FontSpec::FONTSET_FOOTER_LABEL, candidates_.footer().sub_label());
     footer_size.width += label_string_size.width;
     footer_size.height = std::max(footer_size.height, label_string_size.height);
   }
 
   if (candidates_.footer().index_visible()) {
     const Size index_guide_size = text_renderer_->GetPixelSize(
-      FontSpec::FONTSET_FOOTER_INDEX,
-      GetIndexGuideString(candidates_));
+        FontSpec::FONTSET_FOOTER_INDEX, GetIndexGuideString(candidates_));
     footer_size.width += index_guide_size.width;
     footer_size.height = std::max(footer_size.height, index_guide_size.height);
   }
 
   if (candidates_.candidate_size() < candidates_.size()) {
     const Size minimum_size = text_renderer_->GetPixelSize(
-      FontSpec::FONTSET_CANDIDATE,
-      kMinimumCandidateAndDescriptionWidthAsString);
-    table_layout_->EnsureColumnsWidth(
-      COLUMN_CANDIDATE, COLUMN_DESCRIPTION, minimum_size.width);
+        FontSpec::FONTSET_CANDIDATE,
+        kMinimumCandidateAndDescriptionWidthAsString);
+    table_layout_->EnsureColumnsWidth(COLUMN_CANDIDATE, COLUMN_DESCRIPTION,
+                                      minimum_size.width);
   }
 
   if (candidates_.footer().logo_visible()) {
@@ -337,8 +322,7 @@ void CandidateWindow::UpdateCandidatesSize(bool *has_description) {
   DCHECK(has_description);
   *has_description = false;
   for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate =
-        candidates_.candidate(i);
+    const commands::Candidates::Candidate &candidate = candidates_.candidate(i);
 
     string shortcut, description, candidate_string;
     GetDisplayString(candidate, &shortcut, &candidate_string, &description);
@@ -348,8 +332,8 @@ void CandidateWindow::UpdateCandidatesSize(bool *has_description) {
       text.push_back(' ');
       text.append(shortcut);
       text.push_back(' ');
-      const Size rendering_size = text_renderer_->GetPixelSize(
-          FontSpec::FONTSET_SHORTCUT, text);
+      const Size rendering_size =
+          text_renderer_->GetPixelSize(FontSpec::FONTSET_SHORTCUT, text);
       table_layout_->EnsureCellSize(COLUMN_SHORTCUT, rendering_size);
     }
 
@@ -363,8 +347,8 @@ void CandidateWindow::UpdateCandidatesSize(bool *has_description) {
       string text;
       text.append(description);
       text.push_back(' ');
-      const Size rendering_size = text_renderer_->GetPixelSize(
-          FontSpec::FONTSET_DESCRIPTION, text);
+      const Size rendering_size =
+          text_renderer_->GetPixelSize(FontSpec::FONTSET_DESCRIPTION, text);
       table_layout_->EnsureCellSize(COLUMN_DESCRIPTION, rendering_size);
       *has_description = true;
     }
@@ -373,18 +357,17 @@ void CandidateWindow::UpdateCandidatesSize(bool *has_description) {
 
 void CandidateWindow::UpdateGap2Size(bool has_description) {
   const char *gap2_string = (has_description ? "   " : " ");
-  const Size gap2_size = text_renderer_->GetPixelSize(
-      FontSpec::FONTSET_CANDIDATE, gap2_string);
+  const Size gap2_size =
+      text_renderer_->GetPixelSize(FontSpec::FONTSET_CANDIDATE, gap2_string);
   table_layout_->EnsureCellSize(COLUMN_GAP2, gap2_size);
 }
 
 Size CandidateWindow::Update(const commands::Candidates &candidates) {
-  DCHECK(
-      (candidates_.category()  == commands::CONVERSION) ||
-      (candidates_.category()  == commands::PREDICTION) ||
-      (candidates_.category()  == commands::TRANSLITERATION) ||
-      (candidates_.category()  == commands::SUGGESTION) ||
-      (candidates_.category()  == commands::USAGE))
+  DCHECK((candidates_.category() == commands::CONVERSION) ||
+         (candidates_.category() == commands::PREDICTION) ||
+         (candidates_.category() == commands::TRANSLITERATION) ||
+         (candidates_.category() == commands::SUGGESTION) ||
+         (candidates_.category() == commands::USAGE))
       << "Unknown candidate category" << candidates_.category();
 
   candidates_.CopyFrom(candidates);
@@ -407,10 +390,8 @@ Size CandidateWindow::Update(const commands::Candidates &candidates) {
 }
 
 void CandidateWindow::GetDisplayString(
-    const commands::Candidates::Candidate &candidate,
-    string *shortcut,
-    string *value,
-    string *description) {
+    const commands::Candidates::Candidate &candidate, string *shortcut,
+    string *value, string *description) {
   DCHECK(shortcut);
   DCHECK(value);
   DCHECK(description);

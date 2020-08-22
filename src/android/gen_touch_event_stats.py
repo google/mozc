@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,14 +36,20 @@ python android/gen_touch_event_stat.py --output_dir android/assets \
 --collected_keyboards android/collected_keyboards.csv
 """
 
-__author__ = "matsuzakit"
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 from collections import defaultdict
 import csv
 import optparse
 import os
 import struct
-import urllib
+
+import six
+from six.moves import urllib
+
+__author__ = "matsuzakit"
 
 
 def ReadCollectedKeyboards(stream):
@@ -112,7 +118,7 @@ def WriteKeyboardData(keyboard_value, stream):
   # c.f. usage_stats/usage_stats_uploader.cc
   keys = ('sxa', 'sya', 'sxv', 'syv', 'dxa', 'dya', 'dxv', 'dyv')
   stream.write(struct.pack('>i', len(keyboard_value)))
-  for source_id, source_value in keyboard_value.iteritems():
+  for source_id, source_value in six.iteritems(keyboard_value):
     stream.write(struct.pack('>i', source_id))
     # Note that we are calculating
     # "Average of average" and "Average of variance".
@@ -124,12 +130,12 @@ def WriteKeyboardData(keyboard_value, stream):
 
 
 def WriteData(stats, output_dir):
-  for base_name_orientation in stats.iterkeys():
-    with open(os.path.join(output_dir,
-                           '%s_%s.touch_stats' % (
-                               urllib.unquote(base_name_orientation[0]),
-                               base_name_orientation[1])),
-              'wb') as stream:
+  for base_name_orientation in six.iterkeys(stats):
+    with open(
+        os.path.join(
+            output_dir, '%s_%s.touch_stats' % (urllib.parse.unquote(
+                base_name_orientation[0]), base_name_orientation[1])),
+        'wb') as stream:
       WriteKeyboardData(stats[base_name_orientation], stream)
 
 

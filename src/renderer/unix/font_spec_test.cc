@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,8 @@
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "testing/base/public/gunit.h"
 
-using ::testing::Return;
 using ::testing::_;
+using ::testing::Return;
 using ::testing::StrEq;
 
 namespace mozc {
@@ -46,12 +46,9 @@ namespace gtk {
 namespace {
 
 RGBA RGBAColor2RGBA(const RendererStyle::RGBAColor &rgba) {
-  RGBA result = {
-    static_cast<uint8>(rgba.r()),
-    static_cast<uint8>(rgba.g()),
-    static_cast<uint8>(rgba.b()),
-    static_cast<uint8>(rgba.a() * 255.0)
-  };
+  RGBA result = {static_cast<uint8>(rgba.r()), static_cast<uint8>(rgba.g()),
+                 static_cast<uint8>(rgba.b()),
+                 static_cast<uint8>(rgba.a() * 255.0)};
   return result;
 }
 
@@ -59,15 +56,14 @@ RGBA RGBAColor2RGBA(const RendererStyle::RGBAColor &rgba) {
 
 class TestableFontSpec : public FontSpec {
  public:
-  explicit TestableFontSpec(GtkWrapperInterface *gtk) :
-    FontSpec(gtk) {}
+  explicit TestableFontSpec(GtkWrapperInterface *gtk) : FontSpec(gtk) {}
   virtual ~TestableFontSpec() {}
 
   // Change access rights.
-  using FontSpec::LoadFontSpec;
-  using FontSpec::ReleaseFontSpec;
   using FontSpec::fonts_;
   using FontSpec::is_initialized_;
+  using FontSpec::LoadFontSpec;
+  using FontSpec::ReleaseFontSpec;
 };
 
 class FontSpecTest : public testing::Test {
@@ -82,11 +78,10 @@ class FontSpecTest : public testing::Test {
                              const string &expected,
                              FontSpecInterface::FONT_TYPE font_type) {
     EXPECT_EQ(expected, pango_font_description_to_string(
-        font_spec.GetFontDescription(font_type)));
+                            font_spec.GetFontDescription(font_type)));
   }
 
-  void ExpectFontAttribute(const TestableFontSpec &font_spec,
-                           const RGBA &color,
+  void ExpectFontAttribute(const TestableFontSpec &font_spec, const RGBA &color,
                            double scale,
                            FontSpecInterface::FONT_TYPE font_type) {
     PangoAttrList *attributes = font_spec.GetFontAttributes(font_type);
@@ -95,8 +90,8 @@ class FontSpecTest : public testing::Test {
       PangoAttrIterator *it = pango_attr_list_get_iterator(attributes);
       gint start, end;
       pango_attr_iterator_range(it, &start, &end);
-      PangoAttribute *attribute
-          = pango_attr_iterator_get(it, PANGO_ATTR_FOREGROUND);
+      PangoAttribute *attribute =
+          pango_attr_iterator_get(it, PANGO_ATTR_FOREGROUND);
       ASSERT_TRUE(attribute);
       PangoAttribute *expected_attribute = pango_attr_foreground_new(
           color.red << 8, color.green << 8, color.blue << 8);
@@ -211,12 +206,10 @@ TEST_F(FontSpecTest, AttributeTest) {
   ExpectFontAttribute(font_spec, kShortcutColor, PANGO_SCALE_MEDIUM,
                       FontSpecInterface::FONTSET_SHORTCUT);
   ExpectFontAttribute(
-      font_spec,
-      RGBAColor2RGBA(infostyle.title_style().foreground_color()),
+      font_spec, RGBAColor2RGBA(infostyle.title_style().foreground_color()),
       PANGO_SCALE_MEDIUM, FontSpecInterface::FONTSET_INFOLIST_TITLE);
   ExpectFontAttribute(
-      font_spec,
-      RGBAColor2RGBA(infostyle.title_style().foreground_color()),
+      font_spec, RGBAColor2RGBA(infostyle.title_style().foreground_color()),
       PANGO_SCALE_MEDIUM, FontSpecInterface::FONTSET_INFOLIST_TITLE);
   ExpectFontAttribute(
       font_spec,

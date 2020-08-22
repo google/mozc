@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,10 +51,12 @@
         'base/setup_util.cc',
         'base/singleton_window_helper.cc',
         'base/table_util.cc',
+        'base/util.cc',
         'base/win_util.cc',
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../ipc/ipc.gyp:ipc',
         '../ipc/ipc.gyp:window_info_protocol',
@@ -210,251 +212,6 @@
       'dependencies': [
         'administration_dialog_lib',
         'gui_base',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
-      'target_name': 'gen_character_pad_files',
-      'type': 'none',
-      'variables': {
-        'subdir': 'character_pad',
-      },
-      'sources': [
-        '<(subdir)/character_palette.h',
-        '<(subdir)/character_palette_table_widget.h',
-        '<(subdir)/character_palette.ui',
-        '<(subdir)/hand_writing.h',
-        '<(subdir)/hand_writing.ui',
-        '<(subdir)/hand_writing_canvas.h',
-        '<(subdir)/hand_writing_thread.h',
-        '<(subdir)/result_list.h',
-      ],
-      'includes': [
-        'qt_moc.gypi',
-        'qt_uic.gypi',
-      ],
-    },
-    {
-      'target_name': 'qrc_character_pad',
-      'type': 'none',
-      'variables': {
-        'subdir': 'character_pad',
-        'qrc_base_name': 'character_pad',
-        'qrc_inputs': [
-          '<(subdir)/<(qrc_base_name).qrc',
-          '<(subdir)/<(qrc_base_name)_en.qm',
-          '<(subdir)/<(qrc_base_name)_ja.qm',
-        ],
-      },
-      'includes': [
-        'qt_rcc.gypi',
-      ],
-    },
-    {
-      'target_name': 'gen_character_pad_cp932_data',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'gen_cp932_map_data',
-          'variables': {
-            'input_files': [
-              '../data/unicode/CP932.TXT',
-            ],
-          },
-          'inputs': [
-            'character_pad/data/gen_cp932_map.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/character_pad/data/cp932_map.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/character_pad/data/cp932_map.h',
-            'character_pad/data/gen_cp932_map.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/character_pad/data/cp932_map.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_character_pad_data',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'gen_unihan_data',
-          'variables': {
-            'input_files': [
-              '../data/unicode/RadicalIndex.txt',
-              '../data/unicode/Unihan.txt',
-            ],
-          },
-          'inputs': [
-            'character_pad/data/gen_unihan_data.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/character_pad/data/unihan_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/character_pad/data/unihan_data.h',
-            'character_pad/data/gen_unihan_data.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/character_pad/data/unihan_data.h.',
-        },
-        {
-          'action_name': 'gen_unicode_blocks',
-          'variables': {
-            'input_files': [
-              '../data/unicode/Blocks.txt',
-            ],
-          },
-          'inputs': [
-            'character_pad/data/gen_unicode_blocks.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/character_pad/data/unicode_blocks.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/character_pad/data/unicode_blocks.h',
-            'character_pad/data/gen_unicode_blocks.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/character_pad/data/unicode_blocks.h.',
-        },
-        {
-          'action_name': 'gen_unicode_data',
-          'variables': {
-            'input_files': [
-              '../data/unicode/UnicodeData.txt',
-            ],
-          },
-          'inputs': [
-            'character_pad/data/gen_unicode_data.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/character_pad/data/unicode_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/character_pad/data/unicode_data.h',
-            'character_pad/data/gen_unicode_data.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/character_pad/data/unicode_data.h.',
-        },
-        {
-          'action_name': 'gen_local_character_map',
-          'variables': {
-            'input_files': [
-              '../data/unicode/JIS0201.TXT',
-              '../data/unicode/JIS0208.TXT',
-              '../data/unicode/JIS0212.TXT',
-              '../data/unicode/CP932.TXT',
-            ],
-          },
-          'inputs': [
-            'character_pad/data/gen_local_character_map.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/character_pad/data/local_character_map.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/character_pad/data/local_character_map.h',
-            'character_pad/data/gen_local_character_map.py',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/character_pad/data/local_character_map.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'character_pad_lib',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/character_pad/moc_character_palette.cc',
-        '<(gen_out_dir)/character_pad/moc_hand_writing.cc',
-        '<(gen_out_dir)/character_pad/moc_hand_writing_canvas.cc',
-        '<(gen_out_dir)/character_pad/moc_hand_writing_thread.cc',
-        '<(gen_out_dir)/character_pad/moc_character_palette_table_widget.cc',
-        '<(gen_out_dir)/character_pad/moc_result_list.cc',
-        '<(gen_out_dir)/character_pad/qrc_character_pad.cc',
-        '<(gen_out_dir)/character_pad/data/cp932_map.h',
-        '<(gen_out_dir)/character_pad/data/unihan_data.h',
-        '<(gen_out_dir)/character_pad/data/unicode_blocks.h',
-        '<(gen_out_dir)/character_pad/data/unicode_data.h',
-        '<(gen_out_dir)/character_pad/data/local_character_map.h',
-        '<(gen_out_dir)/dictionary_tool/moc_zero_width_splitter.cc',
-        'character_pad/character_pad_libmain.cc',
-        'character_pad/character_palette_table_widget.cc',
-        'character_pad/character_palette.cc',
-        'character_pad/hand_writing_canvas.cc',
-        'character_pad/hand_writing_thread.cc',
-        'character_pad/hand_writing.cc',
-        'character_pad/result_list.cc',
-        'character_pad/selection_handler.cc',
-        'character_pad/unicode_util.cc',
-        'character_pad/windows_selection_handler.cc',
-        'dictionary_tool/zero_width_splitter.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../client/client.gyp:client',
-        '../config/config.gyp:stats_config_util',
-        '../handwriting/handwriting.gyp:handwriting_manager',
-        '../handwriting/handwriting.gyp:zinnia_handwriting',
-        '../protocol/protocol.gyp:commands_proto',
-        'gen_character_pad_files',
-        'gen_character_pad_cp932_data',
-        'gen_character_pad_data',
-        'gen_dictionary_tool_files',
-        'qrc_character_pad',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-      'conditions': [
-        ['enable_cloud_handwriting==1', {
-          'dependencies': [
-            '../handwriting/handwriting.gyp:cloud_handwriting',
-            '../protocol/protocol.gyp:commands_proto',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'character_palette_main',
-      'type': 'executable',
-      'sources': [
-        'character_pad/character_palette_main.cc',
-      ],
-      'dependencies': [
-        'gui_base',
-        'character_pad_lib',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
-      'target_name': 'hand_writing_main',
-      'type': 'executable',
-      'sources': [
-        'character_pad/hand_writing_main.cc',
-      ],
-      'dependencies': [
-        'gui_base',
-        'character_pad_lib',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -989,7 +746,6 @@
         '../config/config.gyp:stats_config_util',
         'about_dialog_lib',
         'administration_dialog_lib',
-        'character_pad_lib',
         'config_dialog_lib',
         'confirmation_dialog_lib',
         'dictionary_tool_lib',
@@ -1092,6 +848,7 @@
         'base/encoding_util.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base_core',
       ],
     },
@@ -1102,6 +859,7 @@
         'base/encoding_util_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../testing/testing.gyp:gtest_main',
         'encoding_util',
       ],
@@ -1357,57 +1115,6 @@
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
           },
-          'includes': [
-            'mac_gui.gypi',
-          ],
-        },
-        {
-          'target_name': 'hand_writing_mac',
-          'type': 'executable',
-          'mac_bundle': 1,
-          'variables': {
-            'product_name': 'HandWriting',
-          },
-          'xcode_settings': {
-            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
-          },
-          'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns',
-            '../data/mac/HandWriting/English.lproj/InfoPlist.strings',
-            '../data/mac/HandWriting/Japanese.lproj/InfoPlist.strings',
-          ],
-          # TODO(komatsu): Bundle zinnia data on OSS build.
-          'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'mac_bundle_resources': [
-                # handwriting-ja.model is generated by
-                # handwrintng.gyp:install_zinnia_handwriting_data.
-                '<(mozc_data_dir)/handwriting/handwriting-ja.model',
-              ],
-              'dependencies': [
-                '../handwriting/handwriting.gyp:install_zinnia_handwriting_data',
-              ],
-            }],
-          ],
-          'includes': [
-            'mac_gui.gypi',
-          ],
-        },
-        {
-          'target_name': 'character_palette_mac',
-          'type': 'executable',
-          'mac_bundle': 1,
-          'variables': {
-            'product_name': 'CharacterPalette',
-          },
-          'xcode_settings': {
-            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
-          },
-          'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns',
-            '../data/mac/CharacterPalette/English.lproj/InfoPlist.strings',
-            '../data/mac/CharacterPalette/Japanese.lproj/InfoPlist.strings',
-          ],
           'includes': [
             'mac_gui.gypi',
           ],

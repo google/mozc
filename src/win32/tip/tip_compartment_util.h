@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,21 +49,15 @@ class TipCompartmentUtil {
   // |compartment_guid| and owned by |compartment_manager| successfully.
   // Returns false otherwise.
   static bool Set(ITfCompartmentMgr *compartment_manager,
-                  const GUID &compartment_guid,
-                  TfClientId client_id,
+                  const GUID &compartment_guid, TfClientId client_id,
                   const ATL::CComVariant &data);
-  static bool Set(ITfThreadMgr *thread_manager,
-                  const GUID &compartment_guid,
-                  TfClientId client_id,
-                  const ATL::CComVariant &data);
+  static bool Set(ITfThreadMgr *thread_manager, const GUID &compartment_guid,
+                  TfClientId client_id, const ATL::CComVariant &data);
   static bool Set(ITfDocumentMgr *document_manager,
-                  const GUID &compartment_guid,
-                  TfClientId client_id,
+                  const GUID &compartment_guid, TfClientId client_id,
                   const ATL::CComVariant &data);
-  static bool Set(ITfContext *context,
-                  const GUID &compartment_guid,
-                  TfClientId client_id,
-                  const ATL::CComVariant &data);
+  static bool Set(ITfContext *context, const GUID &compartment_guid,
+                  TfClientId client_id, const ATL::CComVariant &data);
 
   // Returns true when |data| is retrieved from the compartment specified by
   // |compartment_guid| and owned by |compartment_manager| successfully.
@@ -71,16 +65,12 @@ class TipCompartmentUtil {
   // Caveats: Returns true and |data| will be VT_EMPTY when the compartment
   //     has not store any data yet.
   static bool Get(ITfCompartmentMgr *compartment_manager,
-                  const GUID &compartment_guid,
-                  ATL::CComVariant *data);
-  static bool Get(ITfThreadMgr *thread_manager,
-                  const GUID &compartment_guid,
+                  const GUID &compartment_guid, ATL::CComVariant *data);
+  static bool Get(ITfThreadMgr *thread_manager, const GUID &compartment_guid,
                   ATL::CComVariant *data);
   static bool Get(ITfDocumentMgr *document_manager,
-                  const GUID &compartment_guid,
-                  ATL::CComVariant *data);
-  static bool Get(ITfContext *context,
-                  const GUID &compartment_guid,
+                  const GUID &compartment_guid, ATL::CComVariant *data);
+  static bool Get(ITfContext *context, const GUID &compartment_guid,
                   ATL::CComVariant *data);
 
   // Returns true when |data| is retrieved from the compartment specified by
@@ -88,30 +78,26 @@ class TipCompartmentUtil {
   // Returns false otherwise.
   // When the compartment has not store any data yet, this function sets
   // |default_data| as default data and copies it into |data|.
-  static bool GetAndEnsureDataExists(
-      ITfCompartmentMgr *compartment_manager,
-      const GUID &compartment_guid,
-      TfClientId client_id,
-      const ATL::CComVariant &default_data,
-      ATL::CComVariant *data);
-  static bool GetAndEnsureDataExists(
-      ITfThreadMgr *thread_manager,
-      const GUID &compartment_guid,
-      TfClientId client_id,
-      const ATL::CComVariant &default_data,
-      ATL::CComVariant *data);
-  static bool GetAndEnsureDataExists(
-      ITfDocumentMgr *document_manager,
-      const GUID &compartment_guid,
-      TfClientId client_id,
-      const ATL::CComVariant &default_data,
-      ATL::CComVariant *data);
-  static bool GetAndEnsureDataExists(
-      ITfContext *context,
-      const GUID &compartment_guid,
-      TfClientId client_id,
-      const ATL::CComVariant &default_data,
-      ATL::CComVariant *data);
+  static bool GetAndEnsureDataExists(ITfCompartmentMgr *compartment_manager,
+                                     const GUID &compartment_guid,
+                                     TfClientId client_id,
+                                     const ATL::CComVariant &default_data,
+                                     ATL::CComVariant *data);
+  static bool GetAndEnsureDataExists(ITfThreadMgr *thread_manager,
+                                     const GUID &compartment_guid,
+                                     TfClientId client_id,
+                                     const ATL::CComVariant &default_data,
+                                     ATL::CComVariant *data);
+  static bool GetAndEnsureDataExists(ITfDocumentMgr *document_manager,
+                                     const GUID &compartment_guid,
+                                     TfClientId client_id,
+                                     const ATL::CComVariant &default_data,
+                                     ATL::CComVariant *data);
+  static bool GetAndEnsureDataExists(ITfContext *context,
+                                     const GUID &compartment_guid,
+                                     TfClientId client_id,
+                                     const ATL::CComVariant &default_data,
+                                     ATL::CComVariant *data);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipCompartmentUtil);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,32 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_UTIL_H_
 #define MOZC_DICTIONARY_FILE_CODEC_UTIL_H_
 
-#include <iostream>
+#include <iosfwd>
+
+#include "base/port.h"
 
 namespace mozc {
 namespace dictionary {
 namespace filecodec_util {
 
-void WriteInt(int value, std::ostream *ofs);
+// Writes a raw memory representation of 32-bit integer to a stream.  Therefore,
+// the written byte sequence depends on the byte order of the architecture on
+// which the code is executed.
+void WriteInt32(int32 value, std::ostream *ofs);
 
-int ReadInt(const char *ptr);
+// Reads an int32 value written by the above WriteInt32() from the memory block
+// starting at |ptr|.  Therefore, 1) |ptr| must be aligned at 32-bit boundary,
+// and 2) at least 4 bytes are accessible memory region.  After the value is
+// read, |ptr| is advanced by sizeof(int32) == 4 bytes.
+int32 ReadInt32ThenAdvance(const char **ptr);
 
-int Rup4(int length);
+// Rounds up |length| to the least upper bound of multiple of 4.  E.g.,
+// RoundUp4(30) == 32.
+int32 RoundUp4(int32 length);
+
+// Given a stream for which |length| bytes were already written, adds a
+// necessary padding byte(s) so that next writing starts at 4-byte boundary.
+void Pad4(int length, std::ostream *ofs);
 
 }  // namespace filecodec_util
 }  // namespace dictionary

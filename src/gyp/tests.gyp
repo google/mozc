@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,6 @@
         '../dictionary/system/system_dictionary_test.gyp:system_dictionary_all_test',
         '../engine/engine_test.gyp:engine_all_test',
         '../gui/gui.gyp:gui_all_test',
-        '../handwriting/handwriting_test.gyp:handwriting_all_test',
         '../ipc/ipc.gyp:ipc_all_test',
         '../net/net_test.gyp:net_all_test',
         '../prediction/prediction_test.gyp:prediction_all_test',
@@ -70,6 +69,14 @@
             '../mac/mac.gyp:mac_all_test',
           ],
         }],
+        ['target_platform=="iOS"', {
+          'dependencies!': [
+            '../client/client_test.gyp:client_all_test',
+            '../gui/gui.gyp:gui_all_test',
+            '../ipc/ipc.gyp:ipc_all_test',
+            '../renderer/renderer.gyp:renderer_all_test',
+          ],
+        }],
         ['target_platform=="Linux"', {
           'dependencies': [
             '../unix/emacs/emacs.gyp:emacs_all_test',
@@ -78,14 +85,6 @@
         ['target_platform=="Linux" and use_libibus==1', {
           'dependencies': [
             '../unix/ibus/ibus.gyp:ibus_all_test',
-          ],
-        }],
-        # Java tests are defined in android/android.gyp:build_java_test.
-        # However asset files (e.g., system.dictionary) are required to run
-        # native tests.
-        ['target_platform=="Android"', {
-          'dependencies': [
-            '../android/android.gyp:assets',
           ],
         }],
       ],

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,8 @@ class TipTextService;
 class TipKeyeventHandler {
  public:
   static HRESULT OnTestKeyDown(TipTextService *text_service,
-                               ITfContext *context,
-                               WPARAM wparam, LPARAM lparam, BOOL *eaten);
+                               ITfContext *context, WPARAM wparam,
+                               LPARAM lparam, BOOL *eaten);
   static HRESULT OnKeyDown(TipTextService *text_service, ITfContext *context,
                            WPARAM wparam, LPARAM lparam, BOOL *eaten);
   static HRESULT OnTestKeyUp(TipTextService *text_service, ITfContext *context,

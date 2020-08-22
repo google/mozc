@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,6 @@
 #ifndef MOZC_DATA_MANAGER_POS_LIST_PROVIDER_H_
 #define MOZC_DATA_MANAGER_POS_LIST_PROVIDER_H_
 
-
 #include "dictionary/user_pos_interface.h"
 
 namespace mozc {
@@ -40,7 +39,7 @@ class POSListProvider : public POSListProviderInterface {
   POSListProvider();
   ~POSListProvider() override;
 
-  void GetPOSList(std::vector<string> *pos_list) const override;
+  void GetPOSList(std::vector<std::string> *pos_list) const override;
 };
 
 }  // namespace mozc

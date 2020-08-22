@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -77,7 +78,7 @@ Node *InitEOSNode(Lattice *lattice, uint16 length) {
 }
 
 bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
-                        const string &str) {
+                        const std::string &str) {
   CHECK(node);
   for (; node->prev != NULL; node = node->prev) {
     if (node->begin_pos == begin_pos && node->end_pos == end_pos &&
@@ -88,11 +89,11 @@ bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
   return false;
 }
 
-string GetDebugStringForNode(const Node *node, const Node *prev_node) {
+std::string GetDebugStringForNode(const Node *node, const Node *prev_node) {
   CHECK(node);
   std::stringstream os;
-  os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) -
-      node->wcost << "]";
+  os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) - node->wcost
+     << "]";
   os << "[lid:" << node->lid << "]";
   os << "\"" << node->value << "\"";
   os << "[wcost:" << node->wcost << "]";
@@ -101,7 +102,7 @@ string GetDebugStringForNode(const Node *node, const Node *prev_node) {
   return os.str();
 }
 
-string GetDebugStringForPath(const Node *end_node) {
+std::string GetDebugStringForPath(const Node *end_node) {
   CHECK(end_node);
   std::stringstream os;
   std::vector<const Node *> node_vector;
@@ -119,11 +120,11 @@ string GetDebugStringForPath(const Node *end_node) {
   return os.str();
 }
 
-string GetCommonPrefix(const string &str1, const string &str2) {
-  std::vector<string> split1, split2;
+std::string GetCommonPrefix(const std::string &str1, const std::string &str2) {
+  std::vector<std::string> split1, split2;
   Util::SplitStringToUtf8Chars(str1, &split1);
   Util::SplitStringToUtf8Chars(str2, &split2);
-  string common_prefix = "";
+  std::string common_prefix = "";
   for (int i = 0; i < std::min(split1.size(), split2.size()); ++i) {
     if (split1[i] == split2[i]) {
       common_prefix += split1[i];
@@ -139,30 +140,22 @@ string GetCommonPrefix(const string &str1, const string &str2) {
 struct LatticeDisplayNodeInfo {
   size_t display_node_begin_pos_;
   size_t display_node_end_pos_;
-  string display_node_str_;
+  std::string display_node_str_;
 };
 
 Lattice::Lattice() : history_end_pos_(0), node_allocator_(new NodeAllocator) {}
 
 Lattice::~Lattice() {}
 
-NodeAllocator *Lattice::node_allocator() const {
-  return node_allocator_.get();
-}
+NodeAllocator *Lattice::node_allocator() const { return node_allocator_.get(); }
 
-Node *Lattice::NewNode() {
-  return node_allocator_->NewNode();
-}
+Node *Lattice::NewNode() { return node_allocator_->NewNode(); }
 
-Node *Lattice::begin_nodes(size_t pos) const {
-  return begin_nodes_[pos];
-}
+Node *Lattice::begin_nodes(size_t pos) const { return begin_nodes_[pos]; }
 
-Node *Lattice::end_nodes(size_t pos) const {
-  return end_nodes_[pos];
-}
+Node *Lattice::end_nodes(size_t pos) const { return end_nodes_[pos]; }
 
-void Lattice::SetKey(StringPiece key) {
+void Lattice::SetKey(absl::string_view key) {
   Clear();
   key_.assign(key.data(), key.size());
   const size_t size = key.size();
@@ -175,19 +168,14 @@ void Lattice::SetKey(StringPiece key) {
   std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(NULL));
   std::fill(cache_info_.begin(), cache_info_.end(), 0);
 
-  end_nodes_[0] = InitBOSNode(this,
-                              static_cast<uint16>(0));
+  end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
   begin_nodes_[key_.size()] =
       InitEOSNode(this, static_cast<uint16>(key_.size()));
 }
 
-Node *Lattice::bos_nodes() const {
-  return end_nodes_[0];
-}
+Node *Lattice::bos_nodes() const { return end_nodes_[0]; }
 
-Node *Lattice::eos_nodes() const {
-  return begin_nodes_[key_.size()];
-}
+Node *Lattice::eos_nodes() const { return begin_nodes_[key_.size()]; }
 
 void Lattice::Insert(size_t pos, Node *node) {
   for (Node *rnode = node; rnode != NULL; rnode = rnode->bnext) {
@@ -214,13 +202,9 @@ void Lattice::Insert(size_t pos, Node *node) {
   }
 }
 
-const string &Lattice::key() const {
-  return key_;
-}
+const std::string &Lattice::key() const { return key_; }
 
-bool Lattice::has_lattice() const {
-  return !begin_nodes_.empty();
-}
+bool Lattice::has_lattice() const { return !begin_nodes_.empty(); }
 
 void Lattice::Clear() {
   key_.clear();
@@ -232,7 +216,7 @@ void Lattice::Clear() {
 }
 
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
-                                  const string &str) {
+                                  const std::string &str) {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_begin_pos_ = begin_pos;
   info->display_node_end_pos_ = end_pos;
@@ -244,17 +228,13 @@ void Lattice::ResetDebugDisplayNode() {
   info->display_node_str_.clear();
 }
 
-void Lattice::set_history_end_pos(size_t pos) {
-  history_end_pos_ = pos;
-}
+void Lattice::set_history_end_pos(size_t pos) { history_end_pos_ = pos; }
 
-size_t Lattice::history_end_pos() const {
-  return history_end_pos_;
-}
+size_t Lattice::history_end_pos() const { return history_end_pos_; }
 
-void Lattice::UpdateKey(const string &new_key) {
-  const string old_key = key_;
-  const string common_prefix = GetCommonPrefix(new_key, old_key);
+void Lattice::UpdateKey(const std::string &new_key) {
+  const std::string old_key = key_;
+  const std::string common_prefix = GetCommonPrefix(new_key, old_key);
 
   // if the length of common prefix is too short, call SetKey
   if (common_prefix.size() <= old_key.size() / 2) {
@@ -275,7 +255,7 @@ void Lattice::UpdateKey(const string &new_key) {
   AddSuffix(new_key.substr(common_prefix.size()));
 }
 
-void Lattice::AddSuffix(const string &suffix_key) {
+void Lattice::AddSuffix(const std::string &suffix_key) {
   if (suffix_key.empty()) {
     return;
   }
@@ -291,10 +271,8 @@ void Lattice::AddSuffix(const string &suffix_key) {
   std::fill(end_nodes_.begin() + old_size + 1, end_nodes_.end(),
             static_cast<Node *>(NULL));
 
-  end_nodes_[0] = InitBOSNode(this,
-                              static_cast<uint16>(0));
-  begin_nodes_[new_size] =
-      InitEOSNode(this, static_cast<uint16>(new_size));
+  end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
+  begin_nodes_[new_size] = InitEOSNode(this, static_cast<uint16>(new_size));
 
   // update cache_info
   cache_info_.resize(new_size + 4, 0);
@@ -317,7 +295,7 @@ void Lattice::ShrinkKey(const size_t new_len) {
       continue;
     }
 
-    for (Node *prev = begin, *curr = begin->bnext; curr != NULL; ) {
+    for (Node *prev = begin, *curr = begin->bnext; curr != NULL;) {
       CHECK(prev);
       if (curr->end_pos > new_len) {
         prev->bnext = curr->bnext;
@@ -339,8 +317,7 @@ void Lattice::ShrinkKey(const size_t new_len) {
   for (size_t i = new_len + 1; i <= old_len; ++i) {
     end_nodes_[i] = NULL;
   }
-  begin_nodes_[new_len] =
-      InitEOSNode(this, static_cast<uint16>(new_len));
+  begin_nodes_[new_len] = InitEOSNode(this, static_cast<uint16>(new_len));
 
   // update cache_info
   for (size_t i = 0; i < new_len; ++i) {
@@ -422,7 +399,7 @@ void Lattice::ResetNodeCost() {
   }
 }
 
-string Lattice::DebugString() const {
+std::string Lattice::DebugString() const {
   std::stringstream os;
   if (!has_lattice()) {
     return "";
@@ -455,8 +432,7 @@ string Lattice::DebugString() const {
     }
     for (const Node *prev_node = end_nodes(best_path_node->begin_pos);
          prev_node; prev_node = prev_node->enext) {
-      if (!PathContainsString(prev_node,
-                              info->display_node_begin_pos_,
+      if (!PathContainsString(prev_node, info->display_node_begin_pos_,
                               info->display_node_end_pos_,
                               info->display_node_str_)) {
         continue;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,8 @@
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -49,10 +48,8 @@ const char kName[] = "named_event_test";
 
 class NamedEventListenerThread : public Thread {
  public:
-  NamedEventListenerThread(const string &name,
-                           uint32 initial_wait_msec,
-                           uint32 wait_msec,
-                           size_t max_num_wait)
+  NamedEventListenerThread(const std::string &name, uint32 initial_wait_msec,
+                           uint32 wait_msec, size_t max_num_wait)
       : listener_(name.c_str()),
         initial_wait_msec_(initial_wait_msec),
         wait_msec_(wait_msec),
@@ -73,13 +70,9 @@ class NamedEventListenerThread : public Thread {
     }
   }
 
-  uint64 first_triggered_ticks() const {
-    return first_triggered_ticks_;
-  }
+  uint64 first_triggered_ticks() const { return first_triggered_ticks_; }
 
-  bool IsTriggered() const {
-    return first_triggered_ticks() > 0;
-  }
+  bool IsTriggered() const { return first_triggered_ticks() > 0; }
 
  private:
   NamedEventListener listener_;
@@ -100,7 +93,7 @@ class NamedEventTest : public testing::Test {
   }
 
  private:
-  string original_user_profile_directory_;
+  std::string original_user_profile_directory_;
 };
 
 TEST_F(NamedEventTest, NamedEventBasicTest) {
@@ -139,7 +132,7 @@ TEST_F(NamedEventTest, IsOwnerTest) {
   EXPECT_TRUE(l1.IsOwner());
   EXPECT_TRUE(l1.IsAvailable());
   NamedEventListener l2(kName);
-  EXPECT_FALSE(l2.IsOwner());   // the instance is owneded by l1
+  EXPECT_FALSE(l2.IsOwner());  // the instance is owneded by l1
   EXPECT_TRUE(l2.IsAvailable());
 }
 
@@ -178,7 +171,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
 
 TEST_F(NamedEventTest, NamedEventPathLengthTest) {
 #ifndef OS_WIN
-  const string name_path = NamedEventUtil::GetEventPath(kName);
+  const std::string name_path = NamedEventUtil::GetEventPath(kName);
   // length should be less than 14 not includeing terminating null.
   EXPECT_EQ(13, strlen(name_path.c_str()));
 #endif  // OS_WIN

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,25 +42,25 @@ message GeneralConfig {
   //
 
   // config version, corresponding to the suffix of config file
-  optional uint32 config_version = 1 [ default = 0 ];
+  optional uint32 config_version = 1 [default = 0];
 
   // The product version that wrote this config
-  optional string last_modified_product_version = 2 [ default = "0.0.0.0" ];
+  optional string last_modified_product_version = 2 [default = "0.0.0.0"];
 
   // last modified time in UTC second
-  optional uint64 last_modified_time = 3 [ default = 0 ];
+  optional uint64 last_modified_time = 3 [default = 0];
 
   // These fileds are not used now
   // platform of machine that wrote this config
-  optional string platform = 4  [ default = "" ];
+  optional string platform = 4 [default = ""];
 
   // UI locale of machine that wrote this config
-  optional string ui_locale = 5 [ default = "" ];
+  optional string ui_locale = 5 [default = ""];
 
   // Whether to upload usage stats
   // This flag is used only for Android.
   optional bool upload_usage_stats = 6 [default = false];
-};
+}
 
 message Config {
   reserved 2 to 9;  // Moved to GeneralConfig
@@ -75,7 +75,7 @@ message Config {
   //
 
   // set verbose level of logging library (FLAGS_v)
-  optional int32 verbose_level = 10 [ default = 0 ];
+  optional int32 verbose_level = 10 [default = 0];
 
   reserved 11;  // Deprecated log_all_commands
 
@@ -91,11 +91,11 @@ message Config {
   reserved 21;  // Deprecated upload_usage_stats
 
   // whether to show the set default dialog on startup
-  optional bool check_default = 22 [ default = true ];
+  optional bool check_default = 22 [default = true];
 
   // Presentation mode:
   // disable all suggestion temporally.
-  optional bool presentation_mode = 23 [ default = false ];
+  optional bool presentation_mode = 23 [default = false];
 
   //////////////////////////////////////////////////////////////
   //
@@ -104,7 +104,7 @@ message Config {
   enum PreeditMethod {
     ROMAN = 0;
     KANA = 1;
-  };
+  }
 
   // Roman/Kana
   optional PreeditMethod preedit_method = 40 [default = ROMAN];
@@ -124,7 +124,7 @@ message Config {
     KOTOERI = 3;
     MOBILE = 4;
     CHROMEOS = 5;
-  };
+  }
   optional SessionKeymap session_keymap = 41 [default = NONE];
 
   // custom keymap
@@ -139,7 +139,7 @@ message Config {
     COMMA_PERIOD = 1;
     KUTEN_PERIOD = 2;
     COMMA_TOUTEN = 3;
-  };
+  }
   optional PunctuationMethod punctuation_method = 45 [default = KUTEN_TOUTEN];
 
   enum SymbolMethod {
@@ -147,15 +147,17 @@ message Config {
     SQUARE_BRACKET_SLASH = 1;
     CORNER_BRACKET_SLASH = 2;
     SQUARE_BRACKET_MIDDLE_DOT = 3;
-  };
-  optional SymbolMethod symbol_method = 46 [default = CORNER_BRACKET_MIDDLE_DOT];
+  }
+  optional SymbolMethod symbol_method = 46
+      [default = CORNER_BRACKET_MIDDLE_DOT];
 
   enum FundamentalCharacterForm {
-    FUNDAMENTAL_INPUT_MODE = 0;   // follow the input mode
-    FUNDAMENTAL_FULL_WIDTH = 1;   // always FullWidth
-    FUNDAMENTAL_HALF_WIDTH = 2;   // always HalfWidth
-  };
-  optional FundamentalCharacterForm space_character_form = 47 [ default = FUNDAMENTAL_INPUT_MODE ];
+    FUNDAMENTAL_INPUT_MODE = 0;  // follow the input mode
+    FUNDAMENTAL_FULL_WIDTH = 1;  // always FullWidth
+    FUNDAMENTAL_HALF_WIDTH = 2;  // always HalfWidth
+  }
+  optional FundamentalCharacterForm space_character_form = 47
+      [default = FUNDAMENTAL_INPUT_MODE];
 
   // If this flag is true, Mozc toggles preedit method with some predefined
   // key events when IME is turned on.  Otherwise, Mozc ignores such kind of
@@ -172,22 +174,24 @@ message Config {
   //   However, people who are not aware of this functionality have been
   //   puzzled because the default key stroke is likely to be pressed
   //   by accident.
-  optional bool use_keyboard_to_change_preedit_method = 48 [ default = false ];
+  optional bool use_keyboard_to_change_preedit_method = 48 [default = false];
 
   // User history learning
   enum HistoryLearningLevel {
     DEFAULT_HISTORY = 0;
     READ_ONLY = 1;
     NO_HISTORY = 2;
-  };
-  optional HistoryLearningLevel history_learning_level = 50 [default = DEFAULT_HISTORY];
+  }
+  optional HistoryLearningLevel history_learning_level = 50
+      [default = DEFAULT_HISTORY];
 
   enum SelectionShortcut {
     NO_SHORTCUT = 0;
     SHORTCUT_123456789 = 1;
     SHORTCUT_ASDFGHJKL = 2;
-  };
-  optional SelectionShortcut selection_shortcut = 52 [default = SHORTCUT_123456789];
+  }
+  optional SelectionShortcut selection_shortcut = 52
+      [default = SHORTCUT_123456789];
 
   // character form (Halfwidth/Fullwidth
   enum CharacterForm {
@@ -195,35 +199,37 @@ message Config {
     FULL_WIDTH = 1;
     LAST_FORM = 2;
     NO_CONVERSION = 3;
-  };
+  }
   message CharacterFormRule {
     optional string group = 1;
-    optional CharacterForm preedit_character_form = 2 [ default = FULL_WIDTH ];
-    optional CharacterForm conversion_character_form = 3 [ default = FULL_WIDTH ];
-  };
+    optional CharacterForm preedit_character_form = 2 [default = FULL_WIDTH];
+    optional CharacterForm conversion_character_form = 3 [default = FULL_WIDTH];
+  }
   repeated CharacterFormRule character_form_rules = 54;
 
   // auto IME turn off feature
-  optional bool use_auto_ime_turn_off = 56 [ default = true ];
+  optional bool use_auto_ime_turn_off = 56 [default = true];
 
   // Toggle to use cascanding window for debuging.
-  optional bool use_cascading_window = 58 [ default = true ];
+  optional bool use_cascading_window = 58 [default = true];
 
   // Shift key mode switch
   enum ShiftKeyModeSwitch {
-    OFF = 0;  // Case insensitive
-    ASCII_INPUT_MODE = 1;  // MSIME, ATOK behavior
+    OFF = 0;                  // Case insensitive
+    ASCII_INPUT_MODE = 1;     // MSIME, ATOK behavior
     KATAKANA_INPUT_MODE = 2;  // Kotoeri behavior
-  };
-  optional ShiftKeyModeSwitch shift_key_mode_switch = 59 [ default = ASCII_INPUT_MODE ];
+  }
+  optional ShiftKeyModeSwitch shift_key_mode_switch = 59
+      [default = ASCII_INPUT_MODE];
 
   enum NumpadCharacterForm {
     NUMPAD_INPUT_MODE = 0;
     NUMPAD_FULL_WIDTH = 1;
     NUMPAD_HALF_WIDTH = 2;
     NUMPAD_DIRECT_INPUT = 3;
-  };
-  optional NumpadCharacterForm numpad_character_form = 60 [ default = NUMPAD_HALF_WIDTH ];
+  }
+  optional NumpadCharacterForm numpad_character_form = 60
+      [default = NUMPAD_HALF_WIDTH];
 
   enum AutoConversionKey {
     AUTO_CONVERSION_OFF = 0;
@@ -231,30 +237,30 @@ message Config {
     AUTO_CONVERSION_TOUTEN = 2;
     AUTO_CONVERSION_QUESTION_MARK = 4;
     AUTO_CONVERSION_EXCLAMATION_MARK = 8;
-  };
-  optional bool use_auto_conversion = 61 [ default = false ];
+  }
+  optional bool use_auto_conversion = 61 [default = false];
 
   // can't use AutoConversionKey as a type since
   // undefined enum type is not correctly handled.
-  optional uint32 auto_conversion_key = 62 [ default = 13 ];
+  optional uint32 auto_conversion_key = 62 [default = 13];
 
   // Mac only config items: yen_sign_character and use_japanese_layout.
   enum YenSignCharacter {
     YEN_SIGN = 0;
     BACKSLASH = 1;
-  };
+  }
   // Mac-original JIS key layout has "yen-sign" key which generates
   // U+00A5 instead of U+005C and sometimes users get troubles with
   // them because they expect backslashes which are rendered as
   // yen-sign.  If this configuration is BACKSLASH, Mozc will
   // interpret U+005C even when the original key event is U+00A5.
-  optional YenSignCharacter yen_sign_character = 63 [ default = YEN_SIGN ];
+  optional YenSignCharacter yen_sign_character = 63 [default = YEN_SIGN];
 
   // Use Japanese keyboard layout even when the user uses other
   // keyboard layouts.  In Mac OSX people can use several keyboard
   // layouts such like French or Spanish but some people want to use
   // Japanese layout for Japanese.  See http://b/2917320
-  optional bool use_japanese_layout = 64 [ default = false ];
+  optional bool use_japanese_layout = 64 [default = false];
 
   // Use kana modifier insensitive conversion.
   // e.g. かつこう -> 学校
@@ -263,25 +269,25 @@ message Config {
   //   On the other hand Config's is under a user's control.
   // - Whether the feature is activated or not is decided by logical-AND
   //   of Request's and Config's.
-  optional bool use_kana_modifier_insensitive_conversion = 65 [ default = false ];
+  optional bool use_kana_modifier_insensitive_conversion = 65 [default = false];
 
   // Use typing correction feature.
   // e.g. sunkai -> 深海
-  optional bool use_typing_correction = 66 [ default = false ];
+  optional bool use_typing_correction = 66 [default = false];
 
   //////////////////////////////////////////////////////////////
   //
   // Dictionary (80-99)
   //
-  optional bool use_date_conversion = 80 [ default = true ];
-  optional bool use_single_kanji_conversion = 81 [ default = true ];
-  optional bool use_symbol_conversion = 82 [ default = true ];
-  optional bool use_number_conversion = 83 [ default = true ];
-  optional bool use_emoticon_conversion = 84 [ default = true ];
-  optional bool use_calculator = 85 [ default = true ];
-  optional bool use_t13n_conversion = 86 [ default = true ];
-  optional bool use_zip_code_conversion = 87  [ default = true ];
-  optional bool use_spelling_correction = 88  [ default = true ];
+  optional bool use_date_conversion = 80 [default = true];
+  optional bool use_single_kanji_conversion = 81 [default = true];
+  optional bool use_symbol_conversion = 82 [default = true];
+  optional bool use_number_conversion = 83 [default = true];
+  optional bool use_emoticon_conversion = 84 [default = true];
+  optional bool use_calculator = 85 [default = true];
+  optional bool use_t13n_conversion = 86 [default = true];
+  optional bool use_zip_code_conversion = 87 [default = true];
+  optional bool use_spelling_correction = 88 [default = true];
 
   // If use_emoji_conversion is true, the user can input emoji characters
   // by converting from a query string (e.g. "いぬ → 🐶" [U+1F436]).
@@ -291,13 +297,13 @@ message Config {
   // to use the variation sequence to specify emoji presentation [U+FE0E],
   // although it is not implemented yet.
   // See: http://unicode.org/reports/tr51/#Presentation_Style
-  optional bool use_emoji_conversion = 89 [ default = false ];
+  optional bool use_emoji_conversion = 89 [default = false];
 
   message InformationListConfig {
-    optional bool use_local_usage_dictionary = 1 [ default = true ];
-    reserved 2;  // Deprecated use_web_usage_dictionary
+    optional bool use_local_usage_dictionary = 1 [default = true];
+    reserved 2;   // Deprecated use_web_usage_dictionary
     reserved 10;  // Deprecated web_service_entries
-  };
+  }
   optional InformationListConfig information_list_config = 90;
 
   //////////////////////////////////////////////////////////////
@@ -305,24 +311,24 @@ message Config {
   // Suggest (100-119)
   //
   // Use history-based suggest feature.
-  optional bool use_history_suggest = 100 [ default = true ];
+  optional bool use_history_suggest = 100 [default = true];
 
   // Use dictionary-based suggest feature.
-  optional bool use_dictionary_suggest = 101 [ default = true ];
+  optional bool use_dictionary_suggest = 101 [default = true];
 
   // Use realtime conversion feature.
-  optional bool use_realtime_conversion = 102 [ default = true ];
+  optional bool use_realtime_conversion = 102 [default = true];
 
 
   // Size of suggestions.
-  optional uint32 suggestions_size = 110 [ default = 3 ];
+  optional uint32 suggestions_size = 110 [default = 3];
 
   //////////////////////////////////////////////////////////////
   //
   // Renderer (120-139)
   //
   // Use mode indicator feature.
-  optional bool use_mode_indicator = 120 [ default = true ];
+  optional bool use_mode_indicator = 120 [default = true];
 
 
   //////////////////////////////////////////////////////////////
@@ -331,15 +337,8 @@ message Config {
   //
   // Configuration for cloud sync feature. This field is obsolete.
   reserved 300;  // Deprecated sync_config
-
-  // Allow the cloud handwriting.  The handwriting UI has to notice
-  // user before activating the feature, and set this field to true
-  // when the user permit.
-  // NOTE: OSS version does not handle this field.
-  optional bool allow_cloud_handwriting = 301 [ default = false ];
-
-
+  reserved 301;  // Deprecated allow_cloud_handwriting
   reserved 996;  // Deprecated pinyin_config
   reserved 998;  // Deprecated hangul_config
   reserved 999;  // Deprecated chewing_config
-};
+}

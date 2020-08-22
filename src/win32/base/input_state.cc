@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,7 @@ namespace mozc {
 namespace win32 {
 
 InputState::InputState()
-    : open(false),
-      logical_conversion_mode(0),
-      visible_conversion_mode(0) {
-}
+    : open(false), logical_conversion_mode(0), visible_conversion_mode(0) {}
 
 InputBehavior::InputBehavior()
     : initialized(false),

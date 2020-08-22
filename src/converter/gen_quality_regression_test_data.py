@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,12 @@
 A tool to embedded tsv file into test binary for quality regression test.
 """
 
-__author__ = "taku"
+from __future__ import absolute_import
+from __future__ import print_function
 
-import xml.dom.minidom
 import sys
+import xml.dom.minidom
+
 
 def EscapeString(s):
   """ escape the string with "\\xXX" format.
@@ -104,19 +106,19 @@ def ParseFile(file):
 
 def GenerateHeader(files):
   try:
-    print 'namespace mozc{'
-    print 'struct TestCase {'
-    print '  const bool enabled;'
-    print '  const char *tsv;'
-    print '} kTestData[] = {'
+    print('namespace mozc{')
+    print('struct TestCase {')
+    print('  const bool enabled;')
+    print('  const char *tsv;')
+    print('} kTestData[] = {')
     for file in files:
       for enabled, line in ParseFile(file):
-        print ' {%s, "%s"},' % (enabled, EscapeString(line))
-    print '  {false, nullptr},'
-    print '};'
-    print '}  // namespace mozc'
+        print(' {%s, "%s"},' % (enabled, EscapeString(line)))
+    print('  {false, nullptr},')
+    print('};')
+    print('}  // namespace mozc')
   except:
-    print 'cannot open %s' % (file)
+    print('cannot open %s' % (file))
     sys.exit(1)
 
 

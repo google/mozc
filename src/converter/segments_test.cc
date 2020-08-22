@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -66,7 +67,7 @@ TEST(SegmentsTest, BasicTest) {
     EXPECT_EQ(i + 1, segments.segments_size());
   }
 
-  const string output = segments.DebugString();
+  const std::string output = segments.DebugString();
   EXPECT_FALSE(output.empty());
 
   EXPECT_FALSE(segments.resized());
@@ -174,15 +175,20 @@ TEST(CandidateTest, BasicTest) {
 
   for (int i = 0; i < kCandidatesSize; ++i) {
     EXPECT_EQ(i, segment.indexOf(segment.mutable_candidate(i)));
+    EXPECT_TRUE(segment.is_valid_index(i));
   }
+  EXPECT_FALSE(segment.is_valid_index(kCandidatesSize));
 
-  for (int i = -static_cast<int>(segment.meta_candidates_size()) - 1;
-       i >= 0; ++i) {
+  const int kMetaCandidatesSize =
+      static_cast<int>(segment.meta_candidates_size());
+  for (int i = -kMetaCandidatesSize; i < 0; ++i) {
     EXPECT_EQ(i, segment.indexOf(segment.mutable_candidate(i)));
+    EXPECT_TRUE(segment.is_valid_index(i));
   }
+  EXPECT_TRUE(segment.is_valid_index(-kMetaCandidatesSize));
+  EXPECT_FALSE(segment.is_valid_index(-kMetaCandidatesSize - 1));
 
-  EXPECT_EQ(segment.candidates_size(),
-            segment.indexOf(NULL));
+  EXPECT_EQ(segment.candidates_size(), segment.indexOf(NULL));
 
   segment.pop_back_candidate();
   EXPECT_EQ(cand[3], segment.mutable_candidate(3));
@@ -327,12 +333,12 @@ TEST(SegmentsTest, RevertEntryTest) {
   for (int i = 0; i < kSize; ++i) {
     {
       const Segments::RevertEntry &e = segments.revert_entry(i);
-      EXPECT_EQ(string("test") + std::to_string(i), e.key);
+      EXPECT_EQ(std::string("test") + std::to_string(i), e.key);
       EXPECT_EQ(i, e.id);
     }
     {
       Segments::RevertEntry *e = segments.mutable_revert_entry(i);
-      EXPECT_EQ(string("test") + std::to_string(i), e->key);
+      EXPECT_EQ(std::string("test") + std::to_string(i), e->key);
       EXPECT_EQ(i, e->id);
     }
   }
@@ -345,7 +351,7 @@ TEST(SegmentsTest, RevertEntryTest) {
 
   for (int i = 0; i < kSize; ++i) {
     const Segments::RevertEntry &e = segments.revert_entry(i);
-    EXPECT_EQ(string("test2") + std::to_string(i), e.key);
+    EXPECT_EQ(std::string("test2") + std::to_string(i), e.key);
     EXPECT_EQ(kSize - i, e.id);
   }
 
@@ -493,7 +499,7 @@ TEST(CandidateTest, InnerSegmentIterator) {
     candidate.value = "redgreenblue";
     candidate.PushBackInnerSegmentBoundary(4, 3, 4, 3);
     candidate.PushBackInnerSegmentBoundary(6, 9, 3, 5);
-    std::vector<StringPiece> keys, values, content_keys, content_values;
+    std::vector<absl::string_view> keys, values, content_keys, content_values;
     for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
          !iter.Done(); iter.Next()) {
       keys.push_back(iter.GetKey());
@@ -547,9 +553,9 @@ TEST(SegmentTest, MetaCandidateTest) {
   EXPECT_EQ(0, segment.meta_candidates_size());
 
   const int kCandidatesSize = 5;
-  std::vector<string> values;
+  std::vector<std::string> values;
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    values.push_back(string(1, 'a' + i));
+    values.push_back(std::string(1, 'a' + i));
   }
 
   // add_meta_candidate()
@@ -562,7 +568,7 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   // mutable_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    const int meta_idx = -static_cast<int>(i)-1;
+    const int meta_idx = -static_cast<int>(i) - 1;
     Segment::Candidate *cand = segment.mutable_candidate(meta_idx);
     EXPECT_EQ(values[i], cand->value);
   }
@@ -575,7 +581,7 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   // candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    const int meta_idx = -static_cast<int>(i)-1;
+    const int meta_idx = -static_cast<int>(i) - 1;
     const Segment::Candidate &cand = segment.candidate(meta_idx);
     EXPECT_EQ(values[i], cand.value);
   }
@@ -588,12 +594,11 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   // indexOf
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    const int meta_idx = -static_cast<int>(i)-1;
+    const int meta_idx = -static_cast<int>(i) - 1;
     EXPECT_EQ(meta_idx, segment.indexOf(segment.mutable_candidate(meta_idx)));
   }
 
-  EXPECT_EQ(segment.candidates_size(),
-            segment.indexOf(NULL));
+  EXPECT_EQ(segment.candidates_size(), segment.indexOf(NULL));
 
   // mutable_meta_candidates
   {

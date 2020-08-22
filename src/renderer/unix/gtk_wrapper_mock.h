@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,52 +39,47 @@ namespace gtk {
 
 class GtkWrapperMock : public GtkWrapperInterface {
  public:
-  MOCK_METHOD2(GSourceNew, GSource *(GSourceFuncs *source_funcs,
-                                     guint struct_size));
-  MOCK_METHOD1(GtkWindowGetScreen, GdkScreen *(GtkWidget *window));
-  MOCK_METHOD0(GtkDrawingAreaNew, GtkWidget *());
-  MOCK_METHOD1(GtkWindowNew, GtkWidget *(GtkWindowType type));
-  MOCK_METHOD3(GdkScreenGetMonitorAtPoint, gint(GdkScreen *screen,
-                                                gint x,
-                                                gint y));
-  MOCK_METHOD3(GdkScreenGetMonitorGeometry, void(GdkScreen *screen,
-                                                  gint monitor,
-                                                  GdkRectangle *rectangle));
-  MOCK_METHOD1(GObjectUnref, void(gpointer object));
-  MOCK_METHOD4(GSignalConnect, void(gpointer instance,
-                                    const gchar *signal,
-                                    GCallback handler,
-                                    gpointer data));
-  MOCK_METHOD2(GSourceAddPoll, void(GSource *source, GPollFD *fd));
-  MOCK_METHOD2(GSourceAttach, void(GSource *source, GMainContext *context));
-  MOCK_METHOD4(GSourceSetCallback, void(GSource *source,
-                                        GSourceFunc func,
-                                        gpointer data,
-                                        GDestroyNotify notify));
-  MOCK_METHOD2(GSourceSetCanRecurse, void(GSource *source,
-                                          gboolean can_recurse));
-  MOCK_METHOD0(GdkThreadsEnter, void());
-  MOCK_METHOD0(GdkThreadsLeave, void());
-  MOCK_METHOD2(GtkContainerAdd, void(GtkWidget *container, GtkWidget *widget));
-  MOCK_METHOD0(GtkMain, void());
-  MOCK_METHOD0(GtkMainQuit, void());
-  MOCK_METHOD1(GtkWidgetHideAll, void(GtkWidget *widget));
-  MOCK_METHOD5(GtkWidgetQueueDrawArea, void(GtkWidget *widget,
-                                            int x,
-                                            int y,
-                                            int width,
-                                            int height));
-  MOCK_METHOD1(GtkWidgetShowAll, void(GtkWidget *widget));
-  MOCK_METHOD3(GtkWindowGetPosition, void(GtkWidget *window, int *x, int *y));
-  MOCK_METHOD3(GtkWindowGetSize, void(GtkWidget *window, int *width,
-                                      int *height));
-  MOCK_METHOD1(GtkWindowIsActive, bool(GtkWidget *window));
-  MOCK_METHOD3(GtkWindowMove, void(GtkWidget *window, int x, int y));
-  MOCK_METHOD3(GtkWindowResize, void(GtkWidget *window, int width, int height));
-  MOCK_METHOD2(GtkWidgetAddEvents, void(GtkWidget *widget, gint events));
-  MOCK_METHOD1(GtkWidgetRealize, void(GtkWidget *widget));
-  MOCK_METHOD2(GdkWindowSetTypeHint, void(GtkWidget *widget,
-                                          GdkWindowTypeHint hint));
+  MOCK_METHOD(GSource *, GSourceNew,
+              (GSourceFuncs* source_funcs, guint struct_size));
+  MOCK_METHOD(GdkScreen *, GtkWindowGetScreen, (GtkWidget* window));
+  MOCK_METHOD(GtkWidget *, GtkDrawingAreaNew, ());
+  MOCK_METHOD(GtkWidget *, GtkWindowNew, (GtkWindowType type));
+  MOCK_METHOD(gint, GdkScreenGetMonitorAtPoint,
+              (GdkScreen* screen, gint x, gint y));
+  MOCK_METHOD(void, GdkScreenGetMonitorGeometry,
+              (GdkScreen* screen, gint monitor, GdkRectangle *rectangle));
+  MOCK_METHOD(void, GObjectUnref, (gpointer object));
+  MOCK_METHOD(void, GSignalConnect,
+              (gpointer instance, const gchar *signal, GCallback handler,
+               gpointer data));
+  MOCK_METHOD(void, GSourceAddPoll, (GSource* source, GPollFD *fd));
+  MOCK_METHOD(void, GSourceAttach, (GSource* source, GMainContext *context));
+  MOCK_METHOD(void, GSourceSetCallback,
+              (GSource* source, GSourceFunc func, gpointer data,
+               GDestroyNotify notify));
+  MOCK_METHOD(void, GSourceSetCanRecurse,
+              (GSource* source, gboolean can_recurse));
+  MOCK_METHOD(void, GdkThreadsEnter, ());
+  MOCK_METHOD(void, GdkThreadsLeave, ());
+  MOCK_METHOD(void, GtkContainerAdd,
+              (GtkWidget* container, GtkWidget *widget));
+  MOCK_METHOD(void, GtkMain, ());
+  MOCK_METHOD(void, GtkMainQuit, ());
+  MOCK_METHOD(void, GtkWidgetHideAll, (GtkWidget* widget));
+  MOCK_METHOD(void, GtkWidgetQueueDrawArea,
+              (GtkWidget* widget, int x, int y, int width, int height));
+  MOCK_METHOD(void, GtkWidgetShowAll, (GtkWidget* widget));
+  MOCK_METHOD(void, GtkWindowGetPosition, (GtkWidget* window, int *x, int *y));
+  MOCK_METHOD(void, GtkWindowGetSize,
+              (GtkWidget* window, int *width, int *height));
+  MOCK_METHOD(bool, GtkWindowIsActive, (GtkWidget* window));
+  MOCK_METHOD(void, GtkWindowMove, (GtkWidget* window, int x, int y));
+  MOCK_METHOD(void, GtkWindowResize,
+              (GtkWidget* window, int width, int height));
+  MOCK_METHOD(void, GtkWidgetAddEvents, (GtkWidget* widget, gint events));
+  MOCK_METHOD(void, GtkWidgetRealize, (GtkWidget* widget));
+  MOCK_METHOD(void, GdkWindowSetTypeHint,
+              (GtkWidget* widget, GdkWindowTypeHint hint));
 };
 
 }  // namespace gtk

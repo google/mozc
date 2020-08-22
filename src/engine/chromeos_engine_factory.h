@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,13 @@ class ChromeOsEngineFactory {
   // Creates an instance of Engine class. The caller is responsible for deleting
   // the returned object.
   static Engine *Create() {
-    return Engine::CreateDesktopEngineHelper<chromeos::ChromeOsDataManager>()
-        .release();
+    auto engine =
+        Engine::CreateDesktopEngineHelper<chromeos::ChromeOsDataManager>();
+    if (!engine.ok()) {
+      LOG(ERROR) << engine.status();
+      return nullptr;
+    }
+    return engine->release();
   }
 };
 

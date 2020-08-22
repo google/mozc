@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ bool RemoveRedundantCandidateRewriter::Rewrite(const ConversionRequest &request,
   if (segments->conversion_segments_size() == 1 &&
       segments->conversion_segment(0).candidates_size() == 1 &&
       segments->conversion_segment(0).candidate(0).value ==
-      segments->conversion_segment(0).key()) {
+          segments->conversion_segment(0).key()) {
     segments->mutable_conversion_segment(0)->clear_candidates();
     return true;
   } else {

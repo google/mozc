@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ class Thread {
 
   virtual void Run() = 0;
 
-  void Start(const string &thread_name);
+  void Start(const std::string &thread_name);
   bool IsRunning() const;
   void SetJoinable(bool joinable);
   void Join();
@@ -71,12 +71,12 @@ class ThreadJoiner final {
       : joiner_(thread, &ThreadJoiner::JoinThread) {}
 
   // Non-copyable
-  ThreadJoiner(const ThreadJoiner&) = delete;
-  ThreadJoiner& operator=(const ThreadJoiner&) = delete;
+  ThreadJoiner(const ThreadJoiner &) = delete;
+  ThreadJoiner &operator=(const ThreadJoiner &) = delete;
 
   // Movable
-  ThreadJoiner(ThreadJoiner&&) = default;
-  ThreadJoiner& operator=(ThreadJoiner&&) = default;
+  ThreadJoiner(ThreadJoiner &&) = default;
+  ThreadJoiner &operator=(ThreadJoiner &&) = default;
 
   ~ThreadJoiner() = default;
 

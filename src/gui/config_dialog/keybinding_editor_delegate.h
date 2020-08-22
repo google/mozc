@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,24 +45,20 @@ class KeyBindingEditorDelegate : public QItemDelegate {
   explicit KeyBindingEditorDelegate(QObject *parent = NULL);
   virtual ~KeyBindingEditorDelegate();
 
-  QWidget *createEditor(QWidget *parent,
-                        const QStyleOptionViewItem &option,
+  QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                         const QModelIndex &index) const;
 
-  void setEditorData(QWidget *editor,
-                     const QModelIndex &index) const;
-  void setModelData(QWidget *editor,
-                    QAbstractItemModel *model,
+  void setEditorData(QWidget *editor, const QModelIndex &index) const;
+  void setModelData(QWidget *editor, QAbstractItemModel *model,
                     const QModelIndex &index) const;
 
-  void updateEditorGeometry(QWidget *editor,
-                            const QStyleOptionViewItem &option,
+  void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
                             const QModelIndex &index) const;
 
  private slots:
   void CommitAndCloseEditor();
   void CloseEditor();
 };
-}  // gui
-}  // mozc
+}  // namespace gui
+}  // namespace mozc
 #endif  // MOZC_GUI_KEYCOMMAND_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_

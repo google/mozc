@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 #define MOZC_RENDERER_MAC_INFOLIST_WINDOW_H_
 
 #import <Carbon/Carbon.h>
-#include "base/scoped_nsobject.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
 @class InfolistWindowTimerHandler;
@@ -49,17 +48,17 @@ class InfolistWindow : public RendererBaseWindow {
  public:
   InfolistWindow();
   virtual ~InfolistWindow();
-  void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface);
+  void SetSendCommandInterface(client::SendCommandInterface *send_command_interface);
   void SetCandidates(const commands::Candidates &candidates);
   void DelayHide(int delay);  // set duration in msecs.
   void DelayShow(int delay);
   virtual void Hide();
   virtual void Show();
-  void onTimer(NSTimer* timer);
+  void onTimer(NSTimer *timer);
+
  private:
-  scoped_nsobject<InfolistWindowTimerHandler> timer_handler_;
-  NSTimer* lasttimer_;
+  InfolistWindowTimerHandler *timer_handler_;
+  NSTimer *lasttimer_;
   bool visible_;
   void ResetView();
   mozc::client::SendCommandInterface *command_sender_;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,38 +36,41 @@
 #include "base/mmap.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace dictionary {
 
-DictionaryFile::DictionaryFile(
-    const DictionaryFileCodecInterface *file_codec)
+DictionaryFile::DictionaryFile(const DictionaryFileCodecInterface *file_codec)
     : file_codec_(file_codec) {
   DCHECK(file_codec_);
 }
 
-DictionaryFile::~DictionaryFile() {}
+DictionaryFile::~DictionaryFile() = default;
 
-bool DictionaryFile::OpenFromFile(const string &file) {
-  mapping_.reset(new Mmap());
-  CHECK(mapping_->Open(file.c_str()));
+mozc::Status DictionaryFile::OpenFromFile(const std::string &file) {
+  mapping_ = absl::make_unique<Mmap>();
+  if (!mapping_->Open(file.c_str())) {
+    return mozc::UnknownError(
+        absl::StrCat("dictionary_file.cc: Failed to mmap ", file));
+  }
   return OpenFromImage(mapping_->begin(), mapping_->size());
 }
 
-bool DictionaryFile::OpenFromImage(const char *image, int length) {
+mozc::Status DictionaryFile::OpenFromImage(const char *image, int length) {
   sections_.clear();
-  const bool result = file_codec_->ReadSections(image, length, &sections_);
-  return result;
+  return file_codec_->ReadSections(image, length, &sections_);
 }
 
-const char *DictionaryFile::GetSection(const string &section_name,
+const char *DictionaryFile::GetSection(const std::string &section_name,
                                        int *len) const {
   DCHECK(len);
-  const string name = file_codec_->GetSectionName(section_name);
-  for (size_t i = 0; i < sections_.size(); ++i) {
-    if (sections_[i].name == name) {
-      *len = sections_[i].len;
-      return sections_[i].ptr;
+  const std::string name = file_codec_->GetSectionName(section_name);
+  for (const auto &section : sections_) {
+    if (section.name == name) {
+      *len = section.len;
+      return section.ptr;
     }
   }
   return nullptr;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,18 +35,20 @@
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class ConversionRequest;
 class Segments;
 
-class EmoticonRewriter : public RewriterInterface  {
+class EmoticonRewriter : public RewriterInterface {
  public:
   static std::unique_ptr<EmoticonRewriter> CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
-  EmoticonRewriter(StringPiece token_array_data, StringPiece string_array_data);
+  EmoticonRewriter(absl::string_view token_array_data,
+                   absl::string_view string_array_data);
   ~EmoticonRewriter() override;
 
   int capability(const ConversionRequest &request) const override;

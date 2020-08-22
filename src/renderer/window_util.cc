@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -170,13 +170,13 @@ Rect WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
   }
 
   return GetWindowRectForMainWindowFromPreeditRectHorizontal(
-      target_point, preedit_rect, window_size, zero_point_offset,
-      working_area);
+      target_point, preedit_rect, window_size, zero_point_offset, working_area);
 }
 
-Rect WindowUtil::GetWindowRectForCascadingWindow(
-    const Rect &selected_row, const Size &window_size,
-    const Point &zero_point_offset, const Rect &working_area) {
+Rect WindowUtil::GetWindowRectForCascadingWindow(const Rect &selected_row,
+                                                 const Size &window_size,
+                                                 const Point &zero_point_offset,
+                                                 const Rect &working_area) {
   const Point row_top_right(selected_row.Right(), selected_row.Top());
 
   Rect window_rect(row_top_right, window_size);
@@ -212,9 +212,9 @@ Rect WindowUtil::GetWindowRectForCascadingWindow(
   return window_rect;
 }
 
-Rect WindowUtil::GetWindowRectForInfolistWindow(
-    const Size &window_size, const Rect &candidate_rect,
-    const Rect &working_area) {
+Rect WindowUtil::GetWindowRectForInfolistWindow(const Size &window_size,
+                                                const Rect &candidate_rect,
+                                                const Rect &working_area) {
   Point infolist_pos;
 
   if (working_area.Height() == 0 || working_area.Width() == 0) {

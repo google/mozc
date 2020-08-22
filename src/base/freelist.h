@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 #define MOZC_BASE_FREELIST_H_
 
 #include <vector>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -44,25 +45,23 @@ namespace mozc {
 // Also this class runs unneeded T's constructor along with the memory chunk
 // allocation.
 // Please do take care to use this class.
-template <class T> class FreeList {
+template <class T>
+class FreeList {
  public:
   explicit FreeList(size_t size)
-      : current_index_(0), chunk_index_(0), size_(size) {
-  }
+      : current_index_(0), chunk_index_(0), size_(size) {}
 
   ~FreeList() {
     for (size_t i = 0; i < pool_.size(); ++i) {
-      delete [] pool_[i];
+      delete[] pool_[i];
     }
   }
 
-  void Reset() {
-    chunk_index_ = current_index_ = 0;
-  }
+  void Reset() { chunk_index_ = current_index_ = 0; }
 
   void Free() {
     for (size_t i = 1; i < pool_.size(); ++i) {
-      delete [] pool_[i];
+      delete[] pool_[i];
     }
     if (pool_.size() > 1) {
       pool_.resize(1);
@@ -71,9 +70,7 @@ template <class T> class FreeList {
     chunk_index_ = 0;
   }
 
-  T* Alloc() {
-    return Alloc(static_cast<size_t>(1));
-  }
+  T* Alloc() { return Alloc(static_cast<size_t>(1)); }
 
   T* Alloc(size_t len) {
     if ((current_index_ + len) >= size_) {
@@ -90,12 +87,10 @@ template <class T> class FreeList {
     return r;
   }
 
-  void set_size(size_t size) {
-    size_ = size;
-  }
+  void set_size(size_t size) { size_ = size; }
 
  private:
-  std::vector<T *> pool_;
+  std::vector<T*> pool_;
   size_t current_index_;
   size_t chunk_index_;
   size_t size_;
@@ -103,13 +98,12 @@ template <class T> class FreeList {
   DISALLOW_COPY_AND_ASSIGN(FreeList);
 };
 
-template <class T> class ObjectPool {
+template <class T>
+class ObjectPool {
  public:
-  explicit ObjectPool(int size): freelist_(size) {
-  }
+  explicit ObjectPool(int size) : freelist_(size) {}
 
-  ~ObjectPool() {
-  }
+  ~ObjectPool() {}
 
   void Free() {
     released_.clear();
@@ -118,23 +112,19 @@ template <class T> class ObjectPool {
 
   T* Alloc() {
     if (!released_.empty()) {
-      T *result = released_.back();
+      T* result = released_.back();
       released_.pop_back();
       return result;
     }
     return freelist_.Alloc(1);
   }
 
-  void Release(T *ptr) {
-    released_.push_back(ptr);
-  }
+  void Release(T* ptr) { released_.push_back(ptr); }
 
-  void set_size(int size) {
-    freelist_.set_size(size);
-  }
+  void set_size(int size) { freelist_.set_size(size); }
 
  private:
-  std::vector<T *> released_;
+  std::vector<T*> released_;
   FreeList<T> freelist_;
 
   DISALLOW_COPY_AND_ASSIGN(ObjectPool);

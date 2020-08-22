@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -75,7 +75,7 @@
       ],
     },
     {
-      # Android is not supported.
+      # iOS is not supported.
       'target_name': 'session_watch_dog',
       'type': 'static_library',
       'sources': [
@@ -94,6 +94,7 @@
         'session_observer_handler.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
@@ -108,7 +109,7 @@
         ':session_watch_dog',
       ],
       'conditions': [
-        ['(target_platform=="NaCl" and _toolset=="target") or target_platform=="Android"', {
+        ['target_platform=="iOS"', {
           'dependencies!': [
             ':session_watch_dog',
           ],
@@ -137,11 +138,8 @@
         'session_server.cc',
       ],
       'dependencies': [
-        # CAUTION: Don't forget to update android.gyp:mozc target as well!
-        # The target has almost the same dependency so if you update this
-        # dependency list you will have to update Android's.
         '../base/base.gyp:base',
-        '../usage_stats/usage_stats.gyp:usage_stats_uploader',
+        '../usage_stats/usage_stats_base.gyp:usage_stats_uploader',
         '../protocol/protocol.gyp:commands_proto',
         'session_handler',
         'session_usage_observer',
@@ -155,6 +153,7 @@
         'random_keyevents_generator.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         'gen_session_stress_test_data#host',

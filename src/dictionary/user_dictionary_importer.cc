@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dictionary/user_dictionary_importer.h"
+
+#include "absl/strings/string_view.h"
 
 #ifdef OS_WIN
 #include <windows.h>
@@ -59,19 +61,20 @@ namespace {
 
 uint64 EntryFingerprint(const UserDictionary::Entry &entry) {
   DCHECK_LE(0, entry.pos());
-MOZC_CLANG_PUSH_WARNING();
+  MOZC_CLANG_PUSH_WARNING();
+  // clang-format off
 #if MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
-MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
+  MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
 #endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
+  // clang-format on
   DCHECK_LE(entry.pos(), 255);
-MOZC_CLANG_POP_WARNING();
-  return Hash::Fingerprint(entry.key() + "\t" +
-                           entry.value() + "\t" +
+  MOZC_CLANG_POP_WARNING();
+  return Hash::Fingerprint(entry.key() + "\t" + entry.value() + "\t" +
                            static_cast<char>(entry.pos()));
 }
 
-void NormalizePOS(const string &input, string *output) {
-  string tmp;
+void NormalizePOS(const std::string &input, std::string *output) {
+  std::string tmp;
   output->clear();
   Util::FullWidthAsciiToHalfWidthAscii(input, &tmp);
   Util::HalfWidthKatakanaToFullWidthKatakana(tmp, output);
@@ -80,7 +83,7 @@ void NormalizePOS(const string &input, string *output) {
 // A data type to hold conversion rules of POSes. If mozc_pos is set to be an
 // empty string (""), it means that words of the POS should be ignored in Mozc.
 struct POSMap {
-  const char *source_pos;  // POS string of a third party IME.
+  const char *source_pos;            // POS string of a third party IME.
   UserDictionary::PosType mozc_pos;  // POS of Mozc.
 };
 
@@ -91,17 +94,15 @@ struct POSMap {
 // used with std::lower_bound().
 class POSMapCompare {
  public:
-  bool operator() (const POSMap &l_pos_map, const POSMap &r_pos_map) const {
+  bool operator()(const POSMap &l_pos_map, const POSMap &r_pos_map) const {
     return (strcmp(l_pos_map.source_pos, r_pos_map.source_pos) < 0);
   }
 };
 
 // Convert POS of a third party IME to that of Mozc using the given mapping.
-bool ConvertEntryInternal(
-    const POSMap *pos_map,
-    size_t map_size,
-    const UserDictionaryImporter::RawEntry &from,
-    UserDictionary::Entry *to) {
+bool ConvertEntryInternal(const POSMap *pos_map, size_t map_size,
+                          const UserDictionaryImporter::RawEntry &from,
+                          UserDictionary::Entry *to) {
   if (to == NULL) {
     LOG(ERROR) << "Null pointer is passed.";
     return false;
@@ -114,8 +115,16 @@ bool ConvertEntryInternal(
   }
 
   // Normalize POS (remove full width ascii and half width katakana)
-  string pos;
+  std::string pos;
   NormalizePOS(from.pos, &pos);
+
+  std::string locale;
+  // TODO(all): Better to use StrSplit.
+  const auto it = pos.find(':');
+  if (it != std::string::npos) {
+    locale = pos.substr(it + 1, pos.size());
+    pos = pos.substr(0, it);
+  }
 
   // ATOK's POS has a special marker for distinguishing auto-registered
   // words/manually-registered words. Remove the mark here.
@@ -149,13 +158,18 @@ bool ConvertEntryInternal(
   to->set_pos(found->mozc_pos);
 
   // Normalize reading.
-  string normalized_key;
+  std::string normalized_key;
   UserDictionaryUtil::NormalizeReading(to->key(), &normalized_key);
   to->set_key(normalized_key);
 
   // Copy comment.
   if (!from.comment.empty()) {
     to->set_comment(from.comment);
+  }
+
+  // Sets locale field.
+  if (!locale.empty()) {
+    to->set_locale(locale);
   }
 
   // Validation.
@@ -193,8 +207,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
       return IMPORT_TOO_MANY_WORDS;
     }
 
-    if (raw_entry.key.empty() &&
-        raw_entry.value.empty() &&
+    if (raw_entry.key.empty() && raw_entry.value.empty() &&
         raw_entry.comment.empty()) {
       // Empty entry is just skipped. It could be annoying if we show a
       // warning dialog when these empty candidates exist.
@@ -222,8 +235,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
 
 UserDictionaryImporter::ErrorType
 UserDictionaryImporter::ImportFromTextLineIterator(
-    IMEType ime_type,
-    TextLineIteratorInterface *iter,
+    IMEType ime_type, TextLineIteratorInterface *iter,
     UserDictionary *user_dic) {
   TextInputIterator text_iter(ime_type, iter);
   if (text_iter.ime_type() == NUM_IMES) {
@@ -234,7 +246,8 @@ UserDictionaryImporter::ImportFromTextLineIterator(
 }
 
 UserDictionaryImporter::StringTextLineIterator::StringTextLineIterator(
-    StringPiece data) : data_(data), position_(0) {}
+    absl::string_view data)
+    : data_(data), position_(0) {}
 
 UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() {}
 
@@ -242,38 +255,35 @@ bool UserDictionaryImporter::StringTextLineIterator::IsAvailable() const {
   return position_ < data_.length();
 }
 
-bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
+bool UserDictionaryImporter::StringTextLineIterator::Next(std::string *line) {
   if (!IsAvailable()) {
     return false;
   }
 
-  const StringPiece crlf("\r\n");
+  const absl::string_view crlf("\r\n");
   for (size_t i = position_; i < data_.length(); ++i) {
     if (data_[i] == '\n' || data_[i] == '\r') {
-      const StringPiece next_line =
-          ClippedSubstr(data_, position_, i - position_);
+      const absl::string_view next_line =
+          absl::ClippedSubstr(data_, position_, i - position_);
       line->assign(next_line.data(), next_line.size());
       // Handles CR/LF issue.
-      const StringPiece possible_crlf = ClippedSubstr(data_, i, 2);
+      const absl::string_view possible_crlf = absl::ClippedSubstr(data_, i, 2);
       position_ = possible_crlf.compare(crlf) == 0 ? (i + 2) : (i + 1);
       return true;
     }
   }
 
-  const StringPiece next_line =
-      ClippedSubstr(data_, position_, data_.size() - position_);
+  const absl::string_view next_line =
+      absl::ClippedSubstr(data_, position_, data_.size() - position_);
   line->assign(next_line.data(), next_line.size());
   position_ = data_.length();
   return true;
 }
 
-void UserDictionaryImporter::StringTextLineIterator::Reset() {
-  position_ = 0;
-}
+void UserDictionaryImporter::StringTextLineIterator::Reset() { position_ = 0; }
 
 UserDictionaryImporter::TextInputIterator::TextInputIterator(
-    IMEType ime_type,
-    TextLineIteratorInterface *iter)
+    IMEType ime_type, TextLineIteratorInterface *iter)
     : ime_type_(NUM_IMES), iter_(iter) {
   CHECK(iter_);
   if (!iter_->IsAvailable()) {
@@ -281,7 +291,7 @@ UserDictionaryImporter::TextInputIterator::TextInputIterator(
   }
 
   IMEType guessed_type = NUM_IMES;
-  string line;
+  std::string line;
   if (iter_->Next(&line)) {
     guessed_type = GuessIMEType(line);
     iter_->Reset();
@@ -296,8 +306,7 @@ UserDictionaryImporter::TextInputIterator::~TextInputIterator() {}
 
 bool UserDictionaryImporter::TextInputIterator::IsAvailable() const {
   DCHECK(iter_);
-  return (iter_->IsAvailable() &&
-          ime_type_ != IME_AUTO_DETECT &&
+  return (iter_->IsAvailable() && ime_type_ != IME_AUTO_DETECT &&
           ime_type_ != NUM_IMES);
 }
 
@@ -315,7 +324,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
 
   entry->Clear();
 
-  string line;
+  std::string line;
   while (iter_->Next(&line)) {
     Util::ChopReturns(&line);
     // Skip empty lines.
@@ -332,7 +341,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
 
     VLOG(2) << line;
 
-    std::vector<string> values;
+    std::vector<std::string> values;
     switch (ime_type_) {
       case MSIME:
       case ATOK:
@@ -368,18 +377,18 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
   return false;
 }
 
-bool UserDictionaryImporter::ConvertEntry(
-    const RawEntry &from, UserDictionary::Entry *to) {
+bool UserDictionaryImporter::ConvertEntry(const RawEntry &from,
+                                          UserDictionary::Entry *to) {
   return ConvertEntryInternal(kPOSMap, arraysize(kPOSMap), from, to);
 }
 
-UserDictionaryImporter::IMEType
-UserDictionaryImporter::GuessIMEType(StringPiece line) {
+UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
+    absl::string_view line) {
   if (line.empty()) {
     return NUM_IMES;
   }
 
-  string lower = line.as_string();
+  std::string lower = std::string(line);
   Util::LowerString(&lower);
 
   if (lower.find("!microsoft ime") == 0) {
@@ -389,7 +398,7 @@ UserDictionaryImporter::GuessIMEType(StringPiece line) {
   // Old ATOK format (!!DICUT10) is not supported for now
   // http://b/2455897
   if (lower.find("!!dicut") == 0 && lower.size() > 7) {
-    const string version(lower, 7, lower.size() - 7);
+    const std::string version(lower, 7, lower.size() - 7);
     if (NumberUtil::SimpleAtoi(version) >= 11) {
       return ATOK;
     } else {
@@ -402,11 +411,11 @@ UserDictionaryImporter::GuessIMEType(StringPiece line) {
   }
 
   if (*line.begin() == '"' && *line.rbegin() == '"' &&
-      line.find("\t") == string::npos) {
+      line.find("\t") == std::string::npos) {
     return KOTOERI;
   }
 
-  if (*line.begin() == '#' || line.find("\t") != string::npos) {
+  if (*line.begin() == '#' || line.find("\t") != std::string::npos) {
     return MOZC;
   }
 
@@ -436,20 +445,18 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::DetermineFinalIMEType(
   return result_ime_type;
 }
 
-UserDictionaryImporter::EncodingType
-UserDictionaryImporter::GuessEncodingType(StringPiece str) {
+UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
+    absl::string_view str) {
   // Unicode BOM.
-  if (str.size() >= 2 &&
-      ((static_cast<uint8>(str[0]) == 0xFF &&
-        static_cast<uint8>(str[1]) == 0xFE) ||
-       (static_cast<uint8>(str[0]) == 0xFE &&
-        static_cast<uint8>(str[1]) == 0xFF))) {
+  if (str.size() >= 2 && ((static_cast<uint8>(str[0]) == 0xFF &&
+                           static_cast<uint8>(str[1]) == 0xFE) ||
+                          (static_cast<uint8>(str[0]) == 0xFE &&
+                           static_cast<uint8>(str[1]) == 0xFF))) {
     return UTF16;
   }
 
   // UTF-8 BOM.
-  if (str.size() >= 3 &&
-      static_cast<uint8>(str[0]) == 0xEF &&
+  if (str.size() >= 3 && static_cast<uint8>(str[0]) == 0xEF &&
       static_cast<uint8>(str[1]) == 0xBB &&
       static_cast<uint8>(str[2]) == 0xBF) {
     return UTF8;
@@ -475,8 +482,7 @@ UserDictionaryImporter::GuessEncodingType(StringPiece str) {
     }
 
     // "\n\r\t " or Japanese code point
-    if (ucs4 == 0x000A || ucs4 == 0x000D ||
-        ucs4 == 0x0020 || ucs4 == 0x0009 ||
+    if (ucs4 == 0x000A || ucs4 == 0x000D || ucs4 == 0x0020 || ucs4 == 0x0009 ||
         Util::GetScriptType(ucs4) != Util::UNKNOWN_SCRIPT) {
       valid_script += mblen;
     }
@@ -494,7 +500,7 @@ UserDictionaryImporter::GuessEncodingType(StringPiece str) {
 }
 
 UserDictionaryImporter::EncodingType
-UserDictionaryImporter::GuessFileEncodingType(const string &filename) {
+UserDictionaryImporter::GuessFileEncodingType(const std::string &filename) {
   Mmap mmap;
   if (!mmap.Open(filename.c_str(), "r")) {
     LOG(ERROR) << "cannot open: " << filename;
@@ -502,7 +508,8 @@ UserDictionaryImporter::GuessFileEncodingType(const string &filename) {
   }
   const size_t kMaxCheckSize = 1024;
   const size_t size = std::min(kMaxCheckSize, static_cast<size_t>(mmap.size()));
-  const StringPiece mapped_data(static_cast<const char *>(mmap.begin()), size);
+  const absl::string_view mapped_data(static_cast<const char *>(mmap.begin()),
+                                      size);
   return GuessEncodingType(mapped_data);
 }
 

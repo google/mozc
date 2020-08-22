@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,9 +65,7 @@ class SingleKanjiRewriterTest : public ::testing::Test {
     return new SingleKanjiRewriter(*data_manager_);
   }
 
-  const POSMatcher &pos_matcher() {
-    return pos_matcher_;
-  }
+  const POSMatcher &pos_matcher() { return pos_matcher_; }
 
   const ConversionRequest default_request_;
 
@@ -92,7 +90,7 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
 
   Segments segments;
   Segment *segment = segments.add_segment();
-  const string kKey = "あ";
+  const std::string kKey = "あ";
   segment->set_key(kKey);
   Segment::Candidate *candidate = segment->add_candidate();
   // First candidate may be inserted by other rewriters.

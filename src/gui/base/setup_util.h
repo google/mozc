@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,9 @@ namespace gui {
 class SetupUtil {
  public:
   enum SetDefaultFlags {
-    NONE                    = 0,
-    IME_DEFAULT             = 1,
-    DISABLE_HOTKEY          = 2,
+    NONE = 0,
+    IME_DEFAULT = 1,
+    DISABLE_HOTKEY = 2,
     IMPORT_MSIME_DICTIONARY = 4
   };
 

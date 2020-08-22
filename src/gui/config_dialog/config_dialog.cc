@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,10 @@
 #endif  // OS_ANDROID || OS_NACL
 
 #ifdef OS_WIN
-#include <QtGui/QGuiApplication>
+// clang-format off
 #include <windows.h>
+#include <QtGui/QGuiApplication>
+// clang-format on
 #endif
 
 #include <QtWidgets/QMessageBox>
@@ -47,28 +49,30 @@
 #include <sstream>
 
 #include "base/config_file_stream.h"
-#include "base/const.h"
 #include "base/logging.h"
-#include "base/mac_util.h"
 #include "base/run_level.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"
-#include "gui/base/win_util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
-#include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 
+#ifdef __APPLE__
+#include "base/mac_util.h"
+#endif  // __APPLE__
+
+#ifdef OS_WIN
+#include "gui/base/win_util.h"
+#endif  // OS_WIN
+
 namespace {
-template<typename T>
-void Connect(const QList<T *> &objects,
-             const char *signal,
-             const QObject *receiver,
-             const char *slot) {
+template <typename T>
+void Connect(const QList<T *> &objects, const char *signal,
+             const QObject *receiver, const char *slot) {
   for (typename QList<T *>::const_iterator itr = objects.begin();
        itr != objects.end(); ++itr) {
     QObject::connect(*itr, signal, receiver, slot);
@@ -94,11 +98,11 @@ ConfigDialog::ConfigDialog()
   miscStartupWidget->setVisible(false);
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   miscDefaultIMEWidget->setVisible(false);
   miscAdministrationWidget->setVisible(false);
   setWindowTitle(tr("Mozc Preferences"));
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
 #if defined(OS_LINUX)
   miscDefaultIMEWidget->setVisible(false);
@@ -106,7 +110,7 @@ ConfigDialog::ConfigDialog()
   miscStartupWidget->setVisible(false);
 #endif  // OS_LINUX
 
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
   // disable logging options
   miscLoggingWidget->setVisible(false);
 
@@ -115,15 +119,7 @@ ConfigDialog::ConfigDialog()
   const int kMiscTabIndex = 6;
   configDialogTabWidget->removeTab(kMiscTabIndex);
 #endif  // OS_LINUX
-#endif  // NO_LOGGING
-
-#ifndef ENABLE_CLOUD_HANDWRITING
-  cloudHandwritingCheckBox->setVisible(false);
-  cloudServersLayoutWidget->setVisible(false);
-  // Hide "Cloud" tab when all the cloud features are not available.
-  const int kCloudTabIndex = 5;
-  configDialogTabWidget->removeTab(kCloudTabIndex);
-#endif  // !ENABLE_CLOUD_HANDWRITING
+#endif  // MOZC_NO_LOGGING
 
   suggestionsSizeSpinBox->setRange(1, 9);
 
@@ -183,13 +179,13 @@ ConfigDialog::ConfigDialog()
   yenSignComboBox->addItem(tr("Yen Sign ¥"));
   yenSignComboBox->addItem(tr("Backslash \\"));
 
-#ifndef OS_MACOSX
+#ifndef __APPLE__
   // On Windows/Linux, yenSignCombBox can be hidden.
   yenSignLabel->hide();
   yenSignComboBox->hide();
   // On Windows/Linux, useJapaneseLayout checkbox should be invisible.
   useJapaneseLayout->hide();
-#endif  // !OS_MACOSX
+#endif  // !__APPLE__
 
 #ifndef OS_WIN
   // Mode indicator is available only on Windows.
@@ -198,71 +194,41 @@ ConfigDialog::ConfigDialog()
 
   // Reset texts explicitly for translations.
   configDialogButtonBox->button(QDialogButtonBox::Ok)->setText(tr("  Ok  "));
-  configDialogButtonBox->button(QDialogButtonBox::Cancel)->setText(
-      tr("Cancel"));
+  configDialogButtonBox->button(QDialogButtonBox::Cancel)
+      ->setText(tr("Cancel"));
   configDialogButtonBox->button(QDialogButtonBox::Apply)->setText(tr("Apply"));
 
   // signal/slot
-  QObject::connect(configDialogButtonBox,
-                   SIGNAL(clicked(QAbstractButton *)),
-                   this,
-                   SLOT(clicked(QAbstractButton *)));
-  QObject::connect(clearUserHistoryButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(configDialogButtonBox, SIGNAL(clicked(QAbstractButton *)),
+                   this, SLOT(clicked(QAbstractButton *)));
+  QObject::connect(clearUserHistoryButton, SIGNAL(clicked()), this,
                    SLOT(ClearUserHistory()));
-  QObject::connect(clearUserPredictionButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(clearUserPredictionButton, SIGNAL(clicked()), this,
                    SLOT(ClearUserPrediction()));
-  QObject::connect(clearUnusedUserPredictionButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(clearUnusedUserPredictionButton, SIGNAL(clicked()), this,
                    SLOT(ClearUnusedUserPrediction()));
-  QObject::connect(editUserDictionaryButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(editUserDictionaryButton, SIGNAL(clicked()), this,
                    SLOT(EditUserDictionary()));
-  QObject::connect(editKeymapButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(editKeymapButton, SIGNAL(clicked()), this,
                    SLOT(EditKeymap()));
-  QObject::connect(resetToDefaultsButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(resetToDefaultsButton, SIGNAL(clicked()), this,
                    SLOT(ResetToDefaults()));
-  QObject::connect(editRomanTableButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(editRomanTableButton, SIGNAL(clicked()), this,
                    SLOT(EditRomanTable()));
-  QObject::connect(inputModeComboBox,
-                   SIGNAL(currentIndexChanged(int)),
-                   this,
+  QObject::connect(inputModeComboBox, SIGNAL(currentIndexChanged(int)), this,
                    SLOT(SelectInputModeSetting(int)));
-  QObject::connect(useAutoConversion,
-                   SIGNAL(stateChanged(int)),
-                   this,
+  QObject::connect(useAutoConversion, SIGNAL(stateChanged(int)), this,
                    SLOT(SelectAutoConversionSetting(int)));
-  QObject::connect(historySuggestCheckBox,
-                   SIGNAL(stateChanged(int)),
-                   this,
+  QObject::connect(historySuggestCheckBox, SIGNAL(stateChanged(int)), this,
                    SLOT(SelectSuggestionSetting(int)));
-  QObject::connect(dictionarySuggestCheckBox,
-                   SIGNAL(stateChanged(int)),
-                   this,
+  QObject::connect(dictionarySuggestCheckBox, SIGNAL(stateChanged(int)), this,
                    SLOT(SelectSuggestionSetting(int)));
-  QObject::connect(realtimeConversionCheckBox,
-                   SIGNAL(stateChanged(int)),
-                   this,
+  QObject::connect(realtimeConversionCheckBox, SIGNAL(stateChanged(int)), this,
                    SLOT(SelectSuggestionSetting(int)));
-  QObject::connect(launchAdministrationDialogButton,
-                   SIGNAL(clicked()),
-                   this,
+  QObject::connect(launchAdministrationDialogButton, SIGNAL(clicked()), this,
                    SLOT(LaunchAdministrationDialog()));
   QObject::connect(launchAdministrationDialogButtonForUsageStats,
-                   SIGNAL(clicked()),
-                   this,
-                   SLOT(LaunchAdministrationDialog()));
+                   SIGNAL(clicked()), this, SLOT(LaunchAdministrationDialog()));
 
   // Event handlers to enable 'Apply' button.
   Connect(findChildren<QPushButton *>(), SIGNAL(clicked()), this,
@@ -287,7 +253,7 @@ ConfigDialog::ConfigDialog()
   checkDefaultCheckBox->setVisible(false);
   checkDefaultLine->setVisible(false);
   checkDefaultLabel->setVisible(false);
-#endif   // !OS_WIN
+#endif  // !OS_WIN
 
 #ifdef OS_WIN
   launchAdministrationDialogButton->setEnabled(true);
@@ -339,8 +305,7 @@ ConfigDialog::ConfigDialog()
 #endif  // CHANNEL_DEV
 }
 
-ConfigDialog::~ConfigDialog() {
-}
+ConfigDialog::~ConfigDialog() {}
 
 bool ConfigDialog::SetConfig(const config::Config &config) {
   if (!client_->CheckVersionOrRestartServer()) {
@@ -393,16 +358,14 @@ bool ConfigDialog::Update() {
   if (config.session_keymap() == config::Config::CUSTOM &&
       config.custom_keymap_table().empty()) {
     QMessageBox::warning(this, windowTitle(),
-        tr("The current custom keymap table is empty. "
-           "When custom keymap is selected, "
-           "you must customize it."));
+                         tr("The current custom keymap table is empty. "
+                            "When custom keymap is selected, "
+                            "you must customize it."));
     return false;
   }
 
-
 #if defined(OS_WIN)
-  if ((initial_preedit_method_ !=
-       static_cast<int>(config.preedit_method())) ||
+  if ((initial_preedit_method_ != static_cast<int>(config.preedit_method())) ||
       (initial_use_keyboard_to_change_preedit_method_ !=
        config.use_keyboard_to_change_preedit_method())) {
     QMessageBox::information(this, windowTitle(),
@@ -424,8 +387,7 @@ bool ConfigDialog::Update() {
 #endif  // OS_WIN
 
   if (!SetConfig(config)) {
-    QMessageBox::critical(this, windowTitle(),
-                          tr("Failed to update config"));
+    QMessageBox::critical(this, windowTitle(), tr("Failed to update config"));
   }
 
 #ifdef OS_WIN
@@ -437,7 +399,7 @@ bool ConfigDialog::Update() {
   }
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   if (startupCheckBox->isChecked()) {
     if (!MacUtil::CheckPrelauncherLoginItemStatus()) {
       MacUtil::AddPrelauncherLoginItem();
@@ -447,7 +409,7 @@ bool ConfigDialog::Update() {
       MacUtil::RemovePrelauncherLoginItem();
     }
   }
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
   return true;
 }
@@ -470,23 +432,26 @@ void ConfigDialog::GetSendStatsCheckBox() const {
 #endif  // OS_WIN
 }
 
-#define SET_COMBOBOX(combobox, enumname, field) \
-do { \
-  (combobox)->setCurrentIndex(static_cast<int>(config.field()));  \
-} while (0)
+#define SET_COMBOBOX(combobox, enumname, field)                    \
+  do {                                                             \
+    (combobox)->setCurrentIndex(static_cast<int>(config.field())); \
+  } while (0)
 
-#define SET_CHECKBOX(checkbox, field) \
-do { (checkbox)->setChecked(config.field()); } while (0)
+#define SET_CHECKBOX(checkbox, field)       \
+  do {                                      \
+    (checkbox)->setChecked(config.field()); \
+  } while (0)
 
-#define GET_COMBOBOX(combobox, enumname, field) \
-do {  \
-  config->set_##field(static_cast<config::Config_##enumname> \
-                   ((combobox)->currentIndex())); \
-} while (0)
+#define GET_COMBOBOX(combobox, enumname, field)                              \
+  do {                                                                       \
+    config->set_##field(                                                     \
+        static_cast<config::Config_##enumname>((combobox)->currentIndex())); \
+  } while (0)
 
-#define GET_CHECKBOX(checkbox, field) \
-do { config->set_##field((checkbox)->isChecked());  } while (0)
-
+#define GET_CHECKBOX(checkbox, field)             \
+  do {                                            \
+    config->set_##field((checkbox)->isChecked()); \
+  } while (0)
 
 namespace {
 static const int kPreeditMethodSize = 2;
@@ -518,7 +483,6 @@ void GetComboboxForPreeditMethod(const QComboBox *combobox,
   }
 }
 }  // namespace
-
 
 // TODO(taku)
 // Actually ConvertFromProto and ConvertToProto are almost the same.
@@ -563,12 +527,10 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   SET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
 
   SET_CHECKBOX(useAutoConversion, use_auto_conversion);
-  kutenCheckBox->setChecked(
-      config.auto_conversion_key() &
-      config::Config::AUTO_CONVERSION_KUTEN);
-  toutenCheckBox->setChecked(
-      config.auto_conversion_key() &
-      config::Config::AUTO_CONVERSION_TOUTEN);
+  kutenCheckBox->setChecked(config.auto_conversion_key() &
+                            config::Config::AUTO_CONVERSION_KUTEN);
+  toutenCheckBox->setChecked(config.auto_conversion_key() &
+                             config::Config::AUTO_CONVERSION_TOUTEN);
   questionMarkCheckBox->setChecked(
       config.auto_conversion_key() &
       config::Config::AUTO_CONVERSION_QUESTION_MARK);
@@ -576,8 +538,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
       config.auto_conversion_key() &
       config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
 
-  SET_COMBOBOX(shiftKeyModeSwitchComboBox,
-               ShiftKeyModeSwitch,
+  SET_COMBOBOX(shiftKeyModeSwitchComboBox, ShiftKeyModeSwitch,
                shift_key_mode_switch);
 
   SET_CHECKBOX(useJapaneseLayout, use_japanese_layout);
@@ -603,12 +564,10 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   SET_COMBOBOX(yenSignComboBox, YenSignCharacter, yen_sign_character);
 
   characterFormEditor->Load(config);
-  SET_CHECKBOX(cloudHandwritingCheckBox, allow_cloud_handwriting);
 
-#ifdef OS_MACOSX
-  startupCheckBox->setChecked(
-      MacUtil::CheckPrelauncherLoginItemStatus());
-#endif  // OS_MACOSX
+#ifdef __APPLE__
+  startupCheckBox->setChecked(MacUtil::CheckPrelauncherLoginItemStatus());
+#endif  // __APPLE__
 }
 
 void ConfigDialog::ConvertToProto(config::Config *config) const {
@@ -647,8 +606,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_CHECKBOX(spellingCorrectionCheckBox, use_spelling_correction);
 
   // InformationListConfig
-  config->mutable_information_list_config()->CopyFrom(
-      information_list_config_);
+  config->mutable_information_list_config()->CopyFrom(information_list_config_);
   config->mutable_information_list_config()->set_use_local_usage_dictionary(
       localUsageDictionaryCheckBox->isChecked());
 
@@ -663,25 +621,20 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
 
   uint32 auto_conversion_key = 0;
   if (kutenCheckBox->isChecked()) {
-    auto_conversion_key |=
-        config::Config::AUTO_CONVERSION_KUTEN;
+    auto_conversion_key |= config::Config::AUTO_CONVERSION_KUTEN;
   }
   if (toutenCheckBox->isChecked()) {
-    auto_conversion_key |=
-        config::Config::AUTO_CONVERSION_TOUTEN;
+    auto_conversion_key |= config::Config::AUTO_CONVERSION_TOUTEN;
   }
   if (questionMarkCheckBox->isChecked()) {
-    auto_conversion_key |=
-        config::Config::AUTO_CONVERSION_QUESTION_MARK;
+    auto_conversion_key |= config::Config::AUTO_CONVERSION_QUESTION_MARK;
   }
   if (exclamationMarkCheckBox->isChecked()) {
-    auto_conversion_key |=
-        config::Config::AUTO_CONVERSION_EXCLAMATION_MARK;
+    auto_conversion_key |= config::Config::AUTO_CONVERSION_EXCLAMATION_MARK;
   }
   config->set_auto_conversion_key(auto_conversion_key);
 
-  GET_COMBOBOX(shiftKeyModeSwitchComboBox,
-               ShiftKeyModeSwitch,
+  GET_COMBOBOX(shiftKeyModeSwitchComboBox, ShiftKeyModeSwitch,
                shift_key_mode_switch);
 
   // tab4
@@ -689,8 +642,8 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_CHECKBOX(dictionarySuggestCheckBox, use_dictionary_suggest);
   GET_CHECKBOX(realtimeConversionCheckBox, use_realtime_conversion);
 
-  config->set_suggestions_size
-      (static_cast<uint32>(suggestionsSizeSpinBox->value()));
+  config->set_suggestions_size(
+      static_cast<uint32>(suggestionsSizeSpinBox->value()));
 
   // tab5
   GetSendStatsCheckBox();
@@ -703,9 +656,6 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_COMBOBOX(yenSignComboBox, YenSignCharacter, yen_sign_character);
 
   characterFormEditor->Save(config);
-#ifdef ENABLE_CLOUD_HANDWRITING
-  GET_CHECKBOX(cloudHandwritingCheckBox, allow_cloud_handwriting);
-#endif  // ENABLE_CLOUD_HANDWRITING
 }
 
 #undef SET_COMBOBOX
@@ -734,68 +684,54 @@ void ConfigDialog::clicked(QAbstractButton *button) {
 void ConfigDialog::ClearUserHistory() {
   if (QMessageBox::Ok !=
       QMessageBox::question(
-          this,
-          windowTitle(),
+          this, windowTitle(),
           tr("Do you want to clear personalization data? "
              "Input history is not reset with this operation. "
              "Please open \"suggestion\" tab to remove input history data."),
-          QMessageBox::Ok | QMessageBox::Cancel,
-          QMessageBox::Cancel)) {
+          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
     return;
   }
 
   client_->CheckVersionOrRestartServer();
 
   if (!client_->ClearUserHistory()) {
-    QMessageBox::critical(
-        this,
-        windowTitle(),
-        tr("Mozc Converter is not running. "
-           "Settings were not saved."));
+    QMessageBox::critical(this, windowTitle(),
+                          tr("Mozc Converter is not running. "
+                             "Settings were not saved."));
   }
 }
 
 void ConfigDialog::ClearUserPrediction() {
   if (QMessageBox::Ok !=
       QMessageBox::question(
-          this,
-          windowTitle(),
-          tr("Do you want to clear all history data?"),
-          QMessageBox::Ok | QMessageBox::Cancel,
-          QMessageBox::Cancel)) {
+          this, windowTitle(), tr("Do you want to clear all history data?"),
+          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
     return;
   }
 
   client_->CheckVersionOrRestartServer();
 
   if (!client_->ClearUserPrediction()) {
-    QMessageBox::critical(
-        this,
-        windowTitle(),
-        tr("Mozc Converter is not running. "
-           "Settings were not saved."));
+    QMessageBox::critical(this, windowTitle(),
+                          tr("Mozc Converter is not running. "
+                             "Settings were not saved."));
   }
 }
 
 void ConfigDialog::ClearUnusedUserPrediction() {
   if (QMessageBox::Ok !=
       QMessageBox::question(
-          this,
-          windowTitle(),
-          tr("Do you want to clear unused history data?"),
-          QMessageBox::Ok | QMessageBox::Cancel,
-          QMessageBox::Cancel)) {
+          this, windowTitle(), tr("Do you want to clear unused history data?"),
+          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
     return;
   }
 
   client_->CheckVersionOrRestartServer();
 
   if (!client_->ClearUnusedUserPrediction()) {
-    QMessageBox::critical(
-        this,
-        windowTitle(),
-        tr("Mozc Converter is not running. "
-           "Operation was not executed."));
+    QMessageBox::critical(this, windowTitle(),
+                          tr("Mozc Converter is not running. "
+                             "Operation was not executed."));
   }
 }
 
@@ -804,7 +740,7 @@ void ConfigDialog::EditUserDictionary() {
 }
 
 void ConfigDialog::EditKeymap() {
-  string current_keymap_table = "";
+  std::string current_keymap_table = "";
   const QString keymap_name = keymapSettingComboBox->currentText();
   const std::map<QString, config::Config::SessionKeymap>::const_iterator itr =
       keymapname_sessionkeymap_map_.find(keymap_name);
@@ -821,10 +757,8 @@ void ConfigDialog::EditKeymap() {
   } else {
     current_keymap_table = custom_keymap_table_;
   }
-  string output;
-  if (gui::KeyMapEditorDialog::Show(this,
-                                    current_keymap_table,
-                                    &output)) {
+  std::string output;
+  if (gui::KeyMapEditorDialog::Show(this, current_keymap_table, &output)) {
     custom_keymap_table_ = output;
     // set keymapSettingComboBox to "Custom keymap"
     keymapSettingComboBox->setCurrentIndex(0);
@@ -832,10 +766,8 @@ void ConfigDialog::EditKeymap() {
 }
 
 void ConfigDialog::EditRomanTable() {
-  string output;
-  if (gui::RomanTableEditorDialog::Show(this,
-                                        custom_roman_table_,
-                                        &output)) {
+  std::string output;
+  if (gui::RomanTableEditorDialog::Show(this, custom_roman_table_, &output)) {
     custom_roman_table_ = output;
   }
 }
@@ -865,8 +797,7 @@ void ConfigDialog::SelectSuggestionSetting(int state) {
 void ConfigDialog::ResetToDefaults() {
   if (QMessageBox::Ok ==
       QMessageBox::question(
-          this,
-          windowTitle(),
+          this, windowTitle(),
           tr("When you reset Mozc settings, any changes "
              "you've made will be reverted to the default settings. "
              "Do you want to reset settings? "
@@ -875,8 +806,7 @@ void ConfigDialog::ResetToDefaults() {
              " - Input history\n"
              " - Usage statistics and crash reports\n"
              " - Administrator settings"),
-          QMessageBox::Ok | QMessageBox::Cancel,
-          QMessageBox::Cancel)) {
+          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
     // TODO(taku): remove the dependency to config::ConfigHandler
     // nice to have GET_DEFAULT_CONFIG command
     config::Config config;

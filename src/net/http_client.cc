@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,11 @@
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 #if defined(OS_WIN)
-# include <windows.h>
-# include <wininet.h>
-#elif defined(OS_ANDROID)
-# include "base/android_jni_proxy.h"
+#include <windows.h>
+#include <wininet.h>
 #elif defined(HAVE_CURL)
-# include <curl/curl.h>
-#endif  // defined(OS_WIN), defined(OS_ANDROID), defined(HAVE_CURL)
+#include <curl/curl.h>
+#endif  // defined(OS_WIN), defined(HAVE_CURL)
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -51,12 +49,12 @@
 #include "net/http_client_common.h"
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#if defined(OS_MACOSX)
+#if defined(__APPLE__)
 #include "net/http_client_mac.h"
-#elif defined(OS_NACL)  // OS_MACOSX
-#include "net/http_client_pepper.h"
-#endif  // OS_MACOSX or OS_NACL
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
+#elif defined(OS_NACL)  // __APPLE__
+#include "net/http_client_null.h"
+#endif  // __APPLE__ or OS_NACL
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 #include "net/http_client_null.h"
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -70,7 +68,7 @@ const int kOKResponseCode = 200;
 namespace {
 class HTTPStream {
  public:
-  HTTPStream(string *output_string, size_t max_data_size)
+  HTTPStream(std::string *output_string, size_t max_data_size)
       : output_string_(output_string),
         max_data_size_(max_data_size),
         output_size_(0) {
@@ -80,9 +78,7 @@ class HTTPStream {
     VLOG(2) << "max_data_size=" << max_data_size;
   }
 
-  virtual ~HTTPStream() {
-    VLOG(2) << output_size_ << " bytes received";
-  }
+  virtual ~HTTPStream() { VLOG(2) << output_size_ << " bytes received"; }
 
   size_t Append(const char *buf, size_t size) {
     if (output_size_ + size >= max_data_size_) {
@@ -101,9 +97,9 @@ class HTTPStream {
   }
 
  private:
-  string  *output_string_;
-  size_t   max_data_size_;
-  size_t   output_size_;
+  std::string *output_string_;
+  size_t max_data_size_;
+  size_t output_size_;
 };
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
@@ -112,8 +108,7 @@ class HTTPStream {
 // RAII class for HINTERNET
 class ScopedHINTERNET {
  public:
-  explicit ScopedHINTERNET(HINTERNET internet)
-      : internet_(internet) {}
+  explicit ScopedHINTERNET(HINTERNET internet) : internet_(internet) {}
   virtual ~ScopedHINTERNET() {
     if (NULL != internet_) {
       VLOG(2) << "InternetCloseHandle() called";
@@ -122,18 +117,14 @@ class ScopedHINTERNET {
     internet_ = NULL;
   }
 
-  HINTERNET get() {
-    return internet_;
-  }
+  HINTERNET get() { return internet_; }
 
  private:
   HINTERNET internet_;
 };
 
-void CALLBACK StatusCallback(HINTERNET internet,
-                             DWORD_PTR context,
-                             DWORD status,
-                             LPVOID status_info,
+void CALLBACK StatusCallback(HINTERNET internet, DWORD_PTR context,
+                             DWORD status, LPVOID status_info,
                              DWORD status_info_size) {
   if (status == INTERNET_STATUS_REQUEST_COMPLETE) {
     ::SetEvent(reinterpret_cast<HANDLE>(context));
@@ -165,8 +156,8 @@ bool CheckTimeout(HANDLE event, int64 elapsed_msec, int32 timeout_msec) {
     return false;
   }
   if (wait_result == WAIT_TIMEOUT) {
-    LOG(WARNING) << "WaitForSingleObject timed out after "
-                 << positive_time_left << " msec.";
+    LOG(WARNING) << "WaitForSingleObject timed out after " << positive_time_left
+                 << " msec.";
     return false;
   }
   if (wait_result != WAIT_OBJECT_0) {
@@ -178,12 +169,9 @@ bool CheckTimeout(HANDLE event, int64 elapsed_msec, int32 timeout_msec) {
   return true;
 }
 
-bool RequestInternal(HTTPMethodType type,
-                     const string &url,
-                     const char *post_data,
-                     size_t post_size,
-                     const HTTPClient::Option &option,
-                     string *output_string) {
+bool RequestInternal(HTTPMethodType type, const string &url,
+                     const char *post_data, size_t post_size,
+                     const HTTPClient::Option &option, string *output_string) {
   if (option.timeout <= 0) {
     LOG(ERROR) << "timeout should not be negative nor 0";
     return false;
@@ -198,14 +186,11 @@ bool RequestInternal(HTTPMethodType type,
   }
 
   ScopedHINTERNET internet(::InternetOpenA(kUserAgent,
-                                           INTERNET_OPEN_TYPE_PRECONFIG,
-                                           NULL,
-                                           NULL,
-                                           INTERNET_FLAG_ASYNC));
+                                           INTERNET_OPEN_TYPE_PRECONFIG, NULL,
+                                           NULL, INTERNET_FLAG_ASYNC));
 
   if (NULL == internet.get()) {
-    LOG(ERROR) << "InternetOpen() failed: "
-               << ::GetLastError() << " " << url;
+    LOG(ERROR) << "InternetOpen() failed: " << ::GetLastError() << " " << url;
     ::CloseHandle(event);
     return false;
   }
@@ -220,27 +205,27 @@ bool RequestInternal(HTTPMethodType type,
   wchar_t UrlPath[256];
   wchar_t ExtraInfo[512];
 
-  uc.dwStructSize  = sizeof(uc);
-  uc.lpszScheme    = Scheme;
-  uc.lpszHostName  = HostName;
-  uc.lpszUserName  = UserName;
-  uc.lpszPassword  = Password;
-  uc.lpszUrlPath   = UrlPath;
+  uc.dwStructSize = sizeof(uc);
+  uc.lpszScheme = Scheme;
+  uc.lpszHostName = HostName;
+  uc.lpszUserName = UserName;
+  uc.lpszPassword = Password;
+  uc.lpszUrlPath = UrlPath;
   uc.lpszExtraInfo = ExtraInfo;
 
-  uc.dwSchemeLength    = sizeof(Scheme);
-  uc.dwHostNameLength  = sizeof(HostName);
-  uc.dwUserNameLength  = sizeof(UserName);
-  uc.dwPasswordLength  = sizeof(Password);
-  uc.dwUrlPathLength   = sizeof(UrlPath);
+  uc.dwSchemeLength = sizeof(Scheme);
+  uc.dwHostNameLength = sizeof(HostName);
+  uc.dwUserNameLength = sizeof(UserName);
+  uc.dwPasswordLength = sizeof(Password);
+  uc.dwUrlPathLength = sizeof(UrlPath);
   uc.dwExtraInfoLength = sizeof(ExtraInfo);
 
   std::wstring wurl;
   Util::UTF8ToWide(url, &wurl);
 
   if (!::InternetCrackUrlW(wurl.c_str(), 0, 0, &uc)) {
-    LOG(WARNING) << "InternetCrackUrl() failed: "
-                 << ::GetLastError() << " " << url;
+    LOG(WARNING) << "InternetCrackUrl() failed: " << ::GetLastError() << " "
+                 << url;
     return false;
   }
 
@@ -250,18 +235,13 @@ bool RequestInternal(HTTPMethodType type,
     return false;
   }
 
-  ScopedHINTERNET session(::InternetConnect(internet.get(),
-                                            uc.lpszHostName,
-                                            uc.nPort,
-                                            NULL,
-                                            NULL,
-                                            INTERNET_SERVICE_HTTP,
-                                            0,
-                                            0));
+  ScopedHINTERNET session(::InternetConnect(internet.get(), uc.lpszHostName,
+                                            uc.nPort, NULL, NULL,
+                                            INTERNET_SERVICE_HTTP, 0, 0));
 
   if (NULL == session.get()) {
-    LOG(ERROR) << "InternetConnect() failed: "
-               << ::GetLastError() << " " << url;
+    LOG(ERROR) << "InternetConnect() failed: " << ::GetLastError() << " "
+               << url;
     return false;
   }
 
@@ -270,27 +250,21 @@ bool RequestInternal(HTTPMethodType type,
     uri += uc.lpszExtraInfo;
   }
 
-  const wchar_t *method_type_string[]
-      = { L"GET", L"HEAD", L"POST", L"PUT", L"DELETE" };
+  const wchar_t *method_type_string[] = {L"GET", L"HEAD", L"POST", L"PUT",
+                                         L"DELETE"};
   const wchar_t *method = method_type_string[static_cast<int>(type)];
   CHECK(method);
 
-  ScopedHINTERNET handle(::HttpOpenRequestW
-                         (session.get(),
-                          method,
-                          uri.c_str(),
-                          NULL, NULL, NULL,
-                          INTERNET_FLAG_RELOAD |
-                          INTERNET_FLAG_DONT_CACHE |
-                          INTERNET_FLAG_NO_UI |
-                          INTERNET_FLAG_PRAGMA_NOCACHE |
-                          (uc.nScheme == INTERNET_SCHEME_HTTPS ?
-                           INTERNET_FLAG_SECURE : 0),
-                          reinterpret_cast<DWORD_PTR>(event)));
+  ScopedHINTERNET handle(::HttpOpenRequestW(
+      session.get(), method, uri.c_str(), NULL, NULL, NULL,
+      INTERNET_FLAG_RELOAD | INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_NO_UI |
+          INTERNET_FLAG_PRAGMA_NOCACHE |
+          (uc.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0),
+      reinterpret_cast<DWORD_PTR>(event)));
 
   if (NULL == handle.get()) {
-    LOG(ERROR) << "HttpOpenRequest() failed: "
-               << ::GetLastError() << " " << url;
+    LOG(ERROR) << "HttpOpenRequest() failed: " << ::GetLastError() << " "
+               << url;
     return false;
   }
 
@@ -298,23 +272,22 @@ bool RequestInternal(HTTPMethodType type,
     const string header = option.headers[i] + "\r\n";
     std::wstring wheader;
     Util::UTF8ToWide(header, &wheader);
-    if (!::HttpAddRequestHeadersW(handle.get(), wheader.c_str(), -1,
-                                  HTTP_ADDREQ_FLAG_ADD |
-                                  HTTP_ADDREQ_FLAG_REPLACE)) {
+    if (!::HttpAddRequestHeadersW(
+            handle.get(), wheader.c_str(), -1,
+            HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE)) {
       LOG(WARNING) << "HttpAddRequestHeaders() failed: " << option.headers[i]
                    << " " << ::GetLastError();
       return false;
     }
   }
 
-  if (!::HttpSendRequest(handle.get(),
-                         NULL, 0,
+  if (!::HttpSendRequest(handle.get(), NULL, 0,
                          (type == HTTP_POST) ? (LPVOID)post_data : NULL,
                          (type == HTTP_POST) ? post_size : 0)) {
     if (!CheckTimeout(event, stopwatch.GetElapsedMilliseconds(),
                       option.timeout)) {
-      LOG(ERROR) << "HttpSendRequest() failed: "
-                 << ::GetLastError() << " " << url;
+      LOG(ERROR) << "HttpSendRequest() failed: " << ::GetLastError() << " "
+                 << url;
       return false;
     }
   } else {
@@ -324,12 +297,10 @@ bool RequestInternal(HTTPMethodType type,
   if (VLOG_IS_ON(2)) {
     char buf[8192];
     DWORD size = sizeof(buf);
-    if (::HttpQueryInfoA(handle.get(),
-                         HTTP_QUERY_RAW_HEADERS_CRLF |
-                         HTTP_QUERY_FLAG_REQUEST_HEADERS,
-                         buf,
-                         &size,
-                         0)) {
+    if (::HttpQueryInfoA(
+            handle.get(),
+            HTTP_QUERY_RAW_HEADERS_CRLF | HTTP_QUERY_FLAG_REQUEST_HEADERS, buf,
+            &size, 0)) {
       LOG(INFO) << "Request Header: " << buf;
     }
   }
@@ -339,11 +310,9 @@ bool RequestInternal(HTTPMethodType type,
     DWORD code_size = sizeof(code);
     if (!::HttpQueryInfoW(handle.get(),
                           HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
-                          &code,
-                          &code_size,
-                          0)) {
-      LOG(ERROR) << "HttpQueryInfo() failed: "
-                 << ::GetLastError() << " " << url;
+                          &code, &code_size, 0)) {
+      LOG(ERROR) << "HttpQueryInfo() failed: " << ::GetLastError() << " "
+                 << url;
       return false;
     }
   }
@@ -354,13 +323,10 @@ bool RequestInternal(HTTPMethodType type,
   if (option.include_header || type == HTTP_HEAD) {
     char buf[8192];
     DWORD buf_size = sizeof(buf);
-    if (!::HttpQueryInfoA(handle.get(),
-                          HTTP_QUERY_RAW_HEADERS_CRLF,
-                          buf,
-                          &buf_size,
-                          0)) {
-      LOG(ERROR) << "HttpQueryInfo() failed: "
-                 << ::GetLastError() << " " << url;
+    if (!::HttpQueryInfoA(handle.get(), HTTP_QUERY_RAW_HEADERS_CRLF, buf,
+                          &buf_size, 0)) {
+      LOG(ERROR) << "HttpQueryInfo() failed: " << ::GetLastError() << " "
+                 << url;
       return false;
     }
 
@@ -381,9 +347,7 @@ bool RequestInternal(HTTPMethodType type,
     while (true) {
       ibuf.lpvBuffer = buf;
       ibuf.dwBufferLength = sizeof(buf);
-      if (::InternetReadFileExA(handle.get(),
-                                &ibuf,
-                                WININET_API_FLAG_ASYNC,
+      if (::InternetReadFileExA(handle.get(), &ibuf, WININET_API_FLAG_ASYNC,
                                 reinterpret_cast<DWORD_PTR>(event)) ||
           CheckTimeout(event, stopwatch.GetElapsedMilliseconds(),
                        option.timeout)) {
@@ -409,55 +373,30 @@ bool RequestInternal(HTTPMethodType type,
   return true;
 }
 
-#elif defined(OS_MACOSX)  // OS_WIN
+#elif defined(__APPLE__)  // OS_WIN
 
-bool RequestInternal(HTTPMethodType type,
-                     const string &url,
-                     const char *post_data,
-                     size_t post_size,
-                     const HTTPClient::Option &option,
-                     string *output_string) {
-  return MacHTTPRequestHandler::Request(type, url,
-                                        post_data, post_size, option,
+bool RequestInternal(HTTPMethodType type, const string &url,
+                     const char *post_data, size_t post_size,
+                     const HTTPClient::Option &option, string *output_string) {
+  return MacHTTPRequestHandler::Request(type, url, post_data, post_size, option,
                                         output_string);
 }
 
-#elif defined(OS_NACL)  // OS_WIN, OS_MACOSX
+#elif defined(OS_NACL)  // OS_WIN, __APPLE__
 
-bool RequestInternal(HTTPMethodType type,
-                     const string &url,
-                     const char *post_data,
-                     size_t post_size,
-                     const HTTPClient::Option &option,
-                     string *output_string) {
-  return PepperHTTPRequestHandler::Request(type, url,
-                                           post_data, post_size, option,
-                                           output_string);
+bool RequestInternal(HTTPMethodType type, const string &url,
+                     const char *post_data, size_t post_size,
+                     const HTTPClient::Option &option, string *output_string) {
+  return false;
 }
 
-#elif defined(OS_ANDROID)  // OS_WIN, OS_MACOSX, OS_NACL
-bool RequestInternal(HTTPMethodType type,
-                     const string &url,
-                     const char *post_data,
-                     size_t post_size,
-                     const HTTPClient::Option &option,
-                     string *output_string) {
-  // TODO(matsuzakit): Put body field in HTTP response on |output_string|
-  //     if the request arrives to the server and fails.
-  return jni::JavaHttpClientProxy::Request(type, url, post_data, post_size,
-                                           option, output_string);
-}
 #elif defined(HAVE_CURL)
 
 class CurlInitializer {
  public:
-  CurlInitializer() {
-    curl_global_init(CURL_GLOBAL_ALL);
-  }
+  CurlInitializer() { curl_global_init(CURL_GLOBAL_ALL); }
 
-  ~CurlInitializer() {
-    curl_global_cleanup();
-  }
+  ~CurlInitializer() { curl_global_cleanup(); }
 
   void Init() {}
 };
@@ -467,22 +406,20 @@ size_t HTTPOutputCallback(void *ptr, size_t size, size_t nmemb, void *stream) {
   return s->Append(reinterpret_cast<const char *>(ptr), size * nmemb);
 }
 
-int HTTPDebugCallback(CURL *curl, curl_infotype type,
-                      char *buf, size_t size, void *data) {
+int HTTPDebugCallback(CURL *curl, curl_infotype type, char *buf, size_t size,
+                      void *data) {
   if (CURLINFO_TEXT != type) {
     return 0;
   }
-  string *output = reinterpret_cast<string *>(data);
+  std::string *output = reinterpret_cast<std::string *>(data);
   output->append(buf, size);
   return 0;
 }
 
-bool RequestInternal(HTTPMethodType type,
-                     const string &url,
-                     const char *post_data,
-                     size_t post_size,
+bool RequestInternal(HTTPMethodType type, const std::string &url,
+                     const char *post_data, size_t post_size,
                      const HTTPClient::Option &option,
-                     string *output_string) {
+                     std::string *output_string) {
   if (option.timeout < 0) {
     LOG(ERROR) << "timeout should not be negative nor 0";
     return false;
@@ -498,7 +435,7 @@ bool RequestInternal(HTTPMethodType type,
 
   HTTPStream stream(output_string, option.max_data_size);
 
-  string debug;
+  std::string debug;
   if (VLOG_IS_ON(2)) {
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
     curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, HTTPDebugCallback);
@@ -515,11 +452,10 @@ bool RequestInternal(HTTPMethodType type,
   curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, option.timeout);
   curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 5);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &HTTPOutputCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA,
-                   reinterpret_cast<void *>(&stream));
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, reinterpret_cast<void *>(&stream));
 
-  string proxy_host;
-  string proxy_auth;
+  std::string proxy_host;
+  std::string proxy_auth;
   if (ProxyManager::GetProxyData(url, &proxy_host, &proxy_auth)) {
     curl_easy_setopt(curl, CURLOPT_PROXY, proxy_host.c_str());
     if (!proxy_auth.empty()) {
@@ -587,46 +523,40 @@ bool RequestInternal(HTTPMethodType type,
 
   return result;
 }
-#else  // OS_WIN, OS_MACOSX, OS_NACL, OS_ANDROID, HAVE_CURL
+#else  // OS_WIN, __APPLE__, OS_NACL, HAVE_CURL
 #error "HttpClient does not support your platform."
-#endif  // OS_WIN, OS_MACOSX, OS_NACL, OS_ANDROID, HAVE_CURL
+#endif  // OS_WIN, __APPLE__, OS_NACL, HAVE_CURL
 
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 
-bool RequestInternal(HTTPMethodType type,
-                     const string &url,
-                     const char *post_data,
-                     size_t post_size,
-                     const HTTPClient::Option &option,
-                     string *output_string) {
-  return NullHTTPRequestHandler::Request(type, url,
-                                         post_data, post_size, option,
-                                         output_string);
+bool RequestInternal(HTTPMethodType type, const string &url,
+                     const char *post_data, size_t post_size,
+                     const HTTPClient::Option &option, string *output_string) {
+  return NullHTTPRequestHandler::Request(type, url, post_data, post_size,
+                                         option, output_string);
 }
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 }  // namespace
 
-class HTTPClientImpl: public HTTPClientInterface {
+class HTTPClientImpl : public HTTPClientInterface {
  public:
-  virtual bool Get(const string &url, const HTTPClient::Option &option,
-                   string *output_string) const {
-    return RequestInternal(HTTP_GET, url, NULL, 0, option,
-                           output_string);
+  virtual bool Get(const std::string &url, const HTTPClient::Option &option,
+                   std::string *output_string) const {
+    return RequestInternal(HTTP_GET, url, NULL, 0, option, output_string);
   }
 
-  virtual bool Head(const string &url, const HTTPClient::Option &option,
-                    string *output_string) const {
-    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
-                           output_string);
+  virtual bool Head(const std::string &url, const HTTPClient::Option &option,
+                    std::string *output_string) const {
+    return RequestInternal(HTTP_HEAD, url, NULL, 0, option, output_string);
   }
 
-  virtual bool Post(const string &url, const string &data,
+  virtual bool Post(const std::string &url, const std::string &data,
                     const HTTPClient::Option &option,
-                    string *output_string) const {
-    return RequestInternal(HTTP_POST, url, data.data(), data.size(),
-                           option, output_string);
+                    std::string *output_string) const {
+    return RequestInternal(HTTP_POST, url, data.data(), data.size(), option,
+                           output_string);
   }
 };
 
@@ -642,36 +572,35 @@ const HTTPClientInterface &GetHTTPClient() {
 }
 }  // namespace
 
-void HTTPClient::SetHTTPClientHandler(
-    const HTTPClientInterface *handler) {
+void HTTPClient::SetHTTPClientHandler(const HTTPClientInterface *handler) {
   g_http_connection_handler = handler;
 }
 
-bool HTTPClient::Get(const string &url, string *output_string) {
+bool HTTPClient::Get(const std::string &url, std::string *output_string) {
   return GetHTTPClient().Get(url, Option(), output_string);
 }
 
-bool HTTPClient::Head(const string &url, string *output_string) {
+bool HTTPClient::Head(const std::string &url, std::string *output_string) {
   return GetHTTPClient().Head(url, Option(), output_string);
 }
 
-bool HTTPClient::Post(const string &url, const string &data,
-                      string *output_string) {
+bool HTTPClient::Post(const std::string &url, const std::string &data,
+                      std::string *output_string) {
   return GetHTTPClient().Post(url, data, Option(), output_string);
 }
 
-bool HTTPClient::Get(const string &url, const Option &option,
-                     string *output_string) {
+bool HTTPClient::Get(const std::string &url, const Option &option,
+                     std::string *output_string) {
   return GetHTTPClient().Get(url, option, output_string);
 }
 
-bool HTTPClient::Head(const string &url, const Option &option,
-                      string *output_string) {
+bool HTTPClient::Head(const std::string &url, const Option &option,
+                      std::string *output_string) {
   return GetHTTPClient().Head(url, option, output_string);
 }
 
-bool HTTPClient::Post(const string &url, const string &data,
-                      const Option &option, string *output_string) {
+bool HTTPClient::Post(const std::string &url, const std::string &data,
+                      const Option &option, std::string *output_string) {
   return GetHTTPClient().Post(url, data, option, output_string);
 }
 }  // namespace mozc

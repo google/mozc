@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
 
 """Utilities to handle pos related stuff for source code generation."""
 
-__author__ = "hidehiko"
-
+from __future__ import absolute_import
 
 from collections import defaultdict
 import logging
@@ -104,7 +103,7 @@ class PosMatcher(object):
   def GetRuleNameList(self):
     """Returns a list of rule names in the original file's order."""
     sorted_rule_list = sorted(
-        self._match_rule_map.items(), key=lambda item:item[1][2])
+        list(self._match_rule_map.items()), key=lambda item: item[1][2])
     return [rule_name for rule_name, _ in sorted_rule_list]
 
   def GetRange(self, name):

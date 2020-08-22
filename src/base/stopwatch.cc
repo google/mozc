@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -94,8 +94,6 @@ int64 Stopwatch::GetElapsedTicks() {
   return elapsed_timestamp_;
 }
 
-bool Stopwatch::IsRunning() const {
-  return state_ == STOPWATCH_RUNNING;
-}
+bool Stopwatch::IsRunning() const { return state_ == STOPWATCH_RUNNING; }
 
 }  // namespace mozc

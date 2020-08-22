@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,7 @@
 DEFINE_string(test_srcdir, "",
               "A directory that contains the input data files for a test.");
 
-DEFINE_string(test_tmpdir, "",
-              "Directory for all temporary testing files.");
+DEFINE_string(test_tmpdir, "", "Directory for all temporary testing files.");
 
 DECLARE_string(program_invocation_name);
 
@@ -90,7 +89,6 @@ string GetTestTmpdir() {
 
 #else  // OS_WIN
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
 // Get absolute path to this executable. Corresponds to argv[0] plus
 // directory information. E.g like "/spam/eggs/foo_unittest".
 string GetProgramPath() {
@@ -100,39 +98,45 @@ string GetProgramPath() {
   }
 
   // Turn relative filename into absolute
-  char cwd_buf[PATH_MAX+1];
+  char cwd_buf[PATH_MAX + 1];
   CHECK_NE(getcwd(cwd_buf, PATH_MAX), nullptr);
   cwd_buf[PATH_MAX] = '\0';  // make sure it's terminated
   return FileUtil::JoinPath(cwd_buf, program_invocation_name);
 }
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 string GetTestSrcdir() {
+  const char* srcdir_env = getenv("TEST_SRCDIR");
+  if (srcdir_env && srcdir_env[0]) {
+    return srcdir_env;
+  }
+
   const string srcdir(kMozcDataDir);
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
-  // TestSrcdir is not supported in NaCl.
+#if !defined(OS_NACL) && !defined(OS_ANDROID)
+  // TestSrcdir is not supported in NaCl and Android.
   // TODO(horo): Consider how to implement TestSrcdir in NaCl.
   // FIXME(komatsu): We should implement "genrule" and "exports_files"
   // in build.py to install the data files into srcdir.
-  CHECK_EQ(access(srcdir.c_str(), R_OK|X_OK), 0)
+  CHECK_EQ(access(srcdir.c_str(), R_OK | X_OK), 0)
       << "Access failure: " << srcdir;
-#endif  // MOZC_USE_PEPPER_FILE_IO
+#endif  // !defined(OS_NACL) && !defined(OS_ANDROID)
   return srcdir;
 }
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
 string GetTestTmpdir() {
-  const string tmpdir = GetProgramPath() + ".tmp";
+  std::string tmpdir;
+  const char* value = getenv("TEST_TMPDIR");
+  if (value && value[0]) {
+    tmpdir = value;
+  } else {
+    tmpdir = GetProgramPath() + ".tmp";
+  }
 
-  // GetTestTmpdir is not supported in NaCl.
-  // TODO(horo): Consider how to implement TestTmpdir in NaCl.
-  if (access(tmpdir.c_str(), R_OK|X_OK) != 0) {
+  if (access(tmpdir.c_str(), R_OK | X_OK) != 0) {
     CHECK(FileUtil::CreateDirectory(tmpdir));
   }
   return tmpdir;
 }
-#endif  // MOZC_USE_PEPPER_FILE_IO
 #endif  // OS_WIN
 
 }  // namespace
@@ -142,11 +146,7 @@ void InitTestFlags() {
     FLAGS_test_srcdir = GetTestSrcdir();
   }
   if (FLAGS_test_tmpdir.empty()) {
-#ifndef MOZC_USE_PEPPER_FILE_IO
     FLAGS_test_tmpdir = GetTestTmpdir();
-#else  // MOZC_USE_PEPPER_FILE_IO
-    FLAGS_test_tmpdir = "/";
-#endif  // MOZC_USE_PEPPER_FILE_IO
   }
 }
 

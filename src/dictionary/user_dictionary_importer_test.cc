@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@
 
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -46,12 +46,9 @@ namespace {
 class TestInputIterator
     : public UserDictionaryImporter::InputIteratorInterface {
  public:
-  TestInputIterator()
-      : index_(0), is_available_(false), entries_(NULL) {}
+  TestInputIterator() : index_(0), is_available_(false), entries_(NULL) {}
 
-  bool IsAvailable() const {
-    return is_available_;
-  }
+  bool IsAvailable() const { return is_available_; }
 
   bool Next(UserDictionaryImporter::RawEntry *entry) {
     if (!is_available_) {
@@ -73,9 +70,7 @@ class TestInputIterator
     entries_ = entries;
   }
 
-  void set_available(bool is_available) {
-    is_available_ = is_available;
-  }
+  void set_available(bool is_available) { is_available_ = is_available; }
 
  public:
   int index_;
@@ -90,7 +85,8 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
       "きょうと\t京都\t名詞\n"
       "おおさか\t大阪\t地名\n"
       "とうきょう\t東京\t地名\tコメント\n"
-      "すずき\t鈴木\t人名\n";
+      "すずき\t鈴木\t人名\n"
+      "あめりか\tアメリカ\t地名:en";
 
   UserDictionaryImporter::StringTextLineIterator iter(kInput);
   UserDictionaryStorage::UserDictionary user_dic;
@@ -99,30 +95,41 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
             UserDictionaryImporter::ImportFromTextLineIterator(
                 UserDictionaryImporter::MOZC, &iter, &user_dic));
 
-  ASSERT_EQ(4, user_dic.entries_size());
+  ASSERT_EQ(5, user_dic.entries_size());
 
   EXPECT_EQ("きょうと", user_dic.entries(0).key());
   EXPECT_EQ("京都", user_dic.entries(0).value());
   EXPECT_EQ(user_dictionary::UserDictionary::NOUN, user_dic.entries(0).pos());
   EXPECT_EQ("", user_dic.entries(0).comment());
+  EXPECT_EQ("", user_dic.entries(0).locale());
 
   EXPECT_EQ("おおさか", user_dic.entries(1).key());
   EXPECT_EQ("大阪", user_dic.entries(1).value());
   EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
             user_dic.entries(1).pos());
   EXPECT_EQ("", user_dic.entries(1).comment());
+  EXPECT_EQ("", user_dic.entries(1).locale());
 
   EXPECT_EQ("とうきょう", user_dic.entries(2).key());
   EXPECT_EQ("東京", user_dic.entries(2).value());
   EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
             user_dic.entries(2).pos());
   EXPECT_EQ("コメント", user_dic.entries(2).comment());
+  EXPECT_EQ("", user_dic.entries(2).locale());
 
   EXPECT_EQ("すずき", user_dic.entries(3).key());
   EXPECT_EQ("鈴木", user_dic.entries(3).value());
   EXPECT_EQ(user_dictionary::UserDictionary::PERSONAL_NAME,
             user_dic.entries(3).pos());
   EXPECT_EQ("", user_dic.entries(3).comment());
+  EXPECT_EQ("", user_dic.entries(3).locale());
+
+  EXPECT_EQ("あめりか", user_dic.entries(4).key());
+  EXPECT_EQ("アメリカ", user_dic.entries(4).value());
+  EXPECT_EQ(user_dictionary::UserDictionary::PLACE_NAME,
+            user_dic.entries(4).pos());
+  EXPECT_EQ("", user_dic.entries(4).comment());
+  EXPECT_EQ("en", user_dic.entries(4).locale());
 }
 
 TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
@@ -171,7 +178,7 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
       "#とうきょう\t東京\t地名\tコメント\n"
       "すずき\t鈴木\t人名\n";
   {
-    const string kMsImeInput(string("!Microsoft IME\n") + kInput);
+    const std::string kMsImeInput(std::string("!Microsoft IME\n") + kInput);
     UserDictionaryImporter::StringTextLineIterator iter(kMsImeInput);
     UserDictionaryStorage::UserDictionary user_dic;
 
@@ -272,29 +279,26 @@ TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
   iter.set_available(true);
   iter.set_entries(&entries);
 
-  EXPECT_EQ(UserDictionaryStorage::max_entry_size(),
-            user_dic.entries_size());
+  EXPECT_EQ(UserDictionaryStorage::max_entry_size(), user_dic.entries_size());
 
   EXPECT_TRUE(iter.IsAvailable());
   EXPECT_EQ(UserDictionaryImporter::IMPORT_TOO_MANY_WORDS,
             UserDictionaryImporter::ImportFromIterator(&iter, &user_dic));
 
-  EXPECT_EQ(UserDictionaryStorage::max_entry_size(),
-            user_dic.entries_size());
+  EXPECT_EQ(UserDictionaryStorage::max_entry_size(), user_dic.entries_size());
 }
 
 TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
   TestInputIterator iter;
   UserDictionaryStorage::UserDictionary user_dic;
 
-  static const size_t kSize[] = { 10, 100, 1000, 5000, 12000 };
+  static const size_t kSize[] = {10, 100, 1000, 5000, 12000};
   for (size_t i = 0; i < arraysize(kSize); ++i) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const string key("key" + std::to_string(static_cast<uint32>(j)));
-      const string value("value" +
-                         std::to_string(static_cast<uint32>(j)));
+      const std::string key("key" + std::to_string(static_cast<uint32>(j)));
+      const std::string value("value" + std::to_string(static_cast<uint32>(j)));
       entry.key = key;
       entry.value = value;
       entry.pos = "名詞";
@@ -328,13 +332,13 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
   TestInputIterator iter;
   UserDictionaryStorage::UserDictionary user_dic;
 
-  static const size_t kSize[] = { 10, 100, 1000 };
+  static const size_t kSize[] = {10, 100, 1000};
   for (size_t i = 0; i < arraysize(kSize); ++i) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const string key("key" + std::to_string(static_cast<uint32>(j)));
-      const string value("value" + std::to_string(static_cast<uint32>(j)));
+      const std::string key("key" + std::to_string(static_cast<uint32>(j)));
+      const std::string value("value" + std::to_string(static_cast<uint32>(j)));
       entry.key = key;
       entry.value = value;
       if (j % 2 == 0) {
@@ -358,8 +362,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
   UserDictionaryStorage::UserDictionary user_dic;
 
   {
-    UserDictionaryStorage::UserDictionaryEntry *entry
-        = user_dic.add_entries();
+    UserDictionaryStorage::UserDictionaryEntry *entry = user_dic.add_entries();
     entry->set_key("aa");
     entry->set_value("aa");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -407,53 +410,42 @@ TEST(UserDictionaryImporter, GuessIMETypeTest) {
   EXPECT_EQ(UserDictionaryImporter::NUM_IMES,
             UserDictionaryImporter::GuessIMEType(""));
 
-  EXPECT_EQ(UserDictionaryImporter::MSIME,
-            UserDictionaryImporter::GuessIMEType(
-                "!Microsoft IME Dictionary Tool"));
+  EXPECT_EQ(
+      UserDictionaryImporter::MSIME,
+      UserDictionaryImporter::GuessIMEType("!Microsoft IME Dictionary Tool"));
 
   EXPECT_EQ(UserDictionaryImporter::ATOK,
-            UserDictionaryImporter::GuessIMEType(
-                "!!ATOK_TANGO_TEXT_HEADER_1"));
+            UserDictionaryImporter::GuessIMEType("!!ATOK_TANGO_TEXT_HEADER_1"));
 
   EXPECT_EQ(UserDictionaryImporter::NUM_IMES,
-            UserDictionaryImporter::GuessIMEType(
-                "!!DICUT10"));
+            UserDictionaryImporter::GuessIMEType("!!DICUT10"));
 
   EXPECT_EQ(UserDictionaryImporter::NUM_IMES,
-            UserDictionaryImporter::GuessIMEType(
-                "!!DICUT"));
+            UserDictionaryImporter::GuessIMEType("!!DICUT"));
 
   EXPECT_EQ(UserDictionaryImporter::ATOK,
-            UserDictionaryImporter::GuessIMEType(
-                "!!DICUT11"));
+            UserDictionaryImporter::GuessIMEType("!!DICUT11"));
 
   EXPECT_EQ(UserDictionaryImporter::ATOK,
-            UserDictionaryImporter::GuessIMEType(
-                "!!DICUT17"));
+            UserDictionaryImporter::GuessIMEType("!!DICUT17"));
 
   EXPECT_EQ(UserDictionaryImporter::ATOK,
-            UserDictionaryImporter::GuessIMEType(
-                "!!DICUT20"));
+            UserDictionaryImporter::GuessIMEType("!!DICUT20"));
 
   EXPECT_EQ(UserDictionaryImporter::KOTOERI,
-            UserDictionaryImporter::GuessIMEType(
-                "\"foo\",\"bar\",\"buz\""));
+            UserDictionaryImporter::GuessIMEType("\"foo\",\"bar\",\"buz\""));
 
   EXPECT_EQ(UserDictionaryImporter::KOTOERI,
-            UserDictionaryImporter::GuessIMEType(
-                "\"comment\""));
+            UserDictionaryImporter::GuessIMEType("\"comment\""));
 
   EXPECT_EQ(UserDictionaryImporter::MOZC,
-            UserDictionaryImporter::GuessIMEType(
-                "foo\tbar\tbuz"));
+            UserDictionaryImporter::GuessIMEType("foo\tbar\tbuz"));
 
   EXPECT_EQ(UserDictionaryImporter::MOZC,
-            UserDictionaryImporter::GuessIMEType(
-                "foo\tbar"));
+            UserDictionaryImporter::GuessIMEType("foo\tbar"));
 
   EXPECT_EQ(UserDictionaryImporter::NUM_IMES,
-            UserDictionaryImporter::GuessIMEType(
-                "foo"));
+            UserDictionaryImporter::GuessIMEType("foo"));
 }
 
 TEST(UserDictionaryImporter, DetermineFinalIMETypeTest) {
@@ -479,33 +471,27 @@ TEST(UserDictionaryImporter, DetermineFinalIMETypeTest) {
 
   EXPECT_EQ(UserDictionaryImporter::MOZC,
             UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MOZC,
-                UserDictionaryImporter::MSIME));
+                UserDictionaryImporter::MOZC, UserDictionaryImporter::MSIME));
 
   EXPECT_EQ(UserDictionaryImporter::MOZC,
             UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MOZC,
-                UserDictionaryImporter::ATOK));
+                UserDictionaryImporter::MOZC, UserDictionaryImporter::ATOK));
 
   EXPECT_EQ(UserDictionaryImporter::NUM_IMES,
             UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MOZC,
-                UserDictionaryImporter::KOTOERI));
+                UserDictionaryImporter::MOZC, UserDictionaryImporter::KOTOERI));
 
   EXPECT_EQ(UserDictionaryImporter::MSIME,
             UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MSIME,
-                UserDictionaryImporter::MSIME));
+                UserDictionaryImporter::MSIME, UserDictionaryImporter::MSIME));
 
   EXPECT_EQ(UserDictionaryImporter::NUM_IMES,
             UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::ATOK,
-                UserDictionaryImporter::MSIME));
+                UserDictionaryImporter::ATOK, UserDictionaryImporter::MSIME));
 
   EXPECT_EQ(UserDictionaryImporter::NUM_IMES,
             UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::ATOK,
-                UserDictionaryImporter::KOTOERI));
+                UserDictionaryImporter::ATOK, UserDictionaryImporter::KOTOERI));
 }
 
 TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
@@ -532,8 +518,9 @@ TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
 
   {
     // "よろしくお願いします" in Shift-JIS
-    const char str[] = "\x82\xE6\x82\xEB\x82\xB5\x82\xAD"
-                       "\x82\xA8\x8A\xE8\x82\xA2\x82\xB5\x82\xDC\x82\xB7";
+    const char str[] =
+        "\x82\xE6\x82\xEB\x82\xB5\x82\xAD"
+        "\x82\xA8\x8A\xE8\x82\xA2\x82\xB5\x82\xDC\x82\xB7";
     EXPECT_EQ(UserDictionaryImporter::SHIFT_JIS,
               UserDictionaryImporter::GuessEncodingType(str));
   }
@@ -568,22 +555,22 @@ TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
 }
 
 TEST(UserDictionaryImporter, StringTextLineIterator) {
-  string line;
+  std::string line;
   const char *kTestData[] = {
-    // Test for LF.
-    "abcde\n"
-    "fghij\n"
-    "klmno",
+      // Test for LF.
+      "abcde\n"
+      "fghij\n"
+      "klmno",
 
-    // Test for CR.
-    "abcde\r"
-    "fghij\r"
-    "klmno",
+      // Test for CR.
+      "abcde\r"
+      "fghij\r"
+      "klmno",
 
-    // Test for CRLF.
-    "abcde\r\n"
-    "fghij\r\n"
-    "klmno",
+      // Test for CRLF.
+      "abcde\r\n"
+      "fghij\r\n"
+      "klmno",
   };
 
   for (size_t i = 0; i < arraysize(kTestData); ++i) {

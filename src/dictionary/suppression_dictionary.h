@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,12 +56,10 @@ class SuppressionDictionary {
   void UnLock();
 
   // Returns true if the dictionary is locked.
-  bool IsLocked() const {
-    return locked_;
-  }
+  bool IsLocked() const { return locked_; }
 
   // Note: this method is thread unsafe.
-  bool AddEntry(const string &key, const string &value);
+  bool AddEntry(const std::string &key, const std::string &value);
 
   // Note: this method is thread unsafe.
   void Clear();
@@ -72,10 +70,10 @@ class SuppressionDictionary {
   // Returns true if |word| should be suppressed.  If the current dictionay is
   // "locked" via Lock() method, this function always return false.  Lock() and
   // SuppressWord() must be called synchronously.
-  bool SuppressEntry(const string &key, const string &value) const;
+  bool SuppressEntry(const std::string &key, const std::string &value) const;
 
  private:
-  std::set<string> dic_;
+  std::set<std::string> dic_;
   bool locked_;
   bool has_key_empty_;
   bool has_value_empty_;

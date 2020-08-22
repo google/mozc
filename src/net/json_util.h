@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,11 +42,11 @@ class JsonUtil {
   // Converts protobuf message to JSON value.
   // Note: JavaScript JSON parser can't handle int64/uint64.
   // So it converts int64/uint64 value in protobuf to string value in JSON.
-  static bool ProtobufMessageToJsonValue(
-      const protobuf::Message &message, Json::Value *value);
+  static bool ProtobufMessageToJsonValue(const protobuf::Message &message,
+                                         Json::Value *value);
   // Converts JSON value to protobuf message.
-  static bool JsonValueToProtobufMessage(
-      const Json::Value &value, protobuf::Message *message);
+  static bool JsonValueToProtobufMessage(const Json::Value &value,
+                                         protobuf::Message *message);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(JsonUtil);

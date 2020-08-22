@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "renderer/renderer_style_handler.h"
 
+// clang-format off
 #if defined(OS_WIN)
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
@@ -37,6 +38,7 @@
 #include <atlapp.h>
 #include <atlgdi.h>
 #endif  // OS_WIN
+// clang-format on
 
 #include "base/singleton.h"
 #include "protocol/renderer_style.pb.h"
@@ -55,6 +57,7 @@ class RendererStyleHandlerImpl {
   bool GetRendererStyle(RendererStyle *style);
   bool SetRendererStyle(const RendererStyle &style);
   void GetDefaultRendererStyle(RendererStyle *style);
+
  private:
   RendererStyle style_;
 };
@@ -77,12 +80,10 @@ bool RendererStyleHandlerImpl::SetRendererStyle(const RendererStyle &style) {
   style_.CopyFrom(style);
   return true;
 }
-void RendererStyleHandlerImpl::GetDefaultRendererStyle(
-    RendererStyle *style) {
+void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
   double scale_factor_x = 1.0;
   double scale_factor_y = 1.0;
-  RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x,
-                                            &scale_factor_y);
+  RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x, &scale_factor_y);
 
   // TODO(horo): Change to read from human-readable ASCII format protobuf.
   style->Clear();
@@ -126,7 +127,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
   style->mutable_footer_style()->set_right_padding(4 * scale_factor_x);
 
   RendererStyle::TextStyle *footer_sub_label_style =
-    style->mutable_footer_sub_label_style();
+      style->mutable_footer_sub_label_style();
   footer_sub_label_style->set_font_size(10 * scale_factor_y);
   footer_sub_label_style->mutable_foreground_color()->set_r(167);
   footer_sub_label_style->mutable_foreground_color()->set_g(167);
@@ -181,8 +182,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
   infostyle->mutable_title_style()->set_font_size(15 * scale_factor_y);
   infostyle->mutable_title_style()->set_left_padding(5 * scale_factor_x);
   infostyle->mutable_description_style()->set_font_size(12 * scale_factor_y);
-  infostyle->mutable_description_style()->set_left_padding(
-      15 * scale_factor_x);
+  infostyle->mutable_description_style()->set_left_padding(15 * scale_factor_x);
   infostyle->mutable_border_color()->set_r(0x96);
   infostyle->mutable_border_color()->set_g(0x96);
   infostyle->mutable_border_color()->set_b(0x96);

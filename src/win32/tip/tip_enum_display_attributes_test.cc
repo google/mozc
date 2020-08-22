@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,7 @@ using ATL::CComPtr;
 
 class TipEnumDisplayAttributesTest : public testing::Test {
  protected:
-  static void SetUpTestCase() {
-    TipDllModule::InitForUnitTest();
-  }
+  static void SetUpTestCase() { TipDllModule::InitForUnitTest(); }
 };
 
 TEST(TipEnumDisplayAttributesTest, BasicTest) {
@@ -77,8 +75,8 @@ TEST(TipEnumDisplayAttributesTest, NextTest) {
   ITfDisplayAttributeInfo *infolist[4] = {};
 
   ULONG fetched = 0;
-  const HRESULT result = enum_display_attribute.Next(
-      arraysize(infolist), infolist, &fetched);
+  const HRESULT result =
+      enum_display_attribute.Next(arraysize(infolist), infolist, &fetched);
   EXPECT_EQ(S_FALSE, result);
   EXPECT_EQ(2, fetched);
 

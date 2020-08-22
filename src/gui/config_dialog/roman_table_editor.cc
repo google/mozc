@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,19 +49,19 @@ namespace mozc {
 namespace gui {
 namespace {
 enum {
-  NEW_INDEX              = 0,
-  REMOVE_INDEX           = 1,
+  NEW_INDEX = 0,
+  REMOVE_INDEX = 1,
   IMPORT_FROM_FILE_INDEX = 2,
-  EXPORT_TO_FILE_INDEX   = 3,
-  RESET_INDEX            = 4,
-  MENU_SIZE              = 5
+  EXPORT_TO_FILE_INDEX = 3,
+  RESET_INDEX = 4,
+  MENU_SIZE = 5
 };
 const char kRomanTableFile[] = "system://romanji-hiragana.tsv";
 }  // namespace
 
 RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
     : GenericTableEditorDialog(parent, 3) {
-  actions_.reset(new QAction * [MENU_SIZE]);
+  actions_.reset(new QAction *[MENU_SIZE]);
   actions_[NEW_INDEX] = mutable_edit_menu()->addAction(tr("New entry"));
   actions_[REMOVE_INDEX] =
       mutable_edit_menu()->addAction(tr("Remove selected entries"));
@@ -88,12 +88,12 @@ RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
 
 RomanTableEditorDialog::~RomanTableEditorDialog() {}
 
-string RomanTableEditorDialog::GetDefaultRomanTable() {
+std::string RomanTableEditorDialog::GetDefaultRomanTable() {
   std::unique_ptr<std::istream> ifs(
       ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
-  string line, result;
-  std::vector<string> fields;
+  std::string line, result;
+  std::vector<std::string> fields;
   while (getline(*ifs.get(), line)) {
     if (line.empty()) {
       continue;
@@ -119,8 +119,8 @@ string RomanTableEditorDialog::GetDefaultRomanTable() {
 
 bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
   CHECK(is);
-  string line;
-  std::vector<string> fields;
+  std::string line;
+  std::vector<std::string> fields;
   mutable_table_widget()->setRowCount(0);
   mutable_table_widget()->verticalHeader()->hide();
 
@@ -142,12 +142,12 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
       fields.push_back("");
     }
 
-    QTableWidgetItem *input
-        = new QTableWidgetItem(QString::fromUtf8(fields[0].c_str()));
-    QTableWidgetItem *output
-        = new QTableWidgetItem(QString::fromUtf8(fields[1].c_str()));
-    QTableWidgetItem *pending
-        = new QTableWidgetItem(QString::fromUtf8(fields[2].c_str()));
+    QTableWidgetItem *input =
+        new QTableWidgetItem(QString::fromUtf8(fields[0].c_str()));
+    QTableWidgetItem *output =
+        new QTableWidgetItem(QString::fromUtf8(fields[1].c_str()));
+    QTableWidgetItem *pending =
+        new QTableWidgetItem(QString::fromUtf8(fields[2].c_str()));
 
     mutable_table_widget()->insertRow(row);
     mutable_table_widget()->setItem(row, 0, input);
@@ -157,8 +157,7 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
 
     if (row >= max_entry_size()) {
       QMessageBox::warning(
-          this,
-          tr("Mozc settings"),
+          this, tr("Mozc settings"),
           tr("You can't have more than %1 entries").arg(max_entry_size()));
       break;
     }
@@ -170,8 +169,8 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
 }
 
 bool RomanTableEditorDialog::LoadDefaultRomanTable() {
-  std::unique_ptr<std::istream>
-      ifs(ConfigFileStream::LegacyOpen(kRomanTableFile));
+  std::unique_ptr<std::istream> ifs(
+      ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != NULL);  // should never happen
   CHECK(LoadFromStream(ifs.get()));
   return true;
@@ -179,21 +178,20 @@ bool RomanTableEditorDialog::LoadDefaultRomanTable() {
 
 bool RomanTableEditorDialog::Update() {
   if (mutable_table_widget()->rowCount() == 0) {
-    QMessageBox::warning(this,
-                         tr("Mozc settings"),
+    QMessageBox::warning(this, tr("Mozc settings"),
                          tr("Romaji to Kana table is empty."));
     return false;
   }
 
   bool contains_capital = false;
-  string *table = mutable_table();
+  std::string *table = mutable_table();
   table->clear();
   for (int i = 0; i < mutable_table_widget()->rowCount(); ++i) {
-    const string &input =
+    const std::string &input =
         TableUtil::SafeGetItemText(mutable_table_widget(), i, 0).toStdString();
-    const string &output =
+    const std::string &output =
         TableUtil::SafeGetItemText(mutable_table_widget(), i, 1).toStdString();
-    const string &pending =
+    const std::string &pending =
         TableUtil::SafeGetItemText(mutable_table_widget(), i, 2).toStdString();
     if (input.empty() || (output.empty() && pending.empty())) {
       continue;
@@ -208,7 +206,7 @@ bool RomanTableEditorDialog::Update() {
     *table += '\n';
 
     if (!contains_capital) {
-      string lower = input;
+      std::string lower = input;
       Util::LowerString(&lower);
       contains_capital = (lower != input);
     }
@@ -218,12 +216,10 @@ bool RomanTableEditorDialog::Update() {
     // TODO(taku):
     // Want to see the current setting and suppress this
     // dialog if the shift-mode-switch is already off.
-    QMessageBox::information(
-        this,
-        tr("Mozc settings"),
-        tr("Input fields contain capital characters. "
-           "\"Shift-mode-switch\" function is disabled "
-           "with this new mapping."));
+    QMessageBox::information(this, tr("Mozc settings"),
+                             tr("Input fields contain capital characters. "
+                                "\"Shift-mode-switch\" function is disabled "
+                                "with this new mapping."));
   }
 
   return true;
@@ -242,15 +238,13 @@ void RomanTableEditorDialog::OnEditMenuAction(QAction *action) {
   } else if (action == actions_[REMOVE_INDEX]) {
     DeleteSelectedItems();
   } else if (action == actions_[IMPORT_FROM_FILE_INDEX] ||
-             action == actions_[RESET_INDEX]) {   // import or reset
+             action == actions_[RESET_INDEX]) {  // import or reset
     if (mutable_table_widget()->rowCount() > 0 &&
         QMessageBox::Ok !=
-        QMessageBox::question(
-            this,
-            tr("Mozc settings"),
-            tr("Do you want to overwrite the current roman table?"),
-            QMessageBox::Ok | QMessageBox::Cancel,
-            QMessageBox::Cancel)) {
+            QMessageBox::question(
+                this, tr("Mozc settings"),
+                tr("Do you want to overwrite the current roman table?"),
+                QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
       return;
     }
 
@@ -268,8 +262,8 @@ void RomanTableEditorDialog::OnEditMenuAction(QAction *action) {
 
 // static
 bool RomanTableEditorDialog::Show(QWidget *parent,
-                                  const string &current_roman_table,
-                                  string *new_roman_table) {
+                                  const std::string &current_roman_table,
+                                  std::string *new_roman_table) {
   RomanTableEditorDialog window(parent);
 
   if (current_roman_table.empty()) {
@@ -282,8 +276,7 @@ bool RomanTableEditorDialog::Show(QWidget *parent,
   const bool result = (QDialog::Accepted == window.exec());
   new_roman_table->clear();
 
-  if (result &&
-      window.table() != window.GetDefaultRomanTable()) {
+  if (result && window.table() != window.GetDefaultRomanTable()) {
     *new_roman_table = window.table();
   }
 

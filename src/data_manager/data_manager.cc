@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,17 +40,17 @@
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-const char * const kDataSetMagicNumber = "\xEFMOZC\r\n";
+const char *const kDataSetMagicNumber = "\xEFMOZC\r\n";
 
 DataManager::Status InitUserPosManagerDataFromReader(
-    const DataSetReader &reader,
-    StringPiece *pos_matcher_data,
-    StringPiece *user_pos_token_array_data,
-    StringPiece *user_pos_string_array_data) {
+    const DataSetReader &reader, absl::string_view *pos_matcher_data,
+    absl::string_view *user_pos_token_array_data,
+    absl::string_view *user_pos_string_array_data) {
   if (!reader.Get("pos_matcher", pos_matcher_data)) {
     LOG(ERROR) << "Cannot find POS matcher rule ID table";
     return DataManager::Status::DATA_MISSING;
@@ -75,8 +75,8 @@ DataManager::Status InitUserPosManagerDataFromReader(
 
 }  // namespace
 
-string DataManager::StatusCodeToString(Status code) {
-  string s;
+std::string DataManager::StatusCodeToString(Status code) {
+  std::string s;
   switch (code) {
     case Status::OK:
       s.assign("Status::OK");
@@ -104,12 +104,12 @@ string DataManager::StatusCodeToString(Status code) {
 DataManager::DataManager() = default;
 DataManager::~DataManager() = default;
 
-DataManager::Status DataManager::InitFromArray(StringPiece array) {
+DataManager::Status DataManager::InitFromArray(absl::string_view array) {
   return InitFromArray(array, kDataSetMagicNumber);
 }
 
-DataManager::Status DataManager::InitFromArray(StringPiece array,
-                                               StringPiece magic) {
+DataManager::Status DataManager::InitFromArray(absl::string_view array,
+                                               absl::string_view magic) {
   DataSetReader reader;
   if (!reader.Init(array, magic)) {
     LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
@@ -155,7 +155,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     return Status::DATA_MISSING;
   }
   {
-    StringPiece memblock;
+    absl::string_view memblock;
     if (!reader.Get("segmenter_sizeinfo", &memblock)) {
       LOG(ERROR) << "Cannot find a segmenter size info";
       return Status::DATA_MISSING;
@@ -277,10 +277,8 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     LOG(ERROR) << "Emoji rewriter string array data is broken";
     return Status::DATA_BROKEN;
   }
-  if (!reader.Get("single_kanji_token",
-                  &single_kanji_token_array_data_) ||
-      !reader.Get("single_kanji_string",
-                  &single_kanji_string_array_data_) ||
+  if (!reader.Get("single_kanji_token", &single_kanji_token_array_data_) ||
+      !reader.Get("single_kanji_string", &single_kanji_string_array_data_) ||
       !reader.Get("single_kanji_variant_type",
                   &single_kanji_variant_type_data_) ||
       !reader.Get("single_kanji_variant_token",
@@ -304,10 +302,8 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     LOG(ERROR) << "Single Kanji data is broken";
     return Status::DATA_BROKEN;
   }
-  if (!reader.Get("zero_query_token_array",
-                  &zero_query_token_array_data_) ||
-      !reader.Get("zero_query_string_array",
-                  &zero_query_string_array_data_) ||
+  if (!reader.Get("zero_query_token_array", &zero_query_token_array_data_) ||
+      !reader.Get("zero_query_string_array", &zero_query_string_array_data_) ||
       !reader.Get("zero_query_number_token_array",
                   &zero_query_number_token_array_data_) ||
       !reader.Get("zero_query_number_string_array",
@@ -332,8 +328,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
                     &usage_conjugation_suffix_data_) ||
         !reader.Get("usage_conjugation_index",
                     &usage_conjugation_index_data_) ||
-        !reader.Get("usage_string_array",
-                    &usage_string_array_data_)) {
+        !reader.Get("usage_string_array", &usage_string_array_data_)) {
       LOG(ERROR) << "Cannot find some usage dictionary data components";
       return Status::DATA_MISSING;
     }
@@ -357,7 +352,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     return Status::DATA_MISSING;
   }
   {
-    std::vector<StringPiece> components;
+    std::vector<absl::string_view> components;
     Util::SplitStringUsing(data_version_, ".", &components);
     if (components.size() != 3) {
       LOG(ERROR) << "Invalid version format: " << data_version_;
@@ -365,31 +360,30 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     }
     if (components[0] != Version::GetMozcEngineVersion()) {
       LOG(ERROR) << "Incompatible data. The required engine version is "
-                 << Version::GetMozcEngineVersion()
-                 << " but tried to load " << components[0]
-                 << " (" << data_version_ << ")";
+                 << Version::GetMozcEngineVersion() << " but tried to load "
+                 << components[0] << " (" << data_version_ << ")";
       return Status::ENGINE_VERSION_MISMATCH;
     }
   }
   return Status::OK;
 }
 
-DataManager::Status DataManager::InitFromFile(const string &path) {
+DataManager::Status DataManager::InitFromFile(const std::string &path) {
   return InitFromFile(path, kDataSetMagicNumber);
 }
 
-DataManager::Status DataManager::InitFromFile(const string &path,
-                                              StringPiece magic) {
+DataManager::Status DataManager::InitFromFile(const std::string &path,
+                                              absl::string_view magic) {
   if (!mmap_.Open(path.c_str(), "r")) {
     LOG(ERROR) << "Failed to mmap " << path;
     return Status::MMAP_FAILURE;
   }
-  const StringPiece data(mmap_.begin(), mmap_.size());
+  const absl::string_view data(mmap_.begin(), mmap_.size());
   return InitFromArray(data, magic);
 }
 
 DataManager::Status DataManager::InitUserPosManagerDataFromArray(
-    StringPiece array, StringPiece magic) {
+    absl::string_view array, absl::string_view magic) {
   DataSetReader reader;
   if (!reader.Init(array, magic)) {
     LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
@@ -403,12 +397,12 @@ DataManager::Status DataManager::InitUserPosManagerDataFromArray(
 }
 
 DataManager::Status DataManager::InitUserPosManagerDataFromFile(
-    const string &path, StringPiece magic) {
+    const std::string &path, absl::string_view magic) {
   if (!mmap_.Open(path.c_str(), "r")) {
     LOG(ERROR) << "Failed to mmap " << path;
     return Status::MMAP_FAILURE;
   }
-  const StringPiece data(mmap_.begin(), mmap_.size());
+  const absl::string_view data(mmap_.begin(), mmap_.size());
   return InitUserPosManagerDataFromArray(data, magic);
 }
 
@@ -439,8 +433,8 @@ void DataManager::GetSuggestionFilterData(const char **data,
   *size = suggestion_filter_data_.size();
 }
 
-void DataManager::GetUserPOSData(StringPiece *token_array_data,
-                                 StringPiece *string_array_data) const {
+void DataManager::GetUserPOSData(absl::string_view *token_array_data,
+                                 absl::string_view *string_array_data) const {
   *token_array_data = user_pos_token_array_data_;
   *string_array_data = user_pos_string_array_data_;
 }
@@ -466,8 +460,8 @@ void DataManager::GetSegmenterData(
   *boundary_data = reinterpret_cast<const uint16 *>(boundary_data_.data());
 }
 
-void DataManager::GetSuffixDictionaryData(StringPiece *key_array_data,
-                                          StringPiece *value_array_data,
+void DataManager::GetSuffixDictionaryData(absl::string_view *key_array_data,
+                                          absl::string_view *value_array_data,
                                           const uint32 **token_array) const {
   *key_array_data = suffix_key_array_data_;
   *value_array_data = suffix_value_array_data_;
@@ -476,39 +470,41 @@ void DataManager::GetSuffixDictionaryData(StringPiece *key_array_data,
 }
 
 void DataManager::GetReadingCorrectionData(
-    StringPiece *value_array_data, StringPiece *error_array_data,
-    StringPiece *correction_array_data) const {
+    absl::string_view *value_array_data, absl::string_view *error_array_data,
+    absl::string_view *correction_array_data) const {
   *value_array_data = reading_correction_value_array_data_;
   *error_array_data = reading_correction_error_array_data_;
   *correction_array_data = reading_correction_correction_array_data_;
 }
 
-void DataManager::GetSymbolRewriterData(StringPiece *token_array_data,
-                                        StringPiece *string_array_data) const {
+void DataManager::GetSymbolRewriterData(
+    absl::string_view *token_array_data,
+    absl::string_view *string_array_data) const {
   *token_array_data = symbol_token_array_data_;
   *string_array_data = symbol_string_array_data_;
 }
 
 void DataManager::GetEmoticonRewriterData(
-    StringPiece *token_array_data, StringPiece *string_array_data) const {
+    absl::string_view *token_array_data,
+    absl::string_view *string_array_data) const {
   *token_array_data = emoticon_token_array_data_;
   *string_array_data = emoticon_string_array_data_;
 }
 
 void DataManager::GetEmojiRewriterData(
-    StringPiece *token_array_data, StringPiece *string_array_data) const {
+    absl::string_view *token_array_data,
+    absl::string_view *string_array_data) const {
   *token_array_data = emoji_token_array_data_;
   *string_array_data = emoji_string_array_data_;
 }
 
 void DataManager::GetSingleKanjiRewriterData(
-    StringPiece *token_array_data,
-    StringPiece *string_array_data,
-    StringPiece *variant_type_array_data,
-    StringPiece *variant_token_array_data,
-    StringPiece *variant_string_array_data,
-    StringPiece *noun_prefix_token_array_data,
-    StringPiece *noun_prefix_string_array_data) const {
+    absl::string_view *token_array_data, absl::string_view *string_array_data,
+    absl::string_view *variant_type_array_data,
+    absl::string_view *variant_token_array_data,
+    absl::string_view *variant_string_array_data,
+    absl::string_view *noun_prefix_token_array_data,
+    absl::string_view *noun_prefix_string_array_data) const {
   *token_array_data = single_kanji_token_array_data_;
   *string_array_data = single_kanji_string_array_data_;
   *variant_type_array_data = single_kanji_variant_type_data_;
@@ -525,10 +521,10 @@ void DataManager::GetCounterSuffixSortedArray(const char **array,
 }
 
 void DataManager::GetZeroQueryData(
-    StringPiece *zero_query_token_array_data,
-    StringPiece *zero_query_string_array_data,
-    StringPiece *zero_query_number_token_array_data,
-    StringPiece *zero_query_number_string_array_data) const {
+    absl::string_view *zero_query_token_array_data,
+    absl::string_view *zero_query_string_array_data,
+    absl::string_view *zero_query_number_token_array_data,
+    absl::string_view *zero_query_number_string_array_data) const {
   *zero_query_token_array_data = zero_query_token_array_data_;
   *zero_query_string_array_data = zero_query_string_array_data_;
   *zero_query_number_token_array_data = zero_query_number_token_array_data_;
@@ -537,11 +533,11 @@ void DataManager::GetZeroQueryData(
 
 #ifndef NO_USAGE_REWRITER
 void DataManager::GetUsageRewriterData(
-    StringPiece *base_conjugation_suffix_data,
-    StringPiece *conjugation_suffix_data,
-    StringPiece *conjugation_index_data,
-    StringPiece *usage_items_data,
-    StringPiece *string_array_data) const {
+    absl::string_view *base_conjugation_suffix_data,
+    absl::string_view *conjugation_suffix_data,
+    absl::string_view *conjugation_index_data,
+    absl::string_view *usage_items_data,
+    absl::string_view *string_array_data) const {
   *base_conjugation_suffix_data = usage_base_conjugation_suffix_data_;
   *conjugation_suffix_data = usage_conjugation_suffix_data_;
   *conjugation_index_data = usage_conjugation_index_data_;
@@ -550,21 +546,18 @@ void DataManager::GetUsageRewriterData(
 }
 #endif  // NO_USAGE_REWRITER
 
-StringPiece DataManager::GetTypingModel(const string &name) const {
+absl::string_view DataManager::GetTypingModel(const std::string &name) const {
   const auto iter = std::lower_bound(
       typing_model_data_.begin(), typing_model_data_.end(), name,
-      [](const std::pair<string, StringPiece> &elem, const string &key) {
-        return elem.first < key;
-      });
+      [](const std::pair<std::string, absl::string_view> &elem,
+         const std::string &key) { return elem.first < key; });
   if (iter == typing_model_data_.end() || iter->first != name) {
-    return StringPiece();
+    return absl::string_view();
   }
   return iter->second;
 }
 
-StringPiece DataManager::GetDataVersion() const {
-  return data_version_;
-}
+absl::string_view DataManager::GetDataVersion() const { return data_version_; }
 
 std::ostream &operator<<(std::ostream &os, DataManager::Status status) {
   return os << DataManager::StatusCodeToString(status);

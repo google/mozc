@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace testing {
@@ -48,15 +48,16 @@ namespace testing {
 //
 // This call gives the absolute path to data/test/dictionary/id.def. (Note that
 // the actual result is separated by OS-specific path separator.)
-string GetSourcePath(const std::vector<StringPiece> &components);
+std::string GetSourcePath(const std::vector<absl::string_view> &components);
 
 // Gets an absolute path of test resource file.  If the file doesn't exist,
 // terminates the program.
-string GetSourceFileOrDie(const std::vector<StringPiece> &components);
+std::string GetSourceFileOrDie(
+    const std::vector<absl::string_view> &components);
 
 // Gets an absolute path of test resource directory.  If the directory doesn't
 // exist, terminates the program.
-string GetSourceDirOrDie(const std::vector<StringPiece> &components);
+std::string GetSourceDirOrDie(const std::vector<absl::string_view> &components);
 
 // Gets absolute paths of test resource files in a directory.  If one of files
 // don't exit, terminates the program.
@@ -66,9 +67,9 @@ string GetSourceDirOrDie(const std::vector<StringPiece> &components);
 //   "/test/srcdir/my/dir/file1",
 //   "/test/srcdir/my/dir/file2",
 // };
-std::vector<string> GetSourceFilesInDirOrDie(
-    const std::vector<StringPiece> &dir_components,
-    const std::vector<StringPiece> &filenames);
+std::vector<std::string> GetSourceFilesInDirOrDie(
+    const std::vector<absl::string_view> &dir_components,
+    const std::vector<absl::string_view> &filenames);
 
 // Temporarily sets the user profile directory to FLAGS_test_tmpdir during the
 // scope.  The original directory is restored at the end of the scope.
@@ -78,7 +79,7 @@ class ScopedTmpUserProfileDirectory {
   ~ScopedTmpUserProfileDirectory();
 
  private:
-  const string original_dir_;
+  const std::string original_dir_;
 };
 
 }  // namespace testing

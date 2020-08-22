@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include "base/embedded_file.h"
 #include "base/logging.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace oss {
@@ -48,7 +49,7 @@ const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 }  // namespace
 
 OssDataManager::OssDataManager() {
-  const StringPiece magic(kMagicNumber, arraysize(kMagicNumber) - 1);
+  const absl::string_view magic(kMagicNumber, arraysize(kMagicNumber) - 1);
   CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
       << "Embedded mozc_imy.h for OSS is broken";
 }

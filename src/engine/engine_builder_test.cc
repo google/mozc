@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ class EngineBuilderTest : public ::testing::Test {
     response_.Clear();
   }
 
-  const string mock_data_path_;
+  const std::string mock_data_path_;
   EngineBuilder builder_;
   EngineReloadRequest request_;
   EngineReloadResponse response_;
@@ -84,10 +84,11 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
   {
     // Test request with install.  Since the requested file is moved,
     // |mock_data_path_| is copied to a temporary file.
-    const string src_path = FileUtil::JoinPath({FLAGS_test_tmpdir, "src.data"});
+    const std::string src_path =
+        FileUtil::JoinPath({FLAGS_test_tmpdir, "src.data"});
     ASSERT_TRUE(FileUtil::CopyFile(mock_data_path_, src_path));
 
-    const string install_path =
+    const std::string install_path =
         FileUtil::JoinPath({FLAGS_test_tmpdir, "dst.data"});
     request_.set_engine_type(EngineReloadRequest::MOBILE);
     request_.set_file_path(src_path);
@@ -152,8 +153,9 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
       {EngineReloadRequest::DESKTOP, "DefaultPredictor"},
       {EngineReloadRequest::MOBILE, "MobilePredictor"},
   };
-  const string &tmp_src = FileUtil::JoinPath({FLAGS_test_tmpdir, "src.data"});
-  const string install_path =
+  const std::string &tmp_src =
+      FileUtil::JoinPath({FLAGS_test_tmpdir, "src.data"});
+  const std::string install_path =
       FileUtil::JoinPath({FLAGS_test_tmpdir, "dst.data"});
 
   for (const auto &test_case : kTestCases) {

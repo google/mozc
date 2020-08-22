@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,35 +48,26 @@
 
 namespace mozc {
 namespace gui {
-PostInstallDialog::PostInstallDialog()
-    : setuputil_(new SetupUtil()) {
+PostInstallDialog::PostInstallDialog() : setuputil_(new SetupUtil()) {
   setupUi(this);
-  setWindowFlags(Qt::WindowSystemMenuHint |
-                 Qt::WindowCloseButtonHint |
-                 Qt::MSWindowsFixedSizeDialogHint |
-                 Qt::WindowStaysOnTopHint);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
 
-  QObject::connect(okButton,
-                   SIGNAL(clicked()),
-                   this,
-                   SLOT(OnOk()));
-  QObject::connect(setAsDefaultCheckBox,
-                   SIGNAL(stateChanged(int)),
-                   this,
+  QObject::connect(okButton, SIGNAL(clicked()), this, SLOT(OnOk()));
+  QObject::connect(setAsDefaultCheckBox, SIGNAL(stateChanged(int)), this,
                    SLOT(OnsetAsDefaultCheckBoxToggled(int)));
 
   // set the default state of migrateDefaultIMEUserDictionaryCheckBox
-  const bool status = (!RunLevel::IsElevatedByUAC() &&
-                       setuputil_->LockUserDictionary());
+  const bool status =
+      (!RunLevel::IsElevatedByUAC() && setuputil_->LockUserDictionary());
   migrateDefaultIMEUserDictionaryCheckBox->setVisible(status);
 
   // import MS-IME by default
   migrateDefaultIMEUserDictionaryCheckBox->setChecked(true);
 }
 
-PostInstallDialog::~PostInstallDialog() {
-}
+PostInstallDialog::~PostInstallDialog() {}
 
 void PostInstallDialog::OnOk() {
   usage_stats::UsageStats::IncrementCount("PostInstallOkButton");

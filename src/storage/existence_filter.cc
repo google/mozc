@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 
 #include "storage/existence_filter.h"
 
-#include <cstring>
 #include <cmath>
+#include <cstring>
 
 #include "base/logging.h"
 #include "base/port.h"
@@ -78,7 +78,7 @@ class ExistenceFilter::BlockBitmap {
   //    for (uint32 iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); ) {
   //      Process(*ptr, bytes);
   //    }
-  bool GetMutableFragment(uint32* itr, char*** ptr, size_t* size);
+  bool GetMutableFragment(uint32 *itr, char ***ptr, size_t *size);
 
  private:
   static const int kBlockShift = 21;  // 2^21 bits == 256KB block
@@ -109,7 +109,7 @@ ExistenceFilter::BlockBitmap::BlockBitmap(uint32 length, bool is_mutable)
   }
   CHECK_GT(num_blocks_, 0);
 
-  block_ = new uint32*[num_blocks_];
+  block_ = new uint32 *[num_blocks_];
   CHECK(block_);
 
   // Allocate full blocks
@@ -119,23 +119,23 @@ ExistenceFilter::BlockBitmap::BlockBitmap(uint32 length, bool is_mutable)
 
   // Allocate the last block
   if (bits_in_last_block) {
-    bytes_in_last_ = sizeof(uint32) * ((bits_in_last_block + 31)/32);
+    bytes_in_last_ = sizeof(uint32) * ((bits_in_last_block + 31) / 32);
   } else {
     bytes_in_last_ = kBlockBytes;
   }
   CHECK_EQ(bytes_in_last_ % sizeof(uint32), 0);
 
-  block_[num_blocks_-1] =
-      is_mutable_ ? new uint32[bytes_in_last_/sizeof(uint32)] : NULL;
+  block_[num_blocks_ - 1] =
+      is_mutable_ ? new uint32[bytes_in_last_ / sizeof(uint32)] : NULL;
 }
 
 ExistenceFilter::BlockBitmap::~BlockBitmap() {
   if (is_mutable_) {
     for (int i = 0; i < num_blocks_; ++i) {
-      delete [] block_[i];
+      delete[] block_[i];
     }
   }
-  delete [] block_;
+  delete[] block_;
 }
 
 void ExistenceFilter::BlockBitmap::Clear() {
@@ -145,47 +145,40 @@ void ExistenceFilter::BlockBitmap::Clear() {
   for (int i = 0; i < num_blocks_ - 1; ++i) {
     memset(block_[i], 0, kBlockBytes);
   }
-  memset(block_[num_blocks_-1], 0, bytes_in_last_);
+  memset(block_[num_blocks_ - 1], 0, bytes_in_last_);
 }
 
 ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k)
-    : vec_size_(m ? m : 1),
-      expected_nelts_(n),
-      num_hashes_(k) {
+    : vec_size_(m ? m : 1), expected_nelts_(n), num_hashes_(k) {
   CHECK_LT(num_hashes_, 8);
   rep_.reset(new BlockBitmap(m ? m : 1, true));
   rep_->Clear();
 }
 
 // this is private constructor
-ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k,
-                                 bool is_mutable)
-    : vec_size_(m ? m : 1),
-      expected_nelts_(n),
-      num_hashes_(k) {
+ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k, bool is_mutable)
+    : vec_size_(m ? m : 1), expected_nelts_(n), num_hashes_(k) {
   CHECK_LT(num_hashes_, 8);
   rep_.reset(new BlockBitmap(m ? m : 1, is_mutable));
   rep_->Clear();
 }
 
 // static
-ExistenceFilter *
-ExistenceFilter::CreateImmutableExietenceFilter(uint32 m,
-                                                uint32 n,
-                                                int k) {
+ExistenceFilter *ExistenceFilter::CreateImmutableExietenceFilter(uint32 m,
+                                                                 uint32 n,
+                                                                 int k) {
   return new ExistenceFilter(m, n, k, false);
 }
 
-ExistenceFilter* ExistenceFilter::CreateOptimal(size_t size_in_bytes,
+ExistenceFilter *ExistenceFilter::CreateOptimal(size_t size_in_bytes,
                                                 uint32 estimated_insertions) {
-  CHECK_LT(size_in_bytes, (1 << 29))
-                             << "Requested size is too big";
+  CHECK_LT(size_in_bytes, (1 << 29)) << "Requested size is too big";
   CHECK_GT(estimated_insertions, 0);
   const uint32 m = size_in_bytes * 8;
   const uint32 n = estimated_insertions;
 
-  int optimal_k = static_cast<int>((static_cast<float>(m) / n * log(2.0))
-                                   + 0.5);
+  int optimal_k =
+      static_cast<int>((static_cast<float>(m) / n * log(2.0)) + 0.5);
   if (optimal_k < 1) {
     optimal_k = 1;
   }
@@ -200,12 +193,9 @@ ExistenceFilter* ExistenceFilter::CreateOptimal(size_t size_in_bytes,
   return filter;
 }
 
-ExistenceFilter::~ExistenceFilter() {
-}
+ExistenceFilter::~ExistenceFilter() {}
 
-void ExistenceFilter::Clear() {
-  rep_->Clear();
-}
+void ExistenceFilter::Clear() { rep_->Clear(); }
 
 inline bool ExistenceFilter::BlockBitmap::Get(uint32 index) const {
   const uint32 bindex = index >> kBlockShift;
@@ -221,8 +211,7 @@ inline void ExistenceFilter::BlockBitmap::Set(uint32 index) {
   block_[bindex][windex] |= (static_cast<uint32>(1) << bitpos);
 }
 
-bool ExistenceFilter::BlockBitmap::GetMutableFragment(uint32 *iter,
-                                                      char ***ptr,
+bool ExistenceFilter::BlockBitmap::GetMutableFragment(uint32 *iter, char ***ptr,
                                                       size_t *size) {
   const uint32 b = *iter;
   if (b >= num_blocks_) {
@@ -232,7 +221,7 @@ bool ExistenceFilter::BlockBitmap::GetMutableFragment(uint32 *iter,
 
   (*iter)++;
   *ptr = reinterpret_cast<char **>(&block_[b]);
-  *size = (b == num_blocks_-1) ? bytes_in_last_ : kBlockBytes;
+  *size = (b == num_blocks_ - 1) ? bytes_in_last_ : kBlockBytes;
   return true;
 }
 
@@ -265,10 +254,10 @@ size_t ExistenceFilter::MinFilterSizeInBytesForErrorRate(float error_rate,
 
   double min_bits = 0;
   for (size_t num_hashes = 1; num_hashes < 8; ++num_hashes) {
-    double num_bits = (-1.0 * num_hashes * num_elements) /
+    double num_bits =
+        (-1.0 * num_hashes * num_elements) /
         log(1.0 - pow(static_cast<double>(error_rate), (1.0 / num_hashes)));
-    if (min_bits == 0 || num_bits < min_bits)
-      min_bits = num_bits;
+    if (min_bits == 0 || num_bits < min_bits) min_bits = num_bits;
   }
   return static_cast<size_t>(ceil(min_bits / 8));
 }
@@ -309,7 +298,7 @@ void ExistenceFilter::Write(char **buf, size_t *size) {
   }
 }
 
-bool ExistenceFilter::ReadHeader(const char *buf, Header* header) {
+bool ExistenceFilter::ReadHeader(const char *buf, Header *header) {
   memcpy(&(header->m), buf, sizeof(header->m));
   buf += sizeof(header->m);
   memcpy(&(header->n), buf, sizeof(header->n));
@@ -323,7 +312,7 @@ bool ExistenceFilter::ReadHeader(const char *buf, Header* header) {
   return true;
 }
 
-ExistenceFilter* ExistenceFilter::Read(const char *buf, size_t size) {
+ExistenceFilter *ExistenceFilter::Read(const char *buf, size_t size) {
   Header header;
   const uint32 header_bytes =
       sizeof(header.m) + sizeof(header.n) + sizeof(header.k);
@@ -341,24 +330,20 @@ ExistenceFilter* ExistenceFilter::Read(const char *buf, size_t size) {
   const uint32 filter_size = BitsToWords(header.m);
   const uint32 filter_bytes = filter_size * sizeof(uint32);
   VLOG(1) << "Reading bloom filter with size: " << filter_bytes << " bytes, "
-          << "estimated insertions: " << header.n << " (k: " << header.k
-          << ")";
-
+          << "estimated insertions: " << header.n << " (k: " << header.k << ")";
 
   if (size < header_bytes + filter_bytes) {
     LOG(ERROR) << "Not enough bufsize: could not read filter";
     return NULL;
   }
 
-  ExistenceFilter* filter =
-      ExistenceFilter::CreateImmutableExietenceFilter(header.m,
-                                                      header.n,
-                                                      header.k);
+  ExistenceFilter *filter = ExistenceFilter::CreateImmutableExietenceFilter(
+      header.m, header.n, header.k);
   char **ptr = NULL;
   size_t n = 0;
   size_t read = 0;
   for (uint32 iter = 0; filter->rep_->GetMutableFragment(&iter, &ptr, &n);) {
-    *ptr = const_cast<char *>(buf);   // TODO(taku): don't want to remove const
+    *ptr = const_cast<char *>(buf);  // TODO(taku): don't want to remove const
     buf += n;
     read += n;
   }

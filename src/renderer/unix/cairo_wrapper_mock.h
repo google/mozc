@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,17 +41,17 @@ namespace gtk {
 
 class CairoWrapperMock : public CairoWrapperInterface {
  public:
-  MOCK_METHOD0(Save, void());
-  MOCK_METHOD0(Restore, void());
-  MOCK_METHOD0(Destroy, void());
-  MOCK_METHOD1(Initialize, void(GdkWindow* window));
-  MOCK_METHOD4(SetSourceRGBA, void(double r, double g, double b, double a));
-  MOCK_METHOD4(Rectangle, void(double x, double y, double w, double h));
-  MOCK_METHOD0(Fill, void());
-  MOCK_METHOD1(SetLineWidth, void(double width));
-  MOCK_METHOD0(Stroke, void());
-  MOCK_METHOD2(MoveTo, void(double from_x, double from_y));
-  MOCK_METHOD2(LineTo, void(double to_x, double to_y));
+  MOCK_METHOD(void, Save, ());
+  MOCK_METHOD(void, Restore, ());
+  MOCK_METHOD(void, Destroy, ());
+  MOCK_METHOD(void, Initialize, (GdkWindow* window));
+  MOCK_METHOD(void, SetSourceRGBA, (double r, double g, double b, double a));
+  MOCK_METHOD(void, Rectangle, (double x, double y, double w, double h));
+  MOCK_METHOD(void, Fill, ());
+  MOCK_METHOD(void, SetLineWidth, (double width));
+  MOCK_METHOD(void, Stroke, ());
+  MOCK_METHOD(void, MoveTo, (double from_x, double from_y));
+  MOCK_METHOD(void, LineTo, (double to_x, double to_y));
 };
 
 }  // namespace gtk

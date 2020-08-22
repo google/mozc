@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,6 +73,7 @@ struct CompositionChangeAttributes {
   const bool move_caret;
   const WPARAM original_flags;
   const WPARAM remaining_flags;
+
  private:
   static LPARAM GetRemainingBits(WPARAM lParam);
 };

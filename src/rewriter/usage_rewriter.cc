@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "absl/strings/string_view.h"
 #ifndef NO_USAGE_REWRITER
 
 #include "rewriter/usage_rewriter.h"
@@ -54,16 +55,14 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
     : pos_matcher_(data_manager->GetPOSMatcherData()),
       dictionary_(dictionary),
       base_conjugation_suffix_(nullptr) {
-  StringPiece base_conjugation_suffix_data;
-  StringPiece conjugation_suffix_data;
-  StringPiece conjugation_suffix_index_data;
-  StringPiece usage_items_data;
-  StringPiece string_array_data;
-  data_manager->GetUsageRewriterData(&base_conjugation_suffix_data,
-                                     &conjugation_suffix_data,
-                                     &conjugation_suffix_index_data,
-                                     &usage_items_data,
-                                     &string_array_data);
+  absl::string_view base_conjugation_suffix_data;
+  absl::string_view conjugation_suffix_data;
+  absl::string_view conjugation_suffix_index_data;
+  absl::string_view usage_items_data;
+  absl::string_view string_array_data;
+  data_manager->GetUsageRewriterData(
+      &base_conjugation_suffix_data, &conjugation_suffix_data,
+      &conjugation_suffix_index_data, &usage_items_data, &string_array_data);
   base_conjugation_suffix_ =
       reinterpret_cast<const uint32 *>(base_conjugation_suffix_data.data());
   const uint32 *conjugation_suffix =
@@ -81,13 +80,12 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
   // binary search over the conjugation_suffix_data diretly.
   for (; begin != end; ++begin) {
     for (size_t i = conjugation_suffix_data_index[begin.conjugation_id()];
-         i < conjugation_suffix_data_index[begin.conjugation_id() + 1];
-         ++i) {
-      const StringPiece key = string_array_[begin.key_index()];
-      const StringPiece value = string_array_[begin.value_index()];
-      const StringPiece key_suffix =
+         i < conjugation_suffix_data_index[begin.conjugation_id() + 1]; ++i) {
+      const absl::string_view key = string_array_[begin.key_index()];
+      const absl::string_view value = string_array_[begin.value_index()];
+      const absl::string_view key_suffix =
           string_array_[conjugation_suffix[2 * i + 1]];
-      const StringPiece value_suffix =
+      const absl::string_view value_suffix =
           string_array_[conjugation_suffix[2 * i]];
       StrPair key_value1;
       Util::ConcatStrings(key, key_suffix, &key_value1.first);
@@ -100,8 +98,7 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
   }
 }
 
-UsageRewriter::~UsageRewriter() {
-}
+UsageRewriter::~UsageRewriter() {}
 
 // static
 // "合いました" => "合い"
@@ -160,7 +157,7 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
     return UsageDictItemIterator();
   }
   // Check result key part is a prefix of the content_key.
-  const StringPiece key = string_array_[itr->second.key_index()];
+  const absl::string_view key = string_array_[itr->second.key_index()];
   if (Util::StartsWith(candidate.content_key, key)) {
     return itr->second;
   }
@@ -214,8 +211,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
       if (dictionary_ != NULL) {
         if (dictionary_->LookupComment(segment->candidate(j).content_key,
                                        segment->candidate(j).content_value,
-                                       request,
-                                       &comment)) {
+                                       request, &comment)) {
           Segment::Candidate *candidate = segment->mutable_candidate(j);
           candidate->usage_id = usage_id_for_user_comment;
           candidate->usage_title = segment->candidate(j).content_value;
@@ -234,8 +230,8 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
         DCHECK(candidate);
         candidate->usage_id = iter.usage_id();
 
-        const StringPiece value_suffix = string_array_[
-            base_conjugation_suffix_[2 * iter.conjugation_id()]];
+        const absl::string_view value_suffix =
+            string_array_[base_conjugation_suffix_[2 * iter.conjugation_id()]];
         candidate->usage_title.assign(string_array_[iter.value_index()].data(),
                                       string_array_[iter.value_index()].size());
         candidate->usage_title.append(value_suffix.data(), value_suffix.size());
@@ -244,13 +240,12 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
             string_array_[iter.meaning_index()].data(),
             string_array_[iter.meaning_index()].size());
 
-        VLOG(2) << i << ":" << j
-                << ":" << candidate->content_key
-                << ":" << candidate->content_value
-                << ":" << string_array_[iter.key_index()]
-                << ":" << string_array_[iter.value_index()]
-                << ":" << iter.conjugation_id()
-                << ":" << string_array_[iter.meaning_index()];
+        VLOG(2) << i << ":" << j << ":" << candidate->content_key << ":"
+                << candidate->content_value << ":"
+                << string_array_[iter.key_index()] << ":"
+                << string_array_[iter.value_index()] << ":"
+                << iter.conjugation_id() << ":"
+                << string_array_[iter.meaning_index()];
         modified = true;
       }
     }

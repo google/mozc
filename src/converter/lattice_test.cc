@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,7 @@ void InsertNodes(Lattice *lattice) {
 TEST(LatticeTest, AddSuffixTest) {
   Lattice lattice;
 
-  const string kKey = "test";
+  const std::string kKey = "test";
 
   lattice.SetKey("");
   for (size_t len = 1; len <= kKey.size(); ++len) {
@@ -153,8 +153,7 @@ TEST(LatticeTest, AddSuffixTest) {
       // check for begin_nodes
       if (i < key_size) {
         std::set<int> lengths;
-        for (Node *node = lattice.begin_nodes(i);
-             node != NULL;
+        for (Node *node = lattice.begin_nodes(i); node != NULL;
              node = node->bnext) {
           lengths.insert(node->key.size());
         }
@@ -163,8 +162,7 @@ TEST(LatticeTest, AddSuffixTest) {
       // check for end_nodes
       if (i > 0) {
         std::set<int> lengths;
-        for (Node *node = lattice.end_nodes(i);
-             node != NULL;
+        for (Node *node = lattice.end_nodes(i); node != NULL;
              node = node->enext) {
           lengths.insert(node->key.size());
         }
@@ -177,7 +175,7 @@ TEST(LatticeTest, AddSuffixTest) {
 TEST(LatticeTest, ShrinkKeyTest) {
   Lattice lattice;
 
-  const string kKey = "test";
+  const std::string kKey = "test";
   for (size_t len = 1; len <= kKey.size(); ++len) {
     lattice.AddSuffix(kKey.substr(len - 1, 1));
     InsertNodes(&lattice);
@@ -205,8 +203,7 @@ TEST(LatticeTest, ShrinkKeyTest) {
       // check for begin_nodes
       if (i < key_size) {
         std::set<int> lengths;
-        for (Node *node = lattice.begin_nodes(i);
-             node != NULL;
+        for (Node *node = lattice.begin_nodes(i); node != NULL;
              node = node->bnext) {
           lengths.insert(node->key.size());
         }
@@ -215,8 +212,7 @@ TEST(LatticeTest, ShrinkKeyTest) {
       // check for end_nodes
       if (i > 0) {
         std::set<int> lengths;
-        for (Node *node = lattice.end_nodes(i);
-             node != NULL;
+        for (Node *node = lattice.end_nodes(i); node != NULL;
              node = node->enext) {
           lengths.insert(node->key.size());
         }

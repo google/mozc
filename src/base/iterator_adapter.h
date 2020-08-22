@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,41 +95,39 @@ namespace mozc {
 // this class is designed for searching or counting purpose. So, it is not
 // possible to assign or swap the original values (pointed by original
 // iterator).
-template<typename BaseIter, typename Adapter>
+template <typename BaseIter, typename Adapter>
 class IteratorAdapter {
  public:
   // Standard type traits for iterator.
   typedef typename std::iterator_traits<BaseIter>::iterator_category
       iterator_category;
-  typedef typename std::iterator_traits<BaseIter>::difference_type
-      difference_type;
+  typedef
+      typename std::iterator_traits<BaseIter>::difference_type difference_type;
   typedef typename Adapter::value_type value_type;
   typedef typename Adapter::pointer pointer;
   typedef typename Adapter::reference reference;
 
   IteratorAdapter(BaseIter iter, Adapter adapter)
-      : iter_(iter), adapter_(adapter) {
-  }
+      : iter_(iter), adapter_(adapter) {}
 
-  IteratorAdapter() {
-  }
+  IteratorAdapter() {}
 
   const BaseIter &base() const { return iter_; }
 
-  value_type operator*() {
-    return adapter_(iter_);
-  }
+  value_type operator*() { return adapter_(iter_); }
 
   pointer operator->() const { return &(operator*()); }
 
-  IteratorAdapter &operator++() { ++iter_; return *this; }
-  IteratorAdapter operator++(int) {
-    return IteratorAdapter(iter_++, adapter_);
+  IteratorAdapter &operator++() {
+    ++iter_;
+    return *this;
   }
-  IteratorAdapter &operator--() { --iter_; return *this; }
-  IteratorAdapter operator--(int) {
-    return IteratorAdapter(iter_--, adapter_);
+  IteratorAdapter operator++(int) { return IteratorAdapter(iter_++, adapter_); }
+  IteratorAdapter &operator--() {
+    --iter_;
+    return *this;
   }
+  IteratorAdapter operator--(int) { return IteratorAdapter(iter_--, adapter_); }
 
   IteratorAdapter &operator+=(const difference_type &diff) {
     iter_ += diff;
@@ -145,8 +143,8 @@ class IteratorAdapter {
   IteratorAdapter operator-(const difference_type &diff) const {
     return IteratorAdapter(iter_ - diff, adapter_);
   }
-  friend IteratorAdapter operator+(
-      const difference_type &diff, const IteratorAdapter &iter) {
+  friend IteratorAdapter operator+(const difference_type &diff,
+                                   const IteratorAdapter &iter) {
     return iter + diff;
   }
   difference_type operator-(const IteratorAdapter &other) const {
@@ -157,23 +155,23 @@ class IteratorAdapter {
     return adapter_(iter_ + diff);
   }
 
-  friend bool operator<(
-      const IteratorAdapter &iter1, const IteratorAdapter &iter2) {
+  friend bool operator<(const IteratorAdapter &iter1,
+                        const IteratorAdapter &iter2) {
     return iter1.iter_ < iter2.iter_;
   }
 
-  friend bool operator>(
-      const IteratorAdapter &iter1, const IteratorAdapter &iter2) {
+  friend bool operator>(const IteratorAdapter &iter1,
+                        const IteratorAdapter &iter2) {
     return iter1.iter_ > iter2.iter_;
   }
 
-  friend bool operator<=(
-      const IteratorAdapter &iter1, const IteratorAdapter &iter2) {
+  friend bool operator<=(const IteratorAdapter &iter1,
+                         const IteratorAdapter &iter2) {
     return iter1.iter_ <= iter2.iter_;
   }
 
-  friend bool operator>=(
-      const IteratorAdapter &iter1, const IteratorAdapter &iter2) {
+  friend bool operator>=(const IteratorAdapter &iter1,
+                         const IteratorAdapter &iter2) {
     return iter1.iter_ >= iter2.iter_;
   }
 
@@ -203,7 +201,7 @@ class IteratorAdapter {
 //       return iter->field1;
 //     }
 //   };
-template<typename T, typename Pointer = T*, typename Reference = T&>
+template <typename T, typename Pointer = T *, typename Reference = T &>
 struct AdapterBase {
   typedef T value_type;
   typedef Pointer pointer;
@@ -213,9 +211,9 @@ struct AdapterBase {
 // Template function will guess the template parameter types based on its
 // arguments. This function can be used to avoid writing the template
 // parameters explicitly, similar to std::make_pair.
-template<typename BaseIter, typename Adapter>
-IteratorAdapter<BaseIter, Adapter> MakeIteratorAdapter(
-    BaseIter iter, Adapter adapter) {
+template <typename BaseIter, typename Adapter>
+IteratorAdapter<BaseIter, Adapter> MakeIteratorAdapter(BaseIter iter,
+                                                       Adapter adapter) {
   return IteratorAdapter<BaseIter, Adapter>(iter, adapter);
 }
 

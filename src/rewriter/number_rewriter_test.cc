@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,10 +38,10 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "request/conversion_request.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
@@ -65,7 +65,7 @@ const char kMaruNumberDescription[] = "丸数字";
 const char kRomanCapitalDescription[] = "ローマ数字(大文字)";
 const char kRomanNoCapitalDescription[] = "ローマ数字(小文字)";
 
-bool FindValue(const Segment &segment, const string &value) {
+bool FindValue(const Segment &segment, const std::string &value) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == value) {
       return true;
@@ -74,8 +74,8 @@ bool FindValue(const Segment &segment, const string &value) {
   return false;
 }
 
-Segment *SetupSegments(const POSMatcher& pos_matcher,
-                       const string &candidate_value, Segments *segments) {
+Segment *SetupSegments(const POSMatcher &pos_matcher,
+                       const std::string &candidate_value, Segments *segments) {
   segments->Clear();
   Segment *segment = segments->push_back_segment();
   Segment::Candidate *candidate = segment->add_candidate();
@@ -87,7 +87,7 @@ Segment *SetupSegments(const POSMatcher& pos_matcher,
   return segment;
 }
 
-bool HasDescription(const Segment &segment, const string &description) {
+bool HasDescription(const Segment &segment, const std::string &description) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).description == description) {
       return true;
@@ -97,7 +97,8 @@ bool HasDescription(const Segment &segment, const string &description) {
 }
 
 // Find candiadte id
-bool FindCandidateId(const Segment &segment, const string &value, int *id) {
+bool FindCandidateId(const Segment &segment, const std::string &value,
+                     int *id) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == value) {
       *id = i;
@@ -172,10 +173,8 @@ TEST_F(NumberRewriterTest, BasicTest) {
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value,
-              seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description,
-              seg->candidate(i).description);
+    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
   }
   seg->clear_candidates();
 }
@@ -185,10 +184,9 @@ TEST_F(NumberRewriterTest, RequestType) {
    public:
     Segments::RequestType request_type_;
     int expected_candidate_number_;
-    TestData(Segments::RequestType request_type, int expected_number) :
-        request_type_(request_type),
-        expected_candidate_number_(expected_number) {
-    }
+    TestData(Segments::RequestType request_type, int expected_number)
+        : request_type_(request_type),
+          expected_candidate_number_(expected_number) {}
   };
   TestData test_data_list[] = {
       TestData(Segments::CONVERSION, 11),  // 11 comes from BasicTest
@@ -200,7 +198,7 @@ TEST_F(NumberRewriterTest, RequestType) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   for (size_t i = 0; i < arraysize(test_data_list); ++i) {
-    TestData& test_data = test_data_list[i];
+    TestData &test_data = test_data_list[i];
     Segments segments;
     segments.set_request_type(test_data.request_type_);
     Segment *seg = segments.push_back_segment();
@@ -249,10 +247,8 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value,
-              seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description,
-              seg->candidate(i).description);
+    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
   }
 
   seg->clear_candidates();
@@ -315,8 +311,7 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
   EXPECT_EQ("", seg->candidate(1).description);
 
   EXPECT_EQ("十五階", seg->candidate(2).value);
-  EXPECT_EQ("十五階",
-            seg->candidate(2).content_value);
+  EXPECT_EQ("十五階", seg->candidate(2).content_value);
   EXPECT_EQ("", seg->candidate(2).description);
 
   EXPECT_EQ("15階", seg->candidate(3).value);
@@ -550,10 +545,8 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value,
-              seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description,
-              seg->candidate(i).description);
+    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
   }
 
   seg->clear_candidates();
@@ -574,27 +567,20 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   const ExpectResult kExpectResults[] = {
-      {"18446744073709551616",
-       "18446744073709551616",
-       ""},
+      {"18446744073709551616", "18446744073709551616", ""},
       {"一八四四六七四四〇七三七〇九五五一六一六",
-       "一八四四六七四四〇七三七〇九五五一六一六",
-       kKanjiDescription},
+       "一八四四六七四四〇七三七〇九五五一六一六", kKanjiDescription},
       {"１８４４６７４４０７３７０９５５１６１６",
-       "１８４４６７４４０７３７０９５５１６１６",
-       kArabicDescription},
-      {"18,446,744,073,709,551,616",
-       "18,446,744,073,709,551,616",
+       "１８４４６７４４０７３７０９５５１６１６", kArabicDescription},
+      {"18,446,744,073,709,551,616", "18,446,744,073,709,551,616",
        kArabicDescription},
       {"１８，４４６，７４４，０７３，７０９，５５１，６１６",
        "１８，４４６，７４４，０７３，７０９，５５１，６１６",
        kArabicDescription},
-      {"1844京6744兆737億955万1616",
-       "1844京6744兆737億955万1616",
+      {"1844京6744兆737億955万1616", "1844京6744兆737億955万1616",
        kArabicDescription},
       {"１８４４京６７４４兆７３７億９５５万１６１６",
-       "１８４４京６７４４兆７３７億９５５万１６１６",
-       kArabicDescription},
+       "１８４４京６７４４兆７３７億９５５万１６１６", kArabicDescription},
       {"千八百四十四京六千七百四十四兆七百三十七億九百五十五万千六百十六",
        "千八百四十四京六千七百四十四兆七百三十七億九百五十五万千六百十六",
        kKanjiDescription},
@@ -609,10 +595,8 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value,
-              seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description,
-              seg->candidate(i).description);
+    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
   }
 
   seg->clear_candidates();
@@ -629,7 +613,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   candidate->rid = pos_matcher_.GetNumberId();
 
   // 10^100 as "100000 ... 0"
-  string input = "1";
+  std::string input = "1";
   for (size_t i = 0; i < 100; ++i) {
     input += "0";
   }
@@ -646,7 +630,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   EXPECT_EQ("", seg->candidate(0).description);
 
   // 10^100 as "一〇〇〇〇〇 ... 〇"
-  string expected2 = "一";
+  std::string expected2 = "一";
   for (size_t i = 0; i < 100; ++i) {
     expected2 += "〇";
   }
@@ -655,7 +639,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // 10^100 as "１０００００ ... ０"
-  string expected3 = "１";
+  std::string expected3 = "１";
   for (size_t i = 0; i < 100; ++i) {
     expected3 += "０";
   }
@@ -664,7 +648,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // 10,000, ... ,000
-  string expected1 = "10";
+  std::string expected1 = "10";
   for (size_t i = 0; i < 100 / 3; ++i) {
     expected1 += ",000";
   }
@@ -673,7 +657,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
 
   // "１０，０００， ... ，０００"
-  string expected4 = "１０";  // "１０"
+  std::string expected4 = "１０";  // "１０"
   for (size_t i = 0; i < 100 / 3; ++i) {
     expected4 += "，０００";
   }
@@ -867,9 +851,8 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
       candidate->content_value = candidate->value;
       candidate->cost = 5925;
       candidate->wcost = 5000;
-      candidate->attributes =
-          Segment::Candidate::USER_DICTIONARY |
-          Segment::Candidate::NO_VARIANTS_EXPANSION;
+      candidate->attributes = Segment::Candidate::USER_DICTIONARY |
+                              Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
 
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -961,8 +944,8 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const Segment::Candidate &candidate = seg.candidate(i);
     EXPECT_TRUE(Util::StartsWith(candidate.description, kBubun));
-    EXPECT_TRUE(
-        candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+    EXPECT_TRUE(candidate.attributes &
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }
 }
 
@@ -1000,8 +983,8 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
     found_halfwidth = true;
     EXPECT_EQ(3, candidate.consumed_key_size);
     EXPECT_TRUE(Util::StartsWith(candidate.description, kBubun));
-    EXPECT_TRUE(
-        candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+    EXPECT_TRUE(candidate.attributes &
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }
   EXPECT_TRUE(found_halfwidth);
 }

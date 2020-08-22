@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,24 +42,25 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 
 namespace {
-void AddSegment(const string &key, const string &value,
+void AddSegment(const std::string &key, const std::string &value,
                 Segments *segments) {
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->value = key;
+  candidate->value = value;
   candidate->content_key = key;
   candidate->content_value = value;
 }
 
-void AddCandidate(const string &value, Segment *segment) {
+void AddCandidate(const std::string &value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   candidate->value = value;
@@ -67,10 +68,9 @@ void AddCandidate(const string &value, Segment *segment) {
   candidate->content_value = value;
 }
 
-bool HasCandidateAndDescription(const Segments &segments,
-                                int index,
-                                const string &key,
-                                const string &description) {
+bool HasCandidateAndDescription(const Segments &segments, int index,
+                                const std::string &key,
+                                const std::string &description) {
   CHECK_GT(segments.segments_size(), index);
   bool check_description = !description.empty();
 
@@ -88,7 +88,8 @@ bool HasCandidateAndDescription(const Segments &segments,
   return false;
 }
 
-bool HasCandidate(const Segments &segments, int index, const string &value) {
+bool HasCandidate(const Segments &segments, int index,
+                  const std::string &value) {
   return HasCandidateAndDescription(segments, index, value, "");
 }
 }  // namespace
@@ -161,11 +162,12 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
+  const ConversionRequest request;
   {
     Segments segments;
     AddSegment("ー", "test", &segments);
     AddSegment(">", "test", &segments);
-    EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(&segments));
+    EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(request, &segments));
     EXPECT_EQ(2, segments.segments_size());
     EXPECT_TRUE(HasCandidate(segments, 0, "―"));
     EXPECT_FALSE(HasCandidate(segments, 0, "→"));
@@ -175,13 +177,14 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
 
 TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
+  const ConversionRequest request;
   {
     Segments segments;
     AddSegment("したつき", "test", &segments);
-    EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(&segments));
+    EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
-    EXPECT_TRUE(HasCandidateAndDescription(segments, 0, "₍",
-                                           "下付き文字(始め丸括弧)"));
+    EXPECT_TRUE(
+        HasCandidateAndDescription(segments, 0, "₍", "下付き文字(始め丸括弧)"));
   }
 }
 
@@ -212,10 +215,60 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     EXPECT_GT(segments.segment(0).candidates_size(), 16);
     for (int i = 0; i < 16; ++i) {
-      const string &value = segments.segment(0).candidate(i).value;
+      const std::string &value = segments.segment(0).candidate(i).value;
       EXPECT_FALSE(Util::IsScriptType(value, Util::UNKNOWN_SCRIPT))
           << i << ": " << value;
     }
+  }
+}
+
+TEST_F(SymbolRewriterTest, InsertSymbolsPosition_MobileSymbolKey) {
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
+  commands::Request command_request;
+  commands::RequestForUnitTest::FillMobileRequest(&command_request);
+  ConversionRequest request;
+  request.set_request(&command_request);
+
+  {
+    Segments segments;
+    AddSegment("%", "%", &segments);  // segments from symbol key.
+    Segment *seg = segments.mutable_segment(0);
+    // Add predictive candidates.
+    AddCandidate("%引き", seg);
+    AddCandidate("%増し", seg);
+    AddCandidate("%台", seg);
+    AddCandidate("%超え", seg);
+
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
+    EXPECT_GT(segments.segment(0).candidates_size(), 5);
+    // Full width should be inserted with high ranking.
+    EXPECT_EQ("％", segments.segment(0).candidate(1).value);
+  }
+}
+
+TEST_F(SymbolRewriterTest, InsertSymbolsPosition_MobileAlphabetKey) {
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
+  commands::Request command_request;
+  commands::RequestForUnitTest::FillMobileRequest(&command_request);
+  ConversionRequest request;
+  request.set_request(&command_request);
+
+  {
+    Segments segments;
+    AddSegment("a", "app", &segments);  // segments from alphabet key.
+    Segment *seg = segments.mutable_segment(0);
+    // Add predictive candidates.
+    AddCandidate("apple", seg);
+    AddCandidate("align", seg);
+    AddCandidate("andy", seg);
+    AddCandidate("at", seg);
+
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
+    EXPECT_GT(segments.segment(0).candidates_size(), 5);  // Symbols were added
+    // Should keep top candidates.
+    EXPECT_EQ("app", segments.segment(0).candidate(0).value);
+    EXPECT_EQ("apple", segments.segment(0).candidate(1).value);
+    EXPECT_EQ("align", segments.segment(0).candidate(2).value);
   }
 }
 
@@ -225,7 +278,7 @@ TEST_F(SymbolRewriterTest, SetKey) {
   const ConversionRequest request;
 
   Segment *segment = segments.push_back_segment();
-  const string kKey = "てん";
+  const std::string kKey = "てん";
   segment->set_key(kKey);
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();

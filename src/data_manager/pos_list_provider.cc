@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
 
-
 namespace mozc {
 namespace {
 
@@ -41,7 +40,7 @@ namespace {
 // Contains the definition of kPosArray (embedded file).
 #include "data_manager/oss/pos_list.h"
 #elif defined(GOOGLE_JAPANESE_INPUT_BUILD)  // MOZC_BUILD
-#else  // defined(MOZC_BUILD) or defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#else   // defined(MOZC_BUILD) or defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #error "Neither MOZC_BUILD nor GOOGLE_JAPANESE_INPUT_BUILD are defined"
 #endif  // defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
@@ -50,12 +49,12 @@ namespace {
 POSListProvider::POSListProvider() = default;
 POSListProvider::~POSListProvider() = default;
 
-void POSListProvider::GetPOSList(std::vector<string> *pos_list) const {
+void POSListProvider::GetPOSList(std::vector<std::string> *pos_list) const {
   SerializedStringArray array;
   CHECK(array.Init(LoadEmbeddedFile(kPosArray)));
   pos_list->resize(array.size());
   for (size_t i = 0; i < array.size(); ++i) {
-    array[i].CopyToString(&(*pos_list)[i]);
+    (*pos_list)[i].assign(array[i].begin(), array[i].end());
   }
 }
 

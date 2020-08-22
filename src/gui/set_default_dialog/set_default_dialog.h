@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,7 @@ namespace mozc {
 namespace gui {
 
 // out-proc set default dialog.
-class SetDefaultDialog : public QDialog,
-                         private Ui::SetDefaultDialog {
+class SetDefaultDialog : public QDialog, private Ui::SetDefaultDialog {
   Q_OBJECT;
 
  public:
@@ -51,6 +50,6 @@ class SetDefaultDialog : public QDialog,
  private:
   bool SetCheckDefault(bool check_default);
 };
-}  // namespace mozc::gui
+}  // namespace gui
 }  // namespace mozc
 #endif  // MOZC_GUI_SET_DEFAULT_DIALOG_SET_DEFAULT_DIALOG_H_

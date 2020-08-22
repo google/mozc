@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ class ExistenceFilter {
   ExistenceFilter(uint32 m, uint32 n, int k);
   ~ExistenceFilter();
 
-  static ExistenceFilter* CreateOptimal(size_t size_in_bytes,
+  static ExistenceFilter *CreateOptimal(size_t size_in_bytes,
                                         uint32 estimated_insertions);
 
   void Clear();
@@ -76,12 +76,12 @@ class ExistenceFilter {
 
   void Write(char **buf, size_t *size);
 
-  static bool ReadHeader(const char *buf, Header* header);
+  static bool ReadHeader(const char *buf, Header *header);
 
   // Read Existence filter from buf[]
   // Note that the returned ExsitenceFilter is immutable filter.
   // Any mutable operations will destroy buf[].
-  static ExistenceFilter* Read(const char *buf, size_t size);
+  static ExistenceFilter *Read(const char *buf, size_t size);
 
  private:
   class BlockBitmap;
@@ -89,14 +89,13 @@ class ExistenceFilter {
   // private constructor for ExistenceFilter::Read();
   ExistenceFilter(uint32 m, uint32 n, int k, bool is_mutable);
 
-  static ExistenceFilter *CreateImmutableExietenceFilter(uint32 m,
-                                                         uint32 n,
+  static ExistenceFilter *CreateImmutableExietenceFilter(uint32 m, uint32 n,
                                                          int k);
 
   std::unique_ptr<BlockBitmap> rep_;  // points to bitmap
-  const uint32 vec_size_;  // size of bitmap (in bits)
-  const uint32 expected_nelts_;  // expected number of inserts
-  const int32 num_hashes_;  // number of hashes per lookup
+  const uint32 vec_size_;             // size of bitmap (in bits)
+  const uint32 expected_nelts_;       // expected number of inserts
+  const int32 num_hashes_;            // number of hashes per lookup
 
   DISALLOW_COPY_AND_ASSIGN(ExistenceFilter);
 };

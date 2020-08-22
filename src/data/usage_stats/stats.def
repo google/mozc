@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -301,6 +301,7 @@ Performed_Conversion_ReportBug
 Performed_Conversion_DeleteSelectedCandidate
 
 # The count of some SessionCommands defined in protocol/commands.proto
+SendCommand_None
 SendCommand_Revert
 SendCommand_Submit
 SendCommand_SelectCandidate
@@ -315,6 +316,7 @@ SendCommand_MoveCursor
 SendCommand_SwitchInputFieldType
 SendCommand_UsageStatsEvent
 SendCommand_UndoOrRewind
+SendCommand_StopKeyToggling
 SendCommand_ExpandSuggestion
 SendCommand_ObsoleteSendCaretLocation
 SendCommand_ObsoleteSendLanguageBarCommand
@@ -324,6 +326,7 @@ SendCommand_ConvertPrevPage
 SendCommand_ConvertNextPage
 SendCommand_TurnOnIme
 SendCommand_TurnOffIme
+SendCommand_DeleteCandidateFromHistory
 
 # The count of revert in Chrome Omnibox or Google search box
 SendCommand_RevertInChromeOmnibox
@@ -546,10 +549,10 @@ SubmittedCandidateRowGE10
 KeyboardFoldEvent
 KeyboardExpandEvent
 MushroomSelectionDialogOpen
-SoftwareKeyboardHeightDipLandscape
-SoftwareKeyboardHeightDipPortrait
 SoftwareKeyboardLayoutAdjustmentEnabledLandscape
 SoftwareKeyboardLayoutAdjustmentEnabledPortrait
+SoftwareKeyboardLayoutEnglishLandscape
+SoftwareKeyboardLayoutEnglishPortrait
 
 # for windows
 

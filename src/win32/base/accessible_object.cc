@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -201,8 +201,7 @@ string RoleToString(const CComVariant &role) {
   }
 }
 
-AccessibleObjectInfo GetInfo(const ATL::CComVariant &role,
-                             const string &name,
+AccessibleObjectInfo GetInfo(const ATL::CComVariant &role, const string &name,
                              const string &value) {
   AccessibleObjectInfo info;
   info.role = RoleToString(role);
@@ -221,22 +220,18 @@ CComVariant GetChildId(int32 child_id) {
 
 }  // namespace
 
-AccessibleObject::AccessibleObject()
-    : child_id_(CHILDID_SELF),
-      valid_(false) {}
+AccessibleObject::AccessibleObject() : child_id_(CHILDID_SELF), valid_(false) {}
 
 AccessibleObject::AccessibleObject(CComPtr<IAccessible> container)
     : container_(container),
       child_id_(CHILDID_SELF),
-      valid_(container != nullptr) {
-}
+      valid_(container != nullptr) {}
 
 AccessibleObject::AccessibleObject(CComPtr<IAccessible> container,
                                    int32 child_id)
     : container_(container),
       child_id_(child_id),
-      valid_(container != nullptr) {
-}
+      valid_(container != nullptr) {}
 
 AccessibleObjectInfo AccessibleObject::GetInfo() const {
   AccessibleObjectInfo info;
@@ -280,8 +275,8 @@ std::vector<AccessibleObject> AccessibleObject::GetChildren() const {
   buffer.resize(num_children);
 
   LONG num_fetched = 0;
-  if (FAILED(::AccessibleChildren(
-          container_, 0, num_children, &buffer[0], &num_fetched))) {
+  if (FAILED(::AccessibleChildren(container_, 0, num_children, &buffer[0],
+                                  &num_fetched))) {
     return result;
   }
   buffer.resize(num_fetched);
@@ -358,9 +353,7 @@ bool AccessibleObject::GetProcessId(DWORD *process_id) const {
   return true;
 }
 
-bool AccessibleObject::IsValid() const {
-  return valid_;
-}
+bool AccessibleObject::IsValid() const { return valid_; }
 
 // static
 AccessibleObject AccessibleObject::FromWindow(HWND window_handle) {
@@ -369,8 +362,8 @@ AccessibleObject AccessibleObject::FromWindow(HWND window_handle) {
   }
   CComPtr<IAccessible> accesible;
   if (FAILED(::AccessibleObjectFromWindow(
-      window_handle, OBJID_WINDOW, __uuidof(IAccessible),
-      reinterpret_cast<void **>(&accesible)))) {
+          window_handle, OBJID_WINDOW, __uuidof(IAccessible),
+          reinterpret_cast<void **>(&accesible)))) {
     return AccessibleObject();
   }
 

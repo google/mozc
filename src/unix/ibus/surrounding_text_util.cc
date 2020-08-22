@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,8 +51,7 @@ bool SurroundingTextUtil::GetSafeDelta(guint from, guint to, int32 *delta) {
       llabs(static_cast<int64>(std::numeric_limits<int32>::max()));
   const int64 kInt32AbsMin =
       llabs(static_cast<int64>(std::numeric_limits<int32>::min()));
-  const int64 kInt32SafeAbsMax =
-      std::min(kInt32AbsMax, kInt32AbsMin);
+  const int64 kInt32SafeAbsMax = std::min(kInt32AbsMax, kInt32AbsMin);
 
   const int64 diff = static_cast<int64>(from) - static_cast<int64>(to);
   if (llabs(diff) > kInt32SafeAbsMax) {
@@ -83,8 +82,7 @@ bool Skip(ConstChar32Iterator *iter, size_t skip_count) {
 // Otherwise returns false.
 // This function receives ConstChar32Iterator as pointer because
 // ConstChar32Iterator is defined as non-copyable.
-bool StartsWith(ConstChar32Iterator *iter,
-                ConstChar32Iterator *prefix_iter) {
+bool StartsWith(ConstChar32Iterator *iter, ConstChar32Iterator *prefix_iter) {
   if (iter->Done() || prefix_iter->Done()) {
     return false;
   }
@@ -104,17 +102,13 @@ bool StartsWith(ConstChar32Iterator *iter,
   }
 }
 
-
 // Returns true if |surrounding_text| contains |selected_text|
 // from |cursor_pos| to |*anchor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosForward(
-    const string &surrounding_text,
-    const string &selected_text,
-    size_t selected_chars_len,
-    guint cursor_pos,
-    guint *anchor_pos) {
-
+bool SearchAnchorPosForward(const string &surrounding_text,
+                            const string &selected_text,
+                            size_t selected_chars_len, guint cursor_pos,
+                            guint *anchor_pos) {
   ConstChar32Iterator iter(surrounding_text);
   // Move |iter| to cursor pos.
   if (!Skip(&iter, cursor_pos)) {
@@ -132,12 +126,10 @@ bool SearchAnchorPosForward(
 // Returns true if |surrounding_text| contains |selected_text|
 // from |*anchor_pos| to |cursor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosBackward(
-    const string &surrounding_text,
-    const string &selected_text,
-    size_t selected_chars_len,
-    guint cursor_pos,
-    guint *anchor_pos) {
+bool SearchAnchorPosBackward(const string &surrounding_text,
+                             const string &selected_text,
+                             size_t selected_chars_len, guint cursor_pos,
+                             guint *anchor_pos) {
   if (cursor_pos < selected_chars_len) {
     return false;
   }
@@ -161,10 +153,8 @@ bool SearchAnchorPosBackward(
 }  // namespace
 
 bool SurroundingTextUtil::GetAnchorPosFromSelection(
-    const string &surrounding_text,
-    const string &selected_text,
-    guint cursor_pos,
-    guint *anchor_pos) {
+    const string &surrounding_text, const string &selected_text,
+    guint cursor_pos, guint *anchor_pos) {
   DCHECK(anchor_pos);
 
   if (surrounding_text.empty()) {
@@ -178,14 +168,12 @@ bool SurroundingTextUtil::GetAnchorPosFromSelection(
   const size_t selected_chars_len = Util::CharsLen(selected_text);
 
   if (SearchAnchorPosForward(surrounding_text, selected_text,
-                             selected_chars_len,
-                             cursor_pos, anchor_pos)) {
+                             selected_chars_len, cursor_pos, anchor_pos)) {
     return true;
   }
 
   return SearchAnchorPosBackward(surrounding_text, selected_text,
-                                 selected_chars_len,
-                                 cursor_pos, anchor_pos);
+                                 selected_chars_len, cursor_pos, anchor_pos);
 }
 
 }  // namespace ibus

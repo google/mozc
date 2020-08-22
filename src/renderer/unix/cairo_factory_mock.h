@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,8 @@ class CairoFactoryMock : public CairoFactoryInterface {
   CairoFactoryMock() {}
   virtual ~CairoFactoryMock() {}
 
-  MOCK_CONST_METHOD1(CreateCairoInstance,
-                     CairoWrapperInterface *(GdkWindow *window));
+  MOCK_METHOD(CairoWrapperInterface *, CreateCairoInstance,
+              (GdkWindow* window), (const));
 };
 
 }  // namespace gtk

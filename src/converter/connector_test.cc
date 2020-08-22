@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,10 +35,12 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "data_manager/connection_file_reader.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -52,19 +54,21 @@ struct ConnectionDataEntry {
 #ifndef OS_NACL
 // Disabled on NaCl since it uses a mock file system.
 TEST(ConnectorTest, CompareWithRawData) {
-  const string path = testing::GetSourceFileOrDie({
-      "data_manager", "testing", "connection.data"});
+  const std::string path = testing::GetSourceFileOrDie(
+      {"data_manager", "testing", "connection.data"});
   Mmap cmmap;
   ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
-  std::unique_ptr<Connector> connector(
-      new Connector(cmmap.begin(), cmmap.size(), 256));
+  auto status_or_connector =
+      Connector::Create(cmmap.begin(), cmmap.size(), 256);
+  ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
+  auto connector = std::move(status_or_connector).value();
   ASSERT_EQ(1, connector->GetResolution());
 
-  const string connection_text_path = testing::GetSourceFileOrDie({
-      "data_manager", "testing", "connection_single_column.txt"});
+  const std::string connection_text_path = testing::GetSourceFileOrDie(
+      {"data_manager", "testing", "connection_single_column.txt"});
   std::vector<ConnectionDataEntry> data;
-  for (ConnectionFileReader reader(connection_text_path);
-       !reader.done(); reader.Next()) {
+  for (ConnectionFileReader reader(connection_text_path); !reader.done();
+       reader.Next()) {
     ConnectionDataEntry entry;
     entry.rid = reader.rid_of_left_node();
     entry.lid = reader.lid_of_right_node();
@@ -85,6 +89,55 @@ TEST(ConnectorTest, CompareWithRawData) {
       actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
       EXPECT_EQ(data[i].cost, actual);
     }
+  }
+}
+
+TEST(ConnectorTest, BrokenData) {
+  const std::string path = testing::GetSourceFileOrDie(
+      {"data_manager", "testing", "connection.data"});
+  Mmap cmmap;
+  ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
+
+  std::string data;
+
+  // Invalid magic number.
+  {
+    data.assign(cmmap.begin(), cmmap.size());
+    *reinterpret_cast<uint16 *>(&data[0]) = 0;
+    const auto status =
+        Connector::Create(data.data(), data.size(), 256).status();
+    VLOG(1) << status;
+    EXPECT_FALSE(status.ok());
+  }
+  // Not square.
+  {
+    data.assign(cmmap.begin(), cmmap.size());
+    uint16 *array = reinterpret_cast<uint16 *>(&data[0]);
+    array[2] = 100;
+    array[3] = 200;
+    const auto status =
+        Connector::Create(data.data(), data.size(), 256).status();
+    VLOG(1) << status;
+    EXPECT_FALSE(status.ok());
+  }
+  // Incomplete data.
+  {
+    data.assign(cmmap.begin(), cmmap.size());
+    for (size_t divider : {2, 3, 5, 7, 10, 100, 1000}) {
+      const auto size = data.size() / divider;
+      const auto status = Connector::Create(data.data(), size, 256).status();
+      VLOG(1) << "Divider=" << divider << ": " << status;
+      EXPECT_FALSE(status.ok());
+    }
+  }
+  // Not aligned at 32-bit bounary.
+  {
+    data.resize(cmmap.size() + 2);
+    data.insert(2, cmmap.begin(), cmmap.size());  // Align at 16-bit boundary.
+    const auto status =
+        Connector::Create(data.data() + 2, cmmap.size(), 256).status();
+    VLOG(1) << status;
+    EXPECT_FALSE(status.ok());
   }
 }
 #endif  // !OS_NACL

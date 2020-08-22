@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
   --pbdir ./third_party/breakpad --outdir /tmp/breakpad
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import optparse
 import os
 import subprocess
@@ -44,7 +46,8 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--pbdir', default='./third_party/breakpad')
   parser.add_option('--outdir', default='./out_mac/Release/Breakpad')
-  parser.add_option('--sdk', default='macosx10.11')
+  parser.add_option('--sdk', default='macosx10.14')
+  parser.add_option('--deployment_target', default='10.9')
 
   (opts, _) = parser.parse_args()
   return opts
@@ -54,34 +57,36 @@ def ProcessCall(command):
   try:
     subprocess.check_output(command)
   except subprocess.CalledProcessError as e:
-    print e.output
+    print(e.output)
     sys.exit(e.returncode)
-  print 'Done: %s' % ' '.join(command)
+  print('Done: %s' % ' '.join(command))
 
 
-def Xcodebuild(projdir, target, arch, sdk, outdir):
+def Xcodebuild(projdir, target, arch, sdk, deployment_target, outdir):
   ProcessCall([
       'xcodebuild', '-project', projdir, '-configuration', 'Release',
       '-target', target, '-arch', arch, '-sdk', sdk,
       'GCC_VERSION=com.apple.compilers.llvm.clang.1_0',
+      'MACOSX_DEPLOYMENT_TARGET=%s' % deployment_target,
       'CONFIGURATION_BUILD_DIR=%s' % outdir,
+      'OTHER_CFLAGS=-Wno-switch',  # For common/dwarf/dwarf2reader.cc
   ])
 
 
-def BuildBreakpad(outdir, sdk):
+def BuildBreakpad(outdir, sdk, deployment_target):
   projdir = os.path.join(outdir, 'src/client/mac/Breakpad.xcodeproj')
-  Xcodebuild(projdir, 'Breakpad', 'x86_64', sdk, outdir)
+  Xcodebuild(projdir, 'Breakpad', 'x86_64', sdk, deployment_target, outdir)
 
 
-def BuildDumpSyms(outdir, sdk):
+def BuildDumpSyms(outdir, sdk, deployment_target):
   projdir = os.path.join(outdir, 'src/tools/mac/dump_syms/dump_syms.xcodeproj')
-  Xcodebuild(projdir, 'dump_syms', 'x86_64', sdk, outdir)
+  Xcodebuild(projdir, 'dump_syms', 'x86_64', sdk, deployment_target, outdir)
 
 
-def BuildSymupload(outdir, sdk):
+def BuildSymupload(outdir, sdk, deployment_target):
   projdir = os.path.join(outdir, 'src/tools/mac/symupload/symupload.xcodeproj')
   # This build fails with Xcode8/i386.
-  Xcodebuild(projdir, 'symupload', 'x86_64', sdk, outdir)
+  Xcodebuild(projdir, 'symupload', 'x86_64', sdk, deployment_target, outdir)
 
 
 def CreateOutDir(pbdir, outdir):
@@ -97,9 +102,9 @@ def main():
   outdir = os.path.abspath(opts.outdir)
 
   CreateOutDir(pbdir, outdir)
-  BuildBreakpad(outdir, opts.sdk)
-  BuildDumpSyms(outdir, opts.sdk)
-  BuildSymupload(outdir, opts.sdk)
+  BuildBreakpad(outdir, opts.sdk, opts.deployment_target)
+  BuildDumpSyms(outdir, opts.sdk, opts.deployment_target)
+  BuildSymupload(outdir, opts.sdk, opts.deployment_target)
 
 
 if __name__ == '__main__':

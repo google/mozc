@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ namespace mozc {
 class LanguageAwareRewriter : public RewriterInterface {
  public:
   LanguageAwareRewriter(const dictionary::POSMatcher &pos_matcher,
-                          const dictionary::DictionaryInterface *dictionary);
+                        const dictionary::DictionaryInterface *dictionary);
   virtual ~LanguageAwareRewriter();
 
   virtual int capability(const ConversionRequest &request) const;
@@ -53,8 +53,7 @@ class LanguageAwareRewriter : public RewriterInterface {
 
  private:
   // Fills the raw text if the query does not look like Japanese.
-  bool FillRawText(const ConversionRequest &request,
-                   Segments *segments) const;
+  bool FillRawText(const ConversionRequest &request, Segments *segments) const;
 
   const uint16 unknown_id_;
   const dictionary::DictionaryInterface *dictionary_;

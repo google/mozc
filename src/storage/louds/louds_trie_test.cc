@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include "base/port.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
@@ -43,7 +44,7 @@ namespace {
 class RecordCallbackArgs {
  public:
   struct CallbackArgs {
-    StringPiece key;
+    absl::string_view key;
     size_t prefix_len;
     const LoudsTrie *trie;
     LoudsTrie::Node node;
@@ -52,7 +53,7 @@ class RecordCallbackArgs {
   explicit RecordCallbackArgs(std::vector<CallbackArgs> *output)
       : output_(output) {}
 
-  void operator()(StringPiece key, size_t prefix_len,
+  void operator()(absl::string_view key, size_t prefix_len,
                   const LoudsTrie &trie, LoudsTrie::Node node) {
     CallbackArgs args;
     args.key = key;
@@ -66,7 +67,7 @@ class RecordCallbackArgs {
   std::vector<CallbackArgs> *output_;
 };
 
-LoudsTrie::Node Traverse(const LoudsTrie &trie, StringPiece key) {
+LoudsTrie::Node Traverse(const LoudsTrie &trie, absl::string_view key) {
   LoudsTrie::Node node;
   trie.Traverse(key, &node);
   return node;
@@ -90,43 +91,26 @@ struct CacheSizeParam {
 class LoudsTrieTest : public ::testing::TestWithParam<CacheSizeParam> {};
 
 #define INSTANTIATE_TEST_CASE(Generator)                                \
-  INSTANTIATE_TEST_CASE_P(                                              \
+  INSTANTIATE_TEST_SUITE_P(                                             \
       Generator, LoudsTrieTest,                                         \
       ::testing::Values(                                                \
-          CacheSizeParam(0, 0, 0, 0, 0),                                \
-          CacheSizeParam(0, 0, 0, 0, 1),                                \
-          CacheSizeParam(0, 0, 0, 1, 0),                                \
-          CacheSizeParam(0, 0, 0, 1, 1),                                \
-          CacheSizeParam(0, 0, 1, 0, 0),                                \
-          CacheSizeParam(0, 0, 1, 0, 1),                                \
-          CacheSizeParam(0, 0, 1, 1, 0),                                \
-          CacheSizeParam(0, 0, 1, 1, 1),                                \
-          CacheSizeParam(0, 1, 0, 0, 0),                                \
-          CacheSizeParam(0, 1, 0, 0, 1),                                \
-          CacheSizeParam(0, 1, 0, 1, 0),                                \
-          CacheSizeParam(0, 1, 0, 1, 1),                                \
-          CacheSizeParam(0, 1, 1, 0, 0),                                \
-          CacheSizeParam(0, 1, 1, 0, 1),                                \
-          CacheSizeParam(0, 1, 1, 1, 0),                                \
-          CacheSizeParam(0, 1, 1, 1, 1),                                \
-          CacheSizeParam(1, 0, 0, 0, 0),                                \
-          CacheSizeParam(1, 0, 0, 0, 1),                                \
-          CacheSizeParam(1, 0, 0, 1, 0),                                \
-          CacheSizeParam(1, 0, 0, 1, 1),                                \
-          CacheSizeParam(1, 0, 1, 0, 0),                                \
-          CacheSizeParam(1, 0, 1, 0, 1),                                \
-          CacheSizeParam(1, 0, 1, 1, 0),                                \
-          CacheSizeParam(1, 0, 1, 1, 1),                                \
-          CacheSizeParam(1, 1, 0, 0, 0),                                \
-          CacheSizeParam(1, 1, 0, 0, 1),                                \
-          CacheSizeParam(1, 1, 0, 1, 0),                                \
-          CacheSizeParam(1, 1, 0, 1, 1),                                \
-          CacheSizeParam(1, 1, 1, 0, 0),                                \
-          CacheSizeParam(1, 1, 1, 0, 1),                                \
-          CacheSizeParam(1, 1, 1, 1, 0),                                \
-          CacheSizeParam(1, 1, 1, 1, 1),                                \
-          CacheSizeParam(2, 2, 2, 2, 2),                                \
-          CacheSizeParam(8, 8, 8, 8, 8),                                \
+          CacheSizeParam(0, 0, 0, 0, 0), CacheSizeParam(0, 0, 0, 0, 1), \
+          CacheSizeParam(0, 0, 0, 1, 0), CacheSizeParam(0, 0, 0, 1, 1), \
+          CacheSizeParam(0, 0, 1, 0, 0), CacheSizeParam(0, 0, 1, 0, 1), \
+          CacheSizeParam(0, 0, 1, 1, 0), CacheSizeParam(0, 0, 1, 1, 1), \
+          CacheSizeParam(0, 1, 0, 0, 0), CacheSizeParam(0, 1, 0, 0, 1), \
+          CacheSizeParam(0, 1, 0, 1, 0), CacheSizeParam(0, 1, 0, 1, 1), \
+          CacheSizeParam(0, 1, 1, 0, 0), CacheSizeParam(0, 1, 1, 0, 1), \
+          CacheSizeParam(0, 1, 1, 1, 0), CacheSizeParam(0, 1, 1, 1, 1), \
+          CacheSizeParam(1, 0, 0, 0, 0), CacheSizeParam(1, 0, 0, 0, 1), \
+          CacheSizeParam(1, 0, 0, 1, 0), CacheSizeParam(1, 0, 0, 1, 1), \
+          CacheSizeParam(1, 0, 1, 0, 0), CacheSizeParam(1, 0, 1, 0, 1), \
+          CacheSizeParam(1, 0, 1, 1, 0), CacheSizeParam(1, 0, 1, 1, 1), \
+          CacheSizeParam(1, 1, 0, 0, 0), CacheSizeParam(1, 1, 0, 0, 1), \
+          CacheSizeParam(1, 1, 0, 1, 0), CacheSizeParam(1, 1, 0, 1, 1), \
+          CacheSizeParam(1, 1, 1, 0, 0), CacheSizeParam(1, 1, 1, 0, 1), \
+          CacheSizeParam(1, 1, 1, 1, 0), CacheSizeParam(1, 1, 1, 1, 1), \
+          CacheSizeParam(2, 2, 2, 2, 2), CacheSizeParam(8, 8, 8, 8, 8), \
           CacheSizeParam(1024, 1024, 1024, 1024, 1024)));
 
 TEST_P(LoudsTrieTest, NodeBasedApis) {
@@ -153,10 +137,8 @@ TEST_P(LoudsTrieTest, NodeBasedApis) {
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
   trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
-            param.louds_lb0_cache_size,
-            param.louds_lb1_cache_size,
-            param.louds_select0_cache_size,
-            param.louds_select1_cache_size,
+            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
+            param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);
 
   char buf[LoudsTrie::kMaxDepth + 1];  // for RestoreKeyString().
@@ -373,10 +355,8 @@ TEST_P(LoudsTrieTest, HasKey) {
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
   trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
-            param.louds_lb0_cache_size,
-            param.louds_lb1_cache_size,
-            param.louds_select0_cache_size,
-            param.louds_select1_cache_size,
+            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
+            param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);
 
   EXPECT_TRUE(trie.HasKey("a"));
@@ -448,13 +428,11 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
   trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
-            param.louds_lb0_cache_size,
-            param.louds_lb1_cache_size,
-            param.louds_select0_cache_size,
-            param.louds_select1_cache_size,
+            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
+            param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);
   {
-    const StringPiece kKey = "abc";
+    const absl::string_view kKey = "abc";
     std::vector<RecordCallbackArgs::CallbackArgs> actual;
     trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
@@ -473,7 +451,7 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
     EXPECT_EQ(Traverse(trie, "abc"), actual[1].node);
   }
   {
-    const StringPiece kKey = "abxxxxxxx";
+    const absl::string_view kKey = "abxxxxxxx";
     std::vector<RecordCallbackArgs::CallbackArgs> actual;
     trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
@@ -487,7 +465,7 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
   }
   {
     // Make sure that it works for non-ascii characters too.
-    const StringPiece kKey = "\x01\xFF\xFF";
+    const absl::string_view kKey = "\x01\xFF\xFF";
     std::vector<RecordCallbackArgs::CallbackArgs> actual;
     trie.PrefixSearch(kKey, RecordCallbackArgs(&actual));
 
@@ -530,10 +508,8 @@ TEST_P(LoudsTrieTest, RestoreKeyString) {
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
   trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
-            param.louds_lb0_cache_size,
-            param.louds_lb1_cache_size,
-            param.louds_select0_cache_size,
-            param.louds_select1_cache_size,
+            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
+            param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);
 
   char buffer[LoudsTrie::kMaxDepth + 1];

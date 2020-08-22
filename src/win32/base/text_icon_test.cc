@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,14 @@
 
 #include "win32/base/text_icon.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
+// clang-format on
 
 #include "base/logging.h"
 #include "base/mmap.h"
@@ -46,11 +48,11 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-using ::WTL::CBitmap;
-using ::WTL::CIcon;
 using ::testing::AssertionFailure;
 using ::testing::AssertionResult;
 using ::testing::AssertionSuccess;
+using ::WTL::CBitmap;
+using ::WTL::CIcon;
 
 class TextIconTest : public testing::Test {
  public:
@@ -87,9 +89,10 @@ class TextIconTest : public testing::Test {
   CBitmap and_bmp = info.hbmMask;
 
   if (xor_bmp.IsNull()) {
-    return AssertionFailure() <<
-        "XOR bitmap (hbmColor) should not be nullptr. This icon causes a GDI "
-        "handle leak when it is passed to ITfLangBarItemButton::GetIcon.";
+    return AssertionFailure()
+           << "XOR bitmap (hbmColor) should not be nullptr. This icon causes a "
+              "GDI "
+              "handle leak when it is passed to ITfLangBarItemButton::GetIcon.";
   }
 
   if (and_bmp.IsNull()) {
@@ -109,16 +112,14 @@ class TextIconTest : public testing::Test {
 
     if (xor_bmp_info.bmWidth != size) {
       return AssertionFailure()
-          << "XOR bitmap (hbmColor) does not have expected width."
-          << " expected: " << size
-          << " actual:   " << xor_bmp_info.bmWidth;
+             << "XOR bitmap (hbmColor) does not have expected width."
+             << " expected: " << size << " actual:   " << xor_bmp_info.bmWidth;
     }
 
     if (xor_bmp_info.bmHeight != size) {
       return AssertionFailure()
-          << "XOR bitmap (hbmColor) does not have expected height."
-          << " expected: " << size
-          << " actual:   " << xor_bmp_info.bmHeight;
+             << "XOR bitmap (hbmColor) does not have expected height."
+             << " expected: " << size << " actual:   " << xor_bmp_info.bmHeight;
     }
   }
 
@@ -130,31 +131,28 @@ class TextIconTest : public testing::Test {
 
     if (and_bmp_info.bmBitsPixel != 1) {
       return AssertionFailure()
-          << "AND bitmap (hbmMask) does not have expected bit depth."
-          << " expected: " << 1
-          << " actual:   " << and_bmp_info.bmBitsPixel;
+             << "AND bitmap (hbmMask) does not have expected bit depth."
+             << " expected: " << 1 << " actual:   " << and_bmp_info.bmBitsPixel;
     }
 
     if (and_bmp_info.bmWidth != size) {
       return AssertionFailure()
-          << "AND bitmap (hbmMask) does not have expected width."
-          << " expected: " << size
-          << " actual:   " << and_bmp_info.bmWidth;
+             << "AND bitmap (hbmMask) does not have expected width."
+             << " expected: " << size << " actual:   " << and_bmp_info.bmWidth;
     }
 
     if (and_bmp_info.bmHeight != size) {
       return AssertionFailure()
-          << "AND bitmap (hbmMask) does not have expected height."
-          << " expected: " << size
-          << " actual:   " << and_bmp_info.bmHeight;
+             << "AND bitmap (hbmMask) does not have expected height."
+             << " expected: " << size << " actual:   " << and_bmp_info.bmHeight;
     }
   }
 
   return AssertionSuccess();
 }
 
-#define EXPECT_MONOCHROME_ICON(icon, icon_size)  \
-    EXPECT_TRUE(ExpectMonochromeIcon((icon), (icon_size)))
+#define EXPECT_MONOCHROME_ICON(icon, icon_size) \
+  EXPECT_TRUE(ExpectMonochromeIcon((icon), (icon_size)))
 
 TEST_F(TextIconTest, CreateMonochromeIcon) {
   {
@@ -167,9 +165,9 @@ TEST_F(TextIconTest, CreateMonochromeIcon) {
   {
     const char kText[] = "あ";
     const size_t kIconSize = 20;
-    CIcon icon = TextIcon::CreateMonochromeIcon(
-        kIconSize, kIconSize, kText, GetGothicFontName(),
-        RGB(0xff, 0x00, 0xff));
+    CIcon icon = TextIcon::CreateMonochromeIcon(kIconSize, kIconSize, kText,
+                                                GetGothicFontName(),
+                                                RGB(0xff, 0x00, 0xff));
     EXPECT_MONOCHROME_ICON(icon, kIconSize);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,8 @@
 
 namespace mozc {
 
-template <class T> class ObjectPool;
+template <class T>
+class ObjectPool;
 class UserPOSInterface;
 
 namespace rewriter {
@@ -62,41 +63,38 @@ class Token {
   int sorting_key() const { return sorting_key_; }
   void set_sorting_key(int sorting_key) { sorting_key_ = sorting_key; }
 
-  const string &key() const { return key_; }
-  void set_key(const string &key) { key_ = key; }
+  const std::string &key() const { return key_; }
+  void set_key(const std::string &key) { key_ = key; }
 
-  const string &value() const { return value_; }
-  void set_value(const string &value) { value_ = value; }
+  const std::string &value() const { return value_; }
+  void set_value(const std::string &value) { value_ = value; }
 
-  const string &pos() const { return pos_; }
-  void set_pos(const string &pos) { pos_ = pos; }
+  const std::string &pos() const { return pos_; }
+  void set_pos(const std::string &pos) { pos_ = pos; }
 
-  const string &description() const {
-    return description_;
-  }
-  const string &additional_description() const {
+  const std::string &description() const { return description_; }
+  const std::string &additional_description() const {
     return additional_description_;
   }
-  void set_description(const string &description) {
+  void set_description(const std::string &description) {
     description_ = description;
   }
-  void set_additional_description(const string &additional_description) {
+  void set_additional_description(const std::string &additional_description) {
     additional_description_ = additional_description;
   }
 
  private:
   int sorting_key_;
-  string key_;
-  string value_;
-  string pos_;
-  string description_;
-  string additional_description_;
+  std::string key_;
+  std::string value_;
+  std::string pos_;
+  std::string description_;
+  std::string additional_description_;
   // NOTE(komatsu): When new arguments are added, MergeFrom function
   // should be updated too.
 
   DISALLOW_COPY_AND_ASSIGN(Token);
 };
-
 
 class DictionaryGenerator {
  public:
@@ -107,7 +105,7 @@ class DictionaryGenerator {
   void AddToken(const Token &token);
 
   // Output the tokens into the filename.
-  bool Output(const string &filename) const;
+  bool Output(const std::string &filename) const;
 
  private:
   std::unique_ptr<ObjectPool<Token>> token_pool_;

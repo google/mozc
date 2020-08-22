@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,13 @@
 #include "base/system_util.h"
 #include "gui/administration_dialog/administration_dialog.h"
 #include "gui/base/locale_util.h"
+#include "gui/base/util.h"
 
 int RunAdministrationDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_administration_dialog);
   mozc::SystemUtil::DisableIME();
 
+  mozc::gui::Util::InitQt();
   QApplication app(argc, argv);
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(

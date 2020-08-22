@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,9 +51,8 @@ const size_t kInvalidPos = static_cast<size_t>(-1);
 // "んう" -> "んぬ"
 // "んえ" -> "んね"
 // "んお" -> "んの"
-bool RewriteNN(size_t key_pos,
-               const char *begin, const char *end,
-               size_t *mblen, string *output) {
+bool RewriteNN(size_t key_pos, const char *begin, const char *end,
+               size_t *mblen, std::string *output) {
   if (key_pos == 0) {
     *mblen = 0;
     return false;
@@ -74,31 +73,31 @@ bool RewriteNN(size_t key_pos,
   const uint16 next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
   uint16 output_ucs4 = 0x0000;
   switch (next_ucs4) {
-    case 0x3042:  // "あ"
-      output_ucs4 = 0x306A;   // "な"
+    case 0x3042:             // "あ"
+      output_ucs4 = 0x306A;  // "な"
       break;
-    case 0x3044:  // "い"
-      output_ucs4 = 0x306B;   // "に"
+    case 0x3044:             // "い"
+      output_ucs4 = 0x306B;  // "に"
       break;
-    case 0x3046:  // "う"
-      output_ucs4 = 0x306C;   // "ぬ"
+    case 0x3046:             // "う"
+      output_ucs4 = 0x306C;  // "ぬ"
       break;
-    case 0x3048:  // "え"
-      output_ucs4 = 0x306D;   // "ね"
+    case 0x3048:             // "え"
+      output_ucs4 = 0x306D;  // "ね"
       break;
-    case 0x304A:  // "お"
-      output_ucs4 = 0x306E;   // "の"
+    case 0x304A:             // "お"
+      output_ucs4 = 0x306E;  // "の"
       break;
     default:
       break;
   }
 
-  if (output_ucs4 != 0x0000) {   // "ん[あいうえお]"
+  if (output_ucs4 != 0x0000) {  // "ん[あいうえお]"
     Util::UCS4ToUTF8Append(ucs4, output);
     Util::UCS4ToUTF8Append(output_ucs4, output);
     *mblen += mblen2;
     return true;
-  } else {   // others
+  } else {  // others
     *mblen = 0;
     return false;
   }
@@ -110,11 +109,10 @@ bool RewriteNN(size_t key_pos,
 // "([^ん])んん[ん]" -> ignore
 // "([^ん])んん[あいうえお]" ->  $1 and leave "ん[あいうえお]"
 // "([^ん])んん[^あいうえお]" -> $1"ん" and leave "[^あいうえお]"
-bool RewriteDoubleNN(size_t key_pos,
-                     const char *begin, const char *end,
-                     size_t *mblen, string *output) {
+bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
+                     size_t *mblen, std::string *output) {
   // 0x3093: "ん"
-  static const uint16 kPattern[] = { 0x0000, 0x3093, 0x3093 };
+  static const uint16 kPattern[] = {0x0000, 0x3093, 0x3093};
 
   *mblen = 0;
   uint16 first_char = 0x0000;
@@ -153,13 +151,11 @@ bool RewriteDoubleNN(size_t key_pos,
 
   size_t mblen2 = 0;
   const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen2);
-  if (ucs4 == 0x3093) {   // "ん" ignore
+  if (ucs4 == 0x3093) {  // "ん" ignore
     *mblen = 0;
     return false;
-  } else if (ucs4 == 0x3042 ||      // "[あいうえお]"
-             ucs4 == 0x3044 ||
-             ucs4 == 0x3046 ||
-             ucs4 == 0x3048 ||
+  } else if (ucs4 == 0x3042 ||  // "[あいうえお]"
+             ucs4 == 0x3044 || ucs4 == 0x3046 || ucs4 == 0x3048 ||
              ucs4 == 0x304A) {
     // drop first "ん" and leave "ん[あいうえお]"
     // remained part will be handled by RewriteNN(), e.g, "んあ" -> "んな"
@@ -169,7 +165,7 @@ bool RewriteDoubleNN(size_t key_pos,
     return true;
   } else {  // "[^あいうえお]"
     Util::UCS4ToUTF8Append(first_char, output);
-    Util::UCS4ToUTF8Append(0x3093, output);   // "ん"
+    Util::UCS4ToUTF8Append(0x3093, output);  // "ん"
     return true;
   }
 
@@ -180,9 +176,8 @@ bool RewriteDoubleNN(size_t key_pos,
 // "にゃ" -> "んや"
 // "にゅ" -> "んゆ"
 // "にょ" -> "んよ"
-bool RewriteNI(size_t key_pos,
-               const char *begin, const char *end,
-               size_t *mblen, string *output) {
+bool RewriteNI(size_t key_pos, const char *begin, const char *end,
+               size_t *mblen, std::string *output) {
   const char32 ucs4 = Util::UTF8ToUCS4(begin, end, mblen);
   if (ucs4 != 0x306B) {  // "に"
     *mblen = 0;
@@ -198,13 +193,13 @@ bool RewriteNI(size_t key_pos,
   const uint16 next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
   uint16 output_ucs4 = 0x0000;
   switch (next_ucs4) {
-    case 0x3083:   // "ゃ"
+    case 0x3083:             // "ゃ"
       output_ucs4 = 0x3084;  // "や"
       break;
-    case 0x3085:   // "ゅ"
+    case 0x3085:             // "ゅ"
       output_ucs4 = 0x3086;  // "ゆ"
       break;
-    case 0x3087:   // "ょ"
+    case 0x3087:             // "ょ"
       output_ucs4 = 0x3088;  // "よ"
       break;
     default:
@@ -213,7 +208,7 @@ bool RewriteNI(size_t key_pos,
   }
 
   if (output_ucs4 != 0x0000) {
-    Util::UCS4ToUTF8Append(0x3093, output);    // "ん"
+    Util::UCS4ToUTF8Append(0x3093, output);  // "ん"
     Util::UCS4ToUTF8Append(output_ucs4, output);
     *mblen += mblen2;
     return true;
@@ -227,9 +222,8 @@ bool RewriteNI(size_t key_pos,
 
 // "m" Pattern (not BOS)
 // "m[ばびぶべぼぱぴぷぺぽ]" -> "ん[ばびぶべぼぱぴぷぺぽ]"
-bool RewriteM(size_t key_pos,
-              const char *begin, const char *end,
-              size_t *mblen, string *output) {
+bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
+              std::string *output) {
   if (key_pos == 0) {
     *mblen = 0;
     return false;
@@ -250,9 +244,9 @@ bool RewriteM(size_t key_pos,
   const uint16 next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
   // "[はばぱひびぴふぶぷへべぺほぼぽ]" => [0x306F .. 0X307D]
   // Here we want to take "[は..ぽ]" except for "はひふへほ"
-  if (next_ucs4 % 3 != 0 &&   // not "はひふへほ"
+  if (next_ucs4 % 3 != 0 &&                          // not "はひふへほ"
       next_ucs4 >= 0x306F && next_ucs4 <= 0x307D) {  // "は..ぽ"
-    Util::UCS4ToUTF8Append(0x3093, output);    // "ん"
+    Util::UCS4ToUTF8Append(0x3093, output);          // "ん"
     Util::UCS4ToUTF8Append(next_ucs4, output);
     *mblen += mblen2;
     return true;
@@ -268,12 +262,11 @@ bool RewriteM(size_t key_pos,
 // replace "([^っ])っっ([^っ])" => "$1っ$2"
 // Don't consider more that three "っっっ"
 // e.g, "かっっった" -> "かっっった"
-bool RewriteSmallTSU(size_t key_pos,
-                     const char *begin, const char *end,
-                     size_t *mblen, string *output) {
+bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
+                     size_t *mblen, std::string *output) {
   // 0x0000 is a place holder for "[^っ]"
   // "っ": 0x3063
-  static const uint16 kPattern[] = { 0x0000, 0x3063, 0x3063, 0x0000 };
+  static const uint16 kPattern[] = {0x0000, 0x3063, 0x3063, 0x0000};
 
   uint16 first_char = 0x0000;
   uint16 last_char = 0x0000;
@@ -306,7 +299,7 @@ bool RewriteSmallTSU(size_t key_pos,
   }
 
   Util::UCS4ToUTF8Append(first_char, output);
-  Util::UCS4ToUTF8Append(0x3063, output);   // "っ"
+  Util::UCS4ToUTF8Append(0x3063, output);  // "っ"
   Util::UCS4ToUTF8Append(last_char, output);
 
   return true;
@@ -320,13 +313,12 @@ bool RewriteSmallTSU(size_t key_pos,
 // "にゅ[^う] -> にゅう"
 // "ひゅ[^う] -> ひゅう"
 // "りゅ[^う] -> りゅう"
-bool RewriteYu(size_t key_pos,
-               const char *begin, const char *end,
-               size_t *mblen, string *output) {
+bool RewriteYu(size_t key_pos, const char *begin, const char *end,
+               size_t *mblen, std::string *output) {
   const char32 first_char = Util::UTF8ToUCS4(begin, end, mblen);
-  if (first_char != 0x304D && first_char != 0x3057 &&
-      first_char != 0x3061 && first_char != 0x306B &&
-      first_char != 0x3072 && first_char != 0x308A) {  // !"きしちにひり"
+  if (first_char != 0x304D && first_char != 0x3057 && first_char != 0x3061 &&
+      first_char != 0x306B && first_char != 0x3072 &&
+      first_char != 0x308A) {  // !"きしちにひり"
     *mblen = 0;
     return false;
   }
@@ -338,7 +330,7 @@ bool RewriteYu(size_t key_pos,
 
   size_t mblen2 = 0;
   const char32 next_char = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
-  if (next_char != 0x3085) {   // "ゅ"
+  if (next_char != 0x3085) {  // "ゅ"
     *mblen = 0;
     return false;
   }
@@ -349,9 +341,9 @@ bool RewriteYu(size_t key_pos,
   }
 
   size_t mblen3 = 0;
-  const char32 last_char = Util::UTF8ToUCS4(begin + *mblen + mblen2,
-                                            end, &mblen3);
-  if (last_char == 0x3046) {   // "う"
+  const char32 last_char =
+      Util::UTF8ToUCS4(begin + *mblen + mblen2, end, &mblen3);
+  if (last_char == 0x3046) {  // "う"
     *mblen = 0;
     return false;
   }
@@ -359,40 +351,33 @@ bool RewriteYu(size_t key_pos,
   // OK, rewrite
   *mblen += mblen2;
   Util::UCS4ToUTF8Append(first_char, output);
-  Util::UCS4ToUTF8Append(next_char, output);   // "ゅ"
-  Util::UCS4ToUTF8Append(0x3046, output);      // "う"
+  Util::UCS4ToUTF8Append(next_char, output);  // "ゅ"
+  Util::UCS4ToUTF8Append(0x3046, output);     // "う"
 
   return true;
 }
 }  // namespace
 
-KeyCorrector::KeyCorrector(const string &key, InputMode mode,
+KeyCorrector::KeyCorrector(const std::string &key, InputMode mode,
                            size_t history_size)
     : available_(false), mode_(mode) {
   CorrectKey(key, mode, history_size);
 }
 
-KeyCorrector::KeyCorrector()
-    : available_(false), mode_(ROMAN) {}
+KeyCorrector::KeyCorrector() : available_(false), mode_(ROMAN) {}
 
 KeyCorrector::~KeyCorrector() {}
 
-KeyCorrector::InputMode KeyCorrector::mode() const {
-  return mode_;
-}
+KeyCorrector::InputMode KeyCorrector::mode() const { return mode_; }
 
-bool KeyCorrector::IsAvailable() const {
-  return available_;
-}
+bool KeyCorrector::IsAvailable() const { return available_; }
 
 // return corrected key;
-const string &KeyCorrector::corrected_key() const {
+const std::string &KeyCorrector::corrected_key() const {
   return corrected_key_;
 }
 
-const string &KeyCorrector::original_key() const {
-  return original_key_;
-}
+const std::string &KeyCorrector::original_key() const { return original_key_; }
 
 size_t KeyCorrector::GetCorrectedPosition(const size_t original_key_pos) const {
   if (original_key_pos < alignment_.size()) {
@@ -416,11 +401,11 @@ void KeyCorrector::Clear() {
   rev_alignment_.clear();
 }
 
-bool KeyCorrector::CorrectKey(const string &key, InputMode mode,
+bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
                               size_t history_size) {
   Clear();
 
-  // TOOD(taku)  support KANA
+  // TODO(taku)  support KANA
   if (mode == KANA) {
     return false;
   }
@@ -443,10 +428,10 @@ bool KeyCorrector::CorrectKey(const string &key, InputMode mode,
     if (begin < input_begin ||
         (!RewriteDoubleNN(key_pos, begin, end, &mblen, &corrected_key_) &&
          !RewriteNN(key_pos, begin, end, &mblen, &corrected_key_) &&
-         !RewriteYu(key_pos,  begin, end, &mblen, &corrected_key_) &&
+         !RewriteYu(key_pos, begin, end, &mblen, &corrected_key_) &&
          !RewriteNI(key_pos, begin, end, &mblen, &corrected_key_) &&
          !RewriteSmallTSU(key_pos, begin, end, &mblen, &corrected_key_) &&
-         !RewriteM(key_pos,  begin, end, &mblen, &corrected_key_))) {
+         !RewriteM(key_pos, begin, end, &mblen, &corrected_key_))) {
       const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
       Util::UCS4ToUTF8Append(ucs4, &corrected_key_);
     }
@@ -467,7 +452,7 @@ bool KeyCorrector::CorrectKey(const string &key, InputMode mode,
         rev_alignment_.push_back(len + i);
       }
     } else {
-    // NOT a one to one maping, we take fist/last alignment only
+      // NOT a one to one maping, we take fist/last alignment only
       alignment_.push_back(org_len);
       for (size_t i = 1; i < mblen; ++i) {
         alignment_.push_back(kInvalidPos);
@@ -532,8 +517,7 @@ size_t KeyCorrector::GetOriginalOffset(const size_t original_key_pos,
     return kInvalidPos;
   }
 
-  const size_t corrected_key_pos =
-      GetCorrectedPosition(original_key_pos);
+  const size_t corrected_key_pos = GetCorrectedPosition(original_key_pos);
   if (!IsValidPosition(corrected_key_pos)) {
     return kInvalidPos;
   }
@@ -559,9 +543,7 @@ size_t KeyCorrector::GetOriginalOffset(const size_t original_key_pos,
 }
 
 // static
-bool KeyCorrector::IsValidPosition(size_t pos) {
-  return (pos != kInvalidPos);
-}
+bool KeyCorrector::IsValidPosition(size_t pos) { return (pos != kInvalidPos); }
 
 // static
 bool KeyCorrector::IsInvalidPosition(size_t pos) {
@@ -569,14 +551,13 @@ bool KeyCorrector::IsInvalidPosition(size_t pos) {
 }
 
 // static
-size_t KeyCorrector::InvalidPosition() {
-  return kInvalidPos;
-}
+size_t KeyCorrector::InvalidPosition() { return kInvalidPos; }
 
 // static
-int KeyCorrector::GetCorrectedCostPenalty(const string &key) {
+int KeyCorrector::GetCorrectedCostPenalty(const std::string &key) {
   // "んん" and "っっ" must be mis-spelling.
-  if (key.find("んん") != string::npos || key.find("っっ") != string::npos) {
+  if (key.find("んん") != std::string::npos ||
+      key.find("っっ") != std::string::npos) {
     return 0;
   }
   // add 3000 to the original word cost

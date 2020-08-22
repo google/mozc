@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -67,21 +67,18 @@ class Transliterators {
   static const TransliteratorInterface *GetTransliterator(
       Transliterator transliterator);
 
-  static bool SplitRaw(const size_t position,
-                       const string &raw,
-                       const string &converted,
-                       string *raw_lhs, string *raw_rhs,
-                       string *converted_lhs, string *converted_rhs);
+  static bool SplitRaw(const size_t position, const std::string &raw,
+                       const std::string &converted, std::string *raw_lhs,
+                       std::string *raw_rhs, std::string *converted_lhs,
+                       std::string *converted_rhs);
 
-  static bool SplitConverted(const size_t position,
-                             const string &raw,
-                             const string &converted,
-                             string *raw_lhs, string *raw_rhs,
-                             string *converted_lhs, string *converted_rhs);
+  static bool SplitConverted(const size_t position, const std::string &raw,
+                             const std::string &converted, std::string *raw_lhs,
+                             std::string *raw_rhs, std::string *converted_lhs,
+                             std::string *converted_rhs);
 };
 
 }  // namespace composer
 }  // namespace mozc
-
 
 #endif  // MOZC_COMPOSER_INTERNAL_TRANSLITERATORS_H_

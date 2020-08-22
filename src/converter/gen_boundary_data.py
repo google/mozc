@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,12 +55,15 @@ suffix penalty of POS ID N (2 bytes)
 See converter/segmenter.cc for how it's used.
 """
 
-__author__ = "taku"
+from __future__ import absolute_import
+from __future__ import print_function
 
 import optparse
 import re
 import struct
 import sys
+
+from six.moves import range
 
 
 def PatternToRegexp(pattern):
@@ -84,7 +87,7 @@ def LoadPatterns(file):
     elif label == 'SUFFIX':
       suffix.append([re.compile(PatternToRegexp(feature)), cost])
     else:
-      print 'format error %s' % (line)
+      print('format error %s' % (line))
       sys.exit(0)
   return (prefix, suffix)
 
@@ -141,7 +144,7 @@ def main():
       f.write(struct.pack('<H', GetCost(prefix, feature)))
       f.write(struct.pack('<H', GetCost(suffix, feature)))
 
-    for _ in xrange(num_special_pos):
+    for _ in range(num_special_pos):
       f.write(struct.pack('<H', 0))
       f.write(struct.pack('<H', 0))
 

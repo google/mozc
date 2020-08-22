@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -83,6 +83,7 @@ def CopyQt(qtdir, qtlib, version, target, copy_resources=False):
 
 def ChangeReferences(qtdir, path, version, target, ref_to, references=None):
   """Change the references of frameworks, by using install_name_tool."""
+  del qtdir  # No longer used because the default path was changed to @rpath.
 
   # Change id
   cmd = ['install_name_tool',
@@ -97,7 +98,7 @@ def ChangeReferences(qtdir, path, version, target, ref_to, references=None):
   for ref in references:
     ref_framework_path = GetFrameworkPath(ref, version)
     change_cmd = ['install_name_tool', '-change',
-                  '%s/lib/%s' % (qtdir, ref_framework_path),
+                  '@rpath/%s' % ref_framework_path,
                   '%s/%s' % (ref_to, ref_framework_path),
                   '%s/%s' % (target, path)]
     RunOrDie(change_cmd)

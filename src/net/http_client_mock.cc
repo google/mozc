@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,31 +36,31 @@
 #include "net/http_client.h"
 
 namespace mozc {
-bool HTTPClientMock::Get(const string &url, const HTTPClient::Option &option,
-                         string *output) const {
-  string header;
+bool HTTPClientMock::Get(const std::string &url,
+                         const HTTPClient::Option &option,
+                         std::string *output) const {
+  std::string header;
   return DoRequest(url, false, "", option, &header, output);
 }
 
-bool HTTPClientMock::Head(const string &url, const HTTPClient::Option &option,
-                          string *output) const {
-  string body;
+bool HTTPClientMock::Head(const std::string &url,
+                          const HTTPClient::Option &option,
+                          std::string *output) const {
+  std::string body;
   return DoRequest(url, false, "", option, output, &body);
 }
 
-bool HTTPClientMock::Post(const string &url, const string &data,
+bool HTTPClientMock::Post(const std::string &url, const std::string &data,
                           const HTTPClient::Option &option,
-                          string *output) const {
-  string header;
+                          std::string *output) const {
+  std::string header;
   return DoRequest(url, true, data, option, &header, output);
 }
 
-bool HTTPClientMock::DoRequest(const string &url,
-                               const bool check_data,
-                               const string &data,
+bool HTTPClientMock::DoRequest(const std::string &url, const bool check_data,
+                               const std::string &data,
                                const HTTPClient::Option &option,
-                               string *header,
-                               string *body) const {
+                               std::string *header, std::string *body) const {
   if (execution_time_ > 0) {
     Util::Sleep(execution_time_);
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -97,13 +97,9 @@ void UIVisibilityTracker::BeginVisibilityTestForCandidateWindow() {
   candidate_window_activated_ = false;
 }
 
-void UIVisibilityTracker::OnFocus() {
-  ui_activated_ = true;
-}
+void UIVisibilityTracker::OnFocus() { ui_activated_ = true; }
 
-void UIVisibilityTracker::OnBlur() {
-  ui_activated_ = false;
-}
+void UIVisibilityTracker::OnBlur() { ui_activated_ = false; }
 
 void UIVisibilityTracker::OnNotify(DWORD sub_message, LPARAM lParam) {
   switch (sub_message) {
@@ -208,10 +204,7 @@ bool UIVisibilityTracker::IsCompositionWindowVisible() const {
   return true;
 }
 
-
-bool UIVisibilityTracker::ui_activated() const {
-  return ui_activated_;
-}
+bool UIVisibilityTracker::ui_activated() const { return ui_activated_; }
 
 bool UIVisibilityTracker::candidate_window_activated() const {
   return candidate_window_activated_;

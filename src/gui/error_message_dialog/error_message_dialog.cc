@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,10 @@ namespace {
 void OnFatal(const QString &message) {
   // we don't use QMessageBox::critical() here
   // to set WindowStaysOnTopHint
-  QMessageBox message_box(QMessageBox::Critical,
-                          QObject::tr("Mozc Fatal Error"),
-                          message, QMessageBox::Ok, NULL,
-                          Qt::Dialog |
-                          Qt::MSWindowsFixedSizeDialogHint |
-                          Qt::WindowStaysOnTopHint);
+  QMessageBox message_box(
+      QMessageBox::Critical, QObject::tr("Mozc Fatal Error"),
+      message, QMessageBox::Ok, NULL,
+      Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
   DeleyedMessageDialogHandler handler(&message_box);
   handler.Exec();
 }
@@ -83,31 +81,39 @@ void ErrorMessageDialog::Show() {
   // defining all literal messages inside Show() method
   // for easy i18n/i10n
   if (FLAGS_error_type == "server_timeout") {
-    OnFatal(QObject::tr("Conversion engine is not responding. "
-                        "Please restart this application."));
+    OnFatal(
+        QObject::tr("Conversion engine is not responding. "
+                    "Please restart this application."));
   } else if (FLAGS_error_type == "server_broken_message") {
-    OnFatal(QObject::tr("Connecting to an incompatible conversion engine. "
-                        "Please restart your computer to enable Mozc. "
-                        "If this problem persists, please uninstall Mozc "
-                        "and install it again."));
+    OnFatal(QObject::tr(
+        "Connecting to an incompatible conversion engine. "
+        "Please restart your computer to enable Mozc. "
+        "If this problem persists, please uninstall Mozc "
+        "and install it again."));
   } else if (FLAGS_error_type == "server_version_mismatch") {
-    OnFatal(QObject::tr("Conversion engine has been upgraded. "
-                        "Please restart this application to enable conversion engine. "
-                        "If the problem persists, please restart your computer."));
+    OnFatal(QObject::tr(
+        "Conversion engine has been upgraded. "
+        "Please restart this application to enable conversion engine. "
+        "If the problem persists, please restart your computer."));
   } else if (FLAGS_error_type == "server_shutdown") {
-    OnFatal(QObject::tr("Conversion engine is killed unexceptionally. "
-                        "Restarting the engine..."));
+    OnFatal(
+        QObject::tr("Conversion engine is killed unexceptionally. "
+                    "Restarting the engine..."));
   } else if (FLAGS_error_type == "server_fatal") {
-    OnFatal(QObject::tr("Cannot start conversion engine. "
-                        "Please restart your computer."));
+    OnFatal(
+        QObject::tr("Cannot start conversion engine. "
+                    "Please restart your computer."));
   } else if (FLAGS_error_type == "renderer_version_mismatch") {
-    OnFatal(QObject::tr("Candidate window renderer has been upgraded. "
-                        "Please restart this application to enable new candidate window renderer. "
-                        "If the problem persists, please restart your computer."));
+    OnFatal(
+        QObject::tr("Candidate window renderer has been upgraded. "
+                    "Please restart this application to enable new candidate "
+                    "window renderer. "
+                    "If the problem persists, please restart your computer."));
   } else if (FLAGS_error_type == "renderer_fatal") {
-    OnFatal(QObject::tr("Cannot start candidate window renderer. "
-                        "Please restart your computer."));
+    OnFatal(
+        QObject::tr("Cannot start candidate window renderer. "
+                    "Please restart your computer."));
   }
 }
-}  // gui
-}  // mozc
+}  // namespace gui
+}  // namespace mozc

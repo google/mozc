@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ const uint32 kTestMicroSeconds = 123456u;
 
 const uint64 kDeltaSeconds = 12uLL;
 const uint32 kDeltaMicroSeconds = 654321u;
-}
+}  // namespace
 
 TEST(ClockMockTest, GetTimeTest) {
   ClockMock mock(kTestSeconds, kTestMicroSeconds);
@@ -129,7 +129,7 @@ TEST(ClockMockTest, PutClockForwardTest) {
   {
     ClockMock mock(kTestSeconds, kTestMicroSeconds);
     const uint64 offset_micro_seconds = 1uLL;
-    mock.PutClockForward(0uLL, offset_micro_seconds);
+    mock.PutClockForward(uint64{0}, offset_micro_seconds);
 
     mock.GetTimeOfDay(&current_sec, &current_usec);
     EXPECT_EQ(kTestSeconds, current_sec);
@@ -141,7 +141,7 @@ TEST(ClockMockTest, PutClockForwardTest) {
   {
     ClockMock mock(kTestSeconds, kTestMicroSeconds);
     const uint64 offset_micro_seconds = 900000uLL;
-    mock.PutClockForward(0uLL, offset_micro_seconds);
+    mock.PutClockForward(uint64{0}, offset_micro_seconds);
 
     mock.GetTimeOfDay(&current_sec, &current_usec);
     EXPECT_EQ(kTestSeconds + 1, current_sec);

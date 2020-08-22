@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/strings/string_view.h"
 
 // EmojiRewriter:
 // Converts HIRAGANA strings to emoji characters, if they are names of emojis.
@@ -58,14 +59,15 @@ const char kEmojiKey[] = "えもじ";
 // Where to insert emoji candidate by default.
 const size_t kDefaultInsertPos = 6;
 
+// List of <emoji value, emoji description>.
+using EmojiEntryList =
+    std::vector<std::pair<absl::string_view, absl::string_view>>;
+
 // Inserts a candidate to the segment at insert_position.
 // Returns true if succeeded, otherwise false. Also, if succeeded, increments
 // the insert_position to represent the next insert position.
-bool InsertCandidate(StringPiece key,
-                     StringPiece value,
-                     StringPiece description,
-                     int cost,
-                     Segment *segment,
+bool InsertCandidate(absl::string_view key, absl::string_view value,
+                     absl::string_view description, int cost, Segment *segment,
                      size_t *insert_position) {
   Segment::Candidate *candidate = segment->insert_candidate(*insert_position);
   if (candidate == NULL) {
@@ -86,8 +88,8 @@ bool InsertCandidate(StringPiece key,
   candidate->content_key.assign(key.data(), key.size());
   candidate->description.assign(kEmoji);
   if (!description.empty()) {
-    Util::AppendStringWithDelimiter(
-        " ", description, &(candidate->description));
+    Util::AppendStringWithDelimiter(" ", description,
+                                    &(candidate->description));
   }
   candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
@@ -95,66 +97,19 @@ bool InsertCandidate(StringPiece key,
   return true;
 }
 
-// Merges two descriptions.  Connects them if one is not a substring of the
-// other.
-void AddDescription(StringPiece adding, std::vector<string> *descriptions) {
-  DCHECK(descriptions);
-  if (adding.empty()) {
-    return;
-  }
-
-  // Add |adding| if it matches with no elements of |descriptions|.
-  for (size_t i = 0; i < descriptions->size(); ++i) {
-    if (adding == (*descriptions)[i]) {
-      return;
-    }
-  }
-
-  descriptions->emplace_back(adding.data(), adding.size());
-}
-
-bool InsertEmojiData(StringPiece key,
+bool InsertEmojiData(absl::string_view key,
                      EmojiRewriter::EmojiDataIterator iter,
-                     const SerializedStringArray &string_array,
-                     int cost,
-                     int32 available_carrier,
-                     Segment *segment,
-                     size_t *insert_position) {
-  bool inserted = false;
-
-  StringPiece utf8_emoji = string_array[iter.emoji_index()];
-
-  // Fill a candidate of Unicode 6.0 emoji.
-  if ((available_carrier & Request::UNICODE_EMOJI) && !utf8_emoji.empty()) {
-    inserted |= InsertCandidate(
-        key, utf8_emoji, string_array[iter.description_utf8_index()],
-        cost, segment, insert_position);
+                     const SerializedStringArray &string_array, int cost,
+                     Segment *segment, size_t *insert_position) {
+  // Fill a candidate with Unicode emoji.
+  absl::string_view utf8_emoji = string_array[iter.emoji_index()];
+  if (utf8_emoji.empty()) {
+    return false;
   }
 
-  std::vector<string> descriptions;
-  if (available_carrier & Request::DOCOMO_EMOJI) {
-    AddDescription(string_array[iter.description_docomo_index()],
-                   &descriptions);
-  }
-  if (available_carrier & Request::SOFTBANK_EMOJI) {
-    AddDescription(string_array[iter.description_softbank_index()],
-                   &descriptions);
-  }
-  if (available_carrier & Request::KDDI_EMOJI) {
-    AddDescription(string_array[iter.description_kddi_index()], &descriptions);
-  }
-
-  if (!descriptions.empty()) {
-    // Encode the PUA code point to utf8 and fill it to candidate.
-    string android_pua;
-    string description;
-    Util::UCS4ToUTF8Append(iter.android_pua(), &android_pua);
-    Util::JoinStrings(descriptions, " ", &description);
-    inserted |= InsertCandidate(
-        key, android_pua, description.c_str(), cost, segment, insert_position);
-  }
-
-  return inserted;
+  return InsertCandidate(key, utf8_emoji,
+                         string_array[iter.description_utf8_index()], cost,
+                         segment, insert_position);
 }
 
 int GetEmojiCost(const Segment &segment) {
@@ -162,39 +117,51 @@ int GetEmojiCost(const Segment &segment) {
   return segment.candidates_size() == 0 ? 0 : segment.candidate(0).cost;
 }
 
-bool InsertAllEmojiData(StringPiece key,
-                        EmojiRewriter::EmojiDataIterator begin,
+void GatherAllEmojiData(EmojiRewriter::EmojiDataIterator begin,
                         EmojiRewriter::EmojiDataIterator end,
                         const SerializedStringArray &string_array,
-                        int32 available_carrier,
-                        Segment *segment) {
-  bool inserted = false;
+                        EmojiEntryList *utf8_emoji_list) {
+  for (; begin != end; ++begin) {
+    absl::string_view utf8_emoji = string_array[begin.emoji_index()];
+    if (utf8_emoji.empty()) {
+      continue;
+    }
+    utf8_emoji_list->emplace_back(utf8_emoji,
+                                  string_array[begin.description_utf8_index()]);
+  }
+
+  std::sort(utf8_emoji_list->begin(), utf8_emoji_list->end());
+}
+
+bool GatherAndInsertAllEmojiData(absl::string_view key,
+                                 EmojiRewriter::EmojiDataIterator begin,
+                                 EmojiRewriter::EmojiDataIterator end,
+                                 const SerializedStringArray &string_array,
+                                 Segment *segment) {
+  EmojiEntryList utf8_emoji_list;
+  GatherAllEmojiData(begin, end, string_array, &utf8_emoji_list);
 
   // Insert all candidates at the tail of the segment.
+  bool inserted = false;
   size_t insert_position = segment->candidates_size();
-  int cost = GetEmojiCost(*segment);
-  for (; begin != end; ++begin) {
-    inserted |= InsertEmojiData(key, begin, string_array, cost,
-                                available_carrier,
-                                segment, &insert_position);
+  const int cost = GetEmojiCost(*segment);
+  for (const auto &emoji_entry : utf8_emoji_list) {
+    inserted |= InsertCandidate(key, emoji_entry.first, emoji_entry.second,
+                                cost, segment, &insert_position);
   }
   return inserted;
 }
 
-bool InsertToken(StringPiece key,
-                 EmojiRewriter::IteratorRange range,
-                 const SerializedStringArray &string_array,
-                 int32 available_carrier,
-                 Segment *segment) {
+bool InsertToken(absl::string_view key, EmojiRewriter::IteratorRange range,
+                 const SerializedStringArray &string_array, Segment *segment) {
   bool inserted = false;
 
   size_t insert_position =
       std::min(segment->candidates_size(), kDefaultInsertPos);
   int cost = GetEmojiCost(*segment);
   for (; range.first != range.second; ++range.first) {
-    inserted |= InsertEmojiData(
-        key, range.first, string_array, cost, available_carrier,
-        segment, &insert_position);
+    inserted |= InsertEmojiData(key, range.first, string_array, cost, segment,
+                                &insert_position);
   }
   return inserted;
 }
@@ -202,7 +169,7 @@ bool InsertToken(StringPiece key,
 }  // namespace
 
 EmojiRewriter::EmojiRewriter(const DataManagerInterface &data_manager) {
-  StringPiece string_array_data;
+  absl::string_view string_array_data;
   data_manager.GetEmojiRewriterData(&token_array_data_, &string_array_data);
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
   string_array_.Set(string_array_data);
@@ -225,14 +192,15 @@ bool EmojiRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
+  // TODO(b/135127317): Remove this protobuf field.
   int32 available_emoji_carrier = request.request().available_emoji_carrier();
-  if (available_emoji_carrier == 0) {
+  if (!(available_emoji_carrier & Request::UNICODE_EMOJI)) {
     VLOG(2) << "No available emoji carrier.";
     return false;
   }
 
   CHECK(segments != NULL);
-  return RewriteCandidates(available_emoji_carrier, segments);
+  return RewriteCandidates(segments);
 }
 
 void EmojiRewriter::Finish(const ConversionRequest &request,
@@ -259,11 +227,11 @@ void EmojiRewriter::Finish(const ConversionRequest &request,
 }
 
 bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
-  return candidate.description.find(kEmoji) != string::npos;
+  return candidate.description.find(kEmoji) != std::string::npos;
 }
 
 std::pair<EmojiRewriter::EmojiDataIterator, EmojiRewriter::EmojiDataIterator>
-EmojiRewriter::LookUpToken(StringPiece key) const {
+EmojiRewriter::LookUpToken(absl::string_view key) const {
   // Search string array for key.
   auto iter = std::lower_bound(string_array_.begin(), string_array_.end(), key);
   if (iter == string_array_.end() || *iter != key) {
@@ -273,10 +241,9 @@ EmojiRewriter::LookUpToken(StringPiece key) const {
   return std::equal_range(begin(), end(), iter.index());
 }
 
-bool EmojiRewriter::RewriteCandidates(
-    int32 available_emoji_carrier, Segments *segments) const {
+bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
   bool modified = false;
-  string reading;
+  std::string reading;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
     Util::FullWidthAsciiToHalfWidthAscii(segment->key(), &reading);
@@ -286,8 +253,8 @@ bool EmojiRewriter::RewriteCandidates(
 
     if (reading == kEmojiKey) {
       // When key is "えもじ", we expect to expand all Emoji characters.
-      modified |= InsertAllEmojiData(reading, begin(), end(), string_array_,
-                                     available_emoji_carrier, segment);
+      modified |= GatherAndInsertAllEmojiData(reading, begin(), end(),
+                                              string_array_, segment);
       continue;
     }
     const auto range = LookUpToken(reading);
@@ -295,8 +262,7 @@ bool EmojiRewriter::RewriteCandidates(
       VLOG(2) << "Token not found: " << reading;
       continue;
     }
-    modified |= InsertToken(reading, range, string_array_,
-                            available_emoji_carrier, segment);
+    modified |= InsertToken(reading, range, string_array_, segment);
   }
   return modified;
 }

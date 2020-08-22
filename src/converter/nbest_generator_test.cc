@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,14 +54,16 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
 using dictionary::DictionaryImpl;
 using dictionary::DictionaryInterface;
-using dictionary::POSMatcher;
 using dictionary::PosGroup;
+using dictionary::POSMatcher;
 using dictionary::SuffixDictionary;
 using dictionary::SuppressionDictionary;
 using dictionary::SystemDictionary;
@@ -72,77 +74,63 @@ class MockDataAndImmutableConverter {
  public:
   // Initializes data and immutable converter with given dictionaries.
   MockDataAndImmutableConverter() {
-    data_manager_.reset(new testing::MockDataManager);
+    data_manager_ = absl::make_unique<testing::MockDataManager>();
 
     pos_matcher_.Set(data_manager_->GetPOSMatcherData());
 
-    suppression_dictionary_.reset(new SuppressionDictionary);
-    CHECK(suppression_dictionary_.get());
+    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+    CHECK(suppression_dictionary_);
 
-    const char *dictionary_data = NULL;
+    const char *dictionary_data = nullptr;
     int dictionary_size = 0;
-    data_manager_->GetSystemDictionaryData(&dictionary_data,
-                                           &dictionary_size);
-    SystemDictionary *sysdic =
-        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-    dictionary_.reset(new DictionaryImpl(
-        sysdic,  // DictionaryImpl takes the ownership
-        new ValueDictionary(pos_matcher_, &sysdic->value_trie()),
-        &user_dictionary_stub_,
-        suppression_dictionary_.get(),
-        &pos_matcher_));
-    CHECK(dictionary_.get());
+    data_manager_->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+    std::unique_ptr<SystemDictionary> sysdic =
+        SystemDictionary::Builder(dictionary_data, dictionary_size)
+            .Build()
+            .value();
+    auto value_dic =
+        absl::make_unique<ValueDictionary>(pos_matcher_, &sysdic->value_trie());
+    dictionary_ = absl::make_unique<DictionaryImpl>(
+        std::move(sysdic), std::move(value_dic), &user_dictionary_stub_,
+        suppression_dictionary_.get(), &pos_matcher_);
+    CHECK(dictionary_);
 
-    StringPiece suffix_key_array_data, suffix_value_array_data;
-    const uint32 *token_array;
-    data_manager_->GetSuffixDictionaryData(&suffix_key_array_data,
-                                           &suffix_value_array_data,
-                                           &token_array);
-    suffix_dictionary_.reset(new SuffixDictionary(suffix_key_array_data,
-                                                  suffix_value_array_data,
-                                                  token_array));
-    CHECK(suffix_dictionary_.get());
+    absl::string_view suffix_key_array_data, suffix_value_array_data;
+    const uint32 *token_array = nullptr;
+    data_manager_->GetSuffixDictionaryData(
+        &suffix_key_array_data, &suffix_value_array_data, &token_array);
+    suffix_dictionary_ = absl::make_unique<SuffixDictionary>(
+        suffix_key_array_data, suffix_value_array_data, token_array);
+    CHECK(suffix_dictionary_);
 
-    connector_.reset(Connector::CreateFromDataManager(*data_manager_));
-    CHECK(connector_.get());
+    connector_ = Connector::CreateFromDataManager(*data_manager_).value();
 
     segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager_));
-    CHECK(segmenter_.get());
+    CHECK(segmenter_);
 
-    pos_group_.reset(new PosGroup(data_manager_->GetPosGroupData()));
-    CHECK(pos_group_.get());
+    pos_group_ = absl::make_unique<PosGroup>(data_manager_->GetPosGroupData());
+    CHECK(pos_group_);
 
     {
-      const char *data = NULL;
+      const char *data = nullptr;
       size_t size = 0;
       data_manager_->GetSuggestionFilterData(&data, &size);
-      suggestion_filter_.reset(new SuggestionFilter(data, size));
+      suggestion_filter_ = absl::make_unique<SuggestionFilter>(data, size);
     }
 
-    immutable_converter_.reset(new ImmutableConverterImpl(
-        dictionary_.get(),
-        suffix_dictionary_.get(),
-        suppression_dictionary_.get(),
-        connector_.get(),
-        segmenter_.get(),
-        &pos_matcher_,
-        pos_group_.get(),
-        suggestion_filter_.get()));
-    CHECK(immutable_converter_.get());
+    immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
+        dictionary_.get(), suffix_dictionary_.get(),
+        suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
+        &pos_matcher_, pos_group_.get(), suggestion_filter_.get());
+    CHECK(immutable_converter_);
   }
 
-  ImmutableConverterImpl *GetConverter() {
-    return immutable_converter_.get();
-  }
+  ImmutableConverterImpl *GetConverter() { return immutable_converter_.get(); }
 
-  NBestGenerator *CreateNBestGenerator(const Lattice *lattice) {
-    return new NBestGenerator(suppression_dictionary_.get(),
-                              segmenter_.get(),
-                              connector_.get(),
-                              &pos_matcher_,
-                              lattice,
-                              suggestion_filter_.get(),
-                              true);
+  std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice *lattice) {
+    return absl::make_unique<NBestGenerator>(
+        suppression_dictionary_.get(), segmenter_.get(), connector_.get(),
+        &pos_matcher_, lattice, suggestion_filter_.get(), true);
   }
 
  private:
@@ -163,9 +151,8 @@ class MockDataAndImmutableConverter {
 
 class NBestGeneratorTest : public ::testing::Test {
  protected:
-  void GatherCandidates(
-      size_t size, Segments::RequestType request_type,
-      NBestGenerator *nbest, Segment *segment) const {
+  void GatherCandidates(size_t size, Segments::RequestType request_type,
+                        NBestGenerator *nbest, Segment *segment) const {
     while (segment->candidates_size() < size) {
       Segment::Candidate *candidate = segment->push_back_candidate();
       candidate->Init();
@@ -184,8 +171,8 @@ class NBestGeneratorTest : public ::testing::Test {
     const Node *end_node = NULL;
     for (Node *node = begin_node.next; node->next != NULL; node = node->next) {
       end_node = node->next;
-      if (converter.IsSegmentEndNode(
-              segments, node, group, is_single_segment)) {
+      if (converter.IsSegmentEndNode(segments, node, group,
+                                     is_single_segment)) {
         break;
       }
     }
@@ -194,8 +181,7 @@ class NBestGeneratorTest : public ::testing::Test {
 };
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  auto data_and_converter = absl::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
@@ -219,19 +205,19 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
-  std::unique_ptr<NBestGenerator> nbest_generator(
-      data_and_converter->CreateNBestGenerator(&lattice));
+  std::unique_ptr<NBestGenerator> nbest_generator =
+      data_and_converter->CreateNBestGenerator(&lattice);
 
   const bool kSingleSegment = false;  // For 'normal' conversion
   const Node *begin_node = lattice.bos_nodes();
-  const Node *end_node = GetEndNode(
-      *converter, segments, *begin_node, group, kSingleSegment);
+  const Node *end_node =
+      GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);
 
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
     Segment result_segment;
-    GatherCandidates(
-        10, Segments::CONVERSION, nbest_generator.get(), &result_segment);
+    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
+                     &result_segment);
     // The top result is treated exceptionally and has no boundary check
     // in NBestGenerator.
     // The best route is calculated in ImmutalbeConverter with boundary check.
@@ -244,8 +230,8 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_MID);
     Segment result_segment;
-    GatherCandidates(
-        10, Segments::CONVERSION, nbest_generator.get(), &result_segment);
+    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
+                     &result_segment);
     ASSERT_EQ(3, result_segment.candidates_size());
     EXPECT_EQ("進行", result_segment.candidate(0).value);
     EXPECT_EQ("信仰", result_segment.candidate(1).value);
@@ -254,13 +240,12 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
 }
 
 TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  auto data_and_converter = absl::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
   segments.set_request_type(Segments::CONVERSION);
-  string kText = "わたしのなまえはなかのです";
+  std::string kText = "わたしのなまえはなかのです";
   {
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::FREE);
@@ -276,46 +261,42 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
-  std::unique_ptr<NBestGenerator> nbest_generator(
-      data_and_converter->CreateNBestGenerator(&lattice));
-
+  std::unique_ptr<NBestGenerator> nbest_generator =
+      data_and_converter->CreateNBestGenerator(&lattice);
 
   const bool kSingleSegment = true;  // For realtime conversion
   const Node *begin_node = lattice.bos_nodes();
-  const Node *end_node = GetEndNode(
-      *converter, segments, *begin_node, group, kSingleSegment);
+  const Node *end_node =
+      GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);
 
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
     Segment result_segment;
-    GatherCandidates(
-        10, Segments::CONVERSION, nbest_generator.get(), &result_segment);
+    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
+                     &result_segment);
     // Top result should be inserted, but other candidates will be cut
     // due to boundary check.
     ASSERT_EQ(1, result_segment.candidates_size());
-    EXPECT_EQ("私の名前は中ノです",
-              result_segment.candidate(0).value);
+    EXPECT_EQ("私の名前は中ノです", result_segment.candidate(0).value);
   }
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
     Segment result_segment;
-    GatherCandidates(
-        10, Segments::CONVERSION, nbest_generator.get(), &result_segment);
+    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
+                     &result_segment);
     // We can get several candidates.
     ASSERT_LT(1, result_segment.candidates_size());
-    EXPECT_EQ("私の名前は中ノです",
-              result_segment.candidate(0).value);
+    EXPECT_EQ("私の名前は中ノです", result_segment.candidate(0).value);
   }
 }
 
 TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  auto data_and_converter = absl::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
-  const string kInput = "とうきょうかなごやにいきたい";
+  const std::string kInput = "とうきょうかなごやにいきたい";
   {
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::FREE);
@@ -331,8 +312,8 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
-  std::unique_ptr<NBestGenerator> nbest_generator(
-      data_and_converter->CreateNBestGenerator(&lattice));
+  std::unique_ptr<NBestGenerator> nbest_generator =
+      data_and_converter->CreateNBestGenerator(&lattice);
 
   const bool kSingleSegment = true;  // For realtime conversion
   const Node *begin_node = lattice.bos_nodes();
@@ -349,7 +330,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   EXPECT_EQ(kInput, top_cand.key);
   EXPECT_EQ("東京か名古屋に行きたい", top_cand.value);
 
-  std::vector<StringPiece> keys, values, content_keys, content_values;
+  std::vector<absl::string_view> keys, values, content_keys, content_values;
   for (Segment::Candidate::InnerSegmentIterator iter(&top_cand); !iter.Done();
        iter.Next()) {
     keys.push_back(iter.GetKey());

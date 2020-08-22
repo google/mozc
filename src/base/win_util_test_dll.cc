@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,7 @@ extern "C" int __stdcall IsLockCheckSucceeded() {
   return g_is_lock_check_succeeded ? 1 : 0;
 }
 
-extern "C" int __stdcall IsLockHeld() {
-  return g_is_lock_held ? 1 : 0;
-}
+extern "C" int __stdcall IsLockHeld() { return g_is_lock_held ? 1 : 0; }
 
 extern "C" int __stdcall ClearFlagsAndCheckAgain() {
   g_is_lock_check_succeeded = false;

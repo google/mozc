@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@ class IPCClientFactoryInterface;
 
 namespace config {
 class Config;
-}  // config
+}  // namespace config
 
 namespace client {
 
@@ -58,7 +58,7 @@ class ServerLauncher : public ServerLauncherInterface {
  public:
   bool StartServer(ClientInterface *client);
 
-  bool ForceTerminateServer(const string &name);
+  bool ForceTerminateServer(const std::string &name);
 
   bool WaitServer(uint32 pid);
 
@@ -66,18 +66,14 @@ class ServerLauncher : public ServerLauncherInterface {
 
   // specify server program. On Mac, we need to specify the server path
   // using this method.
-  void set_server_program(const string &server_program) {
+  void set_server_program(const std::string &server_program) {
     server_program_ = server_program;
   }
 
   // return server program
-  const string &server_program() const {
-    return server_program_;
-  }
+  const std::string &server_program() const { return server_program_; }
 
-  void set_restricted(bool restricted) {
-    restricted_ = restricted;
-  }
+  void set_restricted(bool restricted) { restricted_ = restricted; }
 
   // Sets the flag of error dialog suppression.
   void set_suppress_error_dialog(bool suppress) {
@@ -88,7 +84,7 @@ class ServerLauncher : public ServerLauncherInterface {
   virtual ~ServerLauncher();
 
  private:
-  string server_program_;
+  std::string server_program_;
   bool restricted_;
   bool suppress_error_dialog_;
 };
@@ -142,19 +138,19 @@ class Client : public ClientInterface {
 
   void set_timeout(int timeout);
   void set_restricted(bool restricted);
-  void set_server_program(const string &server_program);
+  void set_server_program(const std::string &server_program);
   void set_suppress_error_dialog(bool suppress);
   void set_client_capability(const commands::Capability &capability);
 
-  bool LaunchTool(const string &mode, const string &arg);
+  bool LaunchTool(const std::string &mode, const std::string &arg);
   bool LaunchToolWithProtoBuf(const commands::Output &output);
   // Converts Output message from server to corresponding mozc_tool arguments
   // If launch_tool_mode is not set or NO_TOOL is set or an invalid value is
   // set, this function will return false and do nothing.
   static bool TranslateProtoBufToMozcToolArg(const commands::Output &output,
-                                             string *mode);
+                                             std::string *mode);
 
-  bool OpenBrowser(const string &url);
+  bool OpenBrowser(const std::string &url);
 
  private:
   FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest);
@@ -177,8 +173,8 @@ class Client : public ClientInterface {
 
   // Dump the recent user inputs to specified file with label
   // This is used for debugging
-  void DumpHistorySnapshot(const string &filename,
-                           const string &label) const;
+  void DumpHistorySnapshot(const std::string &filename,
+                           const std::string &label) const;
 
   // Start server:
   // return true if server is launched sucessfully or server is already running.
@@ -201,15 +197,13 @@ class Client : public ClientInterface {
 
   // This method automatically re-launch mozc_server and
   // re-issue session id if it is not available.
-  bool EnsureCallCommand(commands::Input *input,
-                         commands::Output *output);
+  bool EnsureCallCommand(commands::Input *input, commands::Output *output);
 
   // The most primitive Call method
   // This method won't change the server_status_ even
   // when version mismatch happens. In this case,
   // just return false.
-  bool Call(const commands::Input &input,
-            commands::Output *output);
+  bool Call(const commands::Input &input, commands::Output *output);
 
   // first invoke Call() command and check the
   // protocol_version. When protocol version mismatch,
@@ -250,7 +244,7 @@ class Client : public ClientInterface {
   ServerStatus server_status_;
   uint32 server_protocol_version_;
   uint32 server_process_id_;
-  string server_product_version_;
+  std::string server_product_version_;
   std::vector<commands::Input> history_inputs_;
   // Remember the composition mode of input session for playback.
   commands::CompositionMode last_mode_;

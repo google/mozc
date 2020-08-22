@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_BITARRAY_H_
 #define MOZC_BASE_BITARRAY_H_
 
-#include <cstring>   // memset
+#include <cstring>  // memset
 #include <memory>
 
 #include "base/port.h"
@@ -40,8 +40,8 @@ namespace mozc {
 class BitArray {
  public:
   // Specify the size of bit vector
-  explicit BitArray(uint32 size) : array_(new uint32[1 + (size >> 5)]),
-                                   size_(size) {
+  explicit BitArray(uint32 size)
+      : array_(new uint32[1 + (size >> 5)]), size_(size) {
     memset(reinterpret_cast<char *>(array_.get()), 0, 4 * (1 + (size >> 5)));
   }
 
@@ -49,8 +49,8 @@ class BitArray {
 
   // Gets true/false of |index|
   bool get(uint32 index) const {
-    return static_cast<bool>(
-        (array_[(index >> 5)] >> (index & 0x0000001F)) & 0x00000001);
+    return static_cast<bool>((array_[(index >> 5)] >> (index & 0x0000001F)) &
+                             0x00000001);
   }
 
   // Sets the bit at |index| to true.
@@ -69,20 +69,16 @@ class BitArray {
   }
 
   // Returns the required buffer size for saving the bit vector.
-  size_t array_size() const {
-    return 4 * (1 + (size_ >> 5));
-  }
+  size_t array_size() const { return 4 * (1 + (size_ >> 5)); }
 
   // Returns the number of bit(s).
-  size_t size() const {
-    return size_;
-  }
+  size_t size() const { return size_; }
 
   // Immutable accessor.
   static bool GetValue(const char *array, uint32 index) {
     const uint32 *uarray = reinterpret_cast<const uint32 *>(array);
-    return static_cast<bool>(
-        (uarray[(index >> 5)] >> (index & 0x0000001F)) & 0x00000001);
+    return static_cast<bool>((uarray[(index >> 5)] >> (index & 0x0000001F)) &
+                             0x00000001);
   }
 
  private:

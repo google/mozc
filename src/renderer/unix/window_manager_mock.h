@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,15 +39,15 @@ namespace gtk {
 
 class WindowManagerMock : public WindowManagerInterface {
  public:
-  MOCK_METHOD0(Initialize, void());
-  MOCK_METHOD0(HideAllWindows, void());
-  MOCK_METHOD0(ShowAllWindows, void());
-  MOCK_METHOD1(UpdateLayout, void(const commands::RendererCommand &command));
-  MOCK_METHOD0(Activate, bool());
-  MOCK_CONST_METHOD0(IsAvailable, bool());
-  MOCK_METHOD1(SetSendCommandInterface,
-               bool(client::SendCommandInterface *send_command_interface));
-  MOCK_METHOD2(SetWindowPos, void(int x, int y));
+  MOCK_METHOD(void, Initialize, ());
+  MOCK_METHOD(void, HideAllWindows, ());
+  MOCK_METHOD(void, ShowAllWindows, ());
+  MOCK_METHOD(void, UpdateLayout, (const commands::RendererCommand &command));
+  MOCK_METHOD(bool, Activate, ());
+  MOCK_METHOD(bool, IsAvailable, (), (const));
+  MOCK_METHOD(bool, SetSendCommandInterface,
+              (client::SendCommandInterface* send_command_interface));
+  MOCK_METHOD(void, SetWindowPos, (int x, int y));
 };
 
 }  // namespace gtk

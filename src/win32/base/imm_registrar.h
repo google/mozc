@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,7 @@ class ImmRegistrar {
   static HRESULT Register(const std::wstring &ime_filename,
                           const std::wstring &layout_name,
                           const std::wstring &layout_display_name_resource_path,
-                          int layout_display_name_resource_id,
-                          HKL *hkl);
+                          int layout_display_name_resource_id, HKL *hkl);
 
   // Uninstalls module from the system.
   static HRESULT Unregister(const std::wstring &ime_filename);

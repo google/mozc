@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -87,7 +87,7 @@ return true if id is in one of the ranges).  See the following figure:
 |                                           |
 """
 
-__author__ = "taku"
+from __future__ import absolute_import
 
 import optparse
 import re

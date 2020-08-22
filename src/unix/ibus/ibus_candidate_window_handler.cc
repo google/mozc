@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -66,25 +66,22 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
       candidates.has_focused_index()) {
     // Max size of candidates is 200 so 128 is sufficient size for the buffer.
     char index_buf[128] = {0};
-    const int result = snprintf(index_buf,
-                                sizeof(index_buf) - 1,
-                                "%s%d/%d",
-                                (auxiliary_text.empty() ? "" : " "),
-                                candidates.focused_index() + 1,
-                                candidates.size());
+    const int result =
+        snprintf(index_buf, sizeof(index_buf) - 1, "%s%d/%d",
+                 (auxiliary_text.empty() ? "" : " "),
+                 candidates.focused_index() + 1, candidates.size());
     DCHECK_GE(result, 0) << "snprintf in ComposeAuxiliaryText failed";
     auxiliary_text += index_buf;
   }
-  return auxiliary_text.empty() ?
-      NULL : ibus_text_new_from_string(auxiliary_text.c_str());
+  return auxiliary_text.empty()
+             ? NULL
+             : ibus_text_new_from_string(auxiliary_text.c_str());
 }
 }  // namespace
 
-IBusCandidateWindowHandler::IBusCandidateWindowHandler() {
-}
+IBusCandidateWindowHandler::IBusCandidateWindowHandler() {}
 
-IBusCandidateWindowHandler::~IBusCandidateWindowHandler() {
-}
+IBusCandidateWindowHandler::~IBusCandidateWindowHandler() {}
 
 void IBusCandidateWindowHandler::Update(IBusEngine *engine,
                                         const commands::Output &output) {
@@ -109,8 +106,7 @@ void IBusCandidateWindowHandler::Show(IBusEngine *engine) {
 
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateCandidates(
-    IBusEngine *engine,
-    const commands::Output &output) {
+    IBusEngine *engine, const commands::Output &output) {
   if (!output.has_candidates() || output.candidates().candidate_size() == 0) {
     ibus_engine_hide_lookup_table(engine);
     return true;
@@ -118,8 +114,7 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
 
   const gboolean kRound = TRUE;
   const commands::Candidates &candidates = output.candidates();
-  const gboolean cursor_visible = candidates.has_focused_index() ?
-      TRUE : FALSE;
+  const gboolean cursor_visible = candidates.has_focused_index() ? TRUE : FALSE;
   int cursor_pos = 0;
   if (candidates.has_focused_index()) {
     for (int i = 0; i < candidates.candidate_size(); ++i) {
@@ -135,10 +130,8 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
       page_size > candidates.candidate_size()) {
     page_size = candidates.candidate_size();
   }
-  IBusLookupTable *table = ibus_lookup_table_new(page_size,
-                                                 cursor_pos,
-                                                 cursor_visible,
-                                                 kRound);
+  IBusLookupTable *table =
+      ibus_lookup_table_new(page_size, cursor_pos, cursor_visible, kRound);
   if (candidates.direction() == commands::Candidates::VERTICAL) {
     ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
   } else {
@@ -151,14 +144,12 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
     ibus_lookup_table_append_candidate(table, text);
     // |text| is released by ibus_engine_update_lookup_table along with |table|.
 
-    const bool has_label = candidate.has_annotation() &&
-        candidate.annotation().has_shortcut();
+    const bool has_label =
+        candidate.has_annotation() && candidate.annotation().has_shortcut();
     // Need to append an empty string when the candidate does not have a
     // shortcut. Otherwise the ibus lookup table shows numeric labels.
-    IBusText *label =
-        ibus_text_new_from_string(has_label ?
-                                  candidate.annotation().shortcut().c_str() :
-                                  "");
+    IBusText *label = ibus_text_new_from_string(
+        has_label ? candidate.annotation().shortcut().c_str() : "");
     ibus_lookup_table_append_label(table, label);
     // |label| is released by ibus_engine_update_lookup_table along with
     // |table|.
@@ -171,8 +162,7 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
 
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateAuxiliaryText(
-    IBusEngine *engine,
-    const commands::Output &output) {
+    IBusEngine *engine, const commands::Output &output) {
   if (!output.has_candidates()) {
     ibus_engine_hide_auxiliary_text(engine);
     return true;

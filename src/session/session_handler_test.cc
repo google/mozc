@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,8 +84,8 @@ class MockEngineBuilder : public EngineBuilderInterface {
                     EngineReloadResponse *response) override {
     ++num_prepare_async_called_;
     response->set_status(state_ != State::RUNNING
-                         ? EngineReloadResponse::ACCEPTED
-                         : EngineReloadResponse::ALREADY_RUNNING);
+                             ? EngineReloadResponse::ACCEPTED
+                             : EngineReloadResponse::ALREADY_RUNNING);
   }
 
   bool HasResponse() const override {
@@ -169,7 +169,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
-  // The oldest item is remvoed
+  // The oldest item is removed
   const size_t session_size = 3;
   FLAGS_max_session_size = static_cast<int32>(session_size);
   {
@@ -187,7 +187,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     }
 
     for (int i = static_cast<int>(ids.size() - 1); i >= 0; --i) {
-      if (i > 0) {   // this id is alive
+      if (i > 0) {  // this id is alive
         EXPECT_TRUE(IsGoodSession(&handler, ids[i]));
       } else {  // the first id shuold be removed
         EXPECT_FALSE(IsGoodSession(&handler, ids[i]));
@@ -227,6 +227,8 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     // the oldest id no longer exists
     EXPECT_FALSE(IsGoodSession(&handler, oldest_id));
   }
+
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
@@ -245,6 +247,8 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
 
   clock.PutClockForward(1, 0);
   EXPECT_TRUE(CreateSession(&handler, &id));
+
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
@@ -262,6 +266,8 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 
   // the session is removed by server
   EXPECT_FALSE(IsGoodSession(&handler, id));
+
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
@@ -280,6 +286,8 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
   clock.PutClockForward(timeout, 0);
   EXPECT_TRUE(CleanUp(&handler, id));
   EXPECT_FALSE(IsGoodSession(&handler, id));
+
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(SessionHandlerTest, ShutdownTest) {
@@ -360,6 +368,7 @@ TEST_F(SessionHandlerTest, ElapsedTimeTest) {
   Clock::SetClockForUnitTest(&clock);
   EXPECT_TRUE(CreateSession(&handler, &id));
   EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(SessionHandlerTest, ConfigTest) {
@@ -405,8 +414,8 @@ TEST_F(SessionHandlerTest, ConfigTest) {
 TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
   // Tests if sync is called for the following input commands.
   commands::Input::CommandType command_types[] = {
-    commands::Input::DELETE_SESSION,
-    commands::Input::CLEANUP,
+      commands::Input::DELETE_SESSION,
+      commands::Input::CLEANUP,
   };
   for (size_t i = 0; i < arraysize(command_types); ++i) {
     std::unique_ptr<MockConverterEngine> engine(new MockConverterEngine());
@@ -431,7 +440,10 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
 }
 
 const char *kStorageTestData[] = {
-  "angel", "bishop", "chariot", "dragon",
+    "angel",
+    "bishop",
+    "chariot",
+    "dragon",
 };
 
 class MockStorage : public GenericStorageInterface {
@@ -441,20 +453,18 @@ class MockStorage : public GenericStorageInterface {
   const char **insert_expect;
 
   MockStorage() : insert_count(0), clear_count(0) {}
-  virtual ~MockStorage() {}
+  ~MockStorage() override = default;
 
-  virtual bool Insert(const string &key, const char *value) {
-    EXPECT_EQ(string(insert_expect[insert_count]), key);
-    EXPECT_EQ(string(insert_expect[insert_count]), string(value));
+  bool Insert(const std::string &key, const char *value) override {
+    EXPECT_EQ(std::string(insert_expect[insert_count]), key);
+    EXPECT_EQ(std::string(insert_expect[insert_count]), std::string(value));
     ++insert_count;
     return true;
   }
 
-  virtual const char *Lookup(const string &key) {
-    return NULL;
-  }
+  const char *Lookup(const std::string &key) override { return nullptr; }
 
-  virtual bool GetAllValues(std::vector<string> *values) {
+  bool GetAllValues(std::vector<std::string> *values) override {
     values->clear();
     for (size_t i = 0; i < arraysize(kStorageTestData); ++i) {
       values->push_back(kStorageTestData[i]);
@@ -462,25 +472,30 @@ class MockStorage : public GenericStorageInterface {
     return true;
   }
 
-  virtual bool Clear() {
+  bool Clear() override {
     ++clear_count;
     return true;
   }
 
-  void SetInsertExpect(const char **expect) {
-    insert_expect = expect;
-  }
+  bool Sync() override { return true; }
+
+  void SetInsertExpect(const char **expect) { insert_expect = expect; }
 };
 
 class MockStorageManager : public GenericStorageManagerInterface {
  public:
-  virtual GenericStorageInterface *GetStorage(
-     commands::GenericStorageEntry::StorageType storage_type) {
+  GenericStorageInterface *GetStorage(
+      commands::GenericStorageEntry::StorageType storage_type) override {
     return storage;
   }
 
-  void SetStorage(MockStorage *newStorage) {
-    storage = newStorage;
+  void SetStorage(MockStorage *newStorage) { storage = newStorage; }
+
+  bool SyncAll() override {
+    if (storage == nullptr) {
+      return true;
+    }
+    return storage->Sync();
   }
 
  private:
@@ -520,12 +535,10 @@ TEST_F(SessionHandlerTest, StorageTest) {
         command.mutable_input()->mutable_storage_entry();
     storage_entry->set_type(commands::GenericStorageEntry::EMOTICON_HISTORY);
     EXPECT_TRUE(handler.ReadAllFromStorage(&command));
-    EXPECT_EQ(
-        commands::GenericStorageEntry::EMOTICON_HISTORY,
-        command.output().storage_entry().type());
-    EXPECT_EQ(
-        arraysize(kStorageTestData),
-        command.output().storage_entry().value().size());
+    EXPECT_EQ(commands::GenericStorageEntry::EMOTICON_HISTORY,
+              command.output().storage_entry().type());
+    EXPECT_EQ(arraysize(kStorageTestData),
+              command.output().storage_entry().value().size());
   }
   {
     // Clear
@@ -537,9 +550,8 @@ TEST_F(SessionHandlerTest, StorageTest) {
         command.mutable_input()->mutable_storage_entry();
     storage_entry->set_type(commands::GenericStorageEntry::EMOTICON_HISTORY);
     EXPECT_TRUE(handler.ClearStorage(&command));
-    EXPECT_EQ(
-        commands::GenericStorageEntry::EMOTICON_HISTORY,
-        command.output().storage_entry().type());
+    EXPECT_EQ(commands::GenericStorageEntry::EMOTICON_HISTORY,
+              command.output().storage_entry().type());
     EXPECT_EQ(1, mock_storage.clear_count);
   }
 }
@@ -579,9 +591,8 @@ TEST_F(SessionHandlerTest, EmojiUsageStatsTest) {
 // reload event.
 TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(
-      std::unique_ptr<EngineStub>(new EngineStub()),
-      std::unique_ptr<MockEngineBuilder>(engine_builder));
+  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+                         std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Session handler receives reload request when engine builder is not running.
   // EngineBuilderInterface::PrepareAsync() should be called once.
@@ -604,9 +615,8 @@ TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
 // async data load is already running.
 TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(
-      std::unique_ptr<EngineStub>(new EngineStub()),
-      std::unique_ptr<MockEngineBuilder>(engine_builder));
+  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+                         std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Emulate the state where async data load is running.
   engine_builder->set_state(MockEngineBuilder::State::RUNNING);
@@ -628,9 +638,8 @@ TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
 // requested data is broken.
 TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(
-      std::unique_ptr<EngineStub>(new EngineStub()),
-      std::unique_ptr<MockEngineBuilder>(engine_builder));
+  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+                         std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Emulate the state where requested data is broken.
   engine_builder->set_state(MockEngineBuilder::State::INVALID_DATA);
@@ -647,9 +656,8 @@ TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(
-      std::unique_ptr<EngineStub>(new EngineStub()),
-      std::unique_ptr<MockEngineBuilder>(engine_builder));
+  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+                         std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // A session is created before data is loaded.
   engine_builder->set_state(MockEngineBuilder::State::STOP);

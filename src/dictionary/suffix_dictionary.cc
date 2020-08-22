@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -45,7 +46,7 @@ class ComparePrefix {
  public:
   explicit ComparePrefix(size_t max_len) : max_len_(max_len) {}
 
-  bool operator()(StringPiece x, StringPiece y) const {
+  bool operator()(absl::string_view x, absl::string_view y) const {
     return x.substr(0, max_len_) < y.substr(0, max_len_);
   }
 
@@ -55,8 +56,8 @@ class ComparePrefix {
 
 }  // namespace
 
-SuffixDictionary::SuffixDictionary(StringPiece key_array_data,
-                                   StringPiece value_array_data,
+SuffixDictionary::SuffixDictionary(absl::string_view key_array_data,
+                                   absl::string_view value_array_data,
                                    const uint32 *token_array)
     : token_array_(token_array) {
   DCHECK(SerializedStringArray::VerifyData(key_array_data));
@@ -68,7 +69,7 @@ SuffixDictionary::SuffixDictionary(StringPiece key_array_data,
 
 SuffixDictionary::~SuffixDictionary() {}
 
-bool SuffixDictionary::HasKey(StringPiece key) const {
+bool SuffixDictionary::HasKey(absl::string_view key) const {
   // SuffixDictionary::HasKey() is never called and unnecessary to
   // implement. To avoid accidental calls of this method, the method simply dies
   // so that we can immediately notice this unimplemented method during
@@ -77,7 +78,7 @@ bool SuffixDictionary::HasKey(StringPiece key) const {
   return false;
 }
 
-bool SuffixDictionary::HasValue(StringPiece value) const {
+bool SuffixDictionary::HasValue(absl::string_view value) const {
   // SuffixDictionary::HasValue() is never called and unnecessary to
   // implement. To avoid accidental calls of this method, the method simply dies
   // so that we can immediately notice this unimplemented method during
@@ -87,15 +88,13 @@ bool SuffixDictionary::HasValue(StringPiece value) const {
 }
 
 void SuffixDictionary::LookupPredictive(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
+    absl::string_view key, const ConversionRequest &conversion_request,
     Callback *callback) const {
   using Iter = SerializedStringArray::const_iterator;
-  std::pair<Iter, Iter> range = std::equal_range(key_array_.begin(),
-                                            key_array_.end(),
-                                            key, ComparePrefix(key.size()));
+  std::pair<Iter, Iter> range = std::equal_range(
+      key_array_.begin(), key_array_.end(), key, ComparePrefix(key.size()));
   Token token;
-  token.attributes = Token::NONE;  // Common for all suffix tokens.
+  token.attributes = Token::SUFFIX_DICTIONARY;
   for (; range.first != range.second; ++range.first) {
     token.key.assign((*range.first).data(), (*range.first).size());
     switch (callback->OnKey(token.key)) {
@@ -126,23 +125,17 @@ void SuffixDictionary::LookupPredictive(
   }
 }
 
-void SuffixDictionary::LookupPrefix(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
-}
+void SuffixDictionary::LookupPrefix(absl::string_view key,
+                                    const ConversionRequest &conversion_request,
+                                    Callback *callback) const {}
 
-void SuffixDictionary::LookupExact(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
-}
+void SuffixDictionary::LookupExact(absl::string_view key,
+                                   const ConversionRequest &conversion_request,
+                                   Callback *callback) const {}
 
 void SuffixDictionary::LookupReverse(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
-}
+    absl::string_view key, const ConversionRequest &conversion_request,
+    Callback *callback) const {}
 
 }  // namespace dictionary
 }  // namespace mozc

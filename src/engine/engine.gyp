@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,9 @@
         'engine.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:status',
         '../converter/converter.gyp:converter',
         '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:segmenter',
@@ -81,6 +83,7 @@
         'user_data_manager_mock.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../converter/converter_base.gyp:converter_mock'
       ],

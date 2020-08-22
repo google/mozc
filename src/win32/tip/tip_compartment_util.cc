@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,7 @@ using ATL::CComQIPtr;
 using ATL::CComVariant;
 
 bool TipCompartmentUtil::Set(ITfCompartmentMgr *compartment_manager,
-                             const GUID &compartment_guid,
-                             TfClientId client_id,
+                             const GUID &compartment_guid, TfClientId client_id,
                              const ATL::CComVariant &data) {
   if (!compartment_manager) {
     return false;
@@ -71,23 +70,20 @@ bool TipCompartmentUtil::Set(ITfCompartmentMgr *compartment_manager,
 }
 
 bool TipCompartmentUtil::Set(ITfThreadMgr *thread_manager,
-                             const GUID &compartment_guid,
-                             TfClientId client_id,
+                             const GUID &compartment_guid, TfClientId client_id,
                              const ATL::CComVariant &data) {
   CComQIPtr<ITfCompartmentMgr> compartment_manager(thread_manager);
   return Set(compartment_manager, compartment_guid, client_id, data);
 }
 
 bool TipCompartmentUtil::Set(ITfDocumentMgr *document_manager,
-                             const GUID &compartment_guid,
-                             TfClientId client_id,
+                             const GUID &compartment_guid, TfClientId client_id,
                              const ATL::CComVariant &data) {
   CComQIPtr<ITfCompartmentMgr> compartment_manager(document_manager);
   return Set(compartment_manager, compartment_guid, client_id, data);
 }
 
-bool TipCompartmentUtil::Set(ITfContext *context,
-                             const GUID &compartment_guid,
+bool TipCompartmentUtil::Set(ITfContext *context, const GUID &compartment_guid,
                              TfClientId client_id,
                              const ATL::CComVariant &data) {
   CComQIPtr<ITfCompartmentMgr> compartment_manager(context);
@@ -95,8 +91,7 @@ bool TipCompartmentUtil::Set(ITfContext *context,
 }
 
 bool TipCompartmentUtil::Get(ITfCompartmentMgr *compartment_manager,
-                             const GUID &compartment_guid,
-                             CComVariant *data) {
+                             const GUID &compartment_guid, CComVariant *data) {
   if (data == nullptr) {
     return false;
   }
@@ -132,19 +127,15 @@ bool TipCompartmentUtil::Get(ITfDocumentMgr *document_manager,
   return Get(compartment_manager, compartment_guid, data);
 }
 
-bool TipCompartmentUtil::Get(ITfContext *context,
-                             const GUID &compartment_guid,
+bool TipCompartmentUtil::Get(ITfContext *context, const GUID &compartment_guid,
                              ATL::CComVariant *data) {
   CComQIPtr<ITfCompartmentMgr> compartment_manager(context);
   return Get(compartment_manager, compartment_guid, data);
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-    ITfCompartmentMgr *compartment_manager,
-    const GUID &compartment_guid,
-    TfClientId client_id,
-    const CComVariant &default_data,
-    CComVariant *data) {
+    ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid,
+    TfClientId client_id, const CComVariant &default_data, CComVariant *data) {
   if (data == nullptr) {
     return false;
   }
@@ -177,36 +168,29 @@ bool TipCompartmentUtil::GetAndEnsureDataExists(
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-      ITfThreadMgr *thread_manager,
-      const GUID &compartment_guid,
-      TfClientId client_id,
-      const ATL::CComVariant &default_data,
-      ATL::CComVariant *data) {
+    ITfThreadMgr *thread_manager, const GUID &compartment_guid,
+    TfClientId client_id, const ATL::CComVariant &default_data,
+    ATL::CComVariant *data) {
   CComQIPtr<ITfCompartmentMgr> compartment_manager(thread_manager);
-  return GetAndEnsureDataExists(
-      compartment_manager, compartment_guid, client_id, default_data, data);
+  return GetAndEnsureDataExists(compartment_manager, compartment_guid,
+                                client_id, default_data, data);
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-      ITfDocumentMgr *document_manager,
-      const GUID &compartment_guid,
-      TfClientId client_id,
-      const ATL::CComVariant &default_data,
-      ATL::CComVariant *data) {
+    ITfDocumentMgr *document_manager, const GUID &compartment_guid,
+    TfClientId client_id, const ATL::CComVariant &default_data,
+    ATL::CComVariant *data) {
   CComQIPtr<ITfCompartmentMgr> compartment_manager(document_manager);
-  return GetAndEnsureDataExists(
-      compartment_manager, compartment_guid, client_id, default_data, data);
+  return GetAndEnsureDataExists(compartment_manager, compartment_guid,
+                                client_id, default_data, data);
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-      ITfContext *context,
-      const GUID &compartment_guid,
-      TfClientId client_id,
-      const ATL::CComVariant &default_data,
-      ATL::CComVariant *data) {
+    ITfContext *context, const GUID &compartment_guid, TfClientId client_id,
+    const ATL::CComVariant &default_data, ATL::CComVariant *data) {
   CComQIPtr<ITfCompartmentMgr> compartment_manager(context);
-  return GetAndEnsureDataExists(
-      compartment_manager, compartment_guid, client_id, default_data, data);
+  return GetAndEnsureDataExists(compartment_manager, compartment_guid,
+                                client_id, default_data, data);
 }
 
 }  // namespace tsf

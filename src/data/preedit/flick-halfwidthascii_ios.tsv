@@ -1,0 +1,106 @@
+@		{*}@	NoTransliteration
+#		{*}#	NoTransliteration
+/		{*}/	NoTransliteration
+&		{*}&	NoTransliteration
+_		{*}_	NoTransliteration
+{*}@*		{*}@
+{*}#*		{*}#
+{*}/*		{*}/
+{*}&*		{*}&
+{*}_*		{*}_
+a		{*}a	NoTransliteration
+b		{*}b	NoTransliteration
+c		{*}c	NoTransliteration
+{*}a*		{*}A
+{*}A*		{*}a
+{*}b*		{*}B
+{*}B*		{*}b
+{*}c*		{*}C
+{*}C*		{*}c
+d		{*}d	NoTransliteration
+e		{*}e	NoTransliteration
+f		{*}f	NoTransliteration
+{*}d*		{*}D
+{*}D*		{*}d
+{*}e*		{*}E
+{*}E*		{*}e
+{*}f*		{*}F
+{*}F*		{*}f
+g		{*}g	NoTransliteration
+h		{*}h	NoTransliteration
+i		{*}i	NoTransliteration
+{*}g*		{*}G
+{*}G*		{*}g
+{*}h*		{*}H
+{*}H*		{*}h
+{*}i*		{*}I
+{*}I*		{*}i
+j		{*}j	NoTransliteration
+k		{*}k	NoTransliteration
+l		{*}l	NoTransliteration
+{*}j*		{*}J
+{*}J*		{*}j
+{*}k*		{*}K
+{*}K*		{*}k
+{*}l*		{*}L
+{*}L*		{*}l
+m		{*}m	NoTransliteration
+n		{*}n	NoTransliteration
+o		{*}o	NoTransliteration
+{*}m*		{*}M
+{*}M*		{*}m
+{*}n*		{*}N
+{*}N*		{*}n
+{*}o*		{*}O
+{*}O*		{*}o
+p		{*}p	NoTransliteration
+q		{*}q	NoTransliteration
+r		{*}r	NoTransliteration
+s		{*}s	NoTransliteration
+{*}p*		{*}P
+{*}P*		{*}p
+{*}q*		{*}Q
+{*}Q*		{*}q
+{*}r*		{*}R
+{*}R*		{*}r
+{*}s*		{*}S
+{*}S*		{*}s
+t		{*}t	NoTransliteration
+u		{*}u	NoTransliteration
+v		{*}v	NoTransliteration
+{*}t*		{*}T
+{*}T*		{*}t
+{*}u*		{*}U
+{*}U*		{*}u
+{*}v*		{*}V
+{*}V*		{*}v
+w		{*}w	NoTransliteration
+x		{*}x	NoTransliteration
+y		{*}y	NoTransliteration
+z		{*}z	NoTransliteration
+{*}w*		{*}W
+{*}W*		{*}w
+{*}x*		{*}X
+{*}X*		{*}x
+{*}y*		{*}Y
+{*}Y*		{*}y
+{*}z*		{*}Z
+{*}Z*		{*}z
+'		{*}'	NoTransliteration
+"		{*}"	NoTransliteration
+(		{*}(	NoTransliteration
+)		{*})	NoTransliteration
+{*}'*		{*}'
+{*}"*		{*}"
+{*}(*		{*}(
+{*})*		{*})
+.		{*}.	NoTransliteration
+,		{*},	NoTransliteration
+?		{*}?	NoTransliteration
+!		{*}!	NoTransliteration
+{*}.*		{*}.
+{*},*		{*},
+{*}?*		{*}?
+{*}!*		{*}!
+{<}		
++		

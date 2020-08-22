@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,9 @@ namespace mozc {
 
 class BasePredictor : public PredictorInterface {
  public:
-  // Initializes the composite of predictor with given sub-predictors. All the
-  // predictors are owned by this class and deleted on destruction of this
-  // instance.
-  BasePredictor(PredictorInterface *dictionary_predictor,
-                PredictorInterface *user_history_predictor);
+  // Initializes the composite of predictor with given sub-predictors.
+  BasePredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
+                std::unique_ptr<PredictorInterface> user_history_predictor);
   ~BasePredictor() override;
 
   // Hook(s) for all mutable operations.
@@ -60,7 +58,8 @@ class BasePredictor : public PredictorInterface {
   bool ClearUnusedHistory() override;
 
   // Clears a specific user history data of UserHistoryPredictor.
-  bool ClearHistoryEntry(const string &key, const string &value) override;
+  bool ClearHistoryEntry(const std::string &key,
+                         const std::string &value) override;
 
   // Syncs user history.
   bool Sync() override;
@@ -84,42 +83,46 @@ class BasePredictor : public PredictorInterface {
 // TODO(team): The name should be DesktopPredictor
 class DefaultPredictor : public BasePredictor {
  public:
-  static PredictorInterface *CreateDefaultPredictor(
-      PredictorInterface *dictionary_predictor,
-      PredictorInterface *user_history_predictor);
+  static std::unique_ptr<PredictorInterface> CreateDefaultPredictor(
+      std::unique_ptr<PredictorInterface> dictionary_predictor,
+      std::unique_ptr<PredictorInterface> user_history_predictor);
 
-  DefaultPredictor(PredictorInterface *dictionary_predictor,
-                   PredictorInterface *user_history_predictor);
+  DefaultPredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
+                   std::unique_ptr<PredictorInterface> user_history_predictor);
   ~DefaultPredictor() override;
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override;
 
-  const string &GetPredictorName() const override { return predictor_name_; }
+  const std::string &GetPredictorName() const override {
+    return predictor_name_;
+  }
 
  private:
   const ConversionRequest empty_request_;
-  const string predictor_name_;
+  const std::string predictor_name_;
 };
 
 class MobilePredictor : public BasePredictor {
  public:
-  static PredictorInterface *CreateMobilePredictor(
-      PredictorInterface *dictionary_predictor,
-      PredictorInterface *user_history_predictor);
+  static std::unique_ptr<PredictorInterface> CreateMobilePredictor(
+      std::unique_ptr<PredictorInterface> dictionary_predictor,
+      std::unique_ptr<PredictorInterface> user_history_predictor);
 
-  MobilePredictor(PredictorInterface *dictionary_predictor,
-                  PredictorInterface *user_history_predictor);
+  MobilePredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
+                  std::unique_ptr<PredictorInterface> user_history_predictor);
   ~MobilePredictor() override;
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override;
 
-  const string &GetPredictorName() const override { return predictor_name_; }
+  const std::string &GetPredictorName() const override {
+    return predictor_name_;
+  }
 
  private:
   const ConversionRequest empty_request_;
-  const string predictor_name_;
+  const std::string predictor_name_;
 };
 
 }  // namespace mozc

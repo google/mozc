@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,9 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-TipRefCount::TipRefCount()
-    : reference_count_(0) {
-  TipDllModule::AddRef();
-}
+TipRefCount::TipRefCount() : reference_count_(0) { TipDllModule::AddRef(); }
 
-TipRefCount::~TipRefCount() {
-  TipDllModule::Release();
-}
+TipRefCount::~TipRefCount() { TipDllModule::Release(); }
 
 ULONG TipRefCount::AddRefImpl() {
   return ::InterlockedIncrement(&reference_count_);
@@ -59,4 +54,3 @@ ULONG TipRefCount::ReleaseImpl() {
 }  // namespace tsf
 }  // namespace win32
 }  // namespace mozc
-

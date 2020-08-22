@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,13 @@
 
 #include "base/port.h"
 #include "engine/engine_interface.h"
+#include "engine/user_data_manager_mock.h"
 
 namespace mozc {
 
 class ConverterInterface;
 class ConverterMock;
 class PredictorInterface;
-class UserDataManagerInterface;
-class UserDataManagerMock;
 
 // Engine class with mock converter.
 class MockConverterEngine : public EngineInterface {
@@ -53,9 +52,9 @@ class MockConverterEngine : public EngineInterface {
   PredictorInterface *GetPredictor() const override;
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override;
-  UserDataManagerInterface *GetUserDataManager() override;
+  UserDataManagerMock *GetUserDataManager() override;
 
-  StringPiece GetDataVersion() const override {
+  absl::string_view GetDataVersion() const override {
     return "mock converter engine";
   }
 
@@ -64,7 +63,7 @@ class MockConverterEngine : public EngineInterface {
   }
 
   void SetUserDataManager(UserDataManagerMock *manager);
-  ConverterMock* mutable_converter_mock();
+  ConverterMock *mutable_converter_mock();
 
  private:
   std::unique_ptr<ConverterMock> converter_mock_;

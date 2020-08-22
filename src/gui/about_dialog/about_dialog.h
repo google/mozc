@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,9 +50,9 @@ class LinkCallbackInterface {
   virtual void linkActivated(const QString &str) = 0;
 };
 
-class AboutDialog : public QDialog,
-                    private Ui::AboutDialog {
+class AboutDialog : public QDialog, private Ui::AboutDialog {
   Q_OBJECT;
+
  public:
   explicit AboutDialog(QWidget *parent = nullptr);
   void SetLinkCallback(LinkCallbackInterface *callback);
@@ -67,7 +67,7 @@ class AboutDialog : public QDialog,
   std::unique_ptr<QImage> product_image_;
 };
 
-}  // namespace mozc::gui
+}  // namespace gui
 }  // namespace mozc
 
 #endif  // MOZC_GUI_ABOUT_DIALOG_ABOUT_DIALOG_H_

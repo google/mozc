@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@ class BitVectorBasedArrayBuilder {
   // Adds the element to the builder.
   // The length of the element would be ceiling by padding '\x00' bytes to the
   // end. Please see also comments for SetSize below.
-  void Add(const string& element);
+  void Add(const std::string& element);
 
   // Sets size related parameters. The size of each element will be ceiling
   // (when the image is built) as follows:
@@ -65,20 +65,20 @@ class BitVectorBasedArrayBuilder {
 
   void Build();
 
-  const string &image() const;
+  const std::string& image() const;
+
  private:
   bool built_;
-  std::vector<string> elements_;
+  std::vector<std::string> elements_;
   size_t base_length_;
   size_t step_length_;
 
-  string image_;
+  std::string image_;
   DISALLOW_COPY_AND_ASSIGN(BitVectorBasedArrayBuilder);
 };
 
 }  // namespace louds
 }  // namespace storage
 }  // namespace mozc
-
 
 #endif  // MOZC_STORAGE_LOUDS_BIT_VECTOR_BASED_ARRAY_BUILDER_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,18 +49,14 @@ class ComboBoxDelegate : public QItemDelegate {
 
   void SetItemList(const QStringList &item_list);
 
-  QWidget *createEditor(QWidget *parent,
-                        const QStyleOptionViewItem &option,
+  QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                         const QModelIndex &index) const;
 
-  void setEditorData(QWidget *editor,
-                     const QModelIndex &index) const;
-  void setModelData(QWidget *editor,
-                    QAbstractItemModel *model,
+  void setEditorData(QWidget *editor, const QModelIndex &index) const;
+  void setModelData(QWidget *editor, QAbstractItemModel *model,
                     const QModelIndex &index) const;
 
-  void updateEditorGeometry(QWidget *editor,
-                            const QStyleOptionViewItem &option,
+  void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
                             const QModelIndex &index) const;
 
  private slots:

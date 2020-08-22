@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,6 @@
 
 #include <string>
 
-#include "base/port_string.h"
-
 namespace mozc {
 
 class UserDataManagerInterface {
@@ -60,8 +58,8 @@ class UserDataManagerInterface {
   virtual bool ClearUnusedUserPrediction() = 0;
 
   // Clears a specific user prediction history.
-  virtual bool ClearUserPredictionEntry(
-      const string &key, const string &value) = 0;
+  virtual bool ClearUserPredictionEntry(const std::string &key,
+                                        const std::string &value) = 0;
 
   // Waits for syncer thread to complete.
   virtual bool Wait() = 0;

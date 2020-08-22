@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,19 +41,20 @@
 #include "storage/storage_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace storage {
 namespace {
 
-void CreateKeyValue(std::map<string, string> *output, int size) {
+void CreateKeyValue(std::map<std::string, std::string> *output, int size) {
   output->clear();
   for (int i = 0; i < size; ++i) {
     char key[64];
     char value[64];
-    snprintf(key, sizeof(key), "key%d", i);
-    snprintf(value, sizeof(value), "value%d", i);
-    output->insert(std::pair<string, string>(key, value));
+    absl::SNPrintF(key, sizeof(key), "key%d", i);
+    absl::SNPrintF(value, sizeof(value), "value%d", i);
+    output->insert(std::pair<std::string, std::string>(key, value));
   }
 }
 
@@ -63,26 +64,20 @@ class TinyStorageTest : public testing::Test {
  protected:
   TinyStorageTest() {}
 
-  virtual void SetUp() {
-    UnlinkDBFileIfExists();
-  }
+  virtual void SetUp() { UnlinkDBFileIfExists(); }
 
-  virtual void TearDown() {
-    UnlinkDBFileIfExists();
-  }
+  virtual void TearDown() { UnlinkDBFileIfExists(); }
 
   static void UnlinkDBFileIfExists() {
-    const string path = GetTemporaryFilePath();
+    const std::string path = GetTemporaryFilePath();
     if (FileUtil::FileExists(path)) {
       FileUtil::Unlink(path);
     }
   }
 
-  static StorageInterface *CreateStorage() {
-    return TinyStorage::New();
-  }
+  static StorageInterface *CreateStorage() { return TinyStorage::New(); }
 
-  static string GetTemporaryFilePath() {
+  static std::string GetTemporaryFilePath() {
     // This name should be unique to each test.
     return FileUtil::JoinPath(FLAGS_test_tmpdir, "TinyStorageTest_test.db");
   }
@@ -91,9 +86,8 @@ class TinyStorageTest : public testing::Test {
   DISALLOW_COPY_AND_ASSIGN(TinyStorageTest);
 };
 
-
 TEST_F(TinyStorageTest, TinyStorageTest) {
-  const string filename = GetTemporaryFilePath();
+  const std::string filename = GetTemporaryFilePath();
 
   static const int kSize[] = {10, 100, 1000};
 
@@ -102,28 +96,29 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     std::unique_ptr<StorageInterface> storage(CreateStorage());
 
     // Insert
-    std::map<string, string> target;
-    CreateKeyValue(&target,  kSize[i]);
+    std::map<std::string, std::string> target;
+    CreateKeyValue(&target, kSize[i]);
     {
       EXPECT_TRUE(storage->Open(filename));
-      for (std::map<string, string>::const_iterator it = target.begin();
+      for (std::map<std::string, std::string>::const_iterator it =
+               target.begin();
            it != target.end(); ++it) {
         EXPECT_TRUE(storage->Insert(it->first, it->second));
       }
     }
 
     // Lookup
-    for (std::map<string, string>::const_iterator it = target.begin();
+    for (std::map<std::string, std::string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
-      string value;
+      std::string value;
       EXPECT_TRUE(storage->Lookup(it->first, &value));
       EXPECT_EQ(value, it->second);
     }
 
-    for (std::map<string, string>::const_iterator it = target.begin();
+    for (std::map<std::string, std::string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
-      const string key = it->first + ".dummy";
-      string value;
+      const std::string key = it->first + ".dummy";
+      std::string value;
       EXPECT_FALSE(storage->Lookup(key, &value));
     }
 
@@ -134,35 +129,35 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     EXPECT_EQ(storage->Size(), storage2->Size());
 
     // Lookup
-    for (std::map<string, string>::const_iterator it = target.begin();
+    for (std::map<std::string, std::string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
-      string value;
+      std::string value;
       EXPECT_TRUE(storage2->Lookup(it->first, &value));
       EXPECT_EQ(value, it->second);
     }
 
-    for (std::map<string, string>::const_iterator it = target.begin();
+    for (std::map<std::string, std::string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
-      const string key = it->first + ".dummy";
-      string value;
+      const std::string key = it->first + ".dummy";
+      std::string value;
       EXPECT_FALSE(storage2->Lookup(key, &value));
     }
 
     // Erase
     int id = 0;
-    for (std::map<string, string>::const_iterator it = target.begin();
+    for (std::map<std::string, std::string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
       if (id % 2 == 0) {
         EXPECT_TRUE(storage->Erase(it->first));
-        const string key = it->first + ".dummy";
+        const std::string key = it->first + ".dummy";
         EXPECT_FALSE(storage->Erase(key));
       }
     }
 
-    for (std::map<string, string>::const_iterator it = target.begin();
+    for (std::map<std::string, std::string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
-      string value;
-      const string &key = it->first;
+      std::string value;
+      const std::string &key = it->first;
       if (id % 2 == 0) {
         EXPECT_FALSE(storage->Lookup(key, &value));
       } else {

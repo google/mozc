@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,17 +44,14 @@
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/pepper_file_util.h"
 #include "base/port.h"
-#include "net/http_client_pepper.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace testing {
 
-void WorkAroundEmptyFunctionToAvoidLinkError() {
-}
+void WorkAroundEmptyFunctionToAvoidLinkError() {}
 
 }  // namespace testing
 }  // namespace mozc
@@ -64,12 +61,9 @@ namespace {
 
 class NaclTestInstance : public pp::Instance {
  public:
-  explicit NaclTestInstance(PP_Instance instance)
-      : pp::Instance(instance) {
+  explicit NaclTestInstance(PP_Instance instance) : pp::Instance(instance) {
     cc_factory_.Initialize(this);
-    pthread_create(&thread_handle_,
-                   0,
-                   &NaclTestInstance::ThreadFunc,
+    pthread_create(&thread_handle_, 0, &NaclTestInstance::ThreadFunc,
                    static_cast<void *>(this));
   }
   virtual ~NaclTestInstance() {}
@@ -90,13 +84,9 @@ class NaclTestInstance : public pp::Instance {
 void *NaclTestInstance::ThreadFunc(void *ptr) {
   mozc::InitTestFlags();
   NaclTestInstance *self = static_cast<NaclTestInstance *>(ptr);
-  mozc::RegisterPepperInstanceForHTTPClient(self);
-  mozc::PepperFileUtil::Initialize(self, 1024);
   const int ret = RUN_ALL_TESTS();
   pp::Module::Get()->core()->CallOnMainThread(
-      0,
-      self->cc_factory_.NewCallback(&NaclTestInstance::TestFinish),
-      ret);
+      0, self->cc_factory_.NewCallback(&NaclTestInstance::TestFinish), ret);
   return NULL;
 }
 
@@ -109,9 +99,8 @@ void NaclTestInstance::TestFinish(int32_t result) {
     url_request_->SetURL("http://127.0.0.1:9999/TEST_FIN?result=failed");
   }
   url_request_->SetMethod("GET");
-  url_loader_->Open(
-      *url_request_,
-      cc_factory_.NewCallback(&NaclTestInstance::OnUrlLoaderOpen));
+  url_loader_->Open(*url_request_, cc_factory_.NewCallback(
+                                       &NaclTestInstance::OnUrlLoaderOpen));
 }
 
 void NaclTestInstance::OnUrlLoaderOpen(int32_t result) {
@@ -134,12 +123,12 @@ class NaclTestModule : public pp::Module {
 
 }  // namespace
 
-Module* CreateModule() {
+Module *CreateModule() {
   int argc = 1;
   char argv0[] = "NaclModule";
   char *argv_body[] = {argv0, NULL};
   char **argv = argv_body;
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
   testing::InitGoogleTest(&argc, argv);
 
   return new NaclTestModule();

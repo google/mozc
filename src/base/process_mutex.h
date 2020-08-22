@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,24 +64,18 @@ class ProcessMutex {
   bool Lock();
 
   // Lock the mutex file and write some message to this file
-  bool LockAndWrite(const string &message);
+  bool LockAndWrite(const std::string &message);
 
   // always return true at this moment.
   bool UnLock();
 
   // return lock filename
   // filename: <user_profile>/.lock.<name>
-  const string &lock_filename() const {
-    return filename_;
-  }
+  const std::string &lock_filename() const { return filename_; }
 
-  void set_lock_filename(const string &filename) {
-    filename_ = filename;
-  }
+  void set_lock_filename(const std::string &filename) { filename_ = filename; }
 
-  bool locked() const {
-    return locked_;
-  }
+  bool locked() const { return locked_; }
 
  private:
 #ifdef OS_WIN
@@ -91,7 +85,7 @@ class ProcessMutex {
   // TODO(yukawa): Remove this flag as it can always be determined by other
   //     internal state.
   bool locked_;
-  string filename_;
+  std::string filename_;
 
   DISALLOW_COPY_AND_ASSIGN(ProcessMutex);
 };

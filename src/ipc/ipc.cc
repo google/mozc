@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,9 @@
 #ifdef OS_WIN
 #include <windows.h>
 #else
-#include <sys/types.h>
-#include <signal.h>
 #include <errno.h>
+#include <signal.h>
+#include <sys/types.h>
 #endif
 
 #include <cstdlib>
@@ -51,8 +51,7 @@ namespace {
 
 class IPCServerThread : public Thread {
  public:
-  explicit IPCServerThread(IPCServer *server)
-      : server_(server) {}
+  explicit IPCServerThread(IPCServer *server) : server_(server) {}
   virtual ~IPCServerThread() {}
   virtual void Run() {
     if (server_ != NULL) {
@@ -85,21 +84,18 @@ void IPCServer::Wait() {
   }
 }
 
-IPCClientInterface::~IPCClientInterface() {
-}
+IPCClientInterface::~IPCClientInterface() {}
 
-IPCClientFactoryInterface::~IPCClientFactoryInterface() {
-}
+IPCClientFactoryInterface::~IPCClientFactoryInterface() {}
 
-IPCClientFactory::~IPCClientFactory() {
-}
+IPCClientFactory::~IPCClientFactory() {}
 
-IPCClientInterface *IPCClientFactory::NewClient(const string &name,
-                                                const string &path_name) {
+IPCClientInterface *IPCClientFactory::NewClient(const std::string &name,
+                                                const std::string &path_name) {
   return new IPCClient(name, path_name);
 }
 
-IPCClientInterface *IPCClientFactory::NewClient(const string &name) {
+IPCClientInterface *IPCClientFactory::NewClient(const std::string &name) {
   return new IPCClient(name);
 }
 
@@ -113,7 +109,7 @@ uint32 IPCClient::GetServerProtocolVersion() const {
   return ipc_path_manager_->GetServerProtocolVersion();
 }
 
-const string &IPCClient::GetServerProductVersion() const {
+const std::string &IPCClient::GetServerProductVersion() const {
   DCHECK(ipc_path_manager_);
   return ipc_path_manager_->GetServerProductVersion();
 }
@@ -124,7 +120,7 @@ uint32 IPCClient::GetServerProcessId() const {
 }
 
 // static
-bool IPCClient::TerminateServer(const string &name) {
+bool IPCClient::TerminateServer(const std::string &name) {
   IPCClient client(name);
 
   if (!client.Connected()) {
@@ -139,8 +135,8 @@ bool IPCClient::TerminateServer(const string &name) {
   }
 
 #ifdef OS_WIN
-  HANDLE handle = ::OpenProcess(PROCESS_TERMINATE,
-                                false, static_cast<DWORD>(pid));
+  HANDLE handle =
+      ::OpenProcess(PROCESS_TERMINATE, false, static_cast<DWORD>(pid));
   if (NULL == handle) {
     LOG(ERROR) << "OpenProcess failed: " << ::GetLastError();
     return false;

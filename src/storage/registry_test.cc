@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,6 @@
 #include "storage/registry.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace storage {
@@ -82,11 +80,10 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_EQ(expected, value);
   }
 
-
   {
-    string value = "test";
+    std::string value = "test";
     EXPECT_TRUE(Registry::Insert("string", value));
-    string expected;
+    std::string expected;
     EXPECT_TRUE(Registry::Lookup("string", &expected));
     EXPECT_EQ(expected, value);
   }

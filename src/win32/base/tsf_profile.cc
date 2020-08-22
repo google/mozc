@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,25 +40,33 @@ namespace {
 
 // {D5A86FD5-5308-47EA-AD16-9C4EB160EC3C}
 static const GUID kGoogleJapaneseInputTextService = {
-  0xd5a86fd5, 0x5308, 0x47ea, {0xad, 0x16, 0x9c, 0x4e, 0xb1, 0x60, 0xec, 0x3c}
-};
+    0xd5a86fd5,
+    0x5308,
+    0x47ea,
+    {0xad, 0x16, 0x9c, 0x4e, 0xb1, 0x60, 0xec, 0x3c}};
 
 // {773EB24E-CA1D-4B1B-B420-FA985BB0B80D}
 static const GUID kGoogleJapaneseInputProfile = {
-  0x773eb24e, 0xca1d, 0x4b1b, {0xb4, 0x20, 0xfa, 0x98, 0x5b, 0xb0, 0xb8, 0x0d}
-};
+    0x773eb24e,
+    0xca1d,
+    0x4b1b,
+    {0xb4, 0x20, 0xfa, 0x98, 0x5b, 0xb0, 0xb8, 0x0d}};
 
 #else
 
 // {10A67BC8-22FA-4A59-90DC-2546652C56BF}
 static const GUID kMozcTextService = {
-  0x10a67bc8, 0x22fa, 0x4a59, {0x90, 0xdc, 0x25, 0x46, 0x65, 0x2c, 0x56, 0xbf}
-};
+    0x10a67bc8,
+    0x22fa,
+    0x4a59,
+    {0x90, 0xdc, 0x25, 0x46, 0x65, 0x2c, 0x56, 0xbf}};
 
 // {186F700C-71CF-43FE-A00E-AACB1D9E6D3D}
 static const GUID kMozcProfile = {
-  0x186f700c, 0x71cf, 0x43fe, {0xa0, 0x0e, 0xaa, 0xcb, 0x1d, 0x9e, 0x6d, 0x3d}
-};
+    0x186f700c,
+    0x71cf,
+    0x43fe,
+    {0xa0, 0x0e, 0xaa, 0xcb, 0x1d, 0x9e, 0x6d, 0x3d}};
 
 #endif
 
@@ -83,13 +91,9 @@ const GUID &TsfProfile::GetProfileGuid() {
 #endif
 }
 
-LANGID TsfProfile::GetLangId() {
-  return kTextServiceLanguage;
-}
+LANGID TsfProfile::GetLangId() { return kTextServiceLanguage; }
 
-int TsfProfile::GetIconIndex() {
-  return 0;
-}
+int TsfProfile::GetIconIndex() { return 0; }
 
 int TsfProfile::GetDescriptionTextIndex() {
   return IDS_TEXTSERVICE_DISPLAYNAME_SYNONYM;
@@ -97,4 +101,3 @@ int TsfProfile::GetDescriptionTextIndex() {
 
 }  // namespace win32
 }  // namespace mozc
-

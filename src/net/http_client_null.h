@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,12 +46,10 @@ class Instance;
 namespace mozc {
 class NullHTTPRequestHandler {
  public:
-  static bool Request(HTTPMethodType type,
-                      const string &url,
-                      const char *post_data,
-                      size_t post_size,
-                      const HTTPClient::Option &option,
-                      string *output_string);
+  static bool Request(HTTPMethodType type, const string &url,
+                      const char *post_data, size_t post_size,
+                      const HTTPClient::Option &option, string *output_string);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(NullHTTPRequestHandler);
 };

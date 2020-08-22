@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ class StorageInterface {
   // data storage specified by |filename| opened.
   // StorageInterface::Sync may try to open |filename| again but it
   // may fail even when this method returns true.
-  virtual bool Open(const string &filename) = 0;
+  virtual bool Open(const std::string &filename) = 0;
 
   // Flushes on-memory data into persistent storage (usually on
   // disk) specified by |filename|.
@@ -57,15 +57,15 @@ class StorageInterface {
   // Looks up key and returns the value.
   // If key is not found, returns false.
   // It is not guranteed that the data is synced to the disk.
-  virtual bool Lookup(const string &key, string *value) const = 0;
+  virtual bool Lookup(const std::string &key, std::string *value) const = 0;
 
   // Inserts key and value.
   // It is not guranteed that the data is synced to the disk.
-  virtual bool Insert(const string &key, const string &value) = 0;
+  virtual bool Insert(const std::string &key, const std::string &value) = 0;
 
   // Erases the key-value pair specified by |key|.
   // It is not guranteed that the data is synced to the disk
-  virtual bool Erase(const string &key) = 0;
+  virtual bool Erase(const std::string &key) = 0;
 
   // clears internal keys and values
   // Sync() is automatically called.

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,13 +57,13 @@ namespace mozc {
 
 namespace {
 
-string CreateProcessMutexFileName(const char *name) {
+std::string CreateProcessMutexFileName(const char *name) {
   name = (name == NULL) ? "NULL" : name;
 
 #ifdef OS_WIN
   string basename;
 #else
-  string basename = ".";
+  std::string basename = ".";
 #endif
 
   basename += name;
@@ -73,9 +73,7 @@ string CreateProcessMutexFileName(const char *name) {
 }
 }  // namespace
 
-bool ProcessMutex::Lock() {
-  return LockAndWrite("");
-}
+bool ProcessMutex::Lock() { return LockAndWrite(""); }
 
 #ifdef OS_WIN
 
@@ -84,9 +82,7 @@ ProcessMutex::ProcessMutex(const char *name)
   filename_ = CreateProcessMutexFileName(name);
 }
 
-ProcessMutex::~ProcessMutex() {
-  UnLock();
-}
+ProcessMutex::~ProcessMutex() { UnLock(); }
 
 bool ProcessMutex::LockAndWrite(const string &message) {
   if (locked_) {
@@ -97,18 +93,17 @@ bool ProcessMutex::LockAndWrite(const string &message) {
   std::wstring wfilename;
   Util::UTF8ToWide(filename_, &wfilename);
   const DWORD kAttribute =
-      FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
-      FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
-      FILE_FLAG_DELETE_ON_CLOSE;
+      FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY |
+      FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_FLAG_DELETE_ON_CLOSE;
 
   SECURITY_ATTRIBUTES serucity_attributes = {};
   if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableFileForRead,
                                           &serucity_attributes)) {
     return false;
   }
-  handle_.reset(::CreateFileW(
-      wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ, &serucity_attributes,
-      CREATE_ALWAYS, kAttribute, NULL));
+  handle_.reset(::CreateFileW(wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
+                              &serucity_attributes, CREATE_ALWAYS, kAttribute,
+                              NULL));
   ::LocalFree(serucity_attributes.lpSecurityDescriptor);
 
   locked_ = (handle_.get() != NULL);
@@ -120,8 +115,8 @@ bool ProcessMutex::LockAndWrite(const string &message) {
 
   if (!message.empty()) {
     DWORD size = 0;
-    if (!::WriteFile(handle_.get(), message.data(), message.size(),
-                     &size, NULL)) {
+    if (!::WriteFile(handle_.get(), message.data(), message.size(), &size,
+                     NULL)) {
       const int last_error = ::GetLastError();
       LOG(ERROR) << "Cannot write message: " << message
                  << ", last_error:" << last_error;
@@ -140,7 +135,7 @@ bool ProcessMutex::UnLock() {
   return true;
 }
 
-#elif defined(MOZC_USE_PEPPER_FILE_IO)  // OS_WIN
+#elif defined(OS_NACL)  // OS_WIN
 namespace {
 
 // In NaCl we can't consider about the processes.
@@ -171,9 +166,7 @@ ProcessMutex::ProcessMutex(const char *name) : locked_(false) {
   filename_ = CreateProcessMutexFileName(name);
 }
 
-ProcessMutex::~ProcessMutex() {
-  UnLock();
-}
+ProcessMutex::~ProcessMutex() { UnLock(); }
 
 bool ProcessMutex::LockAndWrite(const string &message) {
   if (!Singleton<NamedLockManager>::get()->Lock(filename_, message)) {
@@ -190,7 +183,7 @@ bool ProcessMutex::UnLock() {
   return true;
 }
 
-#else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
+#else   // !OS_WIN && !OS_NACL
 
 namespace {
 // Special workaround for the bad treatment of fcntl.
@@ -217,7 +210,7 @@ namespace {
 // use it because flock() doesn't work on NFS.
 class FileLockManager {
  public:
-  bool Lock(const string &filename, int *fd) {
+  bool Lock(const std::string &filename, int *fd) {
     scoped_lock l(&mutex_);
 
     if (fd == NULL) {
@@ -252,7 +245,7 @@ class FileLockManager {
     if (-1 == result) {  // failed
       ::close(*fd);
       LOG(WARNING) << "already locked";
-      return false;   // another server is already running
+      return false;  // another server is already running
     }
 
     fdmap_.insert(std::make_pair(filename, *fd));
@@ -260,9 +253,9 @@ class FileLockManager {
     return true;
   }
 
-  void UnLock(const string &filename) {
+  void UnLock(const std::string &filename) {
     scoped_lock l(&mutex_);
-    std::map<string, int>::iterator it = fdmap_.find(filename);
+    std::map<std::string, int>::iterator it = fdmap_.find(filename);
     if (it == fdmap_.end()) {
       LOG(ERROR) << filename << " is not locked";
       return;
@@ -275,7 +268,7 @@ class FileLockManager {
   FileLockManager() {}
 
   ~FileLockManager() {
-    for (std::map<string, int>::const_iterator it = fdmap_.begin();
+    for (std::map<std::string, int>::const_iterator it = fdmap_.begin();
          it != fdmap_.end(); ++it) {
       ::close(it->second);
     }
@@ -284,7 +277,7 @@ class FileLockManager {
 
  private:
   Mutex mutex_;
-  std::map<string, int> fdmap_;
+  std::map<std::string, int> fdmap_;
 };
 
 }  // namespace
@@ -299,7 +292,7 @@ ProcessMutex::~ProcessMutex() {
   }
 }
 
-bool ProcessMutex::LockAndWrite(const string &message) {
+bool ProcessMutex::LockAndWrite(const std::string &message) {
   int fd = -1;
   if (!Singleton<FileLockManager>::get()->Lock(filename_, &fd)) {
     VLOG(1) << filename_ << " is already locked";
@@ -312,8 +305,7 @@ bool ProcessMutex::LockAndWrite(const string &message) {
   }
 
   if (!message.empty()) {
-    if (write(fd, message.data(), message.size()) !=
-        message.size()) {
+    if (write(fd, message.data(), message.size()) != message.size()) {
       LOG(ERROR) << "Cannot write message: " << message;
       UnLock();
       return false;
@@ -333,5 +325,5 @@ bool ProcessMutex::UnLock() {
   locked_ = false;
   return true;
 }
-#endif
+#endif  // !OS_WIN && !OS_NACL
 }  // namespace mozc

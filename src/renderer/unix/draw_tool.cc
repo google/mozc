@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,22 +37,16 @@ namespace mozc {
 namespace renderer {
 namespace gtk {
 
-void DrawTool::Save() {
-  cairo_->Save();
-}
+void DrawTool::Save() { cairo_->Save(); }
 
-void DrawTool::Restore() {
-  cairo_->Restore();
-}
+void DrawTool::Restore() { cairo_->Restore(); }
 
-void DrawTool::Reset(CairoWrapperInterface *cairo) {
-  cairo_.reset(cairo);
-}
+void DrawTool::Reset(CairoWrapperInterface *cairo) { cairo_.reset(cairo); }
 
 void DrawTool::SetColor(const RGBA &color) {
-  cairo_->SetSourceRGBA(static_cast<double>(color.red)   / 255.0,
+  cairo_->SetSourceRGBA(static_cast<double>(color.red) / 255.0,
                         static_cast<double>(color.green) / 255.0,
-                        static_cast<double>(color.blue)  / 255.0,
+                        static_cast<double>(color.blue) / 255.0,
                         static_cast<double>(color.alpha) / 255.0);
 }
 
@@ -63,8 +57,7 @@ void DrawTool::FillRect(const Rect &rect, const RGBA &color) {
   cairo_->Fill();
 }
 
-void DrawTool::FrameRect(const Rect &rect,
-                         const RGBA &color,
+void DrawTool::FrameRect(const Rect &rect, const RGBA &color,
                          const uint32 line_width) {
   SetColor(color);
   cairo_->SetLineWidth(static_cast<double>(line_width));
@@ -73,10 +66,8 @@ void DrawTool::FrameRect(const Rect &rect,
   cairo_->Stroke();
 }
 
-void DrawTool::DrawLine(const Point &from,
-                        const Point &to,
-                        const RGBA &color,
-                        const uint32 line_width ) {
+void DrawTool::DrawLine(const Point &from, const Point &to, const RGBA &color,
+                        const uint32 line_width) {
   SetColor(color);
   cairo_->SetLineWidth(static_cast<double>(line_width));
   cairo_->MoveTo(from.x, from.y);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,8 @@ namespace mozc {
 namespace {
 
 // IPC timeout
-const int32 kCleanupTimeout = 30 * 1000;   // 30 sec for Cleanup Command
-const int32 kPingTimeout    = 5 * 1000;    // 5 sec for Ping
+const int32 kCleanupTimeout = 30 * 1000;  // 30 sec for Cleanup Command
+const int32 kPingTimeout = 5 * 1000;      // 5 sec for Ping
 
 // number of trials for ping
 const int32 kPingTrial = 3;
@@ -65,16 +65,15 @@ const float kMinimumLatestCPULoad = 0.66f;
 
 SessionWatchDog::SessionWatchDog(int32 interval_sec)
     : interval_sec_(interval_sec),
-      client_(NULL), cpu_stats_(NULL), event_(new UnnamedEvent) {
+      client_(NULL),
+      cpu_stats_(NULL),
+      event_(new UnnamedEvent) {
   // allow [1..600].
   interval_sec_ = std::max(1, std::min(interval_sec_, 600));
-  DCHECK(event_->IsAvailable())
-      << "Unnamed event is not available";
+  DCHECK(event_->IsAvailable()) << "Unnamed event is not available";
 }
 
-SessionWatchDog::~SessionWatchDog() {
-  Terminate();
-}
+SessionWatchDog::~SessionWatchDog() { Terminate(); }
 
 void SessionWatchDog::SetClientInterface(client::ClientInterface *client) {
   client_ = client;
@@ -149,8 +148,7 @@ void SessionWatchDog::Run() {
     VLOG(1) << "Finish sleeping " << idle_interval_msec;
 
     int32 cpu_loads_index = 0;
-    for (int n = 0; n < cpu_check_interval_msec;
-         n += cpu_check_duration_msec) {
+    for (int n = 0; n < cpu_check_interval_msec; n += cpu_check_duration_msec) {
       if (event_->Wait(cpu_check_duration_msec)) {
         VLOG(1) << "Received stop signal";
         return;
@@ -172,9 +170,7 @@ void SessionWatchDog::Run() {
     DCHECK_GT(cpu_loads_index, 0);
 
     const uint64 current_cleanup_time = Clock::GetTime();
-    if (!CanSendCleanupCommand(cpu_loads,
-                               cpu_loads_index,
-                               current_cleanup_time,
+    if (!CanSendCleanupCommand(cpu_loads, cpu_loads_index, current_cleanup_time,
                                last_cleanup_time)) {
       VLOG(1) << "CanSendCleanupCommand returned false";
       last_cleanup_time = current_cleanup_time;
@@ -206,9 +202,8 @@ void SessionWatchDog::Run() {
         failed = false;
         break;
       }
-      LOG(ERROR) << "Ping command failed, waiting "
-                 << kPingInterval << " msec, trial: "
-                 << i;
+      LOG(ERROR) << "Ping command failed, waiting " << kPingInterval
+                 << " msec, trial: " << i;
     }
 
     if (failed) {
@@ -216,14 +211,14 @@ void SessionWatchDog::Run() {
         VLOG(1) << "Parent thread is already terminated";
         return;
       }
-#ifndef NO_LOGGING
+#ifndef MOZC_NO_LOGGING
       // We have received crash dumps caused by the following LOG(FATAL).
       // Unfortunately, we cannot investigate the cause of this error,
       // as the crash dump doesn't contain any logging information.
       // Here we temporary save the user name into stack in order
       // to obtain the log file before the LOG(FATAL).
       char user_name[32];
-      const string tmp = SystemUtil::GetUserNameAsString();
+      const std::string tmp = SystemUtil::GetUserNameAsString();
       strncpy(user_name, tmp.c_str(), sizeof(user_name));
       VLOG(1) << "user_name: " << user_name;
 #endif
@@ -232,30 +227,27 @@ void SessionWatchDog::Run() {
   }
 }
 
-bool SessionWatchDog::CanSendCleanupCommand(
-    const volatile float *cpu_loads,
-    int cpu_loads_index,
-    uint64 current_cleanup_time,
-    uint64 last_cleanup_time) const {
+bool SessionWatchDog::CanSendCleanupCommand(const volatile float *cpu_loads,
+                                            int cpu_loads_index,
+                                            uint64 current_cleanup_time,
+                                            uint64 last_cleanup_time) const {
   if (current_cleanup_time <= last_cleanup_time) {
     LOG(ERROR) << "time stamps are the same. clock may be altered";
     return false;
   }
 
   const float all_avg =
-      std::accumulate(cpu_loads, cpu_loads + cpu_loads_index, 0.0)
-      / cpu_loads_index;
+      std::accumulate(cpu_loads, cpu_loads + cpu_loads_index, 0.0) /
+      cpu_loads_index;
 
   const size_t latest_size = std::min(2, cpu_loads_index);
   const float latest_avg =
-      std::accumulate(cpu_loads, cpu_loads + latest_size, 0.0)
-      / latest_size;
+      std::accumulate(cpu_loads, cpu_loads + latest_size, 0.0) / latest_size;
 
   VLOG(1) << "Average CPU load=" << all_avg
           << " latest CPU load=" << latest_avg;
 
-  if (all_avg > kMinimumAllCPULoad ||
-      latest_avg > kMinimumLatestCPULoad) {
+  if (all_avg > kMinimumAllCPULoad || latest_avg > kMinimumLatestCPULoad) {
     VLOG(1) << "Don't send Cleanup command, since CPU load is too high: "
             << all_avg << " " << latest_avg;
     return false;

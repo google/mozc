@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,23 +36,21 @@
 
 namespace mozc {
 namespace composer {
-
 namespace {
 
 using ::mozc::config::CharacterFormManager;
 
-bool SplitPrimaryString(const size_t position,
-                        const string &primary,
-                        const string &secondary,
-                        string *primary_lhs, string *primary_rhs,
-                        string *secondary_lhs, string *secondary_rhs) {
+bool SplitPrimaryString(const size_t position, const std::string &primary,
+                        const std::string &secondary, std::string *primary_lhs,
+                        std::string *primary_rhs, std::string *secondary_lhs,
+                        std::string *secondary_rhs) {
   DCHECK(primary_lhs);
   DCHECK(primary_rhs);
   DCHECK(secondary_lhs);
   DCHECK(secondary_rhs);
 
-  *primary_lhs = Util::SubString(primary, 0, position);
-  *primary_rhs = Util::SubString(primary, position, string::npos);
+  Util::Utf8SubString(primary, 0, position, primary_lhs);
+  Util::Utf8SubString(primary, position, std::string::npos, primary_rhs);
 
   // Set fallback strings.
   *secondary_lhs = *primary_lhs;
@@ -81,14 +79,14 @@ bool SplitPrimaryString(const size_t position,
   return true;
 }
 
-
 // Singleton class which always uses a converted string rather than a
 // raw string.
 class ConversionStringSelector : public TransliteratorInterface {
  public:
   virtual ~ConversionStringSelector() {}
 
-  string Transliterate(const string &raw, const string &converted) const {
+  std::string Transliterate(const std::string &raw,
+                            const std::string &converted) const {
     return converted;
   }
 
@@ -96,14 +94,13 @@ class ConversionStringSelector : public TransliteratorInterface {
   // const because this function overrides the virtual function of
   // TransliterateInterface whose first argument is not const.
   // Otherwise the Windows compiler (cl.exe) raises an error.
-  bool Split(size_t position,
-             const string &raw,
-             const string &converted,
-             string *raw_lhs, string *raw_rhs,
-             string *converted_lhs, string *converted_rhs) const {
-    return Transliterators::SplitConverted(
-        position, raw, converted,
-        raw_lhs, raw_rhs, converted_lhs, converted_rhs);
+  bool Split(size_t position, const std::string &raw,
+             const std::string &converted, std::string *raw_lhs,
+             std::string *raw_rhs, std::string *converted_lhs,
+             std::string *converted_rhs) const {
+    return Transliterators::SplitConverted(position, raw, converted, raw_lhs,
+                                           raw_rhs, converted_lhs,
+                                           converted_rhs);
   }
 };
 
@@ -113,18 +110,17 @@ class RawStringSelector : public TransliteratorInterface {
  public:
   virtual ~RawStringSelector() {}
 
-  string Transliterate(const string &raw, const string &converted) const {
+  std::string Transliterate(const std::string &raw,
+                            const std::string &converted) const {
     return raw;
   }
 
-  bool Split(size_t position,
-             const string &raw,
-             const string &converted,
-             string *raw_lhs, string *raw_rhs,
-             string *converted_lhs, string *converted_rhs) const {
-    return Transliterators::SplitRaw(
-        position, raw, converted,
-        raw_lhs, raw_rhs, converted_lhs, converted_rhs);
+  bool Split(size_t position, const std::string &raw,
+             const std::string &converted, std::string *raw_lhs,
+             std::string *raw_rhs, std::string *converted_lhs,
+             std::string *converted_rhs) const {
+    return Transliterators::SplitRaw(position, raw, converted, raw_lhs, raw_rhs,
+                                     converted_lhs, converted_rhs);
   }
 };
 
@@ -132,22 +128,22 @@ class HiraganaTransliterator : public TransliteratorInterface {
  public:
   virtual ~HiraganaTransliterator() {}
 
-  string Transliterate(const string &raw, const string &converted) const {
-    string full, output;
+  std::string Transliterate(const std::string &raw,
+                            const std::string &converted) const {
+    std::string full, output;
     Util::HalfWidthToFullWidth(converted, &full);
-    CharacterFormManager::GetCharacterFormManager()->
-        ConvertPreeditString(full, &output);
+    CharacterFormManager::GetCharacterFormManager()->ConvertPreeditString(
+        full, &output);
     return output;
   }
 
-  bool Split(size_t position,
-             const string &raw,
-             const string &converted,
-             string *raw_lhs, string *raw_rhs,
-             string *converted_lhs, string *converted_rhs) const {
-    return Transliterators::SplitConverted(
-        position, raw, converted,
-        raw_lhs, raw_rhs, converted_lhs, converted_rhs);
+  bool Split(size_t position, const std::string &raw,
+             const std::string &converted, std::string *raw_lhs,
+             std::string *raw_rhs, std::string *converted_lhs,
+             std::string *converted_rhs) const {
+    return Transliterators::SplitConverted(position, raw, converted, raw_lhs,
+                                           raw_rhs, converted_lhs,
+                                           converted_rhs);
   }
 };
 
@@ -155,25 +151,25 @@ class FullKatakanaTransliterator : public TransliteratorInterface {
  public:
   virtual ~FullKatakanaTransliterator() {}
 
-  string Transliterate(const string &raw, const string &converted) const {
-    string t13n, full;
+  std::string Transliterate(const std::string &raw,
+                            const std::string &converted) const {
+    std::string t13n, full;
     Util::HiraganaToKatakana(converted, &t13n);
     Util::HalfWidthToFullWidth(t13n, &full);
 
-    string output;
-    CharacterFormManager::GetCharacterFormManager()->
-        ConvertPreeditString(full, &output);
+    std::string output;
+    CharacterFormManager::GetCharacterFormManager()->ConvertPreeditString(
+        full, &output);
     return output;
   }
 
-  bool Split(size_t position,
-             const string &raw,
-             const string &converted,
-             string *raw_lhs, string *raw_rhs,
-             string *converted_lhs, string *converted_rhs) const {
-    return Transliterators::SplitConverted(
-        position, raw, converted,
-        raw_lhs, raw_rhs, converted_lhs, converted_rhs);
+  bool Split(size_t position, const std::string &raw,
+             const std::string &converted, std::string *raw_lhs,
+             std::string *raw_rhs, std::string *converted_lhs,
+             std::string *converted_rhs) const {
+    return Transliterators::SplitConverted(position, raw, converted, raw_lhs,
+                                           raw_rhs, converted_lhs,
+                                           converted_rhs);
   }
 };
 
@@ -181,31 +177,31 @@ class HalfKatakanaTransliterator : public TransliteratorInterface {
  public:
   virtual ~HalfKatakanaTransliterator() {}
 
-  static void HalfKatakanaToHiragana(const string &half_katakana,
-                                     string *hiragana) {
-    string full_katakana;
+  static void HalfKatakanaToHiragana(const std::string &half_katakana,
+                                     std::string *hiragana) {
+    std::string full_katakana;
     Util::HalfWidthKatakanaToFullWidthKatakana(half_katakana, &full_katakana);
     Util::KatakanaToHiragana(full_katakana, hiragana);
   }
 
-  string Transliterate(const string &raw, const string &converted) const {
-    string t13n;
-    string katakana_output;
+  std::string Transliterate(const std::string &raw,
+                            const std::string &converted) const {
+    std::string t13n;
+    std::string katakana_output;
     Util::HiraganaToKatakana(converted, &katakana_output);
     Util::FullWidthToHalfWidth(katakana_output, &t13n);
     return t13n;
   }
 
-  bool Split(size_t position,
-             const string &raw,
-             const string &converted,
-             string *raw_lhs, string *raw_rhs,
-             string *converted_lhs, string *converted_rhs) const {
-    const string half_katakana = Transliterate(raw, converted);
-    string hk_raw_lhs, hk_raw_rhs, hk_converted_lhs, hk_converted_rhs;
+  bool Split(size_t position, const std::string &raw,
+             const std::string &converted, std::string *raw_lhs,
+             std::string *raw_rhs, std::string *converted_lhs,
+             std::string *converted_rhs) const {
+    const std::string half_katakana = Transliterate(raw, converted);
+    std::string hk_raw_lhs, hk_raw_rhs, hk_converted_lhs, hk_converted_rhs;
     const bool result = Transliterators::SplitConverted(
-        position, raw, half_katakana,
-        &hk_raw_lhs, &hk_raw_rhs, &hk_converted_lhs, &hk_converted_rhs);
+        position, raw, half_katakana, &hk_raw_lhs, &hk_raw_rhs,
+        &hk_converted_lhs, &hk_converted_rhs);
 
     if (result) {
       *raw_lhs = hk_raw_lhs;
@@ -224,21 +220,20 @@ class HalfAsciiTransliterator : public TransliteratorInterface {
  public:
   virtual ~HalfAsciiTransliterator() {}
 
-  string Transliterate(const string &raw, const string &converted) const {
-    string t13n;
-    const string &input = raw.empty() ? converted : raw;
+  std::string Transliterate(const std::string &raw,
+                            const std::string &converted) const {
+    std::string t13n;
+    const std::string &input = raw.empty() ? converted : raw;
     Util::FullWidthAsciiToHalfWidthAscii(input, &t13n);
     return t13n;
   }
 
-  bool Split(size_t position,
-             const string &raw,
-             const string &converted,
-             string *raw_lhs, string *raw_rhs,
-             string *converted_lhs, string *converted_rhs) const {
-    return Transliterators::SplitRaw(
-        position, raw, converted,
-        raw_lhs, raw_rhs, converted_lhs, converted_rhs);
+  bool Split(size_t position, const std::string &raw,
+             const std::string &converted, std::string *raw_lhs,
+             std::string *raw_rhs, std::string *converted_lhs,
+             std::string *converted_rhs) const {
+    return Transliterators::SplitRaw(position, raw, converted, raw_lhs, raw_rhs,
+                                     converted_lhs, converted_rhs);
   }
 };
 
@@ -246,30 +241,28 @@ class FullAsciiTransliterator : public TransliteratorInterface {
  public:
   virtual ~FullAsciiTransliterator() {}
 
-  string Transliterate(const string &raw, const string &converted) const {
-    string t13n;
-    const string &input = raw.empty() ? converted : raw;
+  std::string Transliterate(const std::string &raw,
+                            const std::string &converted) const {
+    std::string t13n;
+    const std::string &input = raw.empty() ? converted : raw;
     Util::HalfWidthAsciiToFullWidthAscii(input, &t13n);
     return t13n;
   }
 
-  bool Split(size_t position,
-             const string &raw,
-             const string &converted,
-             string *raw_lhs, string *raw_rhs,
-             string *converted_lhs, string *converted_rhs) const {
-    return Transliterators::SplitRaw(
-        position, raw, converted,
-        raw_lhs, raw_rhs, converted_lhs, converted_rhs);
+  bool Split(size_t position, const std::string &raw,
+             const std::string &converted, std::string *raw_lhs,
+             std::string *raw_rhs, std::string *converted_lhs,
+             std::string *converted_rhs) const {
+    return Transliterators::SplitRaw(position, raw, converted, raw_lhs, raw_rhs,
+                                     converted_lhs, converted_rhs);
   }
 };
 
 }  // namespace
 
-
 // static
-const TransliteratorInterface*
-Transliterators::GetTransliterator(Transliterator transliterator) {
+const TransliteratorInterface *Transliterators::GetTransliterator(
+    Transliterator transliterator) {
   VLOG(2) << "Transliterators::GetTransliterator:" << transliterator;
   DCHECK(transliterator != LOCAL);
   switch (transliterator) {
@@ -295,24 +288,24 @@ Transliterators::GetTransliterator(Transliterator transliterator) {
 }
 
 // static
-bool Transliterators::SplitRaw(const size_t position,
-                               const string &raw,
-                               const string &converted,
-                               string *raw_lhs, string *raw_rhs,
-                               string *converted_lhs, string *converted_rhs) {
-  return SplitPrimaryString(position, raw, converted,
-                            raw_lhs, raw_rhs, converted_lhs, converted_rhs);
+bool Transliterators::SplitRaw(const size_t position, const std::string &raw,
+                               const std::string &converted,
+                               std::string *raw_lhs, std::string *raw_rhs,
+                               std::string *converted_lhs,
+                               std::string *converted_rhs) {
+  return SplitPrimaryString(position, raw, converted, raw_lhs, raw_rhs,
+                            converted_lhs, converted_rhs);
 }
 
 // static
-bool Transliterators::SplitConverted(
-    const size_t position,
-    const string &raw,
-    const string &converted,
-    string *raw_lhs, string *raw_rhs,
-    string *converted_lhs, string *converted_rhs) {
-  return SplitPrimaryString(position, converted, raw,
-                            converted_lhs, converted_rhs, raw_lhs, raw_rhs);
+bool Transliterators::SplitConverted(const size_t position,
+                                     const std::string &raw,
+                                     const std::string &converted,
+                                     std::string *raw_lhs, std::string *raw_rhs,
+                                     std::string *converted_lhs,
+                                     std::string *converted_rhs) {
+  return SplitPrimaryString(position, converted, raw, converted_lhs,
+                            converted_rhs, raw_lhs, raw_rhs);
 }
 
 }  // namespace composer

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,14 +39,12 @@
 namespace mozc {
 
 namespace {
-bool StringAsIntegerComparator(const string &lhs, const string &rhs) {
+bool StringAsIntegerComparator(const std::string &lhs, const std::string &rhs) {
   return NumberUtil::SimpleAtoi(lhs) < NumberUtil::SimpleAtoi(rhs);
 }
 }  // namespace
 
-string Version::GetMozcVersion() {
-  return version::kMozcVersion;
-}
+std::string Version::GetMozcVersion() { return version::kMozcVersion; }
 
 #ifdef OS_WIN
 std::wstring Version::GetMozcVersionW() {
@@ -56,38 +54,32 @@ std::wstring Version::GetMozcVersionW() {
 }
 #endif
 
-int Version::GetMozcVersionMajor() {
-  return version::kMozcVersionMajor;
-}
+int Version::GetMozcVersionMajor() { return version::kMozcVersionMajor; }
 
-int Version::GetMozcVersionMinor() {
-  return version::kMozcVersionMinor;
-}
+int Version::GetMozcVersionMinor() { return version::kMozcVersionMinor; }
 
 int Version::GetMozcVersionBuildNumber() {
   return version::kMozcVersionBuildNumber;
 }
 
-int Version::GetMozcVersionRevision() {
-  return version::kMozcVersionRevision;
-}
+int Version::GetMozcVersionRevision() { return version::kMozcVersionRevision; }
 
 const char *Version::GetMozcEngineVersion() {
   return version::kMozcEngineVersion;
 }
 
-bool Version::CompareVersion(const string &lhs, const string &rhs) {
+bool Version::CompareVersion(const std::string &lhs, const std::string &rhs) {
   if (lhs == rhs) {
     return false;
   }
-  if (lhs.find("Unknown") != string::npos ||
-      rhs.find("Unknown") != string::npos) {
+  if (lhs.find("Unknown") != std::string::npos ||
+      rhs.find("Unknown") != std::string::npos) {
     LOG(WARNING) << "Unknown is given as version";
     return false;
   }
-  std::vector<string> vlhs;
+  std::vector<std::string> vlhs;
   Util::SplitStringUsing(lhs, ".", &vlhs);
-  std::vector<string> vrhs;
+  std::vector<std::string> vrhs;
   Util::SplitStringUsing(rhs, ".", &vrhs);
   return std::lexicographical_compare(vlhs.begin(), vlhs.end(), vrhs.begin(),
                                       vrhs.end(), StringAsIntegerComparator);

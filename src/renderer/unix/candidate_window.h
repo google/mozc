@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,7 @@ class CandidateWindow : public GtkWindowBase {
   // GtkWindowBase (and super class) has ownership of all arguments.
   CandidateWindow(TableLayoutInterface *table_layout,
                   TextRendererInterface *text_renderer,
-                  DrawToolInterface *draw_tool,
-                  GtkWrapperInterface *gtk,
+                  DrawToolInterface *draw_tool, GtkWrapperInterface *gtk,
                   CairoFactoryInterface *cairo_factory);
   virtual ~CandidateWindow() {}
 
@@ -112,9 +111,9 @@ class CandidateWindow : public GtkWindowBase {
 
   // Make strings to be displayed based on candidates. If there is no string to
   // be displayed, string will be empty.
-  static void GetDisplayString(
-      const commands::Candidates::Candidate &candidate,
-      string *shortcut, string *value, string *description);
+  static void GetDisplayString(const commands::Candidates::Candidate &candidate,
+                               string *shortcut, string *value,
+                               string *description);
 
   void UpdateScrollBarSize();
   void UpdateFooterSize();

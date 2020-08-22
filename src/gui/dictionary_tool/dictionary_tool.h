@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,16 @@
 
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QSplitterHandle>
 #include <QtWidgets/QSplitter>
+#include <QtWidgets/QSplitterHandle>
 
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "gui/dictionary_tool/ui_dictionary_tool.h"
 #include "dictionary/user_dictionary_importer.h"
+#include "gui/dictionary_tool/ui_dictionary_tool.h"
 
 namespace mozc {
 
@@ -60,8 +60,7 @@ namespace gui {
 class ImportDialog;
 class FindDialog;
 
-class DictionaryTool : public QMainWindow,
-                       private Ui::DictionaryTool {
+class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   Q_OBJECT
 
  public:
@@ -69,9 +68,7 @@ class DictionaryTool : public QMainWindow,
   virtual ~DictionaryTool();
 
   // return true DictionaryTool is available.
-  bool IsAvailable() const {
-    return is_available_;
-  }
+  bool IsAvailable() const { return is_available_; }
 
  protected:
   // Override the default implementation to check unsaved
@@ -132,8 +129,7 @@ class DictionaryTool : public QMainWindow,
   // first parameter is default text printed in a form. The second is
   // message printed on the dialog. It returns an empty stirng
   // whenever a proper value for dictionary name is input.
-  QString PromptForDictionaryName(const QString &text,
-                                  const QString &label);
+  QString PromptForDictionaryName(const QString &text, const QString &label);
 
   // Check storage_->GetLastError() and displays an
   // appropriate error message.
@@ -149,12 +145,10 @@ class DictionaryTool : public QMainWindow,
   // Show a special dialog message according to the result
   // of UserDictionaryImporter.
   void ReportImportError(UserDictionaryImporter::ErrorType error,
-                         const string &dic_name,
-                         int added_entries_size);
+                         const std::string &dic_name, int added_entries_size);
 
-  void ImportHelper(uint64 dic_id,
-                    const string &dic_name,
-                    const string &file_name,
+  void ImportHelper(uint64 dic_id, const std::string &dic_name,
+                    const std::string &file_name,
                     UserDictionaryImporter::IMEType,
                     UserDictionaryImporter::EncodingType encoding_type);
 
@@ -167,15 +161,15 @@ class DictionaryTool : public QMainWindow,
   void EditComment();
 
   // Changes the POS of all selected items to |pos|.
-  void EditPOS(const string &pos);
+  void EditPOS(const std::string &pos);
 
   // Moves selected items to the dictionary whose row is |dictionary_row|.
   void MoveTo(int dictionary_row);
 
   // Helper functions to check if a file with given name is readable
   // to import or writable to export without trying to open it.
-  static bool IsWritableToExport(const string &file_name);
-  static bool IsReadableToImport(const string &file_name);
+  static bool IsWritableToExport(const std::string &file_name);
+  static bool IsReadableToImport(const std::string &file_name);
 
   // Helper function for DeleteWord and MoveTo.
   // Fills selected word entry rows as a unique sorted sequence.
@@ -186,7 +180,7 @@ class DictionaryTool : public QMainWindow,
   QListWidgetItem *GetFirstSelectedDictionary() const;
 
   ImportDialog *import_dialog_;
-  FindDialog   *find_dialog_;
+  FindDialog *find_dialog_;
   std::unique_ptr<mozc::user_dictionary::UserDictionarySession> session_;
 
   // ID of current selected dictionary. This needs to be maintained

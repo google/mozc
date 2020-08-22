@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,13 +37,13 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/strings/string_view.h"
 
 using mozc::storage::louds::LoudsTrie;
 
@@ -54,8 +54,7 @@ ValueDictionary::ValueDictionary(const POSMatcher &pos_matcher,
                                  const LoudsTrie *value_trie)
     : value_trie_(value_trie),
       codec_(SystemDictionaryCodecFactory::GetCodec()),
-      suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {
-}
+      suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {}
 
 ValueDictionary::~ValueDictionary() {}
 
@@ -63,23 +62,19 @@ ValueDictionary::~ValueDictionary() {}
 // and SystemDictionary::HasKey should return the same result with
 // ValueDictionary::HasKey.  So we can skip the actual logic of HasKey
 // and return just false.
-bool ValueDictionary::HasKey(StringPiece key) const {
-  return false;
-}
+bool ValueDictionary::HasKey(absl::string_view key) const { return false; }
 
 // ValueDictionary is supposed to use the same data with SystemDictionary
 // and SystemDictionary::HasValue should return the same result with
 // ValueDictionary::HasValue.  So we can skip the actual logic of HasValue
 // and return just false.
-bool ValueDictionary::HasValue(StringPiece value) const {
-  return false;
-}
+bool ValueDictionary::HasValue(absl::string_view value) const { return false; }
 
 namespace {
 
 // A version of the above function for Token.
 inline void FillToken(const uint16 suggestion_only_word_id,
-                      StringPiece key, Token *token) {
+                      absl::string_view key, Token *token) {
   token->key.assign(key.data(), key.size());
   token->value = token->key;
   token->cost = 10000;
@@ -88,15 +83,11 @@ inline void FillToken(const uint16 suggestion_only_word_id,
 }
 
 inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
-    const LoudsTrie &value_trie,
-    const SystemDictionaryCodecInterface &codec,
-    const uint16 suggestion_only_word_id,
-    const LoudsTrie::Node &node,
-    DictionaryInterface::Callback *callback,
-    char *encoded_value_buffer,
-    string *value,
-    Token *token) {
-  const StringPiece encoded_value =
+    const LoudsTrie &value_trie, const SystemDictionaryCodecInterface &codec,
+    const uint16 suggestion_only_word_id, const LoudsTrie::Node &node,
+    DictionaryInterface::Callback *callback, char *encoded_value_buffer,
+    std::string *value, Token *token) {
+  const absl::string_view encoded_value =
       value_trie.RestoreKeyString(node, encoded_value_buffer);
 
   value->clear();
@@ -114,15 +105,14 @@ inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
 }  // namespace
 
 void ValueDictionary::LookupPredictive(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
+    absl::string_view key, const ConversionRequest &conversion_request,
     Callback *callback) const {
   // Do nothing for empty key, although looking up all the entries with empty
   // string seems natural.
   if (key.empty()) {
     return;
   }
-  string encoded_key;
+  std::string encoded_key;
   codec_->EncodeValue(key, &encoded_key);
 
   LoudsTrie::Node node;
@@ -131,7 +121,7 @@ void ValueDictionary::LookupPredictive(
   }
 
   char encoded_value_buffer[LoudsTrie::kMaxDepth + 1];
-  string value;
+  std::string value;
   value.reserve(key.size() * 2);
   Token token;
 
@@ -144,9 +134,8 @@ void ValueDictionary::LookupPredictive(
 
     if (value_trie_->IsTerminalNode(node)) {
       switch (HandleTerminalNode(*value_trie_, *codec_,
-                                 suggestion_only_word_id_,
-                                 node, callback, encoded_value_buffer,
-                                 &value, &token)) {
+                                 suggestion_only_word_id_, node, callback,
+                                 encoded_value_buffer, &value, &token)) {
         case Callback::TRAVERSE_DONE:
           return;
         case Callback::TRAVERSE_CULL:
@@ -156,30 +145,27 @@ void ValueDictionary::LookupPredictive(
       }
     }
 
-    for (value_trie_->MoveToFirstChild(&node);
-         value_trie_->IsValidNode(node);
+    for (value_trie_->MoveToFirstChild(&node); value_trie_->IsValidNode(node);
          value_trie_->MoveToNextSibling(&node)) {
       queue.push(node);
     }
   } while (!queue.empty());
 }
 
-void ValueDictionary::LookupPrefix(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {}
+void ValueDictionary::LookupPrefix(absl::string_view key,
+                                   const ConversionRequest &conversion_request,
+                                   Callback *callback) const {}
 
-void ValueDictionary::LookupExact(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
+void ValueDictionary::LookupExact(absl::string_view key,
+                                  const ConversionRequest &conversion_request,
+                                  Callback *callback) const {
   if (key.empty()) {
     // For empty string, return nothing for compatibility reason; see the
     // comment above.
     return;
   }
 
-  string lookup_key_str;
+  std::string lookup_key_str;
   codec_->EncodeValue(key, &lookup_key_str);
   if (value_trie_->ExactSearch(lookup_key_str) == -1) {
     return;
@@ -192,11 +178,9 @@ void ValueDictionary::LookupExact(
   callback->OnToken(key, key, token);
 }
 
-void ValueDictionary::LookupReverse(
-    StringPiece str,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
-}
+void ValueDictionary::LookupReverse(absl::string_view str,
+                                    const ConversionRequest &conversion_request,
+                                    Callback *callback) const {}
 
 }  // namespace dictionary
 }  // namespace mozc

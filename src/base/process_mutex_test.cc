@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,8 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -63,7 +62,7 @@ class ProcessMutexTest : public testing::Test {
   }
 
  private:
-  string original_user_profile_dir_;
+  std::string original_user_profile_dir_;
 };
 
 #if !defined(OS_WIN) && !defined(OS_NACL)

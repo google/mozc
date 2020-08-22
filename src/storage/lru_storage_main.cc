@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ DEFINE_int32(size, 10, "size");
 using mozc::storage::LRUStorage;
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (FLAGS_create_db) {
     CHECK(LRUStorage::CreateStorageFile(
@@ -61,18 +61,18 @@ int main(int argc, char **argv) {
   while (getline(cin, line)) {
     fields.clear();
     mozc::Util::SplitStringUsing(line, "\t ", &fields);
-    if (fields.size() >=2 && fields[0] == "g") {
+    if (fields.size() >= 2 && fields[0] == "g") {
       uint32 lat;
       const char *v = s.Lookup(fields[1], &lat);
       if (v != NULL) {
-        cout << "found " << fields[1] << "\t"
-             << lat << "\t" << *reinterpret_cast<const uint32 *>(v) << endl;
+        std::cout << "found " << fields[1] << "\t" << lat << "\t"
+                  << *reinterpret_cast<const uint32 *>(v) << std::endl;
       } else {
-        cout << "not found " << fields[1] << endl;
+        std::cout << "not found " << fields[1] << std::endl;
       }
     } else if (fields.size() >= 3 && fields[0] == "i") {
       uint32 value = atoi32(fields[2].c_str());
-      s.Insert(fields[1], reinterpret_cast<const char*>(&value));
+      s.Insert(fields[1], reinterpret_cast<const char *>(&value));
     } else {
       LOG(INFO) << "unknown command: " << line;
     }

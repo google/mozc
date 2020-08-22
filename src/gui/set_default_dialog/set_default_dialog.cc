@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,18 +52,15 @@ namespace gui {
 
 SetDefaultDialog::SetDefaultDialog() {
   setupUi(this);
-  setWindowFlags(Qt::WindowSystemMenuHint |
-                 Qt::WindowCloseButtonHint |
-                 Qt::MSWindowsFixedSizeDialogHint |
-                 Qt::WindowStaysOnTopHint);
+  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                 Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
 }
 
-SetDefaultDialog::~SetDefaultDialog() {
-}
+SetDefaultDialog::~SetDefaultDialog() {}
 
 void SetDefaultDialog::accept() {
-// TODO(mazda): Implement SetDefault on Mac and Linux.
+  // TODO(mazda): Implement SetDefault on Mac and Linux.
   const bool dont_ask_again =
       (dontAskAgainCheckBox->checkState() == Qt::Checked);
 #ifdef OS_WIN

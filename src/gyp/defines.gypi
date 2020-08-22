@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,10 +39,6 @@
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
 
-    # enable_cloud_handwriting represents if cloud handwriting feature is
-    # enabled or not.
-    'enable_cloud_handwriting%': '0',
-
     # enable_gtk_renderer represents if mozc_renderer is supported on Linux
     # or not.
     'enable_gtk_renderer%': '1',
@@ -64,10 +60,6 @@
     # for the background information.
     'use_libprotobuf%': '0',
 
-    # Set '1' to use system-instaleld zinnia library.  Otherwise
-    # zinnia will be built from source as needed.
-    'use_libzinnia%': '0',
-
     # use_libibus represents if ibus library is used or not.
     # This option is only for Linux.
     'use_libibus%': '0',
@@ -83,9 +75,6 @@
       }],
       ['channel_dev==1', {
         'defines': ['CHANNEL_DEV'],
-      }],
-      ['enable_cloud_handwriting==1', {
-        'defines': ['ENABLE_CLOUD_HANDWRITING'],
       }],
       ['target_platform=="Linux" and enable_gtk_renderer==1', {
         'defines': ['ENABLE_GTK_RENDERER'],

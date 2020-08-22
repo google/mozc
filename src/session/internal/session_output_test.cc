@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -67,12 +67,12 @@ TEST(SessionOutputTest, FillCandidate) {
   CandidateList candidate_list(true);
   commands::Candidates_Candidate candidate_proto;
 
-  const string kValue13 = "Value only";
-  const string kValue42 = "The answer";
-  const string kPrefix42 = "prefix";
-  const string kSuffix42 = "suffix";
-  const string kDescription42 = "description";
-  const string kSubcandidateList = "Subcandidates";
+  const std::string kValue13 = "Value only";
+  const std::string kValue42 = "The answer";
+  const std::string kPrefix42 = "prefix";
+  const std::string kSuffix42 = "suffix";
+  const std::string kDescription42 = "description";
+  const std::string kSubcandidateList = "Subcandidates";
 
   // Make 100 candidates
   for (size_t i = 0; i < 100; ++i) {
@@ -123,8 +123,8 @@ TEST(SessionOutputTest, FillCandidates) {
   CandidateList subcandidate_list(true);
   commands::Candidates candidates_proto;
 
-  const string kSubcandidateList = "Subcandidates";
-  const char* kValues[5] = {"0", "1", "2:sub0", "3:sub1", "4:sub2"};
+  const std::string kSubcandidateList = "Subcandidates";
+  const char *kValues[5] = {"0", "1", "2:sub0", "3:sub1", "4:sub2"};
 
   // Make 5 candidates
   for (size_t i = 0; i < 5; ++i) {
@@ -223,21 +223,24 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
 
   // Initialize Segment
   Segment segment;
-  const char* kNormalKey = "key";
+  const char *kNormalKey = "key";
   segment.set_key(kNormalKey);
-  const char* kDescription = "desc";
+  const char *kDescription = "desc";
 
-  const char* kValues[7] =
-    {"2", "sub1_1", "sub1_3", "sub2_1", "sub2_2", "subsub1_1", "subsub1_2"};
+  const char *kValues[7] = {"2",      "sub1_1",    "sub1_3",   "sub2_1",
+                            "sub2_2", "subsub1_1", "subsub1_2"};
   const size_t kValueSize = arraysize(kValues);
   for (size_t i = 0; i < kValueSize; ++i) {
     Segment::Candidate *candidate = segment.push_back_candidate();
     candidate->content_key = kNormalKey;
     candidate->value = kValues[i];
     candidate->description = kDescription;
+    for (size_t j = 0; j < i; ++j) {
+      candidate->PushBackInnerSegmentBoundary(1, 1, 1, 1);
+    }
   }
   // Set special key to ID:4 / Index:6
-  const char* kSpecialKey = "Special Key";
+  const char *kSpecialKey = "Special Key";
   segment.mutable_candidate(4)->content_key = kSpecialKey;
 
   // Main
@@ -268,7 +271,6 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   EXPECT_EQ(1, sub1.focused_index());
   EXPECT_EQ(0, subsub1.focused_index());
   // End of Initialization
-
 
   // Exexcute FillAllCandidateWords
   const commands::Category kCategory = commands::PREDICTION;
@@ -320,6 +322,81 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   EXPECT_TRUE(candidates_proto.candidates(4).has_annotation());
   EXPECT_TRUE(candidates_proto.candidates(5).has_annotation());
   EXPECT_TRUE(candidates_proto.candidates(6).has_annotation());
+
+  EXPECT_EQ(1, candidates_proto.candidates(0).num_segments_in_candidate());
+  EXPECT_EQ(5, candidates_proto.candidates(1).num_segments_in_candidate());
+  EXPECT_EQ(6, candidates_proto.candidates(2).num_segments_in_candidate());
+  EXPECT_EQ(2, candidates_proto.candidates(3).num_segments_in_candidate());
+  EXPECT_EQ(1, candidates_proto.candidates(4).num_segments_in_candidate());
+  EXPECT_EQ(3, candidates_proto.candidates(5).num_segments_in_candidate());
+  EXPECT_EQ(4, candidates_proto.candidates(6).num_segments_in_candidate());
+}
+
+TEST(SessionOutputTest, FillAllCandidateWords_Attributes) {
+  CandidateList candidate_list(true);
+  commands::CandidateList candidates_proto;
+
+  // Initialize Segment
+  Segment segment;
+  const char *kKey = "key";
+  segment.set_key(kKey);
+
+  const char *kValues[5] = {"value_0", "value_1", "value_2", "value_3",
+                            "value_4"};
+  const size_t kValueSize = arraysize(kValues);
+  for (size_t i = 0; i < kValueSize; ++i) {
+    Segment::Candidate *candidate = segment.push_back_candidate();
+    candidate->content_key = kKey;
+    candidate->value = kValues[i];
+
+    candidate_list.AddCandidate(i, kValues[i]);
+  }
+
+  segment.mutable_candidate(1)->attributes =
+      Segment::Candidate::Attribute::USER_DICTIONARY;
+  segment.mutable_candidate(2)->attributes =
+      Segment::Candidate::Attribute::USER_HISTORY_PREDICTION |
+      Segment::Candidate::Attribute::NO_VARIANTS_EXPANSION;
+  segment.mutable_candidate(3)->attributes =
+      Segment::Candidate::Attribute::SPELLING_CORRECTION |
+      Segment::Candidate::Attribute::NO_EXTRA_DESCRIPTION;
+  segment.mutable_candidate(4)->attributes =
+      Segment::Candidate::Attribute::TYPING_CORRECTION |
+      Segment::Candidate::Attribute::BEST_CANDIDATE;
+
+  candidate_list.set_focused(true);
+  candidate_list.MoveToId(0);
+  EXPECT_EQ(0, candidate_list.focused_id());
+  EXPECT_EQ(0, candidate_list.focused_index());
+  // End of Initialization
+
+  // Exexcute FillAllCandidateWords
+  const commands::Category kCategory = commands::PREDICTION;
+  SessionOutput::FillAllCandidateWords(segment, candidate_list, kCategory,
+                                       &candidates_proto);
+
+  // Varidation
+  EXPECT_EQ(0, candidates_proto.focused_index());
+  EXPECT_EQ(kCategory, candidates_proto.category());
+  EXPECT_EQ(kValueSize, candidates_proto.candidates_size());
+
+  EXPECT_EQ(0, candidates_proto.candidates(0).attributes_size());
+
+  EXPECT_EQ(1, candidates_proto.candidates(1).attributes_size());
+  EXPECT_EQ(commands::CandidateAttribute::USER_DICTIONARY,
+            candidates_proto.candidates(1).attributes(0));
+
+  EXPECT_EQ(1, candidates_proto.candidates(2).attributes_size());
+  EXPECT_EQ(commands::CandidateAttribute::USER_HISTORY,
+            candidates_proto.candidates(2).attributes(0));
+
+  EXPECT_EQ(1, candidates_proto.candidates(3).attributes_size());
+  EXPECT_EQ(commands::CandidateAttribute::SPELLING_CORRECTION,
+            candidates_proto.candidates(3).attributes(0));
+
+  EXPECT_EQ(1, candidates_proto.candidates(4).attributes_size());
+  EXPECT_EQ(commands::CandidateAttribute::TYPING_CORRECTION,
+            candidates_proto.candidates(4).attributes(0));
 }
 
 TEST(SessionOutputTest, ShouldShowUsages) {
@@ -328,11 +405,8 @@ TEST(SessionOutputTest, ShouldShowUsages) {
     CandidateList candidate_list(true);
     CandidateList sub(true);
     static const DummySegment dummy_segments[] = {
-      { "val0", 0, "", "" },
-      { "val1", 0, "", "" },
-      { "val2", 0, "", "" },
-      { "val3", 0, "", "" },
-      { "val4", 0, "", "" },
+        {"val0", 0, "", ""}, {"val1", 0, "", ""}, {"val2", 0, "", ""},
+        {"val3", 0, "", ""}, {"val4", 0, "", ""},
     };
     FillDummySegment(dummy_segments, 5, &segment, &candidate_list);
     candidate_list.AddSubCandidateList(&sub);
@@ -345,11 +419,8 @@ TEST(SessionOutputTest, ShouldShowUsages) {
     CandidateList candidate_list(true);
     CandidateList sub(true);
     static const DummySegment dummy_segments[] = {
-      { "val0", 0, "", "" },
-      { "val1", 10, "title1", "" },
-      { "val2", 0, "", "" },
-      { "val3", 0, "", "" },
-      { "val4", 0, "", "" },
+        {"val0", 0, "", ""}, {"val1", 10, "title1", ""}, {"val2", 0, "", ""},
+        {"val3", 0, "", ""}, {"val4", 0, "", ""},
     };
     FillDummySegment(dummy_segments, 5, &segment, &candidate_list);
     candidate_list.AddSubCandidateList(&sub);
@@ -362,36 +433,21 @@ TEST(SessionOutputTest, ShouldShowUsages) {
     CandidateList candidate_list(true);
     CandidateList sub(true);
     static const DummySegment dummy_segments[] = {
-      { "val00", 10, "title00", "" },
-      { "val01", 0, "", "" },
-      { "val02", 0, "", "" },
-      { "val03", 0, "", "" },
-      { "val04", 0, "", "" },
-      { "val05", 0, "", "" },
-      { "val06", 0, "", "" },
-      { "val07", 0, "", "" },
-      { "val08", 0, "", "" },
-      { "val09", 0, "", "" },
-      { "val10", 20, "title10", "" },
-      { "val11", 0, "", "" },
-      { "val12", 0, "", "" },
-      { "val13", 30, "title13", "" },
-      { "val14", 0, "", "" },
-      { "val15", 0, "", "" },
-      { "val16", 0, "", "" },
-      { "val17", 0, "", "" },
-      { "val18", 0, "", "" },
-      { "val19", 0, "", "" },
-      { "val20", 0, "", "" },
-      { "val21", 0, "", "" },
-      { "val22", 0, "", "" },
-      { "val23", 0, "", "" },
-      { "val24", 0, "", "" },
-      { "val25", 0, "", "" },
-      { "val26", 0, "", "" },
-      { "val27", 0, "", "" },
-      { "val28", 0, "", "" },
-      { "val29", 0, "", "" },
+        {"val00", 10, "title00", ""}, {"val01", 0, "", ""},
+        {"val02", 0, "", ""},         {"val03", 0, "", ""},
+        {"val04", 0, "", ""},         {"val05", 0, "", ""},
+        {"val06", 0, "", ""},         {"val07", 0, "", ""},
+        {"val08", 0, "", ""},         {"val09", 0, "", ""},
+        {"val10", 20, "title10", ""}, {"val11", 0, "", ""},
+        {"val12", 0, "", ""},         {"val13", 30, "title13", ""},
+        {"val14", 0, "", ""},         {"val15", 0, "", ""},
+        {"val16", 0, "", ""},         {"val17", 0, "", ""},
+        {"val18", 0, "", ""},         {"val19", 0, "", ""},
+        {"val20", 0, "", ""},         {"val21", 0, "", ""},
+        {"val22", 0, "", ""},         {"val23", 0, "", ""},
+        {"val24", 0, "", ""},         {"val25", 0, "", ""},
+        {"val26", 0, "", ""},         {"val27", 0, "", ""},
+        {"val28", 0, "", ""},         {"val29", 0, "", ""},
     };
     FillDummySegment(dummy_segments, 30, &segment, &candidate_list);
     candidate_list.AddSubCandidateList(&sub);
@@ -421,36 +477,36 @@ TEST(SessionOutputTest, FillUsages) {
   CandidateList sub(true);
   commands::Candidates candidates_proto;
   static const DummySegment dummy_segments[] = {
-    { "val00", 10, "title00", "desc00" },
-    { "val01", 0, "", "" },
-    { "val02", 0, "", "" },
-    { "val03", 0, "", "" },
-    { "val04", 20, "title04", "desc04" },
-    { "val05", 0, "", "" },
-    { "val06", 0, "", "" },
-    { "val07", 0, "", "" },
-    { "val08", 0, "", "" },
-    { "val09", 0, "", "" },
-    { "val10", 30, "title10", "desc10" },
-    { "val11", 40, "title11", "desc11" },
-    { "val12", 50, "title12", "desc12" },
-    { "val13", 60, "title13", "desc13" },
-    { "val14", 0, "", "" },
-    { "val15", 0, "", "" },
-    { "val16", 0, "", "" },
-    { "val17", 0, "", "" },
-    { "val18", 0, "", "" },
-    { "val19", 100, "title100", "desc100" },
-    { "val20", 110, "title110", "desc110" },
-    { "val21", 100, "title100", "desc100" },
-    { "val22", 110, "title110", "desc110" },
-    { "val23", 0, "", "" },
-    { "val24", 0, "", "" },
-    { "val25", 0, "", "" },
-    { "val26", 0, "", "" },
-    { "val27", 0, "", "" },
-    { "val28", 0, "", "" },
-    { "val29", 0, "", "" },
+      {"val00", 10, "title00", "desc00"},
+      {"val01", 0, "", ""},
+      {"val02", 0, "", ""},
+      {"val03", 0, "", ""},
+      {"val04", 20, "title04", "desc04"},
+      {"val05", 0, "", ""},
+      {"val06", 0, "", ""},
+      {"val07", 0, "", ""},
+      {"val08", 0, "", ""},
+      {"val09", 0, "", ""},
+      {"val10", 30, "title10", "desc10"},
+      {"val11", 40, "title11", "desc11"},
+      {"val12", 50, "title12", "desc12"},
+      {"val13", 60, "title13", "desc13"},
+      {"val14", 0, "", ""},
+      {"val15", 0, "", ""},
+      {"val16", 0, "", ""},
+      {"val17", 0, "", ""},
+      {"val18", 0, "", ""},
+      {"val19", 100, "title100", "desc100"},
+      {"val20", 110, "title110", "desc110"},
+      {"val21", 100, "title100", "desc100"},
+      {"val22", 110, "title110", "desc110"},
+      {"val23", 0, "", ""},
+      {"val24", 0, "", ""},
+      {"val25", 0, "", ""},
+      {"val26", 0, "", ""},
+      {"val27", 0, "", ""},
+      {"val28", 0, "", ""},
+      {"val29", 0, "", ""},
   };
   FillDummySegment(dummy_segments, 30, &segment, &candidate_list);
   candidate_list.AddSubCandidateList(&sub);
@@ -555,9 +611,8 @@ TEST(SessionOutputTest, FillUsages) {
   ASSERT_FALSE(candidates_proto.has_usages());
 }
 
-
 TEST(SessionOutputTest, FillShortcuts) {
-  const string kDigits = "123456789";
+  const std::string kDigits = "123456789";
 
   commands::Candidates candidates_proto1;
   for (size_t i = 0; i < 10; ++i) {
@@ -594,7 +649,7 @@ TEST(SessionOutputTest, FillFooter) {
   EXPECT_FALSE(candidates.footer().has_label());
   EXPECT_TRUE(candidates.footer().has_sub_label());
   EXPECT_EQ(0, candidates.footer().sub_label().find("build "));
-#else  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+#else   // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
   EXPECT_TRUE(candidates.footer().has_label());
   EXPECT_FALSE(candidates.footer().has_sub_label());
   const char kLabel[] = "Tabキーで選択";
@@ -619,8 +674,8 @@ TEST(SessionOutputTest, FillFooter) {
   EXPECT_TRUE(candidates.footer().logo_visible());
 
   candidates.Clear();
-  EXPECT_FALSE(SessionOutput::FillFooter(commands::TRANSLITERATION,
-                                         &candidates));
+  EXPECT_FALSE(
+      SessionOutput::FillFooter(commands::TRANSLITERATION, &candidates));
   EXPECT_FALSE(candidates.has_footer());
 
   candidates.Clear();
@@ -643,13 +698,13 @@ TEST(SessionOutputTest, FillFooter) {
     if (i % 2 == 0) {
       ASSERT_TRUE(candidates.has_footer());
       ASSERT_TRUE(candidates.footer().has_label());
-#if defined(OS_MACOSX)
+#if defined(__APPLE__)
       const char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
 #elif defined(OS_NACL)
       const char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
-#else  // !OS_MACOSX && !OS_NACL
+#else   // !__APPLE__ && !OS_NACL
       const char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
-#endif  // OS_MACOSX || OS_NACL
+#endif  // __APPLE__ || OS_NACL
       EXPECT_EQ(kDeleteInstruction, candidates.footer().label());
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
     } else {
@@ -677,17 +732,17 @@ TEST(SessionOutputTest, AddSegment) {
   int index = 0;
   {
     // "〜" is a character to be processed by TextNormalizer::NormalizeText
-    const string kKey = "ゔ〜 preedit focused";
-    const string kValue = "ゔ〜 PREEDIT FOCUSED";
+    const std::string kKey = "ゔ〜 preedit focused";
+    const std::string kValue = "ゔ〜 PREEDIT FOCUSED";
     const int types = SessionOutput::PREEDIT | SessionOutput::FOCUSED;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    string normalized_key;
+    std::string normalized_key;
     TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
-    string normalized_value;
+    std::string normalized_value;
     TextNormalizer::NormalizeText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
@@ -696,17 +751,17 @@ TEST(SessionOutputTest, AddSegment) {
   }
 
   {
-    const string kKey = "ゔ〜 preedit";
-    const string kValue = "ゔ〜 PREEDIT";
+    const std::string kKey = "ゔ〜 preedit";
+    const std::string kValue = "ゔ〜 PREEDIT";
     const int types = SessionOutput::PREEDIT;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    string normalized_key;
+    std::string normalized_key;
     TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
-    string normalized_value;
+    std::string normalized_value;
     TextNormalizer::NormalizeText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
@@ -715,18 +770,18 @@ TEST(SessionOutputTest, AddSegment) {
   }
 
   {
-    const string kKey = "ゔ〜 conversion focused";
-    const string kValue = "ゔ〜 CONVERSION FOCUSED";
+    const std::string kKey = "ゔ〜 conversion focused";
+    const std::string kValue = "ゔ〜 CONVERSION FOCUSED";
     const int types = SessionOutput::CONVERSION | SessionOutput::FOCUSED;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    string normalized_key;
+    std::string normalized_key;
     TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     // Normalization is performed in Rewriter.
-    string normalized_value = kValue;
+    std::string normalized_value = kValue;
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::HIGHLIGHT, segment.annotation());
@@ -734,18 +789,18 @@ TEST(SessionOutputTest, AddSegment) {
   }
 
   {
-    const string kKey = "ゔ〜 conversion";
-    const string kValue = "ゔ〜 CONVERSION";
+    const std::string kKey = "ゔ〜 conversion";
+    const std::string kValue = "ゔ〜 CONVERSION";
     const int types = SessionOutput::CONVERSION;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    string normalized_key;
+    std::string normalized_key;
     TextNormalizer::NormalizeText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     // Normalization is performed in Rewriter.
-    string normalized_value = kValue;
+    std::string normalized_value = kValue;
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
@@ -753,8 +808,8 @@ TEST(SessionOutputTest, AddSegment) {
   }
 
   {
-    const string kKey = "abc";
-    const string kValue = "";  // empty value
+    const std::string kKey = "abc";
+    const std::string kValue = "";  // empty value
     const int types = SessionOutput::CONVERSION;
     EXPECT_FALSE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(index, preedit.segment_size());
@@ -765,10 +820,10 @@ TEST(SessionOutputTest, FillConversionResultWithoutNormalization) {
   const char kInput[] = "ゔ";
 
   commands::Result result;
-  SessionOutput::FillConversionResultWithoutNormalization(
-      kInput, kInput, &result);
+  SessionOutput::FillConversionResultWithoutNormalization(kInput, kInput,
+                                                          &result);
   EXPECT_EQ(commands::Result::STRING, result.type());
-  EXPECT_EQ(kInput, result.key());  // should not be normalized
+  EXPECT_EQ(kInput, result.key());    // should not be normalized
   EXPECT_EQ(kInput, result.value());  // should not be normalized
 }
 

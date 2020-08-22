@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -81,8 +81,8 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   // If |segments| has only one conversion segment, try calculation and insert
   // the result on success.
   if (segments_size == 1) {
-    const string &key = segments->conversion_segment(0).key();
-    string result;
+    const std::string &key = segments->conversion_segment(0).key();
+    std::string result;
     if (key.empty()) {
       return false;
     }
@@ -97,20 +97,20 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   }
 
   // Merge keys of all conversion segments and try calculation.
-  string merged_key;
+  std::string merged_key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     merged_key += segments->conversion_segment(i).key();
   }
   // The decision to calculate and calculation itself are both done by the
   // calculator.
-  string result;
+  std::string result;
   if (!calculator->CalculateString(merged_key, &result)) {
     return false;
   }
 
   // Merge all conversion segments.
   int offset = Util::CharsLen(merged_key) -
-                   Util::CharsLen(segments->conversion_segment(0).key());
+               Util::CharsLen(segments->conversion_segment(0).key());
   // ConverterInterface::ResizeSegment() calls Rewriter::Rewrite(), so
   // CalculatorRewriter::Rewrite() is recursively called with merged
   // conversion segment.
@@ -121,7 +121,7 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   return true;
 }
 
-bool CalculatorRewriter::InsertCandidate(const string &value,
+bool CalculatorRewriter::InsertCandidate(const std::string &value,
                                          size_t insert_pos,
                                          Segment *segment) const {
   if (segment->candidates_size() == 0) {
@@ -132,7 +132,7 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
   const Segment::Candidate &base_candidate = segment->candidate(0);
 
   // Normalize the expression, used in description.
-  string temp, temp2, expression;
+  std::string temp, temp2, expression;
   Util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key, &temp);
   Util::StringReplace(temp, "・", "/", true, &temp2);
   // "ー", onbiki
@@ -142,8 +142,7 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
 
   for (int n = 0; n < 2; ++n) {
     int current_offset = offset + n;
-    Segment::Candidate *candidate = segment->insert_candidate(
-        current_offset);
+    Segment::Candidate *candidate = segment->insert_candidate(current_offset);
     if (candidate == NULL) {
       LOG(ERROR) << "cannot insert candidate at " << current_offset;
       return false;
@@ -168,10 +167,10 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
     candidate->attributes |= Segment::Candidate::NO_LEARNING;
     candidate->description = "計算結果";
 
-    if (n == 0) {   // without expression
+    if (n == 0) {  // without expression
       candidate->value = value;
       candidate->content_value = value;
-    } else {       // with expression
+    } else {  // with expression
       DCHECK(!expression.empty());
       if (expression.front() == '=') {
         // Expression starts with '='.

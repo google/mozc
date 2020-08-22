@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 #include "dictionary/suppression_dictionary.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -50,77 +51,69 @@ class Segments;
 class ConverterImpl : public ConverterInterface {
  public:
   ConverterImpl();
-  virtual ~ConverterImpl();
+  ~ConverterImpl() override;
 
   // Lazily initializes the internal members. Must be called before the use.
   void Init(const dictionary::POSMatcher *pos_matcher,
             const dictionary::SuppressionDictionary *suppression_dictionary,
-            PredictorInterface *predictor,
-            RewriterInterface *rewriter,
+            std::unique_ptr<PredictorInterface> predictor,
+            std::unique_ptr<RewriterInterface> rewriter,
             ImmutableConverterInterface *immutable_converter);
 
-  bool Predict(const ConversionRequest &request,
-               const string &key,
+  bool Predict(const ConversionRequest &request, const std::string &key,
                const Segments::RequestType request_type,
                Segments *segments) const;
 
-  virtual bool StartConversionForRequest(const ConversionRequest &request,
-                                         Segments *segments) const;
-  virtual bool StartConversion(Segments *segments,
-                               const string &key) const;
-  virtual bool StartReverseConversion(Segments *segments,
-                                      const string &key) const;
-  virtual bool StartPredictionForRequest(const ConversionRequest &request,
-                                         Segments *segments) const;
-  virtual bool StartPrediction(Segments *segments,
-                               const string &key) const;
-  virtual bool StartSuggestionForRequest(const ConversionRequest &request,
-                                         Segments *segments) const;
-  virtual bool StartSuggestion(Segments *segments,
-                               const string &key) const;
-  virtual bool StartPartialPredictionForRequest(
-      const ConversionRequest &request, Segments *segments) const;
-  virtual bool StartPartialPrediction(Segments *segments,
-                                      const string &key) const;
-  virtual bool StartPartialSuggestionForRequest(
-      const ConversionRequest &request, Segments *segments) const;
-  virtual bool StartPartialSuggestion(Segments *segments,
-                                      const string &key) const;
+  bool StartConversionForRequest(const ConversionRequest &request,
+                                 Segments *segments) const override;
+  bool StartConversion(Segments *segments,
+                       const std::string &key) const override;
+  bool StartReverseConversion(Segments *segments,
+                              const std::string &key) const override;
+  bool StartPredictionForRequest(const ConversionRequest &request,
+                                 Segments *segments) const override;
+  bool StartPrediction(Segments *segments,
+                       const std::string &key) const override;
+  bool StartSuggestionForRequest(const ConversionRequest &request,
+                                 Segments *segments) const override;
+  bool StartSuggestion(Segments *segments,
+                       const std::string &key) const override;
+  bool StartPartialPredictionForRequest(const ConversionRequest &request,
+                                        Segments *segments) const override;
+  bool StartPartialPrediction(Segments *segments,
+                              const std::string &key) const override;
+  bool StartPartialSuggestionForRequest(const ConversionRequest &request,
+                                        Segments *segments) const override;
+  bool StartPartialSuggestion(Segments *segments,
+                              const std::string &key) const override;
 
-  virtual bool FinishConversion(const ConversionRequest &request,
-                                Segments *segments) const;
-  virtual bool CancelConversion(Segments *segments) const;
-  virtual bool ResetConversion(Segments *segments) const;
-  virtual bool RevertConversion(Segments *segments) const;
-  virtual bool ReconstructHistory(Segments *segments,
-                                  const string &preceding_text) const;
+  bool FinishConversion(const ConversionRequest &request,
+                        Segments *segments) const override;
+  bool CancelConversion(Segments *segments) const override;
+  bool ResetConversion(Segments *segments) const override;
+  bool RevertConversion(Segments *segments) const override;
+  bool ReconstructHistory(Segments *segments,
+                          const std::string &preceding_text) const override;
 
-  virtual bool CommitSegmentValue(Segments *segments,
-                                  size_t segment_index,
-                                  int candidate_index) const;
-  virtual bool CommitPartialSuggestionSegmentValue(
+  bool CommitSegmentValue(Segments *segments, size_t segment_index,
+                          int candidate_index) const override;
+  bool CommitPartialSuggestionSegmentValue(
+      Segments *segments, size_t segment_index, int candidate_index,
+      absl::string_view current_segment_key,
+      absl::string_view new_segment_key) const override;
+  bool FocusSegmentValue(Segments *segments, size_t segment_index,
+                         int candidate_index) const override;
+  bool FreeSegmentValue(Segments *segments,
+                        size_t segment_index) const override;
+  bool CommitSegments(
       Segments *segments,
-      size_t segment_index,
-      int candidate_index,
-      const string &current_segment_key,
-      const string &new_segment_key) const;
-  virtual bool FocusSegmentValue(Segments *segments,
-                                 size_t segment_index,
-                                 int candidate_index) const;
-  virtual bool FreeSegmentValue(Segments *segments,
-                                size_t segment_index) const;
-  virtual bool CommitSegments(Segments *segments,
-                              const std::vector<size_t> &candidate_index) const;
-  virtual bool ResizeSegment(Segments *segments,
-                             const ConversionRequest &requset,
-                             size_t segment_index,
-                             int offset_length) const;
-  virtual bool ResizeSegment(Segments *segments,
-                             const ConversionRequest &requset,
-                             size_t start_segment_index,
-                             size_t segments_size,
-                             const uint8 *new_size_array,
-                             size_t array_size) const;
+      const std::vector<size_t> &candidate_index) const override;
+  bool ResizeSegment(Segments *segments, const ConversionRequest &request,
+                     size_t segment_index, int offset_length) const override;
+  bool ResizeSegment(Segments *segments, const ConversionRequest &request,
+                     size_t start_segment_index, size_t segments_size,
+                     const uint8 *new_size_array,
+                     size_t array_size) const override;
 
  private:
   FRIEND_TEST(ConverterTest, CompletePOSIds);
@@ -135,20 +128,19 @@ class ConverterImpl : public ConverterInterface {
   // input strings. This function estimates IDs from value heuristically.
   void CompletePOSIds(Segment::Candidate *candidate) const;
 
-  bool CommitSegmentValueInternal(Segments *segments,
-                                  size_t segment_index,
+  bool CommitSegmentValueInternal(Segments *segments, size_t segment_index,
                                   int candidate_index,
                                   Segment::SegmentType segment_type) const;
 
   // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
   // and consumed_key_size if the attribute is not set.
   static void MaybeSetConsumedKeySizeToCandidate(size_t consumed_key_size,
-                                                 Segment::Candidate* candidate);
+                                                 Segment::Candidate *candidate);
 
   // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
   // and consumed_key_size if the attribute is not set.
   static void MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
-                                               Segment* segment);
+                                               Segment *segment);
 
   // Rewrites and applies the suppression dictionary.
   void RewriteAndSuppressCandidates(const ConversionRequest &request,
@@ -162,15 +154,13 @@ class ConverterImpl : public ConverterInterface {
   // Commits usage stats for committed text.
   // |begin_segment_index| is a index of whole segments. (history and conversion
   // segments)
-  void CommitUsageStats(const Segments *segments,
-                        size_t begin_segment_index,
+  void CommitUsageStats(const Segments *segments, size_t begin_segment_index,
                         size_t segment_length) const;
 
   // Returns the substring of |str|. This substring consists of similar script
   // type and you can use it as preceding text for conversion.
-  bool GetLastConnectivePart(const string &preceding_text,
-                             string *key,
-                             string *value,
+  bool GetLastConnectivePart(const std::string &preceding_text,
+                             std::string *key, std::string *value,
                              uint16 *id) const;
 
   const dictionary::POSMatcher *pos_matcher_;

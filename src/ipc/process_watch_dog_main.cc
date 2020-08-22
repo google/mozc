@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,13 +44,13 @@ namespace mozc {
 class TestProcessWatchDog : public ProcessWatchDog {
  public:
   void Signaled(ProcessWatchDog::SignalType type) {
-    cout << "Signaled: " << static_cast<int>(type) << endl;
+    std::cout << "Signaled: " << static_cast<int>(type) << std::endl;
   }
 };
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::TestProcessWatchDog dog;
 
@@ -74,9 +74,9 @@ int main(int argc, char **argv) {
     if (!dog.SetID(static_cast<mozc::ProcessWatchDog::ProcessID>(process_id),
                    static_cast<mozc::ProcessWatchDog::ThreadID>(thread_id),
                    FLAGS_timeout)) {
-      cout << "Error" << endl;
+      std::cout << "Error" << std::endl;
     } else {
-      cout << "OK" << endl;
+      std::cout << "OK" << std::endl;
     }
   }
 

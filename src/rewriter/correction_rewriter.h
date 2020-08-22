@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,8 @@
 #include <vector>
 
 #include "base/serialized_string_array.h"
-#include "base/string_piece.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -44,7 +44,7 @@ class ConversionRequest;
 class DataManagerInterface;
 class Segments;
 
-class CorrectionRewriter : public RewriterInterface  {
+class CorrectionRewriter : public RewriterInterface {
  public:
   // Returnes an instance of ReadingCorrectionRewriter initialized with the
   // default provided by data_manager.  The caller takes the ownership of the
@@ -52,8 +52,9 @@ class CorrectionRewriter : public RewriterInterface  {
   static CorrectionRewriter *CreateCorrectionRewriter(
       const DataManagerInterface *data_manager);
 
-  CorrectionRewriter(StringPiece value_array_data, StringPiece error_array_data,
-                     StringPiece correction_array_data);
+  CorrectionRewriter(absl::string_view value_array_data,
+                     absl::string_view error_array_data,
+                     absl::string_view correction_array_data);
   ~CorrectionRewriter() override;
 
   bool Rewrite(const ConversionRequest &request,
@@ -65,13 +66,14 @@ class CorrectionRewriter : public RewriterInterface  {
 
  private:
   struct ReadingCorrectionItem {
-    ReadingCorrectionItem(StringPiece v, StringPiece e, StringPiece c)
+    ReadingCorrectionItem(absl::string_view v, absl::string_view e,
+                          absl::string_view c)
         : value(v), error(e), correction(c) {}
 
     // ex. (value, error, correction) = ("雰囲気", "ふいんき", "ふんいき")
-    StringPiece value;
-    StringPiece error;
-    StringPiece correction;
+    absl::string_view value;
+    absl::string_view error;
+    absl::string_view correction;
   };
 
   // Sets |candidate| fields from |iterm|.
@@ -83,10 +85,8 @@ class CorrectionRewriter : public RewriterInterface  {
   // If |value| is empty, looks up corrections only using the key.
   // The matched results are saved in |results|.
   // Return false if |results| is empty.
-  bool LookupCorrection(
-      const string &key,
-      const string &value,
-      std::vector<ReadingCorrectionItem> *results) const;
+  bool LookupCorrection(const std::string &key, const std::string &value,
+                        std::vector<ReadingCorrectionItem> *results) const;
 
   SerializedStringArray value_array_;
   SerializedStringArray error_array_;

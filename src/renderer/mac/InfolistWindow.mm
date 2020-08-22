@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ using mozc::commands::SessionCommand;
 @implementation InfolistWindowTimerHandler
 - (InfolistWindowTimerHandler*)initWithInfolistWindow:
     (mozc::renderer::mac::InfolistWindow*) infolist_window {
-  [super init];
+  self = [super init];
   infolist_window_ = infolist_window;
   return self;
 }
@@ -86,8 +86,8 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
 InfolistWindow::InfolistWindow()
     : lasttimer_(nullptr),
       command_sender_(nullptr) {
- timer_handler_.reset([[InfolistWindowTimerHandler alloc]
-     initWithInfolistWindow:this]);
+  timer_handler_ = [[InfolistWindowTimerHandler alloc]
+    initWithInfolistWindow:this];
 }
 
 InfolistWindow::~InfolistWindow() {
@@ -106,7 +106,7 @@ void InfolistWindow::SetCandidates(const Candidates &candidates) {
   if (!window_) {
     InitWindow();
   }
-  InfolistView* infolist_view = (InfolistView*) view_.get();
+  InfolistView* infolist_view = (InfolistView*) view_;
   [infolist_view setCandidates:&candidates];
   [infolist_view setNeedsDisplay:YES];
   NSSize size = [infolist_view updateLayout];
@@ -121,7 +121,7 @@ void InfolistWindow::DelayHide(int delay) {
   visible_ = false;
   const NSTimeInterval interval = delay / 1000.0;
   lasttimer_ = [NSTimer scheduledTimerWithTimeInterval:interval
-                                                target:timer_handler_.get()
+                                                target:timer_handler_
                                               selector:@selector(onTimer:)
                                               userInfo:nil
                                                repeats:NO];
@@ -135,7 +135,7 @@ void InfolistWindow::DelayShow(int delay) {
   visible_ = true;
   const NSTimeInterval interval = delay / 1000.0;
   lasttimer_ = [NSTimer scheduledTimerWithTimeInterval:interval
-                                                target:timer_handler_.get()
+                                                target:timer_handler_
                                               selector:@selector(onTimer:)
                                               userInfo:nil
                                                repeats:NO];
@@ -171,7 +171,7 @@ void InfolistWindow::onTimer(NSTimer* timer) {
 
 void InfolistWindow::ResetView(){
   DLOG(INFO) << "InfolistWindow::ResetView()";
-  view_.reset([[InfolistView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)]);
+  view_ = [[InfolistView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
 }
 
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,11 +52,10 @@ namespace gtk {
 class InfolistWindow : public GtkWindowBase {
  public:
   // GtkWindowBase(InfolistWindow) has ownership of GtkWrapperInterface *gtk;
-  explicit InfolistWindow(
-      TextRendererInterface *text_renderer,
-      DrawToolInterface *draw_tool,
-      GtkWrapperInterface *gtk,
-      CairoFactoryInterface *cairo_factory);
+  explicit InfolistWindow(TextRendererInterface *text_renderer,
+                          DrawToolInterface *draw_tool,
+                          GtkWrapperInterface *gtk,
+                          CairoFactoryInterface *cairo_factory);
   virtual ~InfolistWindow() {}
 
   virtual Size Update(const commands::Candidates &candidates);
@@ -95,10 +94,8 @@ class InfolistWindow : public GtkWindowBase {
   // top position.
   void GetRenderingRects(const renderer::RendererStyle::TextStyle &style,
                          const string &text,
-                         FontSpecInterface::FONT_TYPE font_type,
-                         int top,
-                         Rect *background_rect,
-                         Rect *textarea_rect);
+                         FontSpecInterface::FONT_TYPE font_type, int top,
+                         Rect *background_rect, Rect *textarea_rect);
 
   friend class InfolistWindowTest;
   FRIEND_TEST(InfolistWindowTest, DrawFrameTest);

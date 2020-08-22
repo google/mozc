@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,15 +48,16 @@ using ATL::CComVariant;
 using std::unique_ptr;
 
 // GUID_PROP_INPUTSCOPE
-GUID kGuidPropInputscope = {
-  0x1713dd5a, 0x68e7, 0x4a5b, {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}
-};
+GUID kGuidPropInputscope = {0x1713dd5a,
+                            0x68e7,
+                            0x4a5b,
+                            {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}};
 
 }  // namespace
 
-HRESULT TipRangeUtil::SetSelection(
-      ITfContext *context, TfEditCookie edit_cookie, ITfRange *range,
-      TfActiveSelEnd active_sel_end) {
+HRESULT TipRangeUtil::SetSelection(ITfContext *context,
+                                   TfEditCookie edit_cookie, ITfRange *range,
+                                   TfActiveSelEnd active_sel_end) {
   if (context == nullptr) {
     return E_INVALIDARG;
   }
@@ -67,17 +68,18 @@ HRESULT TipRangeUtil::SetSelection(
   return context->SetSelection(edit_cookie, arraysize(selections), selections);
 }
 
-HRESULT TipRangeUtil::GetDefaultSelection(
-    ITfContext *context, TfEditCookie edit_cookie, ITfRange **range,
-    TfActiveSelEnd *active_sel_end) {
+HRESULT TipRangeUtil::GetDefaultSelection(ITfContext *context,
+                                          TfEditCookie edit_cookie,
+                                          ITfRange **range,
+                                          TfActiveSelEnd *active_sel_end) {
   if (context == nullptr) {
     return E_INVALIDARG;
   }
   TF_SELECTION selections[1] = {};
   ULONG fetched = 0;
-  const HRESULT result = context->GetSelection(
-      edit_cookie, TF_DEFAULT_SELECTION, arraysize(selections), selections,
-      &fetched);
+  const HRESULT result =
+      context->GetSelection(edit_cookie, TF_DEFAULT_SELECTION,
+                            arraysize(selections), selections, &fetched);
   if (FAILED(result)) {
     return result;
   }
@@ -95,8 +97,8 @@ HRESULT TipRangeUtil::GetDefaultSelection(
   return S_OK;
 }
 
-HRESULT TipRangeUtil::GetText(
-    ITfRange *range, TfEditCookie edit_cookie, std::wstring *text) {
+HRESULT TipRangeUtil::GetText(ITfRange *range, TfEditCookie edit_cookie,
+                              std::wstring *text) {
   if (range == nullptr) {
     return E_INVALIDARG;
   }
@@ -153,8 +155,7 @@ HRESULT TipRangeUtil::GetText(
   return S_OK;
 }
 
-HRESULT TipRangeUtil::GetInputScopes(ITfRange *range,
-                                     TfEditCookie read_cookie,
+HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
                                      std::vector<InputScope> *input_scopes) {
   if (input_scopes == nullptr) {
     return E_FAIL;
@@ -199,8 +200,7 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range,
 }
 
 bool TipRangeUtil::IsRangeCovered(TfEditCookie edit_cookie,
-                                  ITfRange* range_test,
-                                  ITfRange* range_cover) {
+                                  ITfRange *range_test, ITfRange *range_cover) {
   HRESULT result = S_OK;
 
   // Check if {the start position of |range_cover|) <= {the start position
@@ -224,13 +224,11 @@ bool TipRangeUtil::IsRangeCovered(TfEditCookie edit_cookie,
 }
 
 HRESULT TipRangeUtil::GetTextExt(ITfContextView *context_view,
-                                 TfEditCookie read_cookie,
-                                 ITfRange *range,
-                                 RECT *rect,
-                                 bool *clipped) {
+                                 TfEditCookie read_cookie, ITfRange *range,
+                                 RECT *rect, bool *clipped) {
   BOOL clipped_result = FALSE;
-  HRESULT hr = context_view->GetTextExt(
-      read_cookie, range, rect, &clipped_result);
+  HRESULT hr =
+      context_view->GetTextExt(read_cookie, range, rect, &clipped_result);
   if (clipped != nullptr) {
     *clipped = (clipped_result != FALSE);
   }
@@ -247,12 +245,11 @@ HRESULT TipRangeUtil::GetTextExt(ITfContextView *context_view,
     // ITextStoreACP::GetACPFromPoint can easily be computationally expensive.
     // This is why we should carefully choose parameters passed to
     // ITfContextView::GetRangeFromPoint here.
-    const POINT dummy_point = {
-       std::numeric_limits<LONG>::min(), std::numeric_limits<LONG>::min()
-    };
+    const POINT dummy_point = {std::numeric_limits<LONG>::min(),
+                               std::numeric_limits<LONG>::min()};
     CComPtr<ITfRange> dummy_range;
     const HRESULT next_hr = context_view->GetRangeFromPoint(
-         read_cookie, &dummy_point, 0, &dummy_range);
+        read_cookie, &dummy_point, 0, &dummy_range);
     if (next_hr == TF_E_NOLAYOUT) {
       hr = TF_E_NOLAYOUT;
     }

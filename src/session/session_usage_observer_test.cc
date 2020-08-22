@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,8 +51,6 @@
 using mozc::usage_stats::Stats;
 using mozc::usage_stats::UsageStats;
 
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
 namespace session {
 
@@ -85,23 +83,21 @@ class SessionUsageObserverTest : public testing::Test {
     scheduler_stub_->PutClockForward(kWaitngUsecForEnsureSave);
   }
 
-  void SetDoubleValueStats(
-      uint32 num, double total, double square_total,
-      Stats::DoubleValueStats *double_stats) {
+  void SetDoubleValueStats(uint32 num, double total, double square_total,
+                           Stats::DoubleValueStats *double_stats) {
     DCHECK(double_stats);
     double_stats->set_num(num);
     double_stats->set_total(total);
     double_stats->set_square_total(square_total);
   }
 
-  void SetEventStats(
-     uint32 source_id,
-     uint32 sx_num, double sx_total, double sx_square_total,
-     uint32 sy_num, double sy_total, double sy_square_total,
-     uint32 dx_num, double dx_total, double dx_square_total,
-     uint32 dy_num, double dy_total, double dy_square_total,
-     uint32 tl_num, double tl_total, double tl_square_total,
-     Stats::TouchEventStats *event_stats) {
+  void SetEventStats(uint32 source_id, uint32 sx_num, double sx_total,
+                     double sx_square_total, uint32 sy_num, double sy_total,
+                     double sy_square_total, uint32 dx_num, double dx_total,
+                     double dx_square_total, uint32 dy_num, double dy_total,
+                     double dy_square_total, uint32 tl_num, double tl_total,
+                     double tl_square_total,
+                     Stats::TouchEventStats *event_stats) {
     event_stats->set_source_id(source_id);
     SetDoubleValueStats(sx_num, sx_total, sx_square_total,
                         event_stats->mutable_start_x_stats());
@@ -207,6 +203,8 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsSoftwareKeyboardLayout) {
 
   EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutLandscape");
   EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutPortrait");
+  EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutEnglishLandscape");
+  EXPECT_STATS_NOT_EXIST("SoftwareKeyboardLayoutEnglishPortrait");
 
   command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
   commands::SessionCommand *session_command =
@@ -436,51 +434,12 @@ TEST_F(SessionUsageObserverTest, LogTouchEvent) {
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardMissStats");
   EnsureSave();
 
-  {
-    Stats stats;
-    UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardStats", &stats);
-    ASSERT_EQ(2, stats.virtual_keyboard_stats_size());
-    ASSERT_EQ(2, stats.virtual_keyboard_stats(0).touch_event_stats_size());
-
-    Stats::TouchEventStats expected_event_stats;
-    SetEventStats(10, 2, 3, 5, 2, 4, 8, 2, 0, 2, 2, -2, 2, 2, 3.5, 6.25,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(0).touch_event_stats(0).DebugString());
-
-    SetEventStats(100, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(0).touch_event_stats(1).DebugString());
-
-    ASSERT_EQ(2, stats.virtual_keyboard_stats(1).touch_event_stats_size());
-
-    SetEventStats(10, 1, 1, 1, 1, 2, 4, 1, 1, 1, 1, -1, 1, 1, 1.5, 2.25,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(1).touch_event_stats(0).DebugString());
-
-    SetEventStats(30, 1, 2, 4, 1, 2, 4, 1, -1, 1, 1, 1, 1, 1, 2, 4,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(1).touch_event_stats(1).DebugString());
-  }
-  {
-    Stats stats;
-    UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardMissStats", &stats);
-    ASSERT_EQ(1, stats.virtual_keyboard_stats_size());
-    ASSERT_EQ(1, stats.virtual_keyboard_stats(0).touch_event_stats_size());
-    Stats::TouchEventStats expected_event_stats;
-    SetEventStats(20, 1, 2, 4, 1, 2, 4, 1, -1, 1, 1, -1, 1, 1, 2, 4,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(0).touch_event_stats(0).DebugString());
-  }
+  // Does not store usage stats anymore.
+  Stats stats;
+  EXPECT_FALSE(
+      UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardStats", &stats));
+  EXPECT_FALSE(UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardMissStats",
+                                                     &stats));
 }
 
 TEST_F(SessionUsageObserverTest, LogTouchEventPasswordField) {
@@ -611,29 +570,12 @@ TEST_F(SessionUsageObserverTest, LogTouchEventPasswordField) {
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardMissStats");
   EnsureSave();
 
-  {
-    Stats stats;
-    UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardStats", &stats);
-    ASSERT_EQ(1, stats.virtual_keyboard_stats_size());
-    ASSERT_EQ(3, stats.virtual_keyboard_stats(0).touch_event_stats_size());
-
-    Stats::TouchEventStats expected_event_stats;
-    SetEventStats(10, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(0).touch_event_stats(0).DebugString());
-    SetEventStats(20, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(0).touch_event_stats(1).DebugString());
-    SetEventStats(40, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1,
-                  &expected_event_stats);
-    EXPECT_EQ(
-        expected_event_stats.DebugString(),
-        stats.virtual_keyboard_stats(0).touch_event_stats(2).DebugString());
-  }
+  // Does not store usage stats anymore.
+  Stats stats;
+  EXPECT_FALSE(
+      UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardStats", &stats));
+  EXPECT_FALSE(UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardMissStats",
+                                                     &stats));
 }
 
 }  // namespace session

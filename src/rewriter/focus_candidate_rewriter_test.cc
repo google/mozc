@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,21 +42,18 @@
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
 namespace {
 
-void AddCandidate(Segment *segment, const string &value) {
+void AddCandidate(Segment *segment, const std::string &value) {
   Segment::Candidate *c = segment->add_candidate();
   c->Init();
   c->value = value;
   c->content_value = value;
 }
 
-void AddCandidateWithContentValue(Segment *segment,
-                                  const string &value,
-                                  const string &content_value) {
+void AddCandidateWithContentValue(Segment *segment, const std::string &value,
+                                  const std::string &content_value) {
   Segment::Candidate *c = segment->add_candidate();
   c->Init();
   c->value = value;
@@ -72,9 +69,7 @@ class FocusCandidateRewriterTest : public ::testing::Test {
     rewriter_.reset(new FocusCandidateRewriter(&mock_data_manager_));
   }
 
-  const RewriterInterface *GetRewriter() {
-    return rewriter_.get();
-  }
+  const RewriterInterface *GetRewriter() { return rewriter_.get(); }
 
  private:
   std::unique_ptr<FocusCandidateRewriter> rewriter_;
@@ -211,7 +206,6 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRightNest) {
   AddCandidate(seg[6], "]");
   AddCandidate(seg[6], "}");
 
-
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 0));
   EXPECT_EQ("｣", seg[6]->candidate(0).content_value);
   EXPECT_EQ("｣", seg[4]->candidate(0).content_value);
@@ -333,8 +327,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   AddCandidate(seg[2], "}");
 
   const int half_index = -transliteration::HALF_KATAKANA - 1;
-  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0,
-                                   half_index));
+  EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, half_index));
   EXPECT_EQ("｢", seg[0]->candidate(0).content_value);
   EXPECT_EQ("｣", seg[2]->candidate(0).content_value);
 
@@ -357,7 +350,6 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   AddCandidate(seg[0], "２");
   AddCandidate(seg[0], "ニ");
   AddCandidate(seg[0], "弐");
-
 
   seg[0]->mutable_candidate(2)->style = NumberUtil::NumberString::NUMBER_KANJI;
   seg[0]->mutable_candidate(3)->style =
@@ -401,18 +393,17 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   EXPECT_EQ("３", seg[2]->candidate(0).content_value);
   EXPECT_EQ("４", seg[3]->candidate(0).content_value);
 
-  EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
-
+  EXPECT_EQ("4", seg[6]->candidate(0).content_value);  // far from
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 2));
   EXPECT_EQ("三", seg[2]->candidate(0).content_value);
   EXPECT_EQ("四", seg[3]->candidate(0).content_value);
 
-  EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
+  EXPECT_EQ("4", seg[6]->candidate(0).content_value);  // far from
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 3));
   EXPECT_EQ("参", seg[2]->candidate(0).content_value);
-  EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
+  EXPECT_EQ("4", seg[6]->candidate(0).content_value);  // far from
 }
 
 // Bug #4596846: Non-number characters are changed to numbers
@@ -464,7 +455,6 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
     seg[5]->set_key("かい");
     AddCandidate(seg[5], "回");
     AddCandidate(seg[5], "階");
-
 
     EXPECT_TRUE(GetRewriter()->Focus(&segments, 1, 1));
     EXPECT_EQ("階", seg[3]->candidate(0).content_value);

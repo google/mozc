@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,13 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 
 struct TokenInfo;
 
-// TODO(hidehiko): Use StringPiece.
 class SystemDictionaryCodecInterface {
  public:
   virtual ~SystemDictionaryCodecInterface() {}
@@ -49,57 +48,61 @@ class SystemDictionaryCodecInterface {
   // Get section name functions are expected not to be called so often
 
   // Return section name for key trie
-  virtual const string GetSectionNameForKey() const = 0;
+  virtual const std::string GetSectionNameForKey() const = 0;
 
   // Return section name for value trie
-  virtual const string GetSectionNameForValue() const = 0;
+  virtual const std::string GetSectionNameForValue() const = 0;
 
   // Return section name for tokens array
-  virtual const string GetSectionNameForTokens() const = 0;
+  virtual const std::string GetSectionNameForTokens() const = 0;
 
   // Return section name for frequent pos map
-  virtual const string GetSectionNameForPos() const = 0;
+  virtual const std::string GetSectionNameForPos() const = 0;
 
   // Encode value(word) string
-  virtual void EncodeValue(const StringPiece src, string *dst) const = 0;
+  virtual void EncodeValue(const absl::string_view src,
+                           std::string *dst) const = 0;
 
   // Decode value(word) string
-  virtual void DecodeValue(const StringPiece src, string *dst) const = 0;
+  virtual void DecodeValue(const absl::string_view src,
+                           std::string *dst) const = 0;
 
   // Encode key(reading) string
-  virtual void EncodeKey(const StringPiece src, string *dst) const = 0;
+  virtual void EncodeKey(const absl::string_view src,
+                         std::string *dst) const = 0;
 
   // Decode key(reading) string
-  virtual void DecodeKey(const StringPiece src, string *dst) const = 0;
+  virtual void DecodeKey(const absl::string_view src,
+                         std::string *dst) const = 0;
 
   // Returns the length of encoded key string.
-  virtual size_t GetEncodedKeyLength(const StringPiece src) const = 0;
+  virtual size_t GetEncodedKeyLength(const absl::string_view src) const = 0;
 
   // Returns the length of decoded key string.
-  virtual size_t GetDecodedKeyLength(const StringPiece src) const = 0;
+  virtual size_t GetDecodedKeyLength(const absl::string_view src) const = 0;
 
   // Encode tokens(word info) for a certain key
-  virtual void EncodeTokens(
-      const std::vector<TokenInfo> &tokens, string *output) const = 0;
+  virtual void EncodeTokens(const std::vector<TokenInfo> &tokens,
+                            std::string *output) const = 0;
 
   // Decode token(word info) for a certain key
-  virtual void DecodeTokens(
-      const uint8 *ptr, std::vector<TokenInfo> *tokens) const = 0;
+  virtual void DecodeTokens(const uint8 *ptr,
+                            std::vector<TokenInfo> *tokens) const = 0;
 
   // Decode a token. If the token is the last one, returns false,
   // otherwise true.
-  virtual bool DecodeToken(
-      const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const = 0;
+  virtual bool DecodeToken(const uint8 *ptr, TokenInfo *token_info,
+                           int *read_bytes) const = 0;
 
   // Read a token for reverse lookup
   // If the token have value id, assign it to |value_id|
   // otherwise assign -1
   // Return false if a token is the last token for a certain key
-  virtual bool ReadTokenForReverseLookup(
-      const uint8 *ptr, int *value_id, int *read_bytes) const = 0;
+  virtual bool ReadTokenForReverseLookup(const uint8 *ptr, int *value_id,
+                                         int *read_bytes) const = 0;
 
   // Return termination flag for tokens
-  virtual uint8 GetTokensTerminationFlag() const  = 0;
+  virtual uint8 GetTokensTerminationFlag() const = 0;
 
  protected:
   SystemDictionaryCodecInterface() {}

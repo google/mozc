@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,24 +30,26 @@
 #include "base/system_util.h"
 
 #ifdef OS_WIN
+// clang-format off
 #include <Windows.h>
 #include <LMCons.h>
 #include <Sddl.h>
 #include <ShlObj.h>
 #include <VersionHelpers.h>
+// clang-format on
 #else  // OS_WIN
 #include <pwd.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <sys/stat.h>
 #include <sys/sysctl.h>
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <cerrno>
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 #include <cstdlib>
 #include <cstring>
 #ifdef OS_WIN
@@ -59,10 +61,14 @@
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#ifdef __APPLE__
 #include "base/mac_util.h"
+#endif  // __APPLE__
 #include "base/singleton.h"
 #include "base/util.h"
+#ifdef OS_WIN
 #include "base/win_util.h"
+#endif  // OS_WIN
 
 #ifdef OS_ANDROID
 #include "base/android_util.h"
@@ -78,10 +84,11 @@ namespace {
 class UserProfileDirectoryImpl {
  public:
   UserProfileDirectoryImpl();
-  string get() { return dir_; }
-  void set(const string &dir) { dir_ = dir; }
+  std::string get() { return dir_; }
+  void set(const std::string &dir) { dir_ = dir; }
+
  private:
-  string dir_;
+  std::string dir_;
 };
 
 #ifdef OS_WIN
@@ -91,15 +98,9 @@ class LocalAppDataDirectoryCache {
   LocalAppDataDirectoryCache() : result_(E_FAIL) {
     result_ = SafeTryGetLocalAppData(&path_);
   }
-  HRESULT result() const {
-    return result_;
-  }
-  const bool succeeded() const {
-    return SUCCEEDED(result_);
-  }
-  const string &path() const {
-    return path_;
-  }
+  HRESULT result() const { return result_; }
+  const bool succeeded() const { return SUCCEEDED(result_); }
+  const string &path() const { return path_; }
 
  private:
   // b/5707813 implies that TryGetLocalAppData causes an exception and makes
@@ -115,7 +116,7 @@ class LocalAppDataDirectoryCache {
   static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(string *dir) {
     __try {
       return TryGetLocalAppData(dir);
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
       return E_UNEXPECTED;
     }
   }
@@ -171,8 +172,8 @@ class LocalAppDataDirectoryCache {
     dir->clear();
 
     wchar_t *task_mem_buffer = nullptr;
-    const HRESULT result = ::SHGetKnownFolderPath(
-        FOLDERID_LocalAppDataLow, 0, nullptr, &task_mem_buffer);
+    const HRESULT result = ::SHGetKnownFolderPath(FOLDERID_LocalAppDataLow, 0,
+                                                  nullptr, &task_mem_buffer);
     if (FAILED(result)) {
       if (task_mem_buffer != nullptr) {
         ::CoTaskMemFree(task_mem_buffer);
@@ -202,15 +203,26 @@ class LocalAppDataDirectoryCache {
 #endif  // OS_WIN
 
 UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // In NaCl, we can't call FileUtil::CreateDirectory() nor
-  // FileUtil::DirectoryExists(). So we just set dir_ here.
-  dir_ = "/";
+#if defined(OS_NACL) || defined(OS_CHROMEOS)
+  // TODO(toka): Must use passed in user profile dir which passed in. If mojo
+  // platform the user profile is determined on runtime.
+  // It's hack, the user profile dir should be passed in. Although the value in
+  // NaCL platform is correct.
+  dir_ = "/mutable";
   return;
-#else  // MOZC_USE_PEPPER_FILE_IO
-  string dir;
+#else  // OS_NACL || OS_CHROMEOS
+  std::string dir;
 
-#ifdef OS_WIN
+#ifdef OS_IOS
+  // OS_IOS block must be placed before __APPLE__ because both macros are
+  // currently defined on iOS.
+  //
+  // On iOS, use Caches directory instead of Application Spport directory
+  // because the support directory doesn't exist by default.  Also, it is backed
+  // up by iTunes and iCloud.
+  dir = FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
+
+#elif defined(OS_WIN)
   DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
   dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
@@ -219,7 +231,7 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, kProductNameInEnglish);
 
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
   dir = MacUtil::GetApplicationSupportDirectory();
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, "Google");
@@ -227,16 +239,19 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   // TODO(komatsu): nice to make a wrapper function.
   ::mkdir(dir.c_str(), 0755);
   dir = FileUtil::JoinPath(dir, "JapaneseInput");
-#else  //  GOOGLE_JAPANESE_INPUT_BUILD
+#else   //  GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, "Mozc");
 #endif  //  GOOGLE_JAPANESE_INPUT_BUILD
 
+#elif defined(OS_WASM)
+  // Do nothing for WebAssembly.
+  return;
 #elif defined(OS_ANDROID)
   // For android, we do nothing here because user profile directory,
   // of which the path depends on active user,
   // is injected from Java layer.
 
-#else  // !OS_WIN && !OS_MACOSX && !OS_ANDROID
+#else   // !OS_IOS && !OS_WIN && !__APPLE__ && !OS_ANDROID
   char buf[1024];
   struct passwd pw, *ppw;
   const uid_t uid = geteuid();
@@ -245,7 +260,7 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   CHECK_LT(0, strlen(pw.pw_dir))
       << "Home directory for uid " << uid << " is not set.";
   dir = FileUtil::JoinPath(pw.pw_dir, ".mozc");
-#endif  // !OS_WIN && !OS_MACOSX && !OS_ANDROID
+#endif  // !OS_IOS && !OS_WIN && !__APPLE__ && !OS_ANDROID
 
   FileUtil::CreateDirectory(dir);
   if (!FileUtil::DirectoryExists(dir)) {
@@ -254,26 +269,26 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 
   // set User profile directory
   dir_ = dir;
-#endif  // MOZC_USE_PEPPER_FILE_IO
+#endif  // !OS_NACL && !OS_CHROMEOS
 }
 
 }  // namespace
 
-string SystemUtil::GetUserProfileDirectory() {
+std::string SystemUtil::GetUserProfileDirectory() {
   return Singleton<UserProfileDirectoryImpl>::get()->get();
 }
 
-string SystemUtil::GetLoggingDirectory() {
-#ifdef OS_MACOSX
+std::string SystemUtil::GetLoggingDirectory() {
+#ifdef __APPLE__
   string dir = MacUtil::GetLoggingDirectory();
   FileUtil::CreateDirectory(dir);
   return dir;
-#else  // OS_MACOSX
+#else   // __APPLE__
   return GetUserProfileDirectory();
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 }
 
-void SystemUtil::SetUserProfileDirectory(const string &path) {
+void SystemUtil::SetUserProfileDirectory(const std::string &path) {
   Singleton<UserProfileDirectoryImpl>::get()->set(path);
 }
 
@@ -285,15 +300,9 @@ class ProgramFilesX86Cache {
   ProgramFilesX86Cache() : result_(E_FAIL) {
     result_ = SafeTryProgramFilesPath(&path_);
   }
-  const bool succeeded() const {
-    return SUCCEEDED(result_);
-  }
-  const HRESULT result() const {
-    return result_;
-  }
-  const string &path() const {
-    return path_;
-  }
+  const bool succeeded() const { return SUCCEEDED(result_); }
+  const HRESULT result() const { return result_; }
+  const string &path() const { return path_; }
 
  private:
   // b/5707813 implies that the Shell API causes an exception in some cases.
@@ -308,7 +317,7 @@ class ProgramFilesX86Cache {
   static HRESULT __declspec(nothrow) SafeTryProgramFilesPath(string *path) {
     __try {
       return TryProgramFilesPath(path);
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
       return E_UNEXPECTED;
     }
   }
@@ -325,16 +334,16 @@ class ProgramFilesX86Cache {
     // CSIDL_PROGRAM_FILES points 64-bit Program Files directory. In this case,
     // we should use CSIDL_PROGRAM_FILESX86 to find server, renderer, and other
     // binaries' path.
-    const HRESULT result = ::SHGetFolderPathW(
-        nullptr, CSIDL_PROGRAM_FILESX86, nullptr,
-        SHGFP_TYPE_CURRENT, program_files_path_buffer);
+    const HRESULT result =
+        ::SHGetFolderPathW(nullptr, CSIDL_PROGRAM_FILESX86, nullptr,
+                           SHGFP_TYPE_CURRENT, program_files_path_buffer);
 #elif defined(_M_IX86)
     // In 32-bit processes (such as server, renderer, and other binaries),
     // CSIDL_PROGRAM_FILES always points 32-bit Program Files directory
     // even if they are running in 64-bit Windows.
-    const HRESULT result = ::SHGetFolderPathW(
-        nullptr, CSIDL_PROGRAM_FILES, nullptr,
-        SHGFP_TYPE_CURRENT, program_files_path_buffer);
+    const HRESULT result =
+        ::SHGetFolderPathW(nullptr, CSIDL_PROGRAM_FILES, nullptr,
+                           SHGFP_TYPE_CURRENT, program_files_path_buffer);
 #else  // !_M_X64 && !_M_IX86
 #error "Unsupported CPU architecture"
 #endif  // _M_X64, _M_IX86, and others
@@ -355,7 +364,7 @@ class ProgramFilesX86Cache {
 }  // namespace
 #endif  // OS_WIN
 
-string SystemUtil::GetServerDirectory() {
+std::string SystemUtil::GetServerDirectory() {
 #ifdef OS_WIN
   DCHECK(SUCCEEDED(Singleton<ProgramFilesX86Cache>::get()->result()));
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
@@ -363,26 +372,27 @@ string SystemUtil::GetServerDirectory() {
       FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                          kCompanyNameInEnglish),
       kProductNameInEnglish);
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                             kProductNameInEnglish);
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
   return MacUtil::GetServerDirectory();
 
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+    defined(OS_WASM)
 #if defined(MOZC_SERVER_DIRECTORY)
   return MOZC_SERVER_DIRECTORY;
 #else
   return "/usr/lib/mozc";
 #endif  // MOZC_SERVER_DIRECTORY
 
-#endif  // OS_WIN, OS_MACOSX, OS_LINUX, ...
+#endif  // OS_WIN, __APPLE__, OS_LINUX, ...
 }
 
-string SystemUtil::GetServerPath() {
-  const string server_path = GetServerDirectory();
+std::string SystemUtil::GetServerPath() {
+  const std::string server_path = GetServerDirectory();
   // if server path is empty, return empty path
   if (server_path.empty()) {
     return "";
@@ -390,8 +400,8 @@ string SystemUtil::GetServerPath() {
   return FileUtil::JoinPath(server_path, kMozcServerName);
 }
 
-string SystemUtil::GetRendererPath() {
-  const string server_path = GetServerDirectory();
+std::string SystemUtil::GetRendererPath() {
+  const std::string server_path = GetServerDirectory();
   // if server path is empty, return empty path
   if (server_path.empty()) {
     return "";
@@ -399,8 +409,8 @@ string SystemUtil::GetRendererPath() {
   return FileUtil::JoinPath(server_path, kMozcRenderer);
 }
 
-string SystemUtil::GetToolPath() {
-  const string server_path = GetServerDirectory();
+std::string SystemUtil::GetToolPath() {
+  const std::string server_path = GetServerDirectory();
   // if server path is empty, return empty path
   if (server_path.empty()) {
     return "";
@@ -408,28 +418,28 @@ string SystemUtil::GetToolPath() {
   return FileUtil::JoinPath(server_path, kMozcTool);
 }
 
-string SystemUtil::GetDocumentDirectory() {
-#if defined(OS_MACOSX)
+std::string SystemUtil::GetDocumentDirectory() {
+#if defined(__APPLE__)
   return GetServerDirectory();
 #elif defined(MOZC_DOCUMENT_DIRECTORY)
   return MOZC_DOCUMENT_DIRECTORY;
 #else
   return FileUtil::JoinPath(GetServerDirectory(), "documents");
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 }
 
-string SystemUtil::GetCrashReportDirectory() {
+std::string SystemUtil::GetCrashReportDirectory() {
   const char kCrashReportDirectory[] = "CrashReports";
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                             kCrashReportDirectory);
 }
 
-string SystemUtil::GetUserNameAsString() {
-#ifdef MOZC_USE_PEPPER_FILE_IO
+std::string SystemUtil::GetUserNameAsString() {
+#ifdef OS_NACL
   LOG(ERROR) << "SystemUtil::GetUserNameAsString() is not implemented in NaCl.";
   return "username";
 
-#elif defined(OS_WIN)  // MOZC_USE_PEPPER_FILE_IO
+#elif defined(OS_WIN)  // OS_NACL
   wchar_t wusername[UNLEN + 1];
   DWORD name_size = UNLEN + 1;
   // Call the same name Windows API.  (include Advapi32.lib).
@@ -448,13 +458,13 @@ string SystemUtil::GetUserNameAsString() {
   CHECK(ppw != NULL);
   return ppw->pw_name;
 
-#else  // OS_ANDROID
-  // OS_MACOSX, OS_LINUX or OS_NACL
+#else   // OS_ANDROID
+  // __APPLE__, OS_LINUX or OS_NACL
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
   return pw.pw_name;
-#endif  // !MOZC_USE_PEPPER_FILE_IO && !OS_WIN && !OS_ANDROID
+#endif  // !OS_NACL && !OS_WIN && !OS_ANDROID
 }
 
 #ifdef OS_WIN
@@ -464,6 +474,7 @@ class UserSidImpl {
  public:
   UserSidImpl();
   const string &get() { return sid_; }
+
  private:
   string sid_;
 };
@@ -506,10 +517,10 @@ UserSidImpl::UserSidImpl() {
 }  // namespace
 #endif  // OS_WIN
 
-string SystemUtil::GetUserSidAsString() {
+std::string SystemUtil::GetUserSidAsString() {
 #ifdef OS_WIN
   return Singleton<UserSidImpl>::get()->get();
-#else  // OS_WIN
+#else   // OS_WIN
   return GetUserNameAsString();
 #endif  // OS_WIN
 }
@@ -526,8 +537,7 @@ string GetObjectNameAsString(HANDLE handle) {
   DWORD size = 0;
   if (::GetUserObjectInformationA(handle, UOI_NAME, nullptr, 0, &size) ||
       ERROR_INSUFFICIENT_BUFFER != ::GetLastError()) {
-    LOG(ERROR) << "GetUserObjectInformationA() failed: "
-               << ::GetLastError();
+    LOG(ERROR) << "GetUserObjectInformationA() failed: " << ::GetLastError();
     return "";
   }
 
@@ -538,10 +548,9 @@ string GetObjectNameAsString(HANDLE handle) {
 
   unique_ptr<char[]> buf(new char[size]);
   DWORD return_size = 0;
-  if (!::GetUserObjectInformationA(handle, UOI_NAME, buf.get(),
-                                   size, &return_size)) {
-    LOG(ERROR) << "::GetUserObjectInformationA() failed: "
-               << ::GetLastError();
+  if (!::GetUserObjectInformationA(handle, UOI_NAME, buf.get(), size,
+                                   &return_size)) {
+    LOG(ERROR) << "::GetUserObjectInformationA() failed: " << ::GetLastError();
     return "";
   }
 
@@ -574,7 +583,8 @@ bool GetCurrentSessionId(uint32 *session_id) {
 // current thread. One reason behind this is that some applications such as
 // Adobe Reader XI use multiple desktops in a process. Basically the input
 // desktop is most appropriate and important desktop for our use case.
-// See http://blogs.adobe.com/asset/2012/10/new-security-capabilities-in-adobe-reader-and-acrobat-xi-now-available.html
+// See
+// http://blogs.adobe.com/asset/2012/10/new-security-capabilities-in-adobe-reader-and-acrobat-xi-now-available.html
 string GetInputDesktopName() {
   const HDESK desktop_handle =
       ::OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS);
@@ -608,15 +618,16 @@ string GetSessionIdString() {
 }  // namespace
 #endif  // OS_WIN
 
-string SystemUtil::GetDesktopNameAsString() {
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+std::string SystemUtil::GetDesktopNameAsString() {
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+    defined(OS_WASM)
   const char *display = getenv("DISPLAY");
   if (display == NULL) {
     return "";
   }
   return display;
 
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
   return "";
 
 #elif defined(OS_WIN)
@@ -639,7 +650,7 @@ string SystemUtil::GetDesktopNameAsString() {
   }
 
   return (session_id + "." + window_station_name + "." + desktop_name);
-#endif  // OS_LINUX, OS_MACOSX, OS_WIN, ...
+#endif  // OS_LINUX, __APPLE__, OS_WIN, ...
 }
 
 #ifdef OS_WIN
@@ -658,12 +669,9 @@ class SystemDirectoryCache {
     DCHECK_EQ(L'\0', path_buffer_[copied_len_wo_null_if_success]);
     system_dir_ = path_buffer_;
   }
-  const bool succeeded() const {
-    return system_dir_ != nullptr;
-  }
-  const wchar_t *system_dir() const {
-    return system_dir_;
-  }
+  const bool succeeded() const { return system_dir_ != nullptr; }
+  const wchar_t *system_dir() const { return system_dir_; }
+
  private:
   wchar_t path_buffer_[MAX_PATH];
   wchar_t *system_dir_;
@@ -739,8 +747,7 @@ bool SystemUtil::IsWindowsX64() {
   SYSTEM_INFO system_info = {};
   // This function never fails.
   ::GetNativeSystemInfo(&system_info);
-  return (system_info.wProcessorArchitecture ==
-          PROCESSOR_ARCHITECTURE_AMD64);
+  return (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
 #else
   return false;
 #endif  // OS_WIN
@@ -788,10 +795,10 @@ string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
 
 // TODO(toshiyuki): move this to the initialization module and calculate
 // version only when initializing.
-string SystemUtil::GetOSVersionString() {
+std::string SystemUtil::GetOSVersionString() {
 #ifdef OS_WIN
   string ret = "Windows";
-  OSVERSIONINFOEX osvi = { 0 };
+  OSVERSIONINFOEX osvi = {0};
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
     ret += ".";
@@ -804,17 +811,17 @@ string SystemUtil::GetOSVersionString() {
     LOG(WARNING) << "GetVersionEx failed";
   }
   return ret;
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
   const string ret = "MacOSX " + MacUtil::GetOSVersionString();
   // TODO(toshiyuki): get more specific info
   return ret;
 #elif defined(OS_LINUX) || defined(OS_NACL)
-  const string ret = "Linux";
+  const std::string ret = "Linux";
   return ret;
-#else  // !OS_WIN && !OS_MACOSX && !OS_LINUX
+#else   // !OS_WIN && !__APPLE__ && !OS_LINUX
   const string ret = "Unknown";
   return ret;
-#endif  // OS_WIN, OS_MACOSX, OS_LINUX
+#endif  // OS_WIN, __APPLE__, OS_LINUX
 }
 
 void SystemUtil::DisableIME() {
@@ -828,17 +835,16 @@ void SystemUtil::DisableIME() {
 
 uint64 SystemUtil::GetTotalPhysicalMemory() {
 #if defined(OS_WIN)
-  MEMORYSTATUSEX memory_status = { sizeof(MEMORYSTATUSEX) };
+  MEMORYSTATUSEX memory_status = {sizeof(MEMORYSTATUSEX)};
   if (!::GlobalMemoryStatusEx(&memory_status)) {
     return 0;
   }
   return memory_status.ullTotalPhys;
-#elif defined(OS_MACOSX)
-  int mib[] = { CTL_HW, HW_MEMSIZE };
+#elif defined(__APPLE__)
+  int mib[] = {CTL_HW, HW_MEMSIZE};
   uint64 total_memory = 0;
   size_t size = sizeof(total_memory);
-  const int error =
-      sysctl(mib, arraysize(mib), &total_memory, &size, NULL, 0);
+  const int error = sysctl(mib, arraysize(mib), &total_memory, &size, NULL, 0);
   if (error == -1) {
     const int error = errno;
     LOG(ERROR) << "sysctl with hw.memsize failed. "
@@ -846,7 +852,8 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
     return 0;
   }
   return total_memory;
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+    defined(OS_WASM)
 #if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const long page_size = sysconf(_SC_PAGESIZE);
   const long number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
@@ -856,12 +863,12 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
     return 0;
   }
   return static_cast<uint64>(number_of_phyisical_pages) * page_size;
-#else  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
+#else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 #endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-#else  // !(defined(OS_WIN) || defined(OS_MACOSX) || defined(OS_LINUX))
+#else   // !(defined(OS_WIN) || defined(__APPLE__) || defined(OS_LINUX))
 #error "unknown platform"
-#endif  // OS_WIN, OS_MACOSX, OS_LINUX
+#endif  // OS_WIN, __APPLE__, OS_LINUX
 }
 
 }  // namespace mozc

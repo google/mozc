@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,10 +35,10 @@
 #include "base/logging.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
-#include "request/conversion_request.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
@@ -52,7 +52,7 @@ enum SegmentType {
   NON_ZIPCODE = 2,
 };
 
-void AddSegment(const string &key, const string &value,
+void AddSegment(const std::string &key, const std::string &value,
                 SegmentType type, const POSMatcher &pos_matcher,
                 Segments *segments) {
   segments->Clear();
@@ -71,7 +71,7 @@ void AddSegment(const string &key, const string &value,
 }
 
 bool HasZipcodeAndAddress(const Segments &segments,
-                          const string &expected) {
+                          const std::string &expected) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
@@ -106,8 +106,8 @@ class ZipcodeRewriterTest : public ::testing::Test {
 TEST_F(ZipcodeRewriterTest, BasicTest) {
   std::unique_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
 
-  const string kZipcode = "107-0052";
-  const string kAddress = "東京都港区赤坂";
+  const std::string kZipcode = "107-0052";
+  const std::string kAddress = "東京都港区赤坂";
   ConversionRequest request;
   config::Config config;
   request.set_config(&config);

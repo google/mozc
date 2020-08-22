@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,9 +55,7 @@ UnnamedEvent::UnnamedEvent()
 
 UnnamedEvent::~UnnamedEvent() {}
 
-bool UnnamedEvent::IsAvailable() const {
-  return (NULL != handle_.get());
-}
+bool UnnamedEvent::IsAvailable() const { return (NULL != handle_.get()); }
 
 bool UnnamedEvent::Notify() {
   if (!IsAvailable()) {
@@ -75,18 +73,17 @@ bool UnnamedEvent::Notify() {
 
 bool UnnamedEvent::Wait(int msec) {
   if (!IsAvailable()) {
-    return true;   // assume that it is already raised
+    return true;  // assume that it is already raised
   }
 
   if (msec < 0) {
     msec = INFINITE;
   }
 
-  return WAIT_TIMEOUT !=
-      ::WaitForSingleObject(handle_.get(), msec);
+  return WAIT_TIMEOUT != ::WaitForSingleObject(handle_.get(), msec);
 }
 
-#else  // OS_WIN
+#else   // OS_WIN
 
 namespace {
 class ScopedPthreadMutexLock {
@@ -94,9 +91,7 @@ class ScopedPthreadMutexLock {
   explicit ScopedPthreadMutexLock(pthread_mutex_t *mutex) : mutex_(mutex) {
     pthread_mutex_lock(mutex_);
   }
-  ~ScopedPthreadMutexLock() {
-    pthread_mutex_unlock(mutex_);
-  }
+  ~ScopedPthreadMutexLock() { pthread_mutex_unlock(mutex_); }
 
  private:
   pthread_mutex_t *mutex_;
@@ -116,9 +111,7 @@ UnnamedEvent::~UnnamedEvent() {
   pthread_cond_destroy(&cond_);
 }
 
-bool UnnamedEvent::IsAvailable() const {
-  return true;
-}
+bool UnnamedEvent::IsAvailable() const { return true; }
 
 bool UnnamedEvent::Notify() {
   {
@@ -193,5 +186,5 @@ bool UnnamedEvent::Wait(int msec) {
   notified_ = false;
   return true;
 }
-#endif   // OS_WIN
+#endif  // OS_WIN
 }  // namespace mozc

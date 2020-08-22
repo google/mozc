@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,13 @@
 
 #include "dictionary/file/codec.h"
 
+#include <cstdint>
+#include <ostream>
+
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/status.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/codec_util.h"
@@ -67,81 +71,113 @@ void DictionaryFileCodec::WriteSections(
     }
   }
 
-  filecodec_util::WriteInt(0, ofs);
+  filecodec_util::WriteInt32(0, ofs);
 }
 
 void DictionaryFileCodec::WriteHeader(std::ostream *ofs) const {
   DCHECK(ofs);
-  filecodec_util::WriteInt(filemagic_, ofs);
-  filecodec_util::WriteInt(seed_, ofs);
+  filecodec_util::WriteInt32(filemagic_, ofs);
+  filecodec_util::WriteInt32(seed_, ofs);
 }
 
 void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
                                        std::ostream *ofs) const {
   DCHECK(ofs);
-  const string &name = section.name;
+  const std::string &name = section.name;
   // name should be encoded
   // uint64 needs just 8 bytes.
   DCHECK_EQ(8, name.size());
-  string escaped;
-  Util::Escape(name, &escaped);
-  VLOG(1) << "section=" << escaped << " length=" << section.len;
-  filecodec_util::WriteInt(section.len, ofs);
-  ofs->write(name.data(), name.size());
-
-  ofs->write(section.ptr, section.len);
-  Pad4(section.len, ofs);
-}
-
-void DictionaryFileCodec::Pad4(int length, std::ostream *ofs) {
-  DCHECK(ofs);
-  for (int i = length; (i % 4) != 0; ++i) {
-    (*ofs) << '\0';
+  if (VLOG_IS_ON(1)) {
+    std::string escaped;
+    Util::Escape(name, &escaped);
+    LOG(INFO) << "section=" << escaped << " length=" << section.len;
   }
+  filecodec_util::WriteInt32(section.len, ofs);
+  ofs->write(name.data(), name.size());
+  ofs->write(section.ptr, section.len);
+  filecodec_util::Pad4(section.len, ofs);
 }
 
-string DictionaryFileCodec::GetSectionName(const string &name) const {
+std::string DictionaryFileCodec::GetSectionName(const std::string &name) const {
   VLOG(1) << "seed\t" << seed_;
   const uint64 name_fp = Hash::FingerprintWithSeed(name, seed_);
-  const string fp_string(reinterpret_cast<const char *>(&name_fp),
-                         sizeof(name_fp));
-  string escaped;
+  const std::string fp_string(reinterpret_cast<const char *>(&name_fp),
+                              sizeof(name_fp));
+  std::string escaped;
   Util::Escape(fp_string, &escaped);
   VLOG(1) << "Section name for " << name << ": " << escaped;
   return fp_string;
 }
 
-bool DictionaryFileCodec::ReadSections(
+mozc::Status DictionaryFileCodec::ReadSections(
     const char *image, int length,
     std::vector<DictionaryFileSection> *sections) const {
   DCHECK(sections);
-  const char *ptr = image;
-  const int filemagic = filecodec_util::ReadInt(ptr);
-  CHECK(filemagic == filemagic_)
-      << "invalid dictionary file magic (recompile dictionary?)";
-  ptr += sizeof(filemagic);
-  seed_ = filecodec_util::ReadInt(ptr);
-  ptr += sizeof(seed_);
-  int size;
-  while ((size = filecodec_util::ReadInt(ptr))) {
-    ptr += sizeof(size);
-    // finger print name
-    const string name(ptr, sizeof(uint64));
-    ptr += sizeof(uint64);
-
-    string escaped;
-    Util::Escape(name, &escaped);
-    VLOG(1) << "section=" << escaped << " length=" << size;
-
-    sections->push_back(DictionaryFileSection(ptr, size, name));
-
-    ptr += size;
-    ptr += filecodec_util::Rup4(size);
-    if (image + length < ptr) {
-      return false;
-    }
+  if (image == nullptr) {
+    return mozc::InvalidArgumentError("codec.cc: Image is nullptr");
   }
-  return true;
+  // At least 12 bytes (3 * int32) are required.
+  if (length < 12) {
+    return mozc::FailedPreconditionError(
+        absl::StrCat("codec.cc: Insufficient data size: ", length, " bytes"));
+  }
+  // The image must be aligned at 32-bit boundary.
+  if (reinterpret_cast<std::uintptr_t>(image) % 4 != 0) {
+    return mozc::FailedPreconditionError(
+        absl::StrCat("codec.cc: memory block of size ", length,
+                     " is not aligned at 32-bit boundary"));
+  }
+  const char *ptr = image;  // The current position at which data is read.
+  const char *const image_end = image + length;
+
+  const int32 filemagic = filecodec_util::ReadInt32ThenAdvance(&ptr);
+  if (filemagic != filemagic_) {
+    return mozc::FailedPreconditionError(absl::StrCat(
+        "codec.cc: Invalid dictionary file magic. Expected: ", filemagic_,
+        " Actual: ", filemagic));
+  }
+  seed_ = filecodec_util::ReadInt32ThenAdvance(&ptr);
+  for (int section_index = 0;; ++section_index) {
+    // Each section has the following format:
+    // +-----------+-------------+-----------------+---------------+
+    // |   int32   |   char[8]   | char[data_size] | up to 3 bytes |
+    // | data_size | fingerprint |      data       |   padding     |
+    // +-----------+-------------+-----------------+---------------+
+    // ^                         <- - - - padded_data_size - - - - >
+    // ptr points to here now.
+    const int32 data_size = filecodec_util::ReadInt32ThenAdvance(&ptr);
+    if (data_size == 0) {  // The end marker written in WriteSections().
+      break;
+    }
+    // Calculate the section end pointer.  Note that |ptr| currently points to
+    // the beginning of fingerprint.
+    constexpr size_t kFingerprintByteLength = 8;
+    const auto padded_data_size = filecodec_util::RoundUp4(data_size);
+    const auto *section_end = ptr + kFingerprintByteLength + padded_data_size;
+    if (section_end > image_end) {
+      return mozc::OutOfRangeError(absl::StrCat(
+          "codec.cc: Section ", section_index,
+          ": Read pointer will pass the end: offset=", section_end - image,
+          ", image_size=", length));
+    }
+    const std::string fingerprint(ptr, kFingerprintByteLength);
+    ptr += kFingerprintByteLength;
+    if (VLOG_IS_ON(1)) {
+      std::string escaped;
+      Util::Escape(fingerprint, &escaped);
+      LOG(INFO) << "section=" << escaped << " data_size=" << data_size;
+    }
+    // Add a section with data and fingerprint.  Note that the data size is
+    // |data_size| but |ptr| is advanced by |padded_data_size| to skip padding
+    // bytes at the end.
+    sections->emplace_back(ptr, data_size, fingerprint);
+    ptr += padded_data_size;
+  }
+  if (ptr != image_end) {
+    return mozc::FailedPreconditionError(absl::StrCat(
+        "codec.cc: ", image_end - ptr, " bytes remaining out of ", length));
+  }
+  return mozc::Status();
 }
 
 }  // namespace dictionary

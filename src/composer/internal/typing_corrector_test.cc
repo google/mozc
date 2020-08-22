@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -50,7 +51,7 @@ using ::mozc::config::ConfigHandler;
 // Embedded cost for testing purpose.
 class CostTableForTest {
  public:
-  typedef std::map<StringPiece, ProbableKeyEvents> CorrectionTable;
+  typedef std::map<absl::string_view, ProbableKeyEvents> CorrectionTable;
 
   CostTableForTest() {
     {
@@ -266,7 +267,7 @@ class CostTableForTest {
   }
 
   void InsertCharacter(TypingCorrector *corrector,
-                       const StringPiece& key) const {
+                       absl::string_view key) const {
     corrector->InsertCharacter(key, table_.find(key)->second);
   }
 
@@ -296,25 +297,24 @@ class TypingCorrectorTest : public ::testing::Test {
     qwerty_table_.InitializeWithRequestAndConfig(request, config_,
                                                  mock_data_manager_);
     qwerty_table_.typing_model_ = TypingModel::CreateTypingModel(
-        commands::Request::QWERTY_MOBILE_TO_HIRAGANA,
-        mock_data_manager_);
+        commands::Request::QWERTY_MOBILE_TO_HIRAGANA, mock_data_manager_);
   }
 
   void InsertOneByOne(const char *keys, TypingCorrector *corrector) {
     for (const char *key = keys; *key != '\0'; ++key) {
-      Singleton<CostTableForTest>::get()->InsertCharacter(corrector,
-                                                          StringPiece(key, 1));
+      Singleton<CostTableForTest>::get()->InsertCharacter(
+          corrector, absl::string_view(key, 1));
     }
   }
 
   bool FindKey(const std::vector<TypeCorrectedQuery> &queries,
-               const string &key) {
+               const std::string &key) {
     for (size_t i = 0; i < queries.size(); ++i) {
-      const std::set<string> &expanded = queries[i].expanded;
+      const std::set<std::string> &expanded = queries[i].expanded;
       if (expanded.empty() && queries[i].base == key) {
         return true;
       }
-      for (std::set<string>::const_iterator itr = expanded.begin();
+      for (std::set<std::string>::const_iterator itr = expanded.begin();
            itr != expanded.end(); ++itr) {
         if (queries[i].base + *itr == key) {
           return true;
@@ -331,8 +331,7 @@ class TypingCorrectorTest : public ::testing::Test {
     EXPECT_EQ(l.config_, r.config_);
     EXPECT_EQ(l.max_correction_query_candidates_,
               r.max_correction_query_candidates_);
-    EXPECT_EQ(l.max_correction_query_results_,
-              r.max_correction_query_results_);
+    EXPECT_EQ(l.max_correction_query_results_, r.max_correction_query_results_);
     EXPECT_EQ(l.top_n_.size(), r.top_n_.size());
     for (size_t i = 0; i < l.top_n_.size(); ++i) {
       EXPECT_EQ(l.top_n_[i], l.top_n_[i]);
@@ -347,8 +346,7 @@ class TypingCorrectorTest : public ::testing::Test {
 TEST_F(TypingCorrectorTest, TypingCorrection) {
   const int kCorrectedQueryCandidates = 1000;
   const int kCorrectedQueryResults = 1000;
-  TypingCorrector corrector(&qwerty_table_,
-                            kCorrectedQueryCandidates,
+  TypingCorrector corrector(&qwerty_table_, kCorrectedQueryCandidates,
                             kCorrectedQueryResults);
   corrector.SetConfig(&config_);
   ASSERT_TRUE(corrector.IsAvailable());
@@ -391,15 +389,14 @@ TEST_F(TypingCorrectorTest, TypingCorrection) {
   };
 
   for (size_t i = 0; i < arraysize(kTestCases); ++i) {
-    SCOPED_TRACE(string("key: ") + kTestCases[i].keys);
+    SCOPED_TRACE(std::string("key: ") + kTestCases[i].keys);
     InsertOneByOne(kTestCases[i].keys, &corrector);
     std::vector<TypeCorrectedQuery> queries;
     corrector.GetQueriesForPrediction(&queries);
     // Number of queries can be equal to kCorrectedQueries.
     EXPECT_GE(kCorrectedQueryResults, queries.size());
     for (std::vector<TypeCorrectedQuery>::iterator it = queries.begin();
-         it != queries.end();
-         ++it) {
+         it != queries.end(); ++it) {
       // Empty TypeCorrectedQuery is unexpected.
       EXPECT_FALSE(it->base.empty() && it->expanded.empty());
     }

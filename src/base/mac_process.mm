@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,6 @@ const char kFileSchema[] = "file://";
 }  // namespace
 
 bool MacProcess::OpenBrowserForMac(const string &url) {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   bool success = false;
   NSURL *nsURL = nil;
   if (url.find(kFileSchema) == 0) {
@@ -63,24 +62,19 @@ bool MacProcess::OpenBrowserForMac(const string &url) {
   } else {
     DLOG(ERROR) << "NSURL is not initialized";
   }
-  [pool drain];
   return success;
 }
 
 bool MacProcess::OpenApplication(const string &path) {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSString *nsStr = [[NSString alloc] initWithBytes:path.data()
                                       length:path.size()
                                       encoding:NSUTF8StringEncoding];
   [[NSWorkspace sharedWorkspace] launchApplication:nsStr];
-  [pool drain];
   return true;
 }
 
 namespace {
 bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
   // FLAGS_error_type is used where FLAGS_mode is "error_message_dialog".
   setenv("FLAGS_error_type", error_type.c_str(), 1);
 
@@ -118,7 +112,6 @@ bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
 
   bool succeeded =
       [[NSWorkspace sharedWorkspace] launchApplication:toolAppPath];
-  [pool drain];
   return succeeded;
 }
 }  // namespace

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,8 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_TRUE(tokens.empty());
   }
 
-  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");
+  const std::string filename =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");
   {
     OutputFileStream ofs(filename.c_str());
     ofs << kTextLines;
@@ -210,9 +211,11 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
 }
 
 TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
-  const string filename1 = FileUtil::JoinPath(FLAGS_test_tmpdir, "test1.tsv");
-  const string filename2 = FileUtil::JoinPath(FLAGS_test_tmpdir, "test2.tsv");
-  const string filename = filename1 + "," + filename2;
+  const std::string filename1 =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test1.tsv");
+  const std::string filename2 =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "test2.tsv");
+  const std::string filename = filename1 + "," + filename2;
 
   {
     OutputFileStream ofs(filename1.c_str());
@@ -236,9 +239,9 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
 TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
 
-  const string dic_filename =
+  const std::string dic_filename =
       FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");
-  const string reading_correction_filename =
+  const std::string reading_correction_filename =
       FileUtil::JoinPath(FLAGS_test_tmpdir, "reading_correction.tsv");
 
   {

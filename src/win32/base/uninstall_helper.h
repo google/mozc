@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,9 @@
 #include <vector>
 
 #include "base/port.h"
+#include "testing/base/public/gunit_prod.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/keyboard_layout_id.h"
-#include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 
 namespace mozc {
@@ -50,14 +50,14 @@ struct KeyboardLayoutInfo {
 
 struct LayoutProfileInfo {
   LayoutProfileInfo();
-  LANGID  langid;
-  CLSID   clsid;
-  GUID    profile_guid;
-  DWORD   klid;
+  LANGID langid;
+  CLSID clsid;
+  GUID profile_guid;
+  DWORD klid;
   std::wstring ime_filename;
-  bool    is_default;
-  bool    is_tip;
-  bool    is_enabled;
+  bool is_default;
+  bool is_tip;
+  bool is_enabled;
 };
 
 // This class is used to determine the new enabled layout/profile for the
@@ -81,14 +81,12 @@ class UninstallHelper {
   // function from the deferred custom action which does not use
   // impersonation, it is highly recomended to set true for
   // |disable_hkcu_cache| so that HKCU points HKU/.Default as expected.
-  static bool EnsureIMEIsRemovedForCurrentUser(
-      bool disable_hkcu_cache);
+  static bool EnsureIMEIsRemovedForCurrentUser(bool disable_hkcu_cache);
 
   // Returns true if installed the list of keyboard layout and TIP is
   // retrieved in successful.
   static bool GetInstalledProfilesByLanguage(
-      LANGID langid,
-      std::vector<LayoutProfileInfo> *installed_profiles);
+      LANGID langid, std::vector<LayoutProfileInfo> *installed_profiles);
 
  private:
   // This function is the main part of RestoreUserIMEEnvironmentMain for
@@ -100,8 +98,7 @@ class UninstallHelper {
   static bool GetNewEnabledProfileForVista(
       const std::vector<LayoutProfileInfo> &current_profiles,
       const std::vector<LayoutProfileInfo> &installed_profiles,
-      LayoutProfileInfo *current_default,
-      LayoutProfileInfo *new_default,
+      LayoutProfileInfo *current_default, LayoutProfileInfo *new_default,
       std::vector<LayoutProfileInfo> *removed_profiles);
 
   // Returns true if the list of keyboard layout and TIP for the current user
@@ -115,9 +112,9 @@ class UninstallHelper {
       const std::vector<LayoutProfileInfo> &profiles_to_be_removed);
 
   // Returns true if |profile| is set as the new default IME or TIP.
-  static bool SetDefaultForVista(
-      const LayoutProfileInfo &current_default,
-      const LayoutProfileInfo &new_default, bool broadcast_change);
+  static bool SetDefaultForVista(const LayoutProfileInfo &current_default,
+                                 const LayoutProfileInfo &new_default,
+                                 bool broadcast_change);
 
   // Returns a string in which the list of profile information specified in
   // |profiles| is encoded.  See input_dll.h for the format.

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,12 @@
 #include <string>
 #include <vector>
 
-#include "base/port_string.h"
-
 namespace mozc {
 
-void OutputExistenceHeader(const std::vector<string> &entries,
-                           const string &data_namespace, std::ostream *ofs,
+void OutputExistenceHeader(const std::vector<std::string> &entries,
+                           const std::string &data_namespace, std::ostream *ofs,
                            double error_rate);
-void OutputExistenceBinary(const std::vector<string> &entries,
+void OutputExistenceBinary(const std::vector<std::string> &entries,
                            std::ostream *ofs, double error_rate);
 
 }  // namespace mozc

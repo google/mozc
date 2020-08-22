@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ Here, <TAG> is any string to distinguish data set.
 """
 
 import optparse
+import re
 
 
 def _ParseOption():
@@ -54,11 +55,11 @@ def main():
   data = {}
   with open(opts.mozc_version_template, 'r') as f:
     for line in f:
-      line = line.rstrip()
-      if not line or line[0] == '#':
-        continue
-      key, value = line.split('=')
-      data[key] = value
+      matchobj = re.match(r'(\w+) *= *(.*)', line.strip())
+      if matchobj:
+        key = matchobj.group(1)
+        value = matchobj.group(2)
+        data[key] = value
 
   with open(opts.output, 'w') as f:
     f.write('.'.join((data['ENGINE_VERSION'], data['DATA_VERSION'], opts.tag)))

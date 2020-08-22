@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ def ReplaceVariables(data, environment):
       The value for the variable if the variable is defined in the
       environment.  Otherwise original string is returned.
     """
-    if environment.has_key(matchobj.group(1)):
+    if matchobj.group(1) in environment:
       return environment[matchobj.group(1)]
     return matchobj.group(0)
 

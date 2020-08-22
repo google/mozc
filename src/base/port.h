@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,10 @@
 #ifndef MOZC_BASE_PORT_H_
 #define MOZC_BASE_PORT_H_
 
-#include "base/port_string.h"
+// TODO(komatsu): Remove this string include and using.
+#include <string>
+
+using std::string;
 
 // Check duplicate OS_XXX definition.
 
@@ -38,9 +41,9 @@
 #define MOZC_OS_DEFINED
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #define MOZC_OS_DEFINED
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
 #ifdef OS_ANDROID
 #define MOZC_OS_DEFINED
@@ -58,6 +61,13 @@
 #endif  // !OS_ANDROID && !OS_NACL
 #endif  // OS_LINUX
 
+#ifdef OS_IOS
+#define MOZC_OS_DEFINED
+#endif  // OS_IOS
+
+#ifdef OS_WASM
+#define MOZC_OS_DEFINED
+#endif  // OS_WASM
 
 #ifndef MOZC_OS_DEFINED
 #error "OS_XXX (e.g., OS_WIN) must be defined."
@@ -66,111 +76,87 @@
 #undef MOZC_OS_DEFINED
 
 
-
 #ifndef _MSC_VER
 #if !defined(__STDC_FORMAT_MACROS)
 #define __STDC_FORMAT_MACROS
 #endif  // !__STDC_FORMAT_MACROS
 #include <inttypes.h>
 #endif  // _MSC_VER
-#include <sys/types.h>
 #include <stdint.h>
+#include <sys/types.h>
 #include <cstddef>
 
+#include "absl/base/attributes.h"
+#include "absl/base/macros.h"
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+#include "absl/base/integral_types.h"
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
+
 // Integral types.
-#ifdef OS_WIN
-using int8 = __int8;
-using int16 = __int16;
-using int32 = __int32;
-using int64 = __int64;
-using uint8 = unsigned __int8;
-using uint16 = unsigned __int16;
-using uint32 = unsigned __int32;
-using uint64 = unsigned __int64;
-#else  // OS_WIN
-using int8 = int8_t;
-using int16 = int16_t;
-using int32 = int32_t;
-using int64 = int64_t;
-using uint8 = uint8_t;
-using uint16 = uint16_t;
-using uint32 = uint32_t;
-using uint64 = uint64_t;
-#endif  // OS_WIN
-using char32 = uint32;
+typedef signed char int8;
+typedef short int16;  // NOLINT
+typedef int int32;
+#ifdef COMPILER_MSVC
+typedef __int64 int64;
+#else
+typedef long long int64;  // NOLINT
+#endif /* COMPILER_MSVC */
 
-template <typename T, size_t N>
-char (&ArraySizeHelper(T (&array)[N]))[N];
+typedef unsigned char uint8;
+typedef unsigned short uint16;  // NOLINT
+typedef unsigned int uint32;
+#ifdef COMPILER_MSVC
+typedef unsigned __int64 uint64;
+#else
+typedef unsigned long long uint64;  // NOLINT
+#endif /* COMPILER_MSVC */
 
-#ifndef _MSC_VER
-template <typename T, size_t N>
-char (&ArraySizeHelper(const T (&array)[N]))[N];
-#endif  // !_MSC_VER
+typedef signed int char32;
 
-#define arraysize(array) (sizeof(ArraySizeHelper(array)))
+#ifdef COMPILER_MSVC /* if Visual C++ */
+
+// VC++ long long suffixes
+#define GG_LONGLONG(x) x##I64
+#define GG_ULONGLONG(x) x##UI64
+
+#else /* not Visual C++ */
 
 #define GG_LONGLONG(x) x##LL
 #define GG_ULONGLONG(x) x##ULL
 
-// Print format strings for 64-bit integers.
-#ifdef _MSC_VER
-#define MOZC_PRId64 "I64d"
-#define MOZC_PRIo64 "I64o"
-#define MOZC_PRIu64 "I64u"
-#define MOZC_PRIx64 "I64x"
-#define MOZC_PRIX64 "I64X"
-#else  // _MSC_VER
-#define MOZC_PRId64 PRId64
-#define MOZC_PRIo64 PRIo64
-#define MOZC_PRIu64 PRIu64
-#define MOZC_PRIx64 PRIx64
-#define MOZC_PRIX64 PRIX64
-#endif  // _MSC_VER
+#endif  // COMPILER_MSVC
 
 // INT_MIN, INT_MAX, UINT_MAX family at Google
-static const uint8  kuint8max  = (( uint8) 0xFF);
-static const uint16 kuint16max = ((uint16) 0xFFFF);
-static const uint32 kuint32max = ((uint32) 0xFFFFFFFF);
-static const uint64 kuint64max = ((uint64) GG_LONGLONG(0xFFFFFFFFFFFFFFFF));
-static const  int8  kint8min   = ((  int8) 0x80);
-static const  int8  kint8max   = ((  int8) 0x7F);
-static const  int16 kint16min  = (( int16) 0x8000);
-static const  int16 kint16max  = (( int16) 0x7FFF);
-static const  int32 kint32min  = (( int32) 0x80000000);
-static const  int32 kint32max  = (( int32) 0x7FFFFFFF);
-static const  int64 kint64min  = (( int64) GG_LONGLONG(0x8000000000000000));
-static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
+const uint8 kuint8max{0xFF};
+const uint16 kuint16max{0xFFFF};
+const uint32 kuint32max{0xFFFFFFFF};
+const uint64 kuint64max{GG_ULONGLONG(0xFFFFFFFFFFFFFFFF)};
+const int8 kint8min{~0x7F};
+const int8 kint8max{0x7F};
+const int16 kint16min{~0x7FFF};
+const int16 kint16max{0x7FFF};
+const int32 kint32min{~0x7FFFFFFF};
+const int32 kint32max{0x7FFFFFFF};
+const int64 kint64min{GG_LONGLONG(~0x7FFFFFFFFFFFFFFF)};
+const int64 kint64max{GG_LONGLONG(0x7FFFFFFFFFFFFFFF)};
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName)    \
-    TypeName(const TypeName&) = delete;       \
-    void operator=(const TypeName&) = delete
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-#define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName)  \
-    TypeName() = delete;                          \
-    DISALLOW_COPY_AND_ASSIGN(TypeName)
+#ifndef arraysize
+#define arraysize(array) ABSL_ARRAYSIZE(array)
+#endif  // arraysize
 
-// Macro for annotating implicit fall-through
-// TODO(team): Implement this.
-#define  FALLTHROUGH_INTENDED do { } while (0)
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+  TypeName(const TypeName&) = delete;      \
+  void operator=(const TypeName&) = delete
 
-#if defined(__GNUC__) || defined(__clang__)
-// Tell the compiler to do printf format string checking if the
-// compiler supports it; see the 'format' attribute in
-// <http://gcc.gnu.org/onlinedocs/gcc-4.3.0/gcc/Function-Attributes.html>.
-//
-// N.B.: As the GCC manual states, "[s]ince non-static C++ methods
-// have an implicit 'this' argument, the arguments of such methods
-// should be counted from two, not one."
-#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check) \
-  __attribute__((__format__(__printf__, string_index, first_to_check)))
-#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check) \
-  __attribute__((__format__(__scanf__, string_index, first_to_check)))
-#else
-#define ABSL_PRINTF_ATTRIBUTE(string_index, first_to_check)
-#define ABSL_SCANF_ATTRIBUTE(string_index, first_to_check)
-#endif  // __GNUC__ || __clang__
+#define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
+  TypeName() = delete;                           \
+  DISALLOW_COPY_AND_ASSIGN(TypeName)
 
-#define AS_STRING(x)   AS_STRING_INTERNAL(x)
-#define AS_STRING_INTERNAL(x)   #x
+#define AS_STRING(x) AS_STRING_INTERNAL(x)
+#define AS_STRING_INTERNAL(x) #x
+
 
 #endif  // MOZC_BASE_PORT_H_

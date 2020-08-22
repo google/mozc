@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,17 +47,16 @@ using ::mozc::commands::Request;
 using ::mozc::config::Config;
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
   std::unique_ptr<mozc::composer::Composer> composer(
-      new mozc::composer::Composer(&table,
-                                   &Request::default_instance(),
+      new mozc::composer::Composer(&table, &Request::default_instance(),
                                    &Config::default_instance()));
 
-  string command;
-  string left, focused, right;
+  std::string command;
+  std::string left, focused, right;
 
   while (getline(std::cin, command)) {
     if (command == "<") {

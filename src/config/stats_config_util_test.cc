@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,13 +36,12 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/win_api_test_helper.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 #ifdef OS_ANDROID
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
-
-DECLARE_string(test_tmpdir);
 #endif  // OS_ANDROID
 
 namespace mozc {
@@ -95,20 +94,17 @@ bool TryGetKnownKey(HKEY key, LPCWSTR sub_key, HKEY *result_key) {
 // set unique id at the template parameter.
 // This template class is mainly used for migration codes of http://b/2451942
 // and http://b/2452672
-template<int Id>
+template <int Id>
 class RegistryEmulator {
  public:
-  template<int Id>
+  template <int Id>
   class PropertySelector {
    public:
-    PropertySelector() : run_level_(kRunLevelMedium) {
-    }
+    PropertySelector() : run_level_(kRunLevelMedium) {}
     bool contains_key_in_usagestats_map(HKEY key) const {
       return usagestats_map_.find(key) != usagestats_map_.end();
     }
-    void clear_usagestats_map() {
-      usagestats_map_.clear();
-    }
+    void clear_usagestats_map() { usagestats_map_.clear(); }
     void erase_entry_from_usagestats_map(HKEY key) {
       usagestats_map_.erase(key);
     }
@@ -122,19 +118,13 @@ class RegistryEmulator {
       }
       return i->second;
     }
-    std::map<HKEY, DWORD> & usagestats_map() const {
-      return usagestats_map_;
-    }
-    int run_level() const {
-      return run_level_;
-    }
-    void set_run_level(int run_level) {
-      run_level_ = run_level;
-    }
+    std::map<HKEY, DWORD> &usagestats_map() const { return usagestats_map_; }
+    int run_level() const { return run_level_; }
+    void set_run_level(int run_level) { run_level_ = run_level; }
 
    private:
     std::map<HKEY, DWORD> usagestats_map_;
-    int              run_level_;
+    int run_level_;
   };
   typedef PropertySelector<Id> Property;
   RegistryEmulator() {
@@ -151,8 +141,8 @@ class RegistryEmulator {
         DEFINE_HOOK("advapi32.dll", RegQueryValueExW, TestRegQueryValueExW));
     requests.push_back(
         DEFINE_HOOK("advapi32.dll", RegDeleteValueW, TestRegDeleteValueW));
-    restore_info_ = WinAPITestHelper::DoHook(
-        ::GetModuleHandle(nullptr), requests);
+    restore_info_ =
+        WinAPITestHelper::DoHook(::GetModuleHandle(nullptr), requests);
   }
 
   ~RegistryEmulator() {
@@ -163,8 +153,8 @@ class RegistryEmulator {
     mozc::Singleton<Property>::get()->set_run_level(run_level);
   }
   static bool HasUsagestatsValue(HKEY key) {
-    if (!mozc::Singleton<Property>::get()->
-        contains_key_in_usagestats_map(key)) {
+    if (!mozc::Singleton<Property>::get()->contains_key_in_usagestats_map(
+            key)) {
       return false;
     }
     return true;
@@ -183,18 +173,15 @@ class RegistryEmulator {
     // Note that kHKLM_ClientStateMedium does not require admin rights.
     if (key == kHKLM_ClientState) {
       // Requires admin rights to update the value
-      if (mozc::Singleton<Property>::get()->run_level() <
-          kRunLevelHigh) {
+      if (mozc::Singleton<Property>::get()->run_level() < kRunLevelHigh) {
         return false;
       }
     } else if (key == kHKLM_ClientStateMedium) {
-      if (mozc::Singleton<Property>::get()->run_level() <
-          kRunLevelMedium) {
+      if (mozc::Singleton<Property>::get()->run_level() < kRunLevelMedium) {
         return false;
       }
     } else if (key == kHKCU_ClientState) {
-      if (mozc::Singleton<Property>::get()->run_level() <
-          kRunLevelMedium) {
+      if (mozc::Singleton<Property>::get()->run_level() < kRunLevelMedium) {
         return false;
       }
     }
@@ -226,9 +213,9 @@ class RegistryEmulator {
     }
     return ERROR_SUCCESS;
   }
-  static LSTATUS WINAPI TestRegSetValueExW(
-      HKEY key, LPCWSTR value_name, DWORD reserved, DWORD type,
-      const BYTE *data, DWORD num_data) {
+  static LSTATUS WINAPI TestRegSetValueExW(HKEY key, LPCWSTR value_name,
+                                           DWORD reserved, DWORD type,
+                                           const BYTE *data, DWORD num_data) {
     if (type != REG_DWORD || std::wstring(kSendStatsName) != value_name) {
       // Do nothing for other cases.
       return ERROR_SUCCESS;
@@ -236,30 +223,31 @@ class RegistryEmulator {
     if (!CheckWritable(key)) {
       return ERROR_ACCESS_DENIED;
     }
-    SetUsagestatsValue(key, *reinterpret_cast<const DWORD*>(data));
+    SetUsagestatsValue(key, *reinterpret_cast<const DWORD *>(data));
     return ERROR_SUCCESS;
   }
-  static LSTATUS WINAPI TestRegCloseKey(HKEY key) {
-    return ERROR_SUCCESS;
-  }
-  static LSTATUS WINAPI TestRegOpenKeyExW(
-      HKEY key, LPCWSTR sub_key, DWORD options, REGSAM sam, PHKEY result) {
+  static LSTATUS WINAPI TestRegCloseKey(HKEY key) { return ERROR_SUCCESS; }
+  static LSTATUS WINAPI TestRegOpenKeyExW(HKEY key, LPCWSTR sub_key,
+                                          DWORD options, REGSAM sam,
+                                          PHKEY result) {
     if (!TryGetKnownKey(key, sub_key, result)) {
       return ERROR_FILE_NOT_FOUND;
     }
     return ERROR_SUCCESS;
   }
-  static LSTATUS WINAPI TestRegQueryValueExW(
-      HKEY key, LPCWSTR value_name, LPDWORD reserved, LPDWORD type,
-      LPBYTE data, LPDWORD num_data) {
+  static LSTATUS WINAPI TestRegQueryValueExW(HKEY key, LPCWSTR value_name,
+                                             LPDWORD reserved, LPDWORD type,
+                                             LPBYTE data, LPDWORD num_data) {
     if (std::wstring(kSendStatsName) != value_name) {
       return ERROR_SUCCESS;
     }
     if (!HasUsagestatsValue(key)) {
       return ERROR_FILE_NOT_FOUND;
     }
-    GetUsagestatsValue(key, reinterpret_cast<DWORD*>(data));
-    if (type != NULL) { *type = REG_DWORD; }
+    GetUsagestatsValue(key, reinterpret_cast<DWORD *>(data));
+    if (type != NULL) {
+      *type = REG_DWORD;
+    }
     return ERROR_SUCCESS;
   }
   static LSTATUS WINAPI TestRegDeleteValueW(HKEY key, LPCWSTR value_name) {
@@ -682,15 +670,15 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
 
 #ifdef OS_ANDROID
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
-  const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
-      "mozc_stats_config_util_test_tmp");
+  const string config_file =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc_stats_config_util_test_tmp");
   FileUtil::Unlink(config_file);
   ConfigHandler::SetConfigFileName(config_file);
   EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
   ConfigHandler::Reload();
 #ifdef CHANNEL_DEV
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
-#else  // CHANNEL_DEV
+#else   // CHANNEL_DEV
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 #endif  // CHANNEL_DEV
 }

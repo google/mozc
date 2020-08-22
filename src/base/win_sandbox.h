@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
 // skip all unless OS_WIN
 #ifdef OS_WIN
 
-#include <Windows.h>
 #include <AccCtrl.h>
+#include <Windows.h>
 
 #include <string>
 #include <vector>
@@ -64,7 +64,8 @@ class WinSandbox {
   // listed the predefined SID page on Microsoft KB page.
   // http://msdn.microsoft.com/en-us/library/cc980032.aspx
   // http://support.microsoft.com/kb/243330
-  // c.f.) http://src.chromium.org/viewvc/chrome/trunk/src/sandbox/src/security_level.h?view=markup
+  // c.f.)
+  // http://src.chromium.org/viewvc/chrome/trunk/src/sandbox/src/security_level.h?view=markup
   enum IntegrityLevel {
     INTEGRITY_LEVEL_SYSTEM,
     INTEGRITY_LEVEL_HIGH,
@@ -151,10 +152,8 @@ class WinSandbox {
   // level.
   // Return true if process is successfully launched.
   // if pid is specified, pid of child process is set.
-  static bool SpawnSandboxedProcess(const string &path,
-                                    const string &arg,
-                                    const SecurityInfo &info,
-                                    DWORD *pid);
+  static bool SpawnSandboxedProcess(const string &path, const string &arg,
+                                    const SecurityInfo &info, DWORD *pid);
 
   // Following three methods returns corresponding list of SID or LUID for
   // CreateRestrictedToken API, depending on given |effective_token| and
@@ -162,27 +161,24 @@ class WinSandbox {
   // method in the Chromium sandbox library.
   // http://src.chromium.org/viewvc/chrome/trunk/src/sandbox/src/restricted_token_utils.cc?view=markup
   static std::vector<Sid> GetSidsToDisable(HANDLE effective_token,
-                                      TokenLevel security_level);
+                                           TokenLevel security_level);
   static std::vector<LUID> GetPrivilegesToDisable(HANDLE effective_token,
-                                             TokenLevel security_level);
+                                                  TokenLevel security_level);
   static std::vector<Sid> GetSidsToRestrict(HANDLE effective_token,
-                                       TokenLevel security_level);
+                                            TokenLevel security_level);
 
   // Returns true if a restricted token handle is successfully assigned into
   // |restricted_token|.
-  static bool GetRestrictedTokenHandle(
-      HANDLE original_token,
-      TokenLevel security_level,
-      IntegrityLevel integrity_level,
-      ScopedHandle* restricted_token);
+  static bool GetRestrictedTokenHandle(HANDLE original_token,
+                                       TokenLevel security_level,
+                                       IntegrityLevel integrity_level,
+                                       ScopedHandle *restricted_token);
 
   // Returns true if a restricted token handle for impersonation is
   // successfully assigned into |restricted_token|.
   static bool GetRestrictedTokenHandleForImpersonation(
-      HANDLE original_token,
-      TokenLevel security_level,
-      IntegrityLevel integrity_level,
-      ScopedHandle* restricted_token);
+      HANDLE original_token, TokenLevel security_level,
+      IntegrityLevel integrity_level, ScopedHandle *restricted_token);
 
   // Returns true |file_name| already has or is updated to have an ACE
   // (Access Control Entry) for "All Application Packages" group to have the
@@ -199,9 +195,9 @@ class WinSandbox {
   // Returns SDDL for given |shareble_object_type|.
   // This method is placed here for unit testing.
   static std::wstring GetSDDL(ObjectSecurityType shareble_object_type,
-                         const std::wstring &token_user_sid,
-                         const std::wstring &token_primary_group_sid,
-                         bool is_windows_8_or_later);
+                              const std::wstring &token_user_sid,
+                              const std::wstring &token_primary_group_sid,
+                              bool is_windows_8_or_later);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(WinSandbox);

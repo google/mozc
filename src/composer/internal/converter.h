@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ class Converter {
  public:
   explicit Converter(const Table& table);
 
-  void Convert(const string& input, string* output) const;
+  void Convert(const std::string& input, std::string* output) const;
 
  private:
   const Table& table_;

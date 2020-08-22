@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "gui/base/win_util.h"
 
 #ifdef OS_WIN
+// clang-format off
 #include <windows.h>
 #include <atlbase.h>
 #include <atlcom.h>
@@ -42,6 +43,7 @@
 #include <propvarutil.h>
 #include <shlobj.h>
 #include <shobjidl.h>
+// clang-format on
 #endif  // OS_WIN
 
 #ifdef OS_WIN
@@ -63,7 +65,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
   CComPtr<IShellLink> link;
   hr = link.CoCreateInstance(CLSID_ShellLink);
   if (FAILED(hr)) {
-    DLOG(INFO) << "Failed to instanciate CLSID_ShellLink. hr = " << hr;
+    DLOG(INFO) << "Failed to instantiate CLSID_ShellLink. hr = " << hr;
     return NULL;
   }
 
@@ -132,33 +134,32 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
 
   hr = object_collection.CoCreateInstance(CLSID_EnumerableObjectCollection);
   if (FAILED(hr)) {
-    DLOG(INFO) << "Failed to instanciate CLSID_EnumerableObjectCollection."
-                  " hr = " << hr;
+    DLOG(INFO) << "Failed to instantiate CLSID_EnumerableObjectCollection."
+                  " hr = "
+               << hr;
     return false;
   }
 
   // TODO(yukawa): Investigate better way to localize strings.
   const LinkInfo kLinks[] = {
-      {"--mode=hand_writing", "Hand Wrinting", "手書き文字入力"},
-      {"--mode=character_palette", "Character Palette", "文字パレット"},
       {"--mode=dictionary_tool", "Dictionary Tool", "辞書ツール"},
       {"--mode=word_register_dialog", "Add Word", "単語登録"},
       {"--mode=config_dialog", "Properties", "プロパティ"},
   };
 
-  const LANGID kJapaneseLangId = MAKELANGID(LANG_JAPANESE,
-                                            SUBLANG_JAPANESE_JAPAN);
+  const LANGID kJapaneseLangId =
+      MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
   const bool use_japanese_ui =
       (kJapaneseLangId == ::GetUserDefaultUILanguage());
 
   for (size_t i = 0; i < arraysize(kLinks); ++i) {
     CComPtr<IShellLink> link;
     if (use_japanese_ui) {
-      link = InitializeShellLinkItem(kLinks[i].argument,
-                                     kLinks[i].title_japanese);
+      link =
+          InitializeShellLinkItem(kLinks[i].argument, kLinks[i].title_japanese);
     } else {
-      link = InitializeShellLinkItem(kLinks[i].argument,
-                                     kLinks[i].title_english);
+      link =
+          InitializeShellLinkItem(kLinks[i].argument, kLinks[i].title_english);
     }
     if (link != NULL) {
       object_collection->AddObject(link);
@@ -186,7 +187,7 @@ void InitializeJumpList() {
   CComPtr<ICustomDestinationList> destination_list;
   hr = destination_list.CoCreateInstance(CLSID_DestinationList);
   if (FAILED(hr)) {
-    DLOG(INFO) << "Failed to instanciate CLSID_DestinationList. hr = " << hr;
+    DLOG(INFO) << "Failed to instantiate CLSID_DestinationList. hr = " << hr;
     return;
   }
 
@@ -211,7 +212,6 @@ void InitializeJumpList() {
 }
 }  // namespace
 #endif  // OS_WIN
-
 
 #ifdef OS_WIN
 namespace {
@@ -247,8 +247,8 @@ void WinUtil::ActivateWindow(uint32 process_id) {
 
   // The target process may contain several top-level windows.
   // We do not care about the invisible windows.
-  if (::EnumWindows(FindVisibleWindowProc,
-                    reinterpret_cast<LPARAM>(&info)) != 0) {
+  if (::EnumWindows(FindVisibleWindowProc, reinterpret_cast<LPARAM>(&info)) !=
+      0) {
     LOG(ERROR) << "Could not find the exsisting window.";
   }
   const CWindow window(info.found_window_handle);
@@ -284,10 +284,10 @@ void WinUtil::ActivateWindow(uint32 process_id) {
 
 #ifdef OS_WIN
 namespace {
-const wchar_t kIMEHotKeyEntryKey[]   = L"Keyboard Layout\\Toggle";
+const wchar_t kIMEHotKeyEntryKey[] = L"Keyboard Layout\\Toggle";
 const wchar_t kIMEHotKeyEntryValue[] = L"Layout Hotkey";
-const wchar_t kIMEHotKeyEntryData[]  = L"3";
-}
+const wchar_t kIMEHotKeyEntryData[] = L"3";
+}  // namespace
 #endif  // OS_WIN
 
 // static
@@ -308,8 +308,7 @@ bool WinUtil::GetIMEHotKeyDisabled() {
 
   // This is only the condition when this function
   // can return |true|
-  if (ERROR_SUCCESS == result &&
-      num_chars < arraysize(data) &&
+  if (ERROR_SUCCESS == result && num_chars < arraysize(data) &&
       std::wstring(data) == kIMEHotKeyEntryData) {
     return true;
   }
@@ -341,8 +340,8 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
     return ERROR_SUCCESS == result;
   } else {
     CRegKey key;
-    LONG result = key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey,
-                           KEY_SET_VALUE | DELETE);
+    LONG result =
+        key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey, KEY_SET_VALUE | DELETE);
     if (result == ERROR_FILE_NOT_FOUND) {
       return true;  // default value will be used.
     }
@@ -364,8 +363,8 @@ void WinUtil::KeepJumpListUpToDate() {
 #ifdef OS_WIN
   HRESULT hr = S_OK;
 
-  hr = ::CoInitializeEx(NULL,
-                        COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+  hr =
+      ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
   if (FAILED(hr)) {
     DLOG(INFO) << "CoInitializeEx failed. hr = " << hr;
     return;

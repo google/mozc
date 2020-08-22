@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@ class CairoWrapper : public CairoWrapperInterface {
   virtual void Stroke();
   virtual void MoveTo(double x, double y);
   virtual void LineTo(double x, double y);
+
  private:
   cairo_t *cairo_context_;
   DISALLOW_COPY_AND_ASSIGN(CairoWrapper);

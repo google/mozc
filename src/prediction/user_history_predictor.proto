@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,42 +35,42 @@ message UserHistory {
   message NextEntry {
     // Just store the Fingerprint32(key + "\t" + value)
     // |entry| is used as the key of LRU cache
-    optional uint32 entry_fp = 1 [ default = 0 ];
-  };
+    optional uint32 entry_fp = 1 [default = 0];
+  }
 
   message Entry {
-    optional string key = 1 [ default = "" ];
-    optional string value = 2 [ default = "" ];
-    optional string description = 6 [ default = ""] ;
+    optional string key = 1 [default = ""];
+    optional string value = 2 [default = ""];
+    optional string description = 6 [default = ""];
 
     // how many times the candidate is selected via suggestion
-    optional uint32 suggestion_freq = 3 [ default = 0 ];
+    optional uint32 suggestion_freq = 3 [default = 0];
 
     // how many times the candidate is selected via conversion
-    optional uint32 conversion_freq = 5 [ default = 0 ];
+    optional uint32 conversion_freq = 5 [default = 0];
 
-    optional uint64 last_access_time = 4 [ default = 0 ];
+    optional uint64 last_access_time = 4 [default = 0];
 
     // list entries which were input just after this entry.
     repeated NextEntry next_entries = 7;
 
     // internally used in UserHistoryPredictor.
-    optional bool bigram_boost = 20 [ default = false ];
+    optional bool bigram_boost = 20 [default = false];
 
     // internally used in UserHistoryPredictor.
-    optional bool spelling_correction = 21 [ default = false ];
+    optional bool spelling_correction = 21 [default = false];
 
     // This entry is removed.
-    optional bool removed = 8 [ default = false ];
+    optional bool removed = 8 [default = false];
 
     enum EntryType {
       DEFAULT_ENTRY = 0;
       CLEAN_ALL_EVENT = 1;
       CLEAN_UNUSED_EVENT = 2;
-    };
+    }
 
-    optional EntryType entry_type = 9 [ default = DEFAULT_ENTRY ];
-  };
+    optional EntryType entry_type = 9 [default = DEFAULT_ENTRY];
+  }
 
   repeated Entry entries = 6;
-};
+}

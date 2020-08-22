@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,15 +43,15 @@
 #ifdef NTDDI_VERSION
 #define MOZC_ORIGINAL_NTDDI_VERSION NTDDI_VERSION
 #undef NTDDI_VERSION
-#endif  // NTDDI_VERSION
+#endif                            // NTDDI_VERSION
 #define NTDDI_VERSION 0x06020000  // == NTDDI_WIN8
 
 // Redefine _WIN32_WINNT with WIN32_WINNT_WIN8
 #ifdef _WIN32_WINNT
 #define MOZC_ORIGINAL_WIN32_WINNT _WIN32_WINNT
 #undef _WIN32_WINNT
-#endif  // MOZC_ORIGINAL_WIN32_WINNT
-#define _WIN32_WINNT 0x0602       // == WIN32_WINNT_WIN8
+#endif                       // MOZC_ORIGINAL_WIN32_WINNT
+#define _WIN32_WINNT 0x0602  // == WIN32_WINNT_WIN8
 
 #include <msime.h>
 
@@ -100,26 +100,23 @@ const wchar_t kVersionIndependentProgIdForMSIME[] = L"MSIME.Japan";
 // Interface identifier of user dictionary in MS-IME.
 // {019F7153-E6DB-11d0-83C3-00C04FDDB82E}
 const GUID kIidIFEDictionary = {
-  0x19f7153, 0xe6db, 0x11d0, {0x83, 0xc3, 0x0, 0xc0, 0x4f, 0xdd, 0xb8, 0x2e}
-};
+    0x19f7153, 0xe6db, 0x11d0, {0x83, 0xc3, 0x0, 0xc0, 0x4f, 0xdd, 0xb8, 0x2e}};
 
 IFEDictionary *CreateIFEDictionary() {
   CLSID class_id = GUID_NULL;
   // On Windows 7 and prior, multiple versions of MS-IME can be installed
   // side-by-side. As far as we've observed, the latest version will be chosen
   // with version-independent ProgId.
-  HRESULT result = ::CLSIDFromProgID(kVersionIndependentProgIdForMSIME,
-                                     &class_id);
+  HRESULT result =
+      ::CLSIDFromProgID(kVersionIndependentProgIdForMSIME, &class_id);
   if (FAILED(result)) {
     LOG(ERROR) << "CLSIDFromProgID() failed: " << result;
     return nullptr;
   }
   IFEDictionary *obj = nullptr;
-  result = ::CoCreateInstance(class_id,
-                              nullptr,
-                              CLSCTX_INPROC_SERVER,
-                              kIidIFEDictionary,
-                              reinterpret_cast<void **>(&obj));
+  result =
+      ::CoCreateInstance(class_id, nullptr, CLSCTX_INPROC_SERVER,
+                         kIidIFEDictionary, reinterpret_cast<void **>(&obj));
   if (FAILED(result)) {
     LOG(ERROR) << "CoCreateInstance() failed: " << result;
     return nullptr;
@@ -130,8 +127,7 @@ IFEDictionary *CreateIFEDictionary() {
 
 class ScopedIFEDictionary {
  public:
-  explicit ScopedIFEDictionary(IFEDictionary *dic)
-      : dic_(dic) {}
+  explicit ScopedIFEDictionary(IFEDictionary *dic) : dic_(dic) {}
 
   ~ScopedIFEDictionary() {
     if (dic_ != NULL) {
@@ -140,9 +136,9 @@ class ScopedIFEDictionary {
     }
   }
 
-  IFEDictionary & operator*() const { return *dic_; }
-  IFEDictionary* operator->() const { return dic_; }
-  IFEDictionary* get() const { return dic_; }
+  IFEDictionary &operator*() const { return *dic_; }
+  IFEDictionary *operator->() const { return dic_; }
+  IFEDictionary *get() const { return dic_; }
 
  private:
   IFEDictionary *dic_;
@@ -154,7 +150,10 @@ class MSIMEImportIterator
  public:
   MSIMEImportIterator()
       : dic_(CreateIFEDictionary()),
-        buf_(kBufferSize), result_(E_FAIL), size_(0), index_(0) {
+        buf_(kBufferSize),
+        result_(E_FAIL),
+        size_(0),
+        index_(0) {
     if (dic_.get() == NULL) {
       LOG(ERROR) << "IFEDictionaryFactory returned NULL";
       return;
@@ -178,8 +177,8 @@ class MSIMEImportIterator
 
     string name;
     for (int i = 0; i < pos_size; ++i) {
-      EncodingUtil::SJISToUTF8(
-          reinterpret_cast<char *>(pos_table->szName), &name);
+      EncodingUtil::SJISToUTF8(reinterpret_cast<char *>(pos_table->szName),
+                               &name);
       pos_map_.insert(std::make_pair(pos_table->nPos, name));
       ++pos_table;
     }
@@ -188,13 +187,10 @@ class MSIMEImportIterator
     // Don't use auto-registered words, since Mozc may not be able to
     // handle auto_registered words correctly, and user is basically
     // unaware of auto-registered words.
-    result_ = dic_->GetWords(NULL, NULL, NULL,
-                             IFED_POS_ALL,
-                             IFED_SELECT_ALL,
+    result_ = dic_->GetWords(NULL, NULL, NULL, IFED_POS_ALL, IFED_SELECT_ALL,
                              IFED_REG_USER,  // | FED_REG_AUTO
                              reinterpret_cast<UCHAR *>(&buf_[0]),
-                             kBufferSize * sizeof(IMEWRD),
-                             &size_);
+                             kBufferSize * sizeof(IMEWRD), &size_);
   }
 
   bool IsAvailable() const {
@@ -259,8 +255,7 @@ class MSIMEImportIterator
       return false;
     } else if (result_ == IFED_S_MORE_ENTRIES) {
       result_ = dic_->NextWords(reinterpret_cast<UCHAR *>(&buf_[0]),
-                                kBufferSize * sizeof(IMEWRD),
-                               &size_);
+                                kBufferSize * sizeof(IMEWRD), &size_);
       if (result_ == E_FAIL) {
         LOG(ERROR) << "NextWords() failed";
         return false;
@@ -298,7 +293,7 @@ MSIMEUserDictionarImporter::Create() {
 namespace mozc {
 namespace gui {
 
-UserDictionaryImporter::InputIteratorInterface *
+UserDictionaryImporter::InputIteratorInterface*
 MSIMEUserDictionarImporter::Create() {
   return nullptr;
 }

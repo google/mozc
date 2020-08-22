@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,43 +49,22 @@ const char kDescription[] = "設定を変更します";
 // Trigger CommandRewriter if and only if the Segment::key is one of
 // kTriggerKeys[]
 const char *kTriggerKeys[] = {
-    "こまんど",
-    "しーくれっと",
-    "しーくれっともーど",
-    "ひみつ",
-    "ぷらいばしー",
-    "ぷらいべーと",
-    "さじぇすと",
-    "ぷれぜんてーしょん",
-    "ぷれぜん",
-    "よそく",
-    "よそくにゅうりょく",
-    "よそくへんかん",
-    "すいそくこうほ"
-};
+    "こまんど",      "しーくれっと", "しーくれっともーど", "ひみつ",
+    "ぷらいばしー",  "ぷらいべーと", "さじぇすと",         "ぷれぜんてーしょん",
+    "ぷれぜん",      "よそく",       "よそくにゅうりょく", "よそくへんかん",
+    "すいそくこうほ"};
 
 // Trigger Values for all commands
-const char *kCommandValues[] = {
-    "コマンド"
-};
+const char *kCommandValues[] = {"コマンド"};
 
 // Trigger Values for Incoginito Mode.
-const char *kIncognitoModeValues[] = {
-    "秘密",
-    "シークレット",
-    "シークレットモード",
-    "プライバシー",
-    "プライベート"
-};
+const char *kIncognitoModeValues[] = {"秘密", "シークレット",
+                                      "シークレットモード", "プライバシー",
+                                      "プライベート"};
 
-const char *kDisableAllSuggestionValues[] = {
-    "サジェスト",
-    "予測",
-    "予測入力",
-    "予測変換",
-    "プレゼンテーション",
-    "プレゼン"
-};
+const char *kDisableAllSuggestionValues[] = {"サジェスト",         "予測",
+                                             "予測入力",           "予測変換",
+                                             "プレゼンテーション", "プレゼン"};
 
 const char kIncoginitoModeOn[] = "シークレットモードをオン";
 const char kIncoginitoModeOff[] = "シークレットモードをオフ";
@@ -103,8 +82,9 @@ bool FindString(const string &query, const char **values, size_t size) {
   return false;
 }
 
-Segment::Candidate *InsertCommandCandidate(
-    Segment *segment, size_t reference_pos, size_t insert_pos) {
+Segment::Candidate *InsertCommandCandidate(Segment *segment,
+                                           size_t reference_pos,
+                                           size_t insert_pos) {
   DCHECK(segment);
   Segment::Candidate *candidate = segment->insert_candidate(
       std::min(segment->candidates_size(), insert_pos));
@@ -121,9 +101,8 @@ Segment::Candidate *InsertCommandCandidate(
 }
 
 bool IsSuggestionEnabled(const config::Config &config) {
-  return config.use_history_suggest() ||
-      config.use_dictionary_suggest() ||
-      config.use_realtime_conversion();
+  return config.use_history_suggest() || config.use_dictionary_suggest() ||
+         config.use_realtime_conversion();
 }
 }  // namespace
 
@@ -132,8 +111,8 @@ CommandRewriter::CommandRewriter() {}
 CommandRewriter::~CommandRewriter() {}
 
 void CommandRewriter::InsertIncognitoModeToggleCommand(
-    const config::Config &config,
-    Segment *segment, size_t reference_pos, size_t insert_pos) const {
+    const config::Config &config, Segment *segment, size_t reference_pos,
+    size_t insert_pos) const {
   Segment::Candidate *candidate =
       InsertCommandCandidate(segment, reference_pos, insert_pos);
   DCHECK(candidate);
@@ -148,8 +127,8 @@ void CommandRewriter::InsertIncognitoModeToggleCommand(
 }
 
 void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
-    const config::Config &config,
-    Segment *segment, size_t reference_pos, size_t insert_pos) const {
+    const config::Config &config, Segment *segment, size_t reference_pos,
+    size_t insert_pos) const {
   if (!IsSuggestionEnabled(config)) {
     return;
   }

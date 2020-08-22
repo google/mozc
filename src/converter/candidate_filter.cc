@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ namespace {
 
 const size_t kSizeThresholdForWeakCompound = 10;
 
-const size_t kMaxCandidatesSize = 200;   // how many candidates we expand
+const size_t kMaxCandidatesSize = 200;  // how many candidates we expand
 
 // Currently, the cost (logprob) is calcurated as cost = -500 * log(prob).
 // Suppose having two candidates A and B and prob(A) = C * prob(B), where
@@ -76,10 +76,10 @@ const size_t kMaxCandidatesSize = 200;   // how many candidates we expand
 // 10000   4605.17
 // 100000  5756.46
 // 1000000 6907.75
-const int   kMinCost                 = 100;
-const int   kCostOffset              = 6907;
-const int   kStructureCostOffset     = 3453;
-const int   kMinStructureCostOffset  = 1151;
+const int kMinCost = 100;
+const int kCostOffset = 6907;
+const int kStructureCostOffset = 3453;
+const int kMinStructureCostOffset = 1151;
 const int32 kStopEnmerationCacheSize = 15;
 
 // Returns true if the given node sequence is noisy weak compound.
@@ -121,8 +121,7 @@ inline bool IsConnectedWeakCompound(const std::vector<const Node *> &nodes,
   if (nodes.size() <= 1) {
     return false;
   }
-  if (nodes[0]->lid != nodes[0]->rid ||
-      nodes[1]->lid != nodes[1]->rid) {
+  if (nodes[0]->lid != nodes[0]->rid || nodes[1]->lid != nodes[1]->rid) {
     // nodes[0/1] is COMPOUND entry in dictionary.
     return false;
   }
@@ -157,16 +156,15 @@ bool ContainsIsolatedWordOrGeneralSymbol(
 }
 
 bool IsNormalOrConstrainedNode(const Node *node) {
-  return node != nullptr &&
-      (node->node_type == Node::NOR_NODE || node->node_type == Node::CON_NODE);
+  return node != nullptr && (node->node_type == Node::NOR_NODE ||
+                             node->node_type == Node::CON_NODE);
 }
 
 }  // namespace
 
 CandidateFilter::CandidateFilter(
     const SuppressionDictionary *suppression_dictionary,
-    const POSMatcher *pos_matcher,
-    const SuggestionFilter *suggestion_filter,
+    const POSMatcher *pos_matcher, const SuggestionFilter *suggestion_filter,
     bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),
@@ -187,8 +185,7 @@ void CandidateFilter::Reset() {
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
-    const string &original_key,
-    const Segment::Candidate *candidate,
+    const std::string &original_key, const Segment::Candidate *candidate,
     const std::vector<const Node *> &nodes,
     Segments::RequestType request_type) {
   DCHECK(candidate);
@@ -208,7 +205,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       if (original_key == candidate->key) {
         break;
       }
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case Segments::SUGGESTION:
       // For mobile, most users will use suggestion/prediction only and do not
       // trigger conversion explicitly.
@@ -366,16 +363,15 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::BAD_CANDIDATE;
   }
 
-  if (is_connected_weak_compound && candidate_size >=
-      kSizeThresholdForWeakCompound) {
+  if (is_connected_weak_compound &&
+      candidate_size >= kSizeThresholdForWeakCompound) {
     return CandidateFilter::BAD_CANDIDATE;
   }
 
   // don't drop lid/rid are the same as those
   // of top candidate.
   // http://b/issue?id=4285213
-  if (!is_noisy_weak_compound &&
-      top_candidate_->structure_cost == 0 &&
+  if (!is_noisy_weak_compound && top_candidate_->structure_cost == 0 &&
       candidate->lid == top_candidate_->lid &&
       candidate->rid == top_candidate_->rid) {
     VLOG(1) << "don't filter lid/rid are the same";
@@ -384,15 +380,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   // "好かっ|たり" vs  "良かっ|たり" have same non_content_value.
   // "良かっ|たり" is also a good candidate but it is not the top candidate.
-  if (!is_noisy_weak_compound &&
-      top_candidate_ != candidate &&
+  if (!is_noisy_weak_compound && top_candidate_ != candidate &&
       top_candidate_->content_value != top_candidate_->value &&
       (top_candidate_->value.compare(
-          top_candidate_->content_value.size(),
-          top_candidate_->value.size() - top_candidate_->content_value.size(),
-          candidate->value,
-          candidate->content_value.size(),
-          candidate->value.size() - candidate->content_value.size()) == 0)) {
+           top_candidate_->content_value.size(),
+           top_candidate_->value.size() - top_candidate_->content_value.size(),
+           candidate->value, candidate->content_value.size(),
+           candidate->value.size() - candidate->content_value.size()) == 0)) {
     VLOG(1) << "don't filter if non-content value are the same";
     return CandidateFilter::GOOD_CANDIDATE;
   }
@@ -423,14 +417,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       std::max(kMinCost, top_candidate_->structure_cost);
 
   // If candidate size < 3, don't filter candidate aggressively
-  // TOOD(taku): This is a tentative workaround for the case where
+  // TODO(taku): This is a tentative workaround for the case where
   // TOP candidate is compound and the structure cost for it is "0"
   // If 2nd or 3rd candidates are regular candidate but not having
   // non-zero cost, they might be removed. This hack removes such case.
-  if (candidate_size < 3 &&
-      candidate->cost < top_cost + 2302 &&
+  if (candidate_size < 3 && candidate->cost < top_cost + 2302 &&
       candidate->structure_cost < 6907) {
-     return CandidateFilter::GOOD_CANDIDATE;
+    return CandidateFilter::GOOD_CANDIDATE;
   }
 
   // Don't drop personal names aggressivly.
@@ -445,19 +438,16 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   // Filters out candidates with higher cost.
   if (top_cost + cost_offset < candidate->cost &&
-      top_structure_cost + kMinStructureCostOffset
-      < candidate->structure_cost) {
+      top_structure_cost + kMinStructureCostOffset <
+          candidate->structure_cost) {
     // Stops candidates enumeration when we see sufficiently high cost
     // candidate.
     VLOG(2) << "cost is invalid: "
-            << "top_cost=" << top_cost
-            << " cost_offset=" << cost_offset
-            << " value=" << candidate->value
-            << " cost=" << candidate->cost
+            << "top_cost=" << top_cost << " cost_offset=" << cost_offset
+            << " value=" << candidate->value << " cost=" << candidate->cost
             << " top_structure_cost=" << top_structure_cost
             << " structure_cost=" << candidate->structure_cost
-            << " lid=" << candidate->lid
-            << " rid=" << candidate->rid;
+            << " lid=" << candidate->lid << " rid=" << candidate->rid;
     if (candidate_size < kStopEnmerationCacheSize) {
       // Even when the current candidate is classified as bad candidate,
       // we don't return STOP_ENUMERATION here.
@@ -474,17 +464,16 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   if (top_structure_cost + kStructureCostOffset > INT_MAX ||
       std::max(top_structure_cost,
                static_cast<int64>(kMinStructureCostOffset)) +
-          kStructureCostOffset <
-      candidate->structure_cost) {
+              kStructureCostOffset <
+          candidate->structure_cost) {
     // We don't stop enumeration here. Just drops high cost structure
     // looks enough.
     // |top_structure_cost| can be so small especially for compound or
     // web dictionary entries.
     // For avoiding over filtering, we use kMinStructureCostOffset if
     // |top_structure_cost| is small.
-    VLOG(2) << "structure cost is invalid:  "
-              << candidate->value << " " << candidate->content_value << " "
-              << candidate->structure_cost
+    VLOG(2) << "structure cost is invalid:  " << candidate->value << " "
+            << candidate->content_value << " " << candidate->structure_cost
             << " " << candidate->cost;
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -493,8 +482,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
-    const string &original_key,
-    const Segment::Candidate *candidate,
+    const std::string &original_key, const Segment::Candidate *candidate,
     const std::vector<const Node *> &nodes,
     Segments::RequestType request_type) {
   if (request_type == Segments::REVERSE_CONVERSION) {
@@ -504,8 +492,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     const bool inserted = seen_.insert(candidate->value).second;
     return inserted ? GOOD_CANDIDATE : BAD_CANDIDATE;
   } else {
-    const ResultType result = FilterCandidateInternal(original_key, candidate,
-                                                      nodes, request_type);
+    const ResultType result =
+        FilterCandidateInternal(original_key, candidate, nodes, request_type);
     if (result != GOOD_CANDIDATE) {
       return result;
     }

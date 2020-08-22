@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,9 @@
 #define MOZC_REWRITER_COLLOCATION_UTIL_H_
 
 #include <string>
+
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -45,16 +46,16 @@ class CollocationUtil {
   // for example:
   // "一個" -> "個" (removes 'number' if |remove_number| is true)
   // "%％" -> "%%" (full width '%' to half width)
-  static void GetNormalizedScript(
-      const StringPiece str, bool remove_number, string *output);
+  static void GetNormalizedScript(const absl::string_view str,
+                                  bool remove_number, std::string *output);
 
   // Returns true if given char is number including kanji.
   static bool IsNumber(char32 c);
 
  private:
   // Removes characters for normalizing.
-  static void RemoveExtraCharacters(
-      const StringPiece input, bool remove_number, string *output);
+  static void RemoveExtraCharacters(const absl::string_view input,
+                                    bool remove_number, std::string *output);
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(CollocationUtil);
 };

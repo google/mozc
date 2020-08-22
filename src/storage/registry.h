@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
 #include <cstring>
 #include <string>
 
-#include "base/port.h"
 #include "base/logging.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace storage {
@@ -60,25 +60,24 @@ class StorageInterface;
 class Registry {
  public:
   template <typename T>
-  static bool Lookup(const string &key, T *value) {
+  static bool Lookup(const std::string &key, T *value) {
     DCHECK(value);
-    string tmp;
+    std::string tmp;
     if (!LookupInternal(key, &tmp)) {
       return false;
     }
     if (sizeof(*value) != tmp.size()) {
       return false;
     }
-    memcpy(reinterpret_cast<char *>(value),
-           tmp.data(), tmp.size());
+    memcpy(reinterpret_cast<char *>(value), tmp.data(), tmp.size());
     return true;
   }
 
-  static bool Lookup(const string &key, string *value) {
+  static bool Lookup(const std::string &key, std::string *value) {
     return LookupInternal(key, value);
   }
 
-  static bool Lookup(const string &key, bool *value) {
+  static bool Lookup(const std::string &key, bool *value) {
     uint8 v = 0;
     const bool result = Lookup<uint8>(key, &v);
     *value = (v != 0);
@@ -88,20 +87,20 @@ class Registry {
   // insert key and data
   // It is not guaranteed that the data is synced to the disk
   template <typename T>
-  static bool Insert(const string &key, const T &value) {
-    string tmp(reinterpret_cast<const char *>(&value), sizeof(value));
+  static bool Insert(const std::string &key, const T &value) {
+    std::string tmp(reinterpret_cast<const char *>(&value), sizeof(value));
     return InsertInternal(key, tmp);
   }
 
   // Insert key and string value
   // It is not guaranteed that the data is synced to the disk
-  static bool Insert(const string &key, const string &value) {
+  static bool Insert(const std::string &key, const std::string &value) {
     return InsertInternal(key, value);
   }
 
   // Insert key and bool value
   // It is not guaranteed that the data is synced to the disk
-  static bool Insert(const string &key, const bool &value) {
+  static bool Insert(const std::string &key, const bool &value) {
     const uint8 tmp = static_cast<uint8>(value);
     return Insert<uint8>(key, tmp);
   }
@@ -110,7 +109,7 @@ class Registry {
   static bool Sync();
 
   // Erase key
-  static bool Erase(const string &key);
+  static bool Erase(const std::string &key);
 
   // clear internal keys and values
   static bool Clear();
@@ -121,8 +120,8 @@ class Registry {
   static void SetStorage(StorageInterface *handler);
 
  private:
-  static bool LookupInternal(const string &key, string *value);
-  static bool InsertInternal(const string &key, const string &value);
+  static bool LookupInternal(const std::string &key, std::string *value);
+  static bool InsertInternal(const std::string &key, const std::string &value);
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(Registry);
 };

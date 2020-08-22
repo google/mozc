@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,22 +47,19 @@ mozc::Mutex g_storage_ensure_mutex;
 
 mozc::GenericStorageManagerInterface *g_storage_manager = NULL;
 
-const char kSymbolStorageFileName[] =
-    "user://symbol_history.db";
+const char kSymbolStorageFileName[] = "user://symbol_history.db";
 // 32 characters * 3 bytes(typical byte size per character)
 const size_t kSymbolValueSize = 32 * 3;
 const size_t kSymbolSize = 100;
 const uint32 kSymbolSeed = 336843897;
 
-const char kEmoticonStorageFileName[] =
-    "user://emoticon_history.db";
+const char kEmoticonStorageFileName[] = "user://emoticon_history.db";
 // 64 characters * 3 bytes(typical byte size per character)
 const size_t kEmoticonValueSize = 64 * 3;
 const size_t kEmoticonSize = 100;
 const uint32 kEmoticonSeed = 236843897;
 
-const char kEmojiStorageFileName[] =
-    "user://emoji_history.db";
+const char kEmojiStorageFileName[] = "user://emoji_history.db";
 // 32 characters * 3 bytes(typical byte size per character)
 const size_t kEmojiValueSize = 32 * 3;
 const size_t kEmojiSize = 100;
@@ -74,25 +71,23 @@ namespace mozc {
 
 using mozc::storage::LRUStorage;
 
-class GenericStorageManagerImpl
-    : public GenericStorageManagerInterface {
+class GenericStorageManagerImpl : public GenericStorageManagerInterface {
  public:
-  GenericStorageManagerImpl() :
-      symbol_history_storage_(kSymbolStorageFileName,
-                              kSymbolValueSize,
-                              kSymbolSize,
-                              kSymbolSeed),
-      emoticon_history_storage_(kEmoticonStorageFileName,
-                                kEmoticonValueSize,
-                                kEmoticonSize,
-                                kEmoticonSeed),
-      emoji_history_storage_(kEmojiStorageFileName,
-                             kEmojiValueSize,
-                             kEmojiSize,
-                             kEmojiSeed) {}
-  virtual ~GenericStorageManagerImpl() {}
-  virtual GenericStorageInterface *GetStorage(
-     commands::GenericStorageEntry::StorageType storage_type);
+  GenericStorageManagerImpl()
+      : symbol_history_storage_(kSymbolStorageFileName, kSymbolValueSize,
+                                kSymbolSize, kSymbolSeed),
+        emoticon_history_storage_(kEmoticonStorageFileName, kEmoticonValueSize,
+                                  kEmoticonSize, kEmoticonSeed),
+        emoji_history_storage_(kEmojiStorageFileName, kEmojiValueSize,
+                               kEmojiSize, kEmojiSeed) {}
+
+  ~GenericStorageManagerImpl() override = default;
+
+  GenericStorageInterface *GetStorage(
+      commands::GenericStorageEntry::StorageType storage_type) override;
+
+  bool SyncAll() override;
+
  private:
   GenericLruStorage symbol_history_storage_;
   GenericLruStorage emoticon_history_storage_;
@@ -100,7 +95,7 @@ class GenericStorageManagerImpl
 };
 
 GenericStorageInterface *GenericStorageManagerImpl::GetStorage(
-     commands::GenericStorageEntry::StorageType storage_type) {
+    commands::GenericStorageEntry::StorageType storage_type) {
   switch (storage_type) {
     case commands::GenericStorageEntry::SYMBOL_HISTORY:
       return &symbol_history_storage_;
@@ -114,6 +109,13 @@ GenericStorageInterface *GenericStorageManagerImpl::GetStorage(
   return NULL;
 }
 
+bool GenericStorageManagerImpl::SyncAll() {
+  const bool symbol_ok = symbol_history_storage_.Sync();
+  const bool emoticon_ok = emoticon_history_storage_.Sync();
+  const bool emoji_ok = emoji_history_storage_.Sync();
+  return symbol_ok && emoticon_ok && emoji_ok;
+}
+
 // static
 void GenericStorageManagerFactory::SetGenericStorageManager(
     GenericStorageManagerInterface *manager) {
@@ -122,21 +124,29 @@ void GenericStorageManagerFactory::SetGenericStorageManager(
 
 // static
 GenericStorageInterface *GenericStorageManagerFactory::GetStorage(
-     commands::GenericStorageEntry::StorageType storage_type) {
-  GenericStorageManagerInterface *manager = g_storage_manager ?
-      g_storage_manager : Singleton<GenericStorageManagerImpl>::get();
+    commands::GenericStorageEntry::StorageType storage_type) {
+  GenericStorageManagerInterface *manager =
+      g_storage_manager ? g_storage_manager
+                        : Singleton<GenericStorageManagerImpl>::get();
   return manager->GetStorage(storage_type);
 }
 
-
-GenericLruStorage::GenericLruStorage(
-    const char *file_name, size_t value_size, size_t size, uint32 seed)
-    : file_name_(file_name), value_size_(value_size),
-      size_(size), seed_(seed), value_buffer_(new char[value_size + 1]) {
+bool GenericStorageManagerFactory::SyncAll() {
+  GenericStorageManagerInterface *manager =
+      g_storage_manager ? g_storage_manager
+                        : Singleton<GenericStorageManagerImpl>::get();
+  return manager->SyncAll();
 }
 
-GenericLruStorage::~GenericLruStorage() {
-}
+GenericLruStorage::GenericLruStorage(const char *file_name, size_t value_size,
+                                     size_t size, uint32 seed)
+    : file_name_(file_name),
+      value_size_(value_size),
+      size_(size),
+      seed_(seed),
+      value_buffer_(new char[value_size + 1]) {}
+
+GenericLruStorage::~GenericLruStorage() {}
 
 bool GenericLruStorage::EnsureStorage() {
   scoped_lock lock(&g_storage_ensure_mutex);
@@ -146,8 +156,7 @@ bool GenericLruStorage::EnsureStorage() {
   }
   std::unique_ptr<LRUStorage> new_storage;
   new_storage.reset(new LRUStorage());
-  const string &filename =
-      ConfigFileStream::GetFileName(file_name_);
+  const std::string &filename = ConfigFileStream::GetFileName(file_name_);
   if (!new_storage->OpenOrCreate(filename.data(), value_size_, size_, seed_)) {
     return false;
   }
@@ -155,7 +164,7 @@ bool GenericLruStorage::EnsureStorage() {
   return true;
 }
 
-bool GenericLruStorage::Insert(const string &key, const char *value) {
+bool GenericLruStorage::Insert(const std::string &key, const char *value) {
   if (!EnsureStorage()) {
     return false;
   }
@@ -170,18 +179,19 @@ bool GenericLruStorage::Insert(const string &key, const char *value) {
   return lru_storage_->Insert(key, value_buffer_.get());
 }
 
-const char *GenericLruStorage::Lookup(const string &key) {
+const char *GenericLruStorage::Lookup(const std::string &key) {
   if (!EnsureStorage()) {
     return NULL;
   }
   return lru_storage_->Lookup(key);
 }
 
-bool GenericLruStorage::GetAllValues(std::vector<string> *values) {
+bool GenericLruStorage::GetAllValues(std::vector<std::string> *values) {
   if (!EnsureStorage()) {
     return false;
   }
-  return lru_storage_->GetAllValues(values);
+  lru_storage_->GetAllValues(values);
+  return true;
 }
 
 bool GenericLruStorage::Clear() {
@@ -189,6 +199,14 @@ bool GenericLruStorage::Clear() {
     return false;
   }
   return lru_storage_->Clear();
+}
+
+bool GenericLruStorage::Sync() {
+  if (!EnsureStorage()) {
+    return false;
+  }
+  lru_storage_->DeleteElementsUntouchedFor62Days();
+  return true;
 }
 
 }  // namespace mozc

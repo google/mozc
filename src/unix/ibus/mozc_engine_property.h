@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ namespace ibus {
 // The list of properties used in ibus-mozc.
 struct MozcEngineProperty {
   commands::CompositionMode composition_mode;
-  const char *key;  // IBus property key for the mode.
+  const char *key;    // IBus property key for the mode.
   const char *label;  // text for the radio menu (ibus-anthy compatible).
   const char *label_for_panel;  // text for the language panel.
   const char *icon;

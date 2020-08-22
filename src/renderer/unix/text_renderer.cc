@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,7 @@ namespace renderer {
 namespace gtk {
 
 TextRenderer::TextRenderer(FontSpecInterface *font_spec)
-  : font_spec_(font_spec),
-    pango_(nullptr) {
-}
+    : font_spec_(font_spec), pango_(nullptr) {}
 
 void TextRenderer::Initialize(GdkDrawable *drawable) {
   pango_.reset(new PangoWrapper(drawable));
@@ -49,8 +47,8 @@ void TextRenderer::Initialize(GdkDrawable *drawable) {
 void TextRenderer::SetUpPangoLayout(const string &str,
                                     FontSpecInterface::FONT_TYPE font_type,
                                     PangoLayoutWrapperInterface *layout) {
-  PangoAttrList *attributes = pango_->CopyAttributes(
-      font_spec_->GetFontAttributes(font_type));
+  PangoAttrList *attributes =
+      pango_->CopyAttributes(font_spec_->GetFontAttributes(font_type));
   layout->SetText(str.c_str());
   layout->SetAlignment(font_spec_->GetFontAlignment(font_type));
   layout->SetAttributes(attributes);
@@ -72,31 +70,26 @@ Size TextRenderer::GetPixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
 }
 
 Size TextRenderer::GetMultiLinePixelSize(FontSpecInterface::FONT_TYPE font_type,
-                                         const string &str,
-                                         const int width) {
+                                         const string &str, const int width) {
   PangoLayoutWrapper layout(pango_->GetContext());
   return GetMultiLinePixelSizeInternal(font_type, str, width, &layout);
 }
 
 Size TextRenderer::GetMultiLinePixelSizeInternal(
-    FontSpecInterface::FONT_TYPE font_type,
-    const string &str,
-    const int width,
+    FontSpecInterface::FONT_TYPE font_type, const string &str, const int width,
     PangoLayoutWrapperInterface *layout) {
   SetUpPangoLayout(str, font_type, layout);
   layout->SetWidth(width * PANGO_SCALE);
   return layout->GetPixelSize();
 }
 
-void TextRenderer::RenderText(const string &text,
-                              const Rect &rect,
+void TextRenderer::RenderText(const string &text, const Rect &rect,
                               FontSpecInterface::FONT_TYPE font_type) {
   PangoLayoutWrapper layout(pango_->GetContext());
   RenderTextInternal(text, rect, font_type, &layout);
 }
 
-void TextRenderer::RenderTextInternal(const string& text,
-                                      const Rect &rect,
+void TextRenderer::RenderTextInternal(const string &text, const Rect &rect,
                                       FontSpecInterface::FONT_TYPE font_type,
                                       PangoLayoutWrapperInterface *layout) {
   SetUpPangoLayout(text, font_type, layout);

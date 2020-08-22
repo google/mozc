@@ -1,6 +1,0 @@
-{
-  global:
-        JNI_OnLoad*;
-        JNI_OnUnload*;
-  local: *;
-};

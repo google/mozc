@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,11 @@
 
 #include "gui/base/encoding_util.h"
 
+#include <cstdint>
+
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "base/util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -53,9 +55,7 @@ namespace {
 //   * SecondByteRange2: [0x80, 0xFF]
 // Two byte characters are decoded using the conversion table defined in
 // sjis_to_ucs2_table.h.
-inline bool IsInFirstByteRange1(uint8_t byte) {
-  return byte <= 0x80;
-}
+inline bool IsInFirstByteRange1(uint8_t byte) { return byte <= 0x80; }
 
 inline bool IsInFirstByteRange2(uint8_t byte) {
   return 0x81 <= byte && byte <= 0x9F;
@@ -65,17 +65,13 @@ inline bool IsInFirstByteRange3(uint8_t byte) {
   return 0xA1 <= byte && byte <= 0xDF;
 }
 
-inline bool IsInFirstByteRange4(uint8_t byte) {
-  return 0xE0 <= byte;
-}
+inline bool IsInFirstByteRange4(uint8_t byte) { return 0xE0 <= byte; }
 
 inline bool IsInSecondByteRange1(uint8_t byte) {
   return 0x40 <= byte && byte <= 0x7E;
 }
 
-inline bool IsInSecondByteRange2(uint8_t byte) {
-  return 0x80 <= byte;
-}
+inline bool IsInSecondByteRange2(uint8_t byte) { return 0x80 <= byte; }
 
 size_t ComputeIndex(uint8_t first, uint8_t second) {
   size_t first_index = 0;
@@ -103,7 +99,7 @@ size_t ComputeIndex(uint8_t first, uint8_t second) {
   return first_index * width + second_index;
 }
 
-bool SJISToUTF8Internal(StringPiece input, string* output) {
+bool SJISToUTF8Internal(absl::string_view input, std::string *output) {
   bool expect_first_byte = true;
   uint8_t first_byte = 0;
   for (const char c : input) {
@@ -140,9 +136,9 @@ bool SJISToUTF8Internal(StringPiece input, string* output) {
   return expect_first_byte;
 }
 
-}   // namespace
+}  // namespace
 
-void EncodingUtil::SJISToUTF8(const string &input, string *output) {
+void EncodingUtil::SJISToUTF8(const std::string &input, std::string *output) {
   output->clear();
   if (!SJISToUTF8Internal(input, output)) {
     output->clear();

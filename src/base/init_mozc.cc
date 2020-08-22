@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,17 +43,15 @@
 #include "base/system_util.h"
 #endif  // MOZC_BUILDTOOL_BUILD
 
-DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
-
 // Even if log_dir is modified in the middle of the process, the
 // logging directory will not be changed because the logging stream is
 // initialized in the very early initialization stage.
-DEFINE_string(log_dir,
-              "",
+DEFINE_string(log_dir, "",
               "If specified, logfiles are written into this directory "
               "instead of the default logging directory.");
 
 
+DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
 
 namespace mozc {
 namespace {
@@ -72,7 +70,7 @@ string GetLogFilePathFromProgramName(const string &program_name) {
   if (FLAGS_log_dir.empty()) {
 #ifdef MOZC_BUILDTOOL_BUILD
     return basename;
-#else  // MOZC_BUILDTOOL_BUILD
+#else   // MOZC_BUILDTOOL_BUILD
     return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
 #endif  // MOZC_BUILDTOOL_BUILD
   }
@@ -81,7 +79,8 @@ string GetLogFilePathFromProgramName(const string &program_name) {
 
 }  // namespace
 
-void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags) {
+void InitMozc(const char *arg0, int *argc, char ***argv) {
+  FLAGS_program_invocation_name = *argv[0];
 #ifdef OS_WIN
   // InitMozc() is supposed to be used for code generator or
   // other programs which are not included in the production code.
@@ -90,8 +89,7 @@ void InitMozc(const char *arg0, int *argc, char ***argv, bool remove_flags) {
   // our continuous build stable.
   ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
 #endif  // OS_WIN
-  FLAGS_program_invocation_name = *argv[0];
-  mozc_flags::ParseCommandLineFlags(argc, argv, remove_flags);
+  mozc_flags::ParseCommandLineFlags(argc, argv);
 
   const string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
   Logging::InitLogStream(GetLogFilePathFromProgramName(program_name));

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,29 +38,29 @@ namespace renderer {
 
 class TableLayoutMock : public TableLayoutInterface {
  public:
-  MOCK_METHOD2(Initialize, void(int num_rows, int num_columns));
-  MOCK_METHOD1(SetVScrollBar, void(int width_in_pixels));
-  MOCK_METHOD1(SetWindowBorder, void(int width_in_pixels));
-  MOCK_METHOD1(SetRowRectPadding, void(int width_pixels));
-  MOCK_METHOD2(EnsureCellSize, void(int column, const Size &size));
-  MOCK_METHOD3(EnsureColumnsWidth,
-               void(int from_column, int to_column, int width));
-  MOCK_METHOD1(EnsureFooterSize, void(const Size &size_in_pixels));
-  MOCK_METHOD1(EnsureHeaderSize, void(const Size &size_in_pixels));
-  MOCK_METHOD0(FreezeLayout, void());
-  MOCK_CONST_METHOD0(IsLayoutFrozen, bool());
-  MOCK_CONST_METHOD2(GetCellRect, Rect(int row, int column));
-  MOCK_CONST_METHOD0(GetTotalSize, Size());
-  MOCK_CONST_METHOD0(GetHeaderRect, Rect());
-  MOCK_CONST_METHOD0(GetFooterRect, Rect());
-  MOCK_CONST_METHOD0(GetVScrollBarRect, Rect());
-  MOCK_CONST_METHOD3(GetVScrollIndicatorRect,
-                     Rect(int begin_index, int end_index,
-                          int candidates_total));
-  MOCK_CONST_METHOD1(GetRowRect, Rect(int row));
-  MOCK_CONST_METHOD1(GetColumnRect, Rect(int column));
-  MOCK_CONST_METHOD0(number_of_rows, int());
-  MOCK_CONST_METHOD0(number_of_columns, int());
+  MOCK_METHOD(void, Initialize, (int num_rows, int num_columns), (override));
+  MOCK_METHOD(void, SetVScrollBar, (int width_in_pixels), (override));
+  MOCK_METHOD(void, SetWindowBorder, (int width_in_pixels), (override));
+  MOCK_METHOD(void, SetRowRectPadding, (int width_pixels), (override));
+  MOCK_METHOD(void, EnsureCellSize, (int column, const Size &size), (override));
+  MOCK_METHOD(void, EnsureColumnsWidth,
+              (int from_column, int to_column, int width), (override));
+  MOCK_METHOD(void, EnsureFooterSize, (const Size &size_in_pixels), (override));
+  MOCK_METHOD(void, EnsureHeaderSize, (const Size &size_in_pixels), (override));
+  MOCK_METHOD(void, FreezeLayout, (), (override));
+  MOCK_METHOD(bool, IsLayoutFrozen, (), (const, override));
+  MOCK_METHOD(Rect, GetCellRect, (int row, int column), (const, override));
+  MOCK_METHOD(Size, GetTotalSize, (), (const, override));
+  MOCK_METHOD(Rect, GetHeaderRect, (), (const, override));
+  MOCK_METHOD(Rect, GetFooterRect, (), (const, override));
+  MOCK_METHOD(Rect, GetVScrollBarRect, (), (const, override));
+  MOCK_METHOD(Rect, GetVScrollIndicatorRect,
+              (int begin_index, int end_index, int candidates_total),
+              (const, override));
+  MOCK_METHOD(Rect, GetRowRect, (int row), (const, override));
+  MOCK_METHOD(Rect, GetColumnRect, (int column), (const, override));
+  MOCK_METHOD(int, number_of_rows, (), (const, override));
+  MOCK_METHOD(int, number_of_columns, (), (const, override));
 };
 
 }  // namespace renderer

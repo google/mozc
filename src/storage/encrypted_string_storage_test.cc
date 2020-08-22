@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,8 +50,8 @@ namespace {
 class TestEncryptedStringStorage : public EncryptedStringStorage {
  public:
   explicit TestEncryptedStringStorage(const string &filename)
-      : EncryptedStringStorage(filename) {
-  }
+      : EncryptedStringStorage(filename) {}
+
  protected:
   virtual bool Encrypt(const string &salt, string *data) const {
     salt_ = salt;
@@ -87,7 +87,7 @@ class EncryptedStringStorageTest : public testing::Test {
     storage_.reset(new TestEncryptedStringStorage(filename_));
   }
 
-  string filename_;
+  std::string filename_;
   std::unique_ptr<EncryptedStringStorage> storage_;
 };
 
@@ -95,7 +95,7 @@ TEST_F(EncryptedStringStorageTest, SaveAndLoad) {
   const char *kData = "abcdefghijklmnopqrstuvwxyz";
   ASSERT_TRUE(storage_->Save(kData));
 
-  string output;
+  std::string output;
   ASSERT_TRUE(storage_->Load(&output));
 
   EXPECT_EQ(kData, output);
@@ -105,7 +105,7 @@ TEST_F(EncryptedStringStorageTest, SaveAndLoad) {
 // Note: On Android, we cannot check the behavior of Encryption because
 // it depends on the JVM's behavior, which cannot be launched from native test.
 TEST_F(EncryptedStringStorageTest, Encrypt) {
-  const string original_data = "abcdefghijklmnopqrstuvwxyz";
+  const std::string original_data = "abcdefghijklmnopqrstuvwxyz";
   ASSERT_TRUE(storage_->Save(original_data));
 
   InputFileStream ifs(filename_.c_str(), (std::ios::in | std::ios::binary));
@@ -118,12 +118,12 @@ TEST_F(EncryptedStringStorageTest, Encrypt) {
   const size_t read_size = ifs.gcount();
   ifs.peek();
   ASSERT_TRUE(ifs.eof());
-  const string result(buf, read_size);
+  const std::string result(buf, read_size);
 
   // Saved stirng is longer than original string since it has some data
   // used for encryption.
   EXPECT_LT(original_data.size(), result.size());
-  EXPECT_TRUE(result.find(original_data) == string::npos);
+  EXPECT_TRUE(result.find(original_data) == std::string::npos);
 }
 #endif  // OS_ANDROID
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,19 +59,14 @@ bool IsHexadecimalDigit(wchar_t c) {
 
 namespace mozc {
 namespace win32 {
-KeyboardLayoutID::KeyboardLayoutID()
-    : id_(kDefaultKLID),
-      has_id_(false) {}
+KeyboardLayoutID::KeyboardLayoutID() : id_(kDefaultKLID), has_id_(false) {}
 
 KeyboardLayoutID::KeyboardLayoutID(const std::wstring &text)
-    : id_(kDefaultKLID),
-      has_id_(false) {
+    : id_(kDefaultKLID), has_id_(false) {
   Parse(text);
 }
 
-KeyboardLayoutID::KeyboardLayoutID(DWORD id)
-    : id_(id),
-      has_id_(true) {}
+KeyboardLayoutID::KeyboardLayoutID(DWORD id) : id_(id), has_id_(true) {}
 
 bool KeyboardLayoutID::Parse(const std::wstring &text) {
   clear_id();
@@ -114,9 +109,7 @@ void KeyboardLayoutID::set_id(DWORD id) {
   has_id_ = true;
 }
 
-bool KeyboardLayoutID::has_id() const {
-  return has_id_;
-}
+bool KeyboardLayoutID::has_id() const { return has_id_; }
 
 void KeyboardLayoutID::clear_id() {
   id_ = kDefaultKLID;

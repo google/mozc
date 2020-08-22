@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ class PangoLayoutWrapper : public PangoLayoutWrapperInterface {
   virtual void SetHeight(int height);
   virtual Size GetPixelSize() const;
   virtual PangoLayout *GetPangoLayout();
+
  private:
   PangoLayout *layout_;
   DISALLOW_COPY_AND_ASSIGN(PangoLayoutWrapper);
@@ -58,11 +59,12 @@ class PangoWrapper : public PangoWrapperInterface {
  public:
   explicit PangoWrapper(GdkDrawable *drawable);
   virtual ~PangoWrapper();
-  virtual void RendererDrawLayout(PangoLayoutWrapperInterface *layout,
-                                  int x, int y);
+  virtual void RendererDrawLayout(PangoLayoutWrapperInterface *layout, int x,
+                                  int y);
   virtual PangoAttrList *CopyAttributes(PangoAttrList *attr);
   virtual void AttributesUnref(PangoAttrList *attr);
   virtual PangoContext *GetContext();
+
  private:
   PangoRenderer *renderer_;
   PangoContext *context_;

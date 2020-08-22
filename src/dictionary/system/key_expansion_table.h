@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,7 @@ namespace dictionary {
 // Note that this class is very small so it's ok to be copied.
 class ExpandedKey {
  public:
-  explicit ExpandedKey(const uint32 *data) : data_(data) {
-  }
+  explicit ExpandedKey(const uint32 *data) : data_(data) {}
 
   bool IsHit(char value) const {
     return (data_[value / 32] >> (value % 32)) & 1;
@@ -73,7 +72,7 @@ class KeyExpansionTable {
   }
 
   // Add expanding data of the given key.
-  void Add(char key, const string &data) {
+  void Add(char key, const std::string &data) {
     for (size_t i = 0; i < data.length(); ++i) {
       SetBit(key, data[i]);
     }

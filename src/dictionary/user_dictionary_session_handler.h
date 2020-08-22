@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -105,7 +105,7 @@ class UserDictionarySessionHandler {
   void GetStorage(const UserDictionaryCommand &command,
                   UserDictionaryCommandStatus *status);
 
-  void set_dictionary_path(const string &dictionary_path) {
+  void set_dictionary_path(const std::string &dictionary_path) {
     dictionary_path_ = dictionary_path;
   }
 
@@ -117,7 +117,7 @@ class UserDictionarySessionHandler {
   // (From the different point of view, this is LRU with max capacity '1'.)
   uint64 session_id_;
   std::unique_ptr<UserDictionarySession> session_;
-  string dictionary_path_;
+  std::string dictionary_path_;
 
   UserDictionarySession *GetSession(const UserDictionaryCommand &command,
                                     UserDictionaryCommandStatus *status);

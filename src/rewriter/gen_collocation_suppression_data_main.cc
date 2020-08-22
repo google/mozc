@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,20 +60,20 @@ namespace {
 
 void Convert() {
   const char kSeparator[] = "\t";
-  std::vector<string> entries;
+  std::vector<std::string> entries;
 
   if (FLAGS_suppression_data.empty()) {
-    const string kDummyStr = "__NO_DATA__";
+    const std::string kDummyStr = "__NO_DATA__";
     entries.push_back(kDummyStr + kSeparator + kDummyStr);
   } else {
     InputFileStream ifs(FLAGS_suppression_data.c_str());
-    string line;
+    std::string line;
 
     while (!getline(ifs, line).fail()) {
       if (line.empty()) {
         continue;
       }
-      std::vector<string> fields;
+      std::vector<std::string> fields;
       Util::SplitStringUsing(line, kSeparator, &fields);
       CHECK_GE(fields.size(), 2);
       entries.push_back(fields[0] + kSeparator + fields[1]);
@@ -93,7 +93,7 @@ void Convert() {
   if (FLAGS_binary_mode) {
     OutputExistenceBinary(entries, ofs, FLAGS_error_rate);
   } else {
-    const string kNameSpace = "CollocationSuppressionData";
+    const std::string kNameSpace = "CollocationSuppressionData";
     OutputExistenceHeader(entries, kNameSpace, ofs, FLAGS_error_rate);
   }
 
@@ -105,7 +105,7 @@ void Convert() {
 }  // namespace mozc
 
 int main(int argc, char *argv[]) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   LOG(INFO) << FLAGS_suppression_data;
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,10 +55,10 @@ class PosIdPrinter {
 
   // Returns POS string for the given id.
   // For an invalid id, returns empty string.
-  string IdToString(int id) const;
+  std::string IdToString(int id) const;
 
  private:
-  std::map<int, string> id_to_pos_map_;
+  std::map<int, std::string> id_to_pos_map_;
 
   DISALLOW_COPY_AND_ASSIGN(PosIdPrinter);
 };

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,87 +51,107 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_MOCK_H_
 #define MOZC_DICTIONARY_DICTIONARY_MOCK_H_
 
-#include <list>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 
-class DictionaryMock : public DictionaryInterface {
+// Helper function to create a new token.
+std::unique_ptr<Token> CreateToken(const std::string &key,
+                                   const std::string &value, int cost, int lid,
+                                   int rid,
+                                   Token::AttributesBitfield attributes);
+
+class DictionaryMock final : public DictionaryInterface {
  public:
+  static const int kDefaultCost;
+  static const int kDummyPosId;
+
   DictionaryMock();
-  virtual ~DictionaryMock();
 
-  virtual bool HasKey(StringPiece key) const;
+  DictionaryMock(const DictionaryMock &) = delete;
+  DictionaryMock &operator=(const DictionaryMock &) = delete;
 
-  virtual bool HasValue(StringPiece value) const;
+  ~DictionaryMock() override;
+
+  bool HasKey(absl::string_view key) const override;
+
+  bool HasValue(absl::string_view value) const override;
 
   // DictionaryMock doesn't support a limitation.  Note also that only the
   // tokens whose keys exactly match the registered key are looked up; see the
   // comment of AddLookupPredictive.
-  virtual void LookupPredictive(StringPiece key,
-                                const ConversionRequest &conversion_request,
-                                Callback *callback) const;
+  void LookupPredictive(absl::string_view key,
+                        const ConversionRequest &conversion_request,
+                        Callback *callback) const override;
 
-  virtual void LookupPrefix(StringPiece key,
-                            const ConversionRequest &conversion_request,
-                            Callback *callback) const;
+  void LookupPrefix(absl::string_view key,
+                    const ConversionRequest &conversion_request,
+                    Callback *callback) const override;
 
-  virtual void LookupExact(StringPiece key,
-                           const ConversionRequest &conversion_request,
-                           Callback *callback) const;
+  void LookupExact(absl::string_view key,
+                   const ConversionRequest &conversion_request,
+                   Callback *callback) const override;
 
   // For reverse lookup, the reading is stored in Token::value and the word
   // is stored in Token::key.
-  virtual void LookupReverse(StringPiece str,
-                             const ConversionRequest &conversion_request,
-                             Callback *callback) const;
+  void LookupReverse(absl::string_view str,
+                     const ConversionRequest &conversion_request,
+                     Callback *callback) const override;
 
   // Adds a string-result pair to the predictive search result.
   // LookupPrefix will return the result only when the search key exactly
   // matches the string registered by this function.
   // Note that str and key are not necessarily the same, as in the case of the
   // spelling correction. (This applies to other types of searches.)
-  void AddLookupPredictive(const string &str,
-                           const string &key, const string &value,
+  void AddLookupPredictive(const std::string &str, const std::string &key,
+                           const std::string &value, int cost, int lid, int rid,
                            Token::AttributesBitfield token_attributes);
+
+  void AddLookupPredictive(const std::string &str, const std::string &key,
+                           const std::string &value,
+                           Token::AttributesBitfield token_attributes) {
+    AddLookupPredictive(str, key, value, kDefaultCost, kDummyPosId, kDummyPosId,
+                        token_attributes);
+  }
 
   // Adds a string-token pair to the prefix search result.
   // LookupPrefix will return the result when the left part of the search key
   // partially matches the string registered by this function.
-  void AddLookupPrefix(const string &str,
-                       const string &key, const string &value,
+  void AddLookupPrefix(const std::string &str, const std::string &key,
+                       const std::string &value,
                        Token::AttributesBitfield token_attributes);
 
   // Adds a string-token pair to the reverse search result.
   // Same as AddLookupPrefix, but they have different dictionaries
   // internally.
-  void AddLookupReverse(const string &str,
-                        const string &key, const string &value,
+  void AddLookupReverse(const std::string &str, const std::string &key,
+                        const std::string &value,
                         Token::AttributesBitfield token_attributes);
 
   // Adds a string-token pair to the exact search result.
   // Same as AddLookupPrefix, but they have different dictionaries
   // internally.
-  void AddLookupExact(const string &str,
-                      const string &key, const string &value,
+  void AddLookupExact(const std::string &str, const std::string &key,
+                      const std::string &value,
                       Token::AttributesBitfield token_attributes);
 
  private:
-  std::map<string, std::vector<Token *>> reverse_dictionary_;
-  std::map<string, std::vector<Token *>> prefix_dictionary_;
-  std::map<string, std::vector<Token *>> exact_dictionary_;
-  std::map<string, std::vector<Token *>> predictive_dictionary_;
+  using TokensMap = std::map<std::string, std::vector<std::unique_ptr<Token>>>;
 
-  DISALLOW_COPY_AND_ASSIGN(DictionaryMock);
+  TokensMap reverse_dictionary_;
+  TokensMap prefix_dictionary_;
+  TokensMap exact_dictionary_;
+  TokensMap predictive_dictionary_;
 };
 
 }  // namespace dictionary

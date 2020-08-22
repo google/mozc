@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef MOZC_RENDERER_WIN32_CANDIDATE_WINDOW_H_
 #define MOZC_RENDERER_WIN32_CANDIDATE_WINDOW_H_
 
+// clang-format off
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -39,6 +40,7 @@
 #include <atlcrack.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
+// clang-format on
 
 #include <memory>
 #include <string>
@@ -71,32 +73,30 @@ class TextRenderer;
 // SPI_GETACTIVEWINDOWTRACKING is enabled.
 // TODO(yukawa): Support mouse operations before we add a GUI feature which
 //   requires UI interaction by mouse and/or touch. (b/2954874)
-typedef ATL::CWinTraits<
-            WS_POPUP | WS_DISABLED,
-            WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE>
-        CandidateWindowTraits;
+typedef ATL::CWinTraits<WS_POPUP | WS_DISABLED,
+                        WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE>
+    CandidateWindowTraits;
 
 // a class which implements an IME candidate window for Windows. This class
 // is derived from an ATL CWindowImpl<T> class, which provides methods for
 // creating a window and handling windows messages.
-class CandidateWindow : public ATL::CWindowImpl<CandidateWindow,
-                                                ATL::CWindow,
+class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
                                                 CandidateWindowTraits> {
  public:
-  DECLARE_WND_CLASS_EX(kCandidateWindowClassName,
-                       CS_SAVEBITS | CS_DROPSHADOW, COLOR_WINDOW);
+  DECLARE_WND_CLASS_EX(kCandidateWindowClassName, CS_SAVEBITS | CS_DROPSHADOW,
+                       COLOR_WINDOW);
 
   BEGIN_MSG_MAP_EX(CandidateWindow)
-    MSG_WM_CREATE(OnCreate)
-    MSG_WM_DESTROY(OnDestroy)
-    MSG_WM_ERASEBKGND(OnEraseBkgnd)
-    MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
-    MSG_WM_LBUTTONDOWN(OnLButtonDown)
-    MSG_WM_LBUTTONUP(OnLButtonUp)
-    MSG_WM_MOUSEMOVE(OnMouseMove)
-    MSG_WM_SETTINGCHANGE(OnSettingChange)
-    MSG_WM_PAINT(OnPaint)
-    MSG_WM_PRINTCLIENT(OnPrintClient)
+  MSG_WM_CREATE(OnCreate)
+  MSG_WM_DESTROY(OnDestroy)
+  MSG_WM_ERASEBKGND(OnEraseBkgnd)
+  MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
+  MSG_WM_LBUTTONDOWN(OnLButtonDown)
+  MSG_WM_LBUTTONUP(OnLButtonUp)
+  MSG_WM_MOUSEMOVE(OnMouseMove)
+  MSG_WM_SETTINGCHANGE(OnSettingChange)
+  MSG_WM_PAINT(OnPaint)
+  MSG_WM_PRINTCLIENT(OnPrintClient)
   END_MSG_MAP()
 
   CandidateWindow();
@@ -137,8 +137,8 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow,
   void DrawFrame(WTL::CDCHandle dc);
 
   // Handles candidate selection by mouse.
-  void HandleMouseEvent(
-      UINT nFlags, const WTL::CPoint &point, bool close_candidatewindow);
+  void HandleMouseEvent(UINT nFlags, const WTL::CPoint &point,
+                        bool close_candidatewindow);
 
   // Even though the candidate window supports limited mouse operations, we
   // accept them when and only when SPI_GETACTIVEWINDOWTRACKING is disabled

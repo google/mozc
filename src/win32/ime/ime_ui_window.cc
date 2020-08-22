@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "win32/ime/ime_ui_window.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
@@ -37,6 +38,7 @@
 #include <atlwin.h>
 #include <atlmisc.h>
 #include <strsafe.h>
+// clang-format on
 
 #include <algorithm>
 #include <memory>
@@ -55,8 +57,8 @@
 #include "renderer/win32/win32_renderer_client.h"
 #include "session/output_util.h"
 #include "win32/base/conversion_mode_util.h"
-#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/imm_util.h"
+#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/string_util.h"
 #include "win32/base/win32_window_util.h"
 #include "win32/ime/ime_core.h"
@@ -86,11 +88,11 @@ volatile bool g_module_unloaded = false;
 // As filed in b/3088049 or b/4271156, the IME module (e.g. GIMEJa.ime) is
 // sometimes unloaded too early. You can use this macro to guard callback
 // functions from being called in such situation.
-#define DANGLING_CALLBACK_GUARD(return_code)   \
-  do {                                         \
-    if (g_module_unloaded) {                   \
-      return (return_code);                    \
-    }                                          \
+#define DANGLING_CALLBACK_GUARD(return_code) \
+  do {                                       \
+    if (g_module_unloaded) {                 \
+      return (return_code);                  \
+    }                                        \
   } while (false)
 
 // A global variable of mozc::once_t, which is POD, has no bad side effect.
@@ -122,8 +124,7 @@ void LaunchSetDefaultDialog() {
   // Even if SetDefaultDialog is launched multiple times,
   // it's safe because mozc_tool also checks the existence of
   // the process with ProcessMutex.
-  mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
-                                  "--mode=set_default_dialog");
+  mozc::Process::SpawnMozcProcess(mozc::kMozcTool, "--mode=set_default_dialog");
 }
 
 bool IsProcessSandboxedImpl() {
@@ -170,8 +171,8 @@ class PrivateRendererMessageInitializer {
     if (!::IsWindow(target_window)) {
       return false;
     }
-    return WindowUtil::ChangeMessageFilter(
-        target_window, private_renderer_message_);
+    return WindowUtil::ChangeMessageFilter(target_window,
+                                           private_renderer_message_);
   }
 
   // Returns true if the specified message ID is the callback message.
@@ -187,8 +188,7 @@ class PrivateRendererMessageInitializer {
   DISALLOW_COPY_AND_ASSIGN(PrivateRendererMessageInitializer);
 };
 
-void UpdateCommand(const UIContext &context,
-                   HWND ui_window,
+void UpdateCommand(const UIContext &context, HWND ui_window,
                    const UIVisibilityTracker &ui_visibility_tracker,
                    mozc::commands::RendererCommand *command) {
   typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
@@ -278,9 +278,7 @@ void UpdateCommand(const UIContext &context,
         DWORD native_mode = 0;
         CompositionMode mode = commands::DIRECT;
         if (context.GetConversionMode(&native_mode) &&
-            ConversionModeUtil::ToMozcMode(
-                native_mode,
-                &mode)) {
+            ConversionModeUtil::ToMozcMode(native_mode, &mode)) {
           if (!command->has_output()) {
             context.GetLastOutput(command->mutable_output());
           }
@@ -340,13 +338,9 @@ bool TurnOnIMEAndTryToReconvertFromIME(HWND hwnd) {
 
 class LangBarCallbackImpl : public LangBarCallback {
  public:
-  explicit LangBarCallbackImpl(HWND hwnd)
-      : hwnd_(hwnd),
-        reference_count_(1) {
-  }
+  explicit LangBarCallbackImpl(HWND hwnd) : hwnd_(hwnd), reference_count_(1) {}
 
-  virtual ~LangBarCallbackImpl() {
-  }
+  virtual ~LangBarCallbackImpl() {}
 
   virtual ULONG AddRef() {
     const LONG count = ::InterlockedIncrement(&reference_count_);
@@ -398,40 +392,40 @@ class LangBarCallbackImpl : public LangBarCallback {
       }
       case LangBarCallback::kProperty: {
         // Open the config dialog.
-        if (!mozc::Process::SpawnMozcProcess(
-                mozc::kMozcTool, "--mode=config_dialog")) {
+        if (!mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
+                                             "--mode=config_dialog")) {
           result = E_FAIL;
         }
         break;
       }
       case LangBarCallback::kDictionary: {
         // Open the dictionary tool.
-        if (!mozc::Process::SpawnMozcProcess(
-                mozc::kMozcTool, "--mode=dictionary_tool")) {
+        if (!mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
+                                             "--mode=dictionary_tool")) {
           result = E_FAIL;
         }
         break;
       }
       case LangBarCallback::kWordRegister: {
         // Open the word register dialog.
-        if (!mozc::Process::SpawnMozcProcess(
-                mozc::kMozcTool, "--mode=word_register_dialog")) {
+        if (!mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
+                                             "--mode=word_register_dialog")) {
           result = E_FAIL;
         }
         break;
       }
       case LangBarCallback::kHandWriting: {
         // Open the Hand Writing Tool.
-        if (!mozc::Process::SpawnMozcProcess(
-                mozc::kMozcTool, "--mode=hand_writing")) {
+        if (!mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
+                                             "--mode=hand_writing")) {
           result = E_FAIL;
         }
         break;
       }
       case LangBarCallback::kCharacterPalette: {
         // Open the Character Palette dialog.
-        if (!mozc::Process::SpawnMozcProcess(
-                mozc::kMozcTool, "--mode=character_palette")) {
+        if (!mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
+                                             "--mode=character_palette")) {
           result = E_FAIL;
         }
         break;
@@ -458,9 +452,7 @@ class LangBarCallbackImpl : public LangBarCallback {
         }
         break;
       }
-      default: {
-        break;
-      }
+      default: { break; }
     }
     return result;
   }
@@ -489,8 +481,7 @@ class LangBarCallbackImpl : public LangBarCallback {
     const UIContext context(himc);
     uint32 imm32_composition_mode = 0;
     if (!win32::ConversionModeUtil::ToNativeMode(
-            mode, context.IsKanaInputPreferred(),
-            &imm32_composition_mode)) {
+            mode, context.IsKanaInputPreferred(), &imm32_composition_mode)) {
       return E_FAIL;
     }
 
@@ -513,8 +504,8 @@ class LangBarCallbackImpl : public LangBarCallback {
       // mode will not be changed. So we will send SwitchInputMode command
       // explicitly.
       mozc::win32::ImeCore::SwitchInputMode(himc, composition_mode, true);
-    } else if (::ImmSetConversionStatus(
-                   himc, composition_mode, sentence_mode) == FALSE) {
+    } else if (::ImmSetConversionStatus(himc, composition_mode,
+                                        sentence_mode) == FALSE) {
       return E_FAIL;
     }
     return S_OK;
@@ -535,8 +526,7 @@ class DefaultUIWindow {
       : hwnd_(hwnd),
         langbar_callback_(new LangBarCallbackImpl(hwnd)),
         language_bar_(new LanguageBar),
-        has_pending_langbar_update_(false) {
-  }
+        has_pending_langbar_update_(false) {}
 
   ~DefaultUIWindow() {
     langbar_callback_->Release();
@@ -552,9 +542,8 @@ class DefaultUIWindow {
     context.ui_visibility_tracker()->OnStartComposition();
   }
 
-  void OnComposition(
-      const UIContext &context, wchar_t latest_change,
-      const CompositionChangeAttributes &attributes) {
+  void OnComposition(const UIContext &context, wchar_t latest_change,
+                     const CompositionChangeAttributes &attributes) {
     context.ui_visibility_tracker()->OnComposition();
   }
 
@@ -562,8 +551,7 @@ class DefaultUIWindow {
     context.ui_visibility_tracker()->OnEndComposition();
   }
 
-  LRESULT OnNotify(const UIContext &context,
-                   DWORD sub_message, LPARAM lParam) {
+  LRESULT OnNotify(const UIContext &context, DWORD sub_message, LPARAM lParam) {
     context.ui_visibility_tracker()->OnNotify(sub_message, lParam);
 
     LRESULT result = 0;
@@ -643,16 +631,13 @@ class DefaultUIWindow {
     return 0;
   }
 
-  LRESULT OnControl(const UIContext &context, DWORD sub_message,
-                    void *data) {
+  LRESULT OnControl(const UIContext &context, DWORD sub_message, void *data) {
     return 0;
   }
 
-  void OnCompositionFull(const UIContext &context) {
-  }
+  void OnCompositionFull(const UIContext &context) {}
 
-  void OnSelect(const UIContext &context, bool select,
-                HKL keyboard_layout) {
+  void OnSelect(const UIContext &context, bool select, HKL keyboard_layout) {
     if (!select) {
       UninitLangBar();
       return;
@@ -666,20 +651,18 @@ class DefaultUIWindow {
     // SetDefaultDialog.
     if (context.ui_visibility_tracker()->IsSuggestWindowVisible()) {
       if (!IsProcessSandboxed() && RunLevel::IsValidClientRunLevel()) {
-        CallOnce(&g_launch_set_default_dialog,
-                 &LaunchSetDefaultDialog);
+        CallOnce(&g_launch_set_default_dialog, &LaunchSetDefaultDialog);
       }
     }
   }
 
-  LRESULT OnRequest(const UIContext &context,
-                    WPARAM wParam, LPARAM lParam) {
+  LRESULT OnRequest(const UIContext &context, WPARAM wParam, LPARAM lParam) {
     return 0;
   }
 
-  LRESULT OnSessionCommand(
-      HIMC himc, commands::SessionCommand::CommandType command_type,
-      LPARAM lParam) {
+  LRESULT OnSessionCommand(HIMC himc,
+                           commands::SessionCommand::CommandType command_type,
+                           LPARAM lParam) {
     if (himc == nullptr) {
       return 0;
     }
@@ -702,8 +685,8 @@ class DefaultUIWindow {
         if (!context.GetLastOutput(&output)) {
           return 0;
         }
-        if (!OutputUtil::GetCandidateIndexById(
-                 output, mozc_candidate_id, &candidate_index)) {
+        if (!OutputUtil::GetCandidateIndexById(output, mozc_candidate_id,
+                                               &candidate_index)) {
           return 0;
         }
       }  // release |context|.
@@ -735,9 +718,7 @@ class DefaultUIWindow {
     return 1;
   }
 
-  LRESULT UIMessageProc(const UIContext &context,
-                        UINT message,
-                        WPARAM wParam,
+  LRESULT UIMessageProc(const UIContext &context, UINT message, WPARAM wParam,
                         LPARAM lParam) {
     // A UI window should admit receiving a message even when the context is
     // empty.  You could see this situation as follows.
@@ -823,9 +804,7 @@ class DefaultUIWindow {
   };
 
   struct LangBarInfo {
-    LangBarInfo()
-        : enabled(false),
-          mode(commands::DIRECT) {}
+    LangBarInfo() : enabled(false), mode(commands::DIRECT) {}
 
     bool enabled;
     commands::CompositionMode mode;
@@ -855,8 +834,7 @@ class DefaultUIWindow {
     commands::RendererCommand command;
     command.set_type(commands::RendererCommand::UPDATE);
     command.set_visible(false);
-    UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(),
-                  &command);
+    UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(), &command);
     Win32RendererClient::OnUpdated(command);
   }
 
@@ -874,8 +852,7 @@ class DefaultUIWindow {
       // Initialize as invisible just in case. Basically this flag will
       // be set to true in UpdateCommand.
       command.set_visible(false);
-      UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(),
-                    &command);
+      UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(), &command);
       Win32RendererClient::OnUpdated(command);
     }
   }
@@ -899,7 +876,7 @@ class DefaultUIWindow {
       commands::CompositionMode mozc_mode = commands::HIRAGANA;
       if (!win32::ConversionModeUtil::ToMozcMode(imm32_visible_mode,
                                                  &mozc_mode)) {
-          return false;
+        return false;
       }
       enabled = true;
       mode = mozc_mode;
@@ -920,18 +897,15 @@ class DefaultUIWindow {
     return true;
   }
 
-  void InvalidateLangBarInfoCache() {
-    langbar_info_cache_.reset();
-  }
+  void InvalidateLangBarInfoCache() { langbar_info_cache_.reset(); }
 
   void SetDeferredLangBarUpdate(bool enabled, commands::CompositionMode mode) {
     CancelDeferredLangBarUpdateIfExists();
 
     deferred_langbar_update_request_.enabled = enabled;
     deferred_langbar_update_request_.mode = mode;
-    const auto result = ::SetTimer(
-        hwnd_, kDeferredLangBarUpdateTimerId,
-        kLangBarUpdateDelayMilliSec, nullptr);
+    const auto result = ::SetTimer(hwnd_, kDeferredLangBarUpdateTimerId,
+                                   kLangBarUpdateDelayMilliSec, nullptr);
     if (result != 0) {
       has_pending_langbar_update_ = true;
     }
@@ -1033,8 +1007,8 @@ class DefaultUIWindow {
 //   In this case, just start handling the message [1].
 //
 // This function returns the aggregated message which should be handled now.
-MSG AggregateRendererCallbackMessage(
-    HWND hwnd, UINT private_message, WPARAM wParam, LPARAM lParam) {
+MSG AggregateRendererCallbackMessage(HWND hwnd, UINT private_message,
+                                     WPARAM wParam, LPARAM lParam) {
   MSG current_msg = {};
   current_msg.hwnd = hwnd;
   current_msg.message = private_message;
@@ -1075,8 +1049,7 @@ MSG AggregateRendererCallbackMessage(
             current_msg.wParam);
 
     // If this is a HIGHLIGHT_CANDIDATE message, resume aggregation.
-    if (command_type ==
-        mozc::commands::SessionCommand::HIGHLIGHT_CANDIDATE) {
+    if (command_type == mozc::commands::SessionCommand::HIGHLIGHT_CANDIDATE) {
       continue;
     }
 
@@ -1084,9 +1057,7 @@ MSG AggregateRendererCallbackMessage(
   }
 }
 
-LRESULT WINAPI UIWindowProc(HWND hwnd,
-                            UINT message,
-                            WPARAM wParam,
+LRESULT WINAPI UIWindowProc(HWND hwnd, UINT message, WPARAM wParam,
                             LPARAM lParam) {
   DANGLING_CALLBACK_GUARD(0);
 
@@ -1111,16 +1082,15 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
       return FALSE;
     }
 
-    DefaultUIWindow* ui_window = new DefaultUIWindow(hwnd);
+    DefaultUIWindow *ui_window = new DefaultUIWindow(hwnd);
 
-    ::SetWindowLongPtr(hwnd,
-                       IMMGWLP_PRIVATE,
+    ::SetWindowLongPtr(hwnd, IMMGWLP_PRIVATE,
                        reinterpret_cast<LONG_PTR>(ui_window));
 
     Singleton<PrivateRendererMessageInitializer>::get()->Initialize(hwnd);
   }
   // Retrieves UI window object from the private area.
-  DefaultUIWindow* ui_window = reinterpret_cast<DefaultUIWindow*>(
+  DefaultUIWindow *ui_window = reinterpret_cast<DefaultUIWindow *>(
       ::GetWindowLongPtrW(hwnd, IMMGWLP_PRIVATE));
 
   if (ui_window == nullptr) {
@@ -1133,24 +1103,23 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
 
   LRESULT result = 0;
   const bool is_renderer_message =
-      Singleton<PrivateRendererMessageInitializer>::get()->
-          IsPrivateRendererMessage(message);
+      Singleton<PrivateRendererMessageInitializer>::get()
+          ->IsPrivateRendererMessage(message);
 
   bool is_handled = false;
   if (is_ui_message) {
     const HIMC himc = GetSafeHIMC(hwnd);
-    result = ui_window->UIMessageProc(UIContext(himc),
-                                      message, wParam, lParam);
+    result = ui_window->UIMessageProc(UIContext(himc), message, wParam, lParam);
     is_handled = true;
   } else if (is_renderer_message) {
-    const MSG renderer_msg = AggregateRendererCallbackMessage(
-        hwnd, message, wParam, lParam);
+    const MSG renderer_msg =
+        AggregateRendererCallbackMessage(hwnd, message, wParam, lParam);
     const mozc::commands::SessionCommand::CommandType command_type =
         static_cast<mozc::commands::SessionCommand::CommandType>(
             renderer_msg.wParam);
     const HIMC himc = GetSafeHIMC(hwnd);
-    result = ui_window->OnSessionCommand(himc, command_type,
-                                         renderer_msg.lParam);
+    result =
+        ui_window->OnSessionCommand(himc, command_type, renderer_msg.lParam);
     is_handled = true;
   } else if (message == WM_DESTROY) {
     // Ensure the LangBar is uninitialized.

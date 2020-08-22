@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/number_compound_util.h"
+#include "absl/strings/string_view.h"
 
 using mozc::dictionary::POSMatcher;
 
@@ -57,7 +58,7 @@ namespace {
 enum RewriteType {
   NO_REWRITE = 0,
   ARABIC_FIRST,  // arabic candidates first ordering
-  KANJI_FIRST,  // kanji candidates first ordering
+  KANJI_FIRST,   // kanji candidates first ordering
 };
 
 struct RewriteCandidateInfo {
@@ -70,12 +71,10 @@ struct RewriteCandidateInfo {
 // base_candidate_pos: the index of the base candidate.
 // *arabic_candidate: arabic candidate using numeric style conversion.
 // POS information, cost, etc will be copied from base candidate.
-RewriteType GetRewriteTypeAndBase(
-    const SerializedStringArray &suffix_array,
-    const Segment &seg,
-    int base_candidate_pos,
-    const POSMatcher &pos_matcher,
-    Segment::Candidate *arabic_candidate) {
+RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
+                                  const Segment &seg, int base_candidate_pos,
+                                  const POSMatcher &pos_matcher,
+                                  Segment::Candidate *arabic_candidate) {
   DCHECK(arabic_candidate);
 
   const Segment::Candidate &c = seg.candidate(base_candidate_pos);
@@ -90,26 +89,25 @@ RewriteType GetRewriteTypeAndBase(
     return ARABIC_FIRST;
   }
 
-  string half_width_new_content_value;
+  std::string half_width_new_content_value;
   Util::FullWidthToHalfWidth(c.content_key, &half_width_new_content_value);
   // Try to get normalized kanji_number and arabic_number.
   // If it failed, do nothing.
   // Retain suffix for later use.
-  string number_suffix, kanji_number, arabic_number;
+  std::string number_suffix, kanji_number, arabic_number;
   if (!NumberUtil::NormalizeNumbersWithSuffix(c.content_value,
                                               false,  // trim_reading_zeros
-                                              &kanji_number,
-                                              &arabic_number,
+                                              &kanji_number, &arabic_number,
                                               &number_suffix) ||
       arabic_number == half_width_new_content_value) {
     return NO_REWRITE;
   }
-  const string new_content_value = arabic_number + number_suffix;
+  const std::string new_content_value = arabic_number + number_suffix;
   if (new_content_value == half_width_new_content_value) {
     return NO_REWRITE;
   }
-  const string suffix(c.value, c.content_value.size(),
-                      c.value.size() - c.content_value.size());
+  const std::string suffix(c.value, c.content_value.size(),
+                           c.value.size() - c.content_value.size());
   arabic_candidate->Init();
   arabic_candidate->value = new_content_value + suffix;
   arabic_candidate->content_value = new_content_value;
@@ -127,8 +125,7 @@ RewriteType GetRewriteTypeAndBase(
 }
 
 void GetRewriteCandidateInfos(
-    const SerializedStringArray &suffix_array,
-    const Segment &seg,
+    const SerializedStringArray &suffix_array, const Segment &seg,
     const POSMatcher &pos_matcher,
     std::vector<RewriteCandidateInfo> *rewrite_candidate_info) {
   DCHECK(rewrite_candidate_info);
@@ -151,7 +148,7 @@ void GetRewriteCandidateInfos(
 // http://b/issue?id=2872048
 const int kArabicNumericOffset = 5;
 
-void PushBackCandidate(const string &value, const string &desc,
+void PushBackCandidate(const std::string &value, const std::string &desc,
                        NumberUtil::NumberString::Style style,
                        std::vector<Segment::Candidate> *results) {
   bool found = false;
@@ -173,7 +170,7 @@ void PushBackCandidate(const string &value, const string &desc,
 
 void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
                        std::vector<Segment::Candidate> *candidates) {
-  const string suffix(
+  const std::string suffix(
       arabic_cand.value, arabic_cand.content_value.size(),
       arabic_cand.value.size() - arabic_cand.content_value.size());
 
@@ -186,13 +183,13 @@ void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
 
 class CheckValueOperator {
  public:
-  explicit CheckValueOperator(const string &v) : find_value_(&v) {}
-  bool operator() (const Segment::Candidate &cand) const {
+  explicit CheckValueOperator(const std::string &v) : find_value_(&v) {}
+  bool operator()(const Segment::Candidate &cand) const {
     return (cand.value == *find_value_);
   }
 
  private:
-  const string *find_value_;
+  const std::string *find_value_;
 };
 
 // If we have the candidates to be inserted before the base candidate,
@@ -200,8 +197,7 @@ class CheckValueOperator {
 // TODO(toshiyuki): Delete candidates between base pos and insert pos
 // if necessary.
 void EraseExistingCandidates(
-    const std::vector<Segment::Candidate> &results,
-    int base_candidate_pos,
+    const std::vector<Segment::Candidate> &results, int base_candidate_pos,
     Segment *seg,
     std::vector<RewriteCandidateInfo> *rewrite_candidate_info_list) {
   DCHECK(seg);
@@ -261,8 +257,7 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
       base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
 }
 
-void InsertCandidate(Segment *segment,
-                     int32 insert_position,
+void InsertCandidate(Segment *segment, int32 insert_position,
                      const Segment::Candidate &base_cand,
                      const Segment::Candidate &result_cand) {
   DCHECK(segment);
@@ -271,8 +266,7 @@ void InsertCandidate(Segment *segment,
   MergeCandidateInfoInternal(base_cand, result_cand, c);
 }
 
-void UpdateCandidate(Segment *segment,
-                     int32 update_position,
+void UpdateCandidate(Segment *segment, int32 update_position,
                      const Segment::Candidate &base_cand,
                      const Segment::Candidate &result_cand) {
   DCHECK(segment);
@@ -291,8 +285,8 @@ void UpdateCandidate(Segment *segment,
 
 void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
                                const Segment::Candidate &base_cand,
-                               int base_candidate_pos,
-                               int insert_pos, Segment *seg) {
+                               int base_candidate_pos, int insert_pos,
+                               Segment *seg) {
   if (results.empty()) {
     return;
   }
@@ -308,7 +302,7 @@ void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
   // For example, "千万" v.s. "一千万", or "一二三" v.s. "百二十三".
   // We don't want to rewrite "千万" to "一千万".
   {
-    const string &base_value = seg->candidate(base_candidate_pos).value;
+    const std::string &base_value = seg->candidate(base_candidate_pos).value;
     std::vector<Segment::Candidate>::const_iterator itr = std::find_if(
         results.begin(), results.end(), CheckValueOperator(base_value));
     if (itr != results.end() &&
@@ -339,15 +333,14 @@ int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
   }
 }
 
-void InsertHalfArabic(const string &half_arabic,
+void InsertHalfArabic(const std::string &half_arabic,
                       std::vector<NumberUtil::NumberString> *output) {
-  output->push_back(
-      NumberUtil::NumberString(half_arabic, "",
-                               NumberUtil::NumberString::DEFAULT_STYLE));
+  output->push_back(NumberUtil::NumberString(
+      half_arabic, "", NumberUtil::NumberString::DEFAULT_STYLE));
 }
 
 void GetNumbers(RewriteType type, bool exec_radix_conversion,
-                const string &arabic_content_value,
+                const std::string &arabic_content_value,
                 std::vector<NumberUtil::NumberString> *output) {
   DCHECK(output);
   if (type == ARABIC_FIRST) {
@@ -369,9 +362,9 @@ void GetNumbers(RewriteType type, bool exec_radix_conversion,
   }
 }
 
-bool RewriteOneSegment(
-    const SerializedStringArray &suffix_array,
-    const POSMatcher &pos_matcher, bool exec_radix_conversion, Segment *seg) {
+bool RewriteOneSegment(const SerializedStringArray &suffix_array,
+                       const POSMatcher &pos_matcher,
+                       bool exec_radix_conversion, Segment *seg) {
   DCHECK(seg);
   bool modified = false;
   std::vector<RewriteCandidateInfo> rewrite_candidate_infos;
@@ -385,9 +378,9 @@ bool RewriteOneSegment(
       break;
     }
 
-    string arabic_content_value;
-    Util::FullWidthToHalfWidth(
-        info.candidate.content_value, &arabic_content_value);
+    std::string arabic_content_value;
+    Util::FullWidthToHalfWidth(info.candidate.content_value,
+                               &arabic_content_value);
     if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
       if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
         // Rewrite for number suffix
@@ -405,20 +398,20 @@ bool RewriteOneSegment(
     GetNumbers(info.type, exec_radix_conversion, arabic_content_value, &output);
     std::vector<Segment::Candidate> converted_numbers;
     for (int j = 0; j < output.size(); ++j) {
-      PushBackCandidate(output[j].value, output[j].description,
-                        output[j].style, &converted_numbers);
+      PushBackCandidate(output[j].value, output[j].description, output[j].style,
+                        &converted_numbers);
     }
     SetCandidatesInfo(info.candidate, &converted_numbers);
 
     // Caution!!!: This invocation will update the data inside of the
     // rewrite_candidate_infos. Thus, |info| also can be updated as well
     // regardless of whether it's const reference-ness.
-    EraseExistingCandidates(converted_numbers, info.position,
-                            seg, &rewrite_candidate_infos);
+    EraseExistingCandidates(converted_numbers, info.position, seg,
+                            &rewrite_candidate_infos);
     int insert_pos = GetInsertPos(info.position, *seg, info.type);
     DCHECK_LT(info.position, insert_pos);
-    InsertConvertedCandidates(
-        converted_numbers, info.candidate, info.position, insert_pos, seg);
+    InsertConvertedCandidates(converted_numbers, info.candidate, info.position,
+                              insert_pos, seg);
     modified = true;
   }
   return modified;
@@ -430,7 +423,7 @@ NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
   const char *array = nullptr;
   size_t size = 0;
   data_manager->GetCounterSuffixSortedArray(&array, &size);
-  const StringPiece data(array, size);
+  const absl::string_view data(array, size);
   // Data manager is responsible for providing a valid data.  Just verify data
   // in debug build.
   DCHECK(SerializedStringArray::VerifyData(data));

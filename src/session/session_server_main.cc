@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,29 +34,28 @@
 #include "base/init_mozc.h"
 #include "protocol/commands.pb.h"
 #include "session/session_server.h"
+#include "absl/strings/str_format.h"
 
 static const int kMaxBufSize = 1024;
 
 namespace mozc {
-void SendCommand(SessionServer *server,
-                 const commands::Input &input,
+void SendCommand(SessionServer *server, const commands::Input &input,
                  commands::Output *output) {
   char buf[kMaxBufSize];
   size_t buf_len = kMaxBufSize;
 
-  printf("input command:\n%s\n", input.Utf8DebugString().c_str());
+  absl::PrintF("input command:\n%s\n", input.Utf8DebugString());
 
-  string input_str = input.SerializeAsString();
-  server->Process(input_str.c_str(), input_str.size(),
-                  buf, &buf_len);
+  std::string input_str = input.SerializeAsString();
+  server->Process(input_str.c_str(), input_str.size(), buf, &buf_len);
 
   output->ParseFromArray(buf, buf_len);
-  printf("output command:\n%s\n", output->Utf8DebugString().c_str());
+  absl::PrintF("output command:\n%s\n", output->Utf8DebugString());
 }
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::SessionServer server;
   mozc::commands::Input input;
@@ -73,8 +72,7 @@ int main(int argc, char **argv) {
   {
     input.set_id(id);
     input.set_type(mozc::commands::Input::SEND_KEY);
-    input.mutable_key()->set_special_key(
-        mozc::commands::KeyEvent::SPACE);
+    input.mutable_key()->set_special_key(mozc::commands::KeyEvent::SPACE);
     mozc::SendCommand(&server, input, &output);
   }
 

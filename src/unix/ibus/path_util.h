@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,11 @@
 
 #include <string>
 
-#include "base/port_string.h"
-
 namespace mozc {
 namespace ibus {
 
 // Returns the icon file path used by ibus_mozc.
-string GetIconPath(const string &icon_file);
+std::string GetIconPath(const std::string &icon_file);
 
 }  // namespace ibus
 }  // namespace mozc

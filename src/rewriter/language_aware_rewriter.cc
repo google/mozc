@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,8 @@ using dictionary::DictionaryInterface;
 using dictionary::POSMatcher;
 
 LanguageAwareRewriter::LanguageAwareRewriter(
-    const POSMatcher &pos_matcher,
-    const DictionaryInterface *dictionary)
-    : unknown_id_(pos_matcher.GetUnknownId()),
-      dictionary_(dictionary) {}
+    const POSMatcher &pos_matcher, const DictionaryInterface *dictionary)
+    : unknown_id_(pos_matcher.GetUnknownId()), dictionary_(dictionary) {}
 
 LanguageAwareRewriter::~LanguageAwareRewriter() = default;
 
@@ -85,8 +83,7 @@ bool IsEnabled(const ConversionRequest &request) {
 
 }  // namespace
 
-int LanguageAwareRewriter::capability(
-    const ConversionRequest &request) const {
+int LanguageAwareRewriter::capability(const ConversionRequest &request) const {
   // Language aware input is performed only on suggestion or prediction.
   if (!IsEnabled(request)) {
     return RewriterInterface::NOT_AVAILABLE;
@@ -97,9 +94,8 @@ int LanguageAwareRewriter::capability(
 
 namespace {
 bool IsRawQuery(const composer::Composer &composer,
-                const DictionaryInterface *dictionary,
-                int *rank) {
-  string raw_text;
+                const DictionaryInterface *dictionary, int *rank) {
+  std::string raw_text;
   composer.GetRawString(&raw_text);
 
   // Check if the length of text is less than or equal to three.
@@ -111,7 +107,7 @@ bool IsRawQuery(const composer::Composer &composer,
 
   // If the composition string is same with the raw_text, there is no
   // need to add the candidate to suggestions.
-  string composition;
+  std::string composition;
   composer.GetStringForPreedit(&composition);
   if (composition == raw_text) {
     return false;
@@ -119,7 +115,7 @@ bool IsRawQuery(const composer::Composer &composer,
 
   // If the composition string is the full width form of the raw_text,
   // there is no need to add the candidate to suggestions.
-  string composition_in_half_width_ascii;
+  std::string composition_in_half_width_ascii;
   Util::FullWidthAsciiToHalfWidthAscii(composition,
                                        &composition_in_half_width_ascii);
   if (composition_in_half_width_ascii == raw_text) {
@@ -134,7 +130,7 @@ bool IsRawQuery(const composer::Composer &composer,
   //
   // Note, GetQueryForPrediction omits the trailing alphabet characters of
   // the composition string and returns it.
-  string key;
+  std::string key;
   composer.GetQueryForPrediction(&key);
   if (Util::ContainsScriptType(key, Util::ALPHABET)) {
     *rank = 0;
@@ -184,8 +180,8 @@ void GetAlphabetIds(const Segment &segment, uint16 *lid, uint16 *rid) {
 // BM_DesktopAnthyCorpusConversion 25062440090 -> 25101542382 (1.002)
 // BM_DesktopStationPredictionCorpusPrediction 8695341697 -> 8672187681 (0.997)
 // BM_DesktopStationPredictionCorpusSuggestion 6149502840 -> 6152393270 (1.000)
-bool LanguageAwareRewriter::FillRawText(
-    const ConversionRequest &request, Segments *segments) const {
+bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
+                                        Segments *segments) const {
   if (segments->conversion_segments_size() != 1 || !request.has_composer()) {
     return false;
   }
@@ -197,7 +193,7 @@ bool LanguageAwareRewriter::FillRawText(
 
   Segment *segment = segments->mutable_conversion_segment(0);
 
-  string raw_string;
+  std::string raw_string;
   request.composer().GetRawString(&raw_string);
 
   uint16 lid = unknown_id_;
@@ -229,8 +225,8 @@ bool LanguageAwareRewriter::FillRawText(
   return true;
 }
 
-bool LanguageAwareRewriter::Rewrite(
-    const ConversionRequest &request, Segments *segments) const {
+bool LanguageAwareRewriter::Rewrite(const ConversionRequest &request,
+                                    Segments *segments) const {
   if (!IsEnabled(request)) {
     return false;
   }
@@ -246,7 +242,7 @@ bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
     return false;
   }
 
-  string raw_string;
+  std::string raw_string;
   composer.GetRawString(&raw_string);
   if (raw_string != candidate.value) {
     return false;
@@ -273,8 +269,7 @@ void LanguageAwareRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (IsLanguageAwareInputCandidate(request.composer(),
-                                    segment.candidate(0))) {
+  if (IsLanguageAwareInputCandidate(request.composer(), segment.candidate(0))) {
     usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionCommitted");
   }
 }

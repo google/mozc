@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2010-2018, Google Inc.
+ Copyright 2010-2020, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -1238,56 +1238,6 @@
       </layout>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab">
-     <attribute name="title">
-      <string>Cloud</string>
-     </attribute>
-     <widget class="QCheckBox" name="cloudHandwritingCheckBox">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>50</y>
-        <width>441</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Enable Cloud handwriting recognition</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="cloudServersLayoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>10</y>
-        <width>461</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_23">
-       <item>
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>Cloud handwriting recognition</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="Line" name="line_7">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </widget>
     <widget class="QWidget" name="miscTab">
      <attribute name="title">
       <string>Misc</string>
@@ -1888,7 +1838,6 @@
   <tabstop>presentationModeCheckBox</tabstop>
   <tabstop>usageStatsCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButtonForUsageStats</tabstop>
-  <tabstop>cloudHandwritingCheckBox</tabstop>
   <tabstop>checkDefaultCheckBox</tabstop>
   <tabstop>IMEHotKeyDisabledCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButton</tabstop>

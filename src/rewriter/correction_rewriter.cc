@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -56,18 +57,16 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
 }
 
 bool CorrectionRewriter::LookupCorrection(
-    const string &key,
-    const string &value,
+    const string &key, const string &value,
     std::vector<ReadingCorrectionItem> *results) const {
   CHECK(results);
   results->clear();
 
   using Iter = SerializedStringArray::const_iterator;
-  std::pair<Iter, Iter> range = std::equal_range(error_array_.begin(),
-                                            error_array_.end(),
-                                            key);
+  std::pair<Iter, Iter> range =
+      std::equal_range(error_array_.begin(), error_array_.end(), key);
   for (; range.first != range.second; ++range.first) {
-    const StringPiece v = value_array_[range.first.index()];
+    const absl::string_view v = value_array_[range.first.index()];
     if (value.empty() || value == v) {
       results->emplace_back(v, *range.first,
                             correction_array_[range.first.index()]);
@@ -76,9 +75,9 @@ bool CorrectionRewriter::LookupCorrection(
   return !results->empty();
 }
 
-CorrectionRewriter::CorrectionRewriter(StringPiece value_array_data,
-                                       StringPiece error_array_data,
-                                       StringPiece correction_array_data) {
+CorrectionRewriter::CorrectionRewriter(
+    absl::string_view value_array_data, absl::string_view error_array_data,
+    absl::string_view correction_array_data) {
   DCHECK(SerializedStringArray::VerifyData(value_array_data));
   DCHECK(SerializedStringArray::VerifyData(error_array_data));
   DCHECK(SerializedStringArray::VerifyData(correction_array_data));
@@ -92,9 +91,8 @@ CorrectionRewriter::CorrectionRewriter(StringPiece value_array_data,
 // static
 CorrectionRewriter *CorrectionRewriter::CreateCorrectionRewriter(
     const DataManagerInterface *data_manager) {
-  StringPiece value_array_data, error_array_data, correction_array_data;
-  data_manager->GetReadingCorrectionData(&value_array_data,
-                                         &error_array_data,
+  absl::string_view value_array_data, error_array_data, correction_array_data;
+  data_manager->GetReadingCorrectionData(&value_array_data, &error_array_data,
                                          &correction_array_data);
   return new CorrectionRewriter(value_array_data, error_array_data,
                                 correction_array_data);
@@ -151,11 +149,9 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
           segment->insert_candidate(kInsertPosition);
       DCHECK(mutable_candidate);
       mutable_candidate->CopyFrom(top_candidate);
-      Util::ConcatStrings(results[k].error,
-                          top_candidate.functional_key(),
+      Util::ConcatStrings(results[k].error, top_candidate.functional_key(),
                           &mutable_candidate->key);
-      Util::ConcatStrings(results[k].value,
-                          top_candidate.functional_value(),
+      Util::ConcatStrings(results[k].value, top_candidate.functional_value(),
                           &mutable_candidate->value);
       mutable_candidate->inner_segment_boundary.clear();
       SetCandidate(results[k], mutable_candidate);

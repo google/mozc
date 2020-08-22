@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,12 +57,10 @@ class TipEditSessionImpl {
                                          ITfComposition *composition,
                                          TfEditCookie write_cookie);
 
-
   // Does post-edit status checking for composition (if exists). For example,
   // when the composition is canceled by the application, this method sends
   // REVERT message to the server so that the status is kept to be consistent.
-  static HRESULT OnEndEdit(TipTextService *text_service,
-                           ITfContext *context,
+  static HRESULT OnEndEdit(TipTextService *text_service, ITfContext *context,
                            TfEditCookie write_cookie,
                            ITfEditRecord *edit_record);
 
@@ -72,14 +70,12 @@ class TipEditSessionImpl {
   // - Updates private context including IME On/Off state and input mode.
   // - Invokes UI update. (by calling UpdateUI)
   static HRESULT UpdateContext(TipTextService *text_service,
-                               ITfContext *context,
-                               TfEditCookie write_cookie,
+                               ITfContext *context, TfEditCookie write_cookie,
                                const commands::Output &output);
 
   // A core logic of UI handler. This function does
   // - Invokes UI update.
-  static void UpdateUI(TipTextService *text_service,
-                       ITfContext *context,
+  static void UpdateUI(TipTextService *text_service, ITfContext *context,
                        TfEditCookie read_cookie);
 
  private:

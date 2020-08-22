@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,18 +56,15 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/strings/string_view.h"
 
-DEFINE_int32(dictionary_test_size, 100000,
-             "Dictionary size for this test.");
+DEFINE_int32(dictionary_test_size, 100000, "Dictionary size for this test.");
 DEFINE_int32(dictionary_reverse_lookup_test_size, 1000,
              "Number of tokens to run reverse lookup test.");
 DECLARE_int32(min_key_length_to_use_small_cost_encoding);
 
 namespace mozc {
 namespace dictionary {
-namespace {
-using std::unique_ptr;
-}  // namespace
 
 class SystemDictionaryTest : public ::testing::Test {
  protected:
@@ -75,8 +72,8 @@ class SystemDictionaryTest : public ::testing::Test {
       : pos_matcher_(mock_data_manager_.GetPOSMatcherData()),
         text_dict_(new TextDictionaryLoader(pos_matcher_)),
         dic_fn_(FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc.dic")) {
-    const string dic_path = mozc::testing::GetSourceFileOrDie({
-        "data", "dictionary_oss", "dictionary00.txt"});
+    const std::string dic_path = mozc::testing::GetSourceFileOrDie(
+        {"data", "dictionary_oss", "dictionary00.txt"});
     text_dict_->LoadWithLineLimit(dic_path, "", FLAGS_dictionary_test_size);
 
     convreq_.set_request(&request_);
@@ -104,21 +101,21 @@ class SystemDictionaryTest : public ::testing::Test {
     config::ConfigHandler::SetConfig(config);
   }
 
-  void BuildSystemDictionary(const std::vector <Token *>& tokens,
+  void BuildSystemDictionary(const std::vector<Token *> &tokens,
                              int num_tokens);
-  Token* CreateToken(const string& key, const string& value) const;
+  Token *CreateToken(const std::string &key, const std::string &value) const;
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   dictionary::POSMatcher pos_matcher_;
-  unique_ptr<TextDictionaryLoader> text_dict_;
+  std::unique_ptr<TextDictionaryLoader> text_dict_;
 
   ConversionRequest convreq_;
   config::Config config_;
   commands::Request request_;
-  const string dic_fn_;
+  const std::string dic_fn_;
   int original_flags_min_key_length_to_use_small_cost_encoding_;
 };
 
@@ -135,9 +132,9 @@ void SystemDictionaryTest::BuildSystemDictionary(
   builder.WriteToFile(dic_fn_);
 }
 
-Token* SystemDictionaryTest::CreateToken(const string& key,
-                                         const string& value) const {
-  Token* t = new Token;
+Token *SystemDictionaryTest::CreateToken(const std::string &key,
+                                         const std::string &value) const {
+  Token *t = new Token;
   t->key = key;
   t->value = value;
   t->cost = 0;
@@ -147,11 +144,11 @@ Token* SystemDictionaryTest::CreateToken(const string& key,
 }
 
 // Returns true if they seem to be same
-bool SystemDictionaryTest::CompareTokensForLookup(
-    const Token &a, const Token &b, bool reverse) const {
-  const bool key_value_check = reverse ?
-      (a.key == b.value && a.value == b.key) :
-      (a.key == b.key && a.value == b.value);
+bool SystemDictionaryTest::CompareTokensForLookup(const Token &a,
+                                                  const Token &b,
+                                                  bool reverse) const {
+  const bool key_value_check = reverse ? (a.key == b.value && a.value == b.key)
+                                       : (a.key == b.key && a.value == b.value);
   if (!key_value_check) {
     return false;
   }
@@ -159,9 +156,8 @@ bool SystemDictionaryTest::CompareTokensForLookup(
   if (!comp_cost) {
     return false;
   }
-  const bool spelling_match =
-      (a.attributes & Token::SPELLING_CORRECTION) ==
-      (b.attributes & Token::SPELLING_CORRECTION);
+  const bool spelling_match = (a.attributes & Token::SPELLING_CORRECTION) ==
+                              (b.attributes & Token::SPELLING_CORRECTION);
   if (!spelling_match) {
     return false;
   }
@@ -195,10 +191,10 @@ TEST_F(SystemDictionaryTest, HasValue) {
     tokens.push_back(token);
   }
 
-  const string kFull = "ｆｕｌｌ";
-  const string kHiragana = "ひらがな";
-  const string kKatakanaKey = "かたかな";
-  const string kKatakanaValue = "カタカナ";
+  const std::string kFull = "ｆｕｌｌ";
+  const std::string kHiragana = "ひらがな";
+  const std::string kKatakanaKey = "かたかな";
+  const std::string kKatakanaValue = "カタカナ";
 
   {  // Alphabet full width
     Token *token = new Token;
@@ -223,9 +219,8 @@ TEST_F(SystemDictionaryTest, HasValue) {
 
   BuildSystemDictionary(tokens, tokens.size());
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
+  auto system_dic = SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic.get() != nullptr)
       << "Failed to open dictionary source:" << dic_fn_;
 
   EXPECT_TRUE(system_dic->HasValue("バリュー0"));
@@ -256,7 +251,7 @@ TEST_F(SystemDictionaryTest, HasValue) {
 
 TEST_F(SystemDictionaryTest, NormalWord) {
   std::vector<Token *> source_tokens;
-  unique_ptr<Token> t0(new Token);
+  std::unique_ptr<Token> t0(new Token);
   t0->key = "あ";
   t0->value = "亜";
   t0->cost = 100;
@@ -265,10 +260,9 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   source_tokens.push_back(t0.get());
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   CollectTokenCallback callback;
 
@@ -322,10 +316,9 @@ TEST_F(SystemDictionaryTest, SameWord) {
   }
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   // All the tokens should be looked up.
   CollectTokenCallback callback;
@@ -337,10 +330,9 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
   const std::vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   // All the tokens should be looked up.
   for (size_t i = 0; i < source_tokens.size(); ++i) {
@@ -352,10 +344,10 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
 }
 
 TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
-  const string k0 = "は";
-  const string k1 = "はひふへほ";
-  unique_ptr<Token> t0(CreateToken(k0, "aa"));
-  unique_ptr<Token> t1(CreateToken(k1, "bb"));
+  const std::string k0 = "は";
+  const std::string k1 = "はひふへほ";
+  std::unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  std::unique_ptr<Token> t1(CreateToken(k1, "bb"));
 
   std::vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -363,10 +355,9 @@ TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   // |t0| should be looked up from |k1|.
   CheckTokenExistenceCallback callback(t0.get());
@@ -378,7 +369,7 @@ namespace {
 
 class LookupPrefixTestCallback : public SystemDictionary::Callback {
  public:
-  virtual ResultType OnKey(StringPiece key) {
+  ResultType OnKey(absl::string_view key) override {
     if (key == "かき") {
       return TRAVERSE_CULL;
     } else if (key == "さ") {
@@ -389,18 +380,18 @@ class LookupPrefixTestCallback : public SystemDictionary::Callback {
     return TRAVERSE_CONTINUE;
   }
 
-  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                             const Token &token) {
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const Token &token) override {
     result_.insert(std::make_pair(token.key, token.value));
     return TRAVERSE_CONTINUE;
   }
 
-  const std::set<std::pair<string, string>> &result() const {
+  const std::set<std::pair<std::string, std::string>> &result() const {
     return result_;
   }
 
  private:
-  std::set<std::pair<string, string>> result_;
+  std::set<std::pair<std::string, std::string>> result_;
 };
 
 }  // namespace
@@ -411,33 +402,17 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     const char *key;
     const char *value;
   } kKeyValues[] = {
-    { "あ", "亜" },
-    { "あ", "安" },
-    { "あ", "在" },
-    { "あい", "愛" },
-    { "あい", "藍" },
-    { "あいう", "藍雨" },
-    { "か", "可" },
-    { "かき", "牡蠣" },
-    { "かき", "夏季" },
-    { "かきく", "柿久" },
-    { "さ", "差" },
-    { "さ", "左" },
-    { "さし", "刺" },
-    { "た", "田" },
-    { "た", "多" },
-    { "たち", "多値" },
-    { "たちつ", "タチツ" },
-    { "は", "葉" },
-    { "は", "歯" },
-    { "はひ", "ハヒ" },
-    { "ば", "場" },
-    { "はび", "波美" },
-    { "ばび", "馬尾" },
-    { "ばびぶ", "バビブ" },
+      {"あ", "亜"},       {"あ", "安"},         {"あ", "在"},
+      {"あい", "愛"},     {"あい", "藍"},       {"あいう", "藍雨"},
+      {"か", "可"},       {"かき", "牡蠣"},     {"かき", "夏季"},
+      {"かきく", "柿久"}, {"さ", "差"},         {"さ", "左"},
+      {"さし", "刺"},     {"た", "田"},         {"た", "多"},
+      {"たち", "多値"},   {"たちつ", "タチツ"}, {"は", "葉"},
+      {"は", "歯"},       {"はひ", "ハヒ"},     {"ば", "場"},
+      {"はび", "波美"},   {"ばび", "馬尾"},     {"ばびぶ", "バビブ"},
   };
   const size_t kKeyValuesSize = arraysize(kKeyValues);
-  unique_ptr<Token> tokens[kKeyValuesSize];
+  std::unique_ptr<Token> tokens[kKeyValuesSize];
   std::vector<Token *> source_tokens(kKeyValuesSize);
   for (size_t i = 0; i < kKeyValuesSize; ++i) {
     tokens[i].reset(CreateToken(kKeyValues[i].key, kKeyValues[i].value));
@@ -445,27 +420,27 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   }
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, kKeyValuesSize);
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   // Test for normal prefix lookup without key expansion.
   {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix("あい",  // "あい"
                              convreq_, &callback);
-    const std::set<std::pair<string, string>> &result = callback.result();
+    const std::set<std::pair<std::string, std::string>> &result =
+        callback.result();
     // "あ" -- "あい" should be found.
     for (size_t i = 0; i < 5; ++i) {
-      const std::pair<string, string> entry(
-          kKeyValues[i].key, kKeyValues[i].value);
+      const std::pair<std::string, std::string> entry(kKeyValues[i].key,
+                                                      kKeyValues[i].value);
       EXPECT_TRUE(result.end() != result.find(entry));
     }
     // The others should not be found.
     for (size_t i = 5; i < arraysize(kKeyValues); ++i) {
-      const std::pair<string, string> entry(
-          kKeyValues[i].key, kKeyValues[i].value);
+      const std::pair<std::string, std::string> entry(kKeyValues[i].key,
+                                                      kKeyValues[i].value);
       EXPECT_TRUE(result.end() == result.find(entry));
     }
   }
@@ -475,12 +450,13 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix("かきく", convreq_, &callback);
-    const std::set<std::pair<string, string>> &result = callback.result();
+    const std::set<std::pair<std::string, std::string>> &result =
+        callback.result();
     // Only "か" should be found as the callback doesn't traverse the subtree of
     // "かき" due to culling request from LookupPrefixTestCallback::OnKey().
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
-      const std::pair<string, string> entry(kKeyValues[i].key,
-                                            kKeyValues[i].value);
+      const std::pair<std::string, std::string> entry(kKeyValues[i].key,
+                                                      kKeyValues[i].value);
       EXPECT_EQ(entry.first == "か", result.find(entry) != result.end());
     }
   }
@@ -489,12 +465,13 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix("さしす", convreq_, &callback);
-    const std::set<std::pair<string, string>> &result = callback.result();
+    const std::set<std::pair<std::string, std::string>> &result =
+        callback.result();
     // Only "さし" should be found as tokens for "さ" is skipped (see
     // LookupPrefixTestCallback::OnKey()).
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
-      const std::pair<string, string> entry(kKeyValues[i].key,
-                                            kKeyValues[i].value);
+      const std::pair<std::string, std::string> entry(kKeyValues[i].key,
+                                                      kKeyValues[i].value);
       EXPECT_EQ(entry.first == "さし", result.find(entry) != result.end());
     }
   }
@@ -503,7 +480,8 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   {
     LookupPrefixTestCallback callback;
     system_dic->LookupPrefix("たちつ", convreq_, &callback);
-    const std::set<std::pair<string, string>> &result = callback.result();
+    const std::set<std::pair<std::string, std::string>> &result =
+        callback.result();
     // Nothing should be found as the traversal is immediately done after seeing
     // "た"; see LookupPrefixTestCallback::OnKey().
     EXPECT_TRUE(result.empty());
@@ -516,22 +494,18 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     request_.set_kana_modifier_insensitive_conversion(true);
     config_.set_use_kana_modifier_insensitive_conversion(true);
     system_dic->LookupPrefix("はひ", convreq_, &callback);
-    const std::set<std::pair<string, string>> &result = callback.result();
+    const std::set<std::pair<std::string, std::string>> &result =
+        callback.result();
     const char *kExpectedKeys[] = {
-      "は",
-      "ば",
-      "はひ",
-      "ばひ",
-      "はび",
-      "ばび",
+        "は", "ば", "はひ", "ばひ", "はび", "ばび",
     };
-    const std::set<string> expected(kExpectedKeys,
-                                    kExpectedKeys + arraysize(kExpectedKeys));
+    const std::set<std::string> expected(
+        kExpectedKeys, kExpectedKeys + arraysize(kExpectedKeys));
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
       const bool to_be_found =
           expected.find(kKeyValues[i].key) != expected.end();
-      const std::pair<string, string> entry(kKeyValues[i].key,
-                                            kKeyValues[i].value);
+      const std::pair<std::string, std::string> entry(kKeyValues[i].key,
+                                                      kKeyValues[i].value);
       EXPECT_EQ(to_be_found, result.find(entry) != result.end());
     }
   }
@@ -549,10 +523,9 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
     text_dict_->CollectTokens(&source_tokens);  // Load test data.
     BuildSystemDictionary(source_tokens, 10000);
   }
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source: " << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source: " << dic_fn_;
 
   // All the tokens in |tokens| should be looked up by "まみむめも".
   const char kMamimumemo[] = "まみむめも";
@@ -569,12 +542,12 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
   tokens.push_back(CreateToken("かっこう", "格好"));
 
   BuildSystemDictionary(tokens, 100);
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
   ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source: " << dic_fn_;
 
-  const string kKey = "かつこう";
+  const std::string kKey = "かつこう";
 
   // Without Kana modifier insensitive lookup flag, nothing is looked up.
   CollectTokenCallback callback;
@@ -603,10 +576,9 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
     text_dict_->CollectTokens(&source_tokens);  // Load test data.
     BuildSystemDictionary(source_tokens, 10000);
   }
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source: " << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source: " << dic_fn_;
 
   // Since there are many entries starting with "あ" in test dictionary, it's
   // expected that "あいうえお" is not looked up because of longer key cut-off
@@ -620,20 +592,19 @@ TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
 TEST_F(SystemDictionaryTest, LookupExact) {
   std::vector<Token *> source_tokens;
 
-  const string k0 = "は";
-  const string k1 = "はひふへほ";
+  const std::string k0 = "は";
+  const std::string k1 = "はひふへほ";
 
-  unique_ptr<Token> t0(CreateToken(k0, "aa"));
-  unique_ptr<Token> t1(CreateToken(k1, "bb"));
+  std::unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  std::unique_ptr<Token> t1(CreateToken(k1, "bb"));
   source_tokens.push_back(t0.get());
   source_tokens.push_back(t1.get());
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   // |t0| should not be looked up from |k1|.
   CheckTokenExistenceCallback callback0(t0.get());
@@ -651,36 +622,36 @@ TEST_F(SystemDictionaryTest, LookupExact) {
 }
 
 TEST_F(SystemDictionaryTest, LookupReverse) {
-  unique_ptr<Token> t0(new Token);
+  std::unique_ptr<Token> t0(new Token);
   t0->key = "ど";
   t0->value = "ド";
   t0->cost = 1;
   t0->lid = 2;
   t0->rid = 3;
-  unique_ptr<Token> t1(new Token);
+  std::unique_ptr<Token> t1(new Token);
   t1->key = "どらえもん";
   t1->value = "ドラえもん";
   t1->cost = 1;
   t1->lid = 2;
   t1->rid = 3;
-  unique_ptr<Token> t2(new Token);
+  std::unique_ptr<Token> t2(new Token);
   t2->key = "といざらす®";
   t2->value = "トイザらス®";
   t2->cost = 1;
   t2->lid = 2;
   t2->rid = 3;
-  unique_ptr<Token> t3(new Token);
+  std::unique_ptr<Token> t3(new Token);
   // Both t3 and t4 will be encoded into 3 bytes.
   t3->key = "ああああああ";
   t3->value = t3->key;
   t3->cost = 32000;
   t3->lid = 1;
   t3->rid = 1;
-  unique_ptr<Token> t4(new Token);
+  std::unique_ptr<Token> t4(new Token);
   *t4 = *t3;
   t4->lid = 1;
   t4->rid = 2;
-  unique_ptr<Token> t5(new Token);
+  std::unique_ptr<Token> t5(new Token);
   // t5 will be encoded into 3 bytes.
   t5->key = "いいいいいい";
   t5->value = t5->key;
@@ -688,21 +659,21 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   t5->lid = 1;
   t5->rid = 1;
   // spelling correction token should not be retrieved by reverse lookup.
-  unique_ptr<Token> t6(new Token);
+  std::unique_ptr<Token> t6(new Token);
   t6->key = "どらえもん";
   t6->value = "ドラえもん";
   t6->cost = 1;
   t6->lid = 2;
   t6->rid = 3;
   t6->attributes = Token::SPELLING_CORRECTION;
-  unique_ptr<Token> t7(new Token);
+  std::unique_ptr<Token> t7(new Token);
   t7->key = "こんさーと";
   t7->value = "コンサート";
   t7->cost = 1;
   t7->lid = 1;
   t7->rid = 1;
   // "バージョン" should not return a result with the key "ヴァージョン".
-  unique_ptr<Token> t8(new Token);
+  std::unique_ptr<Token> t8(new Token);
   t8->key = "ばーじょん";
   t8->value = "バージョン";
   t8->cost = 1;
@@ -723,10 +694,9 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
   const size_t test_size =
       std::min(static_cast<size_t>(FLAGS_dictionary_reverse_lookup_test_size),
                source_tokens.size());
@@ -744,8 +714,8 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
       // It happened once
       // when called with "バージョン", returning "ヴァージョン".
       EXPECT_LE(token.key.size(), source_token.value.size())
-          << string(token.key) << ":" << string(token.value)
-          << "\t" << string(source_token.value);
+          << std::string(token.key) << ":" << std::string(token.value) << "\t"
+          << std::string(source_token.value);
       if (CompareTokensForLookup(source_token, token, true)) {
         found = true;
       }
@@ -759,8 +729,8 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
         return;
       }
     } else {
-      EXPECT_TRUE(found)
-          << "Failed to find " << source_token.key << ":" << source_token.value;
+      EXPECT_TRUE(found) << "Failed to find " << source_token.key << ":"
+                         << source_token.value;
       if (!found) {
         return;
       }
@@ -770,7 +740,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   {
     // test for non exact transliterated index string.
     // append "が"
-    const string key = t7->value + "が";
+    const std::string key = t7->value + "が";
     CollectTokenCallback callback;
     system_dic->LookupReverse(key, convreq_, &callback);
     const std::vector<Token> &tokens = callback.tokens();
@@ -780,8 +750,8 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
         found = true;
       }
     }
-    EXPECT_TRUE(found)
-        << "Missed token for non exact transliterated index " << key;
+    EXPECT_TRUE(found) << "Missed token for non exact transliterated index "
+                       << key;
   }
 }
 
@@ -789,23 +759,25 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
   const std::vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  unique_ptr<SystemDictionary> system_dic_without_index(
+  std::unique_ptr<SystemDictionary> system_dic_without_index =
       SystemDictionary::Builder(dic_fn_)
-      .SetOptions(SystemDictionary::NONE)
-      .Build());
-  ASSERT_TRUE(system_dic_without_index.get() != NULL)
+          .SetOptions(SystemDictionary::NONE)
+          .Build()
+          .value();
+  ASSERT_TRUE(system_dic_without_index)
       << "Failed to open dictionary source:" << dic_fn_;
-  unique_ptr<SystemDictionary> system_dic_with_index(
+  std::unique_ptr<SystemDictionary> system_dic_with_index =
       SystemDictionary::Builder(dic_fn_)
-      .SetOptions(SystemDictionary::ENABLE_REVERSE_LOOKUP_INDEX)
-      .Build());
-  ASSERT_TRUE(system_dic_with_index.get() != NULL)
+          .SetOptions(SystemDictionary::ENABLE_REVERSE_LOOKUP_INDEX)
+          .Build()
+          .value();
+  ASSERT_TRUE(system_dic_with_index)
       << "Failed to open dictionary source:" << dic_fn_;
 
   std::vector<Token *>::const_iterator it;
   int size = FLAGS_dictionary_reverse_lookup_test_size;
-  for (it = source_tokens.begin();
-       size > 0 && it != source_tokens.end(); ++it, --size) {
+  for (it = source_tokens.begin(); size > 0 && it != source_tokens.end();
+       ++it, --size) {
     const Token &t = **it;
     CollectTokenCallback callback1, callback2;
     system_dic_without_index->LookupReverse(t.value, convreq_, &callback1);
@@ -821,7 +793,7 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
 }
 
 TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
-  const string kDoraemon = "ドラえもん";
+  const std::string kDoraemon = "ドラえもん";
 
   Token source_token;
   source_token.key = "どらえもん";
@@ -837,10 +809,9 @@ TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
   Token target_token = source_token;
   target_token.key.swap(target_token.value);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
   system_dic->PopulateReverseLookupCache(kDoraemon);
   CheckTokenExistenceCallback callback(&target_token);
   system_dic->LookupReverse(kDoraemon, convreq_, &callback);
@@ -878,10 +849,9 @@ TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
   }
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   for (size_t i = 0; i < source_tokens.size(); ++i) {
     CheckTokenExistenceCallback callback(source_tokens[i]);
@@ -892,13 +862,13 @@ TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
 }
 
 TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
-  const string k0 = "かつ";
-  const string k1 = "かっこ";
-  const string k2 = "かつこう";
-  const string k3 = "かっこう";
-  const string k4 = "がっこう";
+  const std::string k0 = "かつ";
+  const std::string k1 = "かっこ";
+  const std::string k2 = "かつこう";
+  const std::string k3 = "かっこう";
+  const std::string k4 = "がっこう";
 
-  unique_ptr<Token> tokens[5];
+  std::unique_ptr<Token> tokens[5];
   tokens[0].reset(CreateToken(k0, "aa"));
   tokens[1].reset(CreateToken(k1, "bb"));
   tokens[2].reset(CreateToken(k2, "cc"));
@@ -912,10 +882,9 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   request_.set_kana_modifier_insensitive_conversion(true);
   config_.set_use_kana_modifier_insensitive_conversion(true);
@@ -953,8 +922,8 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
 }
 
 TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
-  unique_ptr<Token> t0(CreateToken("ていすてぃんぐ", "テイスティング"));
-  unique_ptr<Token> t1(CreateToken("てすとです", "てすとです"));
+  std::unique_ptr<Token> t0(CreateToken("ていすてぃんぐ", "テイスティング"));
+  std::unique_ptr<Token> t1(CreateToken("てすとです", "てすとです"));
 
   std::vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -963,13 +932,12 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   // Lookup |t0| from "ていすていんぐ"
-  const string k = "ていすていんぐ";
+  const std::string k = "ていすていんぐ";
   request_.set_kana_modifier_insensitive_conversion(true);
   config_.set_use_kana_modifier_insensitive_conversion(true);
   CheckTokenExistenceCallback callback(t0.get());
@@ -978,17 +946,17 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
 }
 
 TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
-  const string k0 = "かつ";
-  const string k1 = "かっこ";
-  const string k2 = "かつこう";
-  const string k3 = "かっこう";
-  const string k4 = "がっこう";
+  const std::string k0 = "かつ";
+  const std::string k1 = "かっこ";
+  const std::string k2 = "かつこう";
+  const std::string k3 = "かっこう";
+  const std::string k4 = "がっこう";
 
-  unique_ptr<Token> t0(CreateToken(k0, "aa"));
-  unique_ptr<Token> t1(CreateToken(k1, "bb"));
-  unique_ptr<Token> t2(CreateToken(k2, "cc"));
-  unique_ptr<Token> t3(CreateToken(k3, "dd"));
-  unique_ptr<Token> t4(CreateToken(k4, "ee"));
+  std::unique_ptr<Token> t0(CreateToken(k0, "aa"));
+  std::unique_ptr<Token> t1(CreateToken(k1, "bb"));
+  std::unique_ptr<Token> t2(CreateToken(k2, "cc"));
+  std::unique_ptr<Token> t3(CreateToken(k3, "dd"));
+  std::unique_ptr<Token> t4(CreateToken(k4, "ee"));
 
   std::vector<Token *> source_tokens;
   source_tokens.push_back(t0.get());
@@ -1000,10 +968,9 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  unique_ptr<SystemDictionary> system_dic(
-      SystemDictionary::Builder(dic_fn_).Build());
-  ASSERT_TRUE(system_dic.get() != NULL)
-      << "Failed to open dictionary source:" << dic_fn_;
+  std::unique_ptr<SystemDictionary> system_dic =
+      SystemDictionary::Builder(dic_fn_).Build().value();
+  ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
 
   request_.set_kana_modifier_insensitive_conversion(false);
   config_.set_use_kana_modifier_insensitive_conversion(false);
@@ -1027,9 +994,8 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
     for (size_t i = 0; i < not_to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(not_to_be_looked_up[i]);
       system_dic->LookupPrefix(k3, convreq_, &callback);
-      EXPECT_FALSE(callback.found())
-          << "Token should not be found: "
-          << PrintToken(*not_to_be_looked_up[i]);
+      EXPECT_FALSE(callback.found()) << "Token should not be found: "
+                                     << PrintToken(*not_to_be_looked_up[i]);
     }
   }
 
@@ -1052,9 +1018,8 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
     for (size_t i = 0; i < not_to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(not_to_be_looked_up[i]);
       system_dic->LookupPredictive(k3, convreq_, &callback);
-      EXPECT_FALSE(callback.found())
-          << "Token should not be found: "
-          << PrintToken(*not_to_be_looked_up[i]);
+      EXPECT_FALSE(callback.found()) << "Token should not be found: "
+                                     << PrintToken(*not_to_be_looked_up[i]);
     }
   }
 }

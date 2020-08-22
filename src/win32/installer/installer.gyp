@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,11 +68,9 @@
           'qt5widgetsd_dll_path': '',
           'qwindows_dll_path': '',
           'qwindowsd_dll_path': '',
-          'mozc_zinnia_model_data_path': '',
           'mozc_tool_path': '<(outdir32)/GoogleIMEJaTool.exe',
           'conditions': [
             ['use_qt=="YES"', {
-              'mozc_zinnia_model_data_path': '<(DEPTH)/third_party/zinnia/tomoe/handwriting-light-ja.model',
               'mozc_tool_path': '<(outdir32_dynamic)/GoogleIMEJaTool.exe',
               'qt5core_dll_path': '<(qt_dir)/bin/Qt5Core.dll',
               'qt5cored_dll_path': '<(qt_dir)/bin/Qt5Cored.dll',
@@ -97,7 +95,6 @@
         'qt5widgetsd_dll_path': '<(qt5widgetsd_dll_path)',
         'qwindows_dll_path': '<(qwindows_dll_path)',
         'qwindowsd_dll_path': '<(qwindowsd_dll_path)',
-        'mozc_zinnia_model_data_path': '<(mozc_zinnia_model_data_path)',
         'mozc_tool_path': '<(mozc_tool_path)',
         'mozc_broker32_path': '<(outdir32)/GoogleIMEJaBroker32.exe',
         'mozc_broker64_path': '<(outdir64)/GoogleIMEJaBroker64.exe',

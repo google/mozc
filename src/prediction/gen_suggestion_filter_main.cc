@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,20 +42,19 @@
 
 DEFINE_string(input, "", "per-line suggestion filter list");
 DEFINE_string(output, "", "output bloom filter");
-DEFINE_bool(header, true,
-            "make header file instead of raw bloom filter");
+DEFINE_bool(header, true, "make header file instead of raw bloom filter");
 DEFINE_string(name, "SuggestionFilterData",
               "name for variable name in the header file");
 
 namespace {
-void ReadWords(const string &name, std::vector<uint64> *words) {
-  string line;
+void ReadWords(const std::string &name, std::vector<uint64> *words) {
+  std::string line;
   mozc::InputFileStream input(name.c_str());
   while (getline(input, line)) {
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    string lower_value = line;
+    std::string lower_value = line;
     mozc::Util::LowerString(&lower_value);
     words->push_back(mozc::Hash::Fingerprint(lower_value));
   }
@@ -69,10 +68,9 @@ using mozc::storage::ExistenceFilter;
 // read per-line word list and generate
 // bloom filter in raw byte array or header file format
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
-  if ((FLAGS_input.empty() ||
-       FLAGS_output.empty()) && argc > 2) {
+  if ((FLAGS_input.empty() || FLAGS_output.empty()) && argc > 2) {
     FLAGS_input = argv[1];
     FLAGS_output = argv[2];
   }
@@ -111,13 +109,13 @@ int main(int argc, char **argv) {
     codegen_stream.write(buf, size);
     codegen_stream.CloseVarDef();
   } else {
-    mozc::OutputFileStream ofs(
-        FLAGS_output.c_str(),
-        std::ios::out | std::ios::trunc | std::ios::binary);
+    mozc::OutputFileStream ofs(FLAGS_output.c_str(), std::ios::out |
+                                                         std::ios::trunc |
+                                                         std::ios::binary);
     ofs.write(buf, size);
   }
 
-  delete [] buf;
+  delete[] buf;
 
   return 0;
 }

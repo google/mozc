@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
 #include <string>
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -45,10 +45,10 @@ class UserDictionaryImporter {
  public:
   // A raw entry to be read.
   struct RawEntry {
-    string key;
-    string value;
-    string pos;
-    string comment;
+    std::string key;
+    std::string value;
+    std::string pos;  // Mozc extension: pos can encode locale. e.g. 名詞:en
+    std::string comment;
 
     void Clear() {
       key.clear();
@@ -91,7 +91,7 @@ class UserDictionaryImporter {
     // Read a line and convert its encoding to UTF-8.
     // The TextLineIteratorInterface class takes a responsibility of character
     // set conversion. |line| must always be stored in UTF-8.
-    virtual bool Next(string *line) = 0;
+    virtual bool Next(std::string *line) = 0;
 
     // Reset the current position.
     virtual void Reset() = 0;
@@ -107,15 +107,15 @@ class UserDictionaryImporter {
   // string until this iterator is destroyed.
   class StringTextLineIterator : public TextLineIteratorInterface {
    public:
-    explicit StringTextLineIterator(StringPiece data);
+    explicit StringTextLineIterator(absl::string_view data);
     virtual ~StringTextLineIterator();
 
     virtual bool IsAvailable() const;
-    virtual bool Next(string *line);
+    virtual bool Next(std::string *line);
     virtual void Reset();
 
    private:
-    const StringPiece data_;
+    const absl::string_view data_;
     size_t position_;
     DISALLOW_COPY_AND_ASSIGN(StringTextLineIterator);
   };
@@ -123,16 +123,16 @@ class UserDictionaryImporter {
   // List of IMEs.
   enum IMEType {
     IME_AUTO_DETECT = 0,
-    MOZC            = 1,
-    MSIME           = 2,
-    ATOK            = 3,
-    KOTOERI         = 4,
-    NUM_IMES        = 5,
+    MOZC = 1,
+    MSIME = 2,
+    ATOK = 3,
+    KOTOERI = 4,
+    NUM_IMES = 5,
   };
 
   // Guess IME type from the first line of IME file.
   // Return "NUM_IMES" if the format is unknown.
-  static IMEType GuessIMEType(StringPiece line);
+  static IMEType GuessIMEType(absl::string_view line);
 
   // Return the final IME type from user_ime_type and guessed_ime_type.
   static IMEType DetermineFinalIMEType(IMEType user_ime_type,
@@ -141,23 +141,22 @@ class UserDictionaryImporter {
   // List of character encodings.
   enum EncodingType {
     ENCODING_AUTO_DETECT = 0,
-    UTF8                 = 1,
-    UTF16                = 2,
-    SHIFT_JIS            = 3,
-    NUM_ENCODINGS        = 4
+    UTF8 = 1,
+    UTF16 = 2,
+    SHIFT_JIS = 3,
+    NUM_ENCODINGS = 4
   };
 
   // Guess encoding type of a string.
-  static EncodingType GuessEncodingType(StringPiece str);
+  static EncodingType GuessEncodingType(absl::string_view str);
 
   // Guess encoding type of a file.
-  static EncodingType GuessFileEncodingType(const string &filename);
+  static EncodingType GuessFileEncodingType(const std::string &filename);
 
   // A special input iterator to read entries from TextLineIteratorInterface.
   class TextInputIterator : public InputIteratorInterface {
    public:
-    TextInputIterator(IMEType ime_type,
-                      TextLineIteratorInterface *iter);
+    TextInputIterator(IMEType ime_type, TextLineIteratorInterface *iter);
     virtual ~TextInputIterator();
 
     virtual bool IsAvailable() const;
@@ -167,7 +166,7 @@ class UserDictionaryImporter {
    private:
     IMEType ime_type_;
     TextLineIteratorInterface *iter_;
-    string first_line_;
+    std::string first_line_;
 
     DISALLOW_COPY_AND_ASSIGN(TextInputIterator);
   };
@@ -182,19 +181,17 @@ class UserDictionaryImporter {
   };
 
   // Convert POS's of other IME's into Mozc's.
-  static bool ConvertEntry(
-      const RawEntry &from, user_dictionary::UserDictionary::Entry *to);
+  static bool ConvertEntry(const RawEntry &from,
+                           user_dictionary::UserDictionary::Entry *to);
 
   // Import a dictionary from InputIteratorInterface.
   // This is the most generic interface.
-  static ErrorType ImportFromIterator(
-      InputIteratorInterface *iter,
-      user_dictionary::UserDictionary *dic);
+  static ErrorType ImportFromIterator(InputIteratorInterface *iter,
+                                      user_dictionary::UserDictionary *dic);
 
   // Import a dictionary from TextLineIterator.
   static ErrorType ImportFromTextLineIterator(
-      IMEType ime_type,
-      TextLineIteratorInterface *iter,
+      IMEType ime_type, TextLineIteratorInterface *iter,
       user_dictionary::UserDictionary *dic);
 
  private:

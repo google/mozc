@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,30 +49,6 @@
         },
       ],
     }],
-    ['target_platform=="Android"', {
-      'targets': [
-        {
-          # This is a mocking library of Java VM for android.
-          'target_name': 'android_jni_mock',
-          'type': 'static_library',
-          'sources': [
-            'android_jni_mock.cc',
-          ],
-        },
-        {
-          'target_name': 'jni_proxy_test',
-          'type': 'executable',
-          'dependencies': [
-            '../testing/testing.gyp:gtest_main',
-            'android_jni_mock',
-            'base.gyp:jni_proxy',
-          ],
-          'sources': [
-            'android_jni_proxy_test.cc',
-          ],
-        },
-      ],
-    }],
   ],
   'targets': [
     {
@@ -95,16 +71,6 @@
           'sources': [
             'win_api_test_helper_test.cc',
             'win_sandbox_test.cc',
-          ],
-        }],
-        ['target_platform=="NaCl"', {
-          'sources!': [
-            'process_mutex_test.cc',
-          ],
-        }],
-        ['target_platform=="Android"', {
-          'sources!': [
-            'codegen_bytearray_stream_test.cc',
           ],
         }],
       ],
@@ -140,7 +106,6 @@
         'mmap_test.cc',
         'singleton_test.cc',
         'stl_util_test.cc',
-        'string_piece_test.cc',
         'text_normalizer_test.cc',
         'thread_test.cc',
         'version_test.cc',
@@ -149,11 +114,6 @@
         ['OS=="win"', {
           'sources': [
             'win_util_test.cc',
-          ],
-        }],
-        ['target_platform=="Android"', {
-          'sources': [
-            'android_util_test.cc',
           ],
         }],
       ],
@@ -181,6 +141,7 @@
     },
     {
       'target_name': 'clock_mock',
+      'toolsets': ['host', 'target'],
       'type': 'static_library',
       'sources': [
         'clock_mock.cc'
@@ -466,6 +427,19 @@
         'base.gyp:serialized_string_array',
       ],
     },
+    {
+      'target_name': 'status_test',
+      'type': 'executable',
+      'sources': [
+        'status_test.cc',
+        'statusor_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+        'base.gyp:status',
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',
@@ -487,6 +461,7 @@
         'scheduler_stub_test',
         'scheduler_test',
         'serialized_string_array_test',
+        'status_test',
         'system_util_test',
         'trie_test',
         'update_util_test',
@@ -499,11 +474,6 @@
         ['OS=="win"', {
           'dependencies': [
             'win_util_test_dll',
-          ],
-        }],
-        ['target_platform=="Android"', {
-          'dependencies': [
-            'jni_proxy_test',
           ],
         }],
       ],

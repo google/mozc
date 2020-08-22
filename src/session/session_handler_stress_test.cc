@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,13 +40,13 @@
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler_test_util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace {
 uint32 GenerateRandomSeed() {
   uint32 seed = 0;
-  mozc::Util::GetRandomSequence(reinterpret_cast<char *>(&seed),
-                                sizeof(seed));
+  mozc::Util::GetRandomSequence(reinterpret_cast<char *>(&seed), sizeof(seed));
   return seed;
 }
 }  // namespace
@@ -55,8 +55,6 @@ uint32 GenerateRandomSeed() {
 DEFINE_uint64(random_seed, GenerateRandomSeed(),
               "Random seed value. "
               "This value will be interpreted as uint32.");
-DECLARE_string(test_srcdir);
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {

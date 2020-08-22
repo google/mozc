@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
+
 #include <string>
 #else
 #include <fcntl.h>
@@ -42,26 +43,109 @@
 
 #include <cstring>
 
-#include "base/port.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/util.h"
 
-#ifdef OS_WIN
-#include "base/scoped_handle.h"
-#endif  // OS_WIN
+#ifdef OS_NACL
+#include <set>
 
-#ifdef MOZC_USE_PEPPER_FILE_IO
-#include "base/pepper_file_util.h"
-#endif  // MOZC_USE_PEPPER_FILE_IO
+#include "base/file_stream.h"
+#include "base/mutex.h"
+#elif defined(OS_WIN)  // !OS_NACL
+#include "base/scoped_handle.h"
+#endif  // !OS_NACL
 
 namespace mozc {
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
+#ifdef OS_NACL
+namespace {
+Mutex mmap_set_lock;  // NOLINT
+std::set<Mmap *> mmap_set;
+}  // namespace
 
-Mmap::Mmap() : text_(NULL), size_(0) {
+Mmap::Mmap() : write_mode_(false), size_(0) {}
+
+bool Mmap::Open(const char *filename, const char *mode) {
+  Close();
+
+  if (strcmp(mode, "r") == 0) {
+    write_mode_ = false;
+  } else if (strcmp(mode, "r+") == 0) {
+    write_mode_ = true;
+  } else {
+    LOG(WARNING) << "unknown open mode: " << filename;
+    return false;
+  }
+  InputFileStream ifs(filename);
+  if (!ifs) {
+    LOG(WARNING) << "open failed: " << filename;
+  }
+  // get length of file:
+  ifs.seekg(0, ifs.end);
+  int64 length = ifs.tellg();
+  ifs.seekg(0, ifs.beg);
+  if (length <= 0) {
+    LOG(WARNING) << "file size = 0: " << filename;
+    return false;
+  }
+  buffer_.reset(new char[length]);
+  ifs.read(buffer_.get(), length);
+  if (!ifs) {
+    LOG(WARNING) << "read failed: " << filename;
+    return false;
+  }
+  ifs.close();
+  filename_ = filename;
+  size_ = length;
+  if (write_mode_) {
+    scoped_lock lock(&mmap_set_lock);
+    mmap_set.insert(this);
+  }
+  return true;
 }
 
-#ifdef OS_WIN
+void Mmap::Close() {
+  if (write_mode_) {
+    {
+      scoped_lock lock(&mmap_set_lock);
+      mmap_set.erase(this);
+    }
+    OutputFileStream ofs;
+    ofs.open(filename_.c_str());
+    ofs.write(buffer_.get(), size_);
+
+    if (!ofs) {
+      LOG(WARNING) << "write failed: " << filename_;
+    }
+  }
+  buffer_.reset();
+  size_ = 0;
+}
+
+bool Mmap::SyncToFile() {
+  if (!write_mode_) {
+    LOG(ERROR) << "Mmap::SyncToFile error. This file is opened in read mode: "
+               << filename_;
+    return false;
+  }
+  OutputFileStream ofs;
+  ofs.open(filename_.c_str());
+  ofs.write(buffer_.get(), size_);
+  return !!ofs;
+}
+
+bool Mmap::SyncMmapToFile() {
+  scoped_lock lock(&mmap_set_lock);
+  for (Mmap* m : mmap_set) {
+    m->SyncToFile();
+  }
+  return true;
+}
+
+#elif defined(OS_WIN)  // !OS_NACL
+
+Mmap::Mmap() : text_(nullptr), size_(0) {}
 
 bool Mmap::Open(const char *filename, const char *mode) {
   Close();
@@ -86,23 +170,21 @@ bool Mmap::Open(const char *filename, const char *mode) {
     return false;
   }
 
-  ScopedHandle handle(
-      ::CreateFileW(filename_wide.c_str(), mode1, mode4,
-                    0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0));
-  if (handle.get() == NULL) {
+  ScopedHandle handle(::CreateFileW(filename_wide.c_str(), mode1, mode4, 0,
+                                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0));
+  if (handle.get() == nullptr) {
     LOG(ERROR) << "CreateFile() failed: " << filename;
     return false;
   }
 
-  ScopedHandle map_handle(
-      ::CreateFileMapping(handle.get(), 0, mode2, 0, 0, 0));
-  if (map_handle.get() == NULL) {
+  ScopedHandle map_handle(::CreateFileMapping(handle.get(), 0, mode2, 0, 0, 0));
+  if (map_handle.get() == nullptr) {
     LOG(ERROR) << "CreateFileMapping() failed: " << filename;
     return false;
   }
 
   void *ptr = ::MapViewOfFile(map_handle.get(), mode3, 0, 0, 0);
-  if (ptr == NULL) {
+  if (ptr == nullptr) {
     LOG(ERROR) << "MapViewOfFile() failed: " << filename;
     return false;
   }
@@ -114,15 +196,17 @@ bool Mmap::Open(const char *filename, const char *mode) {
 }
 
 void Mmap::Close() {
-  if (text_ != NULL) {
+  if (text_ != nullptr) {
     ::UnmapViewOfFile(text_);
   }
 
-  text_ = NULL;
+  text_ = nullptr;
   size_ = 0;
 }
 
-#else  // OS_WIN
+#else  // !OS_NACL || !OS_WIN
+
+Mmap::Mmap() : text_(nullptr), size_(0) {}
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -131,11 +215,9 @@ void Mmap::Close() {
 namespace {
 class ScopedCloser {
  public:
-  explicit ScopedCloser(int fd) : fd_(fd) {
-  }
-  ~ScopedCloser() {
-    ::close(fd_);
-  }
+  explicit ScopedCloser(int fd) : fd_(fd) {}
+  ~ScopedCloser() { ::close(fd_); }
+
  private:
   int fd_;
 
@@ -187,113 +269,47 @@ bool Mmap::Open(const char *filename, const char *mode) {
 }
 
 void Mmap::Close() {
-  if (text_ != NULL) {
+  if (text_ != nullptr) {
     MaybeMUnlock(text_, size_);
     munmap(reinterpret_cast<char *>(text_), size_);
   }
 
-  text_ = NULL;
+  text_ = nullptr;
   size_ = 0;
 }
-#endif  // OS_WIN
-
-#else  // MOZC_USE_PEPPER_FILE_IO
-
-Mmap::Mmap() : write_mode_(false), size_(0) {
-}
-
-bool Mmap::Open(const char *filename, const char *mode) {
-  Close();
-
-  if (strcmp(mode, "r") == 0) {
-    write_mode_ = false;
-  } else if (strcmp(mode, "r+") == 0) {
-    write_mode_ = true;
-  } else {
-    LOG(WARNING) << "unknown open mode: " << filename;
-    return false;
-  }
-  string buffer;
-  if (!PepperFileUtil::ReadBinaryFile(filename, &buffer)) {
-    LOG(WARNING) << "read failed: " << filename;
-    return false;
-  }
-  if (buffer.empty()) {
-    LOG(WARNING) << "file size = 0: " << filename;
-    return false;
-  }
-  size_ = buffer.size();
-  text_.reset(new char[size_]);
-  buffer.copy(text_.get(), size_);
-  filename_ = filename;
-  if (write_mode_) {
-    PepperFileUtil::RegisterMmap(this);
-  }
-  return true;
-}
-
-void Mmap::Close() {
-  if (write_mode_) {
-    PepperFileUtil::UnRegisterMmap(this);
-    if (!PepperFileUtil::WriteBinaryFile(filename_,
-                                         string(text_.get(), size_))) {
-      LOG(WARNING) << "write failed: " << filename_;
-    }
-  }
-  text_.reset();
-  size_ = 0;
-}
-
-bool Mmap::SyncToFile() {
-  if (!write_mode_) {
-    LOG(ERROR) << "Mmap::SyncToFile error. This file is opened in read mode: "
-               << filename_;
-    return false;
-  }
-  return PepperFileUtil::WriteBinaryFile(filename_,
-                                         string(text_.get(), size_));
-}
-#endif  // MOZC_USE_PEPPER_FILE_IO
+#endif  // !OS_NACL || !OS_WIN
 
 // Define a macro (MOZC_HAVE_MLOCK) to indicate mlock support.
-#if defined(OS_WIN) || defined(OS_ANDROID) || defined(OS_NACL)
-# define MOZC_HAVE_MLOCK 0
-#else  // defined(OS_WIN) || defined(OS_ANDROID) ||
-       // defined(OS_NACL)
-# define MOZC_HAVE_MLOCK 1
-#endif  // defined(OS_WIN) || defined(OS_ANDROID) ||
-        // defined(OS_NACL)
+
+// Caveat: Currently |OS_IOS| and |__APPLE__| are not exclusive.
+#if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_NACL) || \
+    defined(OS_WIN)
+#define MOZC_HAVE_MLOCK 0
+#else  // OS_ANDROID || OS_IOS || OS_NACL || OS_WIN
+#define MOZC_HAVE_MLOCK 1
+#endif  // OS_ANDROID || OS_IOS || OS_NACL || OS_WIN
+
 
 #ifndef MOZC_HAVE_MLOCK
 #error "MOZC_HAVE_MLOCK is not defined"
 #endif
 
 #if MOZC_HAVE_MLOCK
-bool Mmap::IsMLockSupported() {
-  return true;
-}
+bool Mmap::IsMLockSupported() { return true; }
 
-int Mmap::MaybeMLock(const void *addr, size_t len) {
-  return mlock(addr, len);
-}
+int Mmap::MaybeMLock(const void *addr, size_t len) { return mlock(addr, len); }
 
 int Mmap::MaybeMUnlock(const void *addr, size_t len) {
   return munlock(addr, len);
 }
 
-#else  // MOZC_HAVE_MLOCK
+#else   // MOZC_HAVE_MLOCK
 
-bool Mmap::IsMLockSupported() {
-  return false;
-}
+bool Mmap::IsMLockSupported() { return false; }
 
-int Mmap::MaybeMLock(const void *addr, size_t len) {
-  return -1;
-}
+int Mmap::MaybeMLock(const void *addr, size_t len) { return -1; }
 
-int Mmap::MaybeMUnlock(const void *addr, size_t len) {
-  return -1;
-}
+int Mmap::MaybeMUnlock(const void *addr, size_t len) { return -1; }
 #endif  // MOZC_HAVE_MLOCK
 
 #undef MOZC_HAVE_MLOCK

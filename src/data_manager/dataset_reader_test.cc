@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -49,12 +50,10 @@ string GenerateRandomBytes(size_t len) {
   return s;
 }
 
-string GetTestMagicNumber() {
-  return string("ma\0gic", 6);
-}
+string GetTestMagicNumber() { return string("ma\0gic", 6); }
 
 TEST(DataSetReaderTest, ValidData) {
-  const StringPiece kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
+  const absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
   string image;
   {
     DataSetWriter w(GetTestMagicNumber());
@@ -69,7 +68,7 @@ TEST(DataSetReaderTest, ValidData) {
   ASSERT_TRUE(DataSetReader::VerifyChecksum(image));
   ASSERT_TRUE(r.Init(image, GetTestMagicNumber()));
 
-  StringPiece data;
+  absl::string_view data;
   EXPECT_TRUE(r.Get("google", &data));
   EXPECT_EQ(kGoogle, data);
   EXPECT_TRUE(r.Get("mozc", &data));
@@ -126,7 +125,7 @@ TEST(DataSetReaderTest, BrokenMetadata) {
 
 TEST(DataSetReaderTest, BrokenMetadataFields) {
   const string &magic = GetTestMagicNumber();
-  const StringPiece kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
+  const absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
   string content;
   {
     DataSetWriter w(magic);
@@ -163,7 +162,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     auto e = md.add_entries();
     e->set_name("google");
     e->set_offset(content.size());
-    e->set_size(kuint64max);        // Too big size
+    e->set_size(kuint64max);  // Too big size
     const string &md_str = md.SerializeAsString();
     string image = content;
     image.append(md_str);
@@ -176,7 +175,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
 }
 
 TEST(DataSetReaderTest, OneBitError) {
-  const char* kTestMagicNumber = "Dummy magic number\r\n";
+  const char *kTestMagicNumber = "Dummy magic number\r\n";
 
   // Create data at random.
   string image;
@@ -184,8 +183,7 @@ TEST(DataSetReaderTest, OneBitError) {
     const int kAlignments[] = {8, 16, 32, 64};
     DataSetWriter w(kTestMagicNumber);
     for (int i = 0; i < 10; ++i) {
-      w.Add(Util::StringPrintf("key%d", i),
-            kAlignments[Util::Random(4)],
+      w.Add(Util::StringPrintf("key%d", i), kAlignments[Util::Random(4)],
             GenerateRandomBytes(1 + Util::Random(1024)));
     }
     std::stringstream out;

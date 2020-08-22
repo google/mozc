@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,10 +55,8 @@ class TextRenderer : public TextRendererInterface {
   virtual Size GetPixelSize(FontSpecInterface::FONT_TYPE font_type,
                             const string &str);
   virtual Size GetMultiLinePixelSize(FontSpecInterface::FONT_TYPE font_type,
-                                     const string &str,
-                                     const int width);
-  virtual void RenderText(const string &text,
-                          const Rect &rect,
+                                     const string &str, const int width);
+  virtual void RenderText(const string &text, const Rect &rect,
                           FontSpecInterface::FONT_TYPE font_type);
   virtual void ReloadFontConfig(const string &font_description);
 
@@ -71,16 +69,14 @@ class TextRenderer : public TextRendererInterface {
   void SetUpPangoLayout(const string &str,
                         FontSpecInterface::FONT_TYPE font_type,
                         PangoLayoutWrapperInterface *layout);
-  void RenderTextInternal(const string& text,
-                          const Rect &rect,
+  void RenderTextInternal(const string &text, const Rect &rect,
                           FontSpecInterface::FONT_TYPE font_type,
                           PangoLayoutWrapperInterface *layout);
   Size GetPixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
                             const string &str,
                             PangoLayoutWrapperInterface *layout);
   Size GetMultiLinePixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
-                                     const string &str,
-                                     const int width,
+                                     const string &str, const int width,
                                      PangoLayoutWrapperInterface *layout);
   std::unique_ptr<FontSpecInterface> font_spec_;
   std::unique_ptr<PangoWrapperInterface> pango_;

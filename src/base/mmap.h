@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,18 +30,24 @@
 #ifndef MOZC_BASE_MMAP_H_
 #define MOZC_BASE_MMAP_H_
 
-#ifdef MOZC_USE_PEPPER_FILE_IO
-#include <memory>
-#endif  // MOZC_USE_PEPPER_FILE_IO
 #include <string>
 
 #include "base/mmap_sync_interface.h"
 #include "base/port.h"
 
+#ifdef OS_NACL
+#include <memory>
+#endif  // OS_NACL
+
 namespace mozc {
 
 class Mmap : public MmapSyncInterface {
  public:
+#ifdef OS_NACL
+  // Save the all the mmap data in memory to the file.
+  static bool SyncMmapToFile();
+#endif  // OS_NACL
+
   Mmap();
   virtual ~Mmap() { Close(); }
 
@@ -63,37 +69,33 @@ class Mmap : public MmapSyncInterface {
   static int MaybeMLock(const void *addr, size_t len);
   static int MaybeMUnlock(const void *addr, size_t len);
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
+#ifdef OS_NACL
+  char &operator[](size_t n) { return *(buffer_.get() + n); }
+  char operator[](size_t n) const { return *(buffer_.get() + n); }
+  char *begin() { return buffer_.get(); }
+  const char *begin() const { return buffer_.get(); }
+  char *end() { return buffer_.get() + size_; }
+  const char *end() const { return buffer_.get() + size_; }
+#else   // !OS_NACL
   char &operator[](size_t n) { return *(text_ + n); }
   char operator[](size_t n) const { return *(text_ + n); }
   char *begin() { return text_; }
   const char *begin() const { return text_; }
   char *end() { return text_ + size_; }
   const char *end() const { return text_ + size_; }
-#else  // MOZC_USE_PEPPER_FILE_IO
-  char &operator[](size_t n) { return *(text_.get() + n); }
-  char operator[](size_t n) const { return *(text_.get() + n); }
-  char *begin() { return text_.get(); }
-  const char *begin() const { return text_.get(); }
-  char *end() { return text_.get() + size_; }
-  const char *end() const { return text_.get() + size_; }
-#endif  // MOZC_USE_PEPPER_FILE_IO
+#endif  // !OS_NACL
 
   size_t size() const { return size_; }
 
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // Save the data in memory to the file.
-  virtual bool SyncToFile();
-#endif  // MOZC_USE_PEPPER_FILE_IO
-
  private:
-#ifndef MOZC_USE_PEPPER_FILE_IO
-  char *text_;
-#else  // MOZC_USE_PEPPER_FILE_IO
+#ifdef OS_NACL
+  bool SyncToFile();
   string filename_;
-  std::unique_ptr<char[]> text_;
+  std::unique_ptr<char[]> buffer_;
   bool write_mode_;
-#endif  // MOZC_USE_PEPPER_FILE_IO
+#else   // OS_NACL
+  char *text_;
+#endif  // OS_NACL
   size_t size_;
 
   DISALLOW_COPY_AND_ASSIGN(Mmap);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/tip/tip_surrounding_text.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "win32/tip/tip_surrounding_text.h"
 
 namespace mozc {
 namespace win32 {
@@ -80,9 +80,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
 
   // Only Low surrogate.
   {
-    const wchar_t kSource[] = {
-      kLowSurrogateStart, kLowSurrogateStart, L'\0'
-    };
+    const wchar_t kSource[] = {kLowSurrogateStart, kLowSurrogateStart, L'\0'};
     size_t characters_in_utf16 = 0;
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
@@ -103,9 +101,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
 
   // Only High surrogate.
   {
-    const wchar_t kSource[] = {
-      kHighSurrogateStart, kHighSurrogateStart, L'\0'
-    };
+    const wchar_t kSource[] = {kHighSurrogateStart, kHighSurrogateStart, L'\0'};
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 0, &characters_in_utf16));
@@ -125,9 +121,8 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
 
   // An isolated high surrogate and one surrogate pair.
   {
-    const wchar_t kSource[] = {
-      kHighSurrogateStart, kHighSurrogateStart, kLowSurrogateStart, L'\0'
-    };
+    const wchar_t kSource[] = {kHighSurrogateStart, kHighSurrogateStart,
+                               kLowSurrogateStart, L'\0'};
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 0, &characters_in_utf16));

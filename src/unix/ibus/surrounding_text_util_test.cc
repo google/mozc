@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,112 +52,108 @@ TEST(SurroundingTextUtilTest, GetSafeDelta) {
   EXPECT_TRUE(SurroundingTextUtil::GetSafeDelta(0, 1, &delta));
   EXPECT_EQ(-1, delta);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsGUint, 0,
-                                                &delta));
+  EXPECT_TRUE(
+      SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsGUint, 0, &delta));
   EXPECT_EQ(kSafeInt32MaxAsGUint, delta);
   EXPECT_GE(abs(delta), 0);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsGUint + 1, 1,
-                                                &delta));
+  EXPECT_TRUE(
+      SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsGUint + 1, 1, &delta));
   EXPECT_EQ(kSafeInt32MaxAsGUint, delta);
   EXPECT_GE(abs(delta), 0);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetSafeDelta(0, kSafeInt32MaxAsGUint,
-                                                &delta));
+  EXPECT_TRUE(
+      SurroundingTextUtil::GetSafeDelta(0, kSafeInt32MaxAsGUint, &delta));
   EXPECT_EQ(-static_cast<int64>(kSafeInt32MaxAsGUint), delta);
   EXPECT_GE(abs(delta), 0);
 
   // The result exceeds int32.
-  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(
-      kTooLargeGUint, 0, &delta));
+  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(kTooLargeGUint, 0, &delta));
 
   // The result exceeds int32.
-  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(
-      kTooLargeGUint, 0, &delta));
+  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(kTooLargeGUint, 0, &delta));
 
   // Underflow.
-  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(
-      0, kTooLargeGUint, &delta));
+  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(0, kTooLargeGUint, &delta));
 
   // The abs(result) exceeds int32.
   EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(
-      static_cast<guint>(-std::numeric_limits<int32>::min()),
-      0, &delta));
+      static_cast<guint>(-std::numeric_limits<int32>::min()), 0, &delta));
 }
 
 TEST(SurroundingTextUtilTest, GetAnchorPosFromSelection) {
   guint anchor_pos = 0;
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "abcde", 0, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "abcde",
+                                                             0, &anchor_pos));
   EXPECT_EQ(5, anchor_pos);
 
-  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "", "a", 0, &anchor_pos));
+  EXPECT_FALSE(
+      SurroundingTextUtil::GetAnchorPosFromSelection("", "a", 0, &anchor_pos));
 
-  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "a", "", 0, &anchor_pos));
+  EXPECT_FALSE(
+      SurroundingTextUtil::GetAnchorPosFromSelection("a", "", 0, &anchor_pos));
 
-  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "aaa", 4, &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "aaa", 4,
+                                                              &anchor_pos));
 
-  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "aaa", 10, &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "aaa",
+                                                              10, &anchor_pos));
 
   EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
       "aaaaa", "aaaaaaaaaa", 2, &anchor_pos));
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "abcde", 5, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "abcde",
+                                                             5, &anchor_pos));
   EXPECT_EQ(0, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "bc", 1, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "bc", 1,
+                                                             &anchor_pos));
   EXPECT_EQ(3, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "bcde", 1, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "bcde", 1,
+                                                             &anchor_pos));
   EXPECT_EQ(5, anchor_pos);
 
-  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "bcdef", 1, &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "bcdef",
+                                                              1, &anchor_pos));
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "bc", 3, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "bc", 3,
+                                                             &anchor_pos));
   EXPECT_EQ(1, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "abc", 3, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "abc", 3,
+                                                             &anchor_pos));
   EXPECT_EQ(0, anchor_pos);
 
-  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "zabc", 3, &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "zabc",
+                                                              3, &anchor_pos));
 
-  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "abcde", "_bc", 3, &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "_bc", 3,
+                                                              &anchor_pos));
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "aaaa", "a", 1, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("aaaa", "a", 1,
+                                                             &anchor_pos));
   EXPECT_EQ(2, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "あいう", "あいう", 0, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("あいう", "あいう",
+                                                             0, &anchor_pos));
   EXPECT_EQ(3, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "あいう", "あいう", 3, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("あいう", "あいう",
+                                                             3, &anchor_pos));
   EXPECT_EQ(0, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "あいう", "いう", 1, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("あいう", "いう",
+                                                             1, &anchor_pos));
   EXPECT_EQ(3, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "あいう", "いう", 3, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("あいう", "いう",
+                                                             3, &anchor_pos));
   EXPECT_EQ(1, anchor_pos);
 
-  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection(
-      "あいう", "あい", 2, &anchor_pos));
+  EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("あいう", "あい",
+                                                             2, &anchor_pos));
   EXPECT_EQ(0, anchor_pos);
 }
 

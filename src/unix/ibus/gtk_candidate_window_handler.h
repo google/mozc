@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -66,8 +66,7 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
   void RegisterGSettingsObserver();
 
  protected:
-  bool SendUpdateCommand(IBusEngine *engine,
-                         const commands::Output &output,
+  bool SendUpdateCommand(IBusEngine *engine, const commands::Output &output,
                          bool visibility) const;
 
   std::unique_ptr<renderer::RendererInterface> renderer_;

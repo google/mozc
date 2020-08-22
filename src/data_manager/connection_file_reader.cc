@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,10 @@
 
 namespace mozc {
 
-ConnectionFileReader::ConnectionFileReader(const string &filename)
+ConnectionFileReader::ConnectionFileReader(const std::string &filename)
     : stream_(filename.c_str()), done_(false), array_index_(-1), cost_(0) {
   LOG(INFO) << "Loading " << filename;
-  string header;
+  std::string header;
   CHECK(!getline(stream_, header).fail()) << filename << " is empty.";
   pos_size_ = NumberUtil::SimpleAtoi(header);
   Next();
@@ -54,7 +54,7 @@ void ConnectionFileReader::Next() {
   if (done_) {
     return;
   }
-  string line;
+  std::string line;
   done_ = getline(stream_, line).fail();
   if (done_) {
     return;

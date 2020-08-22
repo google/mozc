@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,7 @@ class MacServer : public RendererServer {
 
   // Initialize the application status.
   static void Init();
+
  private:
   Mutex mutex_;
   pthread_cond_t event_;

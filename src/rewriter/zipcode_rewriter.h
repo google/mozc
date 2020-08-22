@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 
 namespace mozc {
 
-class ZipcodeRewriter : public RewriterInterface  {
+class ZipcodeRewriter : public RewriterInterface {
  public:
   explicit ZipcodeRewriter(const dictionary::POSMatcher *pos_matcher);
   virtual ~ZipcodeRewriter();
@@ -47,13 +47,11 @@ class ZipcodeRewriter : public RewriterInterface  {
                        Segments *segments) const;
 
  private:
-  bool GetZipcodeCandidatePositions(const Segment &seg,
-                                    string *zipcode,
-                                    string *address,
+  bool GetZipcodeCandidatePositions(const Segment &seg, std::string *zipcode,
+                                    std::string *address,
                                     size_t *insert_pos) const;
-  bool InsertCandidate(size_t insert_pos,
-                       const string &zipcode,
-                       const string &address,
+  bool InsertCandidate(size_t insert_pos, const std::string &zipcode,
+                       const std::string &address,
                        const ConversionRequest &request,
                        Segment *segment) const;
 

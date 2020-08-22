@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,24 +51,21 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
   virtual ~RomanTableEditorDialog();
 
   // show a modal dialog
-  static bool Show(QWidget *parent,
-                   const string &current_keymap,
-                   string *new_keymap);
+  static bool Show(QWidget *parent, const std::string &current_keymap,
+                   std::string *new_keymap);
 
  protected slots:
   virtual void UpdateMenuStatus();
   virtual void OnEditMenuAction(QAction *action);
 
  protected:
-  virtual string GetDefaultFilename() const {
-    return "romantable.txt";
-  }
+  virtual std::string GetDefaultFilename() const { return "romantable.txt"; }
   virtual bool LoadFromStream(std::istream *is);
   virtual bool Update();
 
  private:
   bool LoadDefaultRomanTable();
-  static string GetDefaultRomanTable();
+  static std::string GetDefaultRomanTable();
 
  private:
   std::unique_ptr<QAction *[]> actions_;

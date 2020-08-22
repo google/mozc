@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,12 +61,10 @@ class SimpleSuccinctBitVectorIndex {
   // Initializes the index. This class doesn't have the ownership of the memory
   // pointed by data, so it is caller's responsibility to manage its life time.
   // The 'data' needs to be aligned to 32-bits.
-  void Init(const uint8 *data, int length,
-            size_t lb0_cache_size, size_t lb1_cache_size);
+  void Init(const uint8 *data, int length, size_t lb0_cache_size,
+            size_t lb1_cache_size);
 
-  void Init(const uint8 *data, int length) {
-    Init(data, length, 0, 0);
-  }
+  void Init(const uint8 *data, int length) { Init(data, length, 0, 0); }
 
   // Resets the internal state, especially releases the allocated memory
   // for the index used internally.
@@ -75,14 +73,10 @@ class SimpleSuccinctBitVectorIndex {
   // Returns the bit at the index in data. The index in a byte is as follows;
   // MSB|XXXXXXXX|LSB
   //     76543210
-  int Get(int index) const {
-    return (data_[index / 8] >> (index % 8)) & 1;
-  }
+  int Get(int index) const { return (data_[index / 8] >> (index % 8)) & 1; }
 
   // Returns the number of 0-bit in [0, n) bits of data.
-  int Rank0(int n) const {
-    return n - Rank1(n);
-  }
+  int Rank0(int n) const { return n - Rank1(n); }
 
   // Returns the number of 1-bit in [0, n) bits of data.
   int Rank1(int n) const;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,15 +48,15 @@ struct Node {
 
   enum Attribute {
     DEFAULT_ATTRIBUTE = 0,
-    SYSTEM_DICTIONARY = 1 << 0,  // System dictionary (not used now)
-    USER_DICTIONARY = 1 << 1,  // User dictionary
+    SYSTEM_DICTIONARY = 1 << 0,      // System dictionary (not used now)
+    USER_DICTIONARY = 1 << 1,        // User dictionary
     NO_VARIANTS_EXPANSION = 1 << 2,  // No need to expand full/half
     // Internally used in the converter
     // TODO(toshiyuki): Delete this attribute.
     WEAK_CONNECTED_OBSOLETE = 1 << 3,
     STARTS_WITH_PARTICLE = 1 << 4,  // User input starts with particle
-    SPELLING_CORRECTION = 1 << 5,  // "Did you mean"
-    ENABLE_CACHE = 1 << 6,  // Cache the node in lattice
+    SPELLING_CORRECTION = 1 << 5,   // "Did you mean"
+    ENABLE_CACHE = 1 << 6,          // Cache the node in lattice
     // Equal to that of Candidate.
     // Life of suggestion candidates from realtime conversion is;
     // 1. Created by ImmutableConverter as Candidate instance.
@@ -67,6 +67,7 @@ struct Node {
     // To propagate this information from Node to Candidate,
     // Node should have the same information as Candidate.
     PARTIALLY_KEY_CONSUMED = 1 << 7,
+    SUFFIX_DICTIONARY = 1 << 8,  // Suffix dictionary
   };
 
   // prev and next are linking pointers to connect minimum cost path
@@ -175,13 +176,11 @@ struct Node {
   // actual_key: The actual search key that corresponds to the value.
   //           Can differ from key when no modifier conversion is enabled.
   // value: The surface form of the word.
-  string key;
-  string actual_key;
-  string value;
+  std::string key;
+  std::string actual_key;
+  std::string value;
 
-  Node() {
-    Init();
-  }
+  Node() { Init(); }
 
   inline void Init() {
     prev = nullptr;
@@ -220,6 +219,9 @@ struct Node {
     attributes = 0;
     if (token.attributes & dictionary::Token::SPELLING_CORRECTION) {
       attributes |= SPELLING_CORRECTION;
+    }
+    if (token.attributes & dictionary::Token::SUFFIX_DICTIONARY) {
+      attributes |= SUFFIX_DICTIONARY;
     }
     if (token.attributes & dictionary::Token::USER_DICTIONARY) {
       attributes |= USER_DICTIONARY;

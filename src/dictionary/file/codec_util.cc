@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,28 +29,38 @@
 
 #include "dictionary/file/codec_util.h"
 
-#include <iostream>
+#include <ostream>
 
 #include "base/logging.h"
+#include "base/status.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace dictionary {
 namespace filecodec_util {
 
-void WriteInt(int value, std::ostream *ofs) {
+void WriteInt32(int32 value, std::ostream *ofs) {
   DCHECK(ofs);
   ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
 }
 
-int ReadInt(const char *ptr) {
+int32 ReadInt32ThenAdvance(const char **ptr) {
   DCHECK(ptr);
-  return *reinterpret_cast<const int *>(ptr);
+  const int32 value = *reinterpret_cast<const int32 *>(*ptr);
+  *ptr += sizeof(int32);
+  return value;
 }
 
-// Round up
-int Rup4(int length) {
+int RoundUp4(int length) {
   const int rem = (length % 4);
-  return ((4 - rem) % 4);
+  return length + ((4 - rem) % 4);
+}
+
+void Pad4(int length, std::ostream *ofs) {
+  DCHECK(ofs);
+  for (int i = length; (i % 4) != 0; ++i) {
+    (*ofs) << '\0';
+  }
 }
 
 }  // namespace filecodec_util

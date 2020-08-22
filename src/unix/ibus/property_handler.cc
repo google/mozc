@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -153,9 +153,9 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   IBusPropList *sub_prop_list = ibus_prop_list_new();
 
   // Create items for the radio menu.
-  const commands::CompositionMode initial_mode = is_activated_ ?
-      original_composition_mode_ :
-      kMozcEnginePropertyIMEOffState->composition_mode;
+  const commands::CompositionMode initial_mode =
+      is_activated_ ? original_composition_mode_
+                    : kMozcEnginePropertyIMEOffState->composition_mode;
 
   string icon_path_for_panel;
   const char *mode_symbol = NULL;
@@ -169,15 +169,9 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
       icon_path_for_panel = GetIconPath(entry.icon);
       mode_symbol = entry.label_for_panel;
     }
-    IBusProperty *item = ibus_property_new(entry.key,
-                                           PROP_TYPE_RADIO,
-                                           label,
-                                           NULL /* icon */,
-                                           NULL /* tooltip */,
-                                           TRUE /* sensitive */,
-                                           TRUE /* visible */,
-                                           state,
-                                           NULL /* sub props */);
+    IBusProperty *item = ibus_property_new(
+        entry.key, PROP_TYPE_RADIO, label, NULL /* icon */, NULL /* tooltip */,
+        TRUE /* sensitive */, TRUE /* visible */, state, NULL /* sub props */);
     g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
     ibus_prop_list_append(sub_prop_list, item);
     // |sub_prop_list| owns |item| by calling g_object_ref_sink for the |item|.
@@ -194,15 +188,10 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   // Do not change the name. Othewise the Gnome shell fails to recognize that
   // this property indicates Mozc's input mode.
   // See /usr/share/gnome-shell/js/ui/status/keyboard.js for details.
-  prop_composition_mode_ = ibus_property_new("InputMode",
-                                             PROP_TYPE_MENU,
-                                             label,
-                                             icon_path_for_panel.c_str(),
-                                             NULL /* tooltip */,
-                                             TRUE /* sensitive */,
-                                             TRUE /* visible */,
-                                             PROP_STATE_UNCHECKED,
-                                             sub_prop_list);
+  prop_composition_mode_ = ibus_property_new(
+      "InputMode", PROP_TYPE_MENU, label, icon_path_for_panel.c_str(),
+      NULL /* tooltip */, TRUE /* sensitive */, TRUE /* visible */,
+      PROP_STATE_UNCHECKED, sub_prop_list);
 
   // Gnome shell uses symbol property for the mode indicator text icon iff the
   // property name is "InputMode".
@@ -219,16 +208,16 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   ibus_prop_list_append(prop_root_, prop_composition_mode_);
 }
 
-void PropertyHandler::UpdateContentTypeImpl(IBusEngine *engine,
-                                            bool disabled) {
+void PropertyHandler::UpdateContentTypeImpl(IBusEngine *engine, bool disabled) {
   const bool prev_is_disabled = is_disabled_;
   is_disabled_ = disabled;
   if (prev_is_disabled == is_disabled_) {
     return;
   }
-  const auto visible_mode = (prev_is_disabled && !is_disabled_ && IsActivated())
-      ? original_composition_mode_ :
-        kMozcEnginePropertyIMEOffState->composition_mode;
+  const auto visible_mode =
+      (prev_is_disabled && !is_disabled_ && IsActivated())
+          ? original_composition_mode_
+          : kMozcEnginePropertyIMEOffState->composition_mode;
   UpdateCompositionModeIcon(engine, visible_mode);
 }
 
@@ -256,31 +245,20 @@ void PropertyHandler::AppendToolPropertyToPanel() {
     IBusText *label = ibus_text_new_from_string(
         translator_->MaybeTranslate(entry.label).c_str());
     // TODO(yusukes): It would be better to use entry.icon here?
-    IBusProperty *item = ibus_property_new(entry.mode,
-                                           PROP_TYPE_NORMAL,
-                                           label,
-                                           NULL /* icon */,
-                                           NULL /* tooltip */,
-                                           TRUE,
-                                           TRUE,
-                                           PROP_STATE_UNCHECKED,
-                                           NULL);
+    IBusProperty *item = ibus_property_new(
+        entry.mode, PROP_TYPE_NORMAL, label, NULL /* icon */,
+        NULL /* tooltip */, TRUE, TRUE, PROP_STATE_UNCHECKED, NULL);
     g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
     ibus_prop_list_append(sub_prop_list, item);
   }
 
-  IBusText *tool_label = ibus_text_new_from_string(
-      translator_->MaybeTranslate("Tools").c_str());
+  IBusText *tool_label =
+      ibus_text_new_from_string(translator_->MaybeTranslate("Tools").c_str());
   const string icon_path = GetIconPath(kMozcToolIconPath);
-  prop_mozc_tool_ = ibus_property_new("MozcTool",
-                                      PROP_TYPE_MENU,
-                                      tool_label,
-                                      icon_path.c_str(),
-                                      NULL /* tooltip */,
-                                      TRUE /* sensitive */,
-                                      TRUE /* visible */,
-                                      PROP_STATE_UNCHECKED,
-                                      sub_prop_list);
+  prop_mozc_tool_ = ibus_property_new("MozcTool", PROP_TYPE_MENU, tool_label,
+                                      icon_path.c_str(), NULL /* tooltip */,
+                                      TRUE /* sensitive */, TRUE /* visible */,
+                                      PROP_STATE_UNCHECKED, sub_prop_list);
 
   // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
   // |prop_mozc_tool_| here so ibus_engine_update_property() call in
@@ -319,15 +297,14 @@ void PropertyHandler::UpdateCompositionModeIcon(
 
   const MozcEngineProperty *entry = NULL;
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
-    if (kMozcEngineProperties[i].composition_mode ==
-        new_composition_mode) {
+    if (kMozcEngineProperties[i].composition_mode == new_composition_mode) {
       entry = &(kMozcEngineProperties[i]);
       break;
     }
   }
   DCHECK(entry);
 
-  for (guint prop_index = 0; ; ++prop_index) {
+  for (guint prop_index = 0;; ++prop_index) {
     IBusProperty *prop = ibus_prop_list_get(
         ibus_property_get_sub_props(prop_composition_mode_), prop_index);
     if (prop == NULL) {
@@ -371,9 +348,8 @@ void PropertyHandler::SetCompositionMode(
   // IMEOn. This setting can be configured with setting
   // kMozcEnginePropertyIMEOffState. If kMozcEnginePropertyIMEOffState is NULL,
   // it means current IME should not be off.
-  if (kMozcEnginePropertyIMEOffState
-      && is_activated_
-      && composition_mode == kMozcEnginePropertyIMEOffState->composition_mode) {
+  if (kMozcEnginePropertyIMEOffState && is_activated_ &&
+      composition_mode == kMozcEnginePropertyIMEOffState->composition_mode) {
     command.set_type(commands::SessionCommand::TURN_OFF_IME);
     command.set_composition_mode(original_composition_mode_);
     client_->SendCommand(command, &output);
@@ -395,7 +371,7 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
   }
 
   if (prop_mozc_tool_) {
-    for (guint prop_index = 0; ; ++prop_index) {
+    for (guint prop_index = 0;; ++prop_index) {
       IBusProperty *prop = ibus_prop_list_get(
           ibus_property_get_sub_props(prop_mozc_tool_), prop_index);
       if (prop == NULL) {
@@ -403,7 +379,7 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
       }
       if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
         const MozcEngineToolProperty *entry =
-            reinterpret_cast<const MozcEngineToolProperty*>(
+            reinterpret_cast<const MozcEngineToolProperty *>(
                 g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
         DCHECK(entry->mode);
         if (!client_->LaunchTool(entry->mode, "")) {
@@ -419,7 +395,7 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
   }
 
   if (prop_composition_mode_) {
-    for (guint prop_index = 0; ; ++prop_index) {
+    for (guint prop_index = 0;; ++prop_index) {
       IBusProperty *prop = ibus_prop_list_get(
           ibus_property_get_sub_props(prop_composition_mode_), prop_index);
       if (prop == NULL) {
@@ -427,24 +403,19 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
       }
       if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
         const MozcEngineProperty *entry =
-            reinterpret_cast<const MozcEngineProperty*>(
+            reinterpret_cast<const MozcEngineProperty *>(
                 g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
         SetCompositionMode(engine, entry->composition_mode);
-        UpdateCompositionModeIcon(
-            engine, entry->composition_mode);
+        UpdateCompositionModeIcon(engine, entry->composition_mode);
         break;
       }
     }
   }
 }
 
-bool PropertyHandler::IsActivated() const {
-  return is_activated_;
-}
+bool PropertyHandler::IsActivated() const { return is_activated_; }
 
-bool PropertyHandler::IsDisabled() const {
-  return is_disabled_;
-}
+bool PropertyHandler::IsDisabled() const { return is_disabled_; }
 
 commands::CompositionMode PropertyHandler::GetOriginalCompositionMode() const {
   return original_composition_mode_;

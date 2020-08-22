@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,36 +44,25 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-using std::unique_ptr;
-
 class DictionaryMockTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-    mock_.reset(new DictionaryMock);
-  }
+  void SetUp() override { mock_.reset(new DictionaryMock); }
 
-  DictionaryMock *GetMock() {
-    return mock_.get();
-  }
+  DictionaryMock *GetMock() { return mock_.get(); }
 
-  static Token *CreateToken(const string &key, const string &value);
-  static Token *CreateToken(const string &key, const string &value,
-                            Token::Attribute attr);
-  static bool SearchMatchingToken(const string &key,
-                                  const string &value,
-                                  uint8 attributes,
+  static bool SearchMatchingToken(const std::string &key,
+                                  const std::string &value, uint8 attributes,
                                   const std::vector<Token> &tokens);
 
-  unique_ptr<DictionaryMock> mock_;
+  std::unique_ptr<DictionaryMock> mock_;
   ConversionRequest convreq_;
 };
 
-bool DictionaryMockTest::SearchMatchingToken(const string &key,
-                                             const string &value,
+bool DictionaryMockTest::SearchMatchingToken(const std::string &key,
+                                             const std::string &value,
                                              uint8 attributes,
                                              const std::vector<Token> &tokens) {
-  for (size_t i = 0; i < tokens.size(); ++i) {
-    const Token &token = tokens[i];
+  for (const Token &token : tokens) {
     if (token.key == key && token.value == value &&
         token.attributes == attributes) {
       return true;
@@ -82,33 +71,26 @@ bool DictionaryMockTest::SearchMatchingToken(const string &key,
   return false;
 }
 
-Token *DictionaryMockTest::CreateToken(const string &key, const string &value) {
-  Token *token = new Token;
-  token->key = key;
-  token->value = value;
-  return token;
+std::unique_ptr<Token> CreateToken(const std::string &key,
+                                   const std::string &value,
+                                   Token::Attribute attr) {
+  return CreateToken(key, value, DictionaryMock::kDefaultCost,
+                     DictionaryMock::kDummyPosId, DictionaryMock::kDummyPosId,
+                     attr);
 }
 
-Token *DictionaryMockTest::CreateToken(const string &key, const string &value,
-                                       Token::Attribute attr) {
-  Token *token = new Token;
-  token->key = key;
-  token->value = value;
-  // The same dummy cost and POS IDs set by DictionaryMock.
-  token->cost = 0;
-  token->lid = 1;
-  token->rid = 1;
-  token->attributes = attr;
-  return token;
+std::unique_ptr<Token> CreateToken(const std::string &key,
+                                   const std::string &value) {
+  return CreateToken(key, value, Token::NONE);
 }
 
 TEST_F(DictionaryMockTest, HasValue) {
   DictionaryMock *dic = GetMock();
 
-  unique_ptr<Token> t0(CreateToken("k0", "v0"));
-  unique_ptr<Token> t1(CreateToken("k1", "v1"));
-  unique_ptr<Token> t2(CreateToken("k2", "v2"));
-  unique_ptr<Token> t3(CreateToken("k3", "v3"));
+  std::unique_ptr<Token> t0 = CreateToken("k0", "v0");
+  std::unique_ptr<Token> t1 = CreateToken("k1", "v1");
+  std::unique_ptr<Token> t2 = CreateToken("k2", "v2");
+  std::unique_ptr<Token> t3 = CreateToken("k3", "v3");
 
   dic->AddLookupPrefix(t0->key, t0->key, t0->value, Token::NONE);
   dic->AddLookupPredictive(t1->key, t1->key, t1->value, Token::NONE);
@@ -127,8 +109,8 @@ TEST_F(DictionaryMockTest, HasValue) {
 TEST_F(DictionaryMockTest, LookupPrefix) {
   DictionaryMock *dic = GetMock();
 
-  unique_ptr<Token> t0(CreateToken("は", "v0", Token::NONE));
-  unique_ptr<Token> t1(CreateToken("はひふへほ", "v1", Token::NONE));
+  std::unique_ptr<Token> t0 = CreateToken("は", "v0", Token::NONE);
+  std::unique_ptr<Token> t1 = CreateToken("はひふへほ", "v1", Token::NONE);
 
   dic->AddLookupPrefix(t0->key, t0->key, t0->value, Token::NONE);
   dic->AddLookupPrefix(t1->key, t1->key, t1->value, Token::NONE);
@@ -152,22 +134,16 @@ TEST_F(DictionaryMockTest, LookupPrefix) {
 TEST_F(DictionaryMockTest, LookupReverse) {
   DictionaryInterface *dic = GetMock();
 
-  const string k0 = "今";
-  const string v0 = "いま";
-  const string k1 = "今日";
-  const string v1 = "きょう";
+  const std::string k0 = "今";
+  const std::string v0 = "いま";
+  const std::string k1 = "今日";
+  const std::string v1 = "きょう";
 
-  std::vector<Token> source_tokens;
-  unique_ptr<Token> t0(CreateToken(k0, v0));
-  unique_ptr<Token> t1(CreateToken(k1, v1));
+  std::unique_ptr<Token> t0 = CreateToken(k0, v0);
+  std::unique_ptr<Token> t1 = CreateToken(k1, v1);
 
-  source_tokens.push_back(*t0.get());
-  source_tokens.push_back(*t1.get());
-
-  for (std::vector<Token>::iterator it = source_tokens.begin();
-       it != source_tokens.end(); ++it) {
-    GetMock()->AddLookupReverse(it->key, it->key, it->value, Token::NONE);
-  }
+  GetMock()->AddLookupReverse(t0->key, t0->key, t0->value, Token::NONE);
+  GetMock()->AddLookupReverse(t1->key, t1->key, t1->value, Token::NONE);
 
   CollectTokenCallback callback;
   dic->LookupReverse(k1, convreq_, &callback);
@@ -181,20 +157,17 @@ TEST_F(DictionaryMockTest, LookupReverse) {
 TEST_F(DictionaryMockTest, LookupPredictive) {
   DictionaryInterface *dic = GetMock();
 
-  const string k0 = "は";
-  const string k1 = "はひふ";
-  const string k2 = "はひふへほ";
+  const std::string k0 = "は";
+  const std::string k1 = "はひふ";
+  const std::string k2 = "はひふへほ";
 
-  std::vector<Token> tokens;
-  unique_ptr<Token> t1(CreateToken(k1, "v0", Token::NONE));
-  unique_ptr<Token> t2(CreateToken(k2, "v1", Token::NONE));
-  tokens.push_back(*t1.get());
-  tokens.push_back(*t2.get());
+  std::unique_ptr<Token> t1 = CreateToken(k1, "v0", 100, 200, 300, Token::NONE);
+  std::unique_ptr<Token> t2 = CreateToken(k2, "v1", 400, 500, 600, Token::NONE);
 
-  for (std::vector<Token>::iterator it = tokens.begin(); it != tokens.end();
-       ++it) {
-    GetMock()->AddLookupPredictive(k0, it->key, it->value, Token::NONE);
-  }
+  GetMock()->AddLookupPredictive(k0, t1->key, t1->value, t1->cost, t1->lid,
+                                 t1->rid, Token::NONE);
+  GetMock()->AddLookupPredictive(k0, t2->key, t2->value, t2->cost, t2->lid,
+                                 t2->rid, Token::NONE);
 
   CollectTokenCallback callback;
   dic->LookupPredictive(k0, convreq_, &callback);
@@ -208,8 +181,8 @@ TEST_F(DictionaryMockTest, LookupExact) {
 
   const char kKey[] = "ほげ";
 
-  unique_ptr<Token> t0(CreateToken(kKey, "value1", Token::NONE));
-  unique_ptr<Token> t1(CreateToken(kKey, "value2", Token::NONE));
+  std::unique_ptr<Token> t0 = CreateToken(kKey, "value1", Token::NONE);
+  std::unique_ptr<Token> t1 = CreateToken(kKey, "value2", Token::NONE);
 
   GetMock()->AddLookupExact(t0->key, t0->key, t0->value, Token::NONE);
   GetMock()->AddLookupExact(t1->key, t1->key, t1->value, Token::NONE);

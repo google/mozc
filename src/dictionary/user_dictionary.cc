@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,6 @@
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/stl_util.h"
-#include "base/string_piece.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -53,28 +52,29 @@
 #include "dictionary/user_pos.h"
 #include "protocol/config.pb.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
 
 struct OrderByKey {
-  bool operator()(const UserPOS::Token *token, StringPiece key) const {
+  bool operator()(const UserPOS::Token *token, absl::string_view key) const {
     return token->key < key;
   }
 
-  bool operator()(StringPiece key, const UserPOS::Token *token) const {
+  bool operator()(absl::string_view key, const UserPOS::Token *token) const {
     return key < token->key;
   }
 };
 
 struct OrderByKeyPrefix {
-  bool operator()(const UserPOS::Token *token, StringPiece prefix) const {
-    return StringPiece(token->key).substr(0, prefix.size()) < prefix;
+  bool operator()(const UserPOS::Token *token, absl::string_view prefix) const {
+    return absl::string_view(token->key).substr(0, prefix.size()) < prefix;
   }
 
-  bool operator()(StringPiece prefix, const UserPOS::Token *token) const {
-    return prefix < StringPiece(token->key).substr(0, prefix.size());
+  bool operator()(absl::string_view prefix, const UserPOS::Token *token) const {
+    return prefix < absl::string_view(token->key).substr(0, prefix.size());
   }
 };
 
@@ -89,7 +89,7 @@ class UserDictionaryFileManager {
  public:
   UserDictionaryFileManager() {}
 
-  const string GetFileName() {
+  const std::string GetFileName() {
     scoped_lock l(&mutex_);
     if (filename_.empty()) {
       return UserDictionaryUtil::GetUserDictionaryFileName();
@@ -98,13 +98,13 @@ class UserDictionaryFileManager {
     }
   }
 
-  void SetFileName(const string &filename) {
+  void SetFileName(const std::string &filename) {
     scoped_lock l(&mutex_);
     filename_ = filename;
   }
 
  private:
-  string filename_;
+  std::string filename_;
   Mutex mutex_;
   DISALLOW_COPY_AND_ASSIGN(UserDictionaryFileManager);
 };
@@ -125,12 +125,9 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
  public:
   TokensIndex(const UserPOSInterface *user_pos,
               SuppressionDictionary *suppression_dictionary)
-      : user_pos_(user_pos),
-        suppression_dictionary_(suppression_dictionary) {}
+      : user_pos_(user_pos), suppression_dictionary_(suppression_dictionary) {}
 
-  ~TokensIndex() {
-    Clear();
-  }
+  ~TokensIndex() { Clear(); }
 
   void Clear() {
     STLDeleteElements(this);
@@ -162,7 +159,7 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
           continue;
         }
 
-        string tmp, reading;
+        std::string tmp, reading;
         UserDictionaryUtil::NormalizeReading(entry.key(), &tmp);
 
         // We cannot call NormalizeVoiceSoundMark inside NormalizeReading,
@@ -171,17 +168,17 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
         Util::NormalizeVoicedSoundMark(tmp, &reading);
 
         DCHECK_LE(0, entry.pos());
-MOZC_CLANG_PUSH_WARNING();
+        MOZC_CLANG_PUSH_WARNING();
+        // clang-format off
 #if MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
-MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
+        MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
 #endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
+        // clang-format on
         DCHECK_LE(entry.pos(), 255);
-MOZC_CLANG_POP_WARNING();
-        const uint64 fp = Hash::Fingerprint(reading +
-                                            "\t" +
-                                            entry.value() +
-                                            "\t" +
-                                            static_cast<char>(entry.pos()));
+        MOZC_CLANG_POP_WARNING();
+        const uint64 fp =
+            Hash::Fingerprint(reading + "\t" + entry.value() + "\t" +
+                              static_cast<char>(entry.pos()));
         if (!seen.insert(fp).second) {
           VLOG(1) << "Found dup item";
           continue;
@@ -222,34 +219,19 @@ MOZC_CLANG_POP_WARNING();
 class UserDictionary::UserDictionaryReloader : public Thread {
  public:
   explicit UserDictionaryReloader(UserDictionary *dic)
-      : modified_at_(0), auto_register_mode_(false), dic_(dic) {
+      : modified_at_(0), dic_(dic) {
     DCHECK(dic_);
   }
 
-  ~UserDictionaryReloader() override {
-    Join();
-  }
-
-  void StartAutoRegistration(const string &key,
-                             const string &value,
-                             user_dictionary::UserDictionary::PosType pos) {
-    {
-      scoped_lock l(&mutex_);
-      auto_register_mode_ = true;
-      key_ = key;
-      value_ = value;
-      pos_ = pos;
-    }
-    Start("UserDictionaryReloader");
-  }
+  ~UserDictionaryReloader() override { Join(); }
 
   // When the user dictionary exists AND the modification time has been updated,
   // reloads the dictionary.  Returns true when reloader thread is started.
   bool MaybeStartReload() {
     FileTimeStamp modification_time;
     if (!FileUtil::GetModificationTime(
-        Singleton<UserDictionaryFileManager>::get()->GetFileName(),
-        &modification_time)) {
+            Singleton<UserDictionaryFileManager>::get()->GetFileName(),
+            &modification_time)) {
       // If the file doesn't exist, return doing nothing.
       // Therefore if the file is deleted after first reload,
       // second reload does nothing so the content loaded by first reload
@@ -281,25 +263,15 @@ class UserDictionary::UserDictionaryReloader : public Thread {
       }
     }
 
-    if (auto_register_mode_ &&
-        !storage->AddToAutoRegisteredDictionary(key_, value_, pos_)) {
-      LOG(ERROR) << "failed to execute AddToAutoRegisteredDictionary";
-      auto_register_mode_ = false;
-      return;
-    }
-
-    auto_register_mode_ = false;
-    dic_->Load(*(storage.get()));
+    dic_->Load(storage->GetProto());
   }
 
  private:
   FileTimeStamp modified_at_;
   Mutex mutex_;
-  bool auto_register_mode_;
   UserDictionary *dic_;
-  string key_;
-  string value_;
-  user_dictionary::UserDictionary::PosType pos_;
+  std::string key_;
+  std::string value_;
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionaryReloader);
 };
@@ -324,14 +296,14 @@ UserDictionary::~UserDictionary() {
   delete tokens_;
 }
 
-bool UserDictionary::HasKey(StringPiece key) const {
+bool UserDictionary::HasKey(absl::string_view key) const {
   // TODO(noriyukit): Currently, we don't support HasKey() for user dictionary
   // because we need to search tokens linearly, which might be slow in extreme
   // cases where 100K entries exist.
   return false;
 }
 
-bool UserDictionary::HasValue(StringPiece value) const {
+bool UserDictionary::HasValue(absl::string_view value) const {
   // TODO(noriyukit): Currently, we don't support HasValue() for user dictionary
   // because we need to search tokens linearly, which might be slow in extreme
   // cases where 100K entries exist.  Note: HasValue() method is used only in
@@ -340,8 +312,7 @@ bool UserDictionary::HasValue(StringPiece value) const {
 }
 
 void UserDictionary::LookupPredictive(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
+    absl::string_view key, const ConversionRequest &conversion_request,
     Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
 
@@ -384,10 +355,9 @@ void UserDictionary::LookupPredictive(
 }
 
 // UserDictionary doesn't support kana modifier insensitive lookup.
-void UserDictionary::LookupPrefix(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
+void UserDictionary::LookupPrefix(absl::string_view key,
+                                  const ConversionRequest &conversion_request,
+                                  Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
 
   if (key.empty()) {
@@ -402,7 +372,8 @@ void UserDictionary::LookupPrefix(
   }
 
   // Find the starting point for iteration over dictionary contents.
-  const StringPiece first_char = key.substr(0, Util::OneCharLen(key.data()));
+  const absl::string_view first_char =
+      key.substr(0, Util::OneCharLen(key.data()));
   Token token;
   for (auto it = std::lower_bound(tokens_->begin(), tokens_->end(), first_char,
                                   OrderByKey());
@@ -441,17 +412,16 @@ void UserDictionary::LookupPrefix(
   }
 }
 
-void UserDictionary::LookupExact(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
+void UserDictionary::LookupExact(absl::string_view key,
+                                 const ConversionRequest &conversion_request,
+                                 Callback *callback) const {
   scoped_reader_lock l(mutex_.get());
   if (key.empty() || tokens_->empty() ||
       conversion_request.config().incognito_mode()) {
     return;
   }
-  auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
-                                OrderByKey());
+  auto range =
+      std::equal_range(tokens_->begin(), tokens_->end(), key, OrderByKey());
   if (range.first == range.second) {
     return;
   }
@@ -472,15 +442,14 @@ void UserDictionary::LookupExact(
   }
 }
 
-void UserDictionary::LookupReverse(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
-}
-
-bool UserDictionary::LookupComment(StringPiece key, StringPiece value,
+void UserDictionary::LookupReverse(absl::string_view key,
                                    const ConversionRequest &conversion_request,
-                                   string *comment) const {
+                                   Callback *callback) const {}
+
+bool UserDictionary::LookupComment(absl::string_view key,
+                                   absl::string_view value,
+                                   const ConversionRequest &conversion_request,
+                                   std::string *comment) const {
   if (key.empty() || conversion_request.config().incognito_mode()) {
     return false;
   }
@@ -521,12 +490,12 @@ namespace {
 
 class FindValueCallback : public DictionaryInterface::Callback {
  public:
-  explicit FindValueCallback(StringPiece value)
+  explicit FindValueCallback(absl::string_view value)
       : value_(value), found_(false) {}
 
-  virtual ResultType OnToken(StringPiece,  // key
-                             StringPiece,  // actual_key
-                             const Token &token) {
+  ResultType OnToken(absl::string_view,  // key
+                     absl::string_view,  // actual_key
+                     const Token &token) override {
     if (token.value == value_) {
       found_ = true;
       return TRAVERSE_DONE;
@@ -537,37 +506,13 @@ class FindValueCallback : public DictionaryInterface::Callback {
   bool found() const { return found_; }
 
  private:
-  const StringPiece value_;
+  const absl::string_view value_;
   bool found_;
 };
 
 }  // namespace
 
-bool UserDictionary::AddToAutoRegisteredDictionary(
-    const string &key, const string &value,
-    const ConversionRequest &conversion_request,
-    user_dictionary::UserDictionary::PosType pos) {
-  if (reloader_->IsRunning()) {
-    return false;
-  }
-
-  FindValueCallback callback(value);
-  LookupExact(key, conversion_request, &callback);
-  if (callback.found()) {
-    // Already registered.
-    return false;
-  }
-
-  suppression_dictionary_->Lock();
-  DCHECK(suppression_dictionary_->IsLocked());
-  reloader_->StartAutoRegistration(key, value, pos);
-
-  return true;
-}
-
-void UserDictionary::WaitForReloader() {
-  reloader_->Join();
-}
+void UserDictionary::WaitForReloader() { reloader_->Join(); }
 
 void UserDictionary::Swap(TokensIndex *new_tokens) {
   DCHECK(new_tokens);
@@ -596,21 +541,21 @@ bool UserDictionary::Load(
 #endif
 
   if (size >= kVeryBigUserDictionarySize) {
-    TokensIndex *dummy_empty_tokens = new TokensIndex(user_pos_.get(),
-                                                      suppression_dictionary_);
+    TokensIndex *dummy_empty_tokens =
+        new TokensIndex(user_pos_.get(), suppression_dictionary_);
     Swap(dummy_empty_tokens);
   }
 
   suppression_dictionary_->Lock();
-  TokensIndex *tokens = new TokensIndex(user_pos_.get(),
-                                        suppression_dictionary_);
+  TokensIndex *tokens =
+      new TokensIndex(user_pos_.get(), suppression_dictionary_);
   tokens->Load(storage);  // |suppression_dictionary_| is unlocked in Load().
   DCHECK(!suppression_dictionary_->IsLocked());
   Swap(tokens);
   return true;
 }
 
-void UserDictionary::SetUserDictionaryName(const string &filename) {
+void UserDictionary::SetUserDictionaryName(const std::string &filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
 }
 

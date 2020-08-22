@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,18 +36,14 @@ namespace transliteration {
 
 // static
 bool T13n::IsInFullAsciiTypes(TransliterationType type) {
-  return (type == FULL_ASCII ||
-          type == FULL_ASCII_UPPER ||
-          type == FULL_ASCII_LOWER ||
-          type == FULL_ASCII_CAPITALIZED);
+  return (type == FULL_ASCII || type == FULL_ASCII_UPPER ||
+          type == FULL_ASCII_LOWER || type == FULL_ASCII_CAPITALIZED);
 }
 
 // static
 bool T13n::IsInHalfAsciiTypes(TransliterationType type) {
-  return (type == HALF_ASCII ||
-          type == HALF_ASCII_UPPER ||
-          type == HALF_ASCII_LOWER ||
-          type == HALF_ASCII_CAPITALIZED);
+  return (type == HALF_ASCII || type == HALF_ASCII_UPPER ||
+          type == HALF_ASCII_LOWER || type == HALF_ASCII_CAPITALIZED);
 }
 
 // static
@@ -65,23 +61,28 @@ bool T13n::IsInHalfKatakanaTypes(TransliterationType type) {
   return (type == HALF_KATAKANA);
 }
 
-
 // static
 TransliterationType T13n::ToggleFullAsciiTypes(
     const TransliterationType current_type) {
-  return ((current_type == FULL_ASCII) ? FULL_ASCII_UPPER :
-          (current_type == FULL_ASCII_UPPER) ? FULL_ASCII_LOWER :
-          (current_type == FULL_ASCII_LOWER) ? FULL_ASCII_CAPITALIZED :
-          FULL_ASCII);
+  return ((current_type == FULL_ASCII)
+              ? FULL_ASCII_UPPER
+              : (current_type == FULL_ASCII_UPPER)
+                    ? FULL_ASCII_LOWER
+                    : (current_type == FULL_ASCII_LOWER)
+                          ? FULL_ASCII_CAPITALIZED
+                          : FULL_ASCII);
 }
 
 // static
 TransliterationType T13n::ToggleHalfAsciiTypes(
     const TransliterationType current_type) {
-  return ((current_type == HALF_ASCII) ? HALF_ASCII_UPPER :
-          (current_type == HALF_ASCII_UPPER) ? HALF_ASCII_LOWER :
-          (current_type == HALF_ASCII_LOWER) ? HALF_ASCII_CAPITALIZED :
-          HALF_ASCII);
+  return ((current_type == HALF_ASCII)
+              ? HALF_ASCII_UPPER
+              : (current_type == HALF_ASCII_UPPER)
+                    ? HALF_ASCII_LOWER
+                    : (current_type == HALF_ASCII_LOWER)
+                          ? HALF_ASCII_CAPITALIZED
+                          : HALF_ASCII);
 }
 
 }  // namespace transliteration

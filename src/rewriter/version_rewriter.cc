@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -69,23 +70,21 @@ class VersionRewriter::VersionDataImpl {
  public:
   class VersionEntry {
    public:
-    VersionEntry(const string& base_candidate,
-                 const string& output,
+    VersionEntry(const std::string &base_candidate, const std::string &output,
                  size_t rank)
-        : base_candidate_(base_candidate),
-          output_(output), rank_(rank) {}
+        : base_candidate_(base_candidate), output_(output), rank_(rank) {}
 
-    const string &base_candidate() const { return base_candidate_; }
-    const string &output() const { return output_; }
+    const std::string &base_candidate() const { return base_candidate_; }
+    const std::string &output() const { return output_; }
     size_t rank() const { return rank_; }
 
    private:
-    string base_candidate_;
-    string output_;
+    std::string base_candidate_;
+    std::string output_;
     size_t rank_;
   };
 
-  const VersionEntry *Lookup(const string &key) const {
+  const VersionEntry *Lookup(const std::string &key) const {
     const auto it = entries_.find(key);
     if (it == entries_.end()) {
       return nullptr;
@@ -93,23 +92,22 @@ class VersionRewriter::VersionDataImpl {
     return it->second.get();
   }
 
-  explicit VersionDataImpl(StringPiece data_version) {
-    string version_string = kVersionRewriterVersionPrefix;
+  explicit VersionDataImpl(absl::string_view data_version) {
+    std::string version_string = kVersionRewriterVersionPrefix;
     version_string.append(Version::GetMozcVersion());
     version_string.append(1, '+');
     version_string.append(data_version.data(), data_version.size());
     for (int i = 0; i < arraysize(kKeyCandList); ++i) {
       entries_[kKeyCandList[i].key].reset(
-          new VersionEntry(kKeyCandList[i].base_candidate,
-                           version_string, 9));
+          new VersionEntry(kKeyCandList[i].base_candidate, version_string, 9));
     }
   }
 
  private:
-  std::map<string, std::unique_ptr<VersionEntry>> entries_;
+  std::map<std::string, std::unique_ptr<VersionEntry>> entries_;
 };
 
-VersionRewriter::VersionRewriter(StringPiece data_version)
+VersionRewriter::VersionRewriter(absl::string_view data_version)
     : impl_(new VersionDataImpl(data_version)) {}
 
 VersionRewriter::~VersionRewriter() = default;
@@ -126,12 +124,12 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
   bool result = false;
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
-    Segment* seg = segments->mutable_segment(i);
+    Segment *seg = segments->mutable_segment(i);
     DCHECK(seg);
     const VersionDataImpl::VersionEntry *ent = impl_->Lookup(seg->key());
     if (ent != nullptr) {
       for (size_t j = 0; j < seg->candidates_size(); ++j) {
-        const Segment::Candidate& c = seg->candidate(static_cast<int>(j));
+        const Segment::Candidate &c = seg->candidate(static_cast<int>(j));
         if (c.value == ent->base_candidate()) {
           Segment::Candidate *new_cand = seg->insert_candidate(
               static_cast<int>(std::min(seg->candidates_size(), ent->rank())));

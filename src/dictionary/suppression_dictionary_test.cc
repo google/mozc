@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -110,10 +110,17 @@ class DictionaryLoaderThread : public Thread {
     dic->Lock();
     dic->Clear();
     for (int i = 0; i < 100; ++i) {
-      const string key = "key" + std::to_string(i);
-      const string value = "value" + std::to_string(i);
+      const std::string key = "key" + std::to_string(i);
+      const std::string value = "value" + std::to_string(i);
       EXPECT_TRUE(dic->AddEntry(key, value));
+#ifdef OS_IOS
+      // Sleep only for 1 msec. On iOS, Util::Sleep takes a very longer time
+      // like 30 times compaired with MacOS. This should be a temporary
+      // solution.
+      Util::Sleep(1);
+#else
       Util::Sleep(5);
+#endif
     }
     dic->UnLock();
   }
@@ -125,15 +132,15 @@ TEST(SupressionDictionary, ThreadTest) {
 
   dic->Lock();
 
-  for (int iter = 0; iter < 3; ++iter)  {
+  for (int iter = 0; iter < 3; ++iter) {
     DictionaryLoaderThread thread;
 
     // Load dictionary in another thread.
     thread.Start("SuppressionDictionaryTest");
 
     for (int i = 0; i < 100; ++i) {
-      const string key = "key" + std::to_string(i);
-      const string value = "value" + std::to_string(i);
+      const std::string key = "key" + std::to_string(i);
+      const std::string value = "value" + std::to_string(i);
       if (!thread.IsRunning()) {
         EXPECT_TRUE(dic->SuppressEntry(key, value));
       }

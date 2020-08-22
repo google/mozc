@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,9 @@
 namespace mozc {
 namespace keymap {
 
-template<typename T>
+template <typename T>
 bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
-                           CommandsType* command) const {
+                           CommandsType *command) const {
   // Shortcut keys should be available as if CapsLock was not enabled like
   // other IMEs such as MS-IME or ATOK. b/5627459
   commands::KeyEvent normalized_key_event;
@@ -68,7 +68,7 @@ bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
   return false;
 }
 
-template<typename T>
+template <typename T>
 bool KeyMap<T>::AddRule(const commands::KeyEvent &key_event,
                         CommandsType command) {
   KeyInformation key;
@@ -80,7 +80,7 @@ bool KeyMap<T>::AddRule(const commands::KeyEvent &key_event,
   return true;
 }
 
-template<typename T>
+template <typename T>
 void KeyMap<T>::Clear() {
   keymap_.clear();
 }

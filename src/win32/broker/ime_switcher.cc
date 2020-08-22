@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@
 #include "win32/base/migration_util.h"
 
 DEFINE_bool(set_default_do_not_ask_again, false,
-              "Set true if SetDefaultDialog should not be displayed again.");
+            "Set true if SetDefaultDialog should not be displayed again.");
 
 namespace mozc {
 namespace win32 {
@@ -62,7 +62,7 @@ const int kErrorLevelSuccess = 0;
 const int kErrorLevelGeneralError = 1;
 
 void NotifyFatalMessageImpl(const string &msg) {
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
   // Explicitly causes crash so that the migration failure will be notified
   // through crash dump.
   LOG(FATAL) << msg;
@@ -91,8 +91,8 @@ HKL EnsureKeyboardLoaded() {
     return nullptr;
   }
 
-  HKL hkl = ::LoadKeyboardLayoutW(
-      target_klid.ToString().c_str(), KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
+  HKL hkl = ::LoadKeyboardLayoutW(target_klid.ToString().c_str(),
+                                  KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
   if (hkl == nullptr) {
     const int error = ::GetLastError();
     LOG(ERROR) << "LoadKeyboardLayoutW failed. error = " << error;
@@ -103,8 +103,8 @@ HKL EnsureKeyboardLoaded() {
   // b/2958563 will be recovered.
   ::UnloadKeyboardLayout(hkl);
 
-  hkl = ::LoadKeyboardLayoutW(
-      target_klid.ToString().c_str(), KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
+  hkl = ::LoadKeyboardLayoutW(target_klid.ToString().c_str(),
+                              KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
   if (hkl == nullptr) {
     const int error = ::GetLastError();
     LOG(ERROR) << "LoadKeyboardLayoutW failed. error = " << error;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@
 #include <set>
 #include <string>
 
-#include "base/string_piece.h"
 #include "data_manager/dataset.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -44,15 +44,16 @@ namespace mozc {
 class DataSetWriter {
  public:
   // Creates a writer with specified magic number.
-  explicit DataSetWriter(StringPiece magic);
+  explicit DataSetWriter(absl::string_view magic);
   ~DataSetWriter();
 
   // Adds a binary image to the packed file so that data is aligned at the
   // specified bit boundary (8, 16, 32, or 64).
-  void Add(const string &name, int alignment, StringPiece data);
+  void Add(const std::string &name, int alignment, absl::string_view data);
 
-  // Similar to Add() for StringPiece but data is read from file.
-  void AddFile(const string &name, int alignment, const string &filepath);
+  // Similar to Add() for absl::string_view but data is read from file.
+  void AddFile(
+      const std::string &name, int alignment, const std::string &filepath);
 
   // Writes the image to output.  If |output| is a file, it should be opened in
   // binary mode.
@@ -63,9 +64,9 @@ class DataSetWriter {
  private:
   void AppendPadding(int alignment);
 
-  string image_;
+  std::string image_;
   DataSetMetadata metadata_;
-  std::set<string> seen_names_;
+  std::set<std::string> seen_names_;
 };
 
 }  // namespace mozc

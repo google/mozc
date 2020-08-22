@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,13 +53,11 @@ namespace {
 
 typedef std::map<string, mozc_flags::Flag *> FlagMap;
 
-FlagMap *GetFlagMap() {
-  return mozc::Singleton<FlagMap>::get();
-}
+FlagMap *GetFlagMap() { return mozc::Singleton<FlagMap>::get(); }
 
 bool IsTrue(const char *value) {
-  const char* kTrue[] = { "1", "t", "true", "y", "yes" };
-  const char* kFalse[] = { "0", "f", "false", "n", "no" };
+  const char *kTrue[] = {"1", "t", "true", "y", "yes"};
+  const char *kFalse[] = {"0", "f", "false", "n", "no"};
   for (size_t i = 0; i < arraysize(kTrue); ++i) {
     if (strcmp(value, kTrue[i]) == 0) {
       return true;
@@ -76,51 +74,57 @@ bool IsTrue(const char *value) {
 // is mapped to StrToNumberImpl::Do<long long>().  Here, struct (class) is
 // intentionally used instead of a template function because, if we use a
 // function, compiler may warn of "unused function".
-template <typename T> struct StrToNumberImpl;
+template <typename T>
+struct StrToNumberImpl;
 
-template <> struct StrToNumberImpl<int> {
+template <>
+struct StrToNumberImpl<int> {
   static int Do(const string &s) { return std::stoi(s); }
 };
 
-template <> struct StrToNumberImpl<long> {                  // NOLINT
+template <>
+struct StrToNumberImpl<long> {                              // NOLINT
   static long Do(const string &s) { return std::stol(s); }  // NOLINT
 };
 
-template <> struct StrToNumberImpl<long long> {                   // NOLINT
+template <>
+struct StrToNumberImpl<long long> {                               // NOLINT
   static long long Do(const string &s) { return std::stoll(s); }  // NOLINT
 };
 
-template <> struct StrToNumberImpl<unsigned long> {                   // NOLINT
+template <>
+struct StrToNumberImpl<unsigned long> {                               // NOLINT
   static unsigned long Do(const string &s) { return std::stoul(s); }  // NOLINT
 };
 
-template <> struct StrToNumberImpl<unsigned long long> {  // NOLINT
-  static unsigned long long Do(const string &s) {         // NOLINT
+template <>
+struct StrToNumberImpl<unsigned long long> {       // NOLINT
+  static unsigned long long Do(const string &s) {  // NOLINT
     return std::stoull(s);
   }
 };
 
-template <typename T> inline T StrToNumber(const string &s) {
+template <typename T>
+inline T StrToNumber(const string &s) {
   return StrToNumberImpl<T>::Do(s);
 }
 
-#if defined(DEBUG) || defined(OS_MACOSX)
-// Defines std::string version of StringPiece::starts_with here to make flags
-// module from independent of string_piece.cc because StringPiece depends on
-// logging.cc etc. and using it causes cyclic dependency.
+#if defined(DEBUG) || defined(__APPLE__)
+// Defines std::string version of absl::string_view::starts_with here to make
+// flags module from independent of string_piece.cc because absl::string_view
+// depends on logging.cc etc. and using it causes cyclic dependency.
 inline bool StartsWith(const string &s, const string &prefix) {
   return s.size() >= prefix.size() &&
          memcmp(s.data(), prefix.data(), prefix.size()) == 0;
 }
-#endif  // defined(DEBUG) || defined(OS_MACOSX)
+#endif  // defined(DEBUG) || defined(__APPLE__)
 
 }  // namespace
 
-FlagRegister::FlagRegister(const char *name,
-                           void *storage,
-                           const void *default_storage,
-                           int shorttpe,
-                           const char *help) : flag_(new Flag) {
+FlagRegister::FlagRegister(const char *name, void *storage,
+                           const void *default_storage, int shorttpe,
+                           const char *help)
+    : flag_(new Flag) {
   flag_->type = shorttpe;
   flag_->storage = storage;
   flag_->default_storage = default_storage;
@@ -128,9 +132,7 @@ FlagRegister::FlagRegister(const char *name,
   GetFlagMap()->insert(std::make_pair(string(name), flag_));
 }
 
-FlagRegister::~FlagRegister() {
-  delete flag_;
-}
+FlagRegister::~FlagRegister() { delete flag_; }
 
 bool SetFlag(const string &name, const string &value) {
   std::map<string, Flag *>::iterator it = GetFlagMap()->find(name);
@@ -138,7 +140,7 @@ bool SetFlag(const string &name, const string &value) {
   string v = value;
   Flag *flag = it->second;
 
-  // If empty value is set, we assume true or emtpy string is set
+  // If empty value is set, we assume true or empty string is set
   // for boolean or string option. With other types, setting fails.
   if (value.empty()) {
     switch (flag->type) {
@@ -230,10 +232,7 @@ void PrintFlags(string *output) {
 
 #endif  // IGNORE_HELP_FLAG
 
-bool CommandLineGetFlag(int argc,
-                        char **argv,
-                        string *key,
-                        string *value,
+bool CommandLineGetFlag(int argc, char **argv, string *key, string *value,
                         int *used_args) {
   key->clear();
   value->clear();
@@ -276,12 +275,11 @@ bool CommandLineGetFlag(int argc,
 
 }  // namespace
 
-uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
+uint32 ParseCommandLineFlags(int *argc, char ***argv) {
   int used_argc = 0;
   string key, value;
   for (int i = 1; i < *argc; i += used_argc) {
-    if (!CommandLineGetFlag(*argc - i, *argv + i,
-                            &key, &value, &used_argc)) {
+    if (!CommandLineGetFlag(*argc - i, *argv + i, &key, &value, &used_argc)) {
       // TODO(komatsu): Do error handling
       continue;
     }
@@ -302,7 +300,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv, bool remove_flags) {
       continue;
     }
 #endif  // DEBUG
-#ifdef OS_MACOSX
+#ifdef __APPLE__
     // Mac OSX specifies process serial number like -psn_0_217141.
     // Let's ignore it.
     if (StartsWith(key, "psn_")) {

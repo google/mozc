@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -86,8 +86,8 @@ class WinUtil {
   // names.
   // Although this function ignores the rest part of given string when NUL
   // character is found, you should not pass such a string in principle.
-  static bool SystemEqualString(
-      const std::wstring &lhs, const std::wstring &rhs, bool ignore_case);
+  static bool SystemEqualString(const std::wstring &lhs,
+                                const std::wstring &rhs, bool ignore_case);
 
   // Returns true if succeeds to determine whether the current process has
   // a process token which seems to be one for service process.  Otherwise,
@@ -158,10 +158,8 @@ class WinUtil {
   // which is expected to be more appropriate than tha directory where the
   // executable exist, because installer can rename the executable to another
   // directory and delete the application directory.
-  static bool ShellExecuteInSystemDir(
-      const wchar_t *verb,
-      const wchar_t *file,
-      const wchar_t *parameters);
+  static bool ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
+                                      const wchar_t *parameters);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(WinUtil);
@@ -176,9 +174,7 @@ class ScopedCOMInitializer {
 
   // Returns the error code from CoInitialize(NULL)
   // (called in constructor)
-  inline HRESULT error_code() const {
-    return hr_;
-  }
+  inline HRESULT error_code() const { return hr_; }
 
  protected:
   HRESULT hr_;

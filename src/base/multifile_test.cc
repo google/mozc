@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,27 +29,23 @@
 
 #include "base/multifile.h"
 
-
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
-
 
 TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
   // Empty string
   {
     InputMultiFile multfile("");
-    string line;
+    std::string line;
     EXPECT_FALSE(multfile.ReadLine(&line));
     EXPECT_FALSE(multfile.ReadLine(&line));
     EXPECT_FALSE(multfile.ReadLine(&line));
@@ -57,10 +53,10 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
 
   // Signle path
   {
-    const string path = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                           "this_file_does_not_exist");
+    const std::string path =
+        FileUtil::JoinPath(FLAGS_test_tmpdir, "this_file_does_not_exist");
     InputMultiFile multfile(path);
-    string line;
+    std::string line;
     EXPECT_FALSE(multfile.ReadLine(&line));
     EXPECT_FALSE(multfile.ReadLine(&line));
     EXPECT_FALSE(multfile.ReadLine(&line));
@@ -68,33 +64,33 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
 
   // Multiple paths
   {
-    std::vector<string> filenames;
+    std::vector<std::string> filenames;
     filenames.push_back(FileUtil::JoinPath(FLAGS_test_tmpdir, "these_files"));
     filenames.push_back(FileUtil::JoinPath(FLAGS_test_tmpdir, "do_not"));
     filenames.push_back(FileUtil::JoinPath(FLAGS_test_tmpdir, "exists"));
 
-    string joined_path;
+    std::string joined_path;
     Util::JoinStrings(filenames, ",", &joined_path);
     InputMultiFile multfile(joined_path);
-    string line;
+    std::string line;
     EXPECT_FALSE(multfile.ReadLine(&line));
     EXPECT_FALSE(multfile.ReadLine(&line));
     EXPECT_FALSE(multfile.ReadLine(&line));
   }
 }
 
-
 TEST(InputMultiFileTest, ReadSingleFileTest) {
   EXPECT_TRUE(FileUtil::DirectoryExists(FLAGS_test_tmpdir));
-  const string path = FileUtil::JoinPath(FLAGS_test_tmpdir, "i_am_a_test_file");
+  const std::string path =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "i_am_a_test_file");
 
   // Create a test file
-  std::vector<string> expected_lines;
+  std::vector<std::string> expected_lines;
   const int kNumLines = 10;
   {
     OutputFileStream ofs(path.c_str());
     for (int i = 0; i < kNumLines; ++i) {
-      string line = Util::StringPrintf("Hi, line %d", i);
+      std::string line = Util::StringPrintf("Hi, line %d", i);
       expected_lines.push_back(line);
       ofs << line << std::endl;
     }
@@ -103,7 +99,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
 
   // Read lines
   InputMultiFile multfile(path);
-  string line;
+  std::string line;
   for (int i = 0; i < kNumLines; ++i) {
     EXPECT_TRUE(multfile.ReadLine(&line));
     EXPECT_EQ(expected_lines[i], line);
@@ -113,7 +109,6 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
   EXPECT_FALSE(multfile.ReadLine(&line));
 }
 
-
 TEST(InputMultiFileTest, ReadMultipleFilesTest) {
   EXPECT_TRUE(FileUtil::DirectoryExists(FLAGS_test_tmpdir));
 
@@ -121,18 +116,18 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
   const int kNumLinesPerFile = 10;
 
   // Create test files
-  std::vector<string> paths;
-  std::vector<string> expected_lines;
+  std::vector<std::string> paths;
+  std::vector<std::string> expected_lines;
   {
     int serial_line_no = 0;
     for (int fileno = 0; fileno < kNumFile; ++fileno) {
-      string filename = Util::StringPrintf("testfile%d", fileno);
-      string path = FileUtil::JoinPath(FLAGS_test_tmpdir, filename);
+      std::string filename = Util::StringPrintf("testfile%d", fileno);
+      std::string path = FileUtil::JoinPath(FLAGS_test_tmpdir, filename);
       paths.push_back(path);
 
       OutputFileStream ofs(path.c_str());
       for (int i = 0; i < kNumLinesPerFile; ++i) {
-        string line = Util::StringPrintf("Hi, line %d", ++serial_line_no);
+        std::string line = Util::StringPrintf("Hi, line %d", ++serial_line_no);
         expected_lines.push_back(line);
         ofs << line << std::endl;
       }
@@ -141,10 +136,10 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
   EXPECT_EQ(kNumLinesPerFile * kNumFile, expected_lines.size());
 
   // Read lines
-  string joined_path;
+  std::string joined_path;
   Util::JoinStrings(paths, ",", &joined_path);
   InputMultiFile multfile(joined_path);
-  string line;
+  std::string line;
   for (int i = 0; i < kNumFile * kNumLinesPerFile; ++i) {
     EXPECT_TRUE(multfile.ReadLine(&line));
     EXPECT_EQ(expected_lines[i], line);

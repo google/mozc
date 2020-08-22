@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 using mozc::dictionary::POSMatcher;
 
@@ -44,7 +45,7 @@ namespace number_compound_util {
 
 TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
   std::unique_ptr<uint32[]> buf;
-  const StringPiece data = SerializedStringArray::SerializeToBuffer(
+  const absl::string_view data = SerializedStringArray::SerializeToBuffer(
       {
           "デシベル",
           "回",
@@ -102,11 +103,10 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
       },
   };
   for (size_t i = 0; i < arraysize(kSplittableCases); ++i) {
-    StringPiece actual_number, actual_suffix;
+    absl::string_view actual_number, actual_suffix;
     uint32 actual_script_type = 0;
     EXPECT_TRUE(SplitStringIntoNumberAndCounterSuffix(
-        suffix_array,
-        kSplittableCases[i].input, &actual_number, &actual_suffix,
+        suffix_array, kSplittableCases[i].input, &actual_number, &actual_suffix,
         &actual_script_type));
     EXPECT_EQ(kSplittableCases[i].expected_number, actual_number);
     EXPECT_EQ(kSplittableCases[i].expected_suffix, actual_suffix);
@@ -121,18 +121,17 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
       "八億九千万600七十４デシベル",
   };
   for (size_t i = 0; i < arraysize(kUnsplittableCases); ++i) {
-    StringPiece actual_number, actual_suffix;
+    absl::string_view actual_number, actual_suffix;
     uint32 actual_script_type = 0;
     EXPECT_FALSE(SplitStringIntoNumberAndCounterSuffix(
-        suffix_array,
-        kUnsplittableCases[i], &actual_number, &actual_suffix,
+        suffix_array, kUnsplittableCases[i], &actual_number, &actual_suffix,
         &actual_script_type));
   }
 }
 
 TEST(NumberCompoundUtilTest, IsNumber) {
   std::unique_ptr<uint32[]> buf;
-  const StringPiece data = SerializedStringArray::SerializeToBuffer(
+  const absl::string_view data = SerializedStringArray::SerializeToBuffer(
       {
           "回",
           "階",

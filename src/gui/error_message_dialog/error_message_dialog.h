@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ class ErrorMessageDialog {
 // user will push space or enter key before reading
 // the message of dialog.
 class DeleyedMessageDialogHandler : public QObject {
- Q_OBJECT
+  Q_OBJECT
 
  public:
   DeleyedMessageDialogHandler(QMessageBox *message_box);
@@ -62,6 +62,6 @@ class DeleyedMessageDialogHandler : public QObject {
  private:
   QMessageBox *message_box_;
 };
-}  // namespace mozc::gui
+}  // namespace gui
 }  // namespace mozc
 #endif  // MOZC_GUI_ERROR_MESSAGE_DIALOG_H_

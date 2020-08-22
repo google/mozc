@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -153,7 +153,7 @@ TEST(ImeSwitchUtilTest, CustomTest) {
   Config config;
   ConfigHandler::GetDefaultConfig(&config);
 
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "DirectInput\tHenkan\tIMEOn\n"
       "DirectInput\tCtrl j\tIMEOn\n"

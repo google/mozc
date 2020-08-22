@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,17 +34,13 @@
 
 namespace mozc {
 
-ScopedHandle::ScopedHandle()
-    : handle_(NULL) {}
+ScopedHandle::ScopedHandle() : handle_(NULL) {}
 
-ScopedHandle::ScopedHandle(Win32Handle handle)
-    : handle_(NULL) {
+ScopedHandle::ScopedHandle(Win32Handle handle) : handle_(NULL) {
   reset(handle);
 }
 
-ScopedHandle::~ScopedHandle() {
-  Close();
-}
+ScopedHandle::~ScopedHandle() { Close(); }
 
 void ScopedHandle::reset(Win32Handle handle) {
   Close();
@@ -68,9 +64,7 @@ void ScopedHandle::reset(Win32Handle handle) {
   }
 }
 
-ScopedHandle::Win32Handle ScopedHandle::get() const {
-  return handle_;
-}
+ScopedHandle::Win32Handle ScopedHandle::get() const { return handle_; }
 
 // transfers ownership away from this object
 ScopedHandle::Win32Handle ScopedHandle::take() {

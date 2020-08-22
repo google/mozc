@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,15 +42,13 @@ bool InputContext::Initialize() {
 
   // Initialize conversion mode.
   if (!(fdwInit & INIT_CONVERSION)) {
-    DLOG(WARNING) << __FUNCTION__
-                  << L"Conversion mode not initialized.";
+    DLOG(WARNING) << __FUNCTION__ << L"Conversion mode not initialized.";
     fdwConversion = IME_CMODE_NATIVE;
     fdwInit |= INIT_CONVERSION;
   }
 
   if ((fdwInit & INIT_SENTENCE) != INIT_SENTENCE) {
-    DLOG(WARNING) << __FUNCTION__
-                  << L"Sentence mode not initialized.";
+    DLOG(WARNING) << __FUNCTION__ << L"Sentence mode not initialized.";
     // Use IME_SMODE_PHRASEPREDICT as a default.
     // See b/2913510, b/2954777, and b/2955175 for details.
     fdwSentence = IME_SMODE_PHRASEPREDICT;

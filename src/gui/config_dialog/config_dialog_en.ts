@@ -150,16 +150,6 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1225"/>
-        <source>Enable Cloud handwriting recognition</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="config_dialog.ui" line="1241"/>
-        <source>Cloud handwriting recognition</source>
-        <translation></translation>
-    </message>
-    <message>
         <location filename="config_dialog.ui" line="1263"/>
         <source>Misc</source>
         <translation></translation>

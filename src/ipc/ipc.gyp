@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@
       'target_name': 'ipc',
       'type': 'static_library',
       'sources': [
-        'android_ipc.cc',
         'ipc.cc',
         'ipc_mock.cc',
         'ipc_path_manager.cc',
@@ -51,12 +50,6 @@
         'ipc_protocol',
       ],
       'conditions': [
-        ['target_platform=="Android"', {
-          'sources!': [
-            'ipc_path_manager.cc',
-            'process_watch_dog.cc',
-          ],
-        }],
         ['target_platform=="Windows"', {
           'dependencies': [
             '../base/base.gyp:obfuscator_support',
@@ -151,12 +144,6 @@
       'type': 'none',
       'dependencies': [
         'ipc_test',
-      ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          # Android tests nothing.
-          'dependencies=': []
-        }],
       ],
     },
   ],

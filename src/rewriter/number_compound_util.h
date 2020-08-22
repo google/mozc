@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,12 +36,14 @@
 
 #include "base/port.h"
 #include "base/serialized_string_array.h"
-#include "base/string_piece.h"
 #include "converter/segments.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
-namespace dictionary { class POSMatcher; }
+namespace dictionary {
+class POSMatcher;
+}
 
 namespace number_compound_util {
 
@@ -60,8 +62,8 @@ enum NumberScriptType {
 // data_manager/data_manager_interface.h.  Returns false if the input cannot be
 // splitted.
 bool SplitStringIntoNumberAndCounterSuffix(
-    const SerializedStringArray &suffix_array,
-    StringPiece input, StringPiece *number, StringPiece *counter_suffix,
+    const SerializedStringArray &suffix_array, absl::string_view input,
+    absl::string_view *number, absl::string_view *counter_suffix,
     uint32 *script_type);
 
 // Checks if the given candidate is number, where candidate is considered as a

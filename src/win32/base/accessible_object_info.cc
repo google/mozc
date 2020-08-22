@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,7 @@
 namespace mozc {
 namespace win32 {
 
-AccessibleObjectInfo::AccessibleObjectInfo()
-    : is_builtin_role(false) {
-}
+AccessibleObjectInfo::AccessibleObjectInfo() : is_builtin_role(false) {}
 
 }  // namespace win32
 }  // namespace mozc

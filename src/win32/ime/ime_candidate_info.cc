@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #include "win32/ime/ime_candidate_info.h"
 
 #include <safeint.h>
-#include <windows.h>  // windows.h must be included before strsafe.h
 #include <strsafe.h>
+#include <windows.h>  // windows.h must be included before strsafe.h
 
 #include <algorithm>
 
@@ -75,7 +75,7 @@ const DWORD kSizeOfCANDIDATELISTHeader =
 
 static_assert((static_cast<int64>(sizeof(CANDIDATEINFO)) +
                static_cast<int64>(sizeof(CANDIDATELIST))) < kint32max,
-               "Check CANDIDATEINFO + CANDIDATELIST size.");
+              "Check CANDIDATEINFO + CANDIDATELIST size.");
 const DWORD kSizeOfCANDIDATEINFOAndCANDIDATELIST =
     static_cast<DWORD>(sizeof(CANDIDATEINFO) + sizeof(CANDIDATELIST));
 
@@ -87,8 +87,8 @@ const DWORD kSizeOfCANDIDATEINFOAndCANDIDATELIST =
 // regardless of the actual number of candidates.  So we use the same strategy.
 const int kSafePageSize = 9;
 
-bool GetCandidateCountInternal(
-    const CANDIDATEINFO *info, DWORD buffer_size, DWORD *count) {
+bool GetCandidateCountInternal(const CANDIDATEINFO *info, DWORD buffer_size,
+                               DWORD *count) {
   DCHECK_NE(nullptr, info);
   DCHECK_NE(nullptr, count);
 
@@ -117,7 +117,7 @@ bool GetCandidateCountInternal(
 
   // Dereference the data.
   *count = *reinterpret_cast<const DWORD *>(
-    reinterpret_cast<const BYTE *>(info) + count_data_offset);
+      reinterpret_cast<const BYTE *>(info) + count_data_offset);
 
   return true;
 }
@@ -330,9 +330,8 @@ void CandidateInfoUtil::Write(const CandidateInfo &info,
     target->dwOffset[i] = 0;
   }
 
-  CANDIDATELIST *candidate_list =
-      reinterpret_cast<CANDIDATELIST *>(reinterpret_cast<BYTE *>(target) +
-                                        kSizeOfCANDIDATEINFO);
+  CANDIDATELIST *candidate_list = reinterpret_cast<CANDIDATELIST *>(
+      reinterpret_cast<BYTE *>(target) + kSizeOfCANDIDATEINFO);
 
   candidate_list->dwSize = info.candidate_list_size;
   candidate_list->dwStyle = IME_CAND_READ;
@@ -403,8 +402,8 @@ HIMCC CandidateInfoUtil::Update(HIMCC current_handle,
   return new_handle;
 }
 
-HIMCC CandidateInfoUtil::UpdateCandidateInfo(
-    HIMCC current_handle, const CandidateInfo &list) {
+HIMCC CandidateInfoUtil::UpdateCandidateInfo(HIMCC current_handle,
+                                             const CandidateInfo &list) {
   DCHECK_GE(list.candidate_info_size, kSizeOfCANDIDATEINFOAndCANDIDATELIST);
 
   HIMCC new_handle = nullptr;

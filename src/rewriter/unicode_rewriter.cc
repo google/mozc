@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ UnicodeRewriter::~UnicodeRewriter() {}
 namespace {
 
 // Checks given string is ucs4 expression or not.
-bool IsValidUCS4Expression(const string &input) {
+bool IsValidUCS4Expression(const std::string &input) {
   if (input.size() < 3 || input.size() > 8) {
     return false;
   }
@@ -61,7 +61,7 @@ bool IsValidUCS4Expression(const string &input) {
     return false;
   }
 
-  const string hexcode(input, 2, input.npos);
+  const std::string hexcode(input, 2, input.npos);
 
   for (size_t i = 0; i < hexcode.size(); ++i) {
     if (!::isxdigit(hexcode.at(i))) {
@@ -72,9 +72,9 @@ bool IsValidUCS4Expression(const string &input) {
 }
 
 // Converts given string to 32bit unsigned integer.
-bool UCS4ExpressionToInteger(const string &input, uint32 *ucs4) {
+bool UCS4ExpressionToInteger(const std::string &input, uint32 *ucs4) {
   DCHECK(ucs4);
-  const string hexcode(input, 2, input.npos);
+  const std::string hexcode(input, 2, input.npos);
   return NumberUtil::SafeHexStrToUInt32(hexcode, ucs4);
 }
 
@@ -99,8 +99,8 @@ bool IsAcceptableUnicode(const uint32 ucs4) {
   return true;
 }
 
-void AddCandidate(
-    const string &key, const string &value, int index, Segment *segment) {
+void AddCandidate(const std::string &key, const std::string &value, int index,
+                  Segment *segment) {
   DCHECK(segment);
 
   if (index > segment->candidates_size()) {
@@ -125,8 +125,7 @@ void AddCandidate(
 // Unicode "U+xxxx" format is added. (ex. "A" -> "U+0041").  This is
 // triggered on reverse conversion only.
 bool UnicodeRewriter::RewriteToUnicodeCharFormat(
-    const ConversionRequest &request,
-    Segments *segments) const {
+    const ConversionRequest &request, Segments *segments) const {
   if (!request.has_composer()) {
     return false;
   }
@@ -136,20 +135,19 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
     return false;
   }
 
-  const string &source_text = request.composer().source_text();
+  const std::string &source_text = request.composer().source_text();
   const size_t source_text_size = Util::CharsLen(source_text);
   if (source_text_size != 1) {
     return false;
   }
 
-  const string &source_char = request.composer().source_text();
+  const std::string &source_char = request.composer().source_text();
   size_t mblen = 0;
-  const char32 ucs4 = Util::UTF8ToUCS4(source_char.data(),
-                                       source_char.data() + source_char.size(),
-                                       &mblen);
-  const string value = Util::StringPrintf("U+%04X", ucs4);
+  const char32 ucs4 = Util::UTF8ToUCS4(
+      source_char.data(), source_char.data() + source_char.size(), &mblen);
+  const std::string value = Util::StringPrintf("U+%04X", ucs4);
 
-  const string &key = segments->conversion_segment(0).key();
+  const std::string &key = segments->conversion_segment(0).key();
   Segment *segment = segments->mutable_conversion_segment(0);
   AddCandidate(key, value, 5, segment);
   return true;
@@ -158,9 +156,8 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
 // If the key is in the "U+xxxx" format, the corresponding Unicode
 // character is added. (ex. "U+0041" -> "A").
 bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
-    const ConversionRequest &request,
-    Segments *segments) const {
-  string key;
+    const ConversionRequest &request, Segments *segments) const {
+  std::string key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     key += segments->conversion_segment(i).key();
   }
@@ -178,7 +175,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     return false;
   }
 
-  string value;
+  std::string value;
   Util::UCS4ToUTF8(ucs4, &value);
   if (value.empty()) {
     return false;
@@ -190,7 +187,8 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
       return false;
     }
 
-    const uint32 resize_len = Util::CharsLen(key) -
+    const uint32 resize_len =
+        Util::CharsLen(key) -
         Util::CharsLen(segments->conversion_segment(0).key());
     if (!parent_converter_->ResizeSegment(segments, request, 0, resize_len)) {
       return false;

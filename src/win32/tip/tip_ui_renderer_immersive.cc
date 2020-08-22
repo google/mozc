@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,13 @@
 
 #include "win32/tip/tip_ui_renderer_immersive.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlmisc.h>
+// clang-format on
 
 #include <memory>
 
@@ -48,11 +50,11 @@ namespace tsf {
 
 namespace {
 
+using std::unique_ptr;
 using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
 using WTL::CRect;
-using std::unique_ptr;
 
 using ::mozc::commands::Candidates;
 using ::mozc::commands::Output;
@@ -77,10 +79,10 @@ const COLORREF kIndicatorColor = RGB(0xb8, 0xb8, 0xb8);
 
 // usage type for each column.
 enum COLUMN_TYPE {
-  COLUMN_GAP1,          // padding region
-  COLUMN_CANDIDATE,     // show candidate string
-  COLUMN_GAP2,          // padding region
-  NUMBER_OF_COLUMNS,    // number of columns. (this item should be last)
+  COLUMN_GAP1,        // padding region
+  COLUMN_CANDIDATE,   // show candidate string
+  COLUMN_GAP2,        // padding region
+  NUMBER_OF_COLUMNS,  // number of columns. (this item should be last)
 };
 
 CRect ToCRect(const Rect &rect) {
@@ -120,8 +122,7 @@ int GetFocusedArrayIndex(const Candidates &candidates) {
   return GetCandidateArrayIndexByCandidateIndex(candidates, focused_index);
 }
 
-void CalcLayout(const Candidates &candidates,
-                const TextRenderer &text_renderer,
+void CalcLayout(const Candidates &candidates, const TextRenderer &text_renderer,
                 TableLayout *table_layout,
                 std::vector<std::wstring> *candidate_strings) {
   table_layout->Initialize(candidates.candidate_size(), NUMBER_OF_COLUMNS);
@@ -171,8 +172,8 @@ void CalcLayout(const Candidates &candidates,
 
   // Put a padding in COLUMN_GAP2.
   const wchar_t *gap2_string = L" ";
-  const Size gap2_size = text_renderer.MeasureString(
-      TextRenderer::FONTSET_CANDIDATE, gap2_string);
+  const Size gap2_size =
+      text_renderer.MeasureString(TextRenderer::FONTSET_CANDIDATE, gap2_string);
   table_layout->EnsureCellSize(COLUMN_GAP2, gap2_size);
   table_layout->FreezeLayout();
 }
@@ -194,17 +195,15 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
   const CRect client_crect(0, 0, width, height);
 
   // Background
-  {
-    dc.FillSolidRect(&client_crect, kDefaultBackgroundColor);
-  }
+  { dc.FillSolidRect(&client_crect, kDefaultBackgroundColor); }
 
   // Focused rectangle
   {
     const int focused_array_index = GetFocusedArrayIndex(candidates);
     if (0 <= focused_array_index &&
         focused_array_index < candidates.candidate_size()) {
-      const commands::Candidates::Candidate &candidate
-          = candidates.candidate(focused_array_index);
+      const commands::Candidates::Candidate &candidate =
+          candidates.candidate(focused_array_index);
 
       const CRect selected_rect =
           ToCRect(table_layout.GetRowRect(focused_array_index));
@@ -215,14 +214,12 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
   // Candidate strings
   {
     const COLUMN_TYPE column_type = COLUMN_CANDIDATE;
-    const TextRenderer::FONT_TYPE font_type =
-        TextRenderer::FONTSET_CANDIDATE;
+    const TextRenderer::FONT_TYPE font_type = TextRenderer::FONTSET_CANDIDATE;
 
     std::vector<TextRenderingInfo> display_list;
     for (size_t i = 0; i < candidate_strings.size(); ++i) {
       const std::wstring &candidate_string = candidate_strings[i];
-      const Rect &text_rect =
-          table_layout.GetCellRect(i, column_type);
+      const Rect &text_rect = table_layout.GetCellRect(i, column_type);
       display_list.push_back(TextRenderingInfo(candidate_string, text_rect));
     }
     text_renderer.RenderTextList(dc.m_hDC, display_list, font_type);
@@ -242,9 +239,8 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
       const CRect background_crect = ToCRect(vscroll_rect);
       dc.FillSolidRect(&background_crect, kIndicatorBackgroundColor);
 
-      const Rect &indicator_rect =
-          table_layout.GetVScrollIndicatorRect(
-              begin_index, end_index, candidates_total);
+      const Rect &indicator_rect = table_layout.GetVScrollIndicatorRect(
+          begin_index, end_index, candidates_total);
 
       const CRect indicator_crect = ToCRect(indicator_rect);
       dc.FillSolidRect(&indicator_crect, kIndicatorColor);
@@ -257,8 +253,7 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
     dc.SetDCBrushColor(kFrameColor);
     CRect crect = client_crect;
     for (int i = 0; i < kWindowBorder; ++i) {
-      dc.FrameRect(&crect,
-                    static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+      dc.FrameRect(&crect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
       crect.DeflateRect(1, 1, 1, 1);
     }
   }
@@ -272,8 +267,7 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
 HBITMAP TipUiRendererImmersive::Render(
     const Candidates &candidates,
     const renderer::win32::TextRenderer *text_renderer,
-    renderer::TableLayout *table_layout,
-    SIZE *size, int *left_align_offset) {
+    renderer::TableLayout *table_layout, SIZE *size, int *left_align_offset) {
   std::vector<std::wstring> candidate_strings;
   CalcLayout(candidates, *text_renderer, table_layout, &candidate_strings);
 
@@ -285,8 +279,8 @@ HBITMAP TipUiRendererImmersive::Render(
   if (left_align_offset != nullptr) {
     *left_align_offset = table_layout->GetColumnRect(COLUMN_CANDIDATE).Left();
   }
-  return RenderImpl(
-      candidates, *table_layout, *text_renderer, candidate_strings);
+  return RenderImpl(candidates, *table_layout, *text_renderer,
+                    candidate_strings);
 }
 
 }  // namespace tsf

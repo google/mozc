@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,9 +59,8 @@ DEFINE_int32(key_duration, 10, "key duration (msec)");
 DEFINE_bool(test_renderer, false, "test renderer");
 DEFINE_bool(test_testsendkey, true, "test TestSendKey");
 
-
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::SetFlag(&FLAGS_logtostderr, true);
 
@@ -78,12 +77,12 @@ int main(int argc, char **argv) {
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
-#if defined(OS_WIN) || defined(OS_MACOSX)
+#if defined(OS_WIN) || defined(__APPLE__)
 #ifdef OS_WIN
-    renderer_command.mutable_application_info()->set_process_id
-        (::GetCurrentProcessId());
-    renderer_command.mutable_application_info()->set_thread_id
-        (::GetCurrentThreadId());
+    renderer_command.mutable_application_info()->set_process_id(
+        ::GetCurrentProcessId());
+    renderer_command.mutable_application_info()->set_thread_id(
+        ::GetCurrentThreadId());
 #endif  // OS_WIN
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
@@ -91,7 +90,7 @@ int main(int argc, char **argv) {
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
 #else
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
-#endif  // OS_WIN || OS_MACOSX
+#endif  // OS_WIN || __APPLE__
     renderer_client.reset(new mozc::renderer::RendererClient);
     CHECK(renderer_client->Activate());
   }

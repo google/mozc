@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -80,8 +80,7 @@ string AndroidUtil::GetSystemProperty(const string &key,
 }
 
 // static
-bool AndroidUtil::GetPropertyFromFile(const string &key,
-                                      string *output) {
+bool AndroidUtil::GetPropertyFromFile(const string &key, string *output) {
   std::ifstream ifs(kBuildPropPath);
   if (!ifs) {
     return false;
@@ -110,8 +109,7 @@ bool AndroidUtil::GetPropertyFromFile(const string &key,
 // android_util_test.cc has some samples.
 //
 // static
-bool AndroidUtil::ParseLine(
-    const string &line, string *lhs, string *rhs) {
+bool AndroidUtil::ParseLine(const string &line, string *lhs, string *rhs) {
   DCHECK(lhs);
   DCHECK(rhs);
   string tmp_line = line;
@@ -131,17 +129,5 @@ bool AndroidUtil::ParseLine(
   *lhs = tmp_line.substr(0, delimiter_pos);
   *rhs = tmp_line.substr(delimiter_pos + 1);
   return !lhs->empty();
-}
-
-// static
-JNIEnv *AndroidUtil::GetEnv(JavaVM *vm) {
-  JNIEnv *env;
-  jint result = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
-  if (result == JNI_OK) {
-    return env;
-  }
-  LOG(ERROR) << "Critical error: VM env is not available.";
-  // We cannot throw an exception because there is no env.
-  return NULL;
 }
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,17 +49,15 @@ bool ConfirmationDialog::Show() {
       // Message
       QObject::tr("Invalid confirmation dialog.  "
                   "You specified less arguments."),
-      QMessageBox::Yes | QMessageBox::No,
-      NULL,
+      QMessageBox::Yes | QMessageBox::No, NULL,
       Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
 
-
   if (FLAGS_confirmation_type == "update") {
-    message_box.setText(QObject::tr(
-        "Mozc has been updated.  "
-        "Would you like to activate the new version now?  "
-        "(Note: some features will not be available "
-        "until you log out and log back in.)"));
+    message_box.setText(
+        QObject::tr("Mozc has been updated.  "
+                    "Would you like to activate the new version now?  "
+                    "(Note: some features will not be available "
+                    "until you log out and log back in.)"));
     QAbstractButton *yes_button = message_box.button(QMessageBox::Yes);
     if (yes_button != NULL) {
       yes_button->setText(QObject::tr("Activate now"));
@@ -69,9 +67,9 @@ bool ConfirmationDialog::Show() {
       no_button->setText(QObject::tr("Wait until logout"));
     }
   } else if (FLAGS_confirmation_type == "log_out") {
-    message_box.setText(QObject::tr(
-        "Mozc has been updated.  "
-        "Please log out and back in to enable the new version."));
+    message_box.setText(
+        QObject::tr("Mozc has been updated.  "
+                    "Please log out and back in to enable the new version."));
     QAbstractButton *yes_button = message_box.button(QMessageBox::Yes);
     if (yes_button != NULL) {
       yes_button->setText(QObject::tr("Log out"));

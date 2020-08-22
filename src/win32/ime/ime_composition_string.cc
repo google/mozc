@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,9 +47,8 @@ namespace {
 const DWORD kPreeditUpdateFlags =
     (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
      GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART);
-const DWORD kResultUpdateFlags =
-    (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE | GCS_RESULTSTR |
-     GCS_RESULTCLAUSE);
+const DWORD kResultUpdateFlags = (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE |
+                                  GCS_RESULTSTR | GCS_RESULTCLAUSE);
 const DWORD kPreeditAndResultUpdateFlags =
     (kPreeditUpdateFlags | kResultUpdateFlags);
 }  // namespace
@@ -81,8 +80,8 @@ bool CompositionString::Initialize() {
   return true;
 }
 
-bool CompositionString::Update(
-    const mozc::commands::Output &output, std::vector<UIMessage> *messages) {
+bool CompositionString::Update(const mozc::commands::Output &output,
+                               std::vector<UIMessage> *messages) {
   CompositionString prev_composition;
   ::CopyMemory(&prev_composition, this, sizeof(CompositionString));
 
@@ -94,8 +93,7 @@ bool CompositionString::Update(
   }
 
   const bool is_oneshot_composition =
-      (prev_composition.info.dwCompStrLen == 0) &&
-      (info.dwCompStrLen == 0) &&
+      (prev_composition.info.dwCompStrLen == 0) && (info.dwCompStrLen == 0) &&
       (info.dwResultReadStrLen > 0);
 
   const bool prev_has_composition = (prev_composition.info.dwCompStrLen > 0);
@@ -138,9 +136,7 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
 
   std::wstring result_string;
   mozc::Util::UTF8ToWide(output.result().value(), &result_string);
-  result = ::StringCchCopyN(result_,
-                            arraysize(result_),
-                            result_string.c_str(),
+  result = ::StringCchCopyN(result_, arraysize(result_), result_string.c_str(),
                             arraysize(result_));
   if (FAILED(result)) {
     return false;
@@ -152,8 +148,8 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
   // TODO(yukawa): Set clause after b/3135804 is implemented.
   static_assert(arraysize(result_reading_clause_) >= 2,
                 "|result_reading_clause_| must has at least 2 elements.");
-  info.dwResultClauseLen = sizeof(result_clause_[0]) +
-                           sizeof(result_clause_[1]);
+  info.dwResultClauseLen =
+      sizeof(result_clause_[0]) + sizeof(result_clause_[1]);
   result_clause_[0] = 0;
   result_clause_[1] = info.dwResultStrLen;
 
@@ -162,10 +158,9 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
     // other major IMEs.  See b/1793283 for details.
     const std::wstring &reading_string =
         StringUtil::KeyToReading(output.result().key());
-    result = ::StringCchCopyN(result_reading_,
-                              arraysize(result_reading_),
-                              reading_string.c_str(),
-                              arraysize(result_reading_));
+    result =
+        ::StringCchCopyN(result_reading_, arraysize(result_reading_),
+                         reading_string.c_str(), arraysize(result_reading_));
     if (FAILED(result)) {
       return false;
     }
@@ -178,8 +173,8 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
     // TODO(yukawa): Set clause after b/3135804 is implemented.
     static_assert(arraysize(result_reading_clause_) >= 2,
                   "|result_reading_clause_| must has at least 2 elements.");
-    info.dwResultReadClauseLen = sizeof(result_reading_clause_[0]) +
-                                 sizeof(result_reading_clause_[1]);
+    info.dwResultReadClauseLen =
+        sizeof(result_reading_clause_[0]) + sizeof(result_reading_clause_[1]);
     result_reading_clause_[0] = 0;
     result_reading_clause_[1] = info.dwResultReadStrLen;
   }
@@ -214,8 +209,8 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
       (preedit.has_highlighted_position() ? ATTR_CONVERTED : ATTR_INPUT);
 
   string preedit_utf8;
-  for (size_t segment_index = 0;
-       segment_index < preedit.segment_size(); ++segment_index) {
+  for (size_t segment_index = 0; segment_index < preedit.segment_size();
+       ++segment_index) {
     const mozc::commands::Preedit::Segment &segment =
         preedit.segment(segment_index);
     if (segment.has_key()) {
@@ -267,7 +262,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
     // surrogate pair appears, use Util::WideCharsLen to calculate the
     // cursor position as wide character index. See b/4163234 for details.
     info.dwCursorPos = Util::WideCharsLen(
-        Util::SubString(preedit_utf8, 0, preedit.cursor()));
+        Util::Utf8SubString(preedit_utf8, 0, preedit.cursor()));
   }
 
   if (preedit.has_highlighted_position()) {
@@ -278,7 +273,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
     // the highlighted position as wide character index.
     // See b/4163234 for details.
     const size_t highlighted_position_as_wchar_index = Util::WideCharsLen(
-        Util::SubString(preedit_utf8, 0, preedit.highlighted_position()));
+        Util::Utf8SubString(preedit_utf8, 0, preedit.highlighted_position()));
 
     focused_character_index_ = highlighted_position_as_wchar_index;
 
@@ -315,19 +310,17 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
   }
 
   HRESULT result = S_OK;
-  result = ::StringCchCopyN(composition_,
-                            arraysize(composition_),
-                            composition_string.c_str(),
-                            arraysize(composition_));
+  result =
+      ::StringCchCopyN(composition_, arraysize(composition_),
+                       composition_string.c_str(), arraysize(composition_));
   if (FAILED(result)) {
     return false;
   }
   info.dwCompStrLen = composition_string.size();
 
-  result = ::StringCchCopyN(composition_reading_,
-                            arraysize(composition_reading_),
-                            reading_string.c_str(),
-                            arraysize(composition_reading_));
+  result =
+      ::StringCchCopyN(composition_reading_, arraysize(composition_reading_),
+                       reading_string.c_str(), arraysize(composition_reading_));
   if (FAILED(result)) {
     return false;
   }

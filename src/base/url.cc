@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,19 +49,17 @@ const char kSurveyHtmlLanguage[] = "jp";
 const char kSurveyFormatEntry[] = "format";
 const char kSurveyFormat[] = "inproduct";
 
-
 class URLImpl {
  public:
-  URLImpl() {
-    InitUninstallationSurveyURL();
-  }
+  URLImpl() { InitUninstallationSurveyURL(); }
 
-  bool GetUninstallationSurveyURL(const string &version, string *url) const {
+  bool GetUninstallationSurveyURL(const std::string &version,
+                                  std::string *url) const {
     DCHECK(url);
     *url = uninstallation_survey_url_;
     if (!version.empty()) {
       *url += "&";
-      std::vector<std::pair<string, string> > params;
+      std::vector<std::pair<std::string, std::string> > params;
       params.push_back(std::make_pair(kSurveyVersionEntry, version));
       Util::AppendCGIParams(params, url);
     }
@@ -73,7 +71,7 @@ class URLImpl {
     uninstallation_survey_url_.clear();
     uninstallation_survey_url_ = kSurveyBaseURL;
     uninstallation_survey_url_ += "?";
-    std::vector<std::pair<string, string> > params;
+    std::vector<std::pair<std::string, std::string> > params;
     params.push_back(
         std::make_pair(kSurveyContactTypeEntry, kSurveyContactType));
     params.push_back(
@@ -82,11 +80,12 @@ class URLImpl {
     Util::AppendCGIParams(params, &uninstallation_survey_url_);
   }
 
-  string uninstallation_survey_url_;
+  std::string uninstallation_survey_url_;
 };
 }  // namespace
 
-bool URL::GetUninstallationSurveyURL(const string &version, string *url) {
+bool URL::GetUninstallationSurveyURL(const std::string &version,
+                                     std::string *url) {
   return Singleton<URLImpl>::get()->GetUninstallationSurveyURL(version, url);
 }
 

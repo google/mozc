@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,24 +51,10 @@ namespace mozc {
 namespace session {
 
 namespace {
-bool GetEnumValueName(const Message &message, const string &enum_name,
-                      string *output) {
-  const FieldDescriptor *field =
-      message.GetDescriptor()->FindFieldByName(enum_name);
-  if (field == NULL || field->cpp_type() != FieldDescriptor::CPPTYPE_ENUM) {
-    LOG(DFATAL) << "Invalid enum field name: " << enum_name;
-    return false;
-  }
-  const EnumValueDescriptor *enum_value =
-      message.GetReflection()->GetEnum(message, field);
-  *output = enum_value->name();
-  return true;
-}
-
 // Splits a text by delimitor, capitalizes each piece and joins them.
 // ex. "AbCd_efgH" => "AbcdEfgh" (delimitor = "_")
-void CamelCaseString(string *str, const char *delm) {
-  std::vector<string> pieces;
+void CamelCaseString(std::string *str, const char *delm) {
+  std::vector<std::string> pieces;
   Util::SplitStringUsing(*str, delm, &pieces);
   for (size_t i = 0; i < pieces.size(); ++i) {
     Util::CapitalizeString(&pieces[i]);
@@ -94,11 +80,8 @@ void SessionUsageStatsUtil::AddSendKeyInputStats(const Input &input) {
     UsageStats::IncrementCount("ASCIITyping");
   } else if (input.key().has_special_key()) {
     UsageStats::IncrementCount("NonASCIITyping");
-    const char kEnumTypeName[] = "special_key";
-    string name;
-    if (GetEnumValueName(input.key(), kEnumTypeName, &name)) {
-      UsageStats::IncrementCount(name);
-    }
+    UsageStats::IncrementCount(
+        commands::KeyEvent::SpecialKey_Name(input.key().special_key()));
   }
 }
 
@@ -113,19 +96,17 @@ void SessionUsageStatsUtil::AddSendKeyOutputStats(const Output &output) {
 void SessionUsageStatsUtil::AddSendCommandInputStats(const Input &input) {
   CHECK(input.has_command() && input.type() == commands::Input::SEND_COMMAND);
 
-  const char kEnumTypeName[] = "type";
-  string name;
-  if (GetEnumValueName(input.command(), kEnumTypeName, &name)) {
-    CamelCaseString(&name, "_");
-    UsageStats::IncrementCount("SendCommand_" + name);
+  std::string name =
+      commands::SessionCommand::CommandType_Name(input.command().type());
+  CamelCaseString(&name, "_");
+  UsageStats::IncrementCount("SendCommand_" + name);
 
-    if (input.command().type() == commands::SessionCommand::REVERT) {
-      if (HasExperimentalFeature(input.context(), "chrome_omnibox")) {
-        UsageStats::IncrementCount("SendCommand_RevertInChromeOmnibox");
-      }
-      if (HasExperimentalFeature(input.context(), "google_search_box")) {
-        UsageStats::IncrementCount("SendCommand_RevertInGoogleSearchBox");
-      }
+  if (input.command().type() == commands::SessionCommand::REVERT) {
+    if (HasExperimentalFeature(input.context(), "chrome_omnibox")) {
+      UsageStats::IncrementCount("SendCommand_RevertInChromeOmnibox");
+    }
+    if (HasExperimentalFeature(input.context(), "google_search_box")) {
+      UsageStats::IncrementCount("SendCommand_RevertInGoogleSearchBox");
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,13 +62,12 @@ class JsonPath {
   //   const Json::Value *value = output[i];
   //   if (value->isObjet() || value->isArray()) {
   //     // output in Json format again.
-  //     cout << value->toStyledString();
+  //     std::cout << value->toStyledString();
   //   } else {
-  //     cout << value->asString();
+  //     std::cout << value->asString();
   //   }
   // }
-  static bool Parse(const Json::Value &root,
-                    const string &jsonpath,
+  static bool Parse(const Json::Value &root, const std::string &jsonpath,
                     std::vector<const Json::Value *> *output);
 
  private:

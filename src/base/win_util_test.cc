@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,15 +48,14 @@ bool LooksLikeNtPath(const std::wstring &nt_path) {
 
 class WinUtilLoaderLockTest : public testing::Test {
  protected:
-  WinUtilLoaderLockTest()
-      : module_(nullptr) {}
+  WinUtilLoaderLockTest() : module_(nullptr) {}
 
   virtual void SetUp() {
     // Dynamically load the DLL to test the loader lock detection.
     // This dll checks the loader lock in the DllMain and
     // returns the result via IsLockHeld exported function.
     if (module_ == nullptr) {
-      module_= ::LoadLibraryW(L"win_util_test_dll.dll");
+      module_ = ::LoadLibraryW(L"win_util_test_dll.dll");
     }
   }
 
@@ -73,15 +72,15 @@ class WinUtilLoaderLockTest : public testing::Test {
 TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   ASSERT_NE(nullptr, module_);
 
-  typedef int (__stdcall *CheckProc)();
+  typedef int(__stdcall * CheckProc)();
 
   CheckProc is_lock_check_succeeded = reinterpret_cast<CheckProc>(
-    ::GetProcAddress(module_, "IsLockCheckSucceeded"));
+      ::GetProcAddress(module_, "IsLockCheckSucceeded"));
   EXPECT_NE(nullptr, is_lock_check_succeeded);
   EXPECT_NE(FALSE, is_lock_check_succeeded());
 
-  CheckProc is_lock_held = reinterpret_cast<CheckProc>(
-    ::GetProcAddress(module_, "IsLockHeld"));
+  CheckProc is_lock_held =
+      reinterpret_cast<CheckProc>(::GetProcAddress(module_, "IsLockHeld"));
   EXPECT_NE(nullptr, is_lock_held);
   // The loader lock should be held in the DllMain.
   EXPECT_NE(FALSE, is_lock_held());
@@ -89,7 +88,7 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   // Clear flags and check again from the caller which does not
   // own the loader lock. The loader lock should not be detected.
   CheckProc clear_flags_and_check_again = reinterpret_cast<CheckProc>(
-    ::GetProcAddress(module_, "ClearFlagsAndCheckAgain"));
+      ::GetProcAddress(module_, "ClearFlagsAndCheckAgain"));
   EXPECT_NE(nullptr, clear_flags_and_check_again);
   clear_flags_and_check_again();
   EXPECT_NE(FALSE, is_lock_check_succeeded());
@@ -98,56 +97,52 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
 
 TEST(WinUtilTest, WindowHandleTest) {
   // Should round-trip as long as the handle value is in uint32 range.
-  const HWND k32bitSource = reinterpret_cast<HWND>(
-      static_cast<uintptr_t>(0x1234));
+  const HWND k32bitSource =
+      reinterpret_cast<HWND>(static_cast<uintptr_t>(0x1234));
   EXPECT_EQ(k32bitSource, WinUtil::DecodeWindowHandle(
-      WinUtil::EncodeWindowHandle(k32bitSource)));
+                              WinUtil::EncodeWindowHandle(k32bitSource)));
 
 #if defined(_M_X64)
   // OK to drop higher 32-bit.
-  const HWND k64bitSource = reinterpret_cast<HWND>(
-      static_cast<uintptr_t>(0xf0f1f2f3e4e5e6e7ULL));
-  const HWND k64bitExpected = reinterpret_cast<HWND>(
-      static_cast<uintptr_t>(0x00000000e4e5e6e7ULL));
+  const HWND k64bitSource =
+      reinterpret_cast<HWND>(static_cast<uintptr_t>(0xf0f1f2f3e4e5e6e7ULL));
+  const HWND k64bitExpected =
+      reinterpret_cast<HWND>(static_cast<uintptr_t>(0x00000000e4e5e6e7ULL));
   EXPECT_EQ(k64bitExpected, WinUtil::DecodeWindowHandle(
-      WinUtil::EncodeWindowHandle(k64bitSource)));
+                                WinUtil::EncodeWindowHandle(k64bitSource)));
 #endif  // _M_X64
 }
 
 TEST(WinUtilTest, SystemEqualStringTest) {
-  EXPECT_TRUE(WinUtil::SystemEqualString(
-      L"abc",
-      L"AbC",
-      true));
+  EXPECT_TRUE(WinUtil::SystemEqualString(L"abc", L"AbC", true));
 
   // case-sensitive
-  EXPECT_FALSE(WinUtil::SystemEqualString(
-      L"abc",
-      L"AbC",
-      false));
+  EXPECT_FALSE(WinUtil::SystemEqualString(L"abc", L"AbC", false));
 
   // Test case in http://b/2977223
-  EXPECT_FALSE(WinUtil::SystemEqualString(
-      L"abc",
-      L"a" L"\x202c" L"bc",   // U+202C: POP DIRECTIONAL FORMATTING
-      true));
+  EXPECT_FALSE(
+      WinUtil::SystemEqualString(L"abc",
+                                 L"a"
+                                 L"\x202c"
+                                 L"bc",  // U+202C: POP DIRECTIONAL FORMATTING
+                                 true));
 
   // Test case in http://b/2977235
   EXPECT_TRUE(WinUtil::SystemEqualString(
-      L"\x01bf",    // U+01BF: LATIN LETTER WYNN
-      L"\x01f7",    // U+01F7: LATIN CAPITAL LETTER WYNN
+      L"\x01bf",  // U+01BF: LATIN LETTER WYNN
+      L"\x01f7",  // U+01F7: LATIN CAPITAL LETTER WYNN
       true));
 
   // http://www.siao2.com/2005/05/26/421987.aspx
   EXPECT_FALSE(WinUtil::SystemEqualString(
-      L"\x03c2",    // U+03C2: GREEK SMALL LETTER FINAL SIGMA
-      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
+      L"\x03c2",  // U+03C2: GREEK SMALL LETTER FINAL SIGMA
+      L"\x03a3",  // U+03A3: GREEK CAPITAL LETTER SIGMA
       true));
 
   // http://www.siao2.com/2005/05/26/421987.aspx
   EXPECT_TRUE(WinUtil::SystemEqualString(
-      L"\x03c3",    // U+03C3: GREEK SMALL LETTER SIGMA
-      L"\x03a3",    // U+03A3: GREEK CAPITAL LETTER SIGMA
+      L"\x03c3",  // U+03C3: GREEK SMALL LETTER SIGMA
+      L"\x03a3",  // U+03A3: GREEK CAPITAL LETTER SIGMA
       true));
 }
 
@@ -159,27 +154,21 @@ TEST(WinUtilTest, SystemEqualStringTestForNUL) {
     const wchar_t kTestBuffer[] = L"abc";
     const std::wstring test_string1(kTestBuffer);
     const std::wstring test_string2(kTestBuffer,
-                               kTestBuffer + arraysize(kTestBuffer));
+                                    kTestBuffer + arraysize(kTestBuffer));
 
     EXPECT_EQ(3, test_string1.size());
     EXPECT_EQ(4, test_string2.size());
-    EXPECT_TRUE(WinUtil::SystemEqualString(
-      test_string1,
-      test_string2,
-      true));
+    EXPECT_TRUE(WinUtil::SystemEqualString(test_string1, test_string2, true));
   }
   {
     const wchar_t kTestBuffer[] = L"abc\0def";
     const std::wstring test_string1(kTestBuffer);
     const std::wstring test_string2(kTestBuffer,
-                               kTestBuffer + arraysize(kTestBuffer));
+                                    kTestBuffer + arraysize(kTestBuffer));
 
     EXPECT_EQ(3, test_string1.size());
     EXPECT_EQ(8, test_string2.size());
-    EXPECT_TRUE(WinUtil::SystemEqualString(
-      test_string1,
-      test_string2,
-      true));
+    EXPECT_TRUE(WinUtil::SystemEqualString(test_string1, test_string2, true));
   }
 }
 #endif  // DEBUG
@@ -198,8 +187,8 @@ TEST(WinUtilTest, AreEqualFileSystemObjectTest) {
   EXPECT_TRUE(WinUtil::AreEqualFileSystemObject(notepad, notepad_with_prefix))
       << "Long path prefix should be supported.";
 
-  EXPECT_FALSE(WinUtil::AreEqualFileSystemObject(
-      kThisFileNeverExists, kThisFileNeverExists))
+  EXPECT_FALSE(WinUtil::AreEqualFileSystemObject(kThisFileNeverExists,
+                                                 kThisFileNeverExists))
       << "Must returns false against a file that does not exist.";
 }
 
@@ -226,14 +215,13 @@ TEST(WinUtilTest, GetNtPath) {
   std::wstring nt_not_exists = L"foo";
   EXPECT_FALSE(WinUtil::GetNtPath(kThisFileNeverExists, &nt_not_exists))
       << "Must fail against non-exist file.";
-  EXPECT_TRUE(nt_not_exists.empty())
-      << "Must be cleared when fails.";
+  EXPECT_TRUE(nt_not_exists.empty()) << "Must be cleared when fails.";
 }
 
 TEST(WinUtilTest, GetProcessInitialNtPath) {
   std::wstring nt_path;
-  EXPECT_TRUE(WinUtil::GetProcessInitialNtPath(::GetCurrentProcessId(),
-                                               &nt_path));
+  EXPECT_TRUE(
+      WinUtil::GetProcessInitialNtPath(::GetCurrentProcessId(), &nt_path));
   EXPECT_TRUE(LooksLikeNtPath(nt_path));
 }
 

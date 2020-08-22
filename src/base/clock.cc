@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,11 @@
 #include <Windows.h>
 #include <time.h>
 #else  // OS_WIN
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <mach/mach_time.h>
-#elif defined(OS_NACL)  // OS_MACOSX
+#elif defined(OS_NACL)  // __APPLE__
 #include <irt.h>
-#endif  // OS_MACOSX or OS_NACL
+#endif  // __APPLE__ or OS_NACL
 #include <sys/time.h>
 #endif  // OS_WIN
 
@@ -50,7 +50,7 @@ class ClockImpl : public ClockInterface {
  public:
 #ifndef OS_NACL
   ClockImpl() {}
-#else  // OS_NACL
+#else   // OS_NACL
   ClockImpl() : timezone_offset_sec_(0) {}
 #endif  // OS_NACL
 
@@ -75,7 +75,7 @@ class ClockImpl : public ClockInterface {
     time_value.QuadPart -= kDeltaEpochInMicroSecs;
     *sec = static_cast<uint64>(time_value.QuadPart / 1000000UL);
     *usec = static_cast<uint32>(time_value.QuadPart % 1000000UL);
-#else  // OS_WIN
+#else   // OS_WIN
     struct timeval tv;
     gettimeofday(&tv, nullptr);
     *sec = tv.tv_sec;
@@ -104,7 +104,7 @@ class ClockImpl : public ClockInterface {
     if (gmtime_r(&localtime_sec, output) == nullptr) {
       return false;
     }
-#else  // !OS_WIN && !OS_NACL
+#else   // !OS_WIN && !OS_NACL
     if (localtime_r(&modified_sec, output) == nullptr) {
       return false;
     }
@@ -119,16 +119,17 @@ class ClockImpl : public ClockInterface {
     // available.
     const BOOL result = ::QueryPerformanceFrequency(&timestamp);
     return static_cast<uint64>(timestamp.QuadPart);
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
     static mach_timebase_info_data_t timebase_info;
     mach_timebase_info(&timebase_info);
-    return static_cast<uint64>(
-        1.0e9 * timebase_info.denom / timebase_info.numer);
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+    return static_cast<uint64>(1.0e9 * timebase_info.denom /
+                               timebase_info.numer);
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+    defined(OS_WASM)
     return 1000000uLL;
-#else  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
+#else  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
 #error "Not supported platform"
-#endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
+#endif  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
   }
 
   virtual uint64 GetTicks() {
@@ -139,16 +140,17 @@ class ClockImpl : public ClockInterface {
     // available.
     const BOOL result = ::QueryPerformanceCounter(&timestamp);
     return static_cast<uint64>(timestamp.QuadPart);
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
     return static_cast<uint64>(mach_absolute_time());
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+    defined(OS_WASM)
     uint64 sec;
     uint32 usec;
     GetTimeOfDay(&sec, &usec);
     return sec * 1000000 + usec;
-#else  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
+#else  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
 #error "Not supported platform"
-#endif  // platforms (OS_WIN, OS_MACOSX, OS_LINUX, ...)
+#endif  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
   }
 
 #ifdef OS_NACL
@@ -173,21 +175,15 @@ void Clock::GetTimeOfDay(uint64 *sec, uint32 *usec) {
   GetClock()->GetTimeOfDay(sec, usec);
 }
 
-uint64 Clock::GetTime() {
-  return GetClock()->GetTime();
-}
+uint64 Clock::GetTime() { return GetClock()->GetTime(); }
 
 bool Clock::GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec) {
   return GetClock()->GetTmWithOffsetSecond(offset_sec, time_with_offset);
 }
 
-uint64 Clock::GetFrequency() {
-  return GetClock()->GetFrequency();
-}
+uint64 Clock::GetFrequency() { return GetClock()->GetFrequency(); }
 
-uint64 Clock::GetTicks() {
-  return GetClock()->GetTicks();
-}
+uint64 Clock::GetTicks() { return GetClock()->GetTicks(); }
 
 #ifdef OS_NACL
 void Clock::SetTimezoneOffset(int32 timezone_offset_sec) {
@@ -195,8 +191,6 @@ void Clock::SetTimezoneOffset(int32 timezone_offset_sec) {
 }
 #endif  // OS_NACL
 
-void Clock::SetClockForUnitTest(ClockInterface *clock) {
-  g_clock = clock;
-}
+void Clock::SetClockForUnitTest(ClockInterface *clock) { g_clock = clock; }
 
 }  // namespace mozc

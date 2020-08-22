@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ message Stats {
     INTEGER = 2;
     BOOLEAN = 3;
     VIRTUAL_KEYBOARD = 4;
-  };
+  }
   required Type type = 2;
 
   // count
@@ -83,4 +83,4 @@ message Stats {
     repeated TouchEventStats touch_event_stats = 2;
   }
   repeated VirtualKeyboardStats virtual_keyboard_stats = 11;
-};
+}

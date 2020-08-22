@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,15 +55,15 @@ const size_t kSaltSize = 32;
 const size_t kMaxFileSize = 64 * 1024 * 1024;
 }  // namespace
 
-EncryptedStringStorage::EncryptedStringStorage(const string &filename)
+EncryptedStringStorage::EncryptedStringStorage(const std::string &filename)
     : filename_(filename) {}
 
 EncryptedStringStorage::~EncryptedStringStorage() {}
 
-bool EncryptedStringStorage::Load(string *output) const {
+bool EncryptedStringStorage::Load(std::string *output) const {
   DCHECK(output);
 
-  string salt;
+  std::string salt;
 
   // Reads encrypted message and salt from local file
   {
@@ -93,10 +93,11 @@ bool EncryptedStringStorage::Load(string *output) const {
   return Decrypt(salt, output);
 }
 
-bool EncryptedStringStorage::Decrypt(const string &salt, string *data) const {
+bool EncryptedStringStorage::Decrypt(const std::string &salt,
+                                     std::string *data) const {
   DCHECK(data);
 
-  string password;
+  std::string password;
   if (!PasswordManager::GetPassword(&password)) {
     LOG(ERROR) << "PasswordManager::GetPassword() failed";
     return false;
@@ -122,8 +123,8 @@ bool EncryptedStringStorage::Decrypt(const string &salt, string *data) const {
   return true;
 }
 
-bool EncryptedStringStorage::Save(const string &input) const {
-  string output, salt;
+bool EncryptedStringStorage::Save(const std::string &input) const {
+  std::string output, salt;
   // Generate salt.
   salt.resize(kSaltSize);
   Util::GetRandomSequence(&salt[0], kSaltSize);
@@ -135,7 +136,7 @@ bool EncryptedStringStorage::Save(const string &input) const {
 
   // Even if histoy is empty, save to them into a file to
   // make the file empty
-  const string tmp_filename = filename_ + ".tmp";
+  const std::string tmp_filename = filename_ + ".tmp";
   {
     OutputFileStream ofs(tmp_filename.c_str(),
                          std::ios::out | std::ios::binary);
@@ -156,18 +157,19 @@ bool EncryptedStringStorage::Save(const string &input) const {
 
 #ifdef OS_WIN
   if (!FileUtil::HideFile(filename_)) {
-    LOG(ERROR) << "Cannot make hidden: " << filename_
-               << " " << ::GetLastError();
+    LOG(ERROR) << "Cannot make hidden: " << filename_ << " "
+               << ::GetLastError();
   }
 #endif
 
   return true;
 }
 
-bool EncryptedStringStorage::Encrypt(const string &salt, string *data) const {
+bool EncryptedStringStorage::Encrypt(const std::string &salt,
+                                     std::string *data) const {
   DCHECK(data);
 
-  string password;
+  std::string password;
   if (!PasswordManager::GetPassword(&password)) {
     LOG(ERROR) << "PasswordManager::GetPassword() failed";
     return false;

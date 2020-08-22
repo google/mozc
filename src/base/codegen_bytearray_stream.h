@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,8 @@
 #ifdef OS_ANDROID
 // This is used only for code generation, so shouldn't be used from android
 // platform.
-#error "base/codegen_bytearray_stream.h shouldn't be used from android platform."
+#error \
+    "base/codegen_bytearray_stream.h shouldn't be used from android platform."
 #endif
 
 #ifdef OS_WIN
@@ -108,8 +109,10 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
                                  codegenstream::StreamOwner own_output_stream)
       : internal_output_buffer_size_(kDefaultInternalBufferSize),
         internal_output_buffer_(new char[internal_output_buffer_size_]),
-        output_stream_(output_stream), own_output_stream_(own_output_stream),
-        is_open_(false), output_count_(0) {
+        output_stream_(output_stream),
+        own_output_stream_(own_output_stream),
+        is_open_(false),
+        output_count_(0) {
     this->setp(internal_output_buffer_.get(),
                internal_output_buffer_.get() + internal_output_buffer_size_);
   }
@@ -122,7 +125,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   }
 
   // Writes the beginning of a variable definition.
-  bool OpenVarDef(const string &var_name_base) {
+  bool OpenVarDef(const std::string &var_name_base) {
     if (is_open_ || var_name_base.empty()) {
       return false;
     }
@@ -130,8 +133,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
     *output_stream_ << "const "
                     << AS_STRING(MOZC_CODEGEN_BYTEARRAY_STREAM_WORD_TYPE)
-                    << " k" << var_name_base_
-                    << "_data_wordtype[] = {\n";
+                    << " k" << var_name_base_ << "_data_wordtype[] = {\n";
     output_stream_format_flags_ = output_stream_->flags();
     // Set the output format in the form of "0x000012340000ABCD".
     output_stream_->setf(std::ios_base::hex, std::ios_base::basefield);
@@ -173,8 +175,8 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
     }
     *output_stream_ << ";\n";
 #endif
-    *output_stream_ << "const size_t k" << var_name_base_ << "_size = "
-                    << output_count_ << ";\n";
+    *output_stream_ << "const size_t k" << var_name_base_
+                    << "_size = " << output_count_ << ";\n";
     is_open_ = false;
     return !output_stream_->fail();
   }
@@ -182,9 +184,9 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
  protected:
   // Flushes.
   virtual int sync() {
-    return (overflow() != traits_type::eof() &&
-            !output_stream_->flush().fail())
-        ? 0 : -1;
+    return (overflow() != traits_type::eof() && !output_stream_->flush().fail())
+               ? 0
+               : -1;
   }
 
   // Writes a given character sequence.  The implementation is expected to be
@@ -219,9 +221,10 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
     this->setp(internal_output_buffer_.get(),
                internal_output_buffer_.get() + internal_output_buffer_size_);
     return output_stream_->fail()
-        ? traits_type::eof()
-        : (traits_type::eq_int_type(c, traits_type::eof())
-           ? traits_type::not_eof(c) : c);
+               ? traits_type::eof()
+               : (traits_type::eq_int_type(c, traits_type::eof())
+                      ? traits_type::not_eof(c)
+                      : c);
   }
 
  private:
@@ -236,7 +239,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   // Converts a raw byte stream to C source code.
   void WriteBytes(const char *begin, const char *end) {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-    char * const buf = reinterpret_cast<char *>(&word_buffer_);
+    char *const buf = reinterpret_cast<char *>(&word_buffer_);
     const size_t kWordSize = sizeof word_buffer_;
     while (begin < end) {
       size_t output_length = std::min(static_cast<size_t>(end - begin),
@@ -247,8 +250,8 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
       output_count_ += output_length;
       if (output_count_ % kWordSize == 0) {
         WriteWordBuffer();
-        *output_stream_ << (output_count_ % kNumOfBytesOnOneLine == 0
-                            ? ",\n" : ", ");
+        *output_stream_ << (output_count_ % kNumOfBytesOnOneLine == 0 ? ",\n"
+                                                                      : ", ");
       }
     }
 #else
@@ -261,8 +264,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
         *output_stream_ << '\"';
       }
       for (size_t i = 0; i < bucket_size; ++i) {
-        *output_stream_ << "\\x"
-                        << kHex[(*begin & 0xF0) >> 4]
+        *output_stream_ << "\\x" << kHex[(*begin & 0xF0) >> 4]
                         << kHex[(*begin & 0x0F) >> 0];
         ++begin;
       }
@@ -277,7 +279,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   void WriteWordBuffer() {
     *output_stream_ << "0x" << std::setw(2 * sizeof word_buffer_)
-        << word_buffer_;
+                    << word_buffer_;
     word_buffer_ = 0;
   }
 #endif
@@ -293,7 +295,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #endif
 
   bool is_open_;
-  string var_name_base_;
+  std::string var_name_base_;
   size_t output_count_;
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   WordType word_buffer_;
@@ -308,17 +310,15 @@ class CodeGenByteArrayOutputStream : public std::ostream {
   //   output_stream: The output stream to which generated code is written.
   //   own_output_stream: The object pointed to by |output_stream| will be
   //       destroyed if |own_output_stream| equals to |OWN_STREAM|.
-  CodeGenByteArrayOutputStream(
-      std::ostream *output_stream,
-      codegenstream::StreamOwner own_output_stream)
-      : std::ostream(NULL),
-        streambuf_(output_stream, own_output_stream) {
+  CodeGenByteArrayOutputStream(std::ostream *output_stream,
+                               codegenstream::StreamOwner own_output_stream)
+      : std::ostream(NULL), streambuf_(output_stream, own_output_stream) {
     this->rdbuf(&streambuf_);
   }
 
   // Writes the beginning of a variable definition.
   // A call to |OpenVarDef| must precede any output to the instance.
-  void OpenVarDef(const string &var_name_base) {
+  void OpenVarDef(const std::string &var_name_base) {
     if (!streambuf_.OpenVarDef(var_name_base)) {
       this->setstate(std::ios_base::failbit);
     }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 #include <set>
 #include <string>
+
 #include "composer/internal/transliterators.h"
 
 namespace mozc {
@@ -50,10 +51,9 @@ class CompositionInterface {
  public:
   virtual ~CompositionInterface() {}
   virtual size_t DeleteAt(size_t position) = 0;
-  virtual size_t InsertAt(size_t position, const string &input) = 0;
-  virtual size_t InsertKeyAndPreeditAt(size_t pos,
-                                       const string &key,
-                                       const string &preedit) = 0;
+  virtual size_t InsertAt(size_t position, const std::string &input) = 0;
+  virtual size_t InsertKeyAndPreeditAt(size_t pos, const std::string &key,
+                                       const std::string &preedit) = 0;
 
   // Insert the given |input| to the composition at the given |position|
   // and return the new position.
@@ -64,51 +64,46 @@ class CompositionInterface {
 
   // Get the position on mode_to from position_from on mode_from.
   virtual size_t ConvertPosition(
-      size_t position_from,
-      Transliterators::Transliterator transliterator_from,
+      size_t position_from, Transliterators::Transliterator transliterator_from,
       Transliterators::Transliterator transliterator_to) = 0;
 
   // TODO(komatsu): To be deleted.
   virtual size_t SetDisplayMode(
-      size_t position,
-      Transliterators::Transliterator transliterator) = 0;
+      size_t position, Transliterators::Transliterator transliterator) = 0;
 
   virtual void SetTransliterator(
-      size_t position_from,
-      size_t position_to,
+      size_t position_from, size_t position_to,
       Transliterators::Transliterator transliterator) = 0;
   virtual Transliterators::Transliterator GetTransliterator(
-      size_t position) = 0;
+      size_t position) const = 0;
 
   virtual size_t GetLength() const = 0;
 
   // Return string with the default translitarator of each char_chunk
   // and TrimeMode::ASIS.
-  virtual void GetString(string *composition) const = 0;
+  virtual void GetString(std::string *composition) const = 0;
 
   // Return string with the specified transliterator and TrimeMode::FIX.
   virtual void GetStringWithTransliterator(
       Transliterators::Transliterator transliterator,
-      string *output) const = 0;
+      std::string *output) const = 0;
 
   // Get string with consideration for ambiguity from pending input
-  virtual void GetExpandedStrings(string *base,
-                                  std::set<string> *expanded) const = 0;
+  virtual void GetExpandedStrings(std::string *base,
+                                  std::set<std::string> *expanded) const = 0;
 
   virtual void GetExpandedStringsWithTransliterator(
-      Transliterators::Transliterator transliterator, string *base,
-      std::set<string> *expanded) const = 0;
+      Transliterators::Transliterator transliterator, std::string *base,
+      std::set<std::string> *expanded) const = 0;
 
   // Return string with the specified trim mode and the current display mode.
   virtual void GetStringWithTrimMode(TrimMode trim_mode,
-                                     string *output) const = 0;
+                                     std::string *output) const = 0;
 
   // Return string with the default translitarator of each char_chunk
   // and TrimMode::ASIS.
-  virtual void GetPreedit(size_t position,
-                          string *left,
-                          string *focused,
-                          string *right) const = 0;
+  virtual void GetPreedit(size_t position, std::string *left,
+                          std::string *focused, std::string *right) const = 0;
 
   virtual void SetInputMode(Transliterators::Transliterator transliterator) = 0;
 
@@ -128,6 +123,8 @@ class CompositionInterface {
   // Set composition table.
   // This class does NOT take the ownership of the table;
   virtual void SetTable(const Table *table) = 0;
+
+  virtual bool IsToggleable(size_t position) const = 0;
 };
 
 }  // namespace composer

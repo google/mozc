@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,31 +50,21 @@ GtkWindowBase::GtkWindowBase(GtkWrapperInterface *gtk)
   gtk_->GSignalConnect(window_, "button-release-event",
                        G_CALLBACK(OnMouseUpThunk), this);
 
-  gtk_->GSignalConnect(canvas_, "expose-event", G_CALLBACK(OnPaintThunk),
-                       this);
+  gtk_->GSignalConnect(canvas_, "expose-event", G_CALLBACK(OnPaintThunk), this);
   gtk_->GtkContainerAdd(window_, canvas_);
   gtk_->GtkWidgetRealize(window_);
   gtk_->GdkWindowSetTypeHint(window_, GDK_WINDOW_TYPE_HINT_POPUP_MENU);
 }
 
-GtkWindowBase::~GtkWindowBase() {
-}
+GtkWindowBase::~GtkWindowBase() {}
 
-void GtkWindowBase::ShowWindow() {
-  gtk_->GtkWidgetShowAll(window_);
-}
+void GtkWindowBase::ShowWindow() { gtk_->GtkWidgetShowAll(window_); }
 
-void GtkWindowBase::HideWindow() {
-  gtk_->GtkWidgetHideAll(window_);
-}
+void GtkWindowBase::HideWindow() { gtk_->GtkWidgetHideAll(window_); }
 
-GtkWidget *GtkWindowBase::GetWindowWidget() {
-  return window_;
-}
+GtkWidget *GtkWindowBase::GetWindowWidget() { return window_; }
 
-GtkWidget *GtkWindowBase::GetCanvasWidget() {
-  return canvas_;
-}
+GtkWidget *GtkWindowBase::GetCanvasWidget() { return canvas_; }
 
 Point GtkWindowBase::GetWindowPos() {
   Point origin;
@@ -92,9 +82,7 @@ Rect GtkWindowBase::GetWindowRect() {
   return Rect(GetWindowPos(), GetWindowSize());
 }
 
-bool GtkWindowBase::IsActive() {
-  return gtk_->GtkWindowIsActive(window_);
-}
+bool GtkWindowBase::IsActive() { return gtk_->GtkWindowIsActive(window_); }
 
 bool GtkWindowBase::DestroyWindow() {
   // TODO(nona): Implement this
@@ -166,17 +154,13 @@ gboolean GtkWindowBase::OnMouseUp(GtkWidget *widget, GdkEventButton *event) {
   return TRUE;  // event consumed.
 }
 
-void GtkWindowBase::OnMouseLeftUp(const Point &pos) {
-}
+void GtkWindowBase::OnMouseLeftUp(const Point &pos) {}
 
-void GtkWindowBase::OnMouseLeftDown(const Point &pos) {
-}
+void GtkWindowBase::OnMouseLeftDown(const Point &pos) {}
 
-void GtkWindowBase::OnMouseRightUp(const Point &pos) {
-}
+void GtkWindowBase::OnMouseRightUp(const Point &pos) {}
 
-void GtkWindowBase::OnMouseRightDown(const Point &pos) {
-}
+void GtkWindowBase::OnMouseRightDown(const Point &pos) {}
 
 bool GtkWindowBase::SetSendCommandInterface(
     client::SendCommandInterface *send_command_interface) {

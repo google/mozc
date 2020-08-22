@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ class UserDictionarySession {
   // An interface to implement the undo operation.
   class UndoCommand;
 
-  explicit UserDictionarySession(const string &filepath);
+  explicit UserDictionarySession(const std::string &filepath);
   ~UserDictionarySession();
 
   const UserDictionaryStorage &storage() const;
@@ -61,7 +61,7 @@ class UserDictionarySession {
 
   // Sets the default dictionary name.
   UserDictionaryCommandStatus::Status SetDefaultDictionaryName(
-      const string &dictionary_name);
+      const std::string &dictionary_name);
 
   // Loads the data from local storage.
   UserDictionaryCommandStatus::Status Load();
@@ -80,7 +80,7 @@ class UserDictionarySession {
 
   // Creates a new dictionary.
   UserDictionaryCommandStatus::Status CreateDictionary(
-      const string &dictionary_name, uint64 *new_dictionary_id);
+      const std::string &dictionary_name, uint64 *new_dictionary_id);
 
   // Deletes the dictionary of the given dictionary_id.
   UserDictionaryCommandStatus::Status DeleteDictionary(uint64 dictionary_id);
@@ -93,7 +93,7 @@ class UserDictionarySession {
 
   // Renames the dictionary of the given dictionary_id to dictionary_name.
   UserDictionaryCommandStatus::Status RenameDictionary(
-      uint64 dictionary_id, const string &dictionary_name);
+      uint64 dictionary_id, const std::string &dictionary_name);
 
   // Adds an entry with given key, value and pos_type to the dictionary
   // specified by the dicitonary_id.
@@ -110,12 +110,12 @@ class UserDictionarySession {
       uint64 dictionary_id, const std::vector<int> &index_list);
 
   // Imports entries from the text data into the dictionary with dictionary_id.
-  UserDictionaryCommandStatus::Status ImportFromString(
-      uint64 dictionary_id, const string &data);
+  UserDictionaryCommandStatus::Status ImportFromString(uint64 dictionary_id,
+                                                       const std::string &data);
 
   // Imports entries from the text data into a newly created dictionary.
   UserDictionaryCommandStatus::Status ImportToNewDictionaryFromString(
-      const string &dictionary_name, const string &data,
+      const std::string &dictionary_name, const std::string &data,
       uint64 *new_dictionary_id);
 
   // Clears all the dictionaries and undo history (doesn't save to the file).
@@ -132,14 +132,14 @@ class UserDictionarySession {
   UserDictionaryCommandStatus::Status DeleteDictionaryInternal(
       uint64 dictionary_id, bool ensure_non_empty_storage);
   UserDictionaryCommandStatus::Status ImportFromStringInternal(
-      UserDictionary *dictionary, const string &data);
+      UserDictionary *dictionary, const std::string &data);
 
   void ClearUndoHistory();
   void AddUndoCommand(UndoCommand *undo_command);
 
   std::unique_ptr<mozc::UserDictionaryStorage> storage_;
-  string default_dictionary_name_;
-  std::deque<UndoCommand*> undo_history_;
+  std::string default_dictionary_name_;
+  std::deque<UndoCommand *> undo_history_;
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionarySession);
 };

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,14 +30,10 @@
 #ifndef MOZC_BASE_MUTEX_H_
 #define MOZC_BASE_MUTEX_H_
 
-#ifdef MOZC_USE_PEPPER_FILE_IO
-#include <pthread.h>
-#endif  // MOZC_USE_PEPPER_FILE_IO
-
 #include <atomic>
 
 #include "base/port.h"
-#include "base/thread_annotations.h"
+#include "absl/base/thread_annotations.h"
 
 namespace mozc {
 
@@ -52,7 +48,7 @@ namespace mozc {
 // To remove dependencies against plafrom specific headers such as
 // <Windows.h> or <pthread.h>, we use an array of pointers as an opaque buffer
 // where platform specific mutex structure will be placed.
-#if defined(OS_MACOSX)
+#if defined(__APPLE__)
 // Mac requires relatively large buffer for pthread mutex object.
 #define MOZC_MUTEX_PTR_ARRAYSIZE 11
 #define MOZC_RW_MUTEX_PTR_ARRAYSIZE 32
@@ -62,19 +58,13 @@ namespace mozc {
 #define MOZC_RW_MUTEX_PTR_ARRAYSIZE 12
 #endif
 
-class LOCKABLE Mutex {
+class ABSL_LOCKABLE Mutex {
  public:
   Mutex();
   ~Mutex();
-  void Lock() EXCLUSIVE_LOCK_FUNCTION();
-  bool TryLock() EXCLUSIVE_TRYLOCK_FUNCTION(true);
-  void Unlock() UNLOCK_FUNCTION();
-
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // Returns the pointer to pthread_mutex_t.
-  // This method is used for a condition object in a BlockingQueue.
-  pthread_mutex_t *raw_mutex();
-#endif  // MOZC_USE_PEPPER_FILE_IO
+  void Lock() ABSL_EXCLUSIVE_LOCK_FUNCTION();
+  bool TryLock() ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true);
+  void Unlock() ABSL_UNLOCK_FUNCTION();
 
  private:
   void *opaque_buffer_[MOZC_MUTEX_PTR_ARRAYSIZE];
@@ -87,15 +77,15 @@ class LOCKABLE Mutex {
 // IMPORTANT NOTE: Unlike mozc::Mutex, this class does not always support
 //     recursive lock.
 // TODO(yukawa): Rename this as ReaderWriterNonRecursiveMutex.
-class LOCKABLE ReaderWriterMutex {
+class ABSL_LOCKABLE ReaderWriterMutex {
  public:
   ReaderWriterMutex();
   ~ReaderWriterMutex();
 
-  void ReaderLock() SHARED_LOCK_FUNCTION();
-  void WriterLock() EXCLUSIVE_LOCK_FUNCTION();
-  void ReaderUnlock() UNLOCK_FUNCTION();
-  void WriterUnlock() UNLOCK_FUNCTION();
+  void ReaderLock() ABSL_SHARED_LOCK_FUNCTION();
+  void WriterLock() ABSL_EXCLUSIVE_LOCK_FUNCTION();
+  void ReaderUnlock() ABSL_UNLOCK_FUNCTION();
+  void WriterUnlock() ABSL_UNLOCK_FUNCTION();
 
   // Returns true if multiple reader thread can grant the lock at the same time
   // on the current platform.
@@ -111,15 +101,13 @@ class LOCKABLE ReaderWriterMutex {
 
 // Implementation of this class is left in header for poor compilers where link
 // time code generation has not been proven well.
-class SCOPED_LOCKABLE scoped_lock {
+class ABSL_SCOPED_LOCKABLE scoped_lock {
  public:
-  explicit scoped_lock(Mutex *mutex) EXCLUSIVE_LOCK_FUNCTION(mutex)
+  explicit scoped_lock(Mutex *mutex) ABSL_EXCLUSIVE_LOCK_FUNCTION(mutex)
       : mutex_(mutex) {
     mutex_->Lock();
   }
-  ~scoped_lock() UNLOCK_FUNCTION() {
-    mutex_->Unlock();
-  }
+  ~scoped_lock() ABSL_UNLOCK_FUNCTION() { mutex_->Unlock(); }
 
  private:
   Mutex *mutex_;
@@ -129,20 +117,19 @@ class SCOPED_LOCKABLE scoped_lock {
 
 // Implementation of this class is left in header for poor compilers where link
 // time code generation has not been proven well.
-class SCOPED_LOCKABLE scoped_try_lock {
+class ABSL_SCOPED_LOCKABLE scoped_try_lock {
  public:
-  explicit scoped_try_lock(Mutex *mutex) EXCLUSIVE_TRYLOCK_FUNCTION(true, mutex)
+  explicit scoped_try_lock(Mutex *mutex)
+      ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true, mutex)
       : mutex_(mutex) {
     locked_ = mutex_->TryLock();
   }
-  ~scoped_try_lock() UNLOCK_FUNCTION() {
+  ~scoped_try_lock() ABSL_UNLOCK_FUNCTION() {
     if (locked_) {
       mutex_->Unlock();
     }
   }
-  bool locked() const {
-    return locked_;
-  }
+  bool locked() const { return locked_; }
 
  private:
   Mutex *mutex_;
@@ -154,16 +141,14 @@ class SCOPED_LOCKABLE scoped_try_lock {
 // Implementation of this class is left in header for poor compilers where link
 // time code generation has not been proven well.
 // TODO(yukawa): Rename this as scoped_nonrecursive_writer_lock.
-class SCOPED_LOCKABLE scoped_writer_lock {
+class ABSL_SCOPED_LOCKABLE scoped_writer_lock {
  public:
   explicit scoped_writer_lock(ReaderWriterMutex *mutex)
-      SHARED_LOCK_FUNCTION(mutex)
+      ABSL_SHARED_LOCK_FUNCTION(mutex)
       : mutex_(mutex) {
     mutex_->WriterLock();
   }
-  ~scoped_writer_lock() UNLOCK_FUNCTION() {
-    mutex_->WriterUnlock();
-  }
+  ~scoped_writer_lock() ABSL_UNLOCK_FUNCTION() { mutex_->WriterUnlock(); }
 
  private:
   ReaderWriterMutex *mutex_;
@@ -174,16 +159,14 @@ class SCOPED_LOCKABLE scoped_writer_lock {
 // Implementation of this class is left in header for poor compilers where link
 // time code generation has not been proven well.
 // TODO(yukawa): Rename this as scoped_nonrecursive_reader_lock.
-class SCOPED_LOCKABLE scoped_reader_lock {
+class ABSL_SCOPED_LOCKABLE scoped_reader_lock {
  public:
   explicit scoped_reader_lock(ReaderWriterMutex *mutex)
-      EXCLUSIVE_LOCK_FUNCTION(mutex)
+      ABSL_EXCLUSIVE_LOCK_FUNCTION(mutex)
       : mutex_(mutex) {
     mutex_->ReaderLock();
   }
-  ~scoped_reader_lock() UNLOCK_FUNCTION() {
-    mutex_->ReaderUnlock();
-  }
+  ~scoped_reader_lock() ABSL_UNLOCK_FUNCTION() { mutex_->ReaderUnlock(); }
 
  private:
   ReaderWriterMutex *mutex_;

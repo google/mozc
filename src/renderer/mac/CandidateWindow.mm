@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,17 +55,17 @@ void CandidateWindow::SetSendCommandInterface(
   DLOG(INFO) << "CandidateWindow::SetSendCommandInterface()";
   command_sender_ = send_command_interface;
 
-  const CandidateView* candidate_view = (CandidateView*) view_.get();
+  const CandidateView* candidate_view = (CandidateView*) view_;
   [candidate_view setSendCommandInterface:send_command_interface];
 }
 
 void CandidateWindow::InitWindow() {
   RendererBaseWindow::InitWindow();
-  const CandidateView* candidate_view = (CandidateView*) view_.get();
+  const CandidateView* candidate_view = (CandidateView*) view_;
   [candidate_view setSendCommandInterface:command_sender_];
 }
 const mozc::renderer::TableLayout *CandidateWindow::GetTableLayout() const {
-  const CandidateView* candidate_view = (CandidateView*) view_.get();
+  const CandidateView* candidate_view = (CandidateView*) view_;
   return [candidate_view tableLayout];
 }
 
@@ -78,7 +78,7 @@ void CandidateWindow::SetCandidates(const Candidates &candidates) {
   if (!window_) {
     InitWindow();
   }
-  CandidateView* candidate_view = (CandidateView*) view_.get();
+  CandidateView* candidate_view = (CandidateView*) view_;
   [candidate_view setCandidates:&candidates];
   [candidate_view setNeedsDisplay:YES];
   NSSize size = [candidate_view updateLayout];
@@ -87,7 +87,7 @@ void CandidateWindow::SetCandidates(const Candidates &candidates) {
 
 void CandidateWindow::ResetView(){
   DLOG(INFO) << "CandidateWindow::ResetView()";
-  view_.reset([[CandidateView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)]);
+  view_ = [[CandidateView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
 }
 
 }  // namespace mozc::renderer::mac

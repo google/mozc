@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,6 @@
 
 #include <string>
 
-#include "base/port_string.h"
-
 namespace mozc {
 
 class ConversionRequest;
@@ -65,8 +63,10 @@ class PredictorInterface {
   virtual bool ClearUnusedHistory() { return true; }
 
   // Clears a specific history data of UserHistoryPredictor.
-  virtual bool ClearHistoryEntry(const string &key,
-                                 const string &value) { return true; }
+  virtual bool ClearHistoryEntry(const std::string &key,
+                                 const std::string &value) {
+    return true;
+  }
 
   // Syncs user history to local disk.
   virtual bool Sync() { return true; }
@@ -77,7 +77,7 @@ class PredictorInterface {
   // Waits for syncer thread to complete.
   virtual bool Wait() { return true; }
 
-  virtual const string &GetPredictorName() const = 0;
+  virtual const std::string &GetPredictorName() const = 0;
 
  protected:
   // Disable the construction.

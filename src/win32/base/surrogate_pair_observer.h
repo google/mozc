@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,7 @@ class SurrogatePairObserver {
   };
 
   struct ClientAction {
-    ClientAction(ClientActionType type, char32 ucs4)
-        : type(type), ucs4(ucs4) {}
+    ClientAction(ClientActionType type, char32 ucs4) : type(type), ucs4(ucs4) {}
     const ClientActionType type;
     const char32 ucs4;
   };

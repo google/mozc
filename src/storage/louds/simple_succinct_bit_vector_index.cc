@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ class ZeroBitAdapter : public AdapterBase<int> {
   // Needs to be default constructive to create invalid iterator.
   ZeroBitAdapter() : index_(nullptr), chunk_size_(0) {}
 
-  ZeroBitAdapter(const std::vector<int>* index, int chunk_size)
+  ZeroBitAdapter(const std::vector<int> *index, int chunk_size)
       : index_(index), chunk_size_(chunk_size) {}
 
   value_type operator()(const int *ptr) const {
@@ -65,9 +65,7 @@ class ZeroBitAdapter : public AdapterBase<int> {
 
 #ifdef __GNUC__
 // TODO(hidehiko): Support XMM and 64-bits popcount for 64bits architectures.
-inline int BitCount1(uint32 x) {
-  return __builtin_popcount(x);
-}
+inline int BitCount1(uint32 x) { return __builtin_popcount(x); }
 #else
 int BitCount1(uint32 x) {
   x = ((x & 0xaaaaaaaa) >> 1) + (x & 0x55555555);
@@ -101,8 +99,8 @@ int Count1Bits(const uint32 *data, int length) {
 }
 
 // Stores index (the camulative number of the 1-bits from begin of each chunk).
-void InitIndex(
-    const uint8 *data, int length, int chunk_size, std::vector<int> *index) {
+void InitIndex(const uint8 *data, int length, int chunk_size,
+               std::vector<int> *index) {
   DCHECK_GE(chunk_size, 4);
   DCHECK(IsPowerOfTwo(chunk_size)) << chunk_size;
   DCHECK_EQ(length % 4, 0);
@@ -137,10 +135,12 @@ void InitLowerBound0Cache(const std::vector<int> &index, int chunk_size,
   ZeroBitAdapter adapter(&index, chunk_size);
   for (size_t i = 1; i <= size; ++i) {
     const int target_index = increment * i;
-    const int *ptr = std::lower_bound(
-        MakeIteratorAdapter(index.data(), adapter),
-        MakeIteratorAdapter(index.data() + index.size(), adapter),
-        target_index).base();
+    const int *ptr =
+        std::lower_bound(
+            MakeIteratorAdapter(index.data(), adapter),
+            MakeIteratorAdapter(index.data() + index.size(), adapter),
+            target_index)
+            .base();
     cache->push_back(ptr);
   }
   cache->push_back(index.data() + index.size());

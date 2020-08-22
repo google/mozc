@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_H_
 
-#include <QtGui/QtGui>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QtGui>
 
 #include <memory>
 #include <string>
@@ -42,8 +42,7 @@
 namespace mozc {
 namespace gui {
 class KeyBindingFilter;
-class KeyBindingEditor : public QDialog,
-                         private Ui::KeyBindingEditor {
+class KeyBindingEditor : public QDialog, private Ui::KeyBindingEditor {
   Q_OBJECT;
 
  public:
@@ -53,9 +52,7 @@ class KeyBindingEditor : public QDialog,
   KeyBindingEditor(QWidget *parent, QWidget *trigger_parent);
   virtual ~KeyBindingEditor();
 
-  QWidget *mutable_trigger_parent() const {
-    return trigger_parent_;
-  }
+  QWidget *mutable_trigger_parent() const { return trigger_parent_; }
 
   // return current binding in QString
   const QString GetBinding() const;

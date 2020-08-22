@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,8 @@ namespace gui {
 
 class DictionaryContentTableWidget : public QTableWidget {
   Q_OBJECT;
- public:
 
+ public:
   // overwrite paintEvent to draw a striped pattern to all
   // view port area This makes the view port Mac style.
   void paintEvent(QPaintEvent *event);
@@ -50,11 +50,11 @@ class DictionaryContentTableWidget : public QTableWidget {
 
   explicit DictionaryContentTableWidget(QWidget *parent);
 
-  signals:
-   void emptyAreaClicked();
+ signals:
+  void emptyAreaClicked();
 };
-}  // gui
-}  // mozc
+}  // namespace gui
+}  // namespace mozc
 
 using mozc::gui::DictionaryContentTableWidget;
 

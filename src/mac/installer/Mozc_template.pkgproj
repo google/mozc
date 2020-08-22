@@ -25,22 +25,6 @@
 											<key>GID</key>
 											<integer>0</integer>
 											<key>PATH</key>
-											<string>${BUILD_DIR}/CharacterPalette.app</string>
-											<key>PATH_TYPE</key>
-											<integer>0</integer>
-											<key>PERMISSIONS</key>
-											<integer>493</integer>
-											<key>TYPE</key>
-											<integer>3</integer>
-											<key>UID</key>
-											<integer>0</integer>
-										</dict>
-										<dict>
-											<key>CHILDREN</key>
-											<array/>
-											<key>GID</key>
-											<integer>0</integer>
-											<key>PATH</key>
 											<string>${BUILD_DIR}/ConfigDialog.app</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
@@ -58,22 +42,6 @@
 											<integer>0</integer>
 											<key>PATH</key>
 											<string>${BUILD_DIR}/DictionaryTool.app</string>
-											<key>PATH_TYPE</key>
-											<integer>0</integer>
-											<key>PERMISSIONS</key>
-											<integer>493</integer>
-											<key>TYPE</key>
-											<integer>3</integer>
-											<key>UID</key>
-											<integer>0</integer>
-										</dict>
-										<dict>
-											<key>CHILDREN</key>
-											<array/>
-											<key>GID</key>
-											<integer>0</integer>
-											<key>PATH</key>
-											<string>${BUILD_DIR}/HandWriting.app</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
 											<key>PERMISSIONS</key>

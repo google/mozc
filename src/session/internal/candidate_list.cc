@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,17 +62,11 @@ void Candidate::Clear() {
   subcandidate_list_owner_ = false;
 }
 
-int Candidate::id() const {
-  return id_;
-}
+int Candidate::id() const { return id_; }
 
-void Candidate::set_id(const int id) {
-  id_ = id;
-}
+void Candidate::set_id(const int id) { id_ = id; }
 
-Attributes Candidate::attributes() const {
-  return attributes_;
-}
+Attributes Candidate::attributes() const { return attributes_; }
 
 void Candidate::add_attributes(const Attributes attributes) {
   attributes_ |= attributes;
@@ -108,7 +102,6 @@ void Candidate::set_subcandidate_list(CandidateList *subcandidate_list) {
   subcandidate_list_ = subcandidate_list;
 }
 
-
 static const size_t kDefaultPageSize = 9;
 
 CandidateList::CandidateList(const bool rotate)
@@ -120,12 +113,9 @@ CandidateList::CandidateList(const bool rotate)
       candidates_(new std::vector<Candidate *>),
       next_available_id_(0),
       added_candidates_(new std::map<uint64, int>),
-      alternative_ids_(new std::map<int, int>) {
-}
+      alternative_ids_(new std::map<int, int>) {}
 
-CandidateList::~CandidateList() {
-  Clear();
-}
+CandidateList::~CandidateList() { Clear(); }
 
 void CandidateList::Clear() {
   std::vector<Candidate *>::iterator it;
@@ -148,12 +138,12 @@ const Candidate &CandidateList::GetDeepestFocusedCandidate() const {
   return focused_candidate();
 }
 
-void CandidateList::AddCandidate(const int id, const string &value) {
+void CandidateList::AddCandidate(const int id, const std::string &value) {
   AddCandidateWithAttributes(id, value, NO_ATTRIBUTES);
 }
 
 void CandidateList::AddCandidateWithAttributes(const int id,
-                                               const string &value,
+                                               const std::string &value,
                                                const Attributes attributes) {
   if (id >= 0) {
     DCHECK(id >= next_available_id_);
@@ -201,29 +191,19 @@ CandidateList *CandidateList::AllocateSubCandidateList(const bool rotate) {
   return new_candidate->allocate_subcandidate_list(rotate);
 }
 
-void CandidateList::set_name(const string &name) {
-  name_ = name;
-}
+void CandidateList::set_name(const std::string &name) { name_ = name; }
 
-const string &CandidateList::name() const {
-  return name_;
-}
+const std::string &CandidateList::name() const { return name_; }
 
 void CandidateList::set_page_size(const size_t page_size) {
   page_size_ = page_size;
 }
 
-size_t CandidateList::page_size() const {
-  return page_size_;
-}
+size_t CandidateList::page_size() const { return page_size_; }
 
-size_t CandidateList::size() const {
-  return candidates_->size();
-}
+size_t CandidateList::size() const { return candidates_->size(); }
 
-size_t CandidateList::last_index() const {
-  return size() - 1;
-}
+size_t CandidateList::last_index() const { return size() - 1; }
 
 const Candidate &CandidateList::focused_candidate() const {
   return candidate(focused_index_);
@@ -233,13 +213,9 @@ const Candidate &CandidateList::candidate(const size_t index) const {
   return *(*candidates_)[index];
 }
 
-bool CandidateList::focused() const {
-  return focused_;
-}
+bool CandidateList::focused() const { return focused_; }
 
-void CandidateList::set_focused(const bool focused) {
-  focused_ = focused;
-}
+void CandidateList::set_focused(const bool focused) { focused_ = focused; }
 
 int CandidateList::focused_id() const {
   // If the list does not have any candidate, 0 will be returned.
@@ -252,9 +228,7 @@ int CandidateList::focused_id() const {
   return focused_candidate().id();
 }
 
-size_t CandidateList::focused_index() const {
-  return focused_index_;
-}
+size_t CandidateList::focused_index() const { return focused_index_; }
 
 int CandidateList::next_available_id() const {
   int result = next_available_id_;
@@ -270,20 +244,15 @@ int CandidateList::next_available_id() const {
   return result;
 }
 
-void CandidateList::GetPageRange(const size_t index,
-                                 size_t *page_begin,
+void CandidateList::GetPageRange(const size_t index, size_t *page_begin,
                                  size_t *page_end) const {
   *page_begin = index - (index % page_size_);
   *page_end = std::min(last_index(), *page_begin + page_size_ - 1);
 }
 
-void CandidateList::MoveFirst() {
-  focused_index_ = 0;
-}
+void CandidateList::MoveFirst() { focused_index_ = 0; }
 
-void CandidateList::MoveLast() {
-  focused_index_ = last_index();
-}
+void CandidateList::MoveLast() { focused_index_ = last_index(); }
 
 bool CandidateList::MoveNext() {
   // If the current candidate points to subcandidate list, the focused
@@ -414,7 +383,7 @@ bool CandidateList::MoveToAttributes(const Attributes attributes) {
     // Shift the index to make the first index focused_index_.
     const size_t index = (focused_index_ + i) % cand_size;
 
-    Candidate *cand =  (*candidates_)[index];
+    Candidate *cand = (*candidates_)[index];
 
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
@@ -444,7 +413,7 @@ bool CandidateList::MoveToId(const int base_id) {
   // of N is less than kMaxCandidateSize (= 200).  So it would not be
   // a problem.
   for (size_t i = 0; i < size(); ++i) {
-    Candidate *cand =  (*candidates_)[i];
+    Candidate *cand = (*candidates_)[i];
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
     if (cand->IsSubcandidateList() &&
@@ -478,9 +447,7 @@ CandidateList *CandidateList::mutable_focused_subcandidate_list() {
   return (*candidates_)[focused_index_]->mutable_subcandidate_list();
 }
 
-bool CandidateList::IsFirst(const size_t index) const {
-  return (index == 0);
-}
+bool CandidateList::IsFirst(const size_t index) const { return (index == 0); }
 
 bool CandidateList::IsLast(const size_t index) const {
   return (index == size() - 1);

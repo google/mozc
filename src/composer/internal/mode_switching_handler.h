@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,6 @@
 #include <string>
 #include <utility>
 
-#include "base/port_string.h"
-
 namespace mozc {
 namespace composer {
 
@@ -58,8 +56,7 @@ class ModeSwitchingHandler {
   // Returns true if the current preedit matches to patterns.  |key|
   // is the string which the user actually typed.  display_mode and
   // input_mode are stored rules controlling the composer.
-  bool GetModeSwitchingRule(const string &key,
-                            ModeSwitching *display_mode,
+  bool GetModeSwitchingRule(const std::string &key, ModeSwitching *display_mode,
                             ModeSwitching *input_mode) const;
 
   // Gets the singleton instance of this class.
@@ -68,18 +65,17 @@ class ModeSwitchingHandler {
   // Matcher to Windows drive letters like "C:\".
   // TODO(team): This static method is internal use only.  It's public for
   // testing purpose.
-  static bool IsDriveLetter(const string &key);
+  static bool IsDriveLetter(const std::string &key);
 
  private:
   // Adds a rule for mode switching.  |display_mode| affects the
   // existing composition the user typed.  |input_mode| affects the
   // current input mode to be used for the user's new typing.
-  void AddRule(const string &key,
-               const ModeSwitching display_mode,
+  void AddRule(const std::string &key, const ModeSwitching display_mode,
                const ModeSwitching input_mode);
 
   // map<key, pair<display_mode, input_mode>>.
-  std::map<string, std::pair<ModeSwitching, ModeSwitching>> patterns_;
+  std::map<std::string, std::pair<ModeSwitching, ModeSwitching>> patterns_;
 };
 
 }  // namespace composer

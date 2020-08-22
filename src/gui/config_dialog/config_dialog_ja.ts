@@ -305,11 +305,6 @@
         <translation>プレゼンテーションモード</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1241"/>
-        <source>Cloud handwriting recognition</source>
-        <translation>クラウド手書き文字認識</translation>
-    </message>
-    <message>
         <location filename="config_dialog.ui" line="1263"/>
         <source>Misc</source>
         <translation>その他</translation>
@@ -360,11 +355,6 @@
         <source>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
         <translation>使用統計データや障害レポートを Google に自動送信して
 Mozcの機能向上に役立てる（再ログイン後に変更は完了します）</translation>
-    </message>
-    <message>
-        <location filename="config_dialog.ui" line="1225"/>
-        <source>Enable Cloud handwriting recognition</source>
-        <translation>クラウド手書き文字認識を有効にする</translation>
     </message>
     <message>
         <location filename="config_dialog.ui" line="1385"/>

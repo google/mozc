@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,8 @@ This is essentially identical to 'echo foo > out.txt' but the script
 can be used in platforms without a Unix shell (i.e. windows).
 """
 
-__author__ = "satorux"
+from __future__ import absolute_import
+from __future__ import print_function
 
 import subprocess
 import sys
@@ -58,9 +59,9 @@ def main():
     process = subprocess.Popen(sys.argv, stdout=subprocess.PIPE,
                                universal_newlines=True)
   except:
-    print '=========='
-    print ' ERROR: %s' % ' '.join(sys.argv)
-    print '=========='
+    print('==========')
+    print(' ERROR: %s' % ' '.join(sys.argv))
+    print('==========')
     raise
   (stdout_content, _) = process.communicate()
   # Write the stdout content to the output file.

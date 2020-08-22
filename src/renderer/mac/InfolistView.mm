@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,6 @@ using mozc::CallOnce;
   }
 
   if (!style_) {
-    [self release];
     self = nil;
   }
   return self;
@@ -89,10 +88,6 @@ using mozc::CallOnce;
 
 - (BOOL)isFlipped {
   return YES;
-}
-
-- (void)dealloc {
-  [super dealloc];
 }
 
 #pragma mark drawing
@@ -182,8 +177,6 @@ using mozc::CallOnce;
     return NSMakeSize(0,0);
   }
 
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
   const InformationList &usages = candidates_.usages();
 
@@ -224,7 +217,6 @@ using mozc::CallOnce;
       strokeRect:NSMakeRect(0.5, 0.5, infostyle.window_width() - 1, ypos - 1)];
   }
 
-  [pool drain];
   return NSMakeSize(infostyle.window_width(),ypos);
 }
 

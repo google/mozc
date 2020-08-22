@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,9 +65,9 @@ class KeyboardMock : public Win32KeyboardInterface {
     return async_key_state_.IsPressed(virtual_key);
   }
 
-  virtual int ToUnicode(UINT virtual_key, UINT scan_code,
-                        const BYTE *key_state, LPWSTR unicode_buffer,
-                        int unicode_buffer_num_elements, UINT flags) {
+  virtual int ToUnicode(UINT virtual_key, UINT scan_code, const BYTE *key_state,
+                        LPWSTR unicode_buffer, int unicode_buffer_num_elements,
+                        UINT flags) {
     // We use a mock class in case the Japanese keyboard layout is not
     // available on this system.  This emulator class should work well in most
     // cases.  It returns an unicode character (if any) as if Japanese keyboard
@@ -82,17 +82,13 @@ class KeyboardMock : public Win32KeyboardInterface {
     return inputs.size();
   }
 
-  const KeyboardStatus &key_state() const {
-    return key_state_;
-  }
+  const KeyboardStatus &key_state() const { return key_state_; }
 
   void set_key_state(const KeyboardStatus &key_state) {
     key_state_ = key_state;
   }
 
-  const KeyboardStatus &async_key_state() const {
-    return async_key_state_;
-  }
+  const KeyboardStatus &async_key_state() const { return async_key_state_; }
 
   void set_async_key_state(const KeyboardStatus &async_key_state) {
     async_key_state_ = async_key_state;
@@ -102,9 +98,7 @@ class KeyboardMock : public Win32KeyboardInterface {
     return last_send_input_data_;
   }
 
-  void clear_last_send_input_data() {
-    last_send_input_data_.clear();
-  }
+  void clear_last_send_input_data() { last_send_input_data_.clear(); }
 
  private:
   KeyboardStatus key_state_;
@@ -128,7 +122,7 @@ TEST(VKBackBasedDeleterTest, OnKeyEventTestWhenNoDeletionIsOngoing) {
 
   // OnKeyEvent never crashes even when there is no ongoing session.
   EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-      deleter.OnKeyEvent(VK_BACK, true, true));
+            deleter.OnKeyEvent(VK_BACK, true, true));
 }
 
 TEST(VKBackBasedDeleterTest, BeginDeletionTest_DeletionCountZero) {
@@ -201,37 +195,37 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
 
   // Initially, the deleter is waiting for the first VK_BACK test-key-down.
   EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-      deleter.OnKeyEvent(VK_TAB, true, true));
+            deleter.OnKeyEvent(VK_TAB, true, true));
   EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-      deleter.OnKeyEvent(VK_TAB, false, true));
+            deleter.OnKeyEvent(VK_TAB, false, true));
   EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-      deleter.OnKeyEvent('X', true, true));
+            deleter.OnKeyEvent('X', true, true));
   EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-      deleter.OnKeyEvent('X', false, true));
+            deleter.OnKeyEvent('X', false, true));
 
   // The first pair of test-key-down/up.
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, true, true));
+            deleter.OnKeyEvent(VK_BACK, true, true));
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, false, true));
+            deleter.OnKeyEvent(VK_BACK, false, true));
 
   // The second pair of test-key-down/up.
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, true, true));
+            deleter.OnKeyEvent(VK_BACK, true, true));
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, false, true));
+            deleter.OnKeyEvent(VK_BACK, false, true));
 
   // The third pair of test-key-down/up.
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, true, true));
+            deleter.OnKeyEvent(VK_BACK, true, true));
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, false, true));
+            deleter.OnKeyEvent(VK_BACK, false, true));
 
   // The last key-down will not be sent to the application.
   EXPECT_EQ(VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-      deleter.OnKeyEvent(VK_BACK, true, true));
+            deleter.OnKeyEvent(VK_BACK, true, true));
   EXPECT_EQ(VKBackBasedDeleter::APPLY_PENDING_STATUS,
-      deleter.OnKeyEvent(VK_BACK, true, false));
+            deleter.OnKeyEvent(VK_BACK, true, false));
 
   // Check the pending output and state.
   EXPECT_EQ(kOutputId, deleter.pending_output().id());
@@ -239,9 +233,9 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
 
   // The last key-up will not be sent to the application.
   EXPECT_EQ(VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-      deleter.OnKeyEvent(VK_BACK, false, true));
+            deleter.OnKeyEvent(VK_BACK, false, true));
   EXPECT_EQ(VKBackBasedDeleter::CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER,
-      deleter.OnKeyEvent(VK_BACK, false, false));
+            deleter.OnKeyEvent(VK_BACK, false, false));
 
   // Make sure the status of modifier keys have not changed.
   EXPECT_FALSE(keyboard_mock->key_state().IsPressed(VK_CONTROL));
@@ -296,13 +290,13 @@ TEST(VKBackBasedDeleterTest, BeginDeletion_InsuccessfulCase) {
 
   // The first pair of test-key-down/up.
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, true, true));
+            deleter.OnKeyEvent(VK_BACK, true, true));
   EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-      deleter.OnKeyEvent(VK_BACK, false, true));
+            deleter.OnKeyEvent(VK_BACK, false, true));
 
   // If an unexpected key is passed, the deletion sequence must be terminated.
   EXPECT_EQ(VKBackBasedDeleter::CALL_END_DELETION_THEN_DO_DEFAULT_ACTION,
-      deleter.OnKeyEvent(VK_TAB, true, true));
+            deleter.OnKeyEvent(VK_TAB, true, true));
 
   // Make sure the status of modifier keys have not changed.
   EXPECT_FALSE(keyboard_mock->key_state().IsPressed(VK_CONTROL));

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ namespace mozc {
 namespace composer {
 
 class CharChunk;
-typedef std::list<CharChunk*> CharChunkList;
+using CharChunkList = std::list<CharChunk *>;
 
 class CompositionInput;
 class Table;
@@ -50,70 +50,69 @@ class Table;
 class Composition : public CompositionInterface {
  public:
   explicit Composition(const Table *table);
-  virtual ~Composition();
+  ~Composition() override;
 
-  virtual size_t DeleteAt(size_t position);
-  virtual size_t InsertAt(size_t position, const string &input);
-  virtual size_t InsertKeyAndPreeditAt(size_t position,
-                                       const string &key,
-                                       const string &preedit);
+  size_t DeleteAt(size_t position) override;
+  size_t InsertAt(size_t position, const std::string &input) override;
+  size_t InsertKeyAndPreeditAt(size_t position, const std::string &key,
+                               const std::string &preedit) override;
   // Insert the given |input| to the composition at the given |position|
   // and return the new position.
-  virtual size_t InsertInput(size_t position, const CompositionInput &input);
+  size_t InsertInput(size_t position, const CompositionInput &input) override;
 
-  virtual void Erase();
+  void Erase() override;
 
   // Get the position on mode_to from position_from on mode_from.
-  virtual size_t ConvertPosition(
-      size_t position_from,
-      Transliterators::Transliterator transliterator_from,
-      Transliterators::Transliterator transliterator_to);
+  size_t ConvertPosition(
+      size_t position_from, Transliterators::Transliterator transliterator_from,
+      Transliterators::Transliterator transliterator_to) override;
 
   // TODO(komatsu): To be deleted.
-  virtual size_t SetDisplayMode(size_t position,
-                                Transliterators::Transliterator transliterator);
+  size_t SetDisplayMode(
+      size_t position, Transliterators::Transliterator transliterator) override;
 
   // NOTE(komatsu) Kind of SetDisplayMode.
-  virtual void SetTransliterator(
-      size_t position_from,
-      size_t position_to,
-      Transliterators::Transliterator transliterator);
-  virtual Transliterators::Transliterator GetTransliterator(size_t position);
+  void SetTransliterator(
+      size_t position_from, size_t position_to,
+      Transliterators::Transliterator transliterator) override;
+  Transliterators::Transliterator GetTransliterator(
+      size_t position) const override;
 
-  virtual size_t GetLength() const;
-  virtual void GetString(string *composition) const;
-  virtual void GetStringWithTransliterator(
+  size_t GetLength() const override;
+  void GetString(std::string *composition) const override;
+  void GetStringWithTransliterator(
       Transliterators::Transliterator transliterator,
-      string *output) const;
-  virtual void GetStringWithTrimMode(TrimMode trim_mode, string* output) const;
+      std::string *output) const override;
+  void GetStringWithTrimMode(TrimMode trim_mode,
+                             std::string *output) const override;
   // Get string with consideration for ambiguity from pending input
-  virtual void GetExpandedStrings(string *base,
-                                  std::set<string> *expanded) const;
-  virtual void GetExpandedStringsWithTransliterator(
-      Transliterators::Transliterator transliterator,
-      string *base,
-      std::set<string> *expanded) const;
-  virtual void GetPreedit(
-      size_t position, string *left, string *focused, string *right) const;
+  void GetExpandedStrings(std::string *base,
+                          std::set<std::string> *expanded) const override;
+  void GetExpandedStringsWithTransliterator(
+      Transliterators::Transliterator transliterator, std::string *base,
+      std::set<std::string> *expanded) const override;
+  void GetPreedit(size_t position, std::string *left, std::string *focused,
+                  std::string *right) const override;
 
-  virtual void SetInputMode(Transliterators::Transliterator transliterator);
+  void SetInputMode(Transliterators::Transliterator transliterator) override;
 
   // Return true if the composition is adviced to be committed immediately.
-  virtual bool ShouldCommit() const;
+  bool ShouldCommit() const override;
 
   // Get a clone.
-  // Clone is a thin wrapper of CloneImpl.
-  // CloneImpl is created to write test codes without dynamic_cast.
-  virtual CompositionInterface *Clone() const;
-  Composition *CloneImpl() const;
+  Composition *Clone() const override;
 
-  virtual void SetTable(const Table *table);
+  void SetTable(const Table *table) override;
+
+  bool IsToggleable(size_t position) const override;
 
   // Following methods are declared as public for unit test.
-  void GetChunkAt(size_t position,
-                  Transliterators::Transliterator transliterator,
-                  CharChunkList::iterator *chunk_it,
-                  size_t *inner_position);
+  CharChunkList::iterator GetChunkAt(
+      size_t position, Transliterators::Transliterator transliterator,
+      size_t *inner_position);
+  CharChunkList::const_iterator GetChunkAt(
+      size_t position, Transliterators::Transliterator transliterator,
+      size_t *inner_position) const;
   size_t GetPosition(Transliterators::Transliterator transliterator,
                      const CharChunkList::const_iterator &it) const;
 
@@ -131,20 +130,13 @@ class Composition : public CompositionInterface {
   void CombinePendingChunks(CharChunkList::iterator it,
                             const CompositionInput &input);
   const CharChunkList &GetCharChunkList() const;
-  const Table *table() const {
-    return table_;
-  }
-  const CharChunkList &chunks() const {
-    return chunks_;
-  }
-  Transliterators::Transliterator input_t12r() const {
-    return input_t12r_;
-  }
+  const Table *table() const { return table_; }
+  const CharChunkList &chunks() const { return chunks_; }
+  Transliterators::Transliterator input_t12r() const { return input_t12r_; }
 
  private:
   void GetStringWithModes(Transliterators::Transliterator transliterator,
-                          TrimMode trim_mode,
-                          string *output) const;
+                          TrimMode trim_mode, std::string *output) const;
 
   const Table *table_;
   CharChunkList chunks_;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,21 +40,20 @@
 namespace mozc {
 namespace win32 {
 TEST(FontUtilTest, ToLOGFONTWithTooLongFaceName) {
-  LOGFONT log_font = {
-    18,
-    11,
-    2700,
-    1800,
-    FW_NORMAL,
-    TRUE,
-    FALSE,
-    TRUE,
-    SYMBOL_CHARSET,
-    OUT_DEFAULT_PRECIS,
-    CLIP_DEFAULT_PRECIS,
-    ANTIALIASED_QUALITY,
-    FF_SCRIPT,
-    L"" };
+  LOGFONT log_font = {18,
+                      11,
+                      2700,
+                      1800,
+                      FW_NORMAL,
+                      TRUE,
+                      FALSE,
+                      TRUE,
+                      SYMBOL_CHARSET,
+                      OUT_DEFAULT_PRECIS,
+                      CLIP_DEFAULT_PRECIS,
+                      ANTIALIASED_QUALITY,
+                      FF_SCRIPT,
+                      L""};
 
   // make a string which is not null-terminated.
   for (size_t i = 0; i < arraysize(log_font.lfFaceName); ++i) {
@@ -82,7 +81,7 @@ TEST(FontUtilTest, ToWinLogFontWithTooLongFaceName) {
   win_log_font.set_quality(ANTIALIASED_QUALITY);
   win_log_font.set_pitch_and_family(FF_SCRIPT);
 
-  LOGFONT log_font = { };
+  LOGFONT log_font = {};
   std::wstring too_long_face_name(L' ', arraysize(log_font.lfFaceName));
   string face_name;
   mozc::Util::WideToUTF8(too_long_face_name, &face_name);
@@ -93,26 +92,25 @@ TEST(FontUtilTest, ToWinLogFontWithTooLongFaceName) {
 }
 
 TEST(FontUtilTest, RoundtripToWinLogFont) {
-  const LOGFONT original = {
-    18,
-    11,
-    2700,
-    1800,
-    FW_NORMAL,
-    TRUE,
-    FALSE,
-    TRUE,
-    SYMBOL_CHARSET,
-    OUT_DEFAULT_PRECIS,
-    CLIP_DEFAULT_PRECIS,
-    ANTIALIASED_QUALITY,
-    FF_SCRIPT,
-    L"MS Sans Serif" };
+  const LOGFONT original = {18,
+                            11,
+                            2700,
+                            1800,
+                            FW_NORMAL,
+                            TRUE,
+                            FALSE,
+                            TRUE,
+                            SYMBOL_CHARSET,
+                            OUT_DEFAULT_PRECIS,
+                            CLIP_DEFAULT_PRECIS,
+                            ANTIALIASED_QUALITY,
+                            FF_SCRIPT,
+                            L"MS Sans Serif"};
 
   mozc::commands::RendererCommand::WinLogFont win_log_font;
   EXPECT_TRUE(FontUtil::ToWinLogFont(original, &win_log_font));
 
-  LOGFONT result = { };
+  LOGFONT result = {};
   EXPECT_TRUE(FontUtil::ToLOGFONT(win_log_font, &result));
 
   EXPECT_EQ(original.lfHeight, result.lfHeight);
@@ -150,7 +148,7 @@ TEST(FontUtilTest, RoundtripToLOGFONT) {
   mozc::Util::WideToUTF8(L"MS Sans Serif", &face_name);
   original.set_face_name(face_name);
 
-  LOGFONT log_font = { };
+  LOGFONT log_font = {};
   EXPECT_TRUE(FontUtil::ToLOGFONT(original, &log_font));
 
   mozc::commands::RendererCommand::WinLogFont result;

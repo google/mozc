@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,8 @@ namespace mozc {
 
 class NodeAllocator {
  public:
-  NodeAllocator() : node_freelist_(1024), max_nodes_size_(8192),
-                    node_count_(0) {}
+  NodeAllocator()
+      : node_freelist_(1024), max_nodes_size_(8192), node_count_(0) {}
   ~NodeAllocator() {}
 
   Node *NewNode() {
@@ -57,17 +57,13 @@ class NodeAllocator {
     node_count_ = 0;
   }
 
-  size_t max_nodes_size() const {
-    return max_nodes_size_;
-  }
+  size_t max_nodes_size() const { return max_nodes_size_; }
 
   void set_max_nodes_size(size_t max_nodes_size) {
     max_nodes_size_ = max_nodes_size;
   }
 
-  size_t node_count() const {
-    return node_count_;
-  }
+  size_t node_count() const { return node_count_; }
 
  private:
   FreeList<Node> node_freelist_;

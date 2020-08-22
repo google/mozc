@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,8 @@ using ATL::CComPtr;
 
 TipClassFactory::TipClassFactory() {}
 
-HRESULT STDMETHODCALLTYPE TipClassFactory::QueryInterface(
-  REFIID interface_id, void **object) {
+HRESULT STDMETHODCALLTYPE TipClassFactory::QueryInterface(REFIID interface_id,
+                                                          void **object) {
   if (object == nullptr) {
     return E_INVALIDARG;
   }
@@ -74,8 +74,9 @@ ULONG STDMETHODCALLTYPE TipClassFactory::Release() {
   return count;
 }
 
-HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(
-    IUnknown *unknown, REFIID interface_id, void **object) {
+HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(IUnknown *unknown,
+                                                          REFIID interface_id,
+                                                          void **object) {
   HRESULT result = S_OK;
 
   if (object == nullptr) {

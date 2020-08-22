@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,15 +37,11 @@ namespace renderer {
 namespace gtk {
 
 UnixRenderer::UnixRenderer(WindowManagerInterface *window_manager)
-    : window_manager_(window_manager) {
-}
+    : window_manager_(window_manager) {}
 
-UnixRenderer::~UnixRenderer() {
-}
+UnixRenderer::~UnixRenderer() {}
 
-bool UnixRenderer::Activate() {
-  return window_manager_->Activate();
-}
+bool UnixRenderer::Activate() { return window_manager_->Activate(); }
 
 bool UnixRenderer::IsAvailable() const {
   return window_manager_->IsAvailable();
@@ -75,9 +71,7 @@ bool UnixRenderer::ExecCommand(const commands::RendererCommand &command) {
   return true;
 }
 
-void UnixRenderer::Initialize() {
-  window_manager_->Initialize();
-}
+void UnixRenderer::Initialize() { window_manager_->Initialize(); }
 
 void UnixRenderer::SetSendCommandInterface(
     client::SendCommandInterface *send_command_interface) {

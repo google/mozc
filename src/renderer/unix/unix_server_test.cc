@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,13 +31,12 @@
 
 #include "base/system_util.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
-
+using testing::_;
 using testing::Return;
 using testing::StrictMock;
-using testing::_;
 
 namespace mozc {
 namespace renderer {
@@ -58,13 +57,13 @@ TEST_F(UnixServerTest, StartMessageLoopTest) {
   UnixServer::MozcWatchSource watch;
 
   EXPECT_CALL(*gtk_mock, GSourceNew(_, _))
-      .WillOnce(Return(reinterpret_cast<GSource*>(&watch)));
+      .WillOnce(Return(reinterpret_cast<GSource *>(&watch)));
   EXPECT_CALL(*gtk_mock, GSourceSetCanRecurse(&watch.source, TRUE));
   EXPECT_CALL(*gtk_mock, GSourceAttach(&watch.source, NULL));
   EXPECT_CALL(*gtk_mock,
               GSourceSetCallback(&watch.source, NULL, (gpointer)&server, NULL));
-  EXPECT_CALL(*gtk_mock, GSourceAddPoll(
-      reinterpret_cast<GSource*>(&watch), &watch.poll_fd));
+  EXPECT_CALL(*gtk_mock, GSourceAddPoll(reinterpret_cast<GSource *>(&watch),
+                                        &watch.poll_fd));
   EXPECT_CALL(*gtk_mock, GdkThreadsEnter());
   EXPECT_CALL(*gtk_mock, GtkMain());
   EXPECT_CALL(*gtk_mock, GdkThreadsLeave());

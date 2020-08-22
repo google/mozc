@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,8 +55,7 @@ void AddCharacterFormRule(const char *group,
                           const Config::CharacterForm preedit_form,
                           const Config::CharacterForm conversion_form,
                           Config *config) {
-  Config::CharacterFormRule *rule =
-      config->add_character_form_rules();
+  Config::CharacterFormRule *rule = config->add_character_form_rules();
   rule->set_group(group);
   rule->set_preedit_character_form(preedit_form);
   rule->set_conversion_character_form(conversion_form);
@@ -92,8 +91,8 @@ class ConfigHandlerImpl {
   bool SetConfig(const Config &config);
   void SetImposedConfig(const Config &config);
   bool Reload();
-  void SetConfigFileName(const string &filename);
-  string GetConfigFileName();
+  void SetConfigFileName(const std::string &filename);
+  std::string GetConfigFileName();
 
  private:
   // copy config to config_ and do some
@@ -101,7 +100,7 @@ class ConfigHandlerImpl {
   bool SetConfigInternal(const Config &config);
   void UpdateMergedConfig();
 
-  string filename_;
+  std::string filename_;
   Config stored_config_;
   Config imposed_config_;
   // equals to config_.MergeFrom(imposed_config_)
@@ -136,7 +135,7 @@ bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
 bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   stored_config_.CopyFrom(config);
 
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
   // Delete the optional field from the config.
   stored_config_.clear_verbose_level();
   // Fall back if the default value is not the expected value.
@@ -220,7 +219,7 @@ bool ConfigHandlerImpl::Reload() {
     ret_code = false;
   } else if (!input_proto.ParseFromIstream(is.get())) {
     LOG(ERROR) << filename_ << " is broken";
-    input_proto.Clear();   // revert to default setting
+    input_proto.Clear();  // revert to default setting
     ret_code = false;
   }
 
@@ -230,14 +229,14 @@ bool ConfigHandlerImpl::Reload() {
   return ret_code;
 }
 
-void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
+void ConfigHandlerImpl::SetConfigFileName(const std::string &filename) {
   scoped_lock lock(&mutex_);
   VLOG(1) << "set new config file name: " << filename;
   filename_ = filename;
   Reload();
 }
 
-string ConfigHandlerImpl::GetConfigFileName() {
+std::string ConfigHandlerImpl::GetConfigFileName() {
   scoped_lock lock(&mutex_);
   return filename_;
 }
@@ -276,11 +275,9 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   AddCharacterFormRule("(){}[]", kFullWidth, kLastForm, config);
   AddCharacterFormRule(".,", kFullWidth, kLastForm, config);
   // "。、",
-  AddCharacterFormRule("。、", kFullWidth, kFullWidth,
-                       config);
+  AddCharacterFormRule("。、", kFullWidth, kFullWidth, config);
   // "・「」"
-  AddCharacterFormRule("・「」",
-                       kFullWidth, kFullWidth, config);
+  AddCharacterFormRule("・「」", kFullWidth, kFullWidth, config);
   AddCharacterFormRule("\"'", kFullWidth, kLastForm, config);
   AddCharacterFormRule(":;", kFullWidth, kLastForm, config);
   AddCharacterFormRule("#%&@$^_|`\\", kFullWidth, kLastForm, config);
@@ -298,20 +295,18 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
 }
 
 // static
-const Config& ConfigHandler::DefaultConfig() {
+const Config &ConfigHandler::DefaultConfig() {
   return GetConfigHandlerImpl()->DefaultConfig();
 }
 
 // Reload from file
-bool ConfigHandler::Reload() {
-  return GetConfigHandlerImpl()->Reload();
-}
+bool ConfigHandler::Reload() { return GetConfigHandlerImpl()->Reload(); }
 
-void ConfigHandler::SetConfigFileName(const string &filename) {
+void ConfigHandler::SetConfigFileName(const std::string &filename) {
   GetConfigHandlerImpl()->SetConfigFileName(filename);
 }
 
-string ConfigHandler::GetConfigFileName() {
+std::string ConfigHandler::GetConfigFileName() {
   return GetConfigHandlerImpl()->GetConfigFileName();
 }
 
@@ -325,13 +320,13 @@ void ConfigHandler::SetMetaData(Config *config) {
 }
 
 Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
-#if defined(OS_MACOSX)
+#if defined(__APPLE__)
   return config::Config::KOTOERI;
-#elif defined(OS_NACL)  // OS_MACOSX
+#elif defined(OS_NACL)  // __APPLE__
   return config::Config::CHROMEOS;
-#else  // OS_MACOSX or OS_NACL
+#else                   // __APPLE__ or OS_NACL
   return config::Config::MSIME;
-#endif  // OS_MACOSX or OS_NACL
+#endif                  // __APPLE__ or OS_NACL
 }
 
 }  // namespace config

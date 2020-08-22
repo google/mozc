@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
-#include <strsafe.h>
 #include <objbase.h>
+#include <strsafe.h>
 
 #include <iomanip>
 #include <map>
@@ -62,12 +62,14 @@ namespace {
 typedef std::map<int, DWORD> PreloadOrderToKLIDMap;
 
 // Windows NT 6.0, 6.1 and 6.2
-const CLSID CLSID_IMJPTIP = {
-    0x03b5835f, 0xf03c, 0x411b, {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}
-};
-const GUID GUID_IMJPTIP = {
-    0xa76c93d9, 0x5523, 0x4e90, {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}
-};
+const CLSID CLSID_IMJPTIP = {0x03b5835f,
+                             0xf03c,
+                             0x411b,
+                             {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}};
+const GUID GUID_IMJPTIP = {0xa76c93d9,
+                           0x5523,
+                           0x4e90,
+                           {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
 
 const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
@@ -91,8 +93,8 @@ std::wstring utow(unsigned int i) {
   return ss.str();
 }
 
-std::wstring GetIMEFileNameFromKeyboardLayout(
-    const CRegKey &key, const KeyboardLayoutID &klid) {
+std::wstring GetIMEFileNameFromKeyboardLayout(const CRegKey &key,
+                                              const KeyboardLayoutID &klid) {
   CRegKey subkey;
   LONG result = subkey.Open(key, klid.ToString().c_str(), KEY_READ);
   if (ERROR_SUCCESS != result) {
@@ -101,8 +103,8 @@ std::wstring GetIMEFileNameFromKeyboardLayout(
 
   wchar_t filename_buffer[kMaxValueNameLength];
   ULONG filename_length_including_null = kMaxValueNameLength;
-  result = subkey.QueryStringValue(
-      L"Ime File", filename_buffer, &filename_length_including_null);
+  result = subkey.QueryStringValue(L"Ime File", filename_buffer,
+                                   &filename_length_including_null);
 
   // Note that |filename_length_including_null| contains NUL terminator.
   if ((ERROR_SUCCESS != result) || (filename_length_including_null <= 1)) {
@@ -125,8 +127,7 @@ bool GenerateKeyboardLayoutList(
   keyboard_layouts->clear();
 
   CRegKey key;
-  LONG result = key.Open(
-      HKEY_LOCAL_MACHINE, kRegKeyboardLayouts, KEY_READ);
+  LONG result = key.Open(HKEY_LOCAL_MACHINE, kRegKeyboardLayouts, KEY_READ);
   if (ERROR_SUCCESS != result) {
     return false;
   }
@@ -134,10 +135,7 @@ bool GenerateKeyboardLayoutList(
   wchar_t value_name[kMaxValueNameLength];
   for (DWORD enum_reg_index = 0;; ++enum_reg_index) {
     DWORD value_name_length = kMaxValueNameLength;
-    result = key.EnumKey(
-        enum_reg_index,
-        value_name,
-        &value_name_length);
+    result = key.EnumKey(enum_reg_index, value_name, &value_name_length);
     if (ERROR_NO_MORE_ITEMS == result) {
       return true;
     }
@@ -191,8 +189,7 @@ std::wstring GetIMEFileName(HKL hkl) {
 }
 
 bool GetInstalledProfilesByLanguageForTSF(
-    LANGID langid,
-    std::vector<LayoutProfileInfo> *installed_profiles) {
+    LANGID langid, std::vector<LayoutProfileInfo> *installed_profiles) {
   ScopedCOMInitializer com_initializer;
   if (FAILED(com_initializer.error_code())) {
     return false;
@@ -230,8 +227,8 @@ bool GetInstalledProfilesByLanguageForTSF(
     profile.langid = src.langid;
     profile.is_default = (src.fActive != FALSE);
     BOOL enabled = FALSE;
-    hr = profiles->IsEnabledLanguageProfile(
-        src.clsid, langid, src.guidProfile, &enabled);
+    hr = profiles->IsEnabledLanguageProfile(src.clsid, langid, src.guidProfile,
+                                            &enabled);
     if (SUCCEEDED(hr)) {
       profile.is_enabled = (enabled != FALSE);
     }
@@ -245,8 +242,7 @@ bool GetInstalledProfilesByLanguageForTSF(
 }
 
 bool GetInstalledProfilesByLanguageForIMM32(
-    LANGID langid,
-    std::vector<LayoutProfileInfo> *installed_profiles) {
+    LANGID langid, std::vector<LayoutProfileInfo> *installed_profiles) {
   std::vector<KeyboardLayoutInfo> keyboard_layouts;
   if (!GenerateKeyboardLayoutList(&keyboard_layouts)) {
     DLOG(ERROR) << "GenerateKeyboardLayoutList failed.";
@@ -289,14 +285,10 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
   for (DWORD i = 0;; ++i) {
     DWORD value_name_length = kMaxValueNameLength;
     DWORD value_length = kMaxValueLength;
-    result = RegEnumValue(preload_key,
-                          i,
-                          value_name,
-                          &value_name_length,
+    result = RegEnumValue(preload_key, i, value_name, &value_name_length,
                           nullptr,  // reserved (must be nullptr)
                           nullptr,  // type (optional)
-                          value,
-                          &value_length);
+                          value, &value_length);
     if (ERROR_NO_MORE_ITEMS == result) {
       break;
     }
@@ -305,8 +297,8 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
     }
 
     const int ivalue_name = _wtoi(value_name);
-    const std::wstring wvalue(reinterpret_cast<wchar_t*>(value),
-                         (value_length / sizeof(wchar_t)) - 1);
+    const std::wstring wvalue(reinterpret_cast<wchar_t *>(value),
+                              (value_length / sizeof(wchar_t)) - 1);
     KeyboardLayoutID klid(wvalue);
     if (!klid.has_id()) {
       continue;
@@ -324,8 +316,7 @@ std::wstring GUIDToString(const GUID &guid) {
     return L"";
   }
 
-  const size_t character_length_without_null =
-      character_length_with_null - 1;
+  const size_t character_length_without_null = character_length_with_null - 1;
   return std::wstring(buffer, buffer + character_length_without_null);
 }
 
@@ -352,8 +343,8 @@ bool BroadcastNewIME(const KeyboardLayoutInfo &layout) {
   // the previous layout.  Consider to use
   // ITfInputProcessorProfiles::SetDefaultLanguageProfile for TIP backed
   // layout.
-  if (::SystemParametersInfo(
-          SPI_SETDEFAULTINPUTLANG, 0, &hkl, SPIF_SENDCHANGE) == FALSE) {
+  if (::SystemParametersInfo(SPI_SETDEFAULTINPUTLANG, 0, &hkl,
+                             SPIF_SENDCHANGE) == FALSE) {
     LOG(ERROR) << "SystemParameterInfo failed: " << GetLastError();
     return false;
   }
@@ -370,11 +361,8 @@ bool BroadcastNewIME(const KeyboardLayoutInfo &layout) {
   // TODO(yukawa): Make a common function around WM_INPUTLANGCHANGEREQUEST.
   DWORD recipients = BSM_APPLICATIONS;
   const LONG result = ::BroadcastSystemMessage(
-      BSF_POSTMESSAGE,
-      &recipients,
-      WM_INPUTLANGCHANGEREQUEST,
-      INPUTLANGCHANGE_SYSCHARSET,
-      reinterpret_cast<LPARAM>(hkl));
+      BSF_POSTMESSAGE, &recipients, WM_INPUTLANGCHANGEREQUEST,
+      INPUTLANGCHANGE_SYSCHARSET, reinterpret_cast<LPARAM>(hkl));
   if (result == 0) {
     const int error = ::GetLastError();
     LOG(ERROR) << "BroadcastSystemMessage failed. error = " << error;
@@ -398,9 +386,8 @@ bool BroadcastNewTIPOnVista(const LayoutProfileInfo &profile) {
     return false;
   }
 
-  const DWORD activate_flags =
-      TF_IPPMF_FORSESSION | TF_IPPMF_ENABLEPROFILE |
-      TF_IPPMF_DONTCARECURRENTINPUTLANGUAGE;
+  const DWORD activate_flags = TF_IPPMF_FORSESSION | TF_IPPMF_ENABLEPROFILE |
+                               TF_IPPMF_DONTCARECURRENTINPUTLANGUAGE;
 
   hr = profile_manager->ActivateProfile(
       TF_PROFILETYPE_INPUTPROCESSOR, profile.langid, profile.clsid,
@@ -412,8 +399,8 @@ bool BroadcastNewTIPOnVista(const LayoutProfileInfo &profile) {
   return true;
 }
 
-bool EnableAndBroadcastNewLayout(
-    const LayoutProfileInfo &profile, bool broadcast_change) {
+bool EnableAndBroadcastNewLayout(const LayoutProfileInfo &profile,
+                                 bool broadcast_change) {
   if (profile.is_tip) {
     ScopedCOMInitializer com_initializer;
     if (FAILED(com_initializer.error_code())) {
@@ -428,8 +415,8 @@ bool EnableAndBroadcastNewLayout(
       return false;
     }
 
-    DWORD activate_flags = TF_IPPMF_ENABLEPROFILE |
-                           TF_IPPMF_DONTCARECURRENTINPUTLANGUAGE;
+    DWORD activate_flags =
+        TF_IPPMF_ENABLEPROFILE | TF_IPPMF_DONTCARECURRENTINPUTLANGUAGE;
 
     if (broadcast_change) {
       activate_flags |= TF_IPPMF_FORSESSION;
@@ -468,8 +455,8 @@ bool GetActiveKeyboardLayouts(std::vector<HKL> *keyboard_layouts) {
 
   const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
   unique_ptr<HKL[]> buffer(new HKL[num_keyboard_layout]);
-  const int num_copied = ::GetKeyboardLayoutList(num_keyboard_layout,
-                                                 buffer.get());
+  const int num_copied =
+      ::GetKeyboardLayoutList(num_keyboard_layout, buffer.get());
   keyboard_layouts->assign(buffer.get(), buffer.get() + num_copied);
 
   return true;
@@ -517,31 +504,26 @@ void EnableAndSetDefaultIfLayoutIsTIP(const KeyboardLayoutInfo &layout) {
     }
 
     HKL hkl = nullptr;
-    hr = substitute_layout->GetSubstituteKeyboardLayout(profile.clsid,
-                                                        profile.langid,
-                                                        profile.guidProfile,
-                                                        &hkl);
+    hr = substitute_layout->GetSubstituteKeyboardLayout(
+        profile.clsid, profile.langid, profile.guidProfile, &hkl);
     if (FAILED(hr)) {
       DLOG(ERROR) << "GetSubstituteKeyboardLayout failed";
       continue;
     }
-    if (!WinUtil::SystemEqualString(
-             GetIMEFileName(hkl), layout.ime_filename, true)) {
+    if (!WinUtil::SystemEqualString(GetIMEFileName(hkl), layout.ime_filename,
+                                    true)) {
       continue;
     }
 
     BOOL enabled = TRUE;
-    hr = profiles->EnableLanguageProfile(profile.clsid,
-                                         profile.langid,
-                                         profile.guidProfile,
-                                         TRUE);
+    hr = profiles->EnableLanguageProfile(profile.clsid, profile.langid,
+                                         profile.guidProfile, TRUE);
     if (FAILED(hr)) {
       DLOG(ERROR) << "EnableLanguageProfile failed";
       continue;
     }
 
-    hr = profiles->SetDefaultLanguageProfile(profile.langid,
-                                             profile.clsid,
+    hr = profiles->SetDefaultLanguageProfile(profile.langid, profile.clsid,
                                              profile.guidProfile);
     if (FAILED(hr)) {
       DLOG(ERROR) << "SetDefaultLanguageProfile failed";
@@ -622,8 +604,8 @@ bool IsEqualProfile(const LayoutProfileInfo &lhs,
   if (lhs.klid != rhs.klid) {
     return false;
   }
-  if (!WinUtil::SystemEqualString(
-           lhs.ime_filename.c_str(), rhs.ime_filename.c_str(), true)) {
+  if (!WinUtil::SystemEqualString(lhs.ime_filename.c_str(),
+                                  rhs.ime_filename.c_str(), true)) {
     return false;
   }
   return true;
@@ -695,8 +677,9 @@ void RemoveHotKeyForVista(
   std::vector<KeyboardLayoutInfo> hotkey_remove_targets;
   for (size_t i = 0; i < installed_profiles.size(); ++i) {
     const LayoutProfileInfo &profile = installed_profiles[i];
-    if (!profile.is_tip && WinUtil::SystemEqualString(
-              profile.ime_filename, ImmRegistrar::GetFileNameForIME(), true)) {
+    if (!profile.is_tip &&
+        WinUtil::SystemEqualString(profile.ime_filename,
+                                   ImmRegistrar::GetFileNameForIME(), true)) {
       // This is the full IMM32 version of Google Japanese Input.
       KeyboardLayoutInfo info;
       info.klid = profile.klid;
@@ -713,8 +696,7 @@ void RemoveHotKeyForVista(
 
 }  // namespace
 
-KeyboardLayoutInfo::KeyboardLayoutInfo()
-    : klid(0) {}
+KeyboardLayoutInfo::KeyboardLayoutInfo() : klid(0) {}
 
 LayoutProfileInfo::LayoutProfileInfo()
     : langid(0),
@@ -730,8 +712,7 @@ LayoutProfileInfo::LayoutProfileInfo()
 bool UninstallHelper::GetNewEnabledProfileForVista(
     const std::vector<LayoutProfileInfo> &current_profiles,
     const std::vector<LayoutProfileInfo> &installed_profiles,
-    LayoutProfileInfo *current_default,
-    LayoutProfileInfo *new_default,
+    LayoutProfileInfo *current_default, LayoutProfileInfo *new_default,
     std::vector<LayoutProfileInfo> *removed_profiles) {
   if (current_default == nullptr) {
     return false;
@@ -756,8 +737,8 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
     }
 
     if (!profile.is_tip &&
-        WinUtil::SystemEqualString(
-            profile.ime_filename, ImmRegistrar::GetFileNameForIME(), true)) {
+        WinUtil::SystemEqualString(profile.ime_filename,
+                                   ImmRegistrar::GetFileNameForIME(), true)) {
       // This is the full IMM32 version of Google Japanese Input.
       removed_profiles->push_back(profile);
       continue;
@@ -799,8 +780,7 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
 }
 
 bool UninstallHelper::GetInstalledProfilesByLanguage(
-    LANGID langid,
-    std::vector<LayoutProfileInfo> *installed_profiles) {
+    LANGID langid, std::vector<LayoutProfileInfo> *installed_profiles) {
   if (installed_profiles == nullptr) {
     return false;
   }
@@ -834,12 +814,12 @@ bool UninstallHelper::GetCurrentProfilesForVista(
   }
 
   {
-    const UINT num_element = ::EnumEnabledLayoutOrTip(
-        nullptr, nullptr, nullptr, nullptr, 0);
+    const UINT num_element =
+        ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
     unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
         new LAYOUTORTIPPROFILE[num_element]);
-    const UINT num_copied = ::EnumEnabledLayoutOrTip(
-        nullptr, nullptr, nullptr, buffer.get(), num_element);
+    const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
+                                                     buffer.get(), num_element);
 
     for (size_t i = 0; i < num_copied; ++i) {
       const LAYOUTORTIPPROFILE &src = buffer[i];
@@ -897,8 +877,8 @@ bool UninstallHelper::RemoveProfilesForVista(
     return true;
   }
 
-  const std::wstring &profile_string = ComposeProfileStringForVista(
-      profiles_to_be_removed);
+  const std::wstring &profile_string =
+      ComposeProfileStringForVista(profiles_to_be_removed);
 
   const BOOL result = ::InstallLayoutOrTipUserReg(
       nullptr, nullptr, nullptr, profile_string.c_str(), ILOT_UNINSTALL);
@@ -1019,7 +999,6 @@ bool UninstallHelper::RestoreUserIMEEnvironmentMain() {
 
 bool UninstallHelper::EnsureIMEIsRemovedForCurrentUser(
     bool disable_hkcu_cache) {
-
   if (disable_hkcu_cache) {
     // For some reason, HKCU in a deferred, non-impersonated custom action is
     // occasionally mapped not to the HKU/.Default but to the active user's

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,10 @@
 #define MOZC_WIN32_BASE_STRING_UTIL_H_
 
 #include <windows.h>
+
 #include <string>
 
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace commands {
@@ -46,15 +47,18 @@ namespace win32 {
 
 class StringUtil {
  public:
+  StringUtil() = delete;
+  ~StringUtil() = delete;
+
   // Converts |key| to a reading string used for a value of GUID_PROP_READING.
   // http://msdn.microsoft.com/en-us/library/ms629017(VS.85).aspx
   // This function only supports conversion of Japanese characters (characters
   // covered by code page 932).
-  static std::wstring KeyToReading(StringPiece key);
+  static std::wstring KeyToReading(absl::string_view key);
 
   // Returns a UTF8 string converted from the result of KeyToReading.
   // This function is mainly for unittest.
-  static string KeyToReadingA(StringPiece key);
+  static string KeyToReadingA(absl::string_view key);
 
   // Joins all segment strings in |preedit| and returns it.
   static std::wstring ComposePreeditText(

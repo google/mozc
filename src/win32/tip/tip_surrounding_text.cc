@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,14 +58,12 @@ using std::unique_ptr;
 namespace {
 
 const int kMaxSurroundingLength = 20;
-const int kMaxCharacterLength = 1024*1024;
+const int kMaxCharacterLength = 1024 * 1024;
 
 class SurroudingTextUpdater : public ITfEditSession {
  public:
   SurroudingTextUpdater(ITfContext *context, bool move_anchor)
-      : context_(context),
-        move_anchor_(move_anchor) {
-  }
+      : context_(context), move_anchor_(move_anchor) {}
 
   // Destructor is kept as non-virtual because this class is designed to be
   // destroyed only by "delete this" in Release() method.
@@ -94,9 +92,7 @@ class SurroudingTextUpdater : public ITfEditSession {
     return S_OK;
   }
 
-  virtual STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   virtual STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -106,9 +102,7 @@ class SurroudingTextUpdater : public ITfEditSession {
     return count;
   }
 
-  const TipSurroundingTextInfo &result() const {
-    return result_;
-  }
+  const TipSurroundingTextInfo &result() const { return result_; }
 
  private:
   virtual STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) {
@@ -130,21 +124,21 @@ class SurroudingTextUpdater : public ITfEditSession {
 
     CComPtr<ITfRange> selected_range;
     {
-      result = TipRangeUtil::GetDefaultSelection(
-          context_, edit_cookie, &selected_range, nullptr);
+      result = TipRangeUtil::GetDefaultSelection(context_, edit_cookie,
+                                                 &selected_range, nullptr);
       if (FAILED(result)) {
         return result;
       }
 
-      result = TipRangeUtil::GetText(
-          selected_range, edit_cookie, &result_.selected_text);
+      result = TipRangeUtil::GetText(selected_range, edit_cookie,
+                                     &result_.selected_text);
       result_.has_selected_text = SUCCEEDED(result);
 
       // For reconversion, the active selection end should be moved to the
       // front character.
       if (move_anchor_) {
-        result = TipRangeUtil::SetSelection(
-            context_, edit_cookie, selected_range, TF_AE_START);
+        result = TipRangeUtil::SetSelection(context_, edit_cookie,
+                                            selected_range, TF_AE_START);
         if (FAILED(result)) {
           return result;
         }
@@ -157,14 +151,12 @@ class SurroudingTextUpdater : public ITfEditSession {
       CComPtr<ITfRange> preceeding_range;
       LONG preceeding_range_shifted = 0;
       if (SUCCEEDED(selected_range->Clone(&preceeding_range)) &&
-          SUCCEEDED(preceeding_range->Collapse(edit_cookie,
-                                               TF_ANCHOR_START)) &&
-          SUCCEEDED(preceeding_range->ShiftStart(edit_cookie,
-                                                 -kMaxSurroundingLength,
-                                                 &preceeding_range_shifted,
-                                                 &halt_cond))) {
-        result = TipRangeUtil::GetText(
-            preceeding_range, edit_cookie, &result_.preceding_text);
+          SUCCEEDED(preceeding_range->Collapse(edit_cookie, TF_ANCHOR_START)) &&
+          SUCCEEDED(preceeding_range->ShiftStart(
+              edit_cookie, -kMaxSurroundingLength, &preceeding_range_shifted,
+              &halt_cond))) {
+        result = TipRangeUtil::GetText(preceeding_range, edit_cookie,
+                                       &result_.preceding_text);
         result_.has_preceding_text = SUCCEEDED(result);
       }
     }
@@ -173,14 +165,12 @@ class SurroudingTextUpdater : public ITfEditSession {
       CComPtr<ITfRange> following_range;
       LONG following_range_shifted = 0;
       if (SUCCEEDED(selected_range->Clone(&following_range)) &&
-          SUCCEEDED(following_range->Collapse(edit_cookie,
-                                              TF_ANCHOR_END)) &&
-          SUCCEEDED(following_range->ShiftEnd(edit_cookie,
-                                              kMaxSurroundingLength,
-                                              &following_range_shifted,
-                                              &halt_cond))) {
-        result = TipRangeUtil::GetText(
-            following_range, edit_cookie, &result_.following_text);
+          SUCCEEDED(following_range->Collapse(edit_cookie, TF_ANCHOR_END)) &&
+          SUCCEEDED(following_range->ShiftEnd(
+              edit_cookie, kMaxSurroundingLength, &following_range_shifted,
+              &halt_cond))) {
+        result = TipRangeUtil::GetText(following_range, edit_cookie,
+                                       &result_.following_text);
         result_.has_following_text = SUCCEEDED(result);
       }
     }
@@ -198,11 +188,8 @@ class SurroudingTextUpdater : public ITfEditSession {
 
 class PrecedingTextDeleter : public ITfEditSession {
  public:
-  PrecedingTextDeleter(
-      ITfContext *context, size_t num_characters_in_ucs4)
-      : context_(context),
-        num_characters_in_ucs4_(num_characters_in_ucs4) {
-  }
+  PrecedingTextDeleter(ITfContext *context, size_t num_characters_in_ucs4)
+      : context_(context), num_characters_in_ucs4_(num_characters_in_ucs4) {}
 
   // Destructor is kept as non-virtual because this class is designed to be
   // destroyed only by "delete this" in Release() method.
@@ -231,9 +218,7 @@ class PrecedingTextDeleter : public ITfEditSession {
     return S_OK;
   }
 
-  virtual STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   virtual STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -248,8 +233,8 @@ class PrecedingTextDeleter : public ITfEditSession {
     HRESULT result = S_OK;
 
     CComPtr<ITfRange> selected_range;
-    result = TipRangeUtil::GetDefaultSelection(
-        context_, edit_cookie, &selected_range, nullptr);
+    result = TipRangeUtil::GetDefaultSelection(context_, edit_cookie,
+                                               &selected_range, nullptr);
     if (FAILED(result)) {
       return result;
     }
@@ -272,15 +257,14 @@ class PrecedingTextDeleter : public ITfEditSession {
     const LONG initial_offset_utf16 =
         -static_cast<LONG>(num_characters_in_ucs4_) * 2;
     LONG preceeding_range_shifted = 0;
-    if (FAILED(preceeding_range->ShiftStart(edit_cookie,
-                                            initial_offset_utf16,
+    if (FAILED(preceeding_range->ShiftStart(edit_cookie, initial_offset_utf16,
                                             &preceeding_range_shifted,
                                             &halt_cond))) {
       return E_FAIL;
     }
     std::wstring total_string;
-    if (FAILED(TipRangeUtil::GetText(
-            preceeding_range, edit_cookie, &total_string))) {
+    if (FAILED(TipRangeUtil::GetText(preceeding_range, edit_cookie,
+                                     &total_string))) {
       return E_FAIL;
     }
     if (total_string.empty()) {
@@ -294,8 +278,7 @@ class PrecedingTextDeleter : public ITfEditSession {
     }
 
     const LONG final_offset = total_string.size() - len_in_utf16;
-    if (FAILED(preceeding_range->ShiftStart(edit_cookie,
-                                            final_offset,
+    if (FAILED(preceeding_range->ShiftStart(edit_cookie, final_offset,
                                             &preceeding_range_shifted,
                                             &halt_cond))) {
       return E_FAIL;
@@ -317,7 +300,6 @@ class PrecedingTextDeleter : public ITfEditSession {
   DISALLOW_COPY_AND_ASSIGN(PrecedingTextDeleter);
 };
 
-
 bool PrepareForReconversionIMM32(ITfContext *context,
                                  TipSurroundingTextInfo *info) {
   CComPtr<ITfContextView> context_view;
@@ -332,8 +314,8 @@ bool PrepareForReconversionIMM32(ITfContext *context,
     return false;
   }
 
-  LRESULT result = ::SendMessage(
-      attached_window, WM_IME_REQUEST, IMR_RECONVERTSTRING, 0);
+  LRESULT result =
+      ::SendMessage(attached_window, WM_IME_REQUEST, IMR_RECONVERTSTRING, 0);
   if (result == 0) {
     // IMR_RECONVERTSTRING is not supported.
     return false;
@@ -347,9 +329,8 @@ bool PrepareForReconversionIMM32(ITfContext *context,
   reconvert_string->dwSize = buffer_size;
   reconvert_string->dwVersion = 0;
 
-  result = ::SendMessage(
-      attached_window, WM_IME_REQUEST, IMR_RECONVERTSTRING,
-      reinterpret_cast<LPARAM>(reconvert_string));
+  result = ::SendMessage(attached_window, WM_IME_REQUEST, IMR_RECONVERTSTRING,
+                         reinterpret_cast<LPARAM>(reconvert_string));
   if (result == 0) {
     return false;
   }
@@ -359,9 +340,9 @@ bool PrepareForReconversionIMM32(ITfContext *context,
   std::wstring target;
   std::wstring following_composition;
   std::wstring following_text;
-  if (!ReconvertString::Decompose(
-          reconvert_string, &preceding_text, &preceding_composition, &target,
-          &following_composition, &following_text)) {
+  if (!ReconvertString::Decompose(reconvert_string, &preceding_text,
+                                  &preceding_composition, &target,
+                                  &following_composition, &following_text)) {
     return false;
   }
   info->in_composition = false;
@@ -383,11 +364,9 @@ TipSurroundingTextInfo::TipSurroundingTextInfo()
       has_selected_text(false),
       has_following_text(false),
       is_transitory(false),
-      in_composition(false) {
-}
+      in_composition(false) {}
 
-bool TipSurroundingText::Get(TipTextService *text_service,
-                             ITfContext *context,
+bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
                              TipSurroundingTextInfo *info) {
   if (info == nullptr) {
     return false;
@@ -407,9 +386,7 @@ bool TipSurroundingText::Get(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(),
-      updater,
-      TF_ES_SYNC | TF_ES_READ,
+      text_service->GetClientID(), updater, TF_ES_SYNC | TF_ES_READ,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -439,9 +416,7 @@ bool PrepareForReconversionTSF(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(),
-      updater,
-      TF_ES_SYNC | TF_ES_READWRITE,
+      text_service->GetClientID(), updater, TF_ES_SYNC | TF_ES_READWRITE,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -455,10 +430,8 @@ bool PrepareForReconversionTSF(TipTextService *text_service,
 }
 
 bool TipSurroundingText::PrepareForReconversionFromIme(
-    TipTextService *text_service,
-    ITfContext *context,
-    TipSurroundingTextInfo *info,
-    bool *need_async_reconversion) {
+    TipTextService *text_service, ITfContext *context,
+    TipSurroundingTextInfo *info, bool *need_async_reconversion) {
   if (info == nullptr) {
     return false;
   }
@@ -484,8 +457,7 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
 }
 
 bool TipSurroundingText::DeletePrecedingText(
-    TipTextService *text_service,
-    ITfContext *context,
+    TipTextService *text_service, ITfContext *context,
     size_t num_characters_to_be_deleted_in_ucs4) {
   // Use Transitory Extensions when supported. Common controls provides
   // surrounding text via Transitory Extensions.
@@ -500,9 +472,7 @@ bool TipSurroundingText::DeletePrecedingText(
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(),
-      edit_session,
-      TF_ES_SYNC | TF_ES_READWRITE,
+      text_service->GetClientID(), edit_session, TF_ES_SYNC | TF_ES_READWRITE,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -514,8 +484,7 @@ bool TipSurroundingText::DeletePrecedingText(
 }
 
 bool TipSurroundingTextUtil::MeasureCharactersBackward(
-    const std::wstring &text,
-    size_t characters_in_ucs4,
+    const std::wstring &text, size_t characters_in_ucs4,
     size_t *characters_in_utf16) {
   if (characters_in_utf16 == nullptr) {
     return false;

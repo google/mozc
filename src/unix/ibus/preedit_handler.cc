@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -67,10 +67,7 @@ IBusText *ComposePreeditText(const commands::Preedit &preedit) {
         break;
     }
     end += segment.value_length();
-    ibus_text_append_attribute(text,
-                               IBUS_ATTR_TYPE_UNDERLINE,
-                               attr,
-                               start,
+    ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, attr, start,
                                end);
 
     // Many applications show a single underline regardless of using
@@ -79,19 +76,13 @@ IBusText *ComposePreeditText(const commands::Preedit &preedit) {
     // to make it easiliy distinguishable.
     if (segment.annotation() == commands::Preedit::Segment::HIGHLIGHT) {
       const guint kBackgroundColor = 0xD1EAFF;
-      ibus_text_append_attribute(text,
-                                 IBUS_ATTR_TYPE_BACKGROUND,
-                                 kBackgroundColor,
-                                 start,
-                                 end);
+      ibus_text_append_attribute(text, IBUS_ATTR_TYPE_BACKGROUND,
+                                 kBackgroundColor, start, end);
       // IBUS_ATTR_TYPE_FOREGROUND is necessary to highlight the segment on
       // Firefox.
       const guint kForegroundColor = 0x000000;
-      ibus_text_append_attribute(text,
-                                 IBUS_ATTR_TYPE_FOREGROUND,
-                                 kForegroundColor,
-                                 start,
-                                 end);
+      ibus_text_append_attribute(text, IBUS_ATTR_TYPE_FOREGROUND,
+                                 kForegroundColor, start, end);
     }
     start = end;
   }
@@ -115,11 +106,9 @@ int CursorPos(const commands::Output &output) {
 
 }  // namespace
 
-PreeditHandler::PreeditHandler() {
-}
+PreeditHandler::PreeditHandler() {}
 
-PreeditHandler::~PreeditHandler() {
-}
+PreeditHandler::~PreeditHandler() {}
 
 bool PreeditHandler::Update(IBusEngine *engine,
                             const commands::Output &output) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,8 +62,10 @@ bool UserDataManagerMock::ClearUnusedUserPrediction() {
   return true;
 }
 
-bool UserDataManagerMock::ClearUserPredictionEntry(const string &,
-                                                   const string &) {
+bool UserDataManagerMock::ClearUserPredictionEntry(const std::string &key,
+                                                   const std::string &value) {
+  last_cleared_key_ = key;
+  last_cleared_value_ = value;
   function_counters_["ClearUserPredictionEntry"]++;
   return true;
 }
@@ -73,8 +75,17 @@ bool UserDataManagerMock::Wait() {
   return true;
 }
 
-int UserDataManagerMock::GetFunctionCallCount(const string &name) {
-  return function_counters_[name];
+int UserDataManagerMock::GetFunctionCallCount(const std::string &name) const {
+  auto iter = function_counters_.find(name);
+  return (iter == function_counters_.end()) ? 0 : iter->second;
+}
+
+const std::string &UserDataManagerMock::GetLastClearedKey() const {
+  return last_cleared_key_;
+}
+
+const std::string &UserDataManagerMock::GetLastClearedValue() const {
+  return last_cleared_value_;
 }
 
 }  // namespace mozc

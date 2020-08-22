@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,18 +59,18 @@ namespace mozc {
 class ConfigFileStream {
  public:
   // Open |filename| as a text file with read permission.
-  static std::istream *OpenReadText(const string &filename) {
+  static std::istream *OpenReadText(const std::string &filename) {
     return Open(filename, std::ios_base::in);
   }
 
   // Open |filename| as a binary file with read permission.
-  static std::istream *OpenReadBinary(const string &filename) {
+  static std::istream *OpenReadBinary(const std::string &filename) {
     return Open(filename, std::ios_base::in | std::ios_base::binary);
   }
 
   // Mozc 1.3 and prior had had a following method, which opens |filename|
   // as a text file with read permission.
-  //   static istream *Open(const string &filename) {
+  //   static istream *Open(const std::string &filename) {
   //     return Open(filename, ios_base::in);
   //   }
   // As of Mozc 1.3, a number of files had had depended on this method.
@@ -82,7 +82,7 @@ class ConfigFileStream {
   // You should not use this method in new code.
   // TODO(yukawa): Add unit tests and replace |LegacyOpen| with |OpenReadText|
   //     or |OpenReadBinary| where this method is used.
-  static std::istream *LegacyOpen(const string &filename) {
+  static std::istream *LegacyOpen(const std::string &filename) {
     return Open(filename, std::ios_base::in);
   }
 
@@ -91,11 +91,11 @@ class ConfigFileStream {
   // succeeds.
   // Note that this method uses binary mode to update |filename|.
   // TODO(yukawa): Consider to rename to |AtomicUpdateBinary|.
-  static bool AtomicUpdate(const string &filename,
-                           const string &new_binary_contens);
+  static bool AtomicUpdate(const std::string &filename,
+                           const std::string &new_binary_contens);
 
   // if prefix is system:// or memory:// return "";
-  static string GetFileName(const string &filename);
+  static std::string GetFileName(const std::string &filename);
 
   // Clear all memory:// files.  This is a utility method for testing.
   static void ClearOnMemoryFiles();
@@ -104,7 +104,7 @@ class ConfigFileStream {
   // This function was deplicated. Use OpenReadText or OpenReadBinary instead.
   // TODO(yukawa): Move this function to anonymous namespace in
   //     config_file_stream.cc.
-  static std::istream *Open(const string &filename,
+  static std::istream *Open(const std::string &filename,
                             std::ios_base::openmode mode);
 };
 }  // namespace mozc

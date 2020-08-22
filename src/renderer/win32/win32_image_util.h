@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -100,44 +100,44 @@ class BalloonImage {
 
     BalloonImageInfo();
 
-    RGBColor  frame_color;
-    RGBColor  inside_color;
-    RGBColor  label_color;
-    RGBColor  blur_color;
+    RGBColor frame_color;
+    RGBColor inside_color;
+    RGBColor label_color;
+    RGBColor blur_color;
     // Factor to blur color as a factor in [0.0, 1.0].
-    double    blur_alpha;
+    double blur_alpha;
     // Size of the label text in points.
-    int       label_size;
+    int label_size;
     // Font name of the label text.
-    string    label_font;
+    string label_font;
     // Label text in UTF-8.
-    string    label;
+    string label;
     // Width of the bounding box of the balloon except for its tail.
-    double    rect_width;
+    double rect_width;
     // Height of the bounding box of the balloon except for its tail.
-    double    rect_height;
+    double rect_height;
     // Frame thickness in pixels. Set 0.0 to render a frame-less balloon.
-    double    frame_thickness;
+    double frame_thickness;
     // Corner radius in pixels. Set 0.0 to render a solid balloon.
-    double    corner_radius;
+    double corner_radius;
     // Height of the tail in pixels. This is vertical length if
     // |tail_direction| is kTop or kBottom and horizontal length if
     // that is kRight or kLeft. Set 0.0 to render a tail-less balloon.
-    double    tail_height;
+    double tail_height;
     // Width of the tail in pixels. This is horizontal length if
     // |tail_direction| is kTop or kBottom and vertical length if that is
     // kRight or kLeft. Set 0.0 to render a tail-less balloon.
-    double    tail_width;
+    double tail_width;
     TailDirection tail_direction;
     // Sigma parameter in pixels of the 2D Gaussian function. Set 0 to disable
     // blur effect.
-    double    blur_sigma;
+    double blur_sigma;
     // Horizontal offset in pixels with which blur image is placed. A positive
     // offset moves the blur rightward (positive way in X coordinate).
-    int       blur_offset_x;
+    int blur_offset_x;
     // Vertical offset in pixels with which blur image is placed. A positive
     // offset moves the blur downward (positive way in Y coordinate).
-    int       blur_offset_y;
+    int blur_offset_y;
   };
 
   // Returns a bitmap handle to a DIB section that contains generated balloon
@@ -153,11 +153,9 @@ class BalloonImage {
   // |arbg_buffer| is not premultiplied-alpha format so that we can compare
   // the rendering result with expected ones more precisely than PBGRA format
   // used in the returned bitmap handle.
-  static HBITMAP CreateInternal(
-      const BalloonImageInfo &info,
-      POINT *tail_offset,
-      SIZE *size,
-      std::vector<ARGBColor> *arbg_buffer);
+  static HBITMAP CreateInternal(const BalloonImageInfo &info,
+                                POINT *tail_offset, SIZE *size,
+                                std::vector<ARGBColor> *arbg_buffer);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(BalloonImage);
@@ -269,8 +267,8 @@ class GaussianBlur {
   template <typename Function>
   double Apply(int x, int y, const Function &f) const {
     double sum = 0.0;
-    for (Matrix::const_iterator it = matrix_.begin();
-         it != matrix_.end(); ++it) {
+    for (Matrix::const_iterator it = matrix_.begin(); it != matrix_.end();
+         ++it) {
       sum += it->coefficient * f(x + it->offset_x, y + it->offset_y);
     }
     return sum;
@@ -325,17 +323,12 @@ class SafeFrameBuffer {
 // output the result to SubdivisionalPixel storage.
 class TextLabel {
  public:
-  typedef
-      std::bitset<SubdivisionalPixel::kDivision * SubdivisionalPixel::kDivision>
+  typedef std::bitset<SubdivisionalPixel::kDivision *
+                      SubdivisionalPixel::kDivision>
       BinarySubdivisionalPixel;
 
-  TextLabel(double left,
-            double top,
-            double width,
-            double height,
-            const string &text,
-            const string &font,
-            size_t font_point,
+  TextLabel(double left, double top, double width, double height,
+            const string &text, const string &font, size_t font_point,
             const RGBColor text_color);
   ~TextLabel();
 

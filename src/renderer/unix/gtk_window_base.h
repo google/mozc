@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,18 +39,18 @@
 #include "renderer/unix/gtk_window_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 
-#define MOZC_GTK_VIRTUAL_CALLBACK_0(CLASS, RETURN, METHOD)                \
-    static RETURN METHOD ## Thunk(GtkWidget *widget, gpointer userdata) { \
-      return reinterpret_cast<CLASS*>(userdata)->METHOD(widget);          \
-    }                                                                     \
-    virtual RETURN METHOD(GtkWidget *widget);
+#define MOZC_GTK_VIRTUAL_CALLBACK_0(CLASS, RETURN, METHOD)            \
+  static RETURN METHOD##Thunk(GtkWidget *widget, gpointer userdata) { \
+    return reinterpret_cast<CLASS *>(userdata)->METHOD(widget);       \
+  }                                                                   \
+  virtual RETURN METHOD(GtkWidget *widget);
 
-#define MOZC_GTK_VIRTUAL_CALLBACK_1(CLASS, RETURN, METHOD, ARG1)       \
-    static RETURN METHOD ## Thunk(GtkWidget *widget, ARG1 one,         \
-                                  gpointer userdata) {                 \
-      return reinterpret_cast<CLASS*>(userdata)->METHOD(widget, one);  \
-    }                                                                  \
-    virtual RETURN METHOD(GtkWidget *widget, ARG1 one);
+#define MOZC_GTK_VIRTUAL_CALLBACK_1(CLASS, RETURN, METHOD, ARG1)     \
+  static RETURN METHOD##Thunk(GtkWidget *widget, ARG1 one,           \
+                              gpointer userdata) {                   \
+    return reinterpret_cast<CLASS *>(userdata)->METHOD(widget, one); \
+  }                                                                  \
+  virtual RETURN METHOD(GtkWidget *widget, ARG1 one);
 
 namespace mozc {
 namespace renderer {

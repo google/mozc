@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,9 @@ Louds::Louds() : select0_cache_size_(0), select1_cache_size_(0) {}
 
 Louds::~Louds() {}
 
-void Louds::Init(const uint8 *image, int length,
-                 size_t bitvec_lb0_cache_size, size_t bitvec_lb1_cache_size,
-                 size_t select0_cache_size, size_t select1_cache_size) {
+void Louds::Init(const uint8 *image, int length, size_t bitvec_lb0_cache_size,
+                 size_t bitvec_lb1_cache_size, size_t select0_cache_size,
+                 size_t select1_cache_size) {
   index_.Init(image, length, bitvec_lb0_cache_size, bitvec_lb1_cache_size);
 
   // Cap the cache sizes.

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
 
 #include "win32/base/imm_registrar.h"
 
-#include <windows.h>
 #include <WinNls32.h>
 #include <atlbase.h>
 #include <strsafe.h>
+#include <windows.h>
 
 #include <iomanip>
 #include <map>
@@ -97,8 +97,8 @@ HRESULT SetLayoutDisplayName(
   const std::wstring &key_name = GetSystemRegKeyName(klid);
 
   CRegKey keybord_layout_key;
-  LRESULT result = keybord_layout_key.Open(
-      HKEY_LOCAL_MACHINE, key_name.c_str(), KEY_READ | KEY_WRITE);
+  LRESULT result = keybord_layout_key.Open(HKEY_LOCAL_MACHINE, key_name.c_str(),
+                                           KEY_READ | KEY_WRITE);
   if (result != ERROR_SUCCESS) {
     LOG(ERROR) << "Failed to open the registry key"
                << " result = " << result;
@@ -131,7 +131,7 @@ HRESULT SetLayoutDisplayName(
 // folder as a system folder, so it will refuse to install our IME. The
 // solution here is to combine the 64-bit System32 folder and our filename
 // to make ImmInstallIME happy.
-std::wstring GetFullPathForSystem(const string& basename) {
+std::wstring GetFullPathForSystem(const string &basename) {
   string system_dir;
   if (Util::WideToUTF8(SystemUtil::GetSystemDir(), &system_dir) <= 0) {
     return L"";
@@ -149,8 +149,7 @@ std::wstring GetFullPathForSystem(const string& basename) {
 
 // Retrieves values under the preload key and stores the result to |keys|.
 // Returns ERROR_SUCCESS if the operation completes successfully.
-LONG RetrievePreloadValues(HKEY preload_key,
-                           PreloadValueMap *keys) {
+LONG RetrievePreloadValues(HKEY preload_key, PreloadValueMap *keys) {
   if (nullptr == keys) {
     return ERROR_INVALID_PARAMETER;
   }
@@ -164,14 +163,10 @@ LONG RetrievePreloadValues(HKEY preload_key,
   for (DWORD i = 0;; ++i) {
     DWORD value_name_length = kMaxValueNameLength;
     DWORD value_length = kMaxValueLength;
-    LONG result = RegEnumValue(preload_key,
-                               i,
-                               value_name,
-                               &value_name_length,
+    LONG result = RegEnumValue(preload_key, i, value_name, &value_name_length,
                                nullptr,  // reserved (must be NULL)
                                nullptr,  // type (optional)
-                               value,
-                               &value_length);
+                               value, &value_length);
 
     if (ERROR_NO_MORE_ITEMS == result) {
       break;
@@ -180,8 +175,8 @@ LONG RetrievePreloadValues(HKEY preload_key,
     }
 
     const int ivalue_name = _wtoi(value_name);
-    const std::wstring wvalue(reinterpret_cast<wchar_t*>(value),
-                         (value_length / sizeof(wchar_t)) - 1);
+    const std::wstring wvalue(reinterpret_cast<wchar_t *>(value),
+                              (value_length / sizeof(wchar_t)) - 1);
     KeyboardLayoutID klid(wvalue);
     if (!klid.has_id()) {
       continue;
@@ -243,11 +238,9 @@ bool RemoveHotKey(HKL hkl) {
 }  // namespace
 
 HRESULT ImmRegistrar::Register(
-    const std::wstring &ime_filename,
-    const std::wstring &layout_name,
+    const std::wstring &ime_filename, const std::wstring &layout_name,
     const std::wstring &layout_display_name_resource_path,
-    int layout_display_name_resource_id,
-    HKL* hkl) {
+    int layout_display_name_resource_id, HKL *hkl) {
   HKL dummy_hkl = nullptr;
   if (hkl == nullptr) {
     hkl = &dummy_hkl;
@@ -266,10 +259,10 @@ HRESULT ImmRegistrar::Register(
     }
   }  // |klid| is no longer needed.
 
-  IMEPROW dummy_ime_property = { 0 };
+  IMEPROW dummy_ime_property = {0};
 
-  const std::wstring &fullpath(
-      std::wstring(SystemUtil::GetSystemDir()) + L"\\" + ime_filename);
+  const std::wstring &fullpath(std::wstring(SystemUtil::GetSystemDir()) +
+                               L"\\" + ime_filename);
 
   // The path name of IME has hard limit. (http://b/2072809)
   if (fullpath.size() + 1 > arraysize(dummy_ime_property.szName)) {
@@ -330,8 +323,8 @@ HRESULT ImmRegistrar::Unregister(const std::wstring &ime_filename) {
   {
     const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
     unique_ptr<HKL[]> keyboard_layouts(new HKL[num_keyboard_layout]);
-    const size_t num_copied = ::GetKeyboardLayoutList(num_keyboard_layout,
-                                                      keyboard_layouts.get());
+    const size_t num_copied =
+        ::GetKeyboardLayoutList(num_keyboard_layout, keyboard_layouts.get());
     for (size_t i = 0; i < num_copied; ++i) {
       const HKL hkl = keyboard_layouts[i];
       if (!ImmRegistrar::IsIME(hkl, ime_filename)) {
@@ -345,8 +338,8 @@ HRESULT ImmRegistrar::Unregister(const std::wstring &ime_filename) {
   // Remove IME registry key.
   {
     CRegKey keyboard_layouts;
-    LONG result = keyboard_layouts.Open(
-        HKEY_LOCAL_MACHINE, kRegKeyboardLayouts, KEY_READ | KEY_WRITE);
+    LONG result = keyboard_layouts.Open(HKEY_LOCAL_MACHINE, kRegKeyboardLayouts,
+                                        KEY_READ | KEY_WRITE);
     if (ERROR_SUCCESS != result) {
       return HRESULT_FROM_WIN32(result);
     }
@@ -389,8 +382,8 @@ KeyboardLayoutID ImmRegistrar::GetKLIDFromFileName(
   }
 
   CRegKey keyboard_layouts;
-  LONG result = keyboard_layouts.Open(
-      HKEY_LOCAL_MACHINE, kRegKeyboardLayouts, KEY_READ);
+  LONG result =
+      keyboard_layouts.Open(HKEY_LOCAL_MACHINE, kRegKeyboardLayouts, KEY_READ);
   if (ERROR_SUCCESS != result) {
     return KeyboardLayoutID();
   }
@@ -401,10 +394,8 @@ KeyboardLayoutID ImmRegistrar::GetKLIDFromFileName(
   wchar_t value_name[kMaxValueNameLength];
   for (DWORD enum_reg_index = 0;; ++enum_reg_index) {
     DWORD value_name_length = kMaxValueNameLength;
-    result = keyboard_layouts.EnumKey(
-        enum_reg_index,
-        value_name,
-        &value_name_length);
+    result = keyboard_layouts.EnumKey(enum_reg_index, value_name,
+                                      &value_name_length);
     if (ERROR_NO_MORE_ITEMS == result) {
       break;
     } else if (ERROR_SUCCESS != result) {
@@ -427,8 +418,8 @@ KeyboardLayoutID ImmRegistrar::GetKLIDFromFileName(
 
     wchar_t filename_buffer[kMaxValueNameLength];
     ULONG filename_length_including_null = kMaxValueNameLength;
-    result = subkey.QueryStringValue(
-        L"Ime File", filename_buffer, &filename_length_including_null);
+    result = subkey.QueryStringValue(L"Ime File", filename_buffer,
+                                     &filename_length_including_null);
 
     // Note that |filename_length_including_null| contains NUL terminator.
     if (ERROR_SUCCESS != result || (filename_length_including_null == 0)) {
@@ -437,8 +428,8 @@ KeyboardLayoutID ImmRegistrar::GetKLIDFromFileName(
 
     const ULONG filename_length = (filename_length_including_null - 1);
     // Note that |filename_length| does not contain NUL character.
-    const std::wstring target_basename(
-        filename_buffer, filename_buffer + filename_length);
+    const std::wstring target_basename(filename_buffer,
+                                       filename_buffer + filename_length);
 
     // TODO(yukawa): Support short filename.  See b/2977730
     if (WinUtil::SystemEqualString(target_basename, ime_filename, true)) {
@@ -498,19 +489,17 @@ HRESULT ImmRegistrar::RemoveKeyFromPreload(
     }
   } else {
     // Remove values whose names are less than |preload_index|.
-    PreloadValueMap::iterator target_iter =
-        preload_values.find(preload_index);
+    PreloadValueMap::iterator target_iter = preload_values.find(preload_index);
     preload_values.erase(preload_values.begin(), target_iter);
     for (PreloadValueMap::iterator i = preload_values.begin();
-         i != preload_values.end();
-         ++i) {
-      const std::wstring& value_name = utow((*i).first);
+         i != preload_values.end(); ++i) {
+      const std::wstring &value_name = utow((*i).first);
       const KeyboardLayoutID target_klid((*i).second);
       result = preload_key.DeleteValue(value_name.c_str());
       if ((*i).first == preload_index) {
         continue;
       }
-      const std::wstring& new_value_name = utow((*i).first - 1);
+      const std::wstring &new_value_name = utow((*i).first - 1);
       preload_key.SetStringValue(new_value_name.c_str(),
                                  target_klid.ToString().c_str());
     }
@@ -545,8 +534,8 @@ HRESULT ImmRegistrar::RestorePreload(const KeyboardLayoutID &klid) {
   }
 
   if (preload_values.size() == 0) {
-    result = preload_key.SetStringValue(
-        kPreloadTopValueName, klid.ToString().c_str());
+    result = preload_key.SetStringValue(kPreloadTopValueName,
+                                        klid.ToString().c_str());
     if (ERROR_SUCCESS != result) {
       return E_FAIL;
     }
@@ -584,8 +573,8 @@ HRESULT ImmRegistrar::MovePreloadValueToTop(const KeyboardLayoutID &klid) {
   if (0 == preload_index) {
     if (preload_values.size() == 0) {
       // It is not necessary to move values since there is no preload key.
-      result = preload_key.SetStringValue(
-          kPreloadTopValueName, klid.ToString().c_str());
+      result = preload_key.SetStringValue(kPreloadTopValueName,
+                                          klid.ToString().c_str());
       if (ERROR_SUCCESS != result) {
         return E_FAIL;
       }
@@ -626,8 +615,8 @@ HRESULT ImmRegistrar::MovePreloadValueToTop(const KeyboardLayoutID &klid) {
                                       first_klid.ToString().c_str());
   if (ERROR_SUCCESS != result) {
     // Attempt rollback when the second call fails.
-    preload_key.SetStringValue(
-        kPreloadTopValueName, first_klid.ToString().c_str());
+    preload_key.SetStringValue(kPreloadTopValueName,
+                               first_klid.ToString().c_str());
     return E_FAIL;
   }
 

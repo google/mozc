@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,15 @@
 
 #import <Carbon/Carbon.h>
 
-#include "base/scoped_nsobject.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
 namespace mozc {
 namespace client {
 class SendCommandInterface;
-}  // namespace mozc::client
+}  // namespace client
 namespace commands {
 class Candidates;
-}  // namespace mozc::commands
+}  // namespace commands
 namespace renderer {
 class TableLayout;
 
@@ -56,6 +55,7 @@ class CandidateWindow : public RendererBaseWindow {
       client::SendCommandInterface *send_command_interface);
   void SetCandidates(const commands::Candidates &candidates);
   const renderer::TableLayout *GetTableLayout() const;
+
  private:
   void InitWindow();
   void ResetView();
@@ -63,7 +63,7 @@ class CandidateWindow : public RendererBaseWindow {
   DISALLOW_COPY_AND_ASSIGN(CandidateWindow);
 };
 
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc
 #endif  // MOZC_RENDERER_MAC_CANDIDATE_WINDOW_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,15 @@
 namespace mozc {
 
 ClockMock::ClockMock(uint64 sec, uint32 usec)
-    : seconds_(sec), micro_seconds_(usec),
-      frequency_(1000000000), ticks_(0),
+    : seconds_(sec),
+      micro_seconds_(usec),
+      frequency_(1000000000),
+      ticks_(0),
 #ifdef OS_NACL
       timezone_offset_sec_(0),
 #endif  // OS_NACL
-      delta_seconds_(0), delta_micro_seconds_(0) {
+      delta_seconds_(0),
+      delta_micro_seconds_(0) {
 }
 
 ClockMock::~ClockMock() {}
@@ -79,13 +82,9 @@ bool ClockMock::GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
   return true;
 }
 
-uint64 ClockMock::GetFrequency() {
-  return frequency_;
-}
+uint64 ClockMock::GetFrequency() { return frequency_; }
 
-uint64 ClockMock::GetTicks() {
-  return ticks_;
-}
+uint64 ClockMock::GetTicks() { return ticks_; }
 
 #ifdef OS_NACL
 void ClockMock::SetTimezoneOffset(int32 timezone_offset_sec) {
@@ -105,12 +104,9 @@ void ClockMock::PutClockForward(uint64 delta_sec, uint32 delta_usec) {
   }
 }
 
-void ClockMock::PutClockForwardByTicks(uint64 ticks) {
-  ticks_ += ticks;
-}
+void ClockMock::PutClockForwardByTicks(uint64 ticks) { ticks_ += ticks; }
 
-void ClockMock::SetAutoPutClockForward(uint64 delta_sec,
-                                       uint32 delta_usec) {
+void ClockMock::SetAutoPutClockForward(uint64 delta_sec, uint32 delta_usec) {
   delta_seconds_ = delta_sec;
   delta_micro_seconds_ = delta_usec;
 }
@@ -120,12 +116,8 @@ void ClockMock::SetTime(uint64 sec, uint32 usec) {
   micro_seconds_ = usec;
 }
 
-void ClockMock::SetFrequency(uint64 frequency) {
-  frequency_ = frequency;
-}
+void ClockMock::SetFrequency(uint64 frequency) { frequency_ = frequency; }
 
-void ClockMock::SetTicks(uint64 ticks) {
-  ticks_ = ticks;
-}
+void ClockMock::SetTicks(uint64 ticks) { ticks_ = ticks; }
 
 }  // namespace mozc

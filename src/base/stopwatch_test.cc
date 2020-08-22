@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,13 +43,11 @@ class StopwatchTest : public testing::Test {
   void SetUp() {
     clock_mock_.reset(new ClockMock(0, 0));
     // 1GHz (Accuracy = 1ns)
-    clock_mock_->SetFrequency(1000000000uLL);
+    clock_mock_->SetFrequency(uint64{1000000000});
     Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
-  void TearDown() {
-    Clock::SetClockForUnitTest(nullptr);
-  }
+  void TearDown() { Clock::SetClockForUnitTest(nullptr); }
 
   void PutForwardNanoseconds(uint64 nano_sec) {
     clock_mock_->PutClockForwardByTicks(nano_sec);

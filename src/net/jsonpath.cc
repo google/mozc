@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,14 +45,9 @@ namespace net {
 namespace {
 
 struct JsonPathNode {
-  enum Type {
-    UNDEFINED_INDEX,
-    OBJECT_INDEX,
-    ARRAY_INDEX,
-    SLICE_INDEX
-  };
+  enum Type { UNDEFINED_INDEX, OBJECT_INDEX, ARRAY_INDEX, SLICE_INDEX };
   Type type;
-  string object_index;
+  std::string object_index;
   int array_index;
   int slice_start;
   int slice_end;
@@ -60,24 +55,25 @@ struct JsonPathNode {
 
   static const int kSliceUndef = kint32max;
 
-  static bool IsUndef(int n) {
-    return n == kSliceUndef;
-  }
+  static bool IsUndef(int n) { return n == kSliceUndef; }
 
-  string DebugString() const {
+  std::string DebugString() const {
     std::ostringstream os;
-    os << "{" << type << ":" << array_index << ":" << object_index
-       << ":(" << slice_start << ":" << slice_end << ":" << slice_step << ")}";
+    os << "{" << type << ":" << array_index << ":" << object_index << ":("
+       << slice_start << ":" << slice_end << ":" << slice_step << ")}";
     return os.str();
   }
 
-  JsonPathNode() :
-      type(UNDEFINED_INDEX), array_index(0),
-      slice_start(0), slice_end(0), slice_step(0) {}
+  JsonPathNode()
+      : type(UNDEFINED_INDEX),
+        array_index(0),
+        slice_start(0),
+        slice_end(0),
+        slice_step(0) {}
   ~JsonPathNode() {}
 };
 
-bool GetDigit(const string &str, int *output) {
+bool GetDigit(const std::string &str, int *output) {
   DCHECK(output);
   if (str.empty()) {
     return false;
@@ -104,7 +100,7 @@ bool GetDigit(const string &str, int *output) {
   return true;
 }
 
-bool GetSliceDigit(const string &str, int *output) {
+bool GetSliceDigit(const std::string &str, int *output) {
   if (str.empty()) {
     *output = JsonPathNode::kSliceUndef;
     return true;
@@ -112,10 +108,9 @@ bool GetSliceDigit(const string &str, int *output) {
   return GetDigit(str, output);
 }
 
-bool GetQuotedString(const string &str, const char c,
-                     string *output) {
-  if (str.size() >= 2 &&
-      str[0] == c && str[str.size() - 1] == c) {
+bool GetQuotedString(const std::string &str, const char c,
+                     std::string *output) {
+  if (str.size() >= 2 && str[0] == c && str[str.size() - 1] == c) {
     *output = str.substr(1, str.size() - 2);
     return true;
   }
@@ -126,7 +121,7 @@ typedef std::vector<JsonPathNode> JsonPathNodes;
 
 class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
  public:
-  bool Parse(const string &jsonpath) {
+  bool Parse(const std::string &jsonpath) {
     clear();
     if (jsonpath.size() <= 1 || jsonpath[0] != '$') {
       LOG(ERROR) << "Not starts with $";
@@ -134,15 +129,15 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
     }
 
     if (Util::EndsWith(jsonpath, ".") ||
-        jsonpath.find("...") != string::npos) {
+        jsonpath.find("...") != std::string::npos) {
       LOG(ERROR) << "Parse error: " << jsonpath;
       return false;
     }
 
-    if (jsonpath.find("(") != string::npos ||
-        jsonpath.find(")") != string::npos ||
-        jsonpath.find("@") != string::npos ||
-        jsonpath.find("?") != string::npos) {
+    if (jsonpath.find("(") != std::string::npos ||
+        jsonpath.find(")") != std::string::npos ||
+        jsonpath.find("@") != std::string::npos ||
+        jsonpath.find("?") != std::string::npos) {
       LOG(ERROR) << "script expression/current node are not supported: "
                  << jsonpath;
       return false;
@@ -151,7 +146,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
     const char *begin = jsonpath.data() + 1;
     const char *end = jsonpath.data() + jsonpath.size();
 
-    string item;
+    std::string item;
     for (; begin < end; ++begin) {
       if (*begin == ']') {
         return false;
@@ -170,7 +165,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
           }
         } else if (*begin == '[') {
           ++begin;
-          string exp;
+          std::string exp;
           while (*begin != ']') {
             if (begin == end) {
               LOG(ERROR) << "Cannot find closing \"]\"";
@@ -197,7 +192,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
     return !empty();
   }
 
-  string DebugString() const {
+  std::string DebugString() const {
     std::ostringstream os;
     for (size_t i = 0; i < size(); ++i) {
       os << "[";
@@ -210,12 +205,9 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
   }
 
  private:
-  enum NodesType {
-    IN_BRACKET,
-    OUT_BRACKET
-  };
+  enum NodesType { IN_BRACKET, OUT_BRACKET };
 
-  bool AddNodes(const string &nodes_exp, NodesType nodes_type) {
+  bool AddNodes(const std::string &nodes_exp, NodesType nodes_type) {
     if (nodes_exp.empty()) {
       return false;
     }
@@ -230,12 +222,12 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
       node.object_index = nodes_exp;
       nodes->push_back(node);
     } else if (nodes_type == IN_BRACKET) {
-      std::vector<string> nodes_exps;
+      std::vector<std::string> nodes_exps;
       Util::SplitStringUsing(nodes_exp, ",", &nodes_exps);
       for (size_t i = 0; i < nodes_exps.size(); ++i) {
         JsonPathNode node;
         node.type = JsonPathNode::UNDEFINED_INDEX;
-        string in_nodes_exp;
+        std::string in_nodes_exp;
         if (GetQuotedString(nodes_exps[i], '\'', &in_nodes_exp) ||
             GetQuotedString(nodes_exps[i], '\"', &in_nodes_exp)) {
           node.type = JsonPathNode::OBJECT_INDEX;
@@ -244,7 +236,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
           node.type = JsonPathNode::OBJECT_INDEX;
           node.object_index = "*";
         } else {
-          std::vector<string> slice;
+          std::vector<std::string> slice;
           Util::SplitStringAllowEmpty(nodes_exps[i], ":", &slice);
           if (slice.size() == 1) {
             if (GetDigit(slice[0], &node.array_index)) {
@@ -293,7 +285,7 @@ void CollectValuesRecursively(const Json::Value &value,
     }
     if (value.isObject()) {
       const Json::Value::Members members = value.getMemberNames();
-      const string &object_index = nodes[node_index].object_index;
+      const std::string &object_index = nodes[node_index].object_index;
       if (object_index != "*" && value.isMember(object_index)) {
         output->push_back(&value[object_index]);
       }
@@ -313,8 +305,7 @@ void CollectValuesRecursively(const Json::Value &value,
 }
 
 void CollectNodesFromJson(const Json::Value &value,
-                          const JsonPathExp &jsonpathexp,
-                          size_t depth,
+                          const JsonPathExp &jsonpathexp, size_t depth,
                           std::vector<const Json::Value *> *output) {
   if (depth >= jsonpathexp.size()) {
     output->push_back(&value);
@@ -330,8 +321,8 @@ void CollectNodesFromJson(const Json::Value &value,
         if (value.isObject()) {
           const Json::Value::Members members = value.getMemberNames();
           for (size_t i = 0; i < members.size(); ++i) {
-            CollectNodesFromJson(value[members[i]],
-                                 jsonpathexp, depth + 1, output);
+            CollectNodesFromJson(value[members[i]], jsonpathexp, depth + 1,
+                                 output);
           }
         } else if (value.isArray()) {
           for (Json::ArrayIndex i = 0; i < value.size(); ++i) {
@@ -345,28 +336,27 @@ void CollectNodesFromJson(const Json::Value &value,
         CollectValuesRecursively(value, jsonpathexp[depth + 1],
                                  &matched_values);
         for (size_t i = 0; i < matched_values.size(); ++i) {
-          CollectNodesFromJson(*(matched_values[i]),
-                               jsonpathexp, depth + 2, output);
+          CollectNodesFromJson(*(matched_values[i]), jsonpathexp, depth + 2,
+                               output);
         }
       } else if (value.isObject() && value.isMember(node.object_index)) {
-        CollectNodesFromJson(value[node.object_index],
-                             jsonpathexp, depth + 1, output);
+        CollectNodesFromJson(value[node.object_index], jsonpathexp, depth + 1,
+                             output);
       }
     } else if (node.type == JsonPathNode::ARRAY_INDEX) {
-      const int i = node.array_index >= 0 ?
-          node.array_index : value.size() + node.array_index;
+      const int i = node.array_index >= 0 ? node.array_index
+                                          : value.size() + node.array_index;
       if (value.isArray() && value.isValidIndex(i)) {
         CollectNodesFromJson(value[i], jsonpathexp, depth + 1, output);
       }
     } else if (node.type == JsonPathNode::SLICE_INDEX) {
       if (value.isArray()) {
         const int size = static_cast<int>(value.size());
-        int start = JsonPathNode::IsUndef(node.slice_start) ?
-            0 : node.slice_start;
-        int end = JsonPathNode::IsUndef(node.slice_end) ?
-            size : node.slice_end;
-        const int step = JsonPathNode::IsUndef(node.slice_step) ?
-            1 : node.slice_step;
+        int start =
+            JsonPathNode::IsUndef(node.slice_start) ? 0 : node.slice_start;
+        int end = JsonPathNode::IsUndef(node.slice_end) ? size : node.slice_end;
+        const int step =
+            JsonPathNode::IsUndef(node.slice_step) ? 1 : node.slice_step;
         start = (start < 0) ? std::max(0, start + size) : std::min(size, start);
         end = (end < 0) ? std::max(0, end + size) : std::min(size, end);
         if (step > 0 && end > start) {
@@ -391,8 +381,7 @@ void CollectNodesFromJson(const Json::Value &value,
 }  // namespace
 
 // static
-bool JsonPath::Parse(const Json::Value &root,
-                     const string &jsonpath,
+bool JsonPath::Parse(const Json::Value &root, const std::string &jsonpath,
                      std::vector<const Json::Value *> *output) {
   JsonPathExp jsonpathexp;
   if (!jsonpathexp.Parse(jsonpath)) {
@@ -406,5 +395,5 @@ bool JsonPath::Parse(const Json::Value &root,
   CollectNodesFromJson(root, jsonpathexp, 0, output);
   return true;
 }
-}   // namespace net
-}   // namespace mozc
+}  // namespace net
+}  // namespace mozc

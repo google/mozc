@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -86,10 +86,10 @@ class ConfigHandler {
   static bool Reload();
 
   // Sets config file. (for unittesting)
-  static void SetConfigFileName(const string &filename);
+  static void SetConfigFileName(const std::string &filename);
 
   // Get config file name.
-  static string GetConfigFileName();
+  static std::string GetConfigFileName();
 
   // Utilitiy function to put config meta data
   static void SetMetaData(Config *config);

@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
         'data_manager.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
         '../protocol/protocol.gyp:segmenter_data_proto',
@@ -83,6 +84,7 @@
         'dataset_writer.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:obfuscator_support',
         'dataset_proto',
@@ -96,6 +98,7 @@
         'dataset_reader.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:obfuscator_support',
         'dataset_proto',
@@ -123,6 +126,7 @@
         'serialized_dictionary.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
       ],
