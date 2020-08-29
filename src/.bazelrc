@@ -1,0 +1,18 @@
+# Common options
+build --cxxopt "-std=c++17"
+build --copt "-funsigned-char"
+build --objccopt "-fsigned-char"
+
+# Linux
+build:linux --define TARGET=oss_linux
+build:oss_linux --define TARGET=oss_linux
+
+# Android
+build:android --define TARGET=oss_android \
+    --copt "-DOS_ANDROID" \
+    --crosstool_top=//external:android/crosstool --cpu=armeabi-v7a \
+    --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+build:oss_android --define TARGET=oss_android \
+    --copt "-DOS_ANDROID" \
+    --crosstool_top=//external:android/crosstool --cpu=armeabi-v7a \
+    --host_crosstool_top=@bazel_tools//tools/cpp:toolchain

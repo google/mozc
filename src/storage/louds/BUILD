@@ -1,0 +1,192 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Description:
+#   The C++ louds implementation.
+
+load(
+    "//:build_defs.bzl",
+    "cc_library_mozc",
+    "cc_test_mozc",
+)
+
+test_suite(
+    name = "nacl_test",
+)
+
+cc_library_mozc(
+    name = "louds",
+    srcs = ["louds.cc"],
+    hdrs = ["louds.h"],
+    deps = [
+        ":simple_succinct_bit_vector_index",
+        "//base",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "louds_test",
+    srcs = ["louds_test.cc"],
+    deps = [
+        ":louds",
+        "//base",
+        "//base:port",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "louds_trie",
+    srcs = ["louds_trie.cc"],
+    hdrs = ["louds_trie.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":louds",
+        ":simple_succinct_bit_vector_index",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "louds_trie_builder",
+    srcs = ["louds_trie_builder.cc"],
+    hdrs = ["louds_trie_builder.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":bit_stream",
+        "//base",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "louds_trie_test",
+    size = "small",
+    srcs = ["louds_trie_test.cc"],
+    deps = [
+        ":louds_trie",
+        ":louds_trie_builder",
+        "//base:port",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "bit_vector_based_array",
+    srcs = ["bit_vector_based_array.cc"],
+    hdrs = ["bit_vector_based_array.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
+    deps = [
+        ":simple_succinct_bit_vector_index",
+        "//base",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_library_mozc(
+    name = "bit_vector_based_array_builder",
+    srcs = ["bit_vector_based_array_builder.cc"],
+    hdrs = ["bit_vector_based_array_builder.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
+    deps = [
+        ":bit_stream",
+        "//base",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "bit_vector_based_array_test",
+    size = "small",
+    srcs = ["bit_vector_based_array_test.cc"],
+    deps = [
+        ":bit_vector_based_array",
+        ":bit_vector_based_array_builder",
+        "//base:port",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "simple_succinct_bit_vector_index",
+    srcs = ["simple_succinct_bit_vector_index.cc"],
+    hdrs = ["simple_succinct_bit_vector_index.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//base",
+        "//base:iterator_adapter",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "simple_succinct_bit_vector_index_test",
+    size = "small",
+    srcs = ["simple_succinct_bit_vector_index_test.cc"],
+    deps = [
+        ":simple_succinct_bit_vector_index",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "bit_stream",
+    srcs = ["bit_stream.cc"],
+    hdrs = ["bit_stream.h"],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "bit_stream_test",
+    size = "small",
+    srcs = ["bit_stream_test.cc"],
+    deps = [
+        ":bit_stream",
+        "//testing:gunit_main",
+    ],
+)

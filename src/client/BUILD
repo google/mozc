@@ -1,0 +1,198 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "select_mozc",
+)
+
+package(default_visibility = ["//:__subpackages__"])
+
+cc_library_mozc(
+    name = "client_interface",
+    hdrs = ["client_interface.h"],
+    deps = [
+        "//base:port",
+        "//protocol:commands_proto",
+    ],
+)
+
+cc_library_mozc(
+    name = "client",
+    srcs = [
+        "client.cc",
+        "server_launcher.cc",
+    ],
+    hdrs = [
+        "client.h",
+    ],
+    deps = [
+        ":client_interface",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:port",
+        "//base:process",
+        "//base:run_level",
+        "//base:singleton",
+        "//base:system_util",
+        "//base:util",
+        "//base:version",
+        "//base:win_util",
+        "//ipc",
+        "//ipc:named_event",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//testing:gunit_prod",
+    ] + select_mozc(
+        ios = ["//base:mac_util"],
+    ),
+)
+
+cc_test_mozc(
+    name = "client_test",
+    size = "small",
+    srcs = ["client_test.cc"],
+    deps = [
+        ":client",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:util",
+        "//base:version",
+        "//ipc:ipc_mock",
+        "//protocol:commands_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_library_mozc(
+    name = "client_mock",
+    testonly = 1,
+    srcs = ["client_mock.cc"],
+    hdrs = ["client_mock.h"],
+    deps = [
+        ":client_interface",
+        "//base",
+        "//base:logging",
+        "//protocol:commands_proto",
+    ],
+)
+
+cc_binary_mozc(
+    name = "server_launcher_main",
+    srcs = ["server_launcher_main.cc"],
+    deps = [
+        ":client",
+        "//base",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:logging",
+        "//base:process",
+    ],
+)
+
+cc_binary_mozc(
+    name = "client_stress_test_main",
+    srcs = ["client_stress_test_main.cc"],
+    deps = [
+        ":client",
+        "//base",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//protocol:renderer_proto",
+        "//renderer:renderer_client",
+        "//session:random_keyevents_generator",
+    ],
+)
+
+cc_binary_mozc(
+    name = "client_scenario_test_main",
+    srcs = ["client_scenario_test_main.cc"],
+    deps = [
+        ":client",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//composer:key_parser",
+        "//protocol:commands_proto",
+        "//protocol:renderer_proto",
+        "//renderer:renderer_client",
+    ],
+)
+
+cc_binary_mozc(
+    name = "client_performance_test_main",
+    srcs = ["client_performance_test_main.cc"],
+    deps = [
+        ":client",
+        "//base",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:logging",
+        "//base:port",
+        "//base:singleton",
+        "//base:stopwatch",
+        "//base:util",
+        "//composer:key_parser",
+        "//config:config_handler",
+        "//protocol:commands_proto",
+        "//session:random_keyevents_generator",
+    ],
+)
+
+cc_binary_mozc(
+    name = "ping_server_main",
+    srcs = ["ping_server_main.cc"],
+    deps = [
+        ":client",
+        "//base",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:logging",
+    ],
+)
