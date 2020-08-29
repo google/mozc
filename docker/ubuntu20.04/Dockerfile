@@ -34,21 +34,33 @@ ENV DEBIAN_FRONTEND noninteractive
 # Package installation
 RUN apt-get update
 ## Common packages for linux build environment
-RUN apt install -y clang libc++-dev libc++abi-dev python python-six pkg-config git curl bzip2 unzip make ninja-build
+RUN apt install -y clang libc++-dev libc++abi-dev python python-six python3-six pkg-config git curl bzip2 unzip make ninja-build
 ## Packages for linux desktop version
 RUN apt install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
-## For emacsian
-RUN apt install -y emacs
 
+## For Bazel
+## https://docs.bazel.build/versions/master/install-ubuntu.html
+RUN apt install -y curl gnupg libncurses5
+RUN curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > bazel.gpg
+RUN mv bazel.gpg /etc/apt/trusted.gpg.d/
+RUN echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
+RUN apt update
+RUN apt install -y bazel
+
+# Working environemnt
 ENV HOME /home/mozc_builder
 RUN useradd --create-home --shell /bin/bash --base-dir /home mozc_builder
 USER mozc_builder
-
-# SDK setup
 RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 
+## For Android NDK
+RUN curl -LO http://dl.google.com/android/repository/android-ndk-r21b-linux-x86_64.zip && unzip android-ndk-r21b-linux-x86_64.zip && rm android-ndk-r21b-linux-x86_64.zip
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r21b
+
 # check out Mozc source with submodules
+RUN mkdir /home/mozc_builder/work/mozc
+# COPY --chown=mozc_builder:mozc_builder src/ /home/mozc_builder/work/mozc/src/
 RUN git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 
 WORKDIR /home/mozc_builder/work/mozc/src
