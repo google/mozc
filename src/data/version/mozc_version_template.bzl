@@ -31,7 +31,7 @@
 MAJOR = 2
 
 MINOR = 25
-BUILD = 0
+BUILD = 4000
 REVISION = 100
 
 # This version represents the version of Mozc IME engine (converter, predictor,

@@ -989,7 +989,7 @@ genrule(
         "//data/preedit:composition_table",
     ],
     outs = ["config_file_stream_data.inc"],
-    cmd = ("$(location :gen_config_file_stream_data) --output=$@ $(SRCS)"),
+    cmd = "$(location :gen_config_file_stream_data) --output=$@ $(SRCS)",
     exec_tools = [":gen_config_file_stream_data"],
     visibility = ["//visibility:private"],
 )
@@ -1041,7 +1041,10 @@ genrule(
         "//data/version:mozc_version_template.bzl",
     ],
     outs = ["mozc_version.txt"],
-    cmd = ('$(location //build_tools:mozc_version) --template_path="$(location //data/version:mozc_version_template.bzl)" --output="$(OUTS)" --build_override=302566722 --target_platform=' + TARGET_PLATFORM),
+    cmd = ("$(location //build_tools:mozc_version)" +
+           ' --template_path="$(location //data/version:mozc_version_template.bzl)"' +
+           ' --output="$(OUTS)"' +
+           " --target_platform=" + TARGET_PLATFORM),
     tools = ["//build_tools:mozc_version"],
     visibility = ["//visibility:private"],
 )

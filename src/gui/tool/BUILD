@@ -33,7 +33,6 @@ load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_binary_mozc",
     "cc_qt_library_mozc",
-    "qt_rcc_mozc",
 )
 
 package(

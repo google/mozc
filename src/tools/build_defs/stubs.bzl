@@ -33,3 +33,8 @@
 def portable_proto_library(name, proto_deps, deps = [], **kwargs):
     _ignore = [kwargs]
     native.cc_proto_library(name = name, deps = deps + proto_deps)
+
+def jspb_proto_library(**kwargs):
+    # Do nothing for OSS.
+    _ignore = kwargs
+    pass

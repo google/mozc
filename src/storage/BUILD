@@ -28,6 +28,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Visibility:  please choose a more appropriate default for the package,
+# and update any rules that should be different.
+
 load(
     "//:build_defs.bzl",
     "cc_library_mozc",
@@ -60,6 +63,7 @@ cc_library_mozc(
     ],
 )
 
+##    Commented out on 2011-03-09, because no other rule depends on it.
 ## cc_binary_mozc(name = "lru_storage_main",
 ##           srcs = [ "lru_storage_main.cc" ],
 ##           deps = [ ":lru_storage",
@@ -74,6 +78,7 @@ cc_library_mozc(
     ],
 )
 
+##    Commented out on 2011-03-09, because no other rule depends on it.
 ## cc_binary_mozc(name = "lru_cache_main",
 ##           srcs = ["lru_cache_main.cc", ],
 ##           deps = [ "//base:base" ]);
@@ -89,6 +94,7 @@ cc_library_mozc(
     ],
 )
 
+##    Commented out on 2011-03-09, because no other rule depends on it.
 ## cc_binary_mozc(name = "existence_filter_main",
 ##           srcs = [ "existence_filter_main.cc" ],
 ##           deps = [ ":existence_filter",

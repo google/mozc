@@ -40,11 +40,9 @@ load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 package_group(
     name = "self_and_friends",
     includes = [
-        "//monitoring/prober_service:internal",
     ],
     packages = [
         "//...",
-        "//assistant/aog/builtins/intent/utils/...",
     ],
 )
 

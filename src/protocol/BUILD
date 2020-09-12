@@ -28,6 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("//tools/build_defs:stubs.bzl", "jspb_proto_library")
 load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = [
@@ -125,9 +126,17 @@ proto_library(
     ],
 )
 
+jspb_proto_library(
+    name = "commands_jspb_proto",
+    visibility = [],
+    deps = [":commands_proto_full"],
+)
+
 # Proto library for Android Java.
 java_lite_proto_library(
     name = "commands_proto_android_java",
+    visibility = [
+    ],
     deps = [
         ":candidates_proto_full",
         ":commands_proto_full",
@@ -143,8 +152,16 @@ proto_library(
     visibility = [],
 )
 
+jspb_proto_library(
+    name = "config_jspb_proto",
+    visibility = [],
+    deps = [":config_proto_full"],
+)
+
 java_lite_proto_library(
     name = "config_proto_lite",
+    visibility = [
+    ],
     deps = [":config_proto_full"],
 )
 
@@ -170,6 +187,12 @@ proto_library(
     ],
 )
 
+jspb_proto_library(
+    name = "candidates_jspb_proto",
+    visibility = [],
+    deps = [":candidates_proto_full"],
+)
+
 proto_library(
     name = "state_proto_full",
     srcs = ["state.proto"],
@@ -186,8 +209,15 @@ proto_library(
     visibility = [],
 )
 
+jspb_proto_library(
+    name = "user_dictionary_storage_jspb_proto",
+    visibility = [],
+    deps = [":user_dictionary_storage_proto_full"],
+)
+
 java_lite_proto_library(
     name = "user_dictionary_storage_proto_lite",
+    visibility = [],
     deps = [":user_dictionary_storage_proto_full"],
 )
 

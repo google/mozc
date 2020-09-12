@@ -28,6 +28,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Visibility:  please choose a more appropriate default for the package,
+# and update any rules that should be different.
+
 load(
     "//:build_defs.bzl",
     "cc_library_mozc",
@@ -107,6 +110,7 @@ cc_library_mozc(
     ),
 )
 
+##    Commented out on 2011-03-09, because no other rule depends on it.
 ## cc_binary_mozc(name = "ipc_path_manager_main",
 ##           srcs = ["ipc_path_manager_main.cc",],
 ##           deps = [":ipc_path_manager",
@@ -176,6 +180,7 @@ cc_test_mozc(
     ],
 )
 
+##    Commented out on 2011-03-09, because no other rule depends on it.
 ## cc_binary_mozc(name = "ipc_main",
 ##           srcs = ["ipc_main.cc",],
 ##           deps = [":ipc",
@@ -198,6 +203,7 @@ cc_library_mozc(
     ],
 )
 
+##    Commented out on 2011-03-09, because no other rule depends on it.
 ## cc_binary_mozc(name = "named_event_main",
 ##           srcs = ["named_event_main.cc",],
 ##           deps = [":named_event",
@@ -239,6 +245,7 @@ cc_library_mozc(
 #   //ipc:ipc_path_manager, which includes ipc/ipc.h
 # cannot depend on the library
 #   //ipc:ipc: Found an inverse include path.
+# See http://go/cxx-layering-faq
 cc_library_mozc(
     name = "ipc_hdr",
     textual_hdrs = ["ipc.h"],
@@ -249,6 +256,7 @@ cc_library_mozc(
     ],
 )
 
+##    Commented out on 2011-03-09, because no other rule depends on it.
 ## cc_binary_mozc(name = "process_watch_dog_main",
 ##           srcs = ["process_watch_dog_main.cc",],
 ##           deps = [":process_watch_dog",

@@ -28,6 +28,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Visibility:  please choose a more appropriate default for the package,
+# and update any rules that should be different.
+
 load(
     "//:build_defs.bzl",
     "cc_binary_mozc",

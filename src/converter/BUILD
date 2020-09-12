@@ -36,10 +36,6 @@ load(
     "py_binary_mozc",
     "py_library_mozc",
 )
-load(
-    ":quality_regression_test.bzl",
-    "quality_regression_tests",
-)
 
 package(default_visibility = [
     "//:__subpackages__",

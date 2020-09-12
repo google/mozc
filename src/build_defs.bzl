@@ -175,6 +175,7 @@ def select_mozc(
       ios: value for iOS build.
       nacl: value for NaCl build.
       linux: value for Linux build.
+      oss_android: value for OSS Android build.
       oss_linux: value for OSS Linux build.
       wasm: value for wasm build.
 
