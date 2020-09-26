@@ -45,7 +45,6 @@
 // Open link specified by the URL.
 - (void)openLink:(NSURL *)url;
 
-
 // Auxiliary methods for switchMode: below.
 - (void)switchModeToDirect:(id)sender;
 - (void)switchModeInternal:(mozc::commands::CompositionMode)new_mode;

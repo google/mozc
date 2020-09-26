@@ -70,7 +70,7 @@ class ZeroQueryEntry(object):
 
 def WriteZeroQueryData(zero_query_dict, output_token_array,
                        output_string_array):
-  # Collect all the strings and assing index in ascending order
+  # Collect all the strings and assign index in ascending order
   string_index = {}
   for key, entry_list in six.iteritems(zero_query_dict):
     string_index[key] = 0

@@ -38,3 +38,12 @@ def jspb_proto_library(**kwargs):
     # Do nothing for OSS.
     _ignore = kwargs
     pass
+
+def bzl_library(**kwargs):
+    # Do nothing for OSS.
+    _ignore = kwargs
+    pass
+
+def py2and3_test(**kwargs):
+    native.py_test(**kwargs)
+    pass

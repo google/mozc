@@ -32,6 +32,7 @@
 // events specified by FLAGS_input file or interactive standard input.  Input
 // file format is same as one of session/session_client_main.
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,6 +50,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
+#include "absl/strings/match.h"
 
 DEFINE_string(input, "", "Input file");
 DEFINE_int32(key_duration, 10, "Key duration (msec)");
@@ -68,12 +70,12 @@ bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
   answer->clear();
 
   std::string line;
-  while (getline(*input, line)) {
+  while (std::getline(*input, line)) {
     Util::ChopReturns(&line);
     if (line.size() > 1 && line[0] == '#' && line[1] == '#') {
       continue;
     }
-    if (line.find(">> ") == 0) {
+    if (absl::StartsWith(line, ">> ")) {
       // Answer line
       answer->assign(line, 3, line.size() - 3);
       continue;

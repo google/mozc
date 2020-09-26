@@ -53,7 +53,7 @@ struct JsonPathNode {
   int slice_end;
   int slice_step;
 
-  static const int kSliceUndef = kint32max;
+  static constexpr int kSliceUndef = kint32max;
 
   static bool IsUndef(int n) { return n == kSliceUndef; }
 

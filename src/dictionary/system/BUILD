@@ -72,6 +72,7 @@ cc_test_mozc(
     name = "codec_test",
     size = "small",
     srcs = ["codec_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":codec",
         ":words_info",
@@ -193,6 +194,7 @@ cc_test_mozc(
         "system_dictionary_test.cc",
     ],
     data = ["//data/dictionary_oss:dictionary00.txt"],
+    requires_full_emulation = False,
     deps = [
         ":codec",
         ":system_dictionary",
@@ -223,6 +225,7 @@ cc_test_mozc(
     name = "value_dictionary_test",
     size = "medium",
     srcs = ["value_dictionary_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":codec",
         ":value_dictionary",
@@ -233,6 +236,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//storage/louds:louds_trie_builder",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -242,6 +246,7 @@ cc_test_mozc(
         "system_dictionary_benchmark.cc",
     ],
     data = ["//data_manager/google:mozc_dataset_for_google@dictionary"],
+    requires_full_emulation = False,
     deps = [
         ":system_dictionary",
         "//base",
@@ -270,6 +275,7 @@ cc_test_mozc(
     name = "key_expansion_table_test",
     size = "small",
     srcs = ["key_expansion_table_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":key_expansion_table",
         "//testing:gunit_main",

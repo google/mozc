@@ -30,14 +30,21 @@
 
 """Generates zero query data file."""
 
-from collections import defaultdict
+import codecs
+import collections
 import logging
 import optparse
 import re
 import sys
 import unicodedata
+import six
 from build_tools import code_generator_util
 from prediction import gen_zero_query_util as util
+
+
+# \xe3\x80\x80 is the UTF-8 sequence of full-width space.
+# The last whitespace is full-width space. (U+3000).
+RE_SPLIT = r'(?: |\xe3\x80\x80|　)+'
 
 
 def ParseCodePoint(s):
@@ -65,8 +72,11 @@ def ParseCodePoint(s):
 
 
 def NormalizeString(string):
-  return unicodedata.normalize(
-      'NFKC', string.decode('utf-8')).encode('utf-8').replace('~', '〜')
+  normalized = unicodedata.normalize('NFKC', six.ensure_text(string))
+  if six.PY2:
+    return normalized.encode('utf-8').replace('~', '〜')
+  else:
+    return normalized.replace('~', '〜')
 
 
 def RemoveTrailingNumber(string):
@@ -84,12 +94,12 @@ def GetReadingsFromDescription(description):
   #  - ビル・建物
   # \xE3\x83\xBB : "・"
   return [RemoveTrailingNumber(token) for token
-          in re.split(r'(?:\(|\)|/|\xE3\x83\xBB)+', normalized)]
+          in re.split(r'(?:\(|\)|/|\xE3\x83\xBB|・)+', normalized)]
 
 
 def ReadEmojiTsv(stream):
   """Reads emoji data from stream and returns zero query data."""
-  zero_query_dict = defaultdict(list)
+  zero_query_dict = collections.defaultdict(list)
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
     if len(columns) != 13:
@@ -118,8 +128,7 @@ def ReadEmojiTsv(stream):
       continue
 
     reading_list = []
-    # \xe3\x80\x80 is a full-width space
-    for reading in re.split(r'(?: |\xe3\x80\x80)+', NormalizeString(readings)):
+    for reading in re.split(RE_SPLIT, NormalizeString(readings)):
       if not reading:
         continue
       reading_list.append(reading)
@@ -155,7 +164,7 @@ def ReadEmojiTsv(stream):
 
 def ReadZeroQueryRuleData(input_stream):
   """Reads zero query rule data from stream and returns zero query data."""
-  zero_query_dict = defaultdict(list)
+  zero_query_dict = collections.defaultdict(list)
 
   for line in input_stream:
     if line.startswith('#'):
@@ -177,7 +186,7 @@ def ReadZeroQueryRuleData(input_stream):
 
 def ReadEmoticonTsv(stream):
   """Reads emoticon data from stream and returns zero query data."""
-  zero_query_dict = defaultdict(list)
+  zero_query_dict = collections.defaultdict(list)
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
     if len(columns) != 3:
@@ -187,8 +196,7 @@ def ReadEmoticonTsv(stream):
     emoticon = columns[0]
     readings = columns[2]
 
-    # \xe3\x80\x80 is a full-width space
-    for reading in re.split(r'(?: |\xe3\x80\x80)+', readings.strip()):
+    for reading in re.split(RE_SPLIT, readings.strip()):
       if not reading:
         continue
       zero_query_dict[reading].append(
@@ -200,7 +208,7 @@ def ReadEmoticonTsv(stream):
 
 def ReadSymbolTsv(stream):
   """Reads emoji data from stream and returns zero query data."""
-  zero_query_dict = defaultdict(list)
+  zero_query_dict = collections.defaultdict(list)
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
     if len(columns) < 3:
@@ -210,7 +218,7 @@ def ReadSymbolTsv(stream):
     symbol = columns[1]
     readings = columns[2]
 
-    symbol_unicode = symbol.decode('utf-8')
+    symbol_unicode = six.ensure_text(symbol)
     if len(symbol_unicode) != 1:
       continue
 
@@ -221,8 +229,7 @@ def ReadSymbolTsv(stream):
     if not (0x2600 <= symbol_code_point and symbol_code_point <= 0x2767):
       continue
 
-    # \xe3\x80\x80 is a full-width space
-    for reading in re.split(r'(?: |\xe3\x80\x80)+', readings.strip()):
+    for reading in re.split(RE_SPLIT, readings.strip()):
       if not reading:
         continue
       zero_query_dict[reading].append(
@@ -253,7 +260,7 @@ def IsValidKeyForZeroQuery(key):
 
 def MergeZeroQueryData(rule_dict, symbol_dict, emoji_dict, emoticon_dict):
   """Returnes merged zero query data."""
-  merged = defaultdict(list)
+  merged = collections.defaultdict(list)
   for key in rule_dict.keys():
     merged[key].extend(rule_dict[key])
 
@@ -299,15 +306,22 @@ def ParseOptions():
   return parser.parse_args()[0]
 
 
+def OpenFile(filename):
+  if six.PY2:
+    return open(filename, 'r')
+  else:
+    return codecs.open(filename, 'r', encoding='utf-8')
+
+
 def main():
   options = ParseOptions()
-  with open(options.input_rule, 'r') as input_stream:
+  with OpenFile(options.input_rule) as input_stream:
     zero_query_rule_dict = ReadZeroQueryRuleData(input_stream)
-  with open(options.input_symbol, 'r') as input_stream:
+  with OpenFile(options.input_symbol) as input_stream:
     zero_query_symbol_dict = ReadSymbolTsv(input_stream)
-  with open(options.input_emoji, 'r') as input_stream:
+  with OpenFile(options.input_emoji) as input_stream:
     zero_query_emoji_dict = ReadEmojiTsv(input_stream)
-  with open(options.input_emoticon, 'r') as input_stream:
+  with OpenFile(options.input_emoticon) as input_stream:
     zero_query_emoticon_dict = ReadEmoticonTsv(input_stream)
 
   merged_zero_query_dict = MergeZeroQueryData(

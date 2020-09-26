@@ -30,6 +30,7 @@
 
 __author__ = "taku"
 
+import codecs
 import optparse
 import struct
 
@@ -52,7 +53,7 @@ def main():
   opts = _ParseOptions()
 
   result = []
-  with open(opts.input, 'r') as stream:
+  with codecs.open(opts.input, 'r', encoding='utf-8') as stream:
     for line in stream:
       line = line.rstrip('\r\n')
       fields = line.split('\t')

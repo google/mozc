@@ -154,7 +154,7 @@
                 '<(mozc_version_file)',
               ],
               'action': [
-                'python', '../../build_tools/replace_version.py',
+                '<(python)', '../../build_tools/replace_version.py',
                 '--version_file', '../../mozc_version.txt',
                 '--input', 'mozc_version_template.wxi',
                 '--output', '<(mozc_version_file)',
@@ -310,7 +310,7 @@
                 '<(PRODUCT_DIR)/mozc_installers_win_versioning_dummy',
               ],
               'action': [
-                'python',
+                '<(python)',
                 '../../build_tools/versioning_files.py',
                 '--version_file', '../../mozc_version.txt',
                 '--configuration', '<(CONFIGURATION_NAME)',
@@ -337,7 +337,7 @@
                 '<(PRODUCT_DIR)/mozc_installers_win_size_check_dummy',
               ],
               'action': [
-                'python',
+                '<(python)',
                 '../../build_tools/binary_size_checker.py',
                 '--target_filename',
                 '<(mozc_32bit_msi),<(mozc_64bit_msi)',

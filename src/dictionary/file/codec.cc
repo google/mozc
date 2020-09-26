@@ -30,6 +30,7 @@
 #include "dictionary/file/codec.h"
 
 #include <cstdint>
+#include <iterator>
 #include <ostream>
 
 #include "base/hash.h"
@@ -145,6 +146,12 @@ mozc::Status DictionaryFileCodec::ReadSections(
     // +-----------+-------------+-----------------+---------------+
     // ^                         <- - - - padded_data_size - - - - >
     // ptr points to here now.
+    if (std::distance(ptr, image_end) < 4) {
+      return mozc::OutOfRangeError(absl::StrCat(
+          "codec.cc: Section ", section_index,
+          ": Insufficient image to read data_size(4 bytes), available size = ",
+          std::distance(ptr, image_end)));
+    }
     const int32 data_size = filecodec_util::ReadInt32ThenAdvance(&ptr);
     if (data_size == 0) {  // The end marker written in WriteSections().
       break;

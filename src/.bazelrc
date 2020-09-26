@@ -1,6 +1,8 @@
 # Common options
 build --cxxopt "-std=c++17"
 build --copt "-funsigned-char"
+build --copt "-Wno-sign-compare"
+build --copt "-Wno-char-subscripts"
 build --objccopt "-fsigned-char"
 
 # Linux

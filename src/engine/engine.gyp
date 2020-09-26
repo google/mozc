@@ -74,6 +74,10 @@
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../rewriter/rewriter.gyp:rewriter',
       ],
+      'export_dependent_settings': [
+        '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
+      ],
     },
     {
       'target_name': 'mock_converter_engine',
@@ -102,10 +106,12 @@
       'target_name': 'mock_data_engine_factory',
       'type': 'static_library',
       'sources': [
+        '<(gen_out_dir)/../dictionary/pos_matcher.h',
         'mock_data_engine_factory.cc',
       ],
       'dependencies': [
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         'engine',
       ],
     },

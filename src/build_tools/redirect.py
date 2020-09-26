@@ -56,8 +56,7 @@ def main():
   if sys.argv[0].endswith('.py'):
     sys.argv.insert(0, sys.executable)  # Inject the python interpreter path.
   try:
-    process = subprocess.Popen(sys.argv, stdout=subprocess.PIPE,
-                               universal_newlines=True)
+    process = subprocess.Popen(sys.argv, stdout=subprocess.PIPE)
   except:
     print('==========')
     print(' ERROR: %s' % ' '.join(sys.argv))
@@ -65,8 +64,8 @@ def main():
     raise
   (stdout_content, _) = process.communicate()
   # Write the stdout content to the output file.
-  output_file = open(output_file_name, 'w')
-  output_file.write(stdout_content)
+  with open(output_file_name, 'wb') as output_file:
+    output_file.write(stdout_content)
   return process.wait()
 
 if __name__ == '__main__':

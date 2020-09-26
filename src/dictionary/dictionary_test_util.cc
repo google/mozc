@@ -32,6 +32,7 @@
 #include <set>
 #include <string>
 
+#include "base/mozc_hash_map.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
@@ -81,7 +82,7 @@ CheckMultiTokensExistenceCallback::CheckMultiTokensExistenceCallback(
 }
 
 bool CheckMultiTokensExistenceCallback::IsFound(const Token *token) const {
-  std::map<const Token *, bool>::const_iterator iter = result_.find(token);
+  const auto iter = result_.find(token);
   if (iter == result_.end()) {
     return false;
   }
@@ -89,9 +90,8 @@ bool CheckMultiTokensExistenceCallback::IsFound(const Token *token) const {
 }
 
 bool CheckMultiTokensExistenceCallback::AreAllFound() const {
-  for (std::map<const Token *, bool>::const_iterator iter = result_.begin();
-       iter != result_.end(); ++iter) {
-    if (!iter->second) {
+  for (const auto &kv : result_) {
+    if (!kv.second) {
       return false;
     }
   }
@@ -102,8 +102,7 @@ DictionaryInterface::Callback::ResultType
 CheckMultiTokensExistenceCallback::OnToken(absl::string_view,  // key
                                            absl::string_view,  // actual_key
                                            const Token &token) {
-  for (std::map<const Token *, bool>::iterator iter = result_.begin();
-       iter != result_.end(); ++iter) {
+  for (auto iter = result_.begin(); iter != result_.end(); ++iter) {
     if (!iter->second && IsTokenEqualImpl(*iter->first, token)) {
       iter->second = true;
       ++found_count_;

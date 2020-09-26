@@ -500,8 +500,8 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
     </message>
     <message>
         <location filename="config_dialog.cc" line="74"/>
-        <source>Mozc Preferences</source>
-        <translation>Mozc 環境設定</translation>
+        <source>%1 Preferences</source>
+        <translation>%1 環境設定</translation>
     </message>
     <message>
         <location filename="config_dialog.cc" line="131"/>
@@ -644,17 +644,17 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
     <message>
         <location filename="config_dialog.cc" line="732"/>
         <location filename="config_dialog.cc" line="754"/>
-        <source>Mozc Converter is not running. Settings were not saved.</source>
+        <source>%1 Converter is not running. Settings were not saved.</source>
         <translation>変換サーバが反応していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
         <location filename="config_dialog.cc" line="849"/>
-        <source>When you reset Mozc settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
+        <source>When you reset %1 settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
  - Usage statistics and crash reports
  - Administrator settings</source>
-        <translation>この機能を実行すると Mozcの設定が標準状態に戻ります。実行しますか？ 以下の設定はリセットされません。
+        <translation>この機能を実行すると %1の設定が標準状態に戻ります。実行しますか？ 以下の設定はリセットされません。
  - 学習履歴
  - 入力履歴
  - 使用統計と障害レポート
@@ -681,8 +681,8 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
     </message>
     <message>
         <location filename="config_dialog.cc" line="776"/>
-        <source>Mozc Converter is not running. Operation was not executed.</source>
-        <translation>Mozcコンバーターが起動していません。設定の反映に失敗しました。</translation>
+        <source>%1 Converter is not running. Operation was not executed.</source>
+        <translation>%1コンバーターが起動していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
         <location filename="config_dialog.cc" line="742"/>
@@ -818,8 +818,8 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
     </message>
     <message>
         <location filename="keymap_editor.cc" line="284"/>
-        <source>Mozc keymap editor</source>
-        <translation>Mozc キー設定</translation>
+        <source>%1 keymap editor</source>
+        <translation>%1 キー設定</translation>
     </message>
     <message>
         <location filename="keymap_editor.cc" line="288"/>
@@ -888,8 +888,8 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
     </message>
     <message>
         <location filename="roman_table_editor.cc" line="48"/>
-        <source>Mozc Romaji table editor</source>
-        <translation>Mozcローマ字テーブル設定</translation>
+        <source>%1 Romaji table editor</source>
+        <translation>%1ローマ字テーブル設定</translation>
     </message>
     <message>
         <location filename="roman_table_editor.cc" line="52"/>
@@ -911,8 +911,8 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
         <location filename="roman_table_editor.cc" line="152"/>
         <location filename="roman_table_editor.cc" line="192"/>
         <location filename="roman_table_editor.cc" line="219"/>
-        <source>Mozc settings</source>
-        <translation>Mozcプロパティ</translation>
+        <source>%1 settings</source>
+        <translation>%1プロパティ</translation>
     </message>
     <message>
         <location filename="roman_table_editor.cc" line="132"/>

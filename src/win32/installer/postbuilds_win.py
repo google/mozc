@@ -60,7 +60,6 @@ def ParseOption():
   return opts
 
 
-
   # Touch the timestamp file.
   if os.path.exists(abs_touch_file_path):
     os.utime(abs_touch_file_path, None)

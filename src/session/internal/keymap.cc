@@ -182,9 +182,9 @@ bool KeyMapManager::LoadStream(std::istream *ifs) {
 bool KeyMapManager::LoadStreamWithErrors(std::istream *ifs,
                                          std::vector<std::string> *errors) {
   std::string line;
-  getline(*ifs, line);  // Skip the first line.
+  std::getline(*ifs, line);  // Skip the first line.
   while (!ifs->eof()) {
-    getline(*ifs, line);
+    std::getline(*ifs, line);
     Util::ChopReturns(&line);
 
     if (line.empty() || line[0] == '#') {  // Skip empty or comment line.

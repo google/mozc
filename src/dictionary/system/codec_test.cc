@@ -113,7 +113,6 @@ namespace {
                           "Other charaters should be encoded into 3bytes.");
 }
 
-
 }  // namespace
 
 class SystemDictionaryCodecTest : public ::testing::Test {
@@ -370,7 +369,6 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
   EXPECT_EQ(original, decoded);
   EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
 }
-
 
 TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
   SystemDictionaryCodecInterface *codec =
@@ -823,7 +821,6 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
     EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
   }
 }
-
 
 }  // namespace dictionary
 }  // namespace mozc

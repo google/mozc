@@ -120,6 +120,7 @@ cc_test_mozc(
     name = "ipc_path_manager_test",
     size = "small",
     srcs = ["ipc_path_manager_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":ipc",
         ":ipc_path_manager",
@@ -166,6 +167,7 @@ cc_test_mozc(
     size = "small",
     srcs = ["ipc_test.cc"],
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # ipc_test.cc
+    requires_full_emulation = False,
     deps = [
         ":ipc",
         ":ipc_test_util",
@@ -213,6 +215,7 @@ cc_test_mozc(
     name = "named_event_test",
     size = "small",
     srcs = ["named_event_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":named_event",
         "//base",
@@ -266,6 +269,7 @@ cc_test_mozc(
     name = "process_watch_dog_test",
     size = "small",
     srcs = ["process_watch_dog_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":process_watch_dog",
         "//base",

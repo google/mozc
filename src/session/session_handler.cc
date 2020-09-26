@@ -241,15 +241,20 @@ bool SessionHandler::StartWatchDog() {
 
 void SessionHandler::SetConfig(const config::Config &config) {
   *config_ = config;
+  const auto *data_manager = engine_->GetDataManager();
   const composer::Table *table =
-      table_manager_->GetTable(*request_, *config_, *engine_->GetDataManager());
+      data_manager != nullptr
+          ? table_manager_->GetTable(*request_, *config_, *data_manager)
+          : nullptr;
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
-       element != NULL; element = element->next) {
-    if (element->value != NULL) {
+       element != nullptr; element = element->next) {
+    if (element->value != nullptr) {
       element->value->SetConfig(config_.get());
       element->value->SetRequest(request_.get());
-      element->value->SetTable(table);
+      if (table != nullptr) {
+        element->value->SetTable(table);
+      }
     }
   }
   config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config);

@@ -44,6 +44,7 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -55,9 +56,9 @@ class StateTable {
   }
 
   // |str| is an 1-dimentional row (or column) represented in byte array.
-  void Add(uint16 id, const std::string &str) {
+  void Add(uint16 id, absl::string_view str) {
     CHECK_LT(id, idarray_.size());
-    idarray_[id] = str;
+    idarray_[id] = std::string(str);
   }
 
   void Build() {

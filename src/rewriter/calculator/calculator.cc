@@ -77,8 +77,8 @@ class CalculatorImpl : public CalculatorInterface {
   typedef std::vector<std::pair<int, double> > TokenSequence;
 
   // Max byte length of operator character
-  static const size_t kMaxLengthOfOperator = 3;
-  static const size_t kBufferSizeOfOutputNumber = 32;
+  static constexpr size_t kMaxLengthOfOperator = 3;
+  static constexpr size_t kBufferSizeOfOutputNumber = 32;
 
   // Tokenizes |expression_body| and sets the tokens into |tokens|.
   // It returns false if |expression_body| includes an invalid token or

@@ -91,6 +91,7 @@ cc_test_mozc(
     srcs = [
         "transliterators_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":transliterator_interface",
         ":transliterators",
@@ -104,6 +105,7 @@ cc_test_mozc(
     srcs = [
         "char_chunk_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":char_chunk",
         ":composition_input",
@@ -131,6 +133,7 @@ cc_test_mozc(
     srcs = [
         "composition_input_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":composition_input",
         ":transliterator_interface",
@@ -166,6 +169,7 @@ cc_test_mozc(
     srcs = [
         "composition_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":char_chunk",
         ":composition",
@@ -205,6 +209,7 @@ cc_test_mozc(
     name = "converter_test",
     size = "small",
     srcs = ["converter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":converter",
         "//base",
@@ -228,6 +233,7 @@ cc_test_mozc(
     name = "mode_switching_handler_test",
     size = "small",
     srcs = ["mode_switching_handler_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":mode_switching_handler",
         "//base",
@@ -249,11 +255,13 @@ cc_binary_mozc(
 py_library_mozc(
     name = "gen_typing_model_lib",
     srcs = ["gen_typing_model.py"],
+    deps = [],
 )
 
 py_binary_mozc(
     name = "gen_typing_model",
     srcs = ["gen_typing_model.py"],
+    python_version = "PY2",
     deps = [":gen_typing_model_lib"],
 )
 
@@ -275,6 +283,7 @@ cc_test_mozc(
     name = "typing_model_test",
     size = "small",
     srcs = ["typing_model_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":typing_model",
         "//base",
@@ -312,6 +321,7 @@ cc_test_mozc(
     name = "typing_corrector_test",
     size = "small",
     srcs = ["typing_corrector_test.cc"],
+    requires_full_emulation = False,
     deps = [
         "typing_corrector",
         ":typing_model",

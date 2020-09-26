@@ -66,6 +66,7 @@ cc_test_mozc(
     name = "renderer_client_test",
     size = "medium",
     srcs = ["renderer_client_test.cc"],
+    requires_full_emulation = False,
     tags = [
         "disable_on_nacl_test",
         "no_android",
@@ -112,6 +113,7 @@ cc_test_mozc(
     name = "renderer_server_test",
     size = "medium",
     srcs = ["renderer_server_test.cc"],
+    requires_full_emulation = False,
     tags = [
         "disable_on_nacl_test",
         "no_android",
@@ -154,6 +156,7 @@ cc_test_mozc(
         "table_layout_interface.h",
         "table_layout_test.cc",
     ],
+    requires_full_emulation = False,
     tags = [
         "disable_on_nacl_test",
         "no_android",
@@ -203,6 +206,7 @@ cc_test_mozc(
     name = "window_util_test",
     size = "small",
     srcs = ["window_util_test.cc"],
+    requires_full_emulation = False,
     tags = [
         "disable_on_nacl_test",
         "no_android",

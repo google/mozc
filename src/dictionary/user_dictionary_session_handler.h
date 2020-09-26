@@ -110,7 +110,7 @@ class UserDictionarySessionHandler {
   }
 
  private:
-  static const uint64 kInvalidSessionId = 0;
+  static constexpr uint64 kInvalidSessionId = 0;
 
   // As an interface, this class can hold multiple sessions,
   // but currently only one latest session is held.

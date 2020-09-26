@@ -228,12 +228,13 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   }
 
  private:
-  static const size_t kDefaultInternalBufferSize = 4000 * 1024;  // 4 mega chars
+  static constexpr size_t kDefaultInternalBufferSize =
+      4000 * 1024;  // 4 mega chars
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   typedef MOZC_CODEGEN_BYTEARRAY_STREAM_WORD_TYPE WordType;
   static const size_t kNumOfBytesOnOneLine = 4 * sizeof(WordType);
 #else
-  static const size_t kNumOfBytesOnOneLine = 20;
+  static constexpr size_t kNumOfBytesOnOneLine = 20;
 #endif
 
   // Converts a raw byte stream to C source code.

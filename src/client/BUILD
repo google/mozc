@@ -84,6 +84,7 @@ cc_test_mozc(
     name = "client_test",
     size = "small",
     srcs = ["client_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":client",
         "//base",
@@ -161,6 +162,7 @@ cc_binary_mozc(
         "//protocol:commands_proto",
         "//protocol:renderer_proto",
         "//renderer:renderer_client",
+        "@com_google_absl//absl/strings",
     ],
 )
 

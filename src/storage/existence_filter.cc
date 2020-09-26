@@ -81,11 +81,11 @@ class ExistenceFilter::BlockBitmap {
   bool GetMutableFragment(uint32 *itr, char ***ptr, size_t *size);
 
  private:
-  static const int kBlockShift = 21;  // 2^21 bits == 256KB block
-  static const int kBlockBits = 1 << kBlockShift;
-  static const int kBlockMask = kBlockBits - 1;
-  static const int kBlockBytes = kBlockBits >> 3;
-  static const int kBlockWords = kBlockBits >> 5;
+  static constexpr int kBlockShift = 21;  // 2^21 bits == 256KB block
+  static constexpr int kBlockBits = 1 << kBlockShift;
+  static constexpr int kBlockMask = kBlockBits - 1;
+  static constexpr int kBlockBytes = kBlockBits >> 3;
+  static constexpr int kBlockWords = kBlockBits >> 5;
 
   // Array of blocks. Each block has kBlockBits region except for last block.
   uint32 **block_;

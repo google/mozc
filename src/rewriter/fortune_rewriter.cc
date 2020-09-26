@@ -61,7 +61,7 @@ const int kMyBirthdayLevels[] = {30, 60, 80, 90, 95};
 const int kFriday13Levels[] = {10, 25, 40, 55, 70};
 
 bool IsValidFortuneType(FortuneType fortune_type) {
-  return (fortune_type >= 0 && fortune_type < NUM_FORTUNE_TYPES);
+  return (fortune_type < NUM_FORTUNE_TYPES);
 }
 
 class FortuneData {

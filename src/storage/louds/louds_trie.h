@@ -44,7 +44,7 @@ namespace louds {
 class LoudsTrie {
  public:
   // The max depth of the trie.
-  static const size_t kMaxDepth = 256;
+  static constexpr size_t kMaxDepth = 256;
 
   // This class stores a traversal state.
   typedef Louds::Node Node;

@@ -1509,6 +1509,7 @@ bool ExpandYear(const std::string &prefix, int year,
 void Insert(const Segment::Candidate &base_candidate, int position,
             const std::string &value, const char *description,
             Segment *segment) {
+  position = std::min(position, static_cast<int>(segment->candidates_size()));
   Segment::Candidate *c = segment->insert_candidate(position);
   DCHECK(c);
   c->Init();

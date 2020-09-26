@@ -30,12 +30,13 @@
 
 __author__ = "taku"
 
+import codecs
 import optparse
 
 
-def IsPrefix(str, key):
+def IsPrefix(s, key):
   try:
-    n = str.index(key)
+    n = s.index(key)
   except:
     n = -1
 
@@ -46,7 +47,7 @@ def IsPrefix(str, key):
 
 
 def LoadRewriteMapRule(filename):
-  fh = open(filename)
+  fh = codecs.open(filename, encoding='utf-8')
   rule = []
   for line in fh:
     line = line.rstrip('\n')
@@ -60,11 +61,11 @@ def LoadRewriteMapRule(filename):
 def ReadPOSID(id_file, special_pos_file):
   pos_list = []
 
-  for line in open(id_file, 'r'):
+  for line in codecs.open(id_file, 'r', encoding='utf-8'):
     fields = line.split()
     pos_list.append(fields[1])
 
-  for line in open(special_pos_file, 'r'):
+  for line in codecs.open(special_pos_file, 'r', encoding='utf-8'):
     if len(line) <= 1 or line[0] == '#':
       continue
     fields = line.split()
@@ -97,7 +98,7 @@ def main():
 
   current_id = 1
   id_map = {}
-  ids = []
+  ids = bytearray()
 
   for target in pos_list:
     id = 0
@@ -112,7 +113,7 @@ def main():
     ids.append(id)
 
   with open(opts.output, 'wb') as f:
-    f.write(''.join(chr(id) for id in ids))
+    f.write(ids)
 
 
 if __name__ == '__main__':

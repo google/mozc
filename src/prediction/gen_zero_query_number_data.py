@@ -30,7 +30,8 @@
 
 """Generate zero query data file for number suffixes."""
 
-from collections import defaultdict
+import codecs
+import collections
 import optparse
 
 from prediction import gen_zero_query_util as util
@@ -38,7 +39,7 @@ from prediction import gen_zero_query_util as util
 
 def ReadZeroQueryNumberData(input_stream):
   """Reads zero query number data from stream and returns zero query data."""
-  zero_query_dict = defaultdict(list)
+  zero_query_dict = collections.defaultdict(list)
 
   for line in input_stream:
     if line.startswith('#'):
@@ -71,7 +72,7 @@ def ParseOption():
 
 def main():
   options = ParseOption()
-  with open(options.input, 'r') as input_stream:
+  with codecs.open(options.input, 'r', encoding='utf-8') as input_stream:
     zero_query_dict = ReadZeroQueryNumberData(input_stream)
   util.WriteZeroQueryData(zero_query_dict,
                           options.output_token_array,

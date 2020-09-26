@@ -262,11 +262,11 @@ void CreatePredictionKeys(PredictionRequestType type,
   switch (type) {
     case ONE_CHAR:
       std::copy(one_chars.begin(), one_chars.end(),
-                back_inserter(*request_keys));
+                std::back_inserter(*request_keys));
       break;
     case TWO_CHARS:
       std::copy(two_chars.begin(), two_chars.end(),
-                back_inserter(*request_keys));
+                std::back_inserter(*request_keys));
       break;
     default:
       break;

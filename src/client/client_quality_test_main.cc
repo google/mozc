@@ -193,7 +193,7 @@ bool CalculateBLEU(client::Client* client, const std::string& hiragana_sentence,
 
 double CalculateMean(const std::vector<double>& scores) {
   CHECK(!scores.empty());
-  const double sum = accumulate(scores.begin(), scores.end(), 0.0);
+  const double sum = std::accumulate(scores.begin(), scores.end(), 0.0);
   return sum / static_cast<double>(scores.size());
 }
 }  // namespace mozc

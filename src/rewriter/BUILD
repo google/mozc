@@ -59,6 +59,7 @@ cc_test_mozc(
     name = "merger_rewriter_test",
     size = "small",
     srcs = ["merger_rewriter_test.cc"],
+    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":merger_rewriter",
@@ -72,6 +73,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -104,6 +106,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "collocation_rewriter_test",
     srcs = ["collocation_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":collocation_rewriter",
         "//base",
@@ -152,6 +155,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["user_segment_history_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":number_rewriter",
         ":user_segment_history_rewriter",
@@ -206,6 +210,7 @@ cc_test_mozc(
     name = "user_boundary_history_rewriter_test",
     size = "small",
     srcs = ["user_boundary_history_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_boundary_history_rewriter",
         "//base",
@@ -251,6 +256,7 @@ cc_test_mozc(
     name = "date_rewriter_test",
     size = "small",
     srcs = ["date_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":date_rewriter",
         "//base",
@@ -269,6 +275,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -302,7 +309,9 @@ cc_library_mozc(
 cc_test_mozc(
     name = "number_rewriter_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["number_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":number_rewriter",
         "//base",
@@ -317,6 +326,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -350,6 +360,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["transliteration_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":transliteration_rewriter",
         "//base",
@@ -370,6 +381,7 @@ cc_test_mozc(
         "//transliteration",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -402,6 +414,7 @@ cc_test_mozc(
     name = "language_aware_rewriter_test",
     size = "small",
     srcs = ["language_aware_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":language_aware_rewriter",
         "//base",
@@ -422,6 +435,7 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -447,6 +461,7 @@ cc_test_mozc(
     name = "version_rewriter_test",
     size = "small",
     srcs = ["version_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":version_rewriter",
         "//base:system_util",
@@ -457,6 +472,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -490,6 +506,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["symbol_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":symbol_rewriter",
         "//base",
@@ -506,6 +523,7 @@ cc_test_mozc(
         "//session:request_test_util",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -535,6 +553,7 @@ cc_test_mozc(
     name = "emoticon_rewriter_test",
     size = "small",
     srcs = ["emoticon_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":emoticon_rewriter",
         "//base",
@@ -550,6 +569,7 @@ cc_test_mozc(
         "//testing:googletest",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -578,6 +598,7 @@ cc_test_mozc(
     name = "variants_rewriter_test",
     size = "small",
     srcs = ["variants_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":variants_rewriter",
         "//base",
@@ -617,6 +638,7 @@ cc_test_mozc(
     name = "english_variants_rewriter_test",
     size = "small",
     srcs = ["english_variants_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":english_variants_rewriter",
         "//base",
@@ -626,6 +648,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -651,6 +674,7 @@ cc_test_mozc(
     name = "fortune_rewriter_test",
     size = "small",
     srcs = ["fortune_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":fortune_rewriter",
         "//base",
@@ -660,6 +684,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -683,6 +708,7 @@ cc_test_mozc(
     name = "dice_rewriter_test",
     size = "small",
     srcs = ["dice_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dice_rewriter",
         "//base",
@@ -691,6 +717,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -719,6 +746,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["calculator_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":calculator_rewriter",
         "//base",
@@ -764,6 +792,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["unicode_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":unicode_rewriter",
         "//base",
@@ -780,6 +809,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -804,6 +834,7 @@ cc_test_mozc(
     name = "user_dictionary_rewriter_test",
     size = "small",
     srcs = ["user_dictionary_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_dictionary_rewriter",
         "//base",
@@ -814,6 +845,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -840,6 +872,7 @@ cc_test_mozc(
     name = "dictionary_generator_test",
     size = "small",
     srcs = ["dictionary_generator_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_generator",
         "//base",
@@ -892,6 +925,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_emoji_rewriter_data",
     srcs = ["gen_emoji_rewriter_data.py"],
+    python_version = "PY2",
     deps = [
         ":gen_emoji_rewriter_data_lib",
         "//build_tools:code_generator_util",
@@ -925,7 +959,9 @@ cc_library_mozc(
 cc_test_mozc(
     name = "emoji_rewriter_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["emoji_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":emoji_rewriter",
         ":variants_rewriter",
@@ -986,6 +1022,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_single_kanji_rewriter_data",
     srcs = ["gen_single_kanji_rewriter_data.py"],
+    python_version = "PY2",
     deps = [
         ":gen_single_kanji_rewriter_data_lib",
         "//build_tools:code_generator_util",
@@ -1008,6 +1045,7 @@ cc_test_mozc(
     name = "single_kanji_rewriter_test",
     size = "small",
     srcs = ["single_kanji_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":single_kanji_rewriter",
         "//base:system_util",
@@ -1036,6 +1074,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_counter_suffix_array",
     srcs = ["gen_counter_suffix_array.py"],
+    python_version = "PY2",
     deps = [
         ":gen_counter_suffix_array_lib",
         "//build_tools:code_generator_util",
@@ -1070,6 +1109,7 @@ cc_test_mozc(
     name = "focus_candidate_rewriter_test",
     size = "small",
     srcs = ["focus_candidate_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":focus_candidate_rewriter",
         "//base",
@@ -1081,6 +1121,7 @@ cc_test_mozc(
         "//testing:googletest",
         "//testing:gunit_main",
         "//transliteration",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1111,6 +1152,7 @@ cc_test_mozc(
     srcs = [
         "zipcode_rewriter_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":zipcode_rewriter",
         "//base",
@@ -1124,6 +1166,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1147,6 +1190,7 @@ cc_test_mozc(
     name = "katakana_promotion_rewriter_test",
     size = "small",
     srcs = ["katakana_promotion_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":katakana_promotion_rewriter",
         ":transliteration_rewriter",
@@ -1158,6 +1202,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1175,6 +1220,7 @@ cc_library_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1182,6 +1228,7 @@ cc_test_mozc(
     name = "command_rewriter_test",
     size = "small",
     srcs = ["command_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":command_rewriter",
         "//base",
@@ -1216,6 +1263,7 @@ cc_test_mozc(
     name = "normalization_rewriter_test",
     size = "small",
     srcs = ["normalization_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":normalization_rewriter",
         "//base",
@@ -1224,6 +1272,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1243,7 +1292,9 @@ cc_library_mozc(
 cc_test_mozc(
     name = "remove_redundant_candidate_rewriter_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["remove_redundant_candidate_rewriter_test.cc"],
+    requires_full_emulation = True,
     deps = [
         ":remove_redundant_candidate_rewriter",
         "//base",
@@ -1300,6 +1351,7 @@ cc_test_mozc(
     name = "usage_rewriter_test",
     size = "small",
     srcs = ["usage_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":rewriter_interface",
         ":usage_rewriter",
@@ -1318,6 +1370,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1333,6 +1386,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_reading_correction_data",
     srcs = ["gen_reading_correction_data.py"],
+    python_version = "PY2",
     deps = [
         ":gen_reading_correction_data_lib",
         "//build_tools:code_generator_util",
@@ -1364,6 +1418,7 @@ cc_test_mozc(
     name = "correction_rewriter_test",
     size = "small",
     srcs = ["correction_rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":correction_rewriter",
         "//base",
@@ -1459,6 +1514,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["rewriter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         "rewriter",
         ":rewriter_interface",
@@ -1491,6 +1547,7 @@ cc_test_mozc(
     name = "collocation_util_test",
     size = "small",
     srcs = ["collocation_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":collocation_util",
         "//base",
@@ -1507,6 +1564,7 @@ cc_library_mozc(
         "//base:hash",
         "//base:logging",
         "//storage:existence_filter",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1571,6 +1629,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "number_compound_util_test",
     srcs = ["number_compound_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":number_compound_util",
         "//base:port",

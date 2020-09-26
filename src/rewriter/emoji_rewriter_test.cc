@@ -156,7 +156,7 @@ const EmojiData kTestEmojiList[] = {
 class TestDataManager : public testing::MockDataManager {
  public:
   TestDataManager() {
-    // Collect all the strings and temporarily assing 0 as index.
+    // Collect all the strings and temporarily assign 0 as index.
     std::map<string, size_t> string_index;
     for (const EmojiData &data : kTestEmojiList) {
       string_index[data.key] = 0;

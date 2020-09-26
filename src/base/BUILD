@@ -175,6 +175,7 @@ cc_test_mozc(
     name = "flags_test",
     size = "small",
     srcs = ["flags_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":flags",
         "//testing:gunit_main",
@@ -234,7 +235,10 @@ cc_library_mozc(
     name = "port",
     hdrs = ["port.h"],
     deps = select_mozc(
-        default = ["//base:base"],
+        default = [
+            "//base:base",
+            "//base:port",
+        ],
         linux = ["@com_google_absl//absl/base:core_headers"],
         nacl = [
             # TODO(hsumita): Move :nacl_linkopts to more suitable position.
@@ -283,7 +287,10 @@ cc_library_mozc(
     ),
     deps = select_mozc(
         client = LOGGING_APP_BUILD_DEPS,
-        default = ["//base"],
+        default = [
+            "//base",
+            "//base:logging_extensions",
+        ],
     ) + [":port"],
 )
 
@@ -291,6 +298,7 @@ cc_test_mozc(
     name = "logging_test",
     size = "small",
     srcs = ["logging_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":logging",
         "//testing:gunit_main",
@@ -312,6 +320,7 @@ cc_test_mozc(
     name = "codegen_bytearray_stream_test",
     size = "small",
     srcs = ["codegen_bytearray_stream_test.cc"],
+    requires_full_emulation = False,
     tags = ["no_android"],
     visibility = ["//visibility:private"],
     deps = [
@@ -337,6 +346,7 @@ cc_test_mozc(
     name = "unnamed_event_test",
     size = "small",
     srcs = ["unnamed_event_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":logging",
         ":port",
@@ -366,6 +376,7 @@ cc_test_mozc(
     srcs = [
         "thread_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":thread",
         ":util",
@@ -394,6 +405,7 @@ cc_test_mozc(
     name = "stl_util_test",
     size = "small",
     srcs = ["stl_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":stl_util",
         "//testing:gunit_main",
@@ -412,6 +424,7 @@ cc_test_mozc(
     name = "iterator_adapter_test",
     size = "small",
     srcs = ["iterator_adapter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":iterator_adapter",
         ":port",
@@ -431,6 +444,7 @@ cc_test_mozc(
     name = "singleton_test",
     size = "small",
     srcs = ["singleton_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":singleton",
         ":thread",
@@ -463,10 +477,14 @@ cc_library_mozc(
     ),
 )
 
+py_binary_mozc(
+    name = "gen_character_set",
+    srcs = ["gen_character_set.py"],
+)
+
 genrule(
     name = "character_set_data",
     srcs = [
-        "gen_character_set.py",
         "//data/unicode:CP932.TXT",
         "//data/unicode:JIS0201.TXT",
         "//data/unicode:JIS0208.TXT",
@@ -474,8 +492,8 @@ genrule(
         "//data/unicode:jisx0213-2004-std.txt",
     ],
     outs = ["character_set.inc"],
-    cmd = "python2.7 $(location :gen_character_set.py) --cp932file=$(location //data/unicode:CP932.TXT) --jisx0201file=$(location //data/unicode:JIS0201.TXT) --jisx0208file=$(location //data/unicode:JIS0208.TXT) --jisx0212file=$(location //data/unicode:JIS0212.TXT) --jisx0213file=$(location //data/unicode:jisx0213-2004-std.txt) --output=$@",
-    local = 0,
+    cmd = "$(location :gen_character_set) --cp932file=$(location //data/unicode:CP932.TXT) --jisx0201file=$(location //data/unicode:JIS0201.TXT) --jisx0208file=$(location //data/unicode:JIS0208.TXT) --jisx0212file=$(location //data/unicode:JIS0212.TXT) --jisx0213file=$(location //data/unicode:jisx0213-2004-std.txt) --output=$@",
+    exec_tools = [":gen_character_set"],
     visibility = ["//visibility:private"],
 )
 
@@ -508,6 +526,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "hash_test",
     srcs = ["hash_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":hash",
         ":port",
@@ -528,6 +547,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "clock_test",
     srcs = ["clock_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":clock",
         ":clock_mock",
@@ -564,6 +584,7 @@ cc_test_mozc(
         "util_test.cc",
     ],
     data = ["//data/test/character_set:character_set.tsv"],
+    requires_full_emulation = False,
     deps = [
         ":compiler_specific",
         ":file_stream",
@@ -600,6 +621,7 @@ cc_test_mozc(
     srcs = [
         "mutex_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":clock",
         ":logging",
@@ -656,6 +678,7 @@ cc_test_mozc(
     name = "number_util_test",
     size = "small",
     srcs = ["number_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":number_util",
         ":port",
@@ -679,9 +702,11 @@ cc_test_mozc(
     name = "trie_test",
     size = "small",
     srcs = ["trie_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":trie",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -701,6 +726,7 @@ cc_test_mozc(
     name = "text_normalizer_test",
     size = "small",
     srcs = ["text_normalizer_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":text_normalizer",
         ":util",
@@ -727,6 +753,7 @@ cc_test_mozc(
     name = "clock_mock_test",
     size = "small",
     srcs = ["clock_mock_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":clock_mock",
         ":util",
@@ -746,6 +773,7 @@ cc_test_mozc(
     name = "bitarray_test",
     size = "small",
     srcs = ["bitarray_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":bitarray",
         ":util",
@@ -786,6 +814,7 @@ cc_test_mozc(
     name = "mmap_test",
     size = "small",
     srcs = ["mmap_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":file_stream",
         ":file_util",
@@ -819,6 +848,7 @@ cc_test_mozc(
     name = "file_util_test",
     size = "small",
     srcs = ["file_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":file_stream",
         ":file_util",
@@ -868,6 +898,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "system_util_test",
     srcs = ["system_util_test.cc"],
+    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":number_util",
@@ -892,6 +923,7 @@ cc_library_mozc(
         ":system_util",
         ":util",
         ":win_util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -927,6 +959,7 @@ cc_test_mozc(
     name = "process_mutex_test",
     size = "small",
     srcs = ["process_mutex_test.cc"],
+    requires_full_emulation = False,
     deps = [
         "logging",
         ":file_util",
@@ -1017,6 +1050,7 @@ cc_test_mozc(
     name = "config_file_stream_test",
     size = "small",
     srcs = ["config_file_stream_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":config_file_stream",
         ":file_util",
@@ -1045,7 +1079,7 @@ genrule(
            ' --template_path="$(location //data/version:mozc_version_template.bzl)"' +
            ' --output="$(OUTS)"' +
            " --target_platform=" + TARGET_PLATFORM),
-    tools = ["//build_tools:mozc_version"],
+    exec_tools = ["//build_tools:mozc_version"],
     visibility = ["//visibility:private"],
 )
 
@@ -1057,7 +1091,7 @@ genrule(
     ],
     outs = ["version_def.h"],
     cmd = "$(location //build_tools:replace_version) --version_file=$(location mozc_version.txt) --input=$(location version_def_template.h) --output=$(OUTS) --branding=GoogleJapaneseInput",
-    tools = ["//build_tools:replace_version"],
+    exec_tools = ["//build_tools:replace_version"],
     visibility = ["//visibility:private"],
 )
 
@@ -1083,6 +1117,7 @@ cc_test_mozc(
     name = "version_test",
     size = "small",
     srcs = ["version_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":util",
         ":version",
@@ -1118,11 +1153,13 @@ cc_test_mozc(
         "unverified_aes256_test.cc",
         "unverified_sha1_test.cc",
     ],
+    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":obfuscator_support",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1163,6 +1200,7 @@ cc_test_mozc(
         "encryptor_test.cc",
         "password_manager_test.cc",
     ],
+    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
@@ -1185,6 +1223,7 @@ cc_binary_mozc(
         ":logging",
         ":mmap",
         ":util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1223,6 +1262,7 @@ cc_test_mozc(
     name = "scheduler_test",
     size = "small",
     srcs = ["scheduler_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":logging",
         ":scheduler",
@@ -1249,6 +1289,7 @@ cc_test_mozc(
     name = "scheduler_stub_test",
     size = "small",
     srcs = ["scheduler_stub_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":scheduler_stub",
         "//testing:gunit_main",
@@ -1270,6 +1311,7 @@ cc_test_mozc(
     name = "cpu_stats_test",
     size = "small",
     srcs = ["cpu_stats_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":cpu_stats",
         "//testing:googletest",
@@ -1305,6 +1347,7 @@ cc_test_mozc(
     name = "stopwatch_test",
     size = "small",
     srcs = ["stopwatch_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":clock",
         ":clock_mock",
@@ -1342,6 +1385,7 @@ cc_test_mozc(
     name = "url_test",
     size = "small",
     srcs = ["url_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":url",
         ":util",
@@ -1368,6 +1412,7 @@ cc_test_mozc(
     name = "multifile_test",
     size = "small",
     srcs = ["multifile_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":file_stream",
         ":file_util",
@@ -1465,6 +1510,7 @@ cc_test_mozc(
         ":gen_embedded_file_test_data",
     ],
     data = ["embedded_file.h"],
+    requires_full_emulation = False,
     deps = [
         ":embedded_file",
         ":file_stream",
@@ -1490,6 +1536,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "serialized_string_array_test",
     srcs = ["serialized_string_array_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":port",
         ":serialized_string_array",
@@ -1510,6 +1557,7 @@ cc_library_mozc(
     deps = select_mozc(
         default = [
             "@com_google_absl//absl/status",
+            "@com_google_absl//absl/status:statusor",
         ],
         oss = [
             ":logging",
@@ -1524,6 +1572,7 @@ cc_test_mozc(
         "status_test.cc",
         "statusor_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":status",
         "//testing:gunit_main",

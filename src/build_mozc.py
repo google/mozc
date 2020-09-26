@@ -37,7 +37,7 @@ Typical usage:
   % python build_mozc.py build base/base.gyp:base
 """
 
-__author__ = "komatsu"
+from __future__ import print_function
 
 import glob
 import logging
@@ -49,12 +49,10 @@ import sys
 from build_tools import mozc_version
 from build_tools.mozc_version import GenerateVersionFile
 from build_tools.test_tools import test_launcher
-from build_tools.util import CheckFileOrDie
 from build_tools.util import ColoredLoggingFilter
 from build_tools.util import ColoredText
 from build_tools.util import CopyFile
 from build_tools.util import GetNumberOfProcessors
-from build_tools.util import GetRelPath
 from build_tools.util import IsLinux
 from build_tools.util import IsMac
 from build_tools.util import IsWindows
@@ -63,6 +61,8 @@ from build_tools.util import RemoveDirectoryRecursively
 from build_tools.util import RemoveFile
 from build_tools.util import RunOrDie
 from build_tools.util import RunOrDieError
+
+import six
 
 SRC_DIR = '.'
 # We need to obtain the absolute path of this script before change directory.
@@ -100,7 +100,8 @@ def GetBuildShortBaseName(target_platform):
   }
 
   if target_platform not in platform_dict:
-    raise RuntimeError('Unkown target_platform: ' + (target_platform or 'None'))
+    raise RuntimeError(
+        'Unknown target_platform: ' + (target_platform or 'None'))
 
   return platform_dict[target_platform]
 
@@ -206,6 +207,8 @@ def ParseGypOptions(args):
                     help='Specifies the branding. [default: %default]')
   parser.add_option('--gypdir', dest='gypdir',
                     help='Specifies the location of GYP to be used.')
+  parser.add_option('--gyp_python_path', dest='gyp_python_path',
+                    help='File path to Python to execute GYP.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
@@ -252,11 +255,13 @@ def ExpandMetaTarget(options, meta_target_name):
   Returns:
     A list of build targets with meta target names expanded.
   """
-  if meta_target_name != 'package':
-    return [meta_target_name]
-
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
+  config = options.configuration
+  dependencies = []
+
+  if meta_target_name != 'package':
+    return dependencies + [meta_target_name]
 
   if target_platform == 'Linux':
     targets = [SRC_DIR + '/server/server.gyp:mozc_server',
@@ -265,15 +270,14 @@ def ExpandMetaTarget(options, meta_target_name):
     if PkgExists('ibus-1.0 >= 1.4.1'):
       targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
   elif target_platform == 'Mac':
-    targets = [SRC_DIR + '/mac/mac.gyp:DiskImage']
+    targets = [SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
   elif target_platform == 'Windows':
-    targets = ['out_win/%s:mozc_win32_build32' % options.configuration]
+    targets = ['out_win/%s:mozc_win32_build32' % config]
     if version.GetQtVersion():
-      targets += ['out_win/%sDynamic:mozc_win32_build32_dynamic'
-                  % options.configuration]
-    targets.append('out_win/%s_x64:mozc_win32_build64' % options.configuration)
+      targets.append('out_win/%sDynamic:mozc_win32_build32_dynamic' % config)
+    targets.append('out_win/%s_x64:mozc_win32_build64' % config)
 
-  return targets
+  return dependencies + targets
 
 
 def ParseBuildOptions(args):
@@ -328,15 +332,19 @@ def AddPythonPathToEnvironmentFilesForWindows(out_dir):
   for d in os.listdir(out_dir):
     abs_dir = os.path.abspath(os.path.join(out_dir, d))
     with open(os.path.join(abs_dir, 'environment.x86'), 'rb') as x86_file:
-      x86_content = (x86_file.read()[:-1] + 'PYTHONPATH' + '=' +
-                     python_path + nul + nul)
+      x86_content = (x86_file.read()[:-1] +
+                     six.b('PYTHONPATH' + '=' + python_path + nul + nul))
     with open(os.path.join(abs_dir, 'environment.x86'), 'wb') as x86_file:
       x86_file.write(x86_content)
+      print('== x86_content ==')
+      print(six.ensure_str(x86_content))
     with open(os.path.join(abs_dir, 'environment.x64'), 'rb') as x64_file:
-      x64_content = (x64_file.read()[:-1] + 'PYTHONPATH' + '=' +
-                     python_path + nul + nul)
+      x64_content = (x64_file.read()[:-1] +
+                     six.b('PYTHONPATH' + '=' + python_path + nul + nul))
     with open(os.path.join(abs_dir, 'environment.x64'), 'wb') as x64_file:
       x64_file.write(x64_content)
+      print('== x64_content ==')
+      print(six.ensure_str(x64_content))
 
 
 def GypMain(options, unused_args):
@@ -385,16 +393,18 @@ def GypMain(options, unused_args):
           '--gypdir option to specify its location. e.g. '
           '"python build_mozc.py gyp --gypdir=/usr/bin"' % gyp_main_file)
       PrintErrorAndExit(message)
-    gyp_command = [sys.executable, gyp_main_file]
+    gyp_python_path = options.gyp_python_path or sys.executable
+    gyp_command = [gyp_python_path, gyp_main_file]
     os.environ['PYTHONPATH'] = os.pathsep.join(
         [os.path.join(gyp_dir, 'pylib'), original_python_path])
+
     # Following script tests if 'import gyp' is now available and its
     # location is expected one. By using this script, make sure
     # 'import gyp' actually loads 'third_party/gyp/pylib/gyp'.
     gyp_check_script = os.path.join(
         ABS_SCRIPT_DIR, 'build_tools', 'ensure_gyp_module_path.py')
     expected_gyp_module_path = os.path.join(gyp_dir, 'pylib', 'gyp')
-    RunOrDie([sys.executable, gyp_check_script,
+    RunOrDie([gyp_python_path, gyp_check_script,
               '--expected=%s' % expected_gyp_module_path])
 
   # Set the generator name.
@@ -417,7 +427,7 @@ def GypMain(options, unused_args):
   gyp_options.extend(['-D', 'abs_depth=%s' % MOZC_ROOT])
   gyp_options.extend(['-D', 'ext_third_party_dir=%s' % EXT_THIRD_PARTY_DIR])
 
-  gyp_options.extend(['-D', 'python_executable=%s' % sys.executable])
+  gyp_options.extend(['-D', 'python=%s' % sys.executable])
 
   gyp_options.extend(gyp_file_names)
 
@@ -560,14 +570,6 @@ def GetNinjaPath():
   return ninja
 
 
-def GetNinjaTargetName(target):
-  """Extracts the build target name for Ninja."""
-  if ':' not in target:
-    PrintErrorAndExit('Invalid target: %s' % target)
-  (_, target_name) = target.split(':')
-  return target_name
-
-
 def BuildWithNinja(options, targets):
   """Build the targets with Ninja."""
   short_basename = GetBuildShortBaseName(GetMozcVersion().GetTargetPlatform())
@@ -575,8 +577,9 @@ def BuildWithNinja(options, targets):
 
   ninja = GetNinjaPath()
 
-  ninja_targets = [GetNinjaTargetName(target) for target in targets]
-  RunOrDie([ninja, '-C', build_arg] + ninja_targets)
+  for target in targets:
+    (_, target_name) = target.split(':')
+    RunOrDie([ninja, '-C', build_arg, target_name])
 
 
 def BuildOnWindows(targets):
@@ -613,7 +616,7 @@ def RunTest(binary_path, output_dir, options):
 
   Args:
     binary_path: The path of unittest.
-    output_dir: The directory of output resutls.
+    output_dir: The directory of output results.
     options: options to be passed to the unittest.
   """
   binary_filename = os.path.basename(binary_path)
@@ -633,7 +636,7 @@ def RunTestOnIos(binary_path, output_dir, _):
 
   Args:
     binary_path: The path of unittest.
-    output_dir: The directory of output resutls.
+    output_dir: The directory of output results.
     _: Unused arg for the compatibility with RunTest.
   """
   iossim = '%s/third_party/iossim/iossim' % MOZC_ROOT
@@ -718,7 +721,7 @@ def RunTests(target_platform, configuration, parallel_num):
       logging.info('running %s...', binary)
       try:
         test_function(binary, gtest_report_dir, options)
-      except RunOrDieError, e:
+      except RunOrDieError as e:
         logging.error(e)
         failed_tests.append(binary)
   else:
@@ -746,7 +749,7 @@ def RunTestsMain(options, args):
   # and '-c' and 'Release' are build options.
   targets = []
   build_options = []
-  for i in xrange(len(args)):
+  for i in range(len(args)):
     if args[i].startswith('-'):
       # starting with build options
       build_options = args[i:]
@@ -827,14 +830,14 @@ def CleanMain(options, unused_args):
 
 def ShowHelpAndExit():
   """Shows the help message."""
-  print 'Usage: build_mozc.py COMMAND [ARGS]'
-  print 'Commands: '
-  print '  gyp          Generate project files.'
-  print '  build        Build the specified target.'
-  print '  runtests     Build all tests and run them.'
-  print '  clean        Clean all the build files and directories.'
-  print ''
-  print 'See also the comment in the script for typical usage.'
+  print('Usage: build_mozc.py COMMAND [ARGS]')
+  print('Commands: ')
+  print('  gyp          Generate project files.')
+  print('  build        Build the specified target.')
+  print('  runtests     Build all tests and run them.')
+  print('  clean        Clean all the build files and directories.')
+  print('')
+  print('See also the comment in the script for typical usage.')
   sys.exit(1)
 
 

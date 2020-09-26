@@ -38,7 +38,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 import optparse
 import os
-import platform
 import subprocess
 import sys
 
@@ -59,29 +58,30 @@ def RunOrDie(command):
     sys.exit(1)
 
 
-def Codesign(target, sign, flags):
+def Codesign(target, sign=None, keychain=None):
   """Run the codesign command with the arguments."""
 
-  # If the platform is Marvericks or greater, "--deep" should be used for
-  # codesign.
-  options = "-f --verbose"
-  mac_ver = platform.mac_ver()[0].split(".")
-  if mac_ver > [10, 9, 0]:
-    options += " --deep"
+  sign = (sign or GetIdentifier(""))
+  keychain = (keychain or GetKeychain(""))
+  if not sign or not keychain:
+    return
 
+  flags = "--keychain " + os.path.abspath(keychain)
   RunOrDie(" ".join(["/usr/bin/codesign",
-                     options,
+                     "-f --verbose",
+                     "--deep",  # Recursive signs
+                     "--timestamp --options=runtime",  # For notarization
                      "--sign \"%s\"" % sign,
                      flags,
                      target]))
 
+
 def Verify(target):
   """Run the codesign command with the -vvv option."""
   # codesign returns false if the target was not signed.
-  result = os.system(" ".join(["/usr/bin/codesign",
-                     "-vvv",
-                     target]))
-  return (result == 0)
+  result = os.system(" ".join(["/usr/bin/codesign", "-vvv", target]))
+  return result == 0
+
 
 def UnlockKeychain(keychain, password=None):
   """Run the security command with the unlock-keychain option."""
@@ -102,6 +102,25 @@ def GetKeychain(default):
   return os.path.abspath(default)
 
 
+def GetCodeSignFlags():
+  """Return a list of code sign flags considering the build environment."""
+  identity = GetIdentifier("")
+  keychain = GetKeychain("")
+
+  if identity and keychain:
+    flags = "--deep --timestamp --options=runtime --keychain %s" % keychain
+    return [
+        "CODE_SIGN_IDENTITY=%s" % identity,
+        "OTHER_CODE_SIGN_FLAGS=%s" % flags,
+        # CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO is the configuration to address
+        # the error of "The executable requests the
+        #               com.apple.security.get-task-allow entitlement."
+        "CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO",
+    ]
+  else:
+    return []
+
+
 def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
@@ -115,6 +134,7 @@ def ParseOption():
                     default=False)
   parser.add_option("--verify", dest="verify", action="store_true",
                     default=False)
+  parser.add_option("--notarization_id", dest="notarization_id")
   (options, unused_args) = parser.parse_args()
 
   if not options.target:
@@ -132,6 +152,10 @@ def DumpEnviron():
   print("==================")
 
 
+def Notarize(target, bundle_id):
+  """Execute the notariazation commands."""
+
+
 def main():
   opts = ParseOption()
   if opts.verify:
@@ -141,16 +165,16 @@ def main():
   DumpEnviron()
 
   # Call Codesign with the release keychain.
-  sign = GetIdentifier(opts.sign)
   keychain = GetKeychain(opts.keychain)
-
-  flags = "--keychain " + os.path.abspath(keychain)
   RunOrDie(" ".join(["/usr/bin/security", "find-identity", keychain]))
 
   # Unlock Keychain for codesigning.
   UnlockKeychain(keychain, opts.password)
 
-  Codesign(opts.target, sign, flags)
+  Codesign(opts.target, keychain=keychain)
+
+  if opts.notarization_id:
+    Notarize(opts.target, opts.notarization_id)
 
 
 if __name__ == "__main__":

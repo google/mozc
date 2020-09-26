@@ -29,6 +29,7 @@
 
 #include "dictionary/user_dictionary_importer.h"
 
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 #ifdef OS_WIN
@@ -335,7 +336,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
     // TODO(yukawa): Use string::front once C++11 is enabled on Mac.
     if (((ime_type_ == MSIME || ime_type_ == ATOK) && line[0] == '!') ||
         (ime_type_ == MOZC && line[0] == '#') ||
-        (ime_type_ == KOTOERI && line.find("//") == 0)) {
+        (ime_type_ == KOTOERI && absl::StartsWith(line, "//"))) {
       continue;
     }
 
@@ -391,13 +392,13 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
   std::string lower = std::string(line);
   Util::LowerString(&lower);
 
-  if (lower.find("!microsoft ime") == 0) {
+  if (absl::StartsWith(lower, "!microsoft ime")) {
     return MSIME;
   }
 
   // Old ATOK format (!!DICUT10) is not supported for now
   // http://b/2455897
-  if (lower.find("!!dicut") == 0 && lower.size() > 7) {
+  if (absl::StartsWith(lower, "!!dicut") && lower.size() > 7) {
     const std::string version(lower, 7, lower.size() - 7);
     if (NumberUtil::SimpleAtoi(version) >= 11) {
       return ATOK;
@@ -406,7 +407,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
     }
   }
 
-  if (lower.find("!!atok_tango_text_header") == 0) {
+  if (absl::StartsWith(lower, "!!atok_tango_text_header")) {
     return ATOK;
   }
 

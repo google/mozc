@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Create a dmg file.
+r"""Create a dmg file.
 
   % python build_diskimage_mac.py --build_dir=/path/to/build_dir \
     --volname=GoogleJapaneseInput GoogleJapaneseInput.mpkg ... \
@@ -42,11 +42,10 @@ __author__ = "mukai"
 import logging
 import optparse
 import os
-import tempfile
+from os import path
 import shutil
 import subprocess
-
-from os import path
+import tempfile
 
 
 def CopyFile(source, target_dir):
@@ -79,7 +78,7 @@ def ParseOptions():
 
 
 def main():
-  """The main function"""
+  """The main function."""
   (options, args) = ParseOptions()
   if options.build_dir is None:
     logging.error("--build_dir is not specified.")
@@ -109,5 +108,5 @@ def main():
   shutil.rmtree(temp_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   main()

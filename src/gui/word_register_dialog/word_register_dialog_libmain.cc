@@ -39,8 +39,7 @@
 
 int RunWordRegisterDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_word_register_dialog);
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   std::string name = "word_register_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -63,5 +62,5 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
   word_register_dialog.show();
   word_register_dialog.raise();
 
-  return app.exec();
+  return app->exec();
 }

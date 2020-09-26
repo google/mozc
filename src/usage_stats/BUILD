@@ -152,6 +152,7 @@ cc_library_mozc(
         "//config:stats_config_util",
         "//config:stats_config_util_mock",
         "//testing",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -165,5 +166,5 @@ genrule(
     srcs = ["//data/usage_stats:stats.def"],
     outs = ["usage_stats_list.h"],
     cmd = "$(location :gen_stats_list) $(SRCS) > $@",
-    tools = [":gen_stats_list"],
+    exec_tools = [":gen_stats_list"],
 )

@@ -62,7 +62,7 @@
         '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.cc',
       ],
       'action': [
-        'python', '<(wrapper_path)',
+        '<(python)', '<(wrapper_path)',
         '--project_root=<(DEPTH)',
         '--protoc_command=<(protoc_command)',
         '--proto=<(RULE_INPUT_PATH)',

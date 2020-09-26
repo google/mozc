@@ -57,7 +57,6 @@ class Version {
   // CompareVersion("1.25.3.4", "1.2.3.4") => false
   static bool CompareVersion(const std::string &lhs, const std::string &rhs);
 
-
  private:
   DISALLOW_COPY_AND_ASSIGN(Version);
 };

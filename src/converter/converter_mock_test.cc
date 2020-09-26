@@ -36,15 +36,16 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void SetSegments(Segments *segments, const std::string &cand_value) {
+void SetSegments(Segments *segments, absl::string_view cand_value) {
   Segment *segment = segments->add_segment();
   segment->set_key("Testてすと");
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->value = cand_value;
+  candidate->value = std::string(cand_value);
 
   // Add meta candidates
   Segment::Candidate *meta_cand = segment->add_meta_candidate();

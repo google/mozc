@@ -82,7 +82,7 @@
             '<(pos_matcher_header)',
           ],
           'action': [
-            'python', 'gen_pos_matcher_code.py',
+            '<(python)', 'gen_pos_matcher_code.py',
             '--pos_matcher_rule_file=<(pos_matcher_rule)',
             '--output_pos_matcher_h=<(pos_matcher_header)',
           ],
@@ -139,7 +139,7 @@
             '<(pos_map_header)',
           ],
           'action': [
-            'python', 'gen_pos_map.py',
+            '<(python)', 'gen_pos_map.py',
             '--user_pos_file=<(user_pos)',
             '--third_party_pos_map_file=<(third_party_pos_map)',
             '--output=<(pos_map_header)',

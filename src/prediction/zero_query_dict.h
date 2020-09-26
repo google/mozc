@@ -86,7 +86,7 @@ enum ZeroQueryEmojiType {
 // format of string array, see base/serialized_string_array.h".
 class ZeroQueryDict {
  public:
-  static const size_t kTokenByteSize = 16;
+  static constexpr size_t kTokenByteSize = 16;
 
   class iterator
       : public std::iterator<std::random_access_iterator_tag, uint32> {

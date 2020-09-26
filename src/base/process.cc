@@ -60,6 +60,7 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "absl/strings/match.h"
 
 #ifdef OS_WIN
 #include "base/scoped_handle.h"
@@ -84,8 +85,8 @@ namespace mozc {
 
 bool Process::OpenBrowser(const std::string &url) {
   // url must start with http:// or https:// or file://
-  if (url.find("http://") != 0 && url.find("https://") != 0 &&
-      url.find("file://") != 0) {
+  if (!absl::StartsWith(url, "http://") && !absl::StartsWith(url, "https://") &&
+      !absl::StartsWith(url, "file://")) {
     return false;
   }
 

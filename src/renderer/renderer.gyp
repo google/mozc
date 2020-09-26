@@ -507,7 +507,7 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'mac/Info.plist',
                 '--version_file', '../mozc_version.txt',

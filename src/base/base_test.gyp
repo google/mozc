@@ -384,7 +384,7 @@
             '<(gen_header_path)',
           ],
           'action': [
-            'python', '../build_tools/embed_file.py',
+            '<(python)', '../build_tools/embed_file.py',
             '--input', '<(input)',
             '--name', 'kEmbeddedFileTestData',
             '--output', '<(gen_header_path)',

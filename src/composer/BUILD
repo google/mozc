@@ -78,6 +78,7 @@ cc_test_mozc(
     name = "composer_test",
     size = "small",
     srcs = ["composer_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":composer",
         ":key_parser",
@@ -108,6 +109,7 @@ cc_library_mozc(
         "//base:file_stream",
         "//base:hash",
         "//base:logging",
+        "//base:mozc_hash_set",
         "//base:port",
         "//base:trie",
         "//base:util",
@@ -161,10 +163,12 @@ cc_test_mozc(
     name = "table_test",
     size = "small",
     srcs = ["table_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":table",
         "//base",
         "//base:file_util",
+        "//base:mozc_hash_set",
         "//base:port",
         "//base:system_util",
         "//composer/internal:composition_input",
@@ -193,6 +197,7 @@ cc_test_mozc(
     name = "key_event_util_test",
     size = "small",
     srcs = ["key_event_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":key_event_util",
         ":key_parser",
@@ -221,6 +226,7 @@ cc_test_mozc(
     name = "key_parser_test",
     size = "small",
     srcs = ["key_parser_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":key_event_util",
         ":key_parser",
@@ -235,6 +241,7 @@ cc_test_mozc(
     name = "composer_benchmark_test",
     size = "small",
     srcs = ["composer_benchmark_test.cc"],
+    requires_full_emulation = False,
     tags = ["disable_on_nacl_test"],
     deps = [
         ":composer",

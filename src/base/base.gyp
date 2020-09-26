@@ -239,7 +239,7 @@
             '<(gen_out_dir)/character_set.inc',
           ],
           'action': [
-            'python', 'gen_character_set.py',
+            '<(python)', 'gen_character_set.py',
             '--cp932file=../data/unicode/CP932.TXT',
             '--jisx0201file=../data/unicode/JIS0201.TXT',
             '--jisx0208file=../data/unicode/JIS0208.TXT',
@@ -315,7 +315,7 @@
             '<(gen_out_dir)/version_def.h',
           ],
           'action': [
-            'python', '../build_tools/replace_version.py',
+            '<(python)', '../build_tools/replace_version.py',
             '--version_file', '../mozc_version.txt',
             '--input', 'version_def_template.h',
             '--output', '<(gen_out_dir)/version_def.h',
@@ -371,7 +371,7 @@
             '<(gen_out_dir)/config_file_stream_data.inc',
           ],
           'action': [
-            'python', 'gen_config_file_stream_data.py',
+            '<(python)', 'gen_config_file_stream_data.py',
             '--output', '<@(_outputs)',
             '<@(_inputs)',
           ],
@@ -529,7 +529,7 @@
               '<(mac_breakpad_dir)/symupload',
             ],
             'action': [
-              'python', '../build_tools/build_breakpad.py',
+              '<(python)', '../build_tools/build_breakpad.py',
               '--pbdir', '<(pbdir)',
               '--outdir', '<(mac_breakpad_dir)',
               '--sdk', 'macosx<(mac_sdk)',

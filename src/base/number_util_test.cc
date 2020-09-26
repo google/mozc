@@ -416,7 +416,8 @@ TEST(NumberUtilTest, SafeStrToUInt64) {
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("012345678", &value));
   EXPECT_EQ(12345678, value);
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("18446744073709551615", &value));
-  EXPECT_EQ(18446744073709551615ull, value);  // max of 64-bit unsigned integer
+  EXPECT_EQ(uint64{18446744073709551615u},
+            value);  // max of 64-bit unsigned integer
 
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("-0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("18446744073709551616",  // overflow

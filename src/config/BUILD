@@ -66,6 +66,7 @@ cc_test_mozc(
     size = "large",
     srcs = ["config_handler_test.cc"],
     data = ["//data/test/config:config_test_data"],
+    requires_full_emulation = False,
     deps = [
         ":config_handler",
         "//base",
@@ -105,6 +106,7 @@ cc_test_mozc(
     name = "stats_config_util_test",
     size = "small",
     srcs = ["stats_config_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":config_handler",
         ":stats_config_util",
@@ -147,6 +149,7 @@ cc_test_mozc(
     name = "character_form_manager_test",
     size = "large",
     srcs = ["character_form_manager_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":character_form_manager",
         ":config_handler",

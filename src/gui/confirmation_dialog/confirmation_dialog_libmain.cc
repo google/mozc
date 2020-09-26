@@ -48,8 +48,7 @@ int RunConfirmationDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_confirmation_dialog);
 
   mozc::SystemUtil::DisableIME();
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   std::string name = "confirmation_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();

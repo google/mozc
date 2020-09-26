@@ -50,8 +50,7 @@ int RunDictionaryTool(int argc, char *argv[]) {
 #endif  // OS_WIN
 
   Q_INIT_RESOURCE(qrc_dictionary_tool);
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   string name = "dictionary_tool.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -73,5 +72,5 @@ int RunDictionaryTool(int argc, char *argv[]) {
   window.show();
   window.raise();
 
-  return app.exec();
+  return app->exec();
 }

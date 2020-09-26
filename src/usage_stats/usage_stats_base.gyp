@@ -69,7 +69,7 @@
             '<(gen_out_dir)/usage_stats_list.h',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(gen_out_dir)/usage_stats_list.h',
             'gen_stats_list.py',
             '<@(input_files)',

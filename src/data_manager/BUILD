@@ -28,6 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("//tools/build_defs:stubs.bzl", "bzl_library")
 load(
     "//:build_defs.bzl",
     "cc_binary_mozc",
@@ -112,6 +113,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_connection_data",
     srcs = ["gen_connection_data.py"],
+    python_version = "PY2",
     deps = [
         ":gen_connection_data_lib",
         "//build_tools:code_generator_util",
@@ -163,6 +165,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "dataset_writer_test",
     srcs = ["dataset_writer_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dataset_proto",
         ":dataset_writer",
@@ -173,6 +176,7 @@ cc_test_mozc(
         "//testing:googletest",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -189,6 +193,7 @@ cc_binary_mozc(
         "//base:logging",
         "//base:number_util",
         "//base:util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -209,6 +214,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "dataset_reader_test",
     srcs = ["dataset_reader_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dataset_reader",
         ":dataset_writer",
@@ -250,6 +256,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "serialized_dictionary_test",
     srcs = ["serialized_dictionary_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":serialized_dictionary",
         "//base:port",
@@ -276,4 +283,11 @@ cc_library_mozc(
         "//base:serialized_string_array",
         "//dictionary:user_pos_interface",
     ],
+)
+
+bzl_library(
+    name = "mozc_data_bzl",
+    srcs = ["mozc_data.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
 )

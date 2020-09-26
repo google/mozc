@@ -144,6 +144,7 @@ cc_test_mozc(
         "//data/dictionary_oss:dictionary09.txt",
         "//data/dictionary_oss:suggestion_filter.txt",
     ],
+    requires_full_emulation = False,
     deps = [
         ":mozc_dataset_for_oss@connection_single_column",
         ":oss_data_manager",

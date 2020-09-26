@@ -85,5 +85,4 @@ bool Version::CompareVersion(const std::string &lhs, const std::string &rhs) {
                                       vrhs.end(), StringAsIntegerComparator);
 }
 
-
 }  // namespace mozc

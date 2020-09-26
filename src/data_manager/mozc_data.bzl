@@ -236,7 +236,7 @@ def mozc_dataset(
             "--output_string_array=$(location :user_pos_string_array.data) " +
             "--output_pos_list=$(location :pos_list.data)"
         ),
-        tools = ["//dictionary:gen_user_pos_data"],
+        exec_tools = ["//dictionary:gen_user_pos_data"],
     )
 
     native.genrule(
@@ -320,7 +320,7 @@ def mozc_dataset(
             "--binary_output_file=$@ " +
             "--use_1byte_cost=" + use_1byte_cost
         ),
-        tools = ["//data_manager:gen_connection_data"],
+        exec_tools = ["//data_manager:gen_connection_data"],
     )
 
     native.genrule(
@@ -362,7 +362,7 @@ def mozc_dataset(
             "--pos_group_def=$(location " + pos_group_def + ") " +
             "--output=$@"
         ),
-        tools = ["//dictionary:gen_pos_rewrite_rule"],
+        exec_tools = ["//dictionary:gen_pos_rewrite_rule"],
     )
 
     native.genrule(
@@ -380,7 +380,7 @@ def mozc_dataset(
             "--special_pos=$(location " + special_pos + ") " +
             "--output=$@"
         ),
-        tools = ["//converter:gen_boundary_data"],
+        exec_tools = ["//converter:gen_boundary_data"],
     )
 
     native.genrule(
@@ -439,7 +439,7 @@ def mozc_dataset(
             "--output=$@ " +
             " ".join(["$(location " + s + ")" for s in dictionary_srcs])
         ),
-        tools = ["//rewriter:gen_counter_suffix_array"],
+        exec_tools = ["//rewriter:gen_counter_suffix_array"],
     )
 
     native.genrule(
@@ -457,7 +457,7 @@ def mozc_dataset(
             "--output_value_array=$(@D)/suffix_value.data " +
             "--output_token_array=$(@D)/suffix_token.data"
         ),
-        tools = ["//dictionary:gen_suffix_data"],
+        exec_tools = ["//dictionary:gen_suffix_data"],
     )
 
     native.genrule(
@@ -475,7 +475,7 @@ def mozc_dataset(
             "--output_error_array=$(@D)/reading_correction_error.data " +
             "--output_correction_array=$(@D)/reading_correction_correction.data"
         ),
-        tools = ["//rewriter:gen_reading_correction_data"],
+        exec_tools = ["//rewriter:gen_reading_correction_data"],
     )
 
     native.genrule(
@@ -531,7 +531,7 @@ def mozc_dataset(
             "--output_token_array=$(location :emoji_token.data) " +
             "--output_string_array=$(location :emoji_string.data)"
         ),
-        tools = ["//rewriter:gen_emoji_rewriter_data"],
+        exec_tools = ["//rewriter:gen_emoji_rewriter_data"],
     )
 
     native.genrule(
@@ -557,7 +557,7 @@ def mozc_dataset(
             "--output_variant_tokens=$(location :single_kanji_variant_token.data) " +
             "--output_variant_strings=$(location :single_kanji_variant_string.data) "
         ),
-        tools = ["//rewriter:gen_single_kanji_rewriter_data"],
+        exec_tools = ["//rewriter:gen_single_kanji_rewriter_data"],
     )
 
     native.genrule(
@@ -595,7 +595,7 @@ def mozc_dataset(
             "--output_token_array=$(location :zero_query_token.data) " +
             "--output_string_array=$(location :zero_query_string.data)"
         ),
-        tools = ["//prediction:gen_zero_query_data"],
+        exec_tools = ["//prediction:gen_zero_query_data"],
     )
 
     native.genrule(
@@ -611,7 +611,7 @@ def mozc_dataset(
             "--output_token_array=$(location :zero_query_number_token.data) " +
             "--output_string_array=$(location :zero_query_number_string.data)"
         ),
-        tools = ["//prediction:gen_zero_query_number_data"],
+        exec_tools = ["//prediction:gen_zero_query_number_data"],
     )
 
     native.genrule(
@@ -635,7 +635,7 @@ def mozc_dataset(
                 "$(location //composer/internal:gen_typing_model) " +
                 "--input_path=$< --output_path=$@"
             ),
-            tools = ["//composer/internal:gen_typing_model"],
+            exec_tools = ["//composer/internal:gen_typing_model"],
         )
     native.filegroup(
         name = name + "@typing_models",

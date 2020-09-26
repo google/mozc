@@ -113,6 +113,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["user_history_predictor_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_history_predictor",
         "//base",
@@ -193,6 +194,7 @@ cc_test_mozc(
     srcs = [
         "dictionary_predictor_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_predictor",
         ":suggestion_filter",
@@ -262,6 +264,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "predictor_test",
     srcs = ["predictor_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_predictor",
         ":predictor",
@@ -317,6 +320,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "zero_query_dict_test",
     srcs = ["zero_query_dict_test.cc"],
+    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":zero_query_dict",
@@ -362,6 +366,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
+    python_version = "PY2",
     deps = [
         ":gen_zero_query_number_data_lib",
         ":gen_zero_query_util",
@@ -380,6 +385,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_data",
     srcs = ["gen_zero_query_data.py"],
+    python_version = "PY2",
     deps = [
         ":gen_zero_query_data_lib",
         ":gen_zero_query_util",

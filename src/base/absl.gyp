@@ -30,6 +30,7 @@
 {
   'variables': {
     'absl_srcdir': '<(DEPTH)/third_party/abseil-cpp/absl',
+    'gen_absl_dir': '<(SHARED_INTERMEDIATE_DIR)/third_party/abseil-cpp/absl',
   },
   'targets': [
     {
@@ -37,7 +38,6 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        '<(absl_srcdir)/base/dynamic_annotations.cc',
         '<(absl_srcdir)/base/internal/cycleclock.cc',
         '<(absl_srcdir)/base/internal/low_level_alloc.cc',
         '<(absl_srcdir)/base/internal/raw_logging.cc',

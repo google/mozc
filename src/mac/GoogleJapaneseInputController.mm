@@ -678,7 +678,6 @@ bool IsBannedApplication(const std::set<string>* bundleIdSet,
 
 #pragma mark Mozc Server methods
 
-
 #pragma mark IMKServerInput Protocol
 // Currently GoogleJapaneseInputController uses handleEvent:client:
 // method to handle key events.  It does not support inputText:client:

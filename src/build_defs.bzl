@@ -67,6 +67,8 @@ def cc_test_mozc(name, tags = [], deps = [], **kwargs):
     """
     cc_test wrapper adding //:macro dependecny.
     """
+
+    requires_full_emulation = kwargs.pop("requires_full_emulation", False)
     native.cc_test(
         name = name,
         tags = tags,
@@ -82,6 +84,7 @@ def cc_test_mozc(name, tags = [], deps = [], **kwargs):
             # Otherwise it is too slow.
             tags = ["manual", "notap"],
             cc_test_name = name,
+            requires_full_emulation = requires_full_emulation,
         )
 
 register_extension_info(
@@ -102,7 +105,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_binary_mozc(name, srcs, **kwargs):
+def py_binary_mozc(name, srcs, python_version = "PY3", **kwargs):
     """py_binary wrapper generating import-modified python script for iOS.
 
     To use this rule, corresponding py_library_mozc needs to be defined to
@@ -111,7 +114,7 @@ def py_binary_mozc(name, srcs, **kwargs):
     native.py_binary(
         name = name,
         srcs = srcs,
-        python_version = "PY3",
+        python_version = python_version,
         # This main specifier is required because, without it, py_binary expects
         # that the file name of source containing main() is name.py.
         main = srcs[0],

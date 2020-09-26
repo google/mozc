@@ -39,7 +39,7 @@
         '<(target_file).postbuild',
       ],
       'action': [
-        'python',
+        '<(python)',
         'postbuilds_win.py',
         '--targetpath', '<@(_inputs)',
       ],

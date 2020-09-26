@@ -64,8 +64,8 @@ class FlagsTest : public testing::Test {
 TEST_F(FlagsTest, FlagsBasicTest) {
   EXPECT_FALSE(FLAGS_test_bool);
   EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
-  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
+  EXPECT_EQ(int64{29051773239673121}, FLAGS_test_int64);
+  EXPECT_EQ(int64{84467440737095516}, FLAGS_test_uint64);
   EXPECT_EQ("hogehoge", FLAGS_test_string);
   EXPECT_LT(0.4, FLAGS_test_double);
   EXPECT_GT(0.6, FLAGS_test_double);
@@ -99,8 +99,8 @@ TEST_F(FlagsTest, FlagsBasicTest) {
 TEST_F(FlagsTest, NoValuesFlagsTest) {
   EXPECT_FALSE(FLAGS_test_bool);
   EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
-  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
+  EXPECT_EQ(int64{29051773239673121}, FLAGS_test_int64);
+  EXPECT_EQ(int64{84467440737095516}, FLAGS_test_uint64);
   EXPECT_EQ("hogehoge", FLAGS_test_string);
   EXPECT_LT(0.4, FLAGS_test_double);
   EXPECT_GT(0.6, FLAGS_test_double);

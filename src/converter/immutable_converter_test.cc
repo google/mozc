@@ -74,15 +74,15 @@ using dictionary::SystemDictionary;
 using dictionary::UserDictionaryStub;
 using dictionary::ValueDictionary;
 
-void SetCandidate(const std::string &key, const std::string &value,
+void SetCandidate(absl::string_view key, absl::string_view value,
                   Segment *segment) {
   segment->set_key(key);
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  candidate->key = key;
-  candidate->value = value;
-  candidate->content_key = key;
-  candidate->content_value = value;
+  candidate->key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_key = std::string(key);
+  candidate->content_value = std::string(value);
 }
 
 const ConversionRequest &GetSimplifiedRankingConversionRequest() {
@@ -241,7 +241,7 @@ TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
 namespace {
 class KeyCheckDictionary : public DictionaryInterface {
  public:
-  explicit KeyCheckDictionary(const std::string &query)
+  explicit KeyCheckDictionary(absl::string_view query)
       : target_query_(query), received_target_query_(false) {}
   ~KeyCheckDictionary() override = default;
 

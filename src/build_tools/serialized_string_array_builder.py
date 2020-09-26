@@ -32,7 +32,9 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+import io
 import struct
+import six
 from six.moves import range
 
 
@@ -46,15 +48,18 @@ def SerializeToFile(strings, filename):
     filename: Output binary file.
   """
   array_size = len(strings)
+  str_data = io.BytesIO()
 
   # Precompute offsets and lengths.
   offsets = []
   lengths = []
   offset = 4 + 8 * array_size  # The start offset of strings chunk
   for s in strings:
+    data = six.ensure_binary(s)
     offsets.append(offset)
-    lengths.append(len(s))
-    offset += len(s) + 1  # Include one byte for the trailing '\0'
+    lengths.append(len(data))
+    offset += len(data) + 1  # Include one byte for the trailing '\0'
+    str_data.write(data + b'\0')
 
   with open(filename, 'wb') as f:
     # 4-byte array_size.
@@ -66,6 +71,4 @@ def SerializeToFile(strings, filename):
       f.write(struct.pack('<I', lengths[i]))
 
     # Strings chunk.
-    for i in range(array_size):
-      f.write(strings[i])
-      f.write('\0')
+    f.write(str_data.getvalue())

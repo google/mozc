@@ -28,14 +28,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Replace variables in InfoPlist.strings with file.
+r"""Replace variables in InfoPlist.strings with file.
 
   % python tweak_info_plist_strings.py --output=out.txt --input=in.txt \
       --branding=Mozc
 """
 
-__author__ = "komatsu"
-
+import codecs
 import datetime
 import logging
 import optparse
@@ -44,6 +43,7 @@ import tweak_data
 
 _COPYRIGHT_YEAR = datetime.date.today().year
 
+
 def ParseOptions():
   """Parse command line options.
 
@@ -51,9 +51,9 @@ def ParseOptions():
     An options data.
   """
   parser = optparse.OptionParser()
-  parser.add_option("--output", dest="output")
-  parser.add_option("--input", dest="input")
-  parser.add_option("--branding", dest="branding")
+  parser.add_option('--output', dest='output')
+  parser.add_option('--input', dest='input')
+  parser.add_option('--branding', dest='branding')
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -63,13 +63,13 @@ def main():
   """The main function."""
   options = ParseOptions()
   if options.output is None:
-    logging.error("--output is not specified.")
+    logging.error('--output is not specified.')
     sys.exit(-1)
   if options.input is None:
-    logging.error("--input is not specified.")
+    logging.error('--input is not specified.')
     sys.exit(-1)
   if options.branding is None:
-    logging.error("--branding is not specified.")
+    logging.error('--branding is not specified.')
     sys.exit(-1)
 
   # \xC2\xA9 is the copyright mark in UTF-8
@@ -77,7 +77,7 @@ def main():
   if options.branding == 'GoogleJapaneseInput':
     variables = {
         'CF_BUNDLE_NAME_EN': 'Google Japanese Input',
-        'CF_BUNDLE_NAME_JA': u'Google 日本語入力'.encode('utf-8'),
+        'CF_BUNDLE_NAME_JA': u'Google 日本語入力',
         'NS_HUMAN_READABLE_COPYRIGHT': copyright_message,
         'INPUT_MODE_ANNOTATION': 'Google',
         }
@@ -89,8 +89,9 @@ def main():
         'INPUT_MODE_ANNOTATION': 'Mozc',
         }
 
-  open(options.output, 'w').write(
-      tweak_data.ReplaceVariables(open(options.input).read(), variables))
+  codecs.open(options.output, 'w', encoding='utf-8').write(
+      tweak_data.ReplaceVariables(
+          codecs.open(options.input, encoding='utf-8').read(), variables))
 
 if __name__ == '__main__':
-    main()
+  main()

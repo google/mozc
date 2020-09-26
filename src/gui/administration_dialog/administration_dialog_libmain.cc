@@ -39,8 +39,7 @@ int RunAdministrationDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_administration_dialog);
   mozc::SystemUtil::DisableIME();
 
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
       "administration_dialog");
@@ -49,5 +48,5 @@ int RunAdministrationDialog(int argc, char *argv[]) {
   administration_dialog.show();
   administration_dialog.raise();
 
-  return app.exec();
+  return app->exec();
 }

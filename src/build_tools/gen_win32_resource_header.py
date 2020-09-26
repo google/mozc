@@ -68,7 +68,6 @@ def GenerateBuildProfile():
   """
   build_details = []
 
-
   return '; '.join(build_details)
 
 

@@ -29,17 +29,41 @@
 
 #include "gui/base/util.h"
 
+#include <memory>
+
+#include <QtCore/QObject>
+#include <QtGui/QFont>
+#include <QtGui/QGuiApplication>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QStyleFactory>
+
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace gui {
 
-void Util::InitQt() {
+// static
+std::unique_ptr<QApplication> Util::InitQt(int argc, char *argv[]) {
   QApplication::setStyle(QStyleFactory::create("fusion"));
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
+
+  auto app = absl::make_unique<QApplication>(argc, argv);
+#ifdef __APPLE__
+  app->setFont(QFont("Hiragino Sans"));
+#endif  // __APPLE__
+  return app;
+}
+
+// static
+const QString Util::ProductName() {
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  const QString name = QObject::tr("Mozc");
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
+  const QString name = QObject::tr("Mozc");
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+  return name;
 }
 
 }  // namespace gui

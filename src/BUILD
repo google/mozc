@@ -31,6 +31,8 @@
 # Description:
 #   Declaration of package_group for visibility managing.
 
+load("//tools/build_defs:stubs.bzl", "bzl_library")
+
 package_group(
     name = "mozc",
     packages = ["//..."],
@@ -118,4 +120,11 @@ cc_library(
         ],
     }),
     visibility = ["//:__subpackages__"],
+)
+
+bzl_library(
+    name = "build_defs_bzl",
+    srcs = ["build_defs.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
 )

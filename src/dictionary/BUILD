@@ -71,6 +71,7 @@ cc_test_mozc(
     name = "dictionary_impl_test",
     size = "small",
     srcs = ["dictionary_impl_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_impl",
         ":dictionary_interface",
@@ -181,6 +182,7 @@ cc_test_mozc(
     srcs = [
         "user_dictionary_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_test_util",
         ":dictionary_token",
@@ -270,7 +272,7 @@ genrule(
         "$(location //data/rules:third_party_pos_map.def) " +
         "--output=$@"
     ),
-    tools = [":gen_pos_map"],
+    exec_tools = [":gen_pos_map"],
 )
 
 cc_library_mozc(
@@ -295,6 +297,7 @@ cc_test_mozc(
     name = "user_dictionary_session_test",
     size = "medium",
     srcs = ["user_dictionary_session_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_dictionary_session",
         ":user_dictionary_storage",
@@ -305,6 +308,7 @@ cc_test_mozc(
         "//testing:googletest",
         "//testing:gunit_main",
         "//testing:testing_util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -331,6 +335,7 @@ cc_test_mozc(
     name = "user_dictionary_session_handler_test",
     size = "small",
     srcs = ["user_dictionary_session_handler_test.cc"],
+    requires_full_emulation = True,
     deps = [
         ":user_dictionary_session_handler",
         "//base:file_stream",
@@ -369,6 +374,7 @@ cc_test_mozc(
     name = "user_dictionary_storage_test",
     size = "small",
     srcs = ["user_dictionary_storage_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_dictionary_importer",
         ":user_dictionary_storage",
@@ -411,6 +417,7 @@ cc_test_mozc(
     name = "user_dictionary_util_test",
     size = "small",
     srcs = ["user_dictionary_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_dictionary_util",
         "//base",
@@ -450,6 +457,7 @@ cc_test_mozc(
     name = "user_dictionary_importer_test",
     size = "small",
     srcs = ["user_dictionary_importer_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_dictionary_importer",
         ":user_dictionary_storage",
@@ -496,6 +504,7 @@ cc_test_mozc(
     srcs = [
         "text_dictionary_loader_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_token",
         ":pos_matcher_lib",
@@ -532,6 +541,7 @@ cc_test_mozc(
     name = "user_pos_test",
     size = "small",
     srcs = ["user_pos_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":user_pos",
         ":user_pos_interface",
@@ -564,6 +574,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_user_pos_data",
     srcs = ["gen_user_pos_data.py"],
+    python_version = "PY2",
     visibility = ["//:__subpackages__"],
     deps = [
         ":gen_user_pos_data_lib",
@@ -599,7 +610,7 @@ genrule(
         "--pos_matcher_rule_file=$< " +
         "--output_pos_matcher_h=$@"
     ),
-    tools = [":gen_pos_matcher_code"],
+    exec_tools = [":gen_pos_matcher_code"],
     visibility = [
         "//visibility:private",
     ],
@@ -622,6 +633,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_pos_rewrite_rule",
     srcs = ["gen_pos_rewrite_rule.py"],
+    python_version = "PY2",
     visibility = ["//:__subpackages__"],
     deps = [":gen_pos_rewrite_rule_lib"],
 )
@@ -663,6 +675,7 @@ cc_test_mozc(
     name = "suppression_dictionary_test",
     size = "small",
     srcs = ["suppression_dictionary_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":suppression_dictionary",
         "//base",
@@ -698,6 +711,7 @@ cc_test_mozc(
     name = "dictionary_mock_test",
     size = "small",
     srcs = ["dictionary_mock_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_mock",
         ":dictionary_test_util",
@@ -718,6 +732,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_suffix_data",
     srcs = ["gen_suffix_data.py"],
+    python_version = "PY2",
     visibility = ["//:__subpackages__"],
     deps = [
         ":gen_suffix_data_lib",
@@ -729,6 +744,7 @@ cc_test_mozc(
     name = "suffix_dictionary_test",
     size = "small",
     srcs = ["suffix_dictionary_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":dictionary_interface",
         ":dictionary_test_util",
@@ -754,6 +770,7 @@ cc_library_mozc(
         ":dictionary_interface",
         ":dictionary_token",
         "//base",
+        "//base:mozc_hash_map",
         "//base:util",
         "//testing",
         "@com_google_absl//absl/strings",

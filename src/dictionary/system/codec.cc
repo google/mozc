@@ -472,7 +472,6 @@ bool SystemDictionaryCodec::ReadTokenForReverseLookup(const uint8 *ptr,
   return !(flags & kLastTokenFlag);
 }
 
-
 namespace {
 
 // Swap the area for Hiragana, prolonged sound mark and middle dot with

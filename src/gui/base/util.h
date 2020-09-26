@@ -30,13 +30,20 @@
 #ifndef MOZC_GUI_BASE_UTIL_H_
 #define MOZC_GUI_BASE_UTIL_H_
 
+#include <QtCore/QString>
+#include <QtWidgets/QApplication>
+#include <memory>
+
 namespace mozc {
 namespace gui {
 
 class Util {
  public:
-  // Initialize the common Qt cofiguration such as High DPI and theme.
-  static void InitQt();
+  // Initializes the common Qt cofiguration such as High DPI, font, and theme.
+  static std::unique_ptr<QApplication> InitQt(int argc, char *argv[]);
+
+  // Returns the product name.
+  static const QString ProductName();
 
  private:
   Util() = delete;

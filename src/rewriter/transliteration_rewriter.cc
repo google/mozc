@@ -110,7 +110,8 @@ struct IsNonnegativeAndLessThan<std::true_type> {
 template <>
 struct IsNonnegativeAndLessThan<std::false_type> {
   bool operator()(char c, size_t upper_bound) const {
-    return c >= 0 && static_cast<size_t>(c) < upper_bound;
+    return static_cast<signed char>(c) >= 0 &&
+           static_cast<size_t>(c) < upper_bound;
   }
 };
 

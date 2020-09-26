@@ -28,19 +28,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""
-A tool to embedded tsv file into test binary for quality regression test.
-"""
+"""A tool to embedded tsv file into test binary for quality regression test."""
 
 from __future__ import absolute_import
 from __future__ import print_function
 
+import codecs
 import sys
 import xml.dom.minidom
 
 
 def EscapeString(s):
-  """ escape the string with "\\xXX" format.
+  r"""escape the string with "\xXX" format.
 
   We don't use encode('string_escape') because it doesn't escape ascii
   characters.
@@ -61,8 +60,9 @@ def EscapeString(s):
 _DISABLED = 'false'
 _ENABLED = 'true'
 
+
 def ParseTSV(file):
-  for line in open(file, 'r'):
+  for line in codecs.open(file, 'r', encoding='utf-8'):
     if line.startswith('#'):
       continue
     line = line.rstrip('\r\n')

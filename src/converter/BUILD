@@ -28,6 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("//tools/build_defs:stubs.bzl", "bzl_library")
 load(
     "//:build_defs.bzl",
     "cc_binary_mozc",
@@ -81,6 +82,7 @@ cc_test_mozc(
     name = "segments_test",
     size = "small",
     srcs = ["segments_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":segments",
         "//base",
@@ -163,6 +165,7 @@ cc_test_mozc(
         "//data_manager/testing:mozc_dataset_for_testing@connection",
         "//data_manager/testing:mozc_dataset_for_testing@connection_single_column",
     ],
+    requires_full_emulation = False,
     deps = [
         ":connector",
         "//base",
@@ -203,6 +206,7 @@ cc_test_mozc(
     srcs = [
         "nbest_generator_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":connector",
         ":immutable_converter_no_factory",
@@ -260,6 +264,7 @@ cc_test_mozc(
     name = "candidate_filter_test",
     size = "small",
     srcs = ["candidate_filter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":candidate_filter",
         ":node",
@@ -314,6 +319,7 @@ cc_test_mozc(
     name = "lattice_test",
     size = "small",
     srcs = ["lattice_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":lattice",
         ":node",
@@ -396,6 +402,7 @@ cc_test_mozc(
     srcs = [
         "immutable_converter_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":connector",
         ":immutable_converter_no_factory",
@@ -493,6 +500,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["converter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":connector",
         ":converter",
@@ -554,6 +562,7 @@ cc_test_mozc(
     name = "converter_regression_test",
     size = "medium",
     srcs = ["converter_regression_test.cc"],
+    requires_full_emulation = False,
     # Disable on NaCl TAP since GoogleDataManager is too large to build on ARM.
     tags = ["disable_on_nacl_tap_test"],
     deps = [
@@ -598,6 +607,7 @@ cc_test_mozc(
     size = "small",
     srcs = ["pos_id_printer_test.cc"],
     data = ["//data/test/dictionary:id.def"],
+    requires_full_emulation = False,
     deps = [
         ":pos_id_printer",
         "//base",
@@ -665,6 +675,7 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//protocol:segmenter_data_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -672,6 +683,7 @@ py_library_mozc(
     name = "gen_segmenter_code_lib",
     srcs = ["gen_segmenter_code.py"],
     visibility = ["//visibility:private"],
+    deps = [],
 )
 
 py_binary_mozc(
@@ -691,6 +703,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_boundary_data",
     srcs = ["gen_boundary_data.py"],
+    python_version = "PY2",
     visibility = ["//data_manager:__subpackages__"],
     deps = [":gen_boundary_data_lib"],
 )
@@ -712,6 +725,7 @@ cc_test_mozc(
     name = "key_corrector_test",
     size = "small",
     srcs = ["key_corrector_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":key_corrector",
         "//base",
@@ -741,6 +755,7 @@ cc_test_mozc(
     name = "converter_mock_test",
     size = "small",
     srcs = ["converter_mock_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":converter_mock",
         ":segments",
@@ -748,6 +763,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:googletest",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -796,4 +812,11 @@ cc_binary_mozc(
         "//engine:engine_factory",
         "//engine:engine_interface",
     ],
+)
+
+bzl_library(
+    name = "quality_regression_test_bzl",
+    srcs = ["quality_regression_test.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
 )

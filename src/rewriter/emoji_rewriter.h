@@ -69,7 +69,7 @@ class ConversionRequest;
 //   }
 class EmojiRewriter : public RewriterInterface {
  public:
-  static const size_t kEmojiDataByteLength = 28;
+  static constexpr size_t kEmojiDataByteLength = 28;
 
   // Emoji data token is 28 bytes data of the following format:
   //

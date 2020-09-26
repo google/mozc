@@ -50,7 +50,8 @@ File format:
 from __future__ import absolute_import
 from __future__ import print_function
 
-from collections import defaultdict
+import codecs
+import collections
 import logging
 import optparse
 import re
@@ -89,15 +90,16 @@ _FULLWIDTH_RE = re.compile(u'[！-～]')   # U+FF01 - U+FF5E
 def NormalizeString(string):
   """Normalize full width ascii characters to half width characters."""
   offset = ord(u'Ａ') - ord(u'A')
-  return _FULLWIDTH_RE.sub(lambda x: unichr(ord(x.group(0)) - offset),
-                           six.text_type(string, 'utf-8')).encode('utf-8')
+  normalized = _FULLWIDTH_RE.sub(lambda x: unichr(ord(x.group(0)) - offset),
+                                 six.ensure_text(string))
+  return normalized
 
 
 def ReadEmojiTsv(stream):
   """Parses emoji_data.tsv file and builds the emoji_data_list and reading map.
   """
   emoji_data_list = []
-  token_dict = defaultdict(list)
+  token_dict = collections.defaultdict(list)
 
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
@@ -165,7 +167,7 @@ def OutputData(emoji_data_list, token_dict,
     strings[docomo_description] = 0
     strings[softbank_description] = 0
     strings[kddi_description] = 0
-  sorted_strings = sorted(six.iterkeys(strings))
+  sorted_strings = sorted(strings.keys())
   for index, s in enumerate(sorted_strings):
     strings[s] = index
 
@@ -199,7 +201,7 @@ def ParseOptions():
 
 def main():
   options = ParseOptions()
-  with open(options.input, 'r') as input_stream:
+  with codecs.open(options.input, 'r', encoding='utf-8') as input_stream:
     (emoji_data_list, token_dict) = ReadEmojiTsv(input_stream)
 
   OutputData(emoji_data_list, token_dict,

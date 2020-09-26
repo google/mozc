@@ -58,6 +58,9 @@ Composition	Shift Right	MoveCursorRight
 Composition	Shift Space	Convert
 Composition	Space	Convert
 Composition	Tab	PredictAndConvert
+Composition	VirtualLeft	MoveCursorLeft
+Composition	VirtualRight	MoveCursorRight
+Composition	VirtualEnter	Commit
 Conversion	Backspace	Cancel
 Conversion	Ctrl a	SegmentFocusFirst
 Conversion	Ctrl Backspace	Cancel
@@ -124,6 +127,9 @@ Conversion	Shift Up	ConvertPrevPage
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert
 Conversion	Up	ConvertPrev
+Conversion	VirtualLeft	SegmentWidthShrink
+Conversion	VirtualRight	SegmentWidthExpand
+Conversion	VirtualEnter	CommitOnlyFirstSegment
 DirectInput	Eisu	IMEOn
 DirectInput	F13	IMEOn
 DirectInput	Hankaku/Zenkaku	IMEOn

@@ -81,8 +81,8 @@ class ProcessWatchDog : public Thread {
   typedef uint32 ThreadID;
 #endif
 
-  static const ProcessID UnknownProcessID = static_cast<ProcessID>(-1);
-  static const ThreadID UnknownThreadID = static_cast<ThreadID>(-1);
+  static constexpr ProcessID UnknownProcessID = static_cast<ProcessID>(-1);
+  static constexpr ThreadID UnknownThreadID = static_cast<ThreadID>(-1);
 
   // Define a signal handler.
   // if the given process or thread is terminated, Signaled() is called

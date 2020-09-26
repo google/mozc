@@ -78,7 +78,7 @@
             '<(gen_out_dir)/mozc.xml',
           ],
           'action': [
-            'python', '../../build_tools/redirect.py',
+            '<(python)', '../../build_tools/redirect.py',
             '<(gen_out_dir)/mozc.xml',
             './gen_mozc_xml.py',
             '--branding=Mozc',
@@ -184,7 +184,7 @@
             '<(gen_out_dir)/main.h',
           ],
           'action': [
-            'python', '../../build_tools/redirect.py',
+            '<(python)', '../../build_tools/redirect.py',
             '<(gen_out_dir)/main.h',
             './gen_mozc_xml.py',
             '--branding=Mozc',

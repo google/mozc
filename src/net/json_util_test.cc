@@ -1077,13 +1077,13 @@ TEST(JsonUtilTest, FailureTest) {
   for (size_t i = 0; i < arraysize(kNumS32ValueKeys); ++i) {
     {
       Json::Value json_value;
-      json_value[kNumS32ValueKeys[i]] = -2147483649ll;
+      json_value[kNumS32ValueKeys[i]] = -int64{2147483649};
       TestMsg msg;
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }
     {
       Json::Value json_value;
-      json_value[kNumS32ValueKeys[i]] = 2147483648ull;
+      json_value[kNumS32ValueKeys[i]] = uint64{2147483648};
       TestMsg msg;
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }
@@ -1098,7 +1098,7 @@ TEST(JsonUtilTest, FailureTest) {
     }
     {
       Json::Value json_value;
-      json_value[kNumU32ValueKeys[i]] = 4294967296ull;
+      json_value[kNumU32ValueKeys[i]] = uint64{4294967296};
       TestMsg msg;
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }

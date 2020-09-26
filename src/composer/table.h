@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+#include "base/mozc_hash_set.h"
 #include "base/port.h"
 #include "base/trie.h"
 #include "data_manager/data_manager_interface.h"
@@ -154,7 +155,7 @@ class Table {
 
   typedef Trie<const Entry *> EntryTrie;
   std::unique_ptr<EntryTrie> entries_;
-  typedef std::set<const Entry *> EntrySet;
+  typedef mozc_hash_set<const Entry *> EntrySet;
   EntrySet entry_set_;
 
   // If false, input alphabet characters are normalized to lower

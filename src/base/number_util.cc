@@ -607,7 +607,7 @@ bool SafeStrToUInt64WithBase(absl::string_view str, int base, uint64 *value) {
 template <typename T1, typename T2>
 struct GenericFalseTypeArity2 {
   // TODO(yukawa): Use std::false_type once C++11 is enabled everywhere.
-  static const bool value = false;
+  static constexpr bool value = false;
 };
 
 template <typename SrcType, typename DestType>

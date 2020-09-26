@@ -55,6 +55,9 @@
         'converter_base.gyp:segmenter',
         'converter_base.gyp:segments',
       ],
+      'export_dependent_settings': [
+        '../dictionary/dictionary_base.gyp:pos_matcher',
+      ],
     },
   ],
 }

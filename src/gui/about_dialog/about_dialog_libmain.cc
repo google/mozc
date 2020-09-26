@@ -37,8 +37,7 @@
 
 int RunAboutDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_about_dialog);
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   std::string name = "about_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -55,5 +54,5 @@ int RunAboutDialog(int argc, char *argv[]) {
 
   about_dialog.show();
   about_dialog.raise();
-  return app.exec();
+  return app->exec();
 }

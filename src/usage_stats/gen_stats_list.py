@@ -34,12 +34,13 @@ from __future__ import print_function
 
 __author__ = "toshiyuki"
 
+import codecs
 import sys
 
 
 def GetStatsNameList(filename):
   stats = []
-  for line in open(filename, 'r'):
+  for line in codecs.open(filename, 'r', encoding='utf-8'):
     stat = line.strip()
     if not stat or stat[0] == '#':
       continue

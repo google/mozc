@@ -43,9 +43,9 @@ namespace internal {
 // TODO(team): Consider to remove this class and stop doing obfuscation.
 class UnverifiedAES256 {
  public:
-  static const size_t kKeyBytes = 32;    // 256 bit
-  static const size_t kBlockBytes = 16;  // 128 bit
-  static const size_t kKeyScheduleBytes = 240;
+  static constexpr size_t kKeyBytes = 32;    // 256 bit
+  static constexpr size_t kBlockBytes = 16;  // 128 bit
+  static constexpr size_t kKeyScheduleBytes = 240;
 
   // Does AES256 CBC transformation.
   // CAVEATS: See the above comment.

@@ -64,8 +64,7 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
   mozc::ScopedCOMInitializer com_initializer;
 #endif
 
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("set_default_dialog");
 

@@ -524,7 +524,7 @@ class SingleDelimiter {
 
 class MultiDelimiter {
  public:
-  static const size_t kTableSize = UCHAR_MAX / 8;
+  static constexpr size_t kTableSize = UCHAR_MAX / 8;
 
   explicit MultiDelimiter(const char *delim);
 

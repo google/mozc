@@ -80,7 +80,7 @@ namespace dictionary {
 // tokens having the same POS index.
 class UserPOS : public UserPOSInterface {
  public:
-  static const size_t kTokenByteLength = 8;
+  static constexpr size_t kTokenByteLength = 8;
 
   class iterator
       : public std::iterator<std::random_access_iterator_tag, uint16> {

@@ -35,6 +35,7 @@ __author__ = "komatsu"
 
 import re
 
+
 def ReplaceVariables(data, environment):
   """Replace all occurrence of the variable in data by the value.
 
@@ -46,7 +47,7 @@ def ReplaceVariables(data, environment):
     the data string which replaces the variables by the value.
   """
   def Replacer(matchobj):
-    """The replace function to expand variables
+    """The replace function to expand variables.
 
     Args:
       matchobj: the match object

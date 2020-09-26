@@ -106,9 +106,9 @@ std::string AsByteStream(const uint32 (&H)[kNumDWordsOfDigest]) {
 class PaddedMessageIterator {
  public:
   // SHA1 uses 64-byte (512-bit) message block.
-  static const size_t kMessageBlockBytes = 64;
+  static constexpr size_t kMessageBlockBytes = 64;
   // The original data length in bit is stored as 8-byte-length data.
-  static const size_t kDataBitLengthBytes = sizeof(uint64);
+  static constexpr size_t kDataBitLengthBytes = sizeof(uint64);
 
   explicit PaddedMessageIterator(absl::string_view source)
       : source_(source),

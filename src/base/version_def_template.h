@@ -43,7 +43,6 @@ const int kMozcVersionRevision = @REVISION@;
 
 const char * const kMozcEngineVersion = "@ENGINE_VERSION@";
 
-
 }  // namespace version
 }  // namespace mozc
 

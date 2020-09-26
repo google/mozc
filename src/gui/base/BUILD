@@ -36,6 +36,7 @@ load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_library_mozc",
     "qt_moc_mozc",
+    "qt_rcc_mozc",
 )
 
 package(
@@ -62,6 +63,17 @@ qt_moc_mozc(
     outs = ["moc_window_title_modifier.cc"],
 )
 
+qt_rcc_mozc(
+    name = "qrc_tr",
+    srcs = [
+        "tr_en.qm",
+        "tr_ja.qm",
+    ],
+    outs = ["qrc_tr.cc"],
+    qrc_file = "tr.qrc",
+    qrc_name = "qrc_tr",
+)
+
 cc_qt_library_mozc(
     name = "gui_base",
     srcs = [
@@ -72,6 +84,7 @@ cc_qt_library_mozc(
         "win_util.cc",
         "window_title_modifier.cc",
         ":base_files",
+        ":qrc_tr",
     ],
     hdrs = [
         "debug_util.h",
@@ -90,6 +103,7 @@ cc_qt_library_mozc(
         "//base:system_util",
         "//base:util",
         "//base:version",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

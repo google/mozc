@@ -125,6 +125,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "http_client_mock_test",
     srcs = ["http_client_mock_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":http_client",
         ":http_client_mock",
@@ -162,6 +163,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "jsonpath_test",
     srcs = ["jsonpath_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":jsonpath",
         "//testing:gunit_main",
@@ -213,6 +215,7 @@ cc_proto_library(
 cc_test_mozc(
     name = "json_util_test",
     srcs = ["json_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":json_util",
         ":json_util_test_proto",

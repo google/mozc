@@ -43,7 +43,7 @@ class DataManagerInterface;
 
 class Connector final {
  public:
-  static const int16 kInvalidCost = 30000;
+  static constexpr int16 kInvalidCost = 30000;
 
   static mozc::StatusOr<std::unique_ptr<Connector>> CreateFromDataManager(
       const DataManagerInterface &data_manager);

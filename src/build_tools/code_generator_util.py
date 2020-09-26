@@ -56,6 +56,7 @@ def ToCppStringLiteral(s):
 
   else:
     # Python2
+    s = six.ensure_str(s)
     if all(0x20 <= ord(c) <= 0x7E for c in s):
       # All characters are in ascii code.
       return '"%s"' % s.replace('\\', r'\\').replace('"', r'\"')

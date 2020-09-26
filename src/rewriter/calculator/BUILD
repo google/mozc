@@ -75,6 +75,7 @@ cc_test_mozc(
     size = "small",
     srcs = ["calculator_test.cc"],
     data = ["//data/test/calculator:testset.txt"],
+    requires_full_emulation = False,
     deps = [
         ":calculator",
         "//base",

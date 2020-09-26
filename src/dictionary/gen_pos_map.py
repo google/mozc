@@ -32,8 +32,8 @@
 """
 
 from __future__ import absolute_import
+import codecs
 import optparse
-import sys
 
 import six  # pylint: disable=g-import-not-at-top
 
@@ -54,8 +54,9 @@ FOOTER = """};
 #endif  // MOZC_DICTIONARY_POS_MAP_H_
 """
 
+
 def ParseUserPos(user_pos_file):
-  with open(user_pos_file, 'r') as stream:
+  with codecs.open(user_pos_file, 'r', encoding='utf8') as stream:
     stream = code_generator_util.SkipLineComment(stream)
     stream = code_generator_util.ParseColumnStream(stream, num_column=2)
     return dict((key, enum_value) for key, enum_value in stream)
@@ -65,7 +66,7 @@ def GeneratePosMap(third_party_pos_map_file, user_pos_file):
   user_pos_map = ParseUserPos(user_pos_file)
 
   result = {}
-  with open(third_party_pos_map_file, 'r') as stream:
+  with codecs.open(third_party_pos_map_file, 'r', encoding='utf8') as stream:
     stream = code_generator_util.SkipLineComment(stream)
     for columns in code_generator_util.ParseColumnStream(stream, num_column=2):
       third_party_pos_name, mozc_pos = (columns + [None])[:2]

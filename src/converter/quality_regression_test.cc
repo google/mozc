@@ -27,7 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -175,7 +174,6 @@ std::unique_ptr<EngineInterface> CreateEngine(const string &data_file_path,
   LOG(ERROR) << "Invalid engine type: " << engine_type;
   return nullptr;
 }
-
 
 }  // namespace
 }  // namespace mozc

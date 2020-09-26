@@ -43,8 +43,7 @@
 
 int RunConfigDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_config_dialog);
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   std::string name = "config_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -61,5 +60,5 @@ int RunConfigDialog(int argc, char *argv[]) {
 
   mozc_config.show();
   mozc_config.raise();
-  return app.exec();
+  return app->exec();
 }

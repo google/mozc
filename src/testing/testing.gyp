@@ -44,7 +44,7 @@
               'inputs': [ '../data/mac/ios_test_info' ],
               'outputs': [ '<(SHARED_INTERMEDIATE_DIR)/ios_test_Info.plist' ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<@(_outputs)',
                 '--input', '<@(_inputs)',
                 '--version_file', '../mozc_version.txt',
@@ -127,7 +127,7 @@
             '<(gen_header_path)',
           ],
           'action': [
-            'python', '../build_tools/embed_pathname.py',
+            '<(python)', '../build_tools/embed_pathname.py',
             '--path_to_be_embedded', '<(mozc_data_dir)',
             '--constant_name', 'kMozcDataDir',
             '--output', '<(gen_header_path)',

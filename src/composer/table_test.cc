@@ -30,6 +30,7 @@
 #include "composer/table.h"
 
 #include "base/file_util.h"
+#include "base/mozc_hash_set.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "composer/internal/composition_input.h"
@@ -996,7 +997,7 @@ TEST_F(TableTest, SpecialKeys) {
 
 TEST_F(TableTest, TableManager) {
   TableManager table_manager;
-  std::set<const Table *> table_set;
+  mozc_hash_set<const Table *> table_set;
   static const commands::Request::SpecialRomanjiTable special_romanji_table[] =
       {
           commands::Request::DEFAULT_TABLE,

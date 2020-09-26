@@ -232,7 +232,7 @@
                 '<(gen_out_dir)/mozc_server_info',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/mozc_server_info',
                 '--input', '../data/mac/mozc_server_info',
                 '--version_file', '../mozc_version.txt',

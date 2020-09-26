@@ -714,8 +714,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
       // It happened once
       // when called with "バージョン", returning "ヴァージョン".
       EXPECT_LE(token.key.size(), source_token.value.size())
-          << std::string(token.key) << ":" << std::string(token.value) << "\t"
-          << std::string(source_token.value);
+          << token.key << ":" << token.value << "\t" << source_token.value;
       if (CompareTokensForLookup(source_token, token, true)) {
         found = true;
       }

@@ -30,6 +30,8 @@
 
 # Description: Version configuration for Google Japanese Input
 
+load("//tools/build_defs:stubs.bzl", "bzl_library")
+
 exports_files(
     ["mozc_version_template.bzl"],
     visibility = [
@@ -37,4 +39,11 @@ exports_files(
         "//data_manager:__subpackages__",
         "//tools/release:__pkg__",
     ],
+)
+
+bzl_library(
+    name = "mozc_version_template_bzl",
+    srcs = ["mozc_version_template.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
 )

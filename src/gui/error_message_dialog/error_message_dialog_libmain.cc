@@ -42,8 +42,7 @@ int RunErrorMessageDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_error_message_dialog);
 
   mozc::SystemUtil::DisableIME();
-  mozc::gui::Util::InitQt();
-  QApplication app(argc, argv);
+  auto app = mozc::gui::Util::InitQt(argc, argv);
 
   string name = "error_message_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();

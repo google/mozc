@@ -113,7 +113,7 @@
             '<(output_file)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=KanaMap',
@@ -134,7 +134,7 @@
             '<(output_file)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=SpecialKeyMap',
@@ -155,7 +155,7 @@
             '<(output_file)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=SpecialCharMap',
@@ -346,7 +346,7 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'Info.plist',
                 '--version_file', '../mozc_version.txt',
@@ -362,7 +362,7 @@
                 '<(gen_out_dir)/ActivatePane/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/ActivatePane/Info.plist',
                 '--input', 'ActivatePane/Info.plist',
                 '--version_file', '../mozc_version.txt',
@@ -378,7 +378,7 @@
                 '<(gen_out_dir)/Uninstaller/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Uninstaller/Info.plist',
                 '--input', 'Uninstaller/Info.plist',
                 '--version_file', '../mozc_version.txt',
@@ -394,7 +394,7 @@
                 '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
                 '--input',
@@ -411,7 +411,7 @@
                 '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
                 '--input',
@@ -428,7 +428,7 @@
                 '<(gen_out_dir)/English.lproj/InfoPlist.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output', '<(gen_out_dir)/English.lproj/InfoPlist.strings',
                 '--input', 'English.lproj/InfoPlist.strings',
                 '--branding', '<(branding)',
@@ -443,7 +443,7 @@
                 '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output', '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
                 '--input', 'Japanese.lproj/InfoPlist.strings',
                 '--branding', '<(branding)',
@@ -460,7 +460,7 @@
               'inputs': [ '../data/mac/com.google.inputmethod.Japanese.Converter.plist', ],
               'outputs': [ '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Converter.plist' ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Converter.plist',
                 '--input', '../data/mac/com.google.inputmethod.Japanese.Converter.plist',
                 '--version_file', '../mozc_version.txt',
@@ -472,7 +472,7 @@
               'inputs': [ '../data/mac/com.google.inputmethod.Japanese.Renderer.plist', ],
               'outputs': [ '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Renderer.plist' ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Renderer.plist',
                 '--input', '../data/mac/com.google.inputmethod.Japanese.Renderer.plist',
                 '--version_file', '../mozc_version.txt',
@@ -502,7 +502,7 @@
               'inputs': [ 'installer/preflight_template.sh', ],
               'outputs': [ '<(gen_out_dir)/preflight.sh' ],
               'action': [
-                'python', '../build_tools/tweak_macinstaller_script.py',
+                '<(python)', '../build_tools/tweak_macinstaller_script.py',
                 '--output', '<(gen_out_dir)/preflight.sh',
                 '--input', 'installer/preflight_template.sh',
                 '--version_file', '../mozc_version.txt',
@@ -514,7 +514,7 @@
               'inputs': [ 'installer/postflight_template.sh', ],
               'outputs': [ '<(gen_out_dir)/postflight.sh' ],
               'action': [
-                'python', '../build_tools/tweak_macinstaller_script.py',
+                '<(python)', '../build_tools/tweak_macinstaller_script.py',
                 '--output', '<(gen_out_dir)/postflight.sh',
                 '--input', 'installer/postflight_template.sh',
                 '--version_file', '../mozc_version.txt',
@@ -526,7 +526,7 @@
               'inputs': [ 'installer/<(branding)_template.pkgproj', ],
               'outputs': [ '<(gen_out_dir)/<(branding).pkgproj' ],
               'action': [
-                'python', '../build_tools/tweak_pkgproj.py',
+                '<(python)', '../build_tools/tweak_pkgproj.py',
                 '--output', '<(gen_out_dir)/<(branding).pkgproj',
                 '--input', 'installer/<(branding)_template.pkgproj',
                 '--version_file', '../mozc_version.txt',
@@ -555,8 +555,9 @@
                 '<(PRODUCT_DIR)/<(branding).pkg',
               ],
               'action': [
-                'python', '../build_tools/build_and_sign_pkg_mac.py',
+                '<(python)', '../build_tools/build_and_sign_pkg_mac.py',
                 '--pkgproj', '<(gen_out_dir)/<(branding).pkgproj',
+                '--product_dir', '<(PRODUCT_DIR)',
               ],
               'conditions': [
                 ['branding=="GoogleJapaneseInput"', {

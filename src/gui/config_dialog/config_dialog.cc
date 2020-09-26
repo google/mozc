@@ -55,6 +55,7 @@
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"
+#include "gui/base/util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
 #include "protocol/commands.pb.h"
@@ -101,7 +102,7 @@ ConfigDialog::ConfigDialog()
 #ifdef __APPLE__
   miscDefaultIMEWidget->setVisible(false);
   miscAdministrationWidget->setVisible(false);
-  setWindowTitle(tr("Mozc Preferences"));
+  setWindowTitle(tr("%1 Preferences").arg(Util::ProductName()));
 #endif  // __APPLE__
 
 #if defined(OS_LINUX)
@@ -696,8 +697,9 @@ void ConfigDialog::ClearUserHistory() {
 
   if (!client_->ClearUserHistory()) {
     QMessageBox::critical(this, windowTitle(),
-                          tr("Mozc Converter is not running. "
-                             "Settings were not saved."));
+                          tr("%1 Converter is not running. "
+                             "Settings were not saved.")
+                              .arg(Util::ProductName()));
   }
 }
 
@@ -712,9 +714,10 @@ void ConfigDialog::ClearUserPrediction() {
   client_->CheckVersionOrRestartServer();
 
   if (!client_->ClearUserPrediction()) {
-    QMessageBox::critical(this, windowTitle(),
-                          tr("Mozc Converter is not running. "
-                             "Settings were not saved."));
+    QMessageBox::critical(
+        this, windowTitle(),
+        tr("%1 Converter is not running. Settings were not saved.")
+            .arg(Util::ProductName()));
   }
 }
 
@@ -729,9 +732,10 @@ void ConfigDialog::ClearUnusedUserPrediction() {
   client_->CheckVersionOrRestartServer();
 
   if (!client_->ClearUnusedUserPrediction()) {
-    QMessageBox::critical(this, windowTitle(),
-                          tr("Mozc Converter is not running. "
-                             "Operation was not executed."));
+    QMessageBox::critical(
+        this, windowTitle(),
+        tr("%1 Converter is not running. Operation was not executed.")
+            .arg(Util::ProductName()));
   }
 }
 
@@ -798,14 +802,15 @@ void ConfigDialog::ResetToDefaults() {
   if (QMessageBox::Ok ==
       QMessageBox::question(
           this, windowTitle(),
-          tr("When you reset Mozc settings, any changes "
+          tr("When you reset %1 settings, any changes "
              "you've made will be reverted to the default settings. "
              "Do you want to reset settings? "
              "The following items are not reset with this operation.\n"
              " - Personalization data\n"
              " - Input history\n"
              " - Usage statistics and crash reports\n"
-             " - Administrator settings"),
+             " - Administrator settings")
+              .arg(Util::ProductName()),
           QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
     // TODO(taku): remove the dependency to config::ConfigHandler
     // nice to have GET_DEFAULT_CONFIG command

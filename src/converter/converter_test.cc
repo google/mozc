@@ -168,7 +168,7 @@ class ConverterTest : public ::testing::Test {
     const std::string key;
     const std::string value;
     const user_dictionary::UserDictionary::PosType pos;
-    UserDefinedEntry(const std::string &k, const std::string &v,
+    UserDefinedEntry(absl::string_view k, absl::string_view v,
                      user_dictionary::UserDictionary::PosType p)
         : key(k), value(v), pos(p) {}
   };
@@ -375,7 +375,7 @@ class ConverterTest : public ::testing::Test {
         .release();
   }
 
-  bool FindCandidateByValue(const std::string &value,
+  bool FindCandidateByValue(absl::string_view value,
                             const Segment &segment) const {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {
       if (segment.candidate(i).value == value) {

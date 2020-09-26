@@ -78,6 +78,7 @@ cc_test_mozc(
         "engine_builder_test.cc",
         "//data_manager/testing:mock_mozc.data",
     ],
+    requires_full_emulation = False,
     deps = [
         ":engine_builder",
         "//base:file_util",
@@ -188,6 +189,7 @@ cc_library_mozc(
 cc_test_mozc(
     name = "engine_factory_test",
     srcs = ["engine_factory_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":engine_factory",
         ":engine_interface",

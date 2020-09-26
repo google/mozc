@@ -41,6 +41,8 @@ import os
 import subprocess
 import sys
 
+import codesign_mac  # for GetCodeSignFlags()
+
 
 def ParseOption():
   parser = optparse.OptionParser()
@@ -70,7 +72,7 @@ def Xcodebuild(projdir, target, arch, sdk, deployment_target, outdir):
       'MACOSX_DEPLOYMENT_TARGET=%s' % deployment_target,
       'CONFIGURATION_BUILD_DIR=%s' % outdir,
       'OTHER_CFLAGS=-Wno-switch',  # For common/dwarf/dwarf2reader.cc
-  ])
+  ] + codesign_mac.GetCodeSignFlags())
 
 
 def BuildBreakpad(outdir, sdk, deployment_target):

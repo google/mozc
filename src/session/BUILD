@@ -104,6 +104,7 @@ cc_test_mozc(
     size = "small",
     timeout = "moderate",
     srcs = ["session_converter_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":request_test_util",
         ":session_converter",
@@ -135,6 +136,7 @@ cc_test_mozc(
     name = "session_converter_stress_test",
     size = "large",
     srcs = ["session_converter_stress_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":session_converter",
         "//base",
@@ -201,6 +203,7 @@ cc_test_mozc(
         "session_interface.h",
         "session_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":request_test_util",
         ":session",
@@ -243,6 +246,7 @@ cc_test_mozc(
         "session_interface.h",
         "session_regression_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":request_test_util",
         ":session",
@@ -288,6 +292,7 @@ cc_test_mozc(
     name = "session_observer_handler_test",
     size = "small",
     srcs = ["session_observer_handler_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":session_observer_handler",
         ":session_observer_interface",
@@ -392,6 +397,7 @@ cc_test_mozc(
         "common.h",
         "session_handler_test.cc",
     ],
+    requires_full_emulation = False,
     deps = [
         ":generic_storage_manager",
         ":session_handler",
@@ -443,6 +449,7 @@ cc_test_mozc(
     name = "session_server_test",
     size = "small",
     srcs = ["session_server_test.cc"],
+    requires_full_emulation = False,
     tags = [
         "disable_on_nacl_test",
         "no_android",
@@ -477,6 +484,7 @@ cc_test_mozc(
     name = "request_test_util_test",
     size = "small",
     srcs = ["request_test_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":request_test_util",
         "//protocol:commands_proto",
@@ -545,6 +553,7 @@ cc_test_mozc(
     name = "session_watch_dog_test",
     size = "large",
     srcs = ["session_watch_dog_test.cc"],
+    requires_full_emulation = False,
     tags = [
         "disable_on_nacl_test",
         "no_android",
@@ -588,6 +597,7 @@ cc_test_mozc(
     name = "session_usage_observer_test",
     size = "small",
     srcs = ["session_usage_observer_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":session_usage_observer",
         "//base",
@@ -625,6 +635,7 @@ cc_test_mozc(
     name = "ime_switch_util_test",
     size = "small",
     srcs = ["ime_switch_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":ime_switch_util",
         "//base",
@@ -662,6 +673,7 @@ cc_test_mozc(
     name = "key_info_util_test",
     size = "small",
     srcs = ["key_info_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":key_info_util",
         "//base",
@@ -690,6 +702,7 @@ cc_test_mozc(
     name = "output_util_test",
     size = "small",
     srcs = ["output_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":output_util",
         "//base",
@@ -721,6 +734,7 @@ cc_test_mozc(
     name = "session_usage_stats_util_test",
     size = "small",
     srcs = ["session_usage_stats_util_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":session_usage_stats_util",
         "//base",
@@ -740,6 +754,7 @@ cc_test_mozc(
         "//data/test/session/scenario:scenario_files",
         "//data/test/session/scenario/usage_stats:usage_stats_scenario_files",
     ],
+    requires_full_emulation = False,
     deps = [
         ":request_test_util",
         ":session_handler",
@@ -819,6 +834,7 @@ cc_test_mozc(
     name = "generic_storage_manager_test",
     size = "small",
     srcs = ["generic_storage_manager_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":generic_storage_manager",
         "//base:file_util",

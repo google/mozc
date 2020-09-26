@@ -50,7 +50,7 @@ message GeneralConfig {
   // last modified time in UTC second
   optional uint64 last_modified_time = 3 [default = 0];
 
-  // These fileds are not used now
+  // These fields are not used now
   // platform of machine that wrote this config
   optional string platform = 4 [default = ""];
 
@@ -319,7 +319,6 @@ message Config {
   // Use realtime conversion feature.
   optional bool use_realtime_conversion = 102 [default = true];
 
-
   // Size of suggestions.
   optional uint32 suggestions_size = 110 [default = 3];
 
@@ -329,7 +328,6 @@ message Config {
   //
   // Use mode indicator feature.
   optional bool use_mode_indicator = 120 [default = true];
-
 
   //////////////////////////////////////////////////////////////
   //

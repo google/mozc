@@ -27,3 +27,33 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load("//tools/build_defs:stubs.bzl", "bzl_library")
+
+bzl_library(
+    name = "stubs_bzl",
+    srcs = ["stubs.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+)
+
+bzl_library(
+    name = "cc_public_library_bzl",
+    srcs = ["cc_public_library.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+)
+
+bzl_library(
+    name = "build_cleaner_bzl",
+    srcs = ["build_cleaner.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+)
+
+bzl_library(
+    name = "qt_bzl",
+    srcs = ["qt.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+)

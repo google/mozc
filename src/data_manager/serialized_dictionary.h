@@ -118,7 +118,7 @@ class SerializedDictionary {
 
   using TokenList = std::vector<std::unique_ptr<CompilerToken>>;
 
-  static const size_t kTokenByteLength = 24;
+  static constexpr size_t kTokenByteLength = 24;
 
   class iterator : public std::iterator<std::random_access_iterator_tag,
                                         absl::string_view> {

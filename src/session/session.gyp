@@ -184,7 +184,7 @@
             '<(gen_out_dir)/session_stress_test_data.h'
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(gen_out_dir)/session_stress_test_data.h',
             'gen_session_stress_test_data.py',
             '../data/test/stress_test/sentences.txt',

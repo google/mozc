@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include "base/mozc_hash_map.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
@@ -81,7 +82,7 @@ class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
 
  private:
   size_t found_count_;
-  std::map<const Token *, bool> result_;
+  mozc_hash_map<const Token *, bool> result_;
 };
 
 // Generates a human redable string of token(s).

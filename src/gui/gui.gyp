@@ -64,6 +64,7 @@
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         'encoding_util',
         'gen_base_files',
+        'qrc_tr',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -80,6 +81,22 @@
       ],
       'includes': [
         'qt_moc.gypi',
+      ],
+    },
+    {
+      'target_name': 'qrc_tr',
+      'type': 'none',
+      'variables': {
+        'subdir': 'base',
+        'qrc_base_name': 'tr',
+        'qrc_inputs': [
+          '<(subdir)/<(qrc_base_name).qrc',
+          '<(subdir)/<(qrc_base_name)_en.qm',
+          '<(subdir)/<(qrc_base_name)_ja.qm',
+        ],
+      },
+      'includes': [
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -786,7 +803,7 @@
                 {
                   'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
-                    'python', '../build_tools/change_reference_mac.py',
+                    '<(python)', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/GuiTool_lib.framework/Versions/A/GuiTool_lib',
@@ -907,7 +924,7 @@
                 '<(gen_out_dir)/mozc_tool_info',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/mozc_tool_info',
                 '--input', '../data/mac/mozc_tool_info',
                 '--version_file', '../mozc_version.txt',
@@ -923,7 +940,7 @@
                 '<(gen_out_dir)/hidden_mozc_tool_info',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/hidden_mozc_tool_info',
                 '--input', '../data/mac/hidden_mozc_tool_info',
                 '--version_file', '../mozc_version.txt',
@@ -945,7 +962,7 @@
                 '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
                 '--input',
@@ -962,7 +979,7 @@
                 '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
                 '--input',
@@ -985,7 +1002,7 @@
                 '<(gen_out_dir)/mozc_tool_lib_info',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/mozc_tool_lib_info',
                 '--input', '../data/mac/mozc_tool_lib_info',
                 '--version_file', '../mozc_version.txt',
@@ -1050,7 +1067,7 @@
                 {
                   'postbuild_name': 'Change the reference to frameworks',
                   'action': [
-                    'python', '../build_tools/change_reference_mac.py',
+                    '<(python)', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
@@ -1059,7 +1076,7 @@
                 {
                   'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
                   'action': [
-                    'python', '../build_tools/copy_qt_frameworks_mac.py',
+                    '<(python)', '../build_tools/copy_qt_frameworks_mac.py',
                     '--qtdir', '<(qt_dir)',
                     '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
                   ],

@@ -64,7 +64,7 @@ class UsageRewriter : public RewriterInterface {
  private:
   FRIEND_TEST(UsageRewriterTest, GetKanjiPrefixAndOneHiragana);
 
-  static const size_t kUsageItemByteLength = 20;
+  static constexpr size_t kUsageItemByteLength = 20;
 
   class UsageDictItemIterator {
    public:
