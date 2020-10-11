@@ -43,12 +43,13 @@ namespace mozc {
 namespace gui {
 
 // static
-std::unique_ptr<QApplication> Util::InitQt(int argc, char *argv[]) {
+std::unique_ptr<QApplication> Util::InitQt(int &argc, char *argv[]) {
   QApplication::setStyle(QStyleFactory::create("fusion"));
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 
+  // QApplication takes argc as a reference.
   auto app = absl::make_unique<QApplication>(argc, argv);
 #ifdef __APPLE__
   app->setFont(QFont("Hiragino Sans"));

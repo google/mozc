@@ -41,7 +41,8 @@ namespace gui {
 class Util {
  public:
   // Initializes the common Qt cofiguration such as High DPI, font, and theme.
-  static std::unique_ptr<QApplication> InitQt(int argc, char *argv[]);
+  // The type of argc is a reference.
+  static std::unique_ptr<QApplication> InitQt(int &argc, char *argv[]);
 
   // Returns the product name.
   static const QString ProductName();
