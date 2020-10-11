@@ -76,70 +76,32 @@ using std::string;
 #undef MOZC_OS_DEFINED
 
 
-#ifndef _MSC_VER
-#if !defined(__STDC_FORMAT_MACROS)
-#define __STDC_FORMAT_MACROS
-#endif  // !__STDC_FORMAT_MACROS
-#include <inttypes.h>
-#endif  // _MSC_VER
-#include <stdint.h>
-#include <sys/types.h>
-#include <cstddef>
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+
+#include "absl/base/attributes.h"
+#include "absl/base/integral_types.h"
+#include "absl/base/macros.h"
+
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
+
+#include <cstdint>
 
 #include "absl/base/attributes.h"
 #include "absl/base/macros.h"
 
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#include "absl/base/integral_types.h"
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
-
 // Integral types.
-typedef signed char int8;
-typedef short int16;  // NOLINT
-typedef int int32;
-#ifdef COMPILER_MSVC
-typedef __int64 int64;
-#else
-typedef long long int64;  // NOLINT
-#endif /* COMPILER_MSVC */
+typedef std::int8_t int8;
+typedef std::int16_t int16;
+typedef std::int32_t int32;
+typedef std::int64_t int64;
 
-typedef unsigned char uint8;
-typedef unsigned short uint16;  // NOLINT
-typedef unsigned int uint32;
-#ifdef COMPILER_MSVC
-typedef unsigned __int64 uint64;
-#else
-typedef unsigned long long uint64;  // NOLINT
-#endif /* COMPILER_MSVC */
+typedef std::uint8_t uint8;
+typedef std::uint16_t uint16;
+typedef std::uint32_t uint32;
+typedef std::uint64_t uint64;
 
 typedef signed int char32;
-
-#ifdef COMPILER_MSVC /* if Visual C++ */
-
-// VC++ long long suffixes
-#define GG_LONGLONG(x) x##I64
-#define GG_ULONGLONG(x) x##UI64
-
-#else /* not Visual C++ */
-
-#define GG_LONGLONG(x) x##LL
-#define GG_ULONGLONG(x) x##ULL
-
-#endif  // COMPILER_MSVC
-
-// INT_MIN, INT_MAX, UINT_MAX family at Google
-const uint8 kuint8max{0xFF};
-const uint16 kuint16max{0xFFFF};
-const uint32 kuint32max{0xFFFFFFFF};
-const uint64 kuint64max{GG_ULONGLONG(0xFFFFFFFFFFFFFFFF)};
-const int8 kint8min{~0x7F};
-const int8 kint8max{0x7F};
-const int16 kint16min{~0x7FFF};
-const int16 kint16max{0x7FFF};
-const int32 kint32min{~0x7FFFFFFF};
-const int32 kint32max{0x7FFFFFFF};
-const int64 kint64min{GG_LONGLONG(~0x7FFFFFFFFFFFFFFF)};
-const int64 kint64max{GG_LONGLONG(0x7FFFFFFFFFFFFFFF)};
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 

@@ -153,12 +153,12 @@ void GenericTableEditorDialog::DeleteSelectedItems() {
 
   // Choose next or prev item.
   QTableWidgetItem *item = editorTableWidget->item(rows.back() + 1, column);
-  if (item == NULL) {
+  if (item == nullptr) {
     item = editorTableWidget->item(rows.back() - 1, column);
   }
 
   // select item
-  if (item != NULL) {
+  if (item != nullptr) {
     editorTableWidget->setCurrentItem(item);
   }
 
@@ -188,7 +188,7 @@ void GenericTableEditorDialog::InsertEmptyItem(int row) {
     editorTableWidget->setItem(row, i, new QTableWidgetItem(""));
   }
   QTableWidgetItem *item = editorTableWidget->item(row, 0);
-  if (item != NULL) {
+  if (item != nullptr) {
     editorTableWidget->setCurrentItem(item);
     editorTableWidget->scrollToItem(item, QAbstractItemView::PositionAtCenter);
     editorTableWidget->editItem(item);
@@ -209,7 +209,7 @@ void GenericTableEditorDialog::InsertEmptyItem(int row) {
 
 void GenericTableEditorDialog::InsertItem() {
   QTableWidgetItem *current = editorTableWidget->currentItem();
-  if (current == NULL) {
+  if (current == nullptr) {
     QMessageBox::warning(this, windowTitle(), tr("No entry is selected"));
     return;
   }
@@ -297,12 +297,12 @@ void GenericTableEditorDialog::Clicked(QAbstractButton *button) {
 
 void GenericTableEditorDialog::OnContextMenuRequested(const QPoint &pos) {
   QTableWidgetItem *item = editorTableWidget->itemAt(pos);
-  if (item == NULL) {
+  if (item == nullptr) {
     return;
   }
 
   QMenu *menu = new QMenu(this);
-  QAction *edit_action = NULL;
+  QAction *edit_action = nullptr;
   const QList<QTableWidgetItem *> selected_items =
       editorTableWidget->selectedItems();
   if (selected_items.count() == 1) {
@@ -312,7 +312,7 @@ void GenericTableEditorDialog::OnContextMenuRequested(const QPoint &pos) {
   QAction *delete_action = menu->addAction(tr("Remove entry"));
   QAction *selected_action = menu->exec(QCursor::pos());
 
-  if (edit_action != NULL && selected_action == edit_action) {
+  if (edit_action != nullptr && selected_action == edit_action) {
     editorTableWidget->editItem(selected_items[0]);
   } else if (selected_action == rename_action) {
     AddNewItem();
@@ -323,7 +323,7 @@ void GenericTableEditorDialog::OnContextMenuRequested(const QPoint &pos) {
 
 void GenericTableEditorDialog::UpdateOKButton(bool status) {
   QPushButton *button = editorButtonBox->button(QDialogButtonBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(status);
   }
 }

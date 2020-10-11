@@ -113,7 +113,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_connection_data",
     srcs = ["gen_connection_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
         ":gen_connection_data_lib",
         "//build_tools:code_generator_util",

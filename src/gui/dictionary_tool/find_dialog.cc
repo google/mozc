@@ -45,7 +45,7 @@ const char kYellowSelectionStyleSheet[] =
 FindDialog::FindDialog(QWidget *parent, QTableWidget *table)
     : QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
       table_(table),
-      last_item_(NULL) {
+      last_item_(nullptr) {
   setupUi(this);
   setModal(false);
 
@@ -67,13 +67,13 @@ void FindDialog::showEvent(QShowEvent *event) {
     QuerylineEdit->selectAll();
   }
   FindForwardpushButton->setDefault(true);
-  last_item_ = NULL;
+  last_item_ = nullptr;
   UpdateUIStatus();
 }
 
 void FindDialog::closeEvent(QCloseEvent *event) {
   table_->setStyleSheet("");
-  last_item_ = NULL;
+  last_item_ = nullptr;
 }
 
 void FindDialog::UpdateUIStatus() {
@@ -83,7 +83,7 @@ void FindDialog::UpdateUIStatus() {
 }
 
 bool FindDialog::Match(const QString &query, int row, int column) {
-  if (last_item_ != NULL && last_item_ == table_->item(row, column)) {
+  if (last_item_ != nullptr && last_item_ == table_->item(row, column)) {
     return false;
   }
   const QString &value = table_->item(row, column)->text();
@@ -146,7 +146,7 @@ FOUND:
     table_->setCurrentItem(item);
     table_->scrollToItem(item);
   } else {
-    last_item_ = NULL;
+    last_item_ = nullptr;
     QMessageBox::information(this, this->windowTitle(),
                              tr("Cannot find pattern %1").arg(query));
   }

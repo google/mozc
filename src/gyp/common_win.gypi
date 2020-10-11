@@ -54,6 +54,12 @@
         'compiler_host': 'msvs',
         'compiler_host_version_int': 1900,  # Visual C++ 2015 or higher
       }],
+      ['MSVS_VERSION=="2017"', {
+        'compiler_target': 'msvs',
+        'compiler_target_version_int': 1910,  # Visual C++ 2017 or higher
+        'compiler_host': 'msvs',
+        'compiler_host_version_int': 1910,  # Visual C++ 2017 or higher
+      }],
     ],
     'msvc_disabled_warnings': [
       # 'expression' : signed/unsigned mismatch

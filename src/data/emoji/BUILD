@@ -33,7 +33,7 @@ exports_files(["emoji_data.tsv"])
 py_binary(
     name = "filter",
     srcs = ["filter.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     visibility = [
     ],
     deps = ["//build_tools:code_generator_util"],

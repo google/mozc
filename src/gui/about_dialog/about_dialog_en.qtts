@@ -5,7 +5,7 @@
     <name>AboutDialog</name>
     <message>
         <location filename="about_dialog.ui" line="32"/>
-        <source>About Mozc</source>
+        <source>About [ProductName]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15,22 +15,22 @@
     </message>
     <message utf8="true">
         <location filename="about_dialog.ui" line="80"/>
-        <source>Copyright © 2019 Google Inc. All rights reserved.</source>
+        <source>Copyright © 2020 Google Inc. All rights reserved.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="about_dialog.ui" line="95"/>
-        <source>&lt;html&gt;&lt;body&gt;Mozc is made possible by &lt;a href=&quot;file://credits_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;open source software&lt;/span&gt;&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;body&gt;[ProductName] is made possible by &lt;a href=&quot;file://credits_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;open source software&lt;/span&gt;&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="about_dialog.ui" line="133"/>
-        <source>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;https://github.com/google/mozc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;https://github.com/google/mozc/issues&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;body&gt;[ProductName] &lt;a href=&quot;https://github.com/google/mozc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;https://github.com/google/mozc/issues&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="about_dialog.ui" line="174"/>
-        <source>Mozc</source>
+        <source>[ProductName]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -176,7 +176,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   void GetSortedSelectedRows(std::vector<int> *rows) const;
 
   // Returns a pointer to the first selected dictionary.
-  // Returns NULL if no dictionary is selected.
+  // Returns nullptr if no dictionary is selected.
   QListWidgetItem *GetFirstSelectedDictionary() const;
 
   ImportDialog *import_dialog_;

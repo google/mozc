@@ -47,3 +47,11 @@ def bzl_library(**kwargs):
 def py2and3_test(**kwargs):
     native.py_test(**kwargs)
     pass
+
+def pytype_strict_library(**kwargs):
+    native.py_library(**kwargs)
+    pass
+
+def pytype_strict_binary(test_lib = True, **kwargs):
+    native.py_binary(**kwargs)
+    pass

@@ -366,7 +366,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
         ":gen_zero_query_number_data_lib",
         ":gen_zero_query_util",
@@ -385,7 +385,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_data",
     srcs = ["gen_zero_query_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
         ":gen_zero_query_data_lib",
         ":gen_zero_query_util",

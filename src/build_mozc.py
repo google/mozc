@@ -477,7 +477,7 @@ def GypMain(options, unused_args):
   gyp_options.extend(['-D', 'target_platform=%s' % target_platform_value])
 
   if IsWindows():
-    gyp_options.extend(['-G', 'msvs_version=2015'])
+    gyp_options.extend(['-G', 'msvs_version=2017'])
 
   if (target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):

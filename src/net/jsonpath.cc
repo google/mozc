@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -53,7 +54,7 @@ struct JsonPathNode {
   int slice_end;
   int slice_step;
 
-  static constexpr int kSliceUndef = kint32max;
+  static constexpr int kSliceUndef = std::numeric_limits<int32>::max();
 
   static bool IsUndef(int n) { return n == kSliceUndef; }
 

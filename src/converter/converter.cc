@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -222,7 +223,7 @@ bool TryNormalizingKeyAsMathExpression(absl::string_view s, std::string *key) {
 ConverterImpl::ConverterImpl()
     : pos_matcher_(nullptr),
       immutable_converter_(nullptr),
-      general_noun_id_(kuint16max) {}
+      general_noun_id_(std::numeric_limits<uint16>::max()) {}
 
 ConverterImpl::~ConverterImpl() = default;
 

@@ -40,7 +40,6 @@
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"

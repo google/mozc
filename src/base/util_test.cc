@@ -32,11 +32,11 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
 
-#include "base/compiler_specific.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -1935,10 +1935,10 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
     uint64 value;
   } kCorrectPairs[] = {
       {"\x00\x00\x00\x00\x00\x00\x00\x00", 0},
-      {"\x00\x00\x00\x00\x00\x00\x00\xFF", kuint8max},
-      {"\x00\x00\x00\x00\x00\x00\xFF\xFF", kuint16max},
-      {"\x00\x00\x00\x00\xFF\xFF\xFF\xFF", kuint32max},
-      {"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", kuint64max},
+      {"\x00\x00\x00\x00\x00\x00\x00\xFF", std::numeric_limits<uint8>::max()},
+      {"\x00\x00\x00\x00\x00\x00\xFF\xFF", std::numeric_limits<uint16>::max()},
+      {"\x00\x00\x00\x00\xFF\xFF\xFF\xFF", std::numeric_limits<uint32>::max()},
+      {"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", std::numeric_limits<uint64>::max()},
       {"\x01\x23\x45\x67\x89\xAB\xCD\xEF", 0x0123456789ABCDEF},
       {"\xFE\xDC\xBA\x98\x76\x54\x32\x10", 0xFEDCBA9876543210},
   };

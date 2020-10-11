@@ -36,6 +36,14 @@ protobuf_deps()
 #     tag = "v3.6.0.1",  # 2018-06-09
 # )
 
+# Japanese Usage Dictionary
+new_local_repository(
+    name = "ja_usage_dict",
+    path = "third_party/japanese_usage_dictionary",
+    build_file = "BUILD.ja_usage_dict",
+)
+
+# Qt
 new_local_repository(
     name = "io_qt",
     # This path should be updated per the environment.

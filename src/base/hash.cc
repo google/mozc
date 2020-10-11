@@ -145,7 +145,7 @@ uint64 Hash::FingerprintWithSeed(absl::string_view str, uint32 seed) {
   const uint32 lo = Fingerprint32WithSeed(str, kFingerPrintSeed1);
   uint64 result = static_cast<uint64>(hi) << 32 | static_cast<uint64>(lo);
   if ((hi == 0) && (lo < 2)) {
-    result ^= GG_ULONGLONG(0x130f9bef94a0a928);
+    result ^= 0x130f9bef94a0a928uLL;
   }
   return result;
 }

@@ -121,7 +121,7 @@ def _ParseVersionTemplateFile(template_path, target_platform,
   template_dict = {}
   with open(template_path) as template_file:
     for line in template_file:
-      matchobj = re.match(r'(\w+) *= *(.*)', line.strip())
+      matchobj = re.match(r'(\w+) *= *(\w*)', line.strip())
       if matchobj:
         var = matchobj.group(1)
         val = matchobj.group(2)

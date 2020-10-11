@@ -47,7 +47,7 @@ void OnFatal(const QString &message) {
   // to set WindowStaysOnTopHint
   QMessageBox message_box(
       QMessageBox::Critical, QObject::tr("Mozc Fatal Error"),
-      message, QMessageBox::Ok, NULL,
+      message, QMessageBox::Ok, nullptr,
       Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
   DeleyedMessageDialogHandler handler(&message_box);
   handler.Exec();
@@ -64,7 +64,7 @@ void DeleyedMessageDialogHandler::Exec() {
   const int kDisableInterval = 3000;
   QTimer::singleShot(kDisableInterval, this, SLOT(EnableOkButton()));
   QAbstractButton *button = message_box_->button(QMessageBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(false);
   }
   message_box_->exec();
@@ -72,7 +72,7 @@ void DeleyedMessageDialogHandler::Exec() {
 
 void DeleyedMessageDialogHandler::EnableOkButton() {
   QAbstractButton *button = message_box_->button(QMessageBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(true);
   }
 }

@@ -31,7 +31,7 @@
 """Script building Breakpad for Mozc/Mac.
 
 ././tools/build_breakpad.py
-  --pbdir ./third_party/breakpad --outdir /tmp/breakpad
+  --bpdir ./third_party/breakpad --outdir /tmp/breakpad
 """
 
 from __future__ import absolute_import
@@ -46,9 +46,9 @@ import codesign_mac  # for GetCodeSignFlags()
 
 def ParseOption():
   parser = optparse.OptionParser()
-  parser.add_option('--pbdir', default='./third_party/breakpad')
+  parser.add_option('--bpdir', default='./third_party/breakpad')
   parser.add_option('--outdir', default='./out_mac/Release/Breakpad')
-  parser.add_option('--sdk', default='macosx10.14')
+  parser.add_option('--sdk', default='macosx10.15')
   parser.add_option('--deployment_target', default='10.9')
 
   (opts, _) = parser.parse_args()
@@ -91,19 +91,19 @@ def BuildSymupload(outdir, sdk, deployment_target):
   Xcodebuild(projdir, 'symupload', 'x86_64', sdk, deployment_target, outdir)
 
 
-def CreateOutDir(pbdir, outdir):
+def CreateOutDir(bpdir, outdir):
   workdir = os.path.join(outdir, 'src')
   if not os.path.isdir(workdir):
     os.makedirs(workdir)
-  ProcessCall(['rsync', '-avH', os.path.join(pbdir, 'src/'), workdir])
+  ProcessCall(['rsync', '-avH', os.path.join(bpdir, 'src/'), workdir])
 
 
 def main():
   opts = ParseOption()
-  pbdir = os.path.abspath(opts.pbdir)
+  bpdir = os.path.abspath(opts.bpdir)
   outdir = os.path.abspath(opts.outdir)
 
-  CreateOutDir(pbdir, outdir)
+  CreateOutDir(bpdir, outdir)
   BuildBreakpad(outdir, opts.sdk, opts.deployment_target)
   BuildDumpSyms(outdir, opts.sdk, opts.deployment_target)
   BuildSymupload(outdir, opts.sdk, opts.deployment_target)

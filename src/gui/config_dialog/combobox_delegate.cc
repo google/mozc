@@ -59,7 +59,7 @@ void ComboBoxDelegate::setEditorData(QWidget *editor,
                                      const QModelIndex &index) const {
   QString str = index.model()->data(index, Qt::EditRole).toString();
   QComboBox *comboBox = static_cast<QComboBox *>(editor);
-  if (comboBox == NULL) {
+  if (comboBox == nullptr) {
     return;
   }
   comboBox->setCurrentIndex(comboBox->findText(str));
@@ -68,7 +68,7 @@ void ComboBoxDelegate::setEditorData(QWidget *editor,
 void ComboBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
                                     const QModelIndex &index) const {
   QComboBox *comboBox = static_cast<QComboBox *>(editor);
-  if (comboBox == NULL || model == NULL) {
+  if (comboBox == nullptr || model == nullptr) {
     return;
   }
   model->setData(index, comboBox->currentText(), Qt::EditRole);
@@ -77,7 +77,7 @@ void ComboBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
 void ComboBoxDelegate::updateEditorGeometry(QWidget *editor,
                                             const QStyleOptionViewItem &option,
                                             const QModelIndex &index) const {
-  if (editor == NULL) {
+  if (editor == nullptr) {
     return;
   }
   editor->setGeometry(option.rect);

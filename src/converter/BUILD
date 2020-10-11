@@ -703,7 +703,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_boundary_data",
     srcs = ["gen_boundary_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     visibility = ["//data_manager:__subpackages__"],
     deps = [":gen_boundary_data_lib"],
 )

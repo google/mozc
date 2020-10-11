@@ -286,7 +286,7 @@
         <location filename="dictionary_tool.cc" line="786"/>
         <source>You have imported a file in an invalid or unsupported file format.
 
-Please check the file format. ATOK11 or older format is not supported by Mozc.</source>
+Please check the file format. ATOK11 or older format is not supported by %1.</source>
         <translation></translation>
     </message>
     <message>

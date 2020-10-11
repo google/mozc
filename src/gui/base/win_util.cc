@@ -66,7 +66,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
   hr = link.CoCreateInstance(CLSID_ShellLink);
   if (FAILED(hr)) {
     DLOG(INFO) << "Failed to instantiate CLSID_ShellLink. hr = " << hr;
-    return NULL;
+    return nullptr;
   }
 
   {
@@ -75,7 +75,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
     hr = link->SetPath(mozc_tool_path_wide.c_str());
     if (FAILED(hr)) {
       DLOG(ERROR) << "SetPath failed. hr = " << hr;
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -85,14 +85,14 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
     hr = link->SetArguments(argument_wide.c_str());
     if (FAILED(hr)) {
       DLOG(ERROR) << "SetArguments failed. hr = " << hr;
-      return NULL;
+      return nullptr;
     }
   }
 
   CComQIPtr<IPropertyStore> property_store(link);
-  if (property_store == NULL) {
+  if (property_store == nullptr) {
     DLOG(ERROR) << "QueryInterface failed.";
-    return NULL;
+    return nullptr;
   }
 
   {
@@ -102,7 +102,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
     hr = ::InitPropVariantFromString(item_title_wide.c_str(), &prop_variant);
     if (FAILED(hr)) {
       DLOG(ERROR) << "QueryInterface failed. hr = " << hr;
-      return NULL;
+      return nullptr;
     }
     hr = property_store->SetValue(PKEY_Title, prop_variant);
     ::PropVariantClear(&prop_variant);
@@ -110,13 +110,13 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
 
   if (FAILED(hr)) {
     DLOG(ERROR) << "SetValue failed. hr = " << hr;
-    return NULL;
+    return nullptr;
   }
 
   hr = property_store->Commit();
   if (FAILED(hr)) {
     DLOG(ERROR) << "Commit failed. hr = " << hr;
-    return NULL;
+    return nullptr;
   }
 
   return link;
@@ -161,13 +161,13 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
       link =
           InitializeShellLinkItem(kLinks[i].argument, kLinks[i].title_english);
     }
-    if (link != NULL) {
+    if (link != nullptr) {
       object_collection->AddObject(link);
     }
   }
 
   CComQIPtr<IObjectArray> object_array(object_collection);
-  if (object_array == NULL) {
+  if (object_array == nullptr) {
     DLOG(ERROR) << "QueryInterface failed.";
     return false;
   }
@@ -304,7 +304,7 @@ bool WinUtil::GetIMEHotKeyDisabled() {
   wchar_t data[4] = {};
   ULONG num_chars = arraysize(data);
   result = key.QueryStringValue(kIMEHotKeyEntryValue, data, &num_chars);
-  // Returned |num_char| includes NULL character.
+  // Returned |num_char| includes nullptr character.
 
   // This is only the condition when this function
   // can return |true|
@@ -363,8 +363,8 @@ void WinUtil::KeepJumpListUpToDate() {
 #ifdef OS_WIN
   HRESULT hr = S_OK;
 
-  hr =
-      ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+  hr = ::CoInitializeEx(nullptr,
+                        COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
   if (FAILED(hr)) {
     DLOG(INFO) << "CoInitializeEx failed. hr = " << hr;
     return;

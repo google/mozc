@@ -30,6 +30,7 @@
 #include "session/session_usage_observer.h"
 
 #include <climits>
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
@@ -76,7 +77,7 @@ uint64 GetTimeInMilliSecond() {
 uint32 GetDuration(uint64 base_value) {
   const uint64 result = GetTimeInMilliSecond() - base_value;
   if (result != static_cast<uint32>(result)) {
-    return kuint32max;
+    return std::numeric_limits<uint32>::max();
   }
   return result;
 }

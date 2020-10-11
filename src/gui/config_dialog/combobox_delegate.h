@@ -44,7 +44,7 @@ namespace gui {
 class ComboBoxDelegate : public QItemDelegate {
   Q_OBJECT
  public:
-  explicit ComboBoxDelegate(QObject *parent = NULL);
+  explicit ComboBoxDelegate(QObject *parent = nullptr);
   virtual ~ComboBoxDelegate();
 
   void SetItemList(const QStringList &item_list);

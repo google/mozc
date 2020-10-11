@@ -83,7 +83,7 @@ ImportDialog::ImportDialog(QWidget *parent)
                               static_cast<int>(UserDictionaryImporter::UTF8));
 
   QPushButton *button = buttonbox_->button(QDialogButtonBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setText(tr("Import"));
   }
 
@@ -142,7 +142,7 @@ bool ImportDialog::IsAcceptButtonEnabled() const {
 
 void ImportDialog::OnFormValueChanged() {
   QPushButton *button = buttonbox_->button(QDialogButtonBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(IsAcceptButtonEnabled());
   }
 }

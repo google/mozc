@@ -199,8 +199,8 @@
         <location filename="dictionary_tool.cc" line="786"/>
         <source>You have imported a file in an invalid or unsupported file format.
 
-Please check the file format. ATOK11 or older format is not supported by Mozc.</source>
-        <translation>指定されたファイルは Mozcでサポートされていないフォーマットで保存されています。
+Please check the file format. ATOK11 or older format is not supported by %1.</source>
+        <translation>指定されたファイルは %1 でサポートされていないフォーマットで保存されています。
 
 インポート対象のファイルフォーマットを確認してください。
 

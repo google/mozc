@@ -114,7 +114,7 @@ def WriteCppDataArray(data, variable_name, target_compiler, stream):
     for word_index in range(0, len(data), 8):
       word_chunk = data[word_index:word_index + 8].ljust(8, '\x00')
       stream.write('0x%016X, ' % struct.unpack('<Q', six.b(word_chunk)))
-      if (word_index / 8) % 4 == 3:
+      if (word_index // 8) % 4 == 3:
         # Line feed for every 4 elements.
         stream.write('\n')
 

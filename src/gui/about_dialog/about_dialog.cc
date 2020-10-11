@@ -39,6 +39,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -57,7 +58,7 @@ bool AddLocalPath(std::string *str) {
       std::string tmp;
       const std::string file_path =
           FileUtil::JoinPath(SystemUtil::GetDocumentDirectory(), filenames[i]);
-      Util::StringReplace(*str, filenames[i], file_path, false, &tmp);
+      mozc::Util::StringReplace(*str, filenames[i], file_path, false, &tmp);
       *str = tmp;
       return true;
     }
@@ -74,7 +75,8 @@ void SetLabelText(QLabel *label) {
 
 }  // namespace
 
-AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent), callback_(NULL) {
+AboutDialog::AboutDialog(QWidget *parent)
+    : QDialog(parent), callback_(nullptr) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
   setWindowModality(Qt::NonModal);
@@ -86,6 +88,10 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent), callback_(NULL) {
   version_info += Version::GetMozcVersion().c_str();
   version_info += ")";
   version_label->setText(version_info);
+  gui::Util::ReplaceTitle(this);
+  gui::Util::ReplaceLabel(label);
+  gui::Util::ReplaceLabel(label_credits);
+  gui::Util::ReplaceLabel(label_terms);
 
   QPalette palette;
   palette.setColor(QPalette::Window, QColor(236, 233, 216));
@@ -130,7 +136,7 @@ void AboutDialog::linkActivated(const QString &link) {
   if (!RunLevel::IsValidClientRunLevel()) {
     return;
   }
-  if (callback_ != NULL) {
+  if (callback_ != nullptr) {
     callback_->linkActivated(link);
   } else {
     defaultLinkActivated(link);

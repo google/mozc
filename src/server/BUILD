@@ -31,10 +31,7 @@
 # Visibility:  please choose a more appropriate default for the package,
 # and update any rules that should be different.
 
-load(
-    "//:build_defs.bzl",
-    "cc_binary_mozc",
-)
+load("//:build_defs.bzl", "cc_binary_mozc")
 
 package(default_visibility = ["//:__subpackages__"])
 

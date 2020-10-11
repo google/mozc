@@ -41,7 +41,7 @@ and it'd cause an crash error, unfortunately.
 
 __author__ = "hidehiko"
 
-import cStringIO as StringIO
+import io
 import logging
 import optparse
 import os
@@ -289,7 +289,7 @@ class MozcDrawableConverter(object):
   def _ConsumeFloatList(self, s, num):
     """Parses num floating values from s."""
     result = []
-    for _ in xrange(num):
+    for _ in range(num):
       value, s = self._ConsumeFloat(s)
       result.append(value)
     return result, s
@@ -1035,12 +1035,12 @@ class MozcDrawableConverter(object):
 
   # Interface for drawable conversion.
   def ConvertPictureDrawable(self, path):
-    output = _OutputStream(StringIO.StringIO())
+    output = _OutputStream(io.BytesIO())
     self._ConvertPictureDrawableInternal(ElementTree.parse(path), output)
     return output.output.getvalue()
 
   def ConvertStateListDrawable(self, drawable_source_list):
-    output = _OutputStream(StringIO.StringIO())
+    output = _OutputStream(io.BytesIO())
     output.WriteByte(DRAWABLE_STATE_LIST)
     output.WriteByte(len(drawable_source_list))
     for (state_list, path) in drawable_source_list:

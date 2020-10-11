@@ -538,7 +538,7 @@ const absl::string_view SkipWhiteSpace(absl::string_view str) {
 // return false when an integer overflow happens.
 bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
   *output = arg1 + arg2;
-  if (arg2 > (kuint64max - arg1)) {
+  if (arg2 > (std::numeric_limits<uint64>::max() - arg1)) {
     // overflow happens
     return false;
   }
@@ -549,7 +549,7 @@ bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
 // return false when an integer overflow happens.
 bool MultiplyAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
   *output = arg1 * arg2;
-  if (arg1 != 0 && arg2 > (kuint64max / arg1)) {
+  if (arg1 != 0 && arg2 > (std::numeric_limits<uint64>::max() / arg1)) {
     // overflow happens
     return false;
   }
@@ -619,8 +619,8 @@ bool SafeCast(SrcType src, DestType *dest) {
 
 template <>
 bool SafeCast(int64 src, int16 *dest) {
-  if (src < static_cast<int64>(kint16min) ||
-      static_cast<int64>(kint16max) < src) {
+  if (src < static_cast<int64>(std::numeric_limits<int16>::min()) ||
+      static_cast<int64>(std::numeric_limits<int16>::max()) < src) {
     return false;
   }
   *dest = static_cast<int16>(src);
@@ -629,8 +629,8 @@ bool SafeCast(int64 src, int16 *dest) {
 
 template <>
 bool SafeCast(int64 src, int32 *dest) {
-  if (src < static_cast<int64>(kint32min) ||
-      static_cast<int64>(kint32max) < src) {
+  if (src < static_cast<int64>(std::numeric_limits<int32>::min()) ||
+      static_cast<int64>(std::numeric_limits<int32>::max()) < src) {
     return false;
   }
   *dest = static_cast<int32>(src);
@@ -639,7 +639,7 @@ bool SafeCast(int64 src, int32 *dest) {
 
 template <>
 bool SafeCast(uint64 src, int64 *dest) {
-  if (src > static_cast<uint64>(kint64max)) {
+  if (src > static_cast<uint64>(std::numeric_limits<int64>::max())) {
     return false;
   }
   *dest = static_cast<int64>(src);
@@ -648,7 +648,7 @@ bool SafeCast(uint64 src, int64 *dest) {
 
 template <>
 bool SafeCast(uint64 src, uint16 *dest) {
-  if (src > static_cast<uint64>(kuint16max)) {
+  if (src > static_cast<uint64>(std::numeric_limits<uint16>::max())) {
     return false;
   }
   *dest = static_cast<uint16>(src);
@@ -657,7 +657,7 @@ bool SafeCast(uint64 src, uint16 *dest) {
 
 template <>
 bool SafeCast(uint64 src, uint32 *dest) {
-  if (src > static_cast<uint64>(kuint32max)) {
+  if (src > static_cast<uint64>(std::numeric_limits<uint32>::max())) {
     return false;
   }
   *dest = static_cast<uint32>(src);
@@ -678,7 +678,7 @@ bool SafeUnaryNegation(uint64 src, int64 *dest) {
     if (src == 0x8000000000000000ul) {
       // This is an exceptional case. |src| isn't in the range of int64,
       // but |-src| is in the range.
-      *dest = kint64min;
+      *dest = std::numeric_limits<int64>::min();
       return true;
     }
     return false;
@@ -966,7 +966,7 @@ bool ReduceNumberLessThan10000(std::vector<uint64>::const_iterator *begin,
 //   "一十二百" = [1, 10, 2, 100] => error
 bool InterpretNumbersInJapaneseWay(const std::vector<uint64> &numbers,
                                    uint64 *output) {
-  uint64 last_base = kuint64max;
+  uint64 last_base = std::numeric_limits<uint64>::max();
   auto begin = numbers.begin();
   *output = 0;
   do {

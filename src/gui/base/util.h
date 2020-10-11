@@ -32,6 +32,7 @@
 
 #include <QtCore/QString>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QLabel>
 #include <memory>
 
 namespace mozc {
@@ -44,6 +45,15 @@ class Util {
 
   // Returns the product name.
   static const QString ProductName();
+
+  // Replace placeholders in the label.
+  static void ReplaceLabel(QLabel *label);
+
+  // Replace placeholders in the widget.
+  static void ReplaceTitle(QWidget *widget);
+
+  // Replace placeholders in the string.
+  static QString ReplaceString(const QString &str);
 
  private:
   Util() = delete;

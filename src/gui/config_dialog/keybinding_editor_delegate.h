@@ -42,7 +42,7 @@ class KeyBindingEditor;
 class KeyBindingEditorDelegate : public QItemDelegate {
   Q_OBJECT
  public:
-  explicit KeyBindingEditorDelegate(QObject *parent = NULL);
+  explicit KeyBindingEditorDelegate(QObject *parent = nullptr);
   virtual ~KeyBindingEditorDelegate();
 
   QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,

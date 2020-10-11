@@ -50,6 +50,7 @@ int RunAboutDialog(int argc, char *argv[]) {
   }
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("about_dialog");
+  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("tr");
   mozc::gui::AboutDialog about_dialog;
 
   about_dialog.show();

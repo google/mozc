@@ -50,11 +50,10 @@
 
 #include <QtGui/QtGui>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/singleton.h"
-#include "base/util.h"
 
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
@@ -64,75 +63,58 @@ namespace mozc {
 namespace gui {
 namespace {
 
-// sicnce Qtranslator and QFont must be available until
-// application exits, allocate the data with Singleton.
-class TranslationDataImpl {
- public:
-  void InstallTranslationMessageAndFont(const char *resource_name);
-
-  TranslationDataImpl();
-  ~TranslationDataImpl() {
-    for (std::map<string, QTranslator *>::iterator it = translators_.begin();
-         it != translators_.end(); ++it) {
-      delete it->second;
-    }
-    translators_.clear();
-  }
-
- private:
-  std::map<string, QTranslator *> translators_;
-  QTranslator default_translator_;
-  QFont font_;
+void InstallEventFilter() {
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
-  WindowTitleModifier window_title_modifier_;
-#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
-};
-
-TranslationDataImpl::TranslationDataImpl() {
-  // qApplication must be loaded first
-  CHECK(qApp);
-
-#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+  static WindowTitleModifier window_title_modifier;
   // Install WindowTilteModifier for official dev channel
   // append a special footer (Dev x.x.x) to the all Windows.
-  qApp->installEventFilter(&window_title_modifier_);
+  qApp->installEventFilter(&window_title_modifier);
 #endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+}
+
+void InstallDefaultTranslator() {
+  // qApplication must be loaded first
+  CHECK(qApp);
+  static QTranslator translator;
 
   // Load "<translation_path>/qt_<lang>.qm" from a qrc file.
-  bool loaded = default_translator_.load(
+  bool loaded = translator.load(
       QLocale::system(), "qt", "_",
       QLibraryInfo::location(QLibraryInfo::TranslationsPath), ".qm");
   if (!loaded) {
     // Load ":/qt_<lang>.qm" from a qrc file.
-    loaded =
-        default_translator_.load(QLocale::system(), "qt", "_", ":/", ".qm");
+    loaded = translator.load(QLocale::system(), "qt", "_", ":/", ".qm");
   }
 
   if (loaded) {
-    qApp->installTranslator(&default_translator_);
+    qApp->installTranslator(&translator);
   }
 }
 
-void TranslationDataImpl::InstallTranslationMessageAndFont(
-    const char *resource_name) {
-  if (translators_.find(resource_name) != translators_.end()) {
+void InstallTranslator(const char *resource_name) {
+  static std::map<string, std::unique_ptr<QTranslator>> translators;
+  if (translators.find(resource_name) != translators.end()) {
     return;
   }
-  QTranslator *translator = new QTranslator;
-  CHECK(translator);
-  translators_.insert(std::make_pair(resource_name, translator));
+  std::unique_ptr<QTranslator> translator(new QTranslator);
 
   // Load ":/<resource_name>_<lang>.qm" from a qrc file.
   if (translator->load(QLocale::system(), resource_name, "_", ":/", ".qm")) {
-    qApp->installTranslator(translator);
+    qApp->installTranslator(translator.get());
+    translators.emplace(resource_name, std::move(translator));
   }
 }
 
 }  // namespace
 
 void LocaleUtil::InstallTranslationMessageAndFont(const char *resource_name) {
-  Singleton<TranslationDataImpl>::get()->InstallTranslationMessageAndFont(
-      resource_name);
+  static bool called = false;
+  if (!called) {
+    called = true;
+    InstallEventFilter();
+    InstallDefaultTranslator();
+  }
+  InstallTranslator(resource_name);
 }
 }  // namespace gui
 }  // namespace mozc

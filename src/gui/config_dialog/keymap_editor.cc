@@ -318,7 +318,7 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
 KeyMapEditorDialog::~KeyMapEditorDialog() {}
 
 bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
-  if (is == NULL) {
+  if (is == nullptr) {
     return false;
   }
 
@@ -499,7 +499,7 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
           keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[import_index]);
       std::unique_ptr<std::istream> ifs(
           ConfigFileStream::LegacyOpen(keymap_file));
-      CHECK(ifs.get() != NULL);  // should never happen
+      CHECK(ifs.get() != nullptr);  // should never happen
       CHECK(LoadFromStream(ifs.get()));
     }
   } else if (action == actions_[EXPORT_TO_FILE_INDEX]) {

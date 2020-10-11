@@ -36,12 +36,12 @@ namespace gui {
 
 QString TableUtil::SafeGetItemText(const QTableWidget *table_widget, int row,
                                    int column) {
-  if (table_widget == NULL) {
+  if (table_widget == nullptr) {
     return QString();
   }
-  // If |row| and/or |column| is out of range, we will get NULL anyway.
+  // If |row| and/or |column| is out of range, we will get nullptr anyway.
   const QTableWidgetItem *item = table_widget->item(row, column);
-  if (item == NULL) {
+  if (item == nullptr) {
     return QString();
   }
   return item->text();

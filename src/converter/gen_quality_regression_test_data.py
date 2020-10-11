@@ -105,21 +105,23 @@ def ParseFile(file):
 
 
 def GenerateHeader(files):
-  try:
-    print('namespace mozc{')
-    print('struct TestCase {')
-    print('  const bool enabled;')
-    print('  const char *tsv;')
-    print('} kTestData[] = {')
-    for file in files:
+  print('namespace mozc{')
+  print('struct TestCase {')
+  print('  const bool enabled;')
+  print('  const char *tsv;')
+  print('} kTestData[] = {')
+
+  for file in files:
+    try:
       for enabled, line in ParseFile(file):
         print(' {%s, "%s"},' % (enabled, EscapeString(line)))
-    print('  {false, nullptr},')
-    print('};')
-    print('}  // namespace mozc')
-  except:
-    print('cannot open %s' % (file))
-    sys.exit(1)
+    except:
+      print('cannot open %s' % file)
+      sys.exit(1)
+
+  print('  {false, nullptr},')
+  print('};')
+  print('}  // namespace mozc')
 
 
 def main():

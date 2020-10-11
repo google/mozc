@@ -60,13 +60,13 @@ bool ReadWindowInfo(const std::string &lock_name,
     mozc::ScopedHandle handle(
         ::CreateFileW(wfilename.c_str(), GENERIC_READ,
                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                      NULL, OPEN_EXISTING, 0, NULL));
-    if (NULL == handle.get()) {
+                      nullptr, OPEN_EXISTING, 0, nullptr));
+    if (nullptr == handle.get()) {
       LOG(ERROR) << "cannot open: " << lock_name << " " << ::GetLastError();
       return false;
     }
 
-    const DWORD size = ::GetFileSize(handle.get(), NULL);
+    const DWORD size = ::GetFileSize(handle.get(), nullptr);
     if (-1 == static_cast<int>(size)) {
       LOG(ERROR) << "GetFileSize failed:" << ::GetLastError();
       return false;
@@ -81,7 +81,7 @@ bool ReadWindowInfo(const std::string &lock_name,
     std::unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
-    if (!::ReadFile(handle.get(), buf.get(), size, &read_size, NULL)) {
+    if (!::ReadFile(handle.get(), buf.get(), size, &read_size, nullptr)) {
       LOG(ERROR) << "ReadFile failed: " << ::GetLastError();
       return false;
     }

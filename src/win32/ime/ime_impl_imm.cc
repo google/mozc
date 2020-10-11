@@ -33,8 +33,9 @@
 #include "win32/ime/ime_impl_imm.h"
 
 #include <ime.h>
-
 #include <strsafe.h>
+
+#include <limits>
 
 #include "google/protobuf/stubs/common.h"
 #include "base/const.h"
@@ -183,7 +184,7 @@ void IncrementContextRevision() {
     return;
   }
   int32 revision = GetContextRevision();
-  if (revision < kint32max) {
+  if (revision < std::numeric_limits<int32>::max()) {
     ++revision;
   } else {
     revision = 0;

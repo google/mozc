@@ -49,7 +49,7 @@ class ComboBoxDelegate;
 class CharacterFormEditor : public QTableWidget {
   Q_OBJECT
  public:
-  explicit CharacterFormEditor(QWidget *parent = NULL);
+  explicit CharacterFormEditor(QWidget *parent = nullptr);
   virtual ~CharacterFormEditor();
 
   void Load(const config::Config &config);

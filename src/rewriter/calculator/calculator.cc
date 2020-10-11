@@ -46,7 +46,6 @@
 #include <string>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/singleton.h"

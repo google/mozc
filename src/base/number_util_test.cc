@@ -29,6 +29,8 @@
 
 #include "base/number_util.h"
 
+#include <limits>
+
 #include "base/port.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -72,10 +74,10 @@ TEST(NumberUtilTest, SafeStrToInt16) {
   EXPECT_EQ(-12345, value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-32768", &value));
-  EXPECT_EQ(kint16min, value);  // min of 16-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int16>::min(), value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("32767", &value));
-  EXPECT_EQ(kint16max, value);  // max of 16-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int16>::max(), value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" 1", &value));
   EXPECT_EQ(1, value);
@@ -132,10 +134,10 @@ TEST(NumberUtilTest, SafeStrToInt32) {
   EXPECT_EQ(-12345678, value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("-2147483648", &value));
-  EXPECT_EQ(kint32min, value);  // min of 32-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int32>::min(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("2147483647", &value));
-  EXPECT_EQ(kint32max, value);  // max of 32-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int32>::max(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32(" 1", &value));
   EXPECT_EQ(1, value);
@@ -193,10 +195,10 @@ TEST(NumberUtilTest, SafeStrToInt64) {
   EXPECT_EQ(-12345678, value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("-9223372036854775808", &value));
-  EXPECT_EQ(kint64min, value);  // min of 64-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int64>::min(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("9223372036854775807", &value));
-  EXPECT_EQ(kint64max, value);  // max of 64-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int64>::max(), value);
 
   EXPECT_FALSE(NumberUtil::SafeStrToInt64("-9223372036854775809",  // overflow
                                           &value));

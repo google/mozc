@@ -574,7 +574,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_user_pos_data",
     srcs = ["gen_user_pos_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     visibility = ["//:__subpackages__"],
     deps = [
         ":gen_user_pos_data_lib",
@@ -633,7 +633,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_pos_rewrite_rule",
     srcs = ["gen_pos_rewrite_rule.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     visibility = ["//:__subpackages__"],
     deps = [":gen_pos_rewrite_rule_lib"],
 )
@@ -732,7 +732,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_suffix_data",
     srcs = ["gen_suffix_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     visibility = ["//:__subpackages__"],
     deps = [
         ":gen_suffix_data_lib",

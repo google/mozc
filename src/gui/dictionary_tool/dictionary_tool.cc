@@ -64,6 +64,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "gui/base/encoding_util.h"
 #include "gui/base/msime_user_dictionary_importer.h"
+#include "gui/base/util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
@@ -232,10 +233,10 @@ class MultiByteTextLineIterator
 
     // strip UTF8 BOM
     if (first_line_ && encoding_type_ == UserDictionaryImporter::UTF8) {
-      Util::StripUTF8BOM(line);
+      mozc::Util::StripUTF8BOM(line);
     }
 
-    Util::ChopReturns(line);
+    mozc::Util::ChopReturns(line);
 
     first_line_ = false;
     return true;
@@ -287,32 +288,32 @@ UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
                                        parent);
       break;
     default:
-      return NULL;
+      return nullptr;
   }
 
-  return NULL;
+  return nullptr;
 }
 }  // namespace
 
 DictionaryTool::DictionaryTool(QWidget *parent)
     : QMainWindow(parent),
-      import_dialog_(NULL),
-      find_dialog_(NULL),
+      import_dialog_(nullptr),
+      find_dialog_(nullptr),
       session_(new UserDictionarySession(
           UserDictionaryUtil::GetUserDictionaryFileName())),
       current_dic_id_(0),
       modified_(false),
       monitoring_user_edit_(false),
-      window_title_(tr("Mozc")),
+      window_title_(gui::Util::ProductName()),
       dic_menu_(new QMenu),
-      new_action_(NULL),
-      rename_action_(NULL),
-      delete_action_(NULL),
-      find_action_(NULL),
-      import_create_action_(NULL),
-      import_append_action_(NULL),
-      export_action_(NULL),
-      import_default_ime_action_(NULL),
+      new_action_(nullptr),
+      rename_action_(nullptr),
+      delete_action_(nullptr),
+      find_action_(nullptr),
+      import_create_action_(nullptr),
+      import_append_action_(nullptr),
+      export_action_(nullptr),
+      import_default_ime_action_(nullptr),
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
@@ -581,7 +582,7 @@ void DictionaryTool::OnDictionarySelectionChanged() {
   SyncToStorage();
 
   DictionaryInfo dic_info = current_dictionary();
-  if (dic_info.item == NULL) {
+  if (dic_info.item == nullptr) {
     current_dic_id_ = 0;
     StopMonitoringUserEdit();
     dic_content_->clearContents();
@@ -605,7 +606,7 @@ void DictionaryTool::SetupDicContentEditor(const DictionaryInfo &dic_info) {
   UserDictionary *dic =
       session_->mutable_storage()->GetUserDictionary(dic_info.id);
 
-  if (dic == NULL) {
+  if (dic == nullptr) {
     LOG(ERROR) << "Failed to load the dictionary: " << dic_info.id;
     ReportError();
     return;
@@ -681,7 +682,7 @@ void DictionaryTool::CreateDictionary() {
 
 void DictionaryTool::DeleteDictionary() {
   DictionaryInfo dic_info = current_dictionary();
-  if (dic_info.item == NULL) {
+  if (dic_info.item == nullptr) {
     QMessageBox::information(this, window_title_,
                              tr("No dictionary is selected."));
     return;
@@ -710,7 +711,7 @@ void DictionaryTool::DeleteDictionary() {
 
 void DictionaryTool::RenameDictionary() {
   DictionaryInfo dic_info = current_dictionary();
-  if (dic_info.item == NULL) {
+  if (dic_info.item == nullptr) {
     QMessageBox::information(this, window_title_,
                              tr("No dictionary is selected."));
     return;
@@ -758,7 +759,7 @@ void DictionaryTool::ImportAndCreateDictionary() {
 
 void DictionaryTool::ImportAndAppendDictionary() {
   DictionaryInfo dic_info = current_dictionary();
-  if (dic_info.item == NULL) {
+  if (dic_info.item == nullptr) {
     LOG(WARNING) << "No dictionary to import is selected";
     QMessageBox::information(this, window_title_,
                              tr("No dictionary is selected."));
@@ -799,7 +800,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
                                   "unsupported file format.\n\n"
                                   "Please check the file format. "
                                   "ATOK11 or older format is not supported by "
-                                  "Mozc."));
+                                  "%1.").arg(gui::Util::ProductName()));
       break;
     case UserDictionaryImporter::IMPORT_TOO_MANY_WORDS:
       QMessageBox::information(
@@ -849,7 +850,7 @@ void DictionaryTool::ImportHelper(
 
   UserDictionary *dic = session_->mutable_storage()->GetUserDictionary(dic_id);
 
-  if (dic == NULL) {
+  if (dic == nullptr) {
     LOG(ERROR) << "Cannot find dictionary id: " << dic_id;
     ReportError();
     return;
@@ -867,8 +868,8 @@ void DictionaryTool::ImportHelper(
   // Open dictionary
   std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface> iter(
       CreateTextLineIterator(encoding_type, file_name, this));
-  if (iter.get() == NULL) {
-    LOG(ERROR) << "CreateTextLineIterator returns NULL";
+  if (iter == nullptr) {
+    LOG(ERROR) << "CreateTextLineIterator returns nullptr";
     return;
   }
 
@@ -906,7 +907,7 @@ void DictionaryTool::ImportFromDefaultIME() {
   }
 
   DictionaryInfo dic_info = current_dictionary();
-  if (dic_info.item == NULL) {
+  if (dic_info.item == nullptr) {
     LOG(WARNING) << "No dictionary to import is selected";
     QMessageBox::information(this, window_title_,
                              tr("No dictionary is selected."));
@@ -955,7 +956,7 @@ void DictionaryTool::ImportFromDefaultIME() {
 
 void DictionaryTool::ExportDictionary() {
   DictionaryInfo dic_info = current_dictionary();
-  if (dic_info.item == NULL) {
+  if (dic_info.item == nullptr) {
     LOG(WARNING) << "No dictionary to export is selected";
     QMessageBox::information(this, window_title_,
                              tr("No dictionary is selected."));
@@ -1040,7 +1041,7 @@ QListWidgetItem *DictionaryTool::GetFirstSelectedDictionary() const {
   QList<QListWidgetItem *> selected_dicts = dic_list_->selectedItems();
   if (selected_dicts.isEmpty()) {
     LOG(WARNING) << "No current dictionary.";
-    return NULL;
+    return nullptr;
   }
   if (selected_dicts.size() > 1) {
     LOG(WARNING) << "Multiple items are selected.";
@@ -1111,10 +1112,10 @@ void DictionaryTool::EditPOS(const std::string &pos) {
 }
 
 void DictionaryTool::MoveTo(int dictionary_row) {
-  UserDictionary *target_dict = NULL;
+  UserDictionary *target_dict = nullptr;
   {
     const QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
-    if (selected_dict == NULL) {
+    if (selected_dict == nullptr) {
       return;
     }
     QListWidgetItem *target_dict_item = dic_list_->item(dictionary_row);
@@ -1250,7 +1251,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   QTableWidgetItem *item = dic_content_->itemAt(pos);
   // When the mouse pointer is not on an item of the table widget, we
   // don't show context menu.
-  if (item == NULL) {
+  if (item == nullptr) {
     return;
   }
 
@@ -1280,7 +1281,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
     change_dictionary_actions.reserve(dic_list_->count() - 1);
     {
       const QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
-      if (selected_dict != NULL) {
+      if (selected_dict != nullptr) {
         for (size_t i = 0; i < dic_list_->count(); ++i) {
           QListWidgetItem *item = dic_list_->item(i);
           DCHECK(item);
@@ -1338,7 +1339,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
 
 void DictionaryTool::OnContextMenuRequestedForList(const QPoint &pos) {
   QListWidgetItem *item = dic_list_->itemAt(pos);
-  if (item == NULL) {
+  if (item == nullptr) {
     return;
   }
 
@@ -1350,22 +1351,22 @@ void DictionaryTool::OnContextMenuRequestedForList(const QPoint &pos) {
   QAction *export_action = menu->addAction(tr("Export this dictionary..."));
   QAction *selected_action = menu->exec(QCursor::pos());
 
-  if ((rename_action != NULL) && (selected_action == rename_action)) {
+  if ((rename_action != nullptr) && (selected_action == rename_action)) {
     RenameDictionary();
-  } else if ((delete_action != NULL) && (selected_action == delete_action)) {
+  } else if ((delete_action != nullptr) && (selected_action == delete_action)) {
     DeleteDictionary();
-  } else if ((import_action != NULL) && (selected_action == import_action)) {
+  } else if ((import_action != nullptr) && (selected_action == import_action)) {
     ImportAndAppendDictionary();
-  } else if ((export_action != NULL) && (selected_action == export_action)) {
+  } else if ((export_action != nullptr) && (selected_action == export_action)) {
     ExportDictionary();
   }
 }
 
 DictionaryTool::DictionaryInfo DictionaryTool::current_dictionary() const {
-  DictionaryInfo retval = {-1, 0, NULL};
+  DictionaryInfo retval = {-1, 0, nullptr};
 
   QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
-  if (selected_dict == NULL) {
+  if (selected_dict == nullptr) {
     return retval;
   }
 
@@ -1383,7 +1384,7 @@ void DictionaryTool::SyncToStorage() {
   UserDictionary *dic =
       session_->mutable_storage()->GetUserDictionary(current_dic_id_);
 
-  if (dic == NULL) {
+  if (dic == nullptr) {
     LOG(ERROR) << "No save dictionary: " << current_dic_id_;
     return;
   }
@@ -1575,7 +1576,7 @@ void DictionaryTool::UpdateUIStatus() {
   delete_word_button_->setEnabled(dic_content_->rowCount() > 0);
 
   const DictionaryInfo dic_info = current_dictionary();
-  if (dic_info.item != NULL) {
+  if (dic_info.item != nullptr) {
     statusbar_message_ = QString(tr("%1: %2 entries"))
                              .arg(dic_info.item->text())
                              .arg(dic_content_->rowCount());

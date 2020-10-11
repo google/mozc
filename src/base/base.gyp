@@ -515,12 +515,12 @@
           'target_name': 'breakpad',
           'type': 'none',
           'variables': {
-            'pbdir': '<(third_party_dir)/breakpad',
+            'bpdir': '<(third_party_dir)/breakpad',
           },
           'actions': [{
             'action_name': 'build_breakpad',
             'inputs': [
-              '<(pbdir)/src/client/mac/Breakpad.xcodeproj/project.pbxproj',
+              '<(bpdir)/src/client/mac/Breakpad.xcodeproj/project.pbxproj',
             ],
             'outputs': [
               '<(mac_breakpad_dir)/Breakpad.framework',
@@ -530,7 +530,7 @@
             ],
             'action': [
               '<(python)', '../build_tools/build_breakpad.py',
-              '--pbdir', '<(pbdir)',
+              '--bpdir', '<(bpdir)',
               '--outdir', '<(mac_breakpad_dir)',
               '--sdk', 'macosx<(mac_sdk)',
               '--deployment_target', '<(mac_deployment_target)',

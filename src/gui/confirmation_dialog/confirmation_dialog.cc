@@ -49,7 +49,7 @@ bool ConfirmationDialog::Show() {
       // Message
       QObject::tr("Invalid confirmation dialog.  "
                   "You specified less arguments."),
-      QMessageBox::Yes | QMessageBox::No, NULL,
+      QMessageBox::Yes | QMessageBox::No, nullptr,
       Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
 
   if (FLAGS_confirmation_type == "update") {
@@ -59,11 +59,11 @@ bool ConfirmationDialog::Show() {
                     "(Note: some features will not be available "
                     "until you log out and log back in.)"));
     QAbstractButton *yes_button = message_box.button(QMessageBox::Yes);
-    if (yes_button != NULL) {
+    if (yes_button != nullptr) {
       yes_button->setText(QObject::tr("Activate now"));
     }
     QAbstractButton *no_button = message_box.button(QMessageBox::No);
-    if (no_button != NULL) {
+    if (no_button != nullptr) {
       no_button->setText(QObject::tr("Wait until logout"));
     }
   } else if (FLAGS_confirmation_type == "log_out") {
@@ -71,11 +71,11 @@ bool ConfirmationDialog::Show() {
         QObject::tr("Mozc has been updated.  "
                     "Please log out and back in to enable the new version."));
     QAbstractButton *yes_button = message_box.button(QMessageBox::Yes);
-    if (yes_button != NULL) {
+    if (yes_button != nullptr) {
       yes_button->setText(QObject::tr("Log out"));
     }
     QAbstractButton *no_button = message_box.button(QMessageBox::No);
-    if (no_button != NULL) {
+    if (no_button != nullptr) {
       no_button->setText(QObject::tr("Remind me in 1 hour"));
     }
   }

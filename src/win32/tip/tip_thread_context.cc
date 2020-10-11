@@ -29,6 +29,7 @@
 
 #include "win32/tip/tip_thread_context.h"
 
+#include <limits>
 #include <memory>
 
 #include "base/win_util.h"
@@ -84,7 +85,7 @@ int32 TipThreadContext::GetFocusRevision() const {
 }
 
 void TipThreadContext::IncrementFocusRevision() {
-  if (state_->focus_revision < kint32max) {
+  if (state_->focus_revision < std::numeric_limits<int32>::max()) {
     state_->focus_revision++;
   } else {
     state_->focus_revision = 0;

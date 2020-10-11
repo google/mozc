@@ -102,12 +102,6 @@ py2and3_test(
     ],
 )
 
-py_library_mozc(
-    name = "replace_version_lib",
-    srcs = ["replace_version.py"],
-    deps = [":mozc_version_lib"],
-)
-
 py_binary_mozc(
     name = "replace_version",
     srcs = ["replace_version.py"],
@@ -131,12 +125,7 @@ py_binary_mozc(
     name = "zlib_util",
     srcs = ["zlib_util.py"],
     visibility = ["//:__subpackages__"],
-    deps = [":zlib_util_main_lib"],
-)
-
-py_library(
-    name = "zlib_util_main_lib",
-    srcs = ["zlib_util.py"],
+    deps = [":zlib_util_lib"],
 )
 
 py_library_mozc(

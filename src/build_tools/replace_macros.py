@@ -153,7 +153,8 @@ def ReplaceVariables(text, variables):
     A replaced string.
   """
   for unused_prefix, var_name, value in variables:
-    text = text.replace('@%s@' % var_name.upper(), str(value))
+    if var_name:
+      text = text.replace('@%s@' % var_name.upper(), str(value))
 
   return text
 

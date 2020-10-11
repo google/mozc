@@ -76,7 +76,8 @@ QString GetEnv(const char *envname) {
 #if defined(OS_WIN)
   std::wstring wenvname;
   mozc::Util::UTF8ToWide(envname, &wenvname);
-  const DWORD buffer_size = ::GetEnvironmentVariable(wenvname.c_str(), NULL, 0);
+  const DWORD buffer_size =
+      ::GetEnvironmentVariable(wenvname.c_str(), nullptr, 0);
   if (buffer_size == 0) {
     return "";
   }
@@ -226,7 +227,7 @@ void WordRegisterDialog::UpdateUIStatus() {
 
   QAbstractButton *button =
       WordRegisterDialogbuttonBox->button(QDialogButtonBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(enabled);
   }
 }
@@ -407,7 +408,7 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
 
 // Get default value from Clipboard
 void WordRegisterDialog::SetDefaultEntryFromClipboard() {
-  if (QApplication::clipboard() == NULL) {
+  if (QApplication::clipboard() == nullptr) {
     return;
   }
   CopyCurrentSelectionToClipboard();
@@ -419,12 +420,13 @@ void WordRegisterDialog::SetDefaultEntryFromClipboard() {
 void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
 #ifdef OS_WIN
   const HWND foreground_window = ::GetForegroundWindow();
-  if (foreground_window == NULL) {
+  if (foreground_window == nullptr) {
     LOG(ERROR) << "GetForegroundWindow() failed: " << ::GetLastError();
     return;
   }
 
-  const DWORD thread_id = ::GetWindowThreadProcessId(foreground_window, NULL);
+  const DWORD thread_id =
+      ::GetWindowThreadProcessId(foreground_window, nullptr);
 
   if (!::AttachThreadInput(::GetCurrentThreadId(), thread_id, TRUE)) {
     LOG(ERROR) << "AttachThreadInput failed: " << ::GetLastError();
@@ -435,7 +437,7 @@ void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
 
   ::AttachThreadInput(::GetCurrentThreadId(), thread_id, FALSE);
 
-  if (focus_window == NULL || !::IsWindow(focus_window)) {
+  if (focus_window == nullptr || !::IsWindow(focus_window)) {
     LOG(WARNING) << "No focus window";
     return;
   }
@@ -478,7 +480,7 @@ void WordRegisterDialog::EnableIME() {
 #ifdef OS_WIN
   // TODO(taku): implement it for other platform.
   HIMC himc = ::ImmGetContext(reinterpret_cast<HWND>(winId()));
-  if (himc != NULL) {
+  if (himc != nullptr) {
     ::ImmSetOpenStatus(himc, TRUE);
   }
 #endif  // OS_WIN

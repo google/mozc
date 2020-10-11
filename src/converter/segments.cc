@@ -30,6 +30,7 @@
 #include "converter/segments.h"
 
 #include <algorithm>
+#include <limits>
 #include <sstream>  // For DebugString()
 #include <string>
 
@@ -115,8 +116,10 @@ bool Segment::Candidate::EncodeLengths(size_t key_len, size_t value_len,
                                        size_t content_key_len,
                                        size_t content_value_len,
                                        uint32 *result) {
-  if (key_len > kuint8max || value_len > kuint8max ||
-      content_key_len > kuint8max || content_value_len > kuint8max) {
+  if (key_len > std::numeric_limits<uint8>::max() ||
+      value_len > std::numeric_limits<uint8>::max() ||
+      content_key_len > std::numeric_limits<uint8>::max() ||
+      content_value_len > std::numeric_limits<uint8>::max()) {
     return false;
   }
   *result = (static_cast<uint32>(key_len) << 24) |

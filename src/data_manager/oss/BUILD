@@ -93,7 +93,7 @@ mozc_dataset(
         "//data/typing:typing_model_qwerty_mobile-hiragana.tsv",
         "//data/typing:typing_model_toggle_flick-hiragana.tsv",
     ],
-    usage_dict = "//third_party/japanese_usage_dictionary:usage_dict.txt",
+    usage_dict = "@ja_usage_dict//:usage_dict.txt",
     use_1byte_cost = "false",
     user_pos_def = "//data/rules:user_pos.def",
     variant_rule = "//data/single_kanji:variant_rule.txt",

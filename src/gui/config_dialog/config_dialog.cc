@@ -754,7 +754,7 @@ void ConfigDialog::EditKeymap() {
         keymap::KeyMapManager::GetKeyMapFileName(itr->second);
     std::unique_ptr<std::istream> ifs(
         ConfigFileStream::LegacyOpen(keymap_file));
-    CHECK(ifs.get() != NULL);  // should never happen
+    CHECK(ifs.get() != nullptr);  // should never happen
     std::stringstream buffer;
     buffer << ifs->rdbuf();
     current_keymap_table = buffer.str();

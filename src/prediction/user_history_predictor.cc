@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -1455,7 +1456,7 @@ void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
     target_next_entry = entry->add_next_entries();
   } else {
     // Otherwise, find the oldest next_entry.
-    uint64 last_access_time = kuint64max;
+    uint64 last_access_time = std::numeric_limits<uint64>::max();
     for (int i = 0; i < entry->next_entries_size(); ++i) {
       // Already has the same id
       if (next_entry.entry_fp() == entry->next_entries(i).entry_fp()) {

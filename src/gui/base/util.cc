@@ -53,6 +53,7 @@ std::unique_ptr<QApplication> Util::InitQt(int argc, char *argv[]) {
 #ifdef __APPLE__
   app->setFont(QFont("Hiragino Sans"));
 #endif  // __APPLE__
+
   return app;
 }
 
@@ -64,6 +65,22 @@ const QString Util::ProductName() {
   const QString name = QObject::tr("Mozc");
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return name;
+}
+
+// static
+void Util::ReplaceLabel(QLabel *label) {
+  label->setText(ReplaceString(label->text()));
+}
+
+// static
+void Util::ReplaceTitle(QWidget *widget) {
+  widget->setWindowTitle(Util::ReplaceString(widget->windowTitle()));
+}
+
+// static
+QString Util::ReplaceString(const QString &str) {
+  QString replaced(str);
+  return replaced.replace("[ProductName]", Util::ProductName());
 }
 
 }  // namespace gui

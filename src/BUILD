@@ -31,6 +31,7 @@
 # Description:
 #   Declaration of package_group for visibility managing.
 
+load("//:build_defs.bzl", "select_mozc")
 load("//tools/build_defs:stubs.bzl", "bzl_library")
 
 package_group(
@@ -126,5 +127,17 @@ bzl_library(
     name = "build_defs_bzl",
     srcs = ["build_defs.bzl"],
     parse_tests = False,
-    visibility = ["//visibility:private"],
+    visibility = ["//:__subpackages__"],
+)
+
+filegroup(
+    name = "package",
+    srcs = select_mozc(
+        default = [],
+        oss_android = ["//android/jni:mozc_lib"],
+        oss_linux = [
+            "//gui/tool:mozc_tool",
+            "//server:mozc_server",
+        ],
+    ),
 )

@@ -73,7 +73,6 @@
 #include <string>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
@@ -130,7 +129,7 @@ class ScopedIFEDictionary {
   explicit ScopedIFEDictionary(IFEDictionary *dic) : dic_(dic) {}
 
   ~ScopedIFEDictionary() {
-    if (dic_ != NULL) {
+    if (dic_ != nullptr) {
       dic_->Close();
       dic_->Release();
     }
@@ -154,22 +153,22 @@ class MSIMEImportIterator
         result_(E_FAIL),
         size_(0),
         index_(0) {
-    if (dic_.get() == NULL) {
-      LOG(ERROR) << "IFEDictionaryFactory returned NULL";
+    if (dic_.get() == nullptr) {
+      LOG(ERROR) << "IFEDictionaryFactory returned nullptr";
       return;
     }
 
     // open user dictionary
-    HRESULT result = dic_->Open(NULL, NULL);
+    HRESULT result = dic_->Open(nullptr, nullptr);
     if (S_OK != result) {
       LOG(ERROR) << "Cannot open user dictionary: " << result_;
       return;
     }
 
-    POSTBL *pos_table = NULL;
+    POSTBL *pos_table = nullptr;
     int pos_size = 0;
     result_ = dic_->GetPosTable(&pos_table, &pos_size);
-    if (S_OK != result_ || pos_table == NULL || pos_size == 0) {
+    if (S_OK != result_ || pos_table == nullptr || pos_size == 0) {
       LOG(ERROR) << "Cannot get POS table: " << result;
       result_ = E_FAIL;
       return;
@@ -187,10 +186,11 @@ class MSIMEImportIterator
     // Don't use auto-registered words, since Mozc may not be able to
     // handle auto_registered words correctly, and user is basically
     // unaware of auto-registered words.
-    result_ = dic_->GetWords(NULL, NULL, NULL, IFED_POS_ALL, IFED_SELECT_ALL,
-                             IFED_REG_USER,  // | FED_REG_AUTO
-                             reinterpret_cast<UCHAR *>(&buf_[0]),
-                             kBufferSize * sizeof(IMEWRD), &size_);
+    result_ =
+        dic_->GetWords(nullptr, nullptr, nullptr, IFED_POS_ALL, IFED_SELECT_ALL,
+                       IFED_REG_USER,  // | FED_REG_AUTO
+                       reinterpret_cast<UCHAR *>(&buf_[0]),
+                       kBufferSize * sizeof(IMEWRD), &size_);
   }
 
   bool IsAvailable() const {
@@ -205,17 +205,17 @@ class MSIMEImportIterator
       return false;
     }
 
-    if (entry == NULL) {
-      LOG(ERROR) << "Entry is NULL";
+    if (entry == nullptr) {
+      LOG(ERROR) << "Entry is nullptr";
       return false;
     }
     entry->Clear();
 
     if (index_ < size_) {
-      if (buf_[index_].pwchReading == NULL ||
-          buf_[index_].pwchDisplay == NULL) {
+      if (buf_[index_].pwchReading == nullptr ||
+          buf_[index_].pwchDisplay == nullptr) {
         ++index_;
-        LOG(ERROR) << "pwchDisplay or pwchReading is NULL";
+        LOG(ERROR) << "pwchDisplay or pwchReading is nullptr";
         return true;
       }
 
@@ -235,7 +235,7 @@ class MSIMEImportIterator
       entry->pos = it->second;
 
       // set comment
-      if (buf_[index_].pvComment != NULL) {
+      if (buf_[index_].pvComment != nullptr) {
         if (buf_[index_].uct == IFED_UCT_STRING_SJIS) {
           EncodingUtil::SJISToUTF8(
               reinterpret_cast<const char *>(buf_[index_].pvComment),

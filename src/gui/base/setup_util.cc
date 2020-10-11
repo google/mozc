@@ -128,8 +128,8 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
 
   UserDictionaryStorage::UserDictionary *dic =
       storage_->GetUserDictionary(dic_id);
-  if (dic == NULL) {
-    LOG(ERROR) << "GetUserDictionary returned NULL";
+  if (dic == nullptr) {
+    LOG(ERROR) << "GetUserDictionary returned nullptr";
     return false;
   }
 

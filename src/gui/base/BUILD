@@ -63,6 +63,11 @@ qt_moc_mozc(
     outs = ["moc_window_title_modifier.cc"],
 )
 
+exports_files([
+    "tr_en.qm",
+    "tr_ja.qm",
+])
+
 qt_rcc_mozc(
     name = "qrc_tr",
     srcs = [

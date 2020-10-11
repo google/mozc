@@ -261,7 +261,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_typing_model",
     srcs = ["gen_typing_model.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [":gen_typing_model_lib"],
 )
 

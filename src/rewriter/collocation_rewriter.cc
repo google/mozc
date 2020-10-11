@@ -573,7 +573,9 @@ bool CollocationRewriter::Rewrite(const ConversionRequest &request,
 
 bool CollocationRewriter::IsName(const Segment::Candidate &cand) const {
   const bool ret = (cand.lid == last_name_id_ || cand.lid == first_name_id_);
-  VLOG_IF(3, ret) << cand.value << " is name sagment";
+  if (ret) {
+    VLOG(3) << cand.value << " is name sagment";
+  }
   return ret;
 }
 
@@ -606,8 +608,10 @@ bool CollocationRewriter::RewriteFromPrevSegment(
       cur.clear();
       CollocationUtil::GetNormalizedScript(curs[j], false, &cur);
       if (collocation_filter_->Exists(prev, cur)) {
-        VLOG_IF(3, i != 0) << prev << cur << " " << seg->candidate(0).value
-                           << "->" << seg->candidate(i).value;
+        if (i != 0) {
+          VLOG(3) << prev << cur << " " << seg->candidate(0).value << "->"
+                  << seg->candidate(i).value;
+        }
         seg->move_candidate(i, 0);
         seg->mutable_candidate(0)->attributes |=
             Segment::Candidate::CONTEXT_SENSITIVE;

@@ -424,7 +424,9 @@ bool VariantsRewriter::GenerateAlternatives(
   // dangerous. So here checks the validity.  For invalid candidate, inner
   // segment boundary is ignored.
   const bool is_valid = original.IsValid();
-  VLOG_IF(2, !is_valid) << "Invalid candidate: " << original.DebugString();
+  if (!is_valid) {
+    VLOG(2) << "Invalid candidate: " << original.DebugString();
+  }
   if (original.inner_segment_boundary.empty() || !is_valid) {
     if (!manager->ConvertConversionStringWithAlternative(
             original.value, default_value, alternative_value)) {

@@ -226,7 +226,7 @@ def main():
     pos_database.Parse(options.id_file, options.special_pos_file)
     pos_matcher = pos_util.PosMatcher(pos_database)
     pos_matcher.Parse(options.pos_matcher_rule_file)
-    with codecs.open(options.output_pos_matcher_data, 'wb') as stream:
+    with open(options.output_pos_matcher_data, 'wb') as stream:
       OutputPosMatcherData(pos_matcher, stream)
 
 

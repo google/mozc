@@ -29,6 +29,7 @@
 
 #include "data_manager/dataset_reader.h"
 
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -111,7 +112,7 @@ TEST(DataSetReaderTest, BrokenMetadata) {
   // Metadata size is too large.
   data = magic;
   data.append("content and metadata");
-  data.append(Util::SerializeUint64(kuint64max));
+  data.append(Util::SerializeUint64(std::numeric_limits<uint64>::max()));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, magic));
 
@@ -162,7 +163,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     auto e = md.add_entries();
     e->set_name("google");
     e->set_offset(content.size());
-    e->set_size(kuint64max);  // Too big size
+    e->set_size(std::numeric_limits<uint64>::max());  // Too big size
     const string &md_str = md.SerializeAsString();
     string image = content;
     image.append(md_str);

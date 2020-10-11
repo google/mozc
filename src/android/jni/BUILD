@@ -35,14 +35,12 @@
 # Usage:
 # % blaze --blazerc android/blazerc build --config=android_arm android/jni:libmozc.so
 
-load(
-    "//:build_defs.bzl",
-    "cc_library_mozc",
-)
+load("//:build_defs.bzl", "cc_library_mozc")
 
 cc_library_mozc(
     name = "mozc_lib",
     srcs = ["mozcjni.cc"],
+    visibility = ["//:__pkg__"],
     deps = [
         "//base:logging",
         "//base:singleton",

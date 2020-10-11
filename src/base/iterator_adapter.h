@@ -116,6 +116,10 @@ class IteratorAdapter {
 
   value_type operator*() { return adapter_(iter_); }
 
+  // MSVS 2017 requires this definition.
+  // See: https://github.com/tensorflow/tensorflow/issues/15925
+  value_type operator*() const { return adapter_(iter_); }
+
   pointer operator->() const { return &(operator*()); }
 
   IteratorAdapter &operator++() {

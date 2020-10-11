@@ -91,7 +91,7 @@ RomanTableEditorDialog::~RomanTableEditorDialog() {}
 std::string RomanTableEditorDialog::GetDefaultRomanTable() {
   std::unique_ptr<std::istream> ifs(
       ConfigFileStream::LegacyOpen(kRomanTableFile));
-  CHECK(ifs.get() != NULL);  // should never happen
+  CHECK(ifs.get() != nullptr);  // should never happen
   std::string line, result;
   std::vector<std::string> fields;
   while (getline(*ifs.get(), line)) {
@@ -171,7 +171,7 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
 bool RomanTableEditorDialog::LoadDefaultRomanTable() {
   std::unique_ptr<std::istream> ifs(
       ConfigFileStream::LegacyOpen(kRomanTableFile));
-  CHECK(ifs.get() != NULL);  // should never happen
+  CHECK(ifs.get() != nullptr);  // should never happen
   CHECK(LoadFromStream(ifs.get()));
   return true;
 }

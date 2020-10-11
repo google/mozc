@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -84,7 +85,8 @@ class SystemDictionaryTest : public ::testing::Test {
     // Don't use small cost encoding by default.
     original_flags_min_key_length_to_use_small_cost_encoding_ =
         FLAGS_min_key_length_to_use_small_cost_encoding;
-    FLAGS_min_key_length_to_use_small_cost_encoding = kint32max;
+    FLAGS_min_key_length_to_use_small_cost_encoding =
+        std::numeric_limits<int32>::max();
 
     request_.Clear();
     config::ConfigHandler::GetDefaultConfig(&config_);

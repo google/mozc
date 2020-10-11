@@ -925,7 +925,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_emoji_rewriter_data",
     srcs = ["gen_emoji_rewriter_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
         ":gen_emoji_rewriter_data_lib",
         "//build_tools:code_generator_util",
@@ -1022,7 +1022,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_single_kanji_rewriter_data",
     srcs = ["gen_single_kanji_rewriter_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
         ":gen_single_kanji_rewriter_data_lib",
         "//build_tools:code_generator_util",
@@ -1074,7 +1074,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_counter_suffix_array",
     srcs = ["gen_counter_suffix_array.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
         ":gen_counter_suffix_array_lib",
         "//build_tools:code_generator_util",
@@ -1386,7 +1386,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_reading_correction_data",
     srcs = ["gen_reading_correction_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
         ":gen_reading_correction_data_lib",
         "//build_tools:code_generator_util",

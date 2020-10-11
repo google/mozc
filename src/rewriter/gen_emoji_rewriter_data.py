@@ -59,7 +59,6 @@ import struct
 import sys
 
 import six
-from six import unichr  # pylint: disable=redefined-builtin
 
 from build_tools import code_generator_util
 from build_tools import serialized_string_array_builder
@@ -90,7 +89,7 @@ _FULLWIDTH_RE = re.compile(u'[！-～]')   # U+FF01 - U+FF5E
 def NormalizeString(string):
   """Normalize full width ascii characters to half width characters."""
   offset = ord(u'Ａ') - ord(u'A')
-  normalized = _FULLWIDTH_RE.sub(lambda x: unichr(ord(x.group(0)) - offset),
+  normalized = _FULLWIDTH_RE.sub(lambda x: six.unichr(ord(x.group(0)) - offset),
                                  six.ensure_text(string))
   return normalized
 

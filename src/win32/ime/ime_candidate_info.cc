@@ -34,6 +34,7 @@
 #include <windows.h>  // windows.h must be included before strsafe.h
 
 #include <algorithm>
+#include <limits>
 
 #include "google/protobuf/stubs/common.h"
 #include "base/logging.h"
@@ -55,17 +56,21 @@ using ::msl::utilities::SafeSubtract;
 
 // Since IMM32 uses DWORD rather than size_t for data size in data structures,
 // relevant data size are stored into DWORD constants here.
-static_assert(sizeof(DWORD) <= kint32max, "Check DWORD size.");
+static_assert(sizeof(DWORD) <= std::numeric_limits<int32>::max(),
+              "Check DWORD size.");
 
 const DWORD kSizeOfDWORD = static_cast<DWORD>(sizeof(DWORD));
 
-static_assert(sizeof(wchar_t) <= kint32max, "Check wchar_t size.");
+static_assert(sizeof(wchar_t) <= std::numeric_limits<int32>::max(),
+              "Check wchar_t size.");
 const DWORD kSizeOfWCHAR = static_cast<DWORD>(sizeof(wchar_t));
 
-static_assert(sizeof(CANDIDATEINFO) <= kint32max, "Check CANDIDATEINFO size.");
+static_assert(sizeof(CANDIDATEINFO) <= std::numeric_limits<int32>::max(),
+              "Check CANDIDATEINFO size.");
 const DWORD kSizeOfCANDIDATEINFO = static_cast<DWORD>(sizeof(CANDIDATEINFO));
 
-static_assert(sizeof(CANDIDATELIST) <= kint32max, "Check CANDIDATELIST size.");
+static_assert(sizeof(CANDIDATELIST) <= std::numeric_limits<int32>::max(),
+              "Check CANDIDATELIST size.");
 const DWORD kSizeOfCANDIDATELIST = static_cast<DWORD>(sizeof(CANDIDATELIST));
 
 static_assert(sizeof(CANDIDATELIST) > sizeof(DWORD),
@@ -74,7 +79,8 @@ const DWORD kSizeOfCANDIDATELISTHeader =
     static_cast<DWORD>(sizeof(CANDIDATELIST) - sizeof(DWORD));
 
 static_assert((static_cast<int64>(sizeof(CANDIDATEINFO)) +
-               static_cast<int64>(sizeof(CANDIDATELIST))) < kint32max,
+               static_cast<int64>(sizeof(CANDIDATELIST))) <
+              std::numeric_limits<int32>::max(),
               "Check CANDIDATEINFO + CANDIDATELIST size.");
 const DWORD kSizeOfCANDIDATEINFOAndCANDIDATELIST =
     static_cast<DWORD>(sizeof(CANDIDATEINFO) + sizeof(CANDIDATELIST));

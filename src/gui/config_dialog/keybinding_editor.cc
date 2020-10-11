@@ -488,7 +488,7 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
 
   QPushButton *ok_button =
       KeyBindingEditorbuttonBox->button(QDialogButtonBox::Ok);
-  CHECK(ok_button != NULL);
+  CHECK(ok_button != nullptr);
 
   filter_.reset(new KeyBindingFilter(KeyBindingLineEdit, ok_button));
   KeyBindingLineEdit->installEventFilter(filter_.get());

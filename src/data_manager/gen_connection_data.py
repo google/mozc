@@ -223,7 +223,7 @@ def BuildBinaryData(matrix, mode_value_list, use_1byte_cost):
             if cost == INVALID_COST:
               cost = INVALID_1BYTE_COST
             else:
-              cost /= resolution
+              cost //= resolution
               assert cost != INVALID_1BYTE_COST
           values.append(cost)
 

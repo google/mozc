@@ -40,15 +40,11 @@ class WindowTitleModifier : public QObject {
   Q_OBJECT;
 
  public:
-  WindowTitleModifier();
-  ~WindowTitleModifier();
+  WindowTitleModifier() = default;
+  ~WindowTitleModifier() override = default;
 
  protected:
   bool eventFilter(QObject *obj, QEvent *event);
-
- private:
-  const QString prefix_;
-  const QString suffix_;
 };
 }  // namespace gui
 }  // namespace mozc

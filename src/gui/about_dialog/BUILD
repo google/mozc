@@ -59,6 +59,8 @@ qt_rcc_mozc(
         "about_dialog_en.qm",
         "about_dialog_ja.qm",
         "//data/images:product_icon_32bpp-128.png",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_about_dialog.cc"],
     qrc_file = "about_dialog.qrc",

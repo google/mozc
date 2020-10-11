@@ -78,7 +78,7 @@ void KeyBindingEditorDelegate::setEditorData(QWidget *editor,
   const QString str = index.model()->data(index, Qt::EditRole).toString();
   KeyBindingEditorTriggerButton *button =
       static_cast<KeyBindingEditorTriggerButton *>(editor);
-  if (button == NULL) {
+  if (button == nullptr) {
     return;
   }
   button->setText(str);
@@ -90,7 +90,7 @@ void KeyBindingEditorDelegate::setModelData(QWidget *editor,
                                             const QModelIndex &index) const {
   KeyBindingEditorTriggerButton *button =
       static_cast<KeyBindingEditorTriggerButton *>(editor);
-  if (model == NULL || button == NULL) {
+  if (model == nullptr || button == nullptr) {
     return;
   }
   model->setData(index, button->mutable_editor()->GetBinding(), Qt::EditRole);
@@ -99,7 +99,7 @@ void KeyBindingEditorDelegate::setModelData(QWidget *editor,
 void KeyBindingEditorDelegate::updateEditorGeometry(
     QWidget *editor, const QStyleOptionViewItem &option,
     const QModelIndex &index) const {
-  if (editor == NULL) {
+  if (editor == nullptr) {
     return;
   }
   editor->setGeometry(option.rect);
@@ -110,7 +110,7 @@ void KeyBindingEditorDelegate::CommitAndCloseEditor() {
   KeyBindingEditorTriggerButton *button =
       static_cast<KeyBindingEditorTriggerButton *>(
           editor->mutable_trigger_parent());
-  if (button == NULL) {
+  if (button == nullptr) {
     return;
   }
   emit commitData(button);
@@ -122,7 +122,7 @@ void KeyBindingEditorDelegate::CloseEditor() {
   KeyBindingEditorTriggerButton *button =
       static_cast<KeyBindingEditorTriggerButton *>(
           editor->mutable_trigger_parent());
-  if (button == NULL) {
+  if (button == nullptr) {
     return;
   }
   emit closeEditor(button);

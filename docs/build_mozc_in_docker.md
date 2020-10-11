@@ -33,6 +33,15 @@ You can also run unittests as follows.
 python build_mozc.py runtests -c Debug
 ```
 
+Experimental: Instead of build_mozc.py, you can try to use Bazel.
+
+```
+bazel build package --config oss_linux
+```
+
+`package` is an alias to build `server:mozc_server` and `gui/tool:mozc_tool`.
+
+
 ### Build Mozc library for Android:
 
 Client code for Android apk is deprecated.
@@ -42,9 +51,10 @@ Client code for Android apk is deprecated.
 The conversion engine for Android is built with Bazel.
 
 ```
-bazel build android/jni:mozc_lib --config oss_android
+bazel build package --config oss_android
 ```
 
+`package` is an alias to build `android/jni:mozc_lib`.
 
 ## Build configurations for Linux desktop
 In `python build_mozc.py gyp` step, there are two different styles to customize configurations.  One is `GYP_DEFINES` environment variable and the other is commandline option.
