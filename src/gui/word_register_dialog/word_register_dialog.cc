@@ -57,6 +57,7 @@
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
+#include "gui/base/util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -109,7 +110,7 @@ WordRegisterDialog::WordRegisterDialog()
       session_(new UserDictionarySession(
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
-      window_title_(tr("Mozc")),
+      window_title_(GuiUtil::ProductName()),
       pos_list_provider_(new POSListProvider()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
@@ -200,6 +201,7 @@ WordRegisterDialog::WordRegisterDialog()
   }
 
   UpdateUIStatus();
+  GuiUtil::ReplaceWidgetLabels(this);
 
   // Turn on IME
   EnableIME();

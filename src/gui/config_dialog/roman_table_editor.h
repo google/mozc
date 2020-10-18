@@ -69,6 +69,7 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
 
  private:
   std::unique_ptr<QAction *[]> actions_;
+  QString dialog_title_;
 };
 
 }  // namespace gui

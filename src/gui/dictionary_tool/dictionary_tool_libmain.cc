@@ -34,7 +34,6 @@
 #include <string>
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/base/util.h"
 #include "gui/dictionary_tool/dictionary_tool.h"
@@ -50,7 +49,7 @@ int RunDictionaryTool(int argc, char *argv[]) {
 #endif  // OS_WIN
 
   Q_INIT_RESOURCE(qrc_dictionary_tool);
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
   string name = "dictionary_tool.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -61,7 +60,7 @@ int RunDictionaryTool(int argc, char *argv[]) {
     return -1;
   }
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("dictionary_tool");
+  mozc::gui::GuiUtil::InstallTranslator("dictionary_tool");
   mozc::gui::DictionaryTool window;
 
   if (!window.IsAvailable()) {

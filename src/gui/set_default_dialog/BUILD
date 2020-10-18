@@ -58,6 +58,8 @@ qt_rcc_mozc(
     srcs = [
         "set_default_dialog_en.qm",
         "set_default_dialog_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_set_default_dialog.cc"],
     qrc_file = "set_default_dialog.qrc",

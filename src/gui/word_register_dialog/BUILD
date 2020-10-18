@@ -58,6 +58,8 @@ qt_rcc_mozc(
     srcs = [
         "word_register_dialog_en.qm",
         "word_register_dialog_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_word_register_dialog.cc"],
     qrc_file = "word_register_dialog.qrc",

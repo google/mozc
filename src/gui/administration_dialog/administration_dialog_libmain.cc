@@ -32,17 +32,15 @@
 
 #include "base/system_util.h"
 #include "gui/administration_dialog/administration_dialog.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/util.h"
 
 int RunAdministrationDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_administration_dialog);
   mozc::SystemUtil::DisableIME();
 
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
-      "administration_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("administration_dialog");
 
   mozc::gui::AdministrationDialog administration_dialog;
   administration_dialog.show();

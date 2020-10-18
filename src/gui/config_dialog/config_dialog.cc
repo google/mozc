@@ -102,7 +102,7 @@ ConfigDialog::ConfigDialog()
 #ifdef __APPLE__
   miscDefaultIMEWidget->setVisible(false);
   miscAdministrationWidget->setVisible(false);
-  setWindowTitle(tr("%1 Preferences").arg(Util::ProductName()));
+  setWindowTitle(tr("%1 Preferences").arg(GuiUtil::ProductName()));
 #endif  // __APPLE__
 
 #if defined(OS_LINUX)
@@ -292,6 +292,8 @@ ConfigDialog::ConfigDialog()
   usageStatsCheckBox->setEnabled(false);
   usageStatsCheckBox->setVisible(false);
 #endif  // OS_LINUX
+
+  GuiUtil::ReplaceWidgetLabels(this);
 
   Reload();
 
@@ -699,7 +701,7 @@ void ConfigDialog::ClearUserHistory() {
     QMessageBox::critical(this, windowTitle(),
                           tr("%1 Converter is not running. "
                              "Settings were not saved.")
-                              .arg(Util::ProductName()));
+                              .arg(GuiUtil::ProductName()));
   }
 }
 
@@ -717,7 +719,7 @@ void ConfigDialog::ClearUserPrediction() {
     QMessageBox::critical(
         this, windowTitle(),
         tr("%1 Converter is not running. Settings were not saved.")
-            .arg(Util::ProductName()));
+            .arg(GuiUtil::ProductName()));
   }
 }
 
@@ -735,7 +737,7 @@ void ConfigDialog::ClearUnusedUserPrediction() {
     QMessageBox::critical(
         this, windowTitle(),
         tr("%1 Converter is not running. Operation was not executed.")
-            .arg(Util::ProductName()));
+            .arg(GuiUtil::ProductName()));
   }
 }
 
@@ -810,7 +812,7 @@ void ConfigDialog::ResetToDefaults() {
              " - Input history\n"
              " - Usage statistics and crash reports\n"
              " - Administrator settings")
-              .arg(Util::ProductName()),
+              .arg(GuiUtil::ProductName()),
           QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
     // TODO(taku): remove the dependency to config::ConfigHandler
     // nice to have GET_DEFAULT_CONFIG command

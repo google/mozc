@@ -41,7 +41,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Mozc Dictionary Tool</string>
+   <string>[ProductName] Dictionary Tool</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">

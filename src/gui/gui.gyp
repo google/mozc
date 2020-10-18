@@ -46,7 +46,6 @@
       'sources': [
         '<(gen_out_dir)/base/moc_window_title_modifier.cc',
         'base/debug_util.cc',
-        'base/locale_util.cc',
         'base/msime_user_dictionary_importer.cc',
         'base/setup_util.cc',
         'base/singleton_window_helper.cc',

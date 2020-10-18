@@ -41,7 +41,7 @@ namespace gui {
 class SetupUtil;
 
 // Shows additional information to the user after installation.
-// This dialog also set Mozc as the default IME if it is closed
+// This dialog also set this IME as the default IME if it is closed
 // with the check box marekd.
 class PostInstallDialog : public QDialog, private Ui::PostInstallDialog {
   Q_OBJECT;
@@ -56,7 +56,7 @@ class PostInstallDialog : public QDialog, private Ui::PostInstallDialog {
   virtual void reject();
 
  private:
-  // - Sets Mozc as the default IME if the check box on the
+  // - Sets this IME as the default IME if the check box on the
   //   dialog is marked.
   // - Imports MS-IME's user dictionary to Mozc' dictionary if
   //   the checkbox on the dialog is marked.

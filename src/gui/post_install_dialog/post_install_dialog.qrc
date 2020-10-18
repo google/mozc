@@ -14,5 +14,7 @@
 <qresource>
   <file>post_install_dialog_ja.qm</file>
   <file>post_install_dialog_en.qm</file>
+  <file alias="tr_ja.qm">../base/tr_ja.qm</file>
+  <file alias="tr_en.qm">../base/tr_en.qm</file>
 </qresource>
 </RCC>

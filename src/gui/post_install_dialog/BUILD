@@ -58,6 +58,8 @@ qt_rcc_mozc(
     srcs = [
         "post_install_dialog_en.qm",
         "post_install_dialog_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_post_install_dialog.cc"],
     qrc_file = "post_install_dialog.qrc",

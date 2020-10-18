@@ -5,13 +5,13 @@
     <name>SetDefaultDialog</name>
     <message>
         <location filename="set_default_dialog.ui" line="14"/>
-        <source>Mozc</source>
+        <source>[ProductName]</source>
         <translation></translation>
     </message>
     <message>
         <location filename="set_default_dialog.ui" line="29"/>
-        <source>Mozc isn&apos;t your default IME.
-Do you want to use Mozc as the default IME?</source>
+        <source>[ProductName] isn&apos;t your default IME.
+Do you want to use [ProductName] as the default IME?</source>
         <translation></translation>
     </message>
     <message>

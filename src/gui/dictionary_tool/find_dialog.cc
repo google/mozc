@@ -34,6 +34,7 @@
 #include <QtWidgets/QTableWidget>
 
 #include "base/logging.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -55,6 +56,7 @@ FindDialog::FindDialog(QWidget *parent, QTableWidget *table)
   connect(FindBackwardpushButton, SIGNAL(clicked()), this,
           SLOT(FindBackward()));
   connect(CancelpushButton, SIGNAL(clicked()), this, SLOT(close()));
+  GuiUtil::ReplaceWidgetLabels(this);
 }
 
 FindDialog::~FindDialog() {}

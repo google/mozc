@@ -791,4 +791,5 @@ py_binary_mozc(
         "zip_code_util.py",
     ],
     visibility = ["//train/zip_code:__subpackages__"],
+    deps = [],
 )

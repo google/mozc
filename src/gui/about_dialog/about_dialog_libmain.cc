@@ -31,13 +31,12 @@
 #include <QtGui/QtGui>
 #include "base/system_util.h"
 #include "gui/about_dialog/about_dialog.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/base/util.h"
 
 int RunAboutDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_about_dialog);
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
   std::string name = "about_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -49,8 +48,8 @@ int RunAboutDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("about_dialog");
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("tr");
+  mozc::gui::GuiUtil::InstallTranslator("about_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("tr");
   mozc::gui::AboutDialog about_dialog;
 
   about_dialog.show();

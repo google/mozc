@@ -51,6 +51,8 @@ qt_rcc_mozc(
     srcs = [
         "confirmation_dialog_en.qm",
         "confirmation_dialog_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_confirmation_dialog.cc"],
     qrc_file = "confirmation_dialog.qrc",

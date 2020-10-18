@@ -29,21 +29,66 @@
 
 #include "gui/base/util.h"
 
+// Show the build number on the title for debugging when the build
+// configuration is official dev channel.
+#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#define MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+
+
 #include <memory>
 
 #include <QtCore/QObject>
 #include <QtGui/QFont>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QtGui>
+#include <QtWidgets/QAbstractButton>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QStyleFactory>
 
 #include "absl/memory/memory.h"
+#include "base/logging.h"
+
+#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+#include "gui/base/window_title_modifier.h"
+#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 
 namespace mozc {
 namespace gui {
 
+namespace {
+void InstallEventFilter() {
+#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+  static WindowTitleModifier window_title_modifier;
+  // Install WindowTilteModifier for official dev channel
+  // append a special footer (Dev x.x.x) to the all Windows.
+  qApp->installEventFilter(&window_title_modifier);
+#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+}
+
+void InstallDefaultTranslator() {
+  // qApplication must be loaded first
+  CHECK(qApp);
+  static QTranslator *translator = new QTranslator;
+
+  // Load "<translation_path>/qt_<lang>.qm" from a qrc file.
+  bool loaded = translator->load(
+      QLocale::system(), "qt", "_",
+      QLibraryInfo::location(QLibraryInfo::TranslationsPath), ".qm");
+  if (loaded) {
+    qApp->installTranslator(translator);
+  } else {
+    // Load ":/qt_<lang>.qm" from a qrc file.
+    GuiUtil::InstallTranslator("qt");
+  }
+
+  // Load ":/tr_<lang>.qm" from a qrc file for the product name.
+  GuiUtil::InstallTranslator("tr");
+}
+}  // namespace
+
 // static
-std::unique_ptr<QApplication> Util::InitQt(int &argc, char *argv[]) {
+std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
   QApplication::setStyle(QStyleFactory::create("fusion"));
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -55,11 +100,31 @@ std::unique_ptr<QApplication> Util::InitQt(int &argc, char *argv[]) {
   app->setFont(QFont("Hiragino Sans"));
 #endif  // __APPLE__
 
+  InstallEventFilter();
+  InstallDefaultTranslator();
+
   return app;
 }
 
 // static
-const QString Util::ProductName() {
+void GuiUtil::InstallTranslator(const char *resource_name) {
+  static std::map<std::string, std::unique_ptr<QTranslator>> *translators =
+      new std::map<std::string, std::unique_ptr<QTranslator>>();
+  if (translators->find(resource_name) != translators->end()) {
+    return;
+  }
+  std::unique_ptr<QTranslator> translator(new QTranslator);
+
+  // Load ":/<resource_name>_<lang>.qm" from a qrc file.
+  if (translator->load(QLocale::system(), resource_name, "_", ":/", ".qm")) {
+    qApp->installTranslator(translator.get());
+    translators->emplace(resource_name, std::move(translator));
+  }
+}
+
+
+// static
+const QString GuiUtil::ProductName() {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   const QString name = QObject::tr("Mozc");
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
@@ -69,19 +134,30 @@ const QString Util::ProductName() {
 }
 
 // static
-void Util::ReplaceLabel(QLabel *label) {
+void GuiUtil::ReplaceWidgetLabels(QWidget *widget) {
+  ReplaceTitle(widget);
+  for (auto *label : widget->findChildren<QLabel *>()) {
+    ReplaceLabel(label);
+  }
+  for (auto *button : widget->findChildren<QAbstractButton *>()) {
+    button->setText(ReplaceString(button->text()));
+  }
+}
+
+// static
+void GuiUtil::ReplaceLabel(QLabel *label) {
   label->setText(ReplaceString(label->text()));
 }
 
 // static
-void Util::ReplaceTitle(QWidget *widget) {
-  widget->setWindowTitle(Util::ReplaceString(widget->windowTitle()));
+void GuiUtil::ReplaceTitle(QWidget *widget) {
+  widget->setWindowTitle(GuiUtil::ReplaceString(widget->windowTitle()));
 }
 
 // static
-QString Util::ReplaceString(const QString &str) {
+QString GuiUtil::ReplaceString(const QString &str) {
   QString replaced(str);
-  return replaced.replace("[ProductName]", Util::ProductName());
+  return replaced.replace("[ProductName]", GuiUtil::ProductName());
 }
 
 }  // namespace gui

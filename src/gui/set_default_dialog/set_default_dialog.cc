@@ -41,6 +41,7 @@
 #include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
+#include "gui/base/util.h"
 #include "protocol/config.pb.h"
 
 #ifdef OS_WIN
@@ -55,6 +56,7 @@ SetDefaultDialog::SetDefaultDialog() {
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
+  GuiUtil::ReplaceWidgetLabels(this);
 }
 
 SetDefaultDialog::~SetDefaultDialog() {}

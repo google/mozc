@@ -41,7 +41,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Mozc</string>
+   <string>[ProductName]</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">

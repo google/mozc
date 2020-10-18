@@ -43,6 +43,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "gui/base/table_util.h"
+#include "gui/base/util.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
@@ -74,7 +75,9 @@ RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
   actions_[RESET_INDEX] =
       mutable_edit_menu()->addAction(tr("Reset to defaults"));
 
-  setWindowTitle(tr("Mozc Romaji table editor"));
+  setWindowTitle(tr("[ProductName] Romaji table editor"));
+  GuiUtil::ReplaceWidgetLabels(this);
+  dialog_title_ = GuiUtil::ReplaceString(tr("[ProductName] settings"));
   CHECK(mutable_table_widget());
   CHECK_EQ(mutable_table_widget()->columnCount(), 3);
   QStringList headers;
@@ -157,7 +160,7 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
 
     if (row >= max_entry_size()) {
       QMessageBox::warning(
-          this, tr("Mozc settings"),
+          this, dialog_title_,
           tr("You can't have more than %1 entries").arg(max_entry_size()));
       break;
     }
@@ -178,7 +181,7 @@ bool RomanTableEditorDialog::LoadDefaultRomanTable() {
 
 bool RomanTableEditorDialog::Update() {
   if (mutable_table_widget()->rowCount() == 0) {
-    QMessageBox::warning(this, tr("Mozc settings"),
+    QMessageBox::warning(this, dialog_title_,
                          tr("Romaji to Kana table is empty."));
     return false;
   }
@@ -216,7 +219,7 @@ bool RomanTableEditorDialog::Update() {
     // TODO(taku):
     // Want to see the current setting and suppress this
     // dialog if the shift-mode-switch is already off.
-    QMessageBox::information(this, tr("Mozc settings"),
+    QMessageBox::information(this, dialog_title_,
                              tr("Input fields contain capital characters. "
                                 "\"Shift-mode-switch\" function is disabled "
                                 "with this new mapping."));
@@ -242,7 +245,7 @@ void RomanTableEditorDialog::OnEditMenuAction(QAction *action) {
     if (mutable_table_widget()->rowCount() > 0 &&
         QMessageBox::Ok !=
             QMessageBox::question(
-                this, tr("Mozc settings"),
+                this, dialog_title_,
                 tr("Do you want to overwrite the current roman table?"),
                 QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
       return;

@@ -5,7 +5,7 @@
     <name>ConfigDialog</name>
     <message>
         <location filename="config_dialog.ui" line="32"/>
-        <source>Mozc Settings</source>
+        <source>[ProductName] Settings</source>
         <translation></translation>
     </message>
     <message>
@@ -337,7 +337,7 @@
     </message>
     <message>
         <location filename="config_dialog.ui" line="1032"/>
-        <source>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
+        <source>Help make [ProductName] better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
         <translation></translation>
     </message>
     <message>
@@ -357,7 +357,7 @@
     </message>
     <message>
         <location filename="config_dialog.ui" line="1385"/>
-        <source>Check if Mozc is the default IME on startup</source>
+        <source>Check if [ProductName] is the default IME on startup</source>
         <translation></translation>
     </message>
     <message>
@@ -380,7 +380,7 @@
     <name>GenericTableEditorDialog</name>
     <message>
         <location filename="generic_table_editor.ui" line="14"/>
-        <source>Mozc</source>
+        <source>[ProductName]</source>
         <translation></translation>
     </message>
     <message>
@@ -393,7 +393,7 @@
     <name>KeyBindingEditor</name>
     <message>
         <location filename="keybinding_editor.ui" line="32"/>
-        <source>Mozc key binding editor</source>
+        <source>[ProductName] key binding editor</source>
         <translation></translation>
     </message>
     <message>
@@ -622,7 +622,7 @@
     </message>
     <message>
         <location filename="config_dialog.cc" line="74"/>
-        <source>%1 Preferences</source>
+        <source>[ProductName] Preferences</source>
         <translation></translation>
     </message>
     <message>
@@ -658,7 +658,7 @@
     <message>
         <location filename="config_dialog.cc" line="732"/>
         <location filename="config_dialog.cc" line="754"/>
-        <source>%1 Converter is not running. Settings were not saved.</source>
+        <source>[ProductName] Converter is not running. Settings were not saved.</source>
         <translation></translation>
     </message>
     <message>
@@ -673,12 +673,12 @@
     </message>
     <message>
         <location filename="config_dialog.cc" line="776"/>
-        <source>%1 Converter is not running. Operation was not executed.</source>
+        <source>[ProductName] Converter is not running. Operation was not executed.</source>
         <translation></translation>
     </message>
     <message>
         <location filename="config_dialog.cc" line="849"/>
-        <source>When you reset %1 settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
+        <source>When you reset [ProductName] settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
  - Usage statistics and crash reports
@@ -701,7 +701,7 @@
     </message>
     <message>
         <location filename="generic_table_editor.cc" line="215"/>
-        <source>You can&apos;t have more than %1 entries</source>
+        <source>You can&apos;t have more than [ProductName] entries</source>
         <translation></translation>
     </message>
     <message>
@@ -794,7 +794,7 @@
     </message>
     <message>
         <location filename="keymap_editor.cc" line="284"/>
-        <source>%1 keymap editor</source>
+        <source>[ProductName] keymap editor</source>
         <translation></translation>
     </message>
     <message>
@@ -863,7 +863,7 @@
     </message>
     <message>
         <location filename="roman_table_editor.cc" line="48"/>
-        <source>%1 Romaji table editor</source>
+        <source>[ProductName] Romaji table editor</source>
         <translation></translation>
     </message>
     <message>
@@ -886,7 +886,7 @@
         <location filename="roman_table_editor.cc" line="152"/>
         <location filename="roman_table_editor.cc" line="192"/>
         <location filename="roman_table_editor.cc" line="219"/>
-        <source>%1 settings</source>
+        <source>[ProductName] settings</source>
         <translation></translation>
     </message>
     <message>

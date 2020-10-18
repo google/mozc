@@ -58,6 +58,8 @@ qt_rcc_mozc(
     srcs = [
         "administration_dialog_en.qm",
         "administration_dialog_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_administration_dialog.cc"],
     qrc_file = "administration_dialog.qrc",

@@ -5,7 +5,7 @@
     <name>DictionaryTool</name>
     <message>
         <location filename="dictionary_tool.ui" line="14"/>
-        <source>Mozc Dictionary Tool</source>
+        <source>[ProductName] Dictionary Tool</source>
         <translation></translation>
     </message>
     <message>
@@ -18,7 +18,7 @@
     <name>FindDialog</name>
     <message>
         <location filename="find_dialog.ui" line="26"/>
-        <source>Mozc Dictionary Find Dialog</source>
+        <source>[ProductName] Dictionary Find Dialog</source>
         <translation></translation>
     </message>
     <message>
@@ -46,7 +46,7 @@
     <name>ImportDialog</name>
     <message>
         <location filename="import_dialog.ui" line="26"/>
-        <source>Mozc Dictionary Tool</source>
+        <source>[ProductName] Dictionary Tool</source>
         <translation></translation>
     </message>
     <message>
@@ -87,7 +87,7 @@
     <name>mozc::gui::DictionaryTool</name>
     <message>
         <location filename="dictionary_tool.cc" line="275"/>
-        <source>Mozc</source>
+        <source>[ProductName]</source>
         <translation></translation>
     </message>
     <message>

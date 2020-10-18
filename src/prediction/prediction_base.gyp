@@ -53,6 +53,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:codegen_bytearray_stream',
         '../storage/storage.gyp:storage',
       ],
     },

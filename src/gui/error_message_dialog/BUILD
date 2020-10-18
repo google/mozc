@@ -51,6 +51,8 @@ qt_rcc_mozc(
     srcs = [
         "error_message_dialog_en.qm",
         "error_message_dialog_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_error_message_dialog.cc"],
     qrc_file = "error_message_dialog.qrc",

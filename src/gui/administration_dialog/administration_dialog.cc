@@ -33,6 +33,7 @@
 
 #include "base/run_level.h"
 #include "config/stats_config_util.h"
+#include "gui/base/util.h"
 #ifdef OS_WIN
 #include "server/cache_service_manager.h"
 #endif  // OS_WIN
@@ -42,7 +43,9 @@ namespace gui {
 
 using mozc::config::StatsConfigUtil;
 
-AdministrationDialog::AdministrationDialog() {
+AdministrationDialog::AdministrationDialog()
+    : dialog_title_(
+          GuiUtil::ReplaceString(tr("[ProductName] administration settings"))) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
@@ -72,6 +75,7 @@ AdministrationDialog::AdministrationDialog() {
   CacheServiceEnabledcheckBox->setChecked(CacheServiceManager::IsEnabled() ||
                                           CacheServiceManager::IsRunning());
 #endif
+  GuiUtil::ReplaceWidgetLabels(this);
 }
 
 AdministrationDialog::~AdministrationDialog() {}
@@ -84,7 +88,7 @@ bool AdministrationDialog::CanStartService() {
 
   if (!CacheServiceManager::HasEnoughMemory()) {
     QMessageBox::critical(
-        this, tr("Mozc administration settings"),
+        this, dialog_title_,
         tr("This computer does not have enough memory to load "
            "dictionary into physical memory."));
     return false;
@@ -101,7 +105,7 @@ void AdministrationDialog::clicked(QAbstractButton *button) {
     case QDialogButtonBox::AcceptRole:
       if (!StatsConfigUtil::SetEnabled(usageStatsCheckBox->isChecked())) {
         QMessageBox::critical(
-            this, tr("Mozc administration settings"),
+            this, dialog_title_,
             tr("Failed to change the configuration of "
                "usage statistics and crash report. "
                "Administrator privilege is required to change the "
@@ -117,7 +121,7 @@ void AdministrationDialog::clicked(QAbstractButton *button) {
         }
         if (!result) {
           QMessageBox::critical(
-              this, tr("Mozc administration settings"),
+              this, dialog_title_,
               tr("Failed to change the configuration of on-memory dictionary. "
                  "Administrator privilege is required to change the "
                  "configuration."));
@@ -130,7 +134,7 @@ void AdministrationDialog::clicked(QAbstractButton *button) {
         if (!RunLevel::SetElevatedProcessDisabled(
                 ElevatedProcessDisabledcheckBox->isChecked())) {
           QMessageBox::critical(
-              this, tr("Mozc administration settings"),
+              this, dialog_title_,
               tr("Failed to save the UAC policy setting. "
                  "Administrator privilege is required to "
                  "change UAC settings."));

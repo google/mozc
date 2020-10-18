@@ -307,6 +307,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "codegen_bytearray_stream",
+    srcs = ["codegen_bytearray_stream.cc"],
     hdrs = ["codegen_bytearray_stream.h"],
     visibility = [
         "//:__subpackages__",

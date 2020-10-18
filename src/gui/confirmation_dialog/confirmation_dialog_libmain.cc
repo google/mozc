@@ -36,7 +36,6 @@
 #include "base/process_mutex.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/util.h"
 #include "gui/confirmation_dialog/confirmation_dialog.h"
 
@@ -48,7 +47,7 @@ int RunConfirmationDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_confirmation_dialog);
 
   mozc::SystemUtil::DisableIME();
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
   std::string name = "confirmation_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -59,8 +58,7 @@ int RunConfirmationDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
-      "confirmation_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("confirmation_dialog");
 
   if (FLAGS_confirmation_type != "log_out") {
     if (mozc::gui::ConfirmationDialog::Show()) {

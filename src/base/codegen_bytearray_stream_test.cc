@@ -62,24 +62,17 @@ class CodeGenByteArrayStreamTest : public testing::Test {
                              const std::string &count,
                              const std::string &body) {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-    return "const " AS_STRING(MOZC_CODEGEN_BYTEARRAY_STREAM_WORD_TYPE) " k" +
-           var_name_base + "_data_wordtype[] = {\n" + body +
-           "};\n"
-           "const char * const k" +
-           var_name_base +
-           "_data = "
-           "reinterpret_cast<const char *>("
-           "k" +
-           var_name_base +
-           "_data_wordtype);\n"
-           "const size_t k" +
-           var_name_base + "_size = " + count + ";\n";
+    return "const uint64 k" + var_name_base + "_data_wordtype[] = {\n" +
+        body + "};\n"
+        "const char * const k" + var_name_base + "_data = "
+        "reinterpret_cast<const char *>("
+        "k" + var_name_base + "_data_wordtype);\n"
+        "const size_t k" + var_name_base + "_size = " + count + ";\n";
 #else
-    return "const char k" + var_name_base + "_data[] =\n" + body +
-           "\n"
-           ";\n"
-           "const size_t k" +
-           var_name_base + "_size = " + count + ";\n";
+    return "const char k" + var_name_base + "_data[] =\n" +
+        body + "\n"
+        ";\n"
+        "const size_t k" + var_name_base + "_size = " + count + ";\n";
 #endif
   }
 

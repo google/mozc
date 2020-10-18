@@ -59,7 +59,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Mozc key binding editor</string>
+   <string>[ProductName] key binding editor</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">

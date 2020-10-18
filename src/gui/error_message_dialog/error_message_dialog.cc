@@ -35,6 +35,7 @@
 #include <QtWidgets/QMessageBox>
 
 #include "base/flags.h"
+#include "gui/base/util.h"
 
 DEFINE_string(error_type, "", "type of error");
 
@@ -46,9 +47,10 @@ void OnFatal(const QString &message) {
   // we don't use QMessageBox::critical() here
   // to set WindowStaysOnTopHint
   QMessageBox message_box(
-      QMessageBox::Critical, QObject::tr("Mozc Fatal Error"),
+      QMessageBox::Critical, QObject::tr("[ProductName] Fatal Error"),
       message, QMessageBox::Ok, nullptr,
       Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
+  GuiUtil::ReplaceWidgetLabels(&message_box);
   DeleyedMessageDialogHandler handler(&message_box);
   handler.Exec();
 }
@@ -87,8 +89,8 @@ void ErrorMessageDialog::Show() {
   } else if (FLAGS_error_type == "server_broken_message") {
     OnFatal(QObject::tr(
         "Connecting to an incompatible conversion engine. "
-        "Please restart your computer to enable Mozc. "
-        "If this problem persists, please uninstall Mozc "
+        "Please restart your computer to enable [ProductName]. "
+        "If this problem persists, please uninstall [ProductName] "
         "and install it again."));
   } else if (FLAGS_error_type == "server_version_mismatch") {
     OnFatal(QObject::tr(

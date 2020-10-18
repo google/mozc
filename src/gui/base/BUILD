@@ -83,7 +83,6 @@ cc_qt_library_mozc(
     name = "gui_base",
     srcs = [
         "debug_util.cc",
-        "locale_util.cc",
         "table_util.cc",
         "util.cc",
         "win_util.cc",
@@ -93,7 +92,6 @@ cc_qt_library_mozc(
     ],
     hdrs = [
         "debug_util.h",
-        "locale_util.h",
         "table_util.h",
         "util.h",
         "win_util.h",

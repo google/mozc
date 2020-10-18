@@ -304,7 +304,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       current_dic_id_(0),
       modified_(false),
       monitoring_user_edit_(false),
-      window_title_(gui::Util::ProductName()),
+      window_title_(GuiUtil::ProductName()),
       dic_menu_(new QMenu),
       new_action_(nullptr),
       rename_action_(nullptr),
@@ -528,6 +528,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   StartMonitoringUserEdit();
   UpdateUIStatus();
 
+  GuiUtil::ReplaceWidgetLabels(this);
   qApp->installEventFilter(this);
 }
 
@@ -800,7 +801,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
                                   "unsupported file format.\n\n"
                                   "Please check the file format. "
                                   "ATOK11 or older format is not supported by "
-                                  "%1.").arg(gui::Util::ProductName()));
+                                  "%1.").arg(GuiUtil::ProductName()));
       break;
     case UserDictionaryImporter::IMPORT_TOO_MANY_WORDS:
       QMessageBox::information(

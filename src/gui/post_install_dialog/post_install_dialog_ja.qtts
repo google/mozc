@@ -5,18 +5,18 @@
     <name>PostInstallDialog</name>
     <message>
         <location filename="post_install_dialog.ui" line="32"/>
-        <source>Mozc</source>
-        <translation>Mozc</translation>
+        <source>[ProductName]</source>
+        <translation>[ProductName]</translation>
     </message>
     <message>
         <location filename="post_install_dialog.ui" line="63"/>
-        <source>Migrate MSIME&apos;s user dictionary to Mozc</source>
-        <translation>MS-IMEのユーザー辞書を Mozcに引き継ぐ</translation>
+        <source>Migrate MSIME&apos;s user dictionary to [ProductName]</source>
+        <translation>MS-IMEのユーザー辞書を [ProductName]に引き継ぐ</translation>
     </message>
     <message>
         <location filename="post_install_dialog.ui" line="73"/>
-        <source>Set Mozc as the default IME</source>
-        <translation>Mozcを既定の IME として設定する</translation>
+        <source>Set [ProductName] as the default IME</source>
+        <translation>[ProductName]を既定の IME として設定する</translation>
     </message>
     <message>
         <location filename="post_install_dialog.ui" line="56"/>

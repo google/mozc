@@ -5,8 +5,8 @@
     <name>DictionaryTool</name>
     <message>
         <location filename="dictionary_tool.ui" line="14"/>
-        <source>Mozc Dictionary Tool</source>
-        <translation>Mozc 辞書ツール</translation>
+        <source>[ProductName] Dictionary Tool</source>
+        <translation>[ProductName] 辞書ツール</translation>
     </message>
     <message>
         <location filename="dictionary_tool.ui" line="31"/>
@@ -18,8 +18,8 @@
     <name>FindDialog</name>
     <message>
         <location filename="find_dialog.ui" line="26"/>
-        <source>Mozc Dictionary Find Dialog</source>
-        <translation>Mozc 辞書検索</translation>
+        <source>[ProductName] Dictionary Find Dialog</source>
+        <translation>[ProductName] 辞書検索</translation>
     </message>
     <message>
         <location filename="find_dialog.ui" line="37"/>
@@ -46,8 +46,8 @@
     <name>ImportDialog</name>
     <message>
         <location filename="import_dialog.ui" line="26"/>
-        <source>Mozc Dictionary Tool</source>
-        <translation>Mozc 辞書ツール</translation>
+        <source>[ProductName] Dictionary Tool</source>
+        <translation>[ProductName] 辞書ツール</translation>
     </message>
     <message>
         <location filename="import_dialog.ui" line="75"/>
@@ -87,8 +87,8 @@
     <name>mozc::gui::DictionaryTool</name>
     <message>
         <location filename="dictionary_tool.cc" line="275"/>
-        <source>Mozc</source>
-        <translation>Mozc</translation>
+        <source>[ProductName]</source>
+        <translation>[ProductName]</translation>
     </message>
     <message>
         <location filename="dictionary_tool.cc" line="304"/>

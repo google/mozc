@@ -5,8 +5,8 @@
     <name>WordRegisterDialog</name>
     <message>
         <location filename="word_register_dialog.ui" line="26"/>
-        <source>Mozc Word Register Dialog</source>
-        <translation>Mozc 単語登録</translation>
+        <source>[ProductName] Word Register Dialog</source>
+        <translation>[ProductName] 単語登録</translation>
     </message>
     <message>
         <location filename="word_register_dialog.ui" line="52"/>
@@ -38,8 +38,8 @@
     <name>mozc::gui::WordRegisterDialog</name>
     <message>
         <location filename="word_register_dialog.cc" line="32"/>
-        <source>Mozc</source>
-        <translation>Mozc</translation>
+        <source>[ProductName]</source>
+        <translation>[ProductName]</translation>
     </message>
     <message>
         <location filename="word_register_dialog.cc" line="46"/>

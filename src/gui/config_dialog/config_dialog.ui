@@ -59,7 +59,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Mozc Settings</string>
+   <string>[ProductName] Settings</string>
   </property>
   <widget class="QWidget" name="centralwidget" native="true">
    <property name="geometry">
@@ -1059,7 +1059,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</string>
+       <string>Help make [ProductName] better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -1362,7 +1362,7 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Check if Mozc is the default IME on startup</string>
+                <string>Check if [ProductName] is the default IME on startup</string>
                </property>
                <property name="tristate">
                 <bool>false</bool>

@@ -77,6 +77,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'base.gyp:base',
+        'base.gyp:codegen_bytearray_stream#host',
         'clock_mock',
       ],
       'variables': {

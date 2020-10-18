@@ -110,6 +110,8 @@ qt_rcc_mozc(
     srcs = [
         "dictionary_tool_en.qm",
         "dictionary_tool_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_dictionary_tool.cc"],
     qrc_file = "dictionary_tool.qrc",

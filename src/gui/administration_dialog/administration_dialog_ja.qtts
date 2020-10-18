@@ -5,19 +5,19 @@
     <name>AdministrationDialog</name>
     <message>
         <location filename="administration_dialog.ui" line="32"/>
-        <source>Mozc administrator settings</source>
-        <translation>Mozc 管理者用プロパティ</translation>
+        <source>[ProductName] administrator settings</source>
+        <translation>[ProductName] 管理者用プロパティ</translation>
     </message>
     <message>
         <location filename="administration_dialog.ui" line="60"/>
-        <source>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
+        <source>Help make [ProductName] better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
         <translation>使用統計データや障害レポートを Google に自動送信して
-Mozcの機能向上に役立てる（再ログイン後に変更は完了します）</translation>
+[ProductName]の機能向上に役立てる（再ログイン後に変更は完了します）</translation>
     </message>
     <message>
         <location filename="administration_dialog.ui" line="108"/>
-        <source>Disable Mozc for UAC-elevated applications</source>
-        <translation>UACで昇格されたアプリケーション上で Mozcを無効にする</translation>
+        <source>Disable [ProductName] for UAC-elevated applications</source>
+        <translation>UACで昇格されたアプリケーション上で [ProductName]を無効にする</translation>
     </message>
     <message>
         <location filename="administration_dialog.ui" line="89"/>
@@ -32,8 +32,8 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
         <location filename="administration_dialog.cc" line="74"/>
         <location filename="administration_dialog.cc" line="91"/>
         <location filename="administration_dialog.cc" line="105"/>
-        <source>Mozc administration settings</source>
-        <translation>Mozc 管理者用プロパティ</translation>
+        <source>[ProductName] administration settings</source>
+        <translation>[ProductName] 管理者用プロパティ</translation>
     </message>
     <message>
         <location filename="administration_dialog.cc" line="56"/>

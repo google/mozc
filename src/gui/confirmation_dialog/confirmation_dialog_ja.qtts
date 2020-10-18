@@ -5,8 +5,8 @@
     <name>QObject</name>
     <message>
         <location filename="confirmation_dialog.cc" line="20"/>
-        <source>Mozc</source>
-        <translation>Mozc</translation>
+        <source>[ProductName]</source>
+        <translation>[ProductName]</translation>
     </message>
     <message>
         <location filename="confirmation_dialog.cc" line="22"/>
@@ -15,8 +15,8 @@
     </message>
     <message>
         <location filename="confirmation_dialog.cc" line="30"/>
-        <source>Mozc has been updated.  Would you like to activate the new version now?  (Note: some features will not be available until you log out and log back in.)</source>
-        <translation>Mozcが新しいバージョンに更新されました。いますぐ新しいバージョンを有効にしますか？（一部の機能については、再ログイン後に有効になります。）</translation>
+        <source>[ProductName] has been updated.  Would you like to activate the new version now?  (Note: some features will not be available until you log out and log back in.)</source>
+        <translation>[ProductName]が新しいバージョンに更新されました。いますぐ新しいバージョンを有効にしますか？（一部の機能については、再ログイン後に有効になります。）</translation>
     </message>
     <message>
         <location filename="confirmation_dialog.cc" line="37"/>
@@ -30,8 +30,8 @@
     </message>
     <message>
         <location filename="confirmation_dialog.cc" line="44"/>
-        <source>Mozc has been updated.  Please log out and back in to enable the new version.</source>
-        <translation>Mozcが新しいバージョンに更新されました。新しいバージョンを利用するにはいったんログアウトし、ログインしなおしてください。</translation>
+        <source>[ProductName] has been updated.  Please log out and back in to enable the new version.</source>
+        <translation>[ProductName]が新しいバージョンに更新されました。新しいバージョンを利用するにはいったんログアウトし、ログインしなおしてください。</translation>
     </message>
     <message>
         <location filename="confirmation_dialog.cc" line="49"/>

@@ -34,7 +34,6 @@
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/util.h"
 #include "gui/error_message_dialog/error_message_dialog.h"
 
@@ -42,7 +41,7 @@ int RunErrorMessageDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_error_message_dialog);
 
   mozc::SystemUtil::DisableIME();
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
   string name = "error_message_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -53,8 +52,7 @@ int RunErrorMessageDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
-      "error_message_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("error_message_dialog");
 
   mozc::gui::ErrorMessageDialog::Show();
   return 0;

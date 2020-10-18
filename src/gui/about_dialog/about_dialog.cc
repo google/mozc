@@ -88,10 +88,7 @@ AboutDialog::AboutDialog(QWidget *parent)
   version_info += Version::GetMozcVersion().c_str();
   version_info += ")";
   version_label->setText(version_info);
-  gui::Util::ReplaceTitle(this);
-  gui::Util::ReplaceLabel(label);
-  gui::Util::ReplaceLabel(label_credits);
-  gui::Util::ReplaceLabel(label_terms);
+  GuiUtil::ReplaceWidgetLabels(this);
 
   QPalette palette;
   palette.setColor(QPalette::Window, QColor(236, 233, 216));

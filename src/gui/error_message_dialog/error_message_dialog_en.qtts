@@ -5,7 +5,7 @@
     <name>QObject</name>
     <message>
         <location filename="error_message_dialog.cc" line="21"/>
-        <source>Mozc Fatal Error</source>
+        <source>[ProductName] Fatal Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15,7 +15,7 @@
     </message>
     <message>
         <location filename="error_message_dialog.cc" line="61"/>
-        <source>Connecting to an incompatible conversion engine. Please restart your computer to enable Mozc. If this problem persists, please uninstall Mozc and install it again.</source>
+        <source>Connecting to an incompatible conversion engine. Please restart your computer to enable [ProductName]. If this problem persists, please uninstall [ProductName] and install it again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

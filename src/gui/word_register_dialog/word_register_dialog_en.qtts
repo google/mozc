@@ -5,7 +5,7 @@
     <name>WordRegisterDialog</name>
     <message>
         <location filename="word_register_dialog.ui" line="26"/>
-        <source>Mozc Word Register Dialog</source>
+        <source>[ProductName] Word Register Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -38,7 +38,7 @@
     <name>mozc::gui::WordRegisterDialog</name>
     <message>
         <location filename="word_register_dialog.cc" line="32"/>
-        <source>Mozc</source>
+        <source>[ProductName]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

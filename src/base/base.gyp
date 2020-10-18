@@ -252,10 +252,10 @@
     },
     {
       'target_name': 'codegen_bytearray_stream',
-      'type': 'none',
+      'type': 'static_library',
       'toolsets': ['host'],
       'sources': [
-        'codegen_bytearray_stream.h',  # this is header only library.
+        'codegen_bytearray_stream.cc',
       ],
       'dependencies': [
         'base_core#host',

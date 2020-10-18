@@ -32,14 +32,13 @@
 #include <QtWidgets/QDialog>
 
 #include "base/system_util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/base/util.h"
 #include "gui/word_register_dialog/word_register_dialog.h"
 
 int RunWordRegisterDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_word_register_dialog);
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
   std::string name = "word_register_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
@@ -51,8 +50,7 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
-      "word_register_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("word_register_dialog");
 
   mozc::gui::WordRegisterDialog word_register_dialog;
   if (!word_register_dialog.IsAvailable()) {

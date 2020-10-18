@@ -5,7 +5,7 @@
     <name>QObject</name>
     <message>
         <location filename="confirmation_dialog.cc" line="20"/>
-        <source>Mozc</source>
+        <source>[ProductName]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15,7 +15,7 @@
     </message>
     <message>
         <location filename="confirmation_dialog.cc" line="30"/>
-        <source>Mozc has been updated.  Would you like to activate the new version now?  (Note: some features will not be available until you log out and log back in.)</source>
+        <source>[ProductName] has been updated.  Would you like to activate the new version now?  (Note: some features will not be available until you log out and log back in.)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -30,7 +30,7 @@
     </message>
     <message>
         <location filename="confirmation_dialog.cc" line="44"/>
-        <source>Mozc has been updated.  Please log out and back in to enable the new version.</source>
+        <source>[ProductName] has been updated.  Please log out and back in to enable the new version.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

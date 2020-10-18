@@ -35,6 +35,7 @@
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -98,6 +99,8 @@ ImportDialog::ImportDialog(QWidget *parent)
           SLOT(OnFormValueChanged()));
   connect(dic_name_lineedit_, SIGNAL(textChanged(const QString &)), this,
           SLOT(OnFormValueChanged()));
+
+  GuiUtil::ReplaceWidgetLabels(this);
 }
 
 ImportDialog::~ImportDialog() {}

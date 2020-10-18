@@ -37,7 +37,6 @@
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/util.h"
 #include "gui/set_default_dialog/set_default_dialog.h"
 
@@ -64,9 +63,9 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
   mozc::ScopedCOMInitializer com_initializer;
 #endif
 
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("set_default_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("set_default_dialog");
 
   mozc::gui::SetDefaultDialog dialog;
   return dialog.exec();

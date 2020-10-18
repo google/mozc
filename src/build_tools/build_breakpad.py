@@ -59,7 +59,7 @@ def ProcessCall(command):
   try:
     subprocess.check_output(command)
   except subprocess.CalledProcessError as e:
-    print(e.output)
+    print(e.output.decode('utf-8'))
     sys.exit(e.returncode)
   print('Done: %s' % ' '.join(command))
 

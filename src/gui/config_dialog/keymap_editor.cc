@@ -53,6 +53,7 @@
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "gui/base/table_util.h"
+#include "gui/base/util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 #include "protocol/commands.pb.h"
@@ -303,7 +304,9 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
                                                    keybinding_delegate_.get());
   mutable_table_widget()->setItemDelegateForColumn(2, commands_delegate_.get());
 
-  setWindowTitle(tr("Mozc keymap editor"));
+  setWindowTitle(tr("[ProductName] keymap editor"));
+  GuiUtil::ReplaceWidgetLabels(this);
+
   CHECK(mutable_table_widget());
   CHECK_EQ(mutable_table_widget()->columnCount(), 3);
   QStringList headers;

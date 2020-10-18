@@ -37,7 +37,6 @@
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/util.h"
 #include "gui/post_install_dialog/post_install_dialog.h"
 
@@ -64,10 +63,9 @@ int RunPostInstallDialog(int argc, char *argv[]) {
   mozc::ScopedCOMInitializer com_initializer;
 #endif
 
-  auto app = mozc::gui::Util::InitQt(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
-      "post_install_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("post_install_dialog");
 
   mozc::gui::PostInstallDialog dialog;
   dialog.exec();

@@ -36,10 +36,10 @@ import codecs
 def ReadCSV(file_name):
   """Read CSV file."""
   # Do not use csv reader module because it does not support unicode
-  return [GetCells(line) for line in codecs.open(file_name,
-                                                 'r',
-                                                 'shift_jis',
-                                                 errors='replace')]
+  return [
+      GetCells(line)
+      for line in codecs.open(file_name, 'r', 'cp932', errors='replace')
+  ]
 
 
 def GetCells(line):

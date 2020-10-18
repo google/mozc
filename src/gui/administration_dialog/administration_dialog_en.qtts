@@ -5,17 +5,17 @@
     <name>AdministrationDialog</name>
     <message>
         <location filename="administration_dialog.ui" line="32"/>
-        <source>Mozc administrator settings</source>
+        <source>[ProductName] administrator settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="administration_dialog.ui" line="60"/>
-        <source>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
+        <source>Help make [ProductName] better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="administration_dialog.ui" line="108"/>
-        <source>Disable Mozc for UAC-elevated applications</source>
+        <source>Disable [ProductName] for UAC-elevated applications</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -31,7 +31,7 @@
         <location filename="administration_dialog.cc" line="74"/>
         <location filename="administration_dialog.cc" line="91"/>
         <location filename="administration_dialog.cc" line="105"/>
-        <source>Mozc administration settings</source>
+        <source>[ProductName] administration settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

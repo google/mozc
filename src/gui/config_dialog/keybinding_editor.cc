@@ -49,6 +49,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -505,6 +506,8 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
   QObject::connect(KeyBindingEditorbuttonBox,
                    SIGNAL(clicked(QAbstractButton *)), this,
                    SLOT(Clicked(QAbstractButton *)));
+
+  GuiUtil::ReplaceWidgetLabels(this);
 
   setFocusProxy(KeyBindingLineEdit);
 }

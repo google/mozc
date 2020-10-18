@@ -39,6 +39,7 @@
 #include "base/run_level.h"
 #include "base/util.h"
 #include "gui/base/setup_util.h"
+#include "gui/base/util.h"
 #include "usage_stats/usage_stats.h"
 
 #ifdef OS_WIN
@@ -65,6 +66,8 @@ PostInstallDialog::PostInstallDialog() : setuputil_(new SetupUtil()) {
 
   // import MS-IME by default
   migrateDefaultIMEUserDictionaryCheckBox->setChecked(true);
+
+  GuiUtil::ReplaceWidgetLabels(this);
 }
 
 PostInstallDialog::~PostInstallDialog() {}

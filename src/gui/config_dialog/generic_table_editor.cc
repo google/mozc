@@ -44,6 +44,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "gui/base/util.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
@@ -111,6 +112,7 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
   editorTableWidget->verticalHeader()->setDefaultSectionSize(
       GetTableHeight(editorTableWidget));
 
+  GuiUtil::ReplaceWidgetLabels(this);
   UpdateMenuStatus();
 }
 

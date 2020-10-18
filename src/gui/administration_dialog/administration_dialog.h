@@ -52,6 +52,7 @@ class AdministrationDialog : public QDialog, private Ui::AdministrationDialog {
 
  private:
   bool CanStartService();
+  QString dialog_title_;
 };
 }  // namespace gui
 }  // namespace mozc

@@ -5,17 +5,17 @@
     <name>PostInstallDialog</name>
     <message>
         <location filename="post_install_dialog.ui" line="32"/>
-        <source>Mozc</source>
+        <source>[ProductName]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="post_install_dialog.ui" line="63"/>
-        <source>Migrate MSIME&apos;s user dictionary to Mozc</source>
+        <source>Migrate MSIME&apos;s user dictionary to [ProductName]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="post_install_dialog.ui" line="73"/>
-        <source>Set Mozc as the default IME</source>
+        <source>Set [ProductName] as the default IME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

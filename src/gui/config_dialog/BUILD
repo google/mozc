@@ -136,6 +136,8 @@ qt_rcc_mozc(
         "config_dialog_ja.qm",
         "keymap_en.qm",
         "keymap_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
     ],
     outs = ["qrc_config_dialog.cc"],
     qrc_file = "config_dialog.qrc",

@@ -59,7 +59,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Mozc</string>
+   <string>[ProductName]</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
@@ -90,7 +90,7 @@
      <item row="5" column="0" colspan="4">
       <widget class="QCheckBox" name="migrateDefaultIMEUserDictionaryCheckBox">
        <property name="text">
-        <string>Migrate MSIME's user dictionary to Mozc</string>
+        <string>Migrate MSIME's user dictionary to [ProductName]</string>
        </property>
        <property name="checked">
         <bool>true</bool>
@@ -100,7 +100,7 @@
      <item row="3" column="0" colspan="4">
       <widget class="QCheckBox" name="setAsDefaultCheckBox">
        <property name="text">
-        <string>Set Mozc as the default IME</string>
+        <string>Set [ProductName] as the default IME</string>
        </property>
        <property name="checked">
         <bool>true</bool>
