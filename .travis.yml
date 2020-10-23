@@ -28,7 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 sudo: required
-dist: trusty
+dist: focal
 osx_image: xcode9.2
 
 os:
@@ -40,20 +40,15 @@ language: cpp
 compiler: clang
 
 env:
-  - TARGET_PLATFORM=Android_arm
-  - TARGET_PLATFORM=Android_arm64
-  - TARGET_PLATFORM=Android_x86
-  - TARGET_PLATFORM=Android_x86_64
   - TARGET_PLATFORM=Linux
   - TARGET_PLATFORM=NaCl
   - TARGET_PLATFORM=Mac
 
 before_install:
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update; fi
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y clang python pkg-config curl bzip2 unzip make; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y clang libc++-dev libc++abi-dev python python-six python3-six pkg-config git curl bzip2 unzip make ninja-build; fi
   - if [ $TARGET_PLATFORM == Linux ]; then sudo apt-get install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then sudo apt-get install -y libc6-i386 lib32stdc++6; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then sudo apt-get install --no-install-recommends openjdk-7-jdk openjdk-7-jre-headless libjsr305-java ant zip libc6-i386 lib32stdc++6 lib32ncurses5 lib32z1; fi
 
 install:
   - if [ $TRAVIS_OS_NAME == linux ]; then git -C src/third_party clone https://chromium.googlesource.com/chromium/tools/depot_tools.git; fi
@@ -64,21 +59,9 @@ install:
   - if [ $TARGET_PLATFORM == Mac ]; then export PATH="$PATH":`pwd`/src/third_party/depot_tools; fi
   - if [ $TARGET_PLATFORM == Mac ]; then brew update && brew install qt5; fi
   - if [ $TARGET_PLATFORM == NaCl ]; then cd src/third_party && curl -LO http://storage.googleapis.com/nativeclient-mirror/nacl/nacl_sdk/nacl_sdk.zip && unzip nacl_sdk.zip && rm nacl_sdk.zip && cd nacl_sdk && ./naclsdk install pepper_49 && cd ../../../; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then jdk_switcher use openjdk7; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then cd src/third_party && curl -LO http://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip && unzip -q android-ndk-r16b-linux-x86_64.zip && rm android-ndk-r16b-linux-x86_64.zip && curl -L http://dl.google.com/android/android-sdk_r24.1.2-linux.tgz | tar -zx && cd ../../; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export ANDROID_NDK_HOME=`pwd`/src/third_party/android-ndk-r16b ; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export ANDROID_HOME=`pwd`/src/third_party/android-sdk-linux ; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then export PATH="$PATH":${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter android-22; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter build-tools-22.0.0; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then echo y | android update sdk --all --force --no-ui --filter platform-tool; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then mkdir -p ${ANDROID_HOME}/extras/android; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then curl -LO https://dl.google.com/dl/android/repository/support_r23.1.1.zip && unzip -d ${ANDROID_HOME}/extras/android support_r23.1.1.zip support/v13/android-support-v13.jar && rm support_r23.1.1.zip; fi
 
 script:
   - cd ./src
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then python build_mozc.py gyp --target_platform=Android --android_arch=${TARGET_PLATFORM:8:6}; fi
-  - if [ ${TARGET_PLATFORM:0:7} == Android ]; then python build_mozc.py build -c Release package; fi
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py gyp --target_platform=Linux; fi
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py build -c Release package; fi
   - if [ $TARGET_PLATFORM == Linux ]; then python build_mozc.py runtests -c Release; fi
@@ -92,14 +75,6 @@ matrix:
   exclude:
   - os: linux
     env: TARGET_PLATFORM=Mac
-  - os: osx
-    env: TARGET_PLATFORM=Android_arm
-  - os: osx
-    env: TARGET_PLATFORM=Android_arm64
-  - os: osx
-    env: TARGET_PLATFORM=Android_x86
-  - os: osx
-    env: TARGET_PLATFORM=Android_x86_64
   - os: osx
     env: TARGET_PLATFORM=Linux
   - os: osx
