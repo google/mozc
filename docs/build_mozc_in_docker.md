@@ -36,10 +36,17 @@ python build_mozc.py runtests -c Debug
 Experimental: Instead of build_mozc.py, you can try to use Bazel.
 
 ```
-bazel build package --config oss_linux
+bazel build package --config oss_linux -c opt
 ```
 
-`package` is an alias to build `server:mozc_server` and `gui/tool:mozc_tool`.
+`package` is an alias to build `server:mozc_server`, `gui/tool:mozc_tool`,
+`renderer:mozc_renderer` and `ibus:ibus_mozc`.
+
+Unittests can be executed as follows.
+
+```
+bazel test base:util_test --config oss_linux -c dbg
+```
 
 
 ### Build Mozc library for Android:
