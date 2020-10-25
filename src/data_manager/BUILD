@@ -173,7 +173,6 @@ cc_test_mozc(
         "//base:file_util",
         "//base:obfuscator_support",
         "//base:util",
-        "//testing:googletest",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/strings",

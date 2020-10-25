@@ -129,7 +129,6 @@ cc_test_mozc(
     deps = [
         ":http_client",
         ":http_client_mock",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

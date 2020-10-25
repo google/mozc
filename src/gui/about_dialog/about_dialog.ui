@@ -160,7 +160,7 @@
         </font>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;body&gt;[ProductName] &lt;a href=&quot;https://github.com/google/mozc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;https://github.com/google/mozc/issues&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;body&gt;[ProductName] &lt;a href=&quot;[ProductUrl]&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;[ForumUrl]&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;[ForumName]&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -194,7 +194,6 @@
      <widget class="QLabel" name="label">
       <property name="font">
        <font>
-        <family>メイリオ</family>
         <pointsize>24</pointsize>
         <weight>50</weight>
         <bold>false</bold>

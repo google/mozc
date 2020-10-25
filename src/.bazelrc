@@ -3,6 +3,10 @@ build --cxxopt "-std=c++17"
 build --copt "-funsigned-char"
 build --copt "-Wno-sign-compare"
 build --copt "-Wno-char-subscripts"
+build --host_cxxopt "-std=c++17"
+build --host_copt "-funsigned-char"
+build --host_copt "-Wno-sign-compare"
+build --host_copt "-Wno-char-subscripts"
 build --objccopt "-fsigned-char"
 
 # Linux

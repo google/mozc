@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 #if !GLIB_CHECK_VERSION(2, 31, 0)
   // There are not g_thread_init function in glib>=2.31.0.
   // http://developer.gnome.org/glib/2.31/glib-Deprecated-Thread-APIs.html#g-thread-init
-  g_thread_init(NULL);
+  g_thread_init(nullptr);
 #endif  // GLIB>=2.31.0
   gdk_threads_init();
   gtk_init(&argc, &argv);

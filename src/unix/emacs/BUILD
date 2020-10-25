@@ -99,7 +99,6 @@ cc_test_mozc(
         "//base:util",
         "//base/protobuf:message",
         "//protocol:commands_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

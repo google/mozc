@@ -36,6 +36,29 @@ protobuf_deps()
 #     tag = "v3.6.0.1",  # 2018-06-09
 # )
 
+# Gtest
+new_local_repository(
+    name = "gtest",
+    path = "third_party/gtest",
+    build_file = "third_party/gtest/BUILD.bazel",
+)
+
+# Gtk2
+new_local_repository(
+    name = "gtk2",
+    # This path should be updated per the environment.
+    path = "/usr",  # For Debian
+    build_file = "BUILD.gtk2",
+)
+
+# iBus
+new_local_repository(
+    name = "ibus",
+    # This path should be updated per the environment.
+    path = "/usr",  # For Debian
+    build_file = "BUILD.ibus",
+)
+
 # Japanese Usage Dictionary
 new_local_repository(
     name = "ja_usage_dict",

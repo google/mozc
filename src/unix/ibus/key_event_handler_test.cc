@@ -425,7 +425,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
     handler_->Clear();
 
     std::set<guint> pressed_keys;
-    string key_sequence;
+    std::string key_sequence;
 
     const int kSequenceLength = 100;
     for (int i = 0; i < kSequenceLength; ++i) {

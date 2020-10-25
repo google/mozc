@@ -50,29 +50,31 @@ void defaultLinkActivated(const QString &str) {
   Process::OpenBrowser(std::string(utf8.data(), utf8.length()));
 }
 
-// set document file paths by adding <server_path>/documents/ to file name.
-bool AddLocalPath(std::string *str) {
-  const char *filenames[] = {"credits_en.html"};
-  for (size_t i = 0; i < arraysize(filenames); ++i) {
-    if (str->find(filenames[i]) != std::string::npos) {
-      std::string tmp;
-      const std::string file_path =
-          FileUtil::JoinPath(SystemUtil::GetDocumentDirectory(), filenames[i]);
-      mozc::Util::StringReplace(*str, filenames[i], file_path, false, &tmp);
-      *str = tmp;
-      return true;
-    }
-  }
-  return false;
+QString ReplaceString(const QString &str) {
+  QString replaced(str);
+  replaced.replace("[ProductName]", GuiUtil::ProductName());
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  replaced.replace("[ProductUrl]", "https://www.google.co.jp/ime/");
+  replaced.replace("[ForumUrl]",
+                   "https://support.google.com/gboard/community?hl=ja");
+  replaced.replace("[ForumName]", QObject::tr("issues"));
+#else
+  replaced.replace("[ProductUrl]", "https://github.com/google/mozc");
+  replaced.replace("[ForumUrl]", "https://github.com/google/mozc/issues");
+  replaced.replace("[ForumName]", QObject::tr("issues"));
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
+  const std::string credit_filepath =
+      FileUtil::JoinPath(SystemUtil::GetDocumentDirectory(), "credits_en.html");
+  replaced.replace("credits_en.html", credit_filepath.c_str());
+
+  return replaced;
 }
 
 void SetLabelText(QLabel *label) {
-  std::string label_text = label->text().toStdString();
-  if (AddLocalPath(&label_text)) {
-    label->setText(QString::fromStdString(label_text));
-  }
+  label->setText(ReplaceString(label->text()));
 }
-
 }  // namespace
 
 AboutDialog::AboutDialog(QWidget *parent)

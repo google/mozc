@@ -161,7 +161,7 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(false);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
@@ -170,7 +170,7 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(true);
     command.mutable_output();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
@@ -179,7 +179,7 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(true);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
@@ -189,7 +189,7 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
         command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_TRUE(manager.ShouldShowCandidateWindow(command));
   }
 }
@@ -201,7 +201,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(false);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -210,7 +210,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(true);
     command.mutable_output();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -219,7 +219,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(true);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -230,7 +230,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
         command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -241,7 +241,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
         command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -254,7 +254,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     commands::InformationList *usage = candidates->mutable_usages();
     usage->add_information();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -269,7 +269,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
 
     candidates->set_focused_index(3);
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -285,7 +285,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_index(0);
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -301,7 +301,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_information_id(0);
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_TRUE(manager.ShouldShowInfolistWindow(command));
   }
 }

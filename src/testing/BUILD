@@ -70,14 +70,14 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
-    name = "gtest_main",
+    name = "gunit_main_internal",
     testonly = 1,
     srcs = ["base/internal/gtest_main.cc"],
+    visibility = ["//visibility:private"],
     deps = [
-        ":googletest",
+        ":gunit",
         "//base",
         "//base:flags",
-        ":gunit",
     ] + select_mozc(
         client = [
             "//base:init_mozc",
@@ -96,7 +96,6 @@ cc_library_mozc(
     hdrs = ["base/public/nacl_mock_module.h"],
     deps = select_mozc(
         nacl = [
-            ":googletest",
             ":gunit",
             "//base",
             "//base:init_mozc",
@@ -113,9 +112,13 @@ cc_library_mozc(
 cc_library_mozc(
     name = "gunit_main",
     testonly = 1,
-    hdrs = ["base/public/gunit.h"],
+    hdrs = [
+        "base/public/gmock.h",
+        "base/public/googletest.h",
+        "base/public/gunit.h",
+    ],
     deps = [":gunit"] + select_mozc(
-        client = [":gtest_main"],
+        client = [":gunit_main_internal"],
         default = ["//testing/base/public:gunit_main"],
     ),
 )
@@ -132,7 +135,6 @@ cc_library_mozc(
     hdrs = ["base/public/testing_util.h"],
     deps = [
         ":gunit",
-        ":testing",
         "//base",
         "//base:logging",
         "//base:port",
@@ -145,37 +147,35 @@ cc_library_mozc(
 cc_library_mozc(
     name = "gunit",
     testonly = 1,
-    hdrs = ["base/public/gunit.h"],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":googletest",
-        "//testing/base/public:gunit_for_library_testonly",
-    ],
-)
-
-cc_library_mozc(
-    name = "googletest",
-    testonly = 1,
     srcs = select_mozc(
         client = ["base/internal/googletest.cc"],
         default = [],
     ),
-    hdrs = ["base/public/googletest.h"],
-    visibility = [
-        "//:__subpackages__",
+    hdrs = [
+        "base/public/gmock.h",
+        "base/public/googletest.h",
+        "base/public/gunit.h",
     ],
     deps = select_mozc(
         client = [
             ":mozc_data_dir_header",
             "//base",
             "//base:logging",
+            "//base:file_util",
+            "//base:flags",
+            "//base:util",
         ],
         default = ["//testing/base/public:gunit_for_library_testonly"],
-    ) + [
-        "//base:file_util",
-        "//base:flags",
-        "//base:util",
-    ],
+        oss = [
+            "@gtest//:gtest",
+            ":mozc_data_dir_header",
+            "//base",
+            "//base:logging",
+            "//base:file_util",
+            "//base:flags",
+            "//base:util",
+        ],
+    ),
 )
 
 cc_library_mozc(
@@ -187,7 +187,7 @@ cc_library_mozc(
         "//:__subpackages__",
     ],
     deps = [
-        ":googletest",
+        ":gunit",
         "//base",
         "//base:file_util",
         "//base:logging",
@@ -195,17 +195,5 @@ cc_library_mozc(
         "//base:system_util",
         "//base:util",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library_mozc(
-    name = "gmock",
-    testonly = 1,
-    hdrs = ["base/public/gmock.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
-    deps = [
-        "//testing/base/public:gunit_for_library_testonly",
     ],
 )

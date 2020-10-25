@@ -214,8 +214,8 @@ bool IsCompatibleCompositionForm(const CompositionForm &form,
 bool ExtractParams(LayoutManager *layout, int compatibility_mode,
                    const commands::RendererCommand::ApplicationInfo &app_info,
                    CandidateWindowLayoutParams *params) {
-  DCHECK_NE(NULL, layout);
-  DCHECK_NE(NULL, params);
+  DCHECK_NE(nullptr, layout);
+  DCHECK_NE(nullptr, params);
 
   params->window_handle.Clear();
   params->char_pos.Clear();
@@ -417,13 +417,13 @@ std::wstring ComposePreeditText(const commands::Preedit &preedit,
                                 string *preedit_utf8,
                                 std::vector<int> *segment_indices,
                                 std::vector<CharacterRange> *segment_ranges) {
-  if (preedit_utf8 != NULL) {
+  if (preedit_utf8 != nullptr) {
     preedit_utf8->clear();
   }
-  if (segment_indices != NULL) {
+  if (segment_indices != nullptr) {
     segment_indices->clear();
   }
-  if (segment_ranges != NULL) {
+  if (segment_ranges != nullptr) {
     segment_ranges->clear();
   }
   std::wstring value;
@@ -434,16 +434,16 @@ std::wstring ComposePreeditText(const commands::Preedit &preedit,
     std::wstring segment_value;
     mozc::Util::UTF8ToWide(segment.value(), &segment_value);
     value.append(segment_value);
-    if (preedit_utf8 != NULL) {
+    if (preedit_utf8 != nullptr) {
       preedit_utf8->append(segment.value());
     }
     const int text_length = segment_value.size();
-    if (segment_indices != NULL) {
+    if (segment_indices != nullptr) {
       for (size_t i = 0; i < text_length; ++i) {
         segment_indices->push_back(segment_index);
       }
     }
-    if (segment_ranges != NULL) {
+    if (segment_ranges != nullptr) {
       CharacterRange range;
       range.begin = total_characters;
       range.length = text_length;
@@ -458,7 +458,7 @@ bool CalcLayoutWithTextWrappingInternal(CDCHandle dc, const std::wstring &str,
                                         const int maximum_line_length,
                                         const int initial_offset,
                                         std::vector<LineLayout> *line_layouts) {
-  DCHECK(line_layouts != NULL);
+  DCHECK(line_layouts != nullptr);
   if (initial_offset < 0 || maximum_line_length <= 0 ||
       maximum_line_length < initial_offset) {
     LOG(ERROR) << "(initial_offset, maximum_line_length) = (" << initial_offset
@@ -497,7 +497,7 @@ bool CalcLayoutWithTextWrappingInternal(CDCHandle dc, const std::wstring &str,
     CSize dummy;
     BOOL result = dc.GetTextExtentExPoint(
         str.c_str() + string_index, remaining_chars, &dummy, remaining_extent,
-        &allowable_chars, NULL);
+        &allowable_chars, nullptr);
     if (result == FALSE) {
       const int error = ::GetLastError();
       LOG(ERROR) << "GetTextExtentExPoint failed. error = " << error;
@@ -579,7 +579,7 @@ class NativeSystemPreferenceAPI : public SystemPreferenceInterface {
   virtual ~NativeSystemPreferenceAPI() {}
 
   virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == NULL) {
+    if (log_font == nullptr) {
       return false;
     }
 
@@ -642,10 +642,10 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
                                       const POINT &logical_coordinate,
                                       POINT *physical_coordinate) {
-    if (physical_coordinate == NULL) {
+    if (physical_coordinate == nullptr) {
       return false;
     }
-    DCHECK_NE(NULL, physical_coordinate);
+    DCHECK_NE(nullptr, physical_coordinate);
     if (!::IsWindow(window_handle)) {
       return false;
     }
@@ -714,7 +714,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetWindowClassName(HWND window_handle,
                                   std::wstring *class_name) {
-    if (class_name == NULL) {
+    if (class_name == nullptr) {
       return false;
     }
     wchar_t class_name_buffer[1024] = {};
@@ -771,7 +771,7 @@ class SystemPreferenceEmulatorImpl : public SystemPreferenceInterface {
   virtual ~SystemPreferenceEmulatorImpl() {}
 
   virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == NULL) {
+    if (log_font == nullptr) {
       return false;
     }
     *log_font = default_gui_font_;
@@ -804,11 +804,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetWindowRect(HWND window_handle, RECT *rect) {
-    if (rect == NULL) {
+    if (rect == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     *rect = info->window_rect;
@@ -817,11 +817,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetClientRect(HWND window_handle, RECT *rect) {
-    if (rect == NULL) {
+    if (rect == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     *rect = CRect(CPoint(0, 0), info->client_area_size);
@@ -830,11 +830,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool ClientToScreen(HWND window_handle, POINT *point) {
-    if (point == NULL) {
+    if (point == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     *point = (info->window_rect.TopLeft() + info->client_area_offset + *point);
@@ -843,8 +843,8 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool IsWindow(HWND window_handle) {
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     return true;
@@ -863,11 +863,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetWindowClassName(HWND window_handle,
                                   std::wstring *class_name) {
-    if (class_name == NULL) {
+    if (class_name == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     *class_name = info->class_name;
@@ -878,14 +878,14 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
                                       const POINT &logical_coordinate,
                                       POINT *physical_coordinate) {
-    if (physical_coordinate == NULL) {
+    if (physical_coordinate == nullptr) {
       return false;
     }
 
-    DCHECK_NE(NULL, physical_coordinate);
+    DCHECK_NE(nullptr, physical_coordinate);
     const WindowInfo *root_info =
-        GetWindowInfomation(GetRootWindow(window_handle));
-    if (root_info == NULL) {
+        GetWindowInformation(GetRootWindow(window_handle));
+    if (root_info == nullptr) {
       return false;
     }
 
@@ -930,9 +930,9 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  const WindowInfo *GetWindowInfomation(HWND hwnd) {
+  const WindowInfo *GetWindowInformation(HWND hwnd) {
     if (window_map_.find(hwnd) == window_map_.end()) {
-      return NULL;
+      return nullptr;
     }
     return &(window_map_.find(hwnd)->second);
   }
@@ -1463,7 +1463,7 @@ bool LayoutIndicatorWindowByCaretInfo(const CandidateWindowLayoutParams &params,
   const HWND target_window = params.window_handle.value();
   CRect rect_in_logical_coord = params.caret_rect.value();
 
-  // Use font height if available to improve the accuracy of exlude region.
+  // Use font height if available to improve the accuracy of exclude region.
   const int font_height = GetAbsoluteFontHeight(params);
   const bool is_vertical = IsVerticalWriting(params);
 
@@ -1585,7 +1585,7 @@ void IndicatorWindowLayout::Clear() {
 bool LayoutManager::CalcLayoutWithTextWrapping(
     const LOGFONTW &font, const std::wstring &text, int maximum_line_length,
     int initial_offset, std::vector<LineLayout> *line_layouts) {
-  if (line_layouts == NULL) {
+  if (line_layouts == nullptr) {
     return false;
   }
   line_layouts->clear();
@@ -1598,7 +1598,7 @@ bool LayoutManager::CalcLayoutWithTextWrapping(
 
   CDC dc;
   // Create a memory DC compatible with desktop DC.
-  dc.CreateCompatibleDC(CDC(::GetDC(NULL)));
+  dc.CreateCompatibleDC(CDC(::GetDC(nullptr)));
   CFontHandle old_font = dc.SelectFont(new_font);
 
   const bool result = CalcLayoutWithTextWrappingInternal(
@@ -1611,7 +1611,7 @@ bool LayoutManager::CalcLayoutWithTextWrapping(
 void LayoutManager::GetPointInPhysicalCoords(HWND window_handle,
                                              const POINT &point,
                                              POINT *result) const {
-  if (result == NULL) {
+  if (result == nullptr) {
     return;
   }
 
@@ -1633,7 +1633,7 @@ void LayoutManager::GetPointInPhysicalCoords(HWND window_handle,
 void LayoutManager::GetRectInPhysicalCoords(HWND window_handle,
                                             const RECT &rect,
                                             RECT *result) const {
-  if (result == NULL) {
+  if (result == nullptr) {
     return;
   }
 
@@ -1677,10 +1677,10 @@ bool LayoutManager::LayoutCompositionWindow(
     const commands::RendererCommand &command,
     std::vector<CompositionWindowLayout> *composition_window_layouts,
     CandidateWindowLayout *candidate_layout) const {
-  if (composition_window_layouts != NULL) {
+  if (composition_window_layouts != nullptr) {
     composition_window_layouts->clear();
   }
-  if (candidate_layout != NULL) {
+  if (candidate_layout != nullptr) {
     candidate_layout->Clear();
   }
 
@@ -1756,7 +1756,7 @@ bool LayoutManager::LayoutCompositionWindow(
 
   const HWND root_window_handle =
       window_position_->GetRootWindow(target_window_handle);
-  if (root_window_handle == NULL) {
+  if (root_window_handle == nullptr) {
     LOG(ERROR) << "GetRootWindow failed.";
     return false;
   }
@@ -1860,7 +1860,7 @@ bool LayoutManager::LayoutCompositionWindow(
     return false;
   }
 
-  if (composition_window_layouts != NULL) {
+  if (composition_window_layouts != nullptr) {
     composition_window_layouts->clear();
   }
 
@@ -1996,7 +1996,7 @@ bool LayoutManager::LayoutCompositionWindow(
     }
 
     if (total_characters <= cursor_index &&
-        cursor_index < next_total_characters && candidate_layout != NULL &&
+        cursor_index < next_total_characters && candidate_layout != nullptr &&
         !suggest_window_never_hides_preedit) {
       const int local_cursor_index = cursor_index - total_characters;
       CPoint cursor_pos;
@@ -2085,7 +2085,7 @@ bool LayoutManager::LayoutCompositionWindow(
       }
       window_layout.marker_layouts.push_back(marker);
     }
-    if (composition_window_layouts != NULL) {
+    if (composition_window_layouts != nullptr) {
       composition_window_layouts->push_back(window_layout);
     }
     total_line_offset += layout.line_width;
@@ -2095,7 +2095,8 @@ bool LayoutManager::LayoutCompositionWindow(
   // In this case, suggest window moves to the next line of the preedit text
   // so that suggest window never hides the preedit.
   if (suggest_window_never_hides_preedit &&
-      (composition_window_layouts->size() > 0) && (candidate_layout != NULL)) {
+      (composition_window_layouts->size() > 0) &&
+      (candidate_layout != nullptr)) {
     // Initialize the |exclusion_area| with invalid data. These values will
     // be updated to be valid at the first turn of the next for-loop.
     // For example, |exclusion_area.left| will be updated as follows.
@@ -2136,7 +2137,7 @@ bool LayoutManager::LayoutCompositionWindow(
 bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
                                         const POINT &src_point,
                                         POINT *dest_point) const {
-  if (dest_point == NULL) {
+  if (dest_point == nullptr) {
     return false;
   }
 
@@ -2159,7 +2160,7 @@ bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
 bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
                                        const RECT &src_rect,
                                        RECT *dest_rect) const {
-  if (dest_rect == NULL) {
+  if (dest_rect == nullptr) {
     return false;
   }
 
@@ -2191,7 +2192,7 @@ bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
 bool LayoutManager::LocalPointToScreen(HWND src_window_handle,
                                        const POINT &src_point,
                                        POINT *dest_point) const {
-  if (dest_point == NULL) {
+  if (dest_point == nullptr) {
     return false;
   }
 
@@ -2216,7 +2217,7 @@ bool LayoutManager::LocalPointToScreen(HWND src_window_handle,
 bool LayoutManager::LocalRectToScreen(HWND src_window_handle,
                                       const RECT &src_rect,
                                       RECT *dest_rect) const {
-  if (dest_rect == NULL) {
+  if (dest_rect == nullptr) {
     return false;
   }
 
@@ -2518,6 +2519,6 @@ bool LayoutManager::LayoutIndicatorWindow(
   return true;
 }
 
-}  // namespace mozc
+}  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

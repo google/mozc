@@ -87,7 +87,7 @@ void *NaclTestInstance::ThreadFunc(void *ptr) {
   const int ret = RUN_ALL_TESTS();
   pp::Module::Get()->core()->CallOnMainThread(
       0, self->cc_factory_.NewCallback(&NaclTestInstance::TestFinish), ret);
-  return NULL;
+  return nullptr;
 }
 
 void NaclTestInstance::TestFinish(int32_t result) {
@@ -126,7 +126,7 @@ class NaclTestModule : public pp::Module {
 Module *CreateModule() {
   int argc = 1;
   char argv0[] = "NaclModule";
-  char *argv_body[] = {argv0, NULL};
+  char *argv_body[] = {argv0, nullptr};
   char **argv = argv_body;
   mozc::InitMozc(argv[0], &argc, &argv);
   testing::InitGoogleTest(&argc, argv);

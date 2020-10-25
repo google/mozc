@@ -91,8 +91,8 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
   virtual ~ParentApplicationWatchDog() {}
 
   void Signaled(ProcessWatchDog::SignalType type) {
-    if (renderer_server_ == NULL) {
-      LOG(ERROR) << "renderer_server is NULL";
+    if (renderer_server_ == nullptr) {
+      LOG(ERROR) << "renderer_server is nullptr";
       return;
     }
     if (type == ProcessWatchDog::PROCESS_SIGNALED ||
@@ -132,8 +132,8 @@ class RendererServerSendCommand : public client::SendCommandInterface {
     }
 
     HWND target = reinterpret_cast<HWND>(receiver_handle_);
-    if (target == NULL) {
-      LOG(ERROR) << "target window is NULL";
+    if (target == nullptr) {
+      LOG(ERROR) << "target window is nullptr";
       return false;
     }
     UINT mozc_msg = ::RegisterWindowMessageW(kMessageReceiverMessageName);
@@ -168,7 +168,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
 RendererServer::RendererServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
       timeout_(0),
-      renderer_interface_(NULL),
+      renderer_interface_(nullptr),
       ALLOW_THIS_IN_INITIALIZER_LIST(
           watch_dog_(new ParentApplicationWatchDog(this))),
       send_command_(new RendererServerSendCommand) {
@@ -192,7 +192,7 @@ RendererServer::~RendererServer() {}
 void RendererServer::SetRendererInterface(
     RendererInterface *renderer_interface) {
   renderer_interface_ = renderer_interface;
-  if (renderer_interface_ != NULL) {
+  if (renderer_interface_ != nullptr) {
     renderer_interface_->SetSendCommandInterface(send_command_.get());
   }
 }
@@ -238,8 +238,8 @@ bool RendererServer::Process(const char *request, size_t request_size,
 
 bool RendererServer::ExecCommandInternal(
     const commands::RendererCommand &command) {
-  if (renderer_interface_ == NULL) {
-    LOG(ERROR) << "renderer_interface is NULL";
+  if (renderer_interface_ == nullptr) {
+    LOG(ERROR) << "renderer_interface is nullptr";
     return false;
   }
 

@@ -38,7 +38,7 @@ namespace gtk {
 
 GtkWindowBase::GtkWindowBase(GtkWrapperInterface *gtk)
     : gtk_(gtk),
-      send_command_interface_(NULL),
+      send_command_interface_(nullptr),
       window_(gtk_->GtkWindowNew(GTK_WINDOW_POPUP)),
       canvas_(gtk_->GtkDrawingAreaNew()) {
   gtk_->GSignalConnect(window_, "destroy", G_CALLBACK(OnDestroyThunk), this);

@@ -123,7 +123,6 @@ cc_test_mozc(
         "//protocol:config_proto",
         "//session/internal:candidate_list",
         "//session/internal:keymap",
-        "//testing:googletest",
         "//testing:gunit_main",
         "//testing:testing_util",
         "//transliteration",
@@ -151,7 +150,6 @@ cc_test_mozc(
         "//engine:mock_data_engine_factory",
         "//protocol:commands_proto",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -270,7 +268,6 @@ cc_test_mozc(
         "//rewriter:rewriter_interface",
         "//session/internal:ime_context",
         "//session/internal:keymap",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -384,7 +381,6 @@ cc_library_mozc(
         "//storage:lru_cache",
         "//storage:registry",
         "//testing",
-        "//testing:googletest",
         "//testing:gunit_prod",
         "//usage_stats:usage_stats_testing_util",
     ],
@@ -416,7 +412,6 @@ cc_test_mozc(
         "//engine:user_data_manager_mock",
         "//protocol:commands_proto",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
@@ -459,7 +454,6 @@ cc_test_mozc(
         "//base",
         "//base:scheduler",
         "//base:system_util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -567,7 +561,6 @@ cc_test_mozc(
         "//base:port",
         "//base:util",
         "//client:client_mock",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -610,7 +603,6 @@ cc_test_mozc(
         "//config:stats_config_util",
         "//config:stats_config_util_mock",
         "//protocol:commands_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
         "//usage_stats",
         "//usage_stats:usage_stats_proto",
@@ -645,7 +637,6 @@ cc_test_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//session/internal:keymap",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -681,7 +672,6 @@ cc_test_mozc(
         "//config:config_handler",
         "//protocol:commands_proto",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -708,7 +698,6 @@ cc_test_mozc(
         "//base",
         "//base:port",
         "//protocol:commands_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -839,7 +828,6 @@ cc_test_mozc(
         ":generic_storage_manager",
         "//base:file_util",
         "//base:util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

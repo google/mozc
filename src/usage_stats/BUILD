@@ -98,7 +98,6 @@ cc_test_mozc(
         "//config:stats_config_util_mock",
         "//storage:registry",
         "//storage:storage_interaface",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -133,7 +132,6 @@ cc_test_mozc(
         "//base:system_util",
         "//base:version",
         "//storage:registry",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

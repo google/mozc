@@ -59,7 +59,8 @@ namespace {
 #ifdef OS_WIN
 string GetProgramPath() {
   wchar_t w_path[MAX_PATH];
-  const DWORD char_size = GetModuleFileNameW(NULL, w_path, arraysize(w_path));
+  const DWORD char_size =
+      GetModuleFileNameW(nullptr, w_path, arraysize(w_path));
   if (char_size == 0) {
     LOG(ERROR) << "GetModuleFileNameW failed.  error = " << ::GetLastError();
     return "";

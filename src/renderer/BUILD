@@ -30,6 +30,7 @@
 
 load(
     "//:build_defs.bzl",
+    "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
     "select_mozc",
@@ -129,7 +130,6 @@ cc_test_mozc(
         "//base:util",
         "//ipc:ipc_test_util",
         "//protocol:renderer_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -181,13 +181,11 @@ cc_library_mozc(
 cc_library_mozc(
     name = "renderer_interface",
     hdrs = ["renderer_interface.h"],
-    visibility = ["//visibility:private"],
 )
 
 cc_library_mozc(
     name = "unix_const",
     hdrs = ["unix/const.h"],
-    visibility = ["//visibility:private"],
     deps = ["//base:port"],
 )
 
@@ -195,10 +193,9 @@ cc_library_mozc(
     name = "renderer_mock",
     testonly = 1,
     hdrs = ["renderer_mock.h"],
-    visibility = ["//visibility:private"],
     deps = [
         ":renderer_interface",
-        "//testing:gmock",
+        "//testing:gunit",
     ],
 )
 
@@ -217,4 +214,152 @@ cc_test_mozc(
         "//base:coordinates",
         "//testing:gunit_main",
     ],
+)
+
+cc_library_mozc(
+    name = "renderer_style_handler",
+    srcs = ["renderer_style_handler.cc"],
+    hdrs = ["renderer_style_handler.h"],
+    deps = [
+        "//base:singleton",
+        "//protocol:renderer_proto",
+    ],
+)
+
+cc_test_mozc(
+    name = "renderer_style_handler_test",
+    size = "small",
+    srcs = ["renderer_style_handler_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":renderer_style_handler",
+        "//protocol:renderer_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+# This rule is only for Linux application build.
+cc_library_mozc(
+    name = "mozc_renderer_lib",
+    srcs = select_mozc(
+        linux = [
+            "unix/cairo_factory.cc",
+            "unix/cairo_wrapper.cc",
+            "unix/candidate_window.cc",
+            "unix/draw_tool.cc",
+            "unix/font_spec.cc",
+            "unix/gtk_window_base.cc",
+            "unix/gtk_wrapper.cc",
+            "unix/infolist_window.cc",
+            "unix/pango_wrapper.cc",
+            "unix/text_renderer.cc",
+            "unix/unix_renderer.cc",
+            "unix/unix_server.cc",
+            "unix/window_manager.cc",
+        ],
+    ),
+    hdrs = select_mozc(
+        linux = [
+            "unix/cairo_factory.h",
+            "unix/cairo_factory_interface.h",
+            "unix/cairo_wrapper.h",
+            "unix/cairo_wrapper_interface.h",
+            "unix/candidate_window.h",
+            "unix/const.h",
+            "unix/draw_tool.h",
+            "unix/draw_tool_interface.h",
+            "unix/font_spec.h",
+            "unix/font_spec_interface.h",
+            "unix/gtk_window_base.h",
+            "unix/gtk_window_interface.h",
+            "unix/gtk_wrapper.h",
+            "unix/gtk_wrapper_interface.h",
+            "unix/infolist_window.h",
+            "unix/pango_wrapper.h",
+            "unix/pango_wrapper_interface.h",
+            "unix/text_renderer.h",
+            "unix/text_renderer_interface.h",
+            "unix/unix_renderer.h",
+            "unix/unix_server.h",
+            "unix/window_manager.h",
+            "unix/window_manager_interface.h",
+        ],
+    ),
+    deps = [
+        "//base",
+        "//client",
+        "//config:stats_config_util",
+        "//ipc",
+        "//protocol:config_proto",
+        "//protocol:renderer_proto",
+        ":renderer_server",
+        ":renderer_style_handler",
+        ":table_layout",
+        ":window_util",
+    ] + select_mozc(
+        oss_linux = ["@gtk2//:gtk2"],
+    ),
+)
+
+# This rule is only for Linux application build.
+cc_binary_mozc(
+    name = "mozc_renderer",
+    srcs = ["mozc_renderer_main.cc"],
+    defines = select_mozc(
+        linux = ["ENABLE_GTK_RENDERER"],
+    ),
+    deps = [
+        ":mozc_renderer_lib",
+        "//base:crash_report_handler",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:run_level",
+        "//base:system_util",
+        "//base:util",
+        "//config:stats_config_util",
+    ] + select_mozc(
+        linux = [":renderer_client"],
+    ),
+)
+
+# This rule is only for Linux application build.
+cc_test_mozc(
+    name = "gtk_renderer_test",
+    srcs = select_mozc(
+        linux = [
+            "renderer_mock.h",
+            "table_layout_mock.h",
+            "unix/cairo_factory_interface.h",
+            "unix/cairo_factory_mock.h",
+            "unix/cairo_wrapper_interface.h",
+            "unix/cairo_wrapper_mock.h",
+            "unix/candidate_window_test.cc",
+            "unix/draw_tool_interface.h",
+            "unix/draw_tool_mock.h",
+            "unix/draw_tool_test.cc",
+            "unix/font_spec_interface.h",
+            "unix/font_spec_test.cc",
+            "unix/gtk_window_base_test.cc",
+            "unix/gtk_window_interface.h",
+            "unix/gtk_window_mock.h",
+            "unix/gtk_wrapper_interface.h",
+            "unix/gtk_wrapper_mock.h",
+            "unix/infolist_window_test.cc",
+            "unix/pango_wrapper_interface.h",
+            "unix/text_renderer_interface.h",
+            "unix/text_renderer_mock.h",
+            "unix/text_renderer_test.cc",
+            "unix/unix_renderer_test.cc",
+            "unix/unix_server_test.cc",
+            "unix/window_manager_interface.h",
+            "unix/window_manager_mock.h",
+            "unix/window_manager_test.cc",
+        ],
+    ),
+    deps = [
+        ":mozc_renderer_lib",
+        "//testing:gunit_main",
+    ] + select_mozc(
+        oss_linux = ["@gtk2//:gtk2"],
+    ),
 )

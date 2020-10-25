@@ -94,32 +94,41 @@ config_setting(
 # Don't depend on this directly. Use cc_(library|binary|test)_mozc rule instead.
 cc_library(
     name = "macro",
-    defines = select({
-        "//tools/cc_target_os:android": [
+    defines = select_mozc(
+        android = [
             "MOZC_DISABLE_SESSION_WATCHDOG",
             "NO_USAGE_REWRITER",
         ],
-        "//tools/cc_target_os:oss_android": [
+        default = [
+        ],
+        ios = [
             "MOZC_DISABLE_SESSION_WATCHDOG",
             "NO_USAGE_REWRITER",
         ],
-        "//tools/cc_target_os:linux": [
+        linux = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
             "OS_LINUX",
         ],
-        "//tools/cc_target_os:oss_linux": [
+        nacl = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
+            "MOZC_USE_MOZC_TESTING",
+            "NO_USAGE_REWRITER",
+        ],
+        oss_android = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
+            "NO_USAGE_REWRITER",
+        ],
+        oss_linux = [
             "MOZC_BUILD",
             "OS_LINUX",
         ],
-        "//tools/cc_target_os:wasm": [
+        wasm = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
             "MOZC_DISABLE_SESSION_WATCHDOG",
             "NO_USAGE_REWRITER",
             "OS_WASM",
         ],
-        "//conditions:default": [
-        ],
-    }),
+    ),
     visibility = ["//:__subpackages__"],
 )
 
@@ -137,7 +146,9 @@ filegroup(
         oss_android = ["//android/jni:mozc_lib"],
         oss_linux = [
             "//gui/tool:mozc_tool",
+            "//renderer:mozc_renderer",
             "//server:mozc_server",
+            "//unix/ibus:ibus_mozc",
         ],
     ),
 )

@@ -114,7 +114,6 @@ cc_test_mozc(
         "//base:logging",
         "//base:port",
         "//base:util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -129,7 +128,6 @@ cc_test_mozc(
         "//base:hash",
         "//base:logging",
         "//base:port",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -165,7 +163,6 @@ cc_test_mozc(
         "//base",
         "//base:file_util",
         "//base:port",
-        "//testing:googletest",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -190,7 +187,6 @@ cc_test_mozc(
         ":memory_storage",
         "//base",
         "//base:port",
-        "//testing:googletest",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -221,7 +217,6 @@ cc_test_mozc(
         ":registry",
         "//base",
         "//base:system_util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -252,7 +247,6 @@ cc_test_mozc(
         "//base:file_util",
         "//base:logging",
         "//base:system_util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

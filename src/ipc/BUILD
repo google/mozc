@@ -134,7 +134,6 @@ cc_test_mozc(
         "//base:thread",
         "//base:util",
         "//base:version",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -177,7 +176,6 @@ cc_test_mozc(
         "//base:system_util",
         "//base:thread",
         "//base:util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -224,7 +222,6 @@ cc_test_mozc(
         "//base:system_util",
         "//base:thread",
         "//base:util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

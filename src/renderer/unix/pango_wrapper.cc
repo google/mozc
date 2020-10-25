@@ -98,9 +98,9 @@ PangoWrapper::PangoWrapper(GdkDrawable *drawable) : gc_(gdk_gc_new(drawable)) {
 
 PangoWrapper::~PangoWrapper() {
   gdk_pango_renderer_set_override_color(GDK_PANGO_RENDERER(renderer_),
-                                        PANGO_RENDER_PART_FOREGROUND, NULL);
-  gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(renderer_), NULL);
-  gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(renderer_), NULL);
+                                        PANGO_RENDER_PART_FOREGROUND, nullptr);
+  gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(renderer_), nullptr);
+  gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(renderer_), nullptr);
   g_object_unref(gc_);
   g_object_unref(context_);
 }

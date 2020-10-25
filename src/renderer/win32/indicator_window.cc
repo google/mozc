@@ -96,7 +96,7 @@ const DWORD kFadingOutInterval = 16;      // msec
 const int kFadingOutAlphaDelta = 32;
 
 double GetDPIScaling() {
-  CDC desktop_dc(::GetDC(NULL));
+  CDC desktop_dc(::GetDC(nullptr));
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   return static_cast<double>(dpi_x) / kDefaultDPI;
 }

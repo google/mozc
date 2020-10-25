@@ -198,3 +198,4 @@ cc_binary_mozc(
         "//base:logging",
     ],
 )
+

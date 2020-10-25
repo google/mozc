@@ -86,7 +86,6 @@ cc_test_mozc(
         "//base:file_util",
         "//base:flags",
         "//base:logging",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -169,7 +168,6 @@ cc_test_mozc(
         "//base:file_util",
         "//base:logging",
         "//base:util",
-        "//testing:googletest",
         "//testing:gunit_main",
         "@com_google_absl//absl/memory",
     ],

@@ -435,8 +435,8 @@ Rect CandidateWindow::GetCandidateColumnInClientCord() const {
 }
 
 void CandidateWindow::OnMouseLeftUp(const Point &pos) {
-  if (send_command_interface_ == NULL) {
-    LOG(ERROR) << "send_command_interface_ is NULL";
+  if (send_command_interface_ == nullptr) {
+    LOG(ERROR) << "send_command_interface_ is nullptr";
     return;
   }
 

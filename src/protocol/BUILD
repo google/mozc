@@ -167,7 +167,10 @@ java_lite_proto_library(
 
 proto_library(
     name = "renderer_proto_full",
-    srcs = ["renderer_command.proto"],
+    srcs = [
+        "renderer_command.proto",
+        "renderer_style.proto",
+    ],
     visibility = ["//visibility:private"],
     deps = [":commands_proto_full"],
 )
@@ -175,7 +178,10 @@ proto_library(
 portable_proto_library(
     name = "renderer_proto",
     config_string = "optimize_mode: SPEED allow_all: true",
-    header_outs = ["renderer_command.pb.h"],
+    header_outs = [
+        "renderer_command.pb.h",
+        "renderer_style.pb.h",
+    ],
     portable_deps = [":commands_proto"],
     proto_deps = [":renderer_proto_full"],
 )

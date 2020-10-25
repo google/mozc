@@ -56,7 +56,7 @@ class KeyTranslator {
  private:
   typedef std::map<guint, commands::KeyEvent::SpecialKey> SpecialKeyMap;
   typedef std::map<guint, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef std::map<guint, std::pair<string, string> > KanaMap;
+  typedef std::map<guint, std::pair<string, std::string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(guint keyval, guint keycode, guint modifiers) const;
@@ -66,7 +66,7 @@ class KeyTranslator {
 
   // Returns true iff |keyval| is a key with a kana assigned.
   bool IsKanaAvailable(guint keyval, guint keycode, guint modifiers,
-                       bool layout_is_jp, string *out) const;
+                       bool layout_is_jp, std::string *out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
   static bool IsAscii(guint keyval, guint keycode, guint modifiers);

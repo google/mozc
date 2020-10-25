@@ -186,8 +186,8 @@ class TestRendererLauncher : public RendererLauncherInterface {
 TEST(RendererClient, InvalidTest) {
   RendererClient client;
 
-  client.SetIPCClientFactory(NULL);
-  client.SetRendererLauncherInterface(NULL);
+  client.SetIPCClientFactory(nullptr);
+  client.SetRendererLauncherInterface(nullptr);
   commands::RendererCommand command;
 
   // IPCClientFactory and Launcher must be set.

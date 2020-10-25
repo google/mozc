@@ -1,0 +1,68 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# This rule is created from pkg-config
+#
+# packages="glib-2.0 gobject-2.0 gthread-2.0 gtk+-2.0 gdk-2.0"
+# copts, hdrs, indludes: pkg-config --cflags $packages
+# linkopts: pkg-config --libs-only-l $packages
+
+cc_library(
+    name = "gtk2",
+    hdrs = glob([
+        "include/atk-1.0/**",
+        "include/blkid/**",
+        "include/cairo/**",
+        "include/freetype2/**",
+        "include/fribidi/**",
+        "include/gdk-pixbuf-2.0/**",
+        "include/glib-2.0/**",
+        "include/gtk-2.0/**",
+        "include/harfbuzz/**",
+        "include/libmount/**",
+        "include/libpng16/**",
+        "include/pango-1.0/**",
+        "include/pixman-1/**",
+        "include/uuid/**",
+        "lib/x86_64-linux-gnu/glib-2.0/include/**",
+        "lib/x86_64-linux-gnu/gtk-2.0/include/**",
+    ]),
+    copts = ["-pthread"],
+    includes = [
+        "include/atk-1.0",
+        "include/blkid",
+        "include/cairo",
+        "include/freetype2",
+        "include/fribidi",
+        "include/gdk-pixbuf-2.0",
+        "include/glib-2.0",
+        "include/gtk-2.0",
+        "include/harfbuzz",
+        "include/libmount",
+        "include/libpng16",
+        "include/pango-1.0",
+        "include/pixman-1",
+        "include/uuid",
+        "lib/x86_64-linux-gnu/glib-2.0/include",
+        "lib/x86_64-linux-gnu/gtk-2.0/include",
+    ],
+    linkopts = [
+        "-latk-1.0",
+        "-lcairo",
+        "-lfontconfig",
+        "-lfreetype",
+        "-lgdk-x11-2.0",
+        "-lgdk-x11-2.0",
+        "-lgdk_pixbuf-2.0",
+        "-lgio-2.0",
+        "-lglib-2.0",
+        "-lgobject-2.0",
+        "-lgthread-2.0",
+        "-lgtk-x11-2.0",
+        "-lharfbuzz",
+        "-lpango-1.0",
+        "-lpangocairo-1.0",
+        "-lpangoft2-1.0",
+    ],
+)

@@ -41,7 +41,7 @@ namespace {
 // Returns an IBusText composed from |preedit| to render preedit text.
 // Caller must release the returned IBusText object.
 IBusText *ComposePreeditText(const commands::Preedit &preedit) {
-  string data;
+  std::string data;
   for (int i = 0; i < preedit.segment_size(); ++i) {
     data.append(preedit.segment(i).value());
   }

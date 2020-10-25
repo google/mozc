@@ -69,7 +69,7 @@ IBusComponent *GetIBusComponent() {
       kComponentName, kComponentDescription,
       mozc::Version::GetMozcVersion().c_str(), kComponentLicense,
       kComponentAuthor, kComponentHomepage, "", kComponentTextdomain);
-  const string icon_path = mozc::ibus::GetIconPath(kEngineIcon);
+  const std::string icon_path = mozc::ibus::GetIconPath(kEngineIcon);
   for (size_t i = 0; i < kEngineArrayLen; ++i) {
     ibus_component_add_engine(
         component,

@@ -40,9 +40,9 @@ namespace ibus {
 struct SelectionInfo {
   uint64 timestamp;
   uint32 process_id;
-  string machine_name;
-  string window_title;
-  string selected_text;
+  std::string machine_name;
+  std::string window_title;
+  std::string selected_text;
   SelectionInfo();
 };
 

@@ -58,7 +58,7 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
   virtual void Show(IBusEngine *engine);
 
   virtual void OnIBusCustomFontDescriptionChanged(
-      const string &custom_font_description);
+      const std::string &custom_font_description);
 
   virtual void OnIBusUseCustomFontDescriptionChanged(
       bool use_custom_font_description);
@@ -73,8 +73,8 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
   std::unique_ptr<commands::Output> last_update_output_;
 
  private:
-  string GetFontDescription() const;
-  string custom_font_description_;
+  std::string GetFontDescription() const;
+  std::string custom_font_description_;
   bool use_custom_font_description_;
   std::unique_ptr<GSettingsObserver> settings_observer_;
 

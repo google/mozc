@@ -105,8 +105,8 @@ bool StartsWith(ConstChar32Iterator *iter, ConstChar32Iterator *prefix_iter) {
 // Returns true if |surrounding_text| contains |selected_text|
 // from |cursor_pos| to |*anchor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosForward(const string &surrounding_text,
-                            const string &selected_text,
+bool SearchAnchorPosForward(const std::string &surrounding_text,
+                            const std::string &selected_text,
                             size_t selected_chars_len, guint cursor_pos,
                             guint *anchor_pos) {
   ConstChar32Iterator iter(surrounding_text);
@@ -126,8 +126,8 @@ bool SearchAnchorPosForward(const string &surrounding_text,
 // Returns true if |surrounding_text| contains |selected_text|
 // from |*anchor_pos| to |cursor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosBackward(const string &surrounding_text,
-                             const string &selected_text,
+bool SearchAnchorPosBackward(const std::string &surrounding_text,
+                             const std::string &selected_text,
                              size_t selected_chars_len, guint cursor_pos,
                              guint *anchor_pos) {
   if (cursor_pos < selected_chars_len) {
@@ -153,7 +153,7 @@ bool SearchAnchorPosBackward(const string &surrounding_text,
 }  // namespace
 
 bool SurroundingTextUtil::GetAnchorPosFromSelection(
-    const string &surrounding_text, const string &selected_text,
+    const std::string &surrounding_text, const std::string &selected_text,
     guint cursor_pos, guint *anchor_pos) {
   DCHECK(anchor_pos);
 

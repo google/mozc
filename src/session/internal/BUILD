@@ -169,7 +169,6 @@ cc_test_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//session:session_converter",
-        "//testing:googletest",
         "//testing:gunit_main",
         "//testing:testing_util",
     ],
@@ -197,7 +196,6 @@ cc_test_mozc(
         "//config:config_handler",
         "//protocol:commands_proto",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -215,7 +213,6 @@ cc_test_mozc(
         "//config:config_handler",
         "//protocol:commands_proto",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

@@ -47,7 +47,7 @@ const gchar kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
 const gchar kIBusPanelUseCustomFont[] = "use-custom-font";
 const gchar kIBusPanelCustomFont[] = "custom-font";
 
-bool GetString(GVariant *value, string *out_string) {
+bool GetString(GVariant *value, std::string *out_string) {
   if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
     return false;
   }
@@ -101,7 +101,7 @@ void GSettingsChangedCallback(GSettings *settings, const gchar *key,
   } else if (g_strcmp0(key, kIBusPanelCustomFont) == 0) {
     GVariant *custom_font_value =
         g_settings_get_value(settings, kIBusPanelCustomFont);
-    string font_description;
+    std::string font_description;
     if (GetString(custom_font_value, &font_description)) {
       handler->OnIBusCustomFontDescriptionChanged(font_description);
     } else {
@@ -206,7 +206,7 @@ void GtkCandidateWindowHandler::Show(IBusEngine *engine) {
 }
 
 void GtkCandidateWindowHandler::OnIBusCustomFontDescriptionChanged(
-    const string &custom_font_description) {
+    const std::string &custom_font_description) {
   custom_font_description_.assign(custom_font_description);
 }
 

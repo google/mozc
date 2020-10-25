@@ -65,7 +65,7 @@ class CandidateWindowHandlerInterface {
   // PangoFontDescription.
   // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
   virtual void OnIBusCustomFontDescriptionChanged(
-      const string &custom_font_description) = 0;
+      const std::string &custom_font_description) = 0;
   virtual void OnIBusUseCustomFontDescriptionChanged(
       bool use_custom_font_description) = 0;
 

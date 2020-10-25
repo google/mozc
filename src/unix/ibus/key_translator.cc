@@ -319,7 +319,7 @@ bool KeyTranslator::Translate(guint keyval, guint keycode, guint modifiers,
     modifiers &= ~IBUS_SHIFT_MASK;
     keyval = IBUS_Katakana;
   }
-  string kana_key_string;
+  std::string kana_key_string;
   if ((method == config::Config::KANA) &&
       IsKanaAvailable(keyval, keycode, modifiers, layout_is_jp,
                       &kana_key_string)) {
@@ -423,7 +423,7 @@ bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(guint keyval, guint keycode,
 
 bool KeyTranslator::IsKanaAvailable(guint keyval, guint keycode,
                                     guint modifiers, bool layout_is_jp,
-                                    string *out) const {
+                                    std::string *out) const {
   if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
     return false;
   }

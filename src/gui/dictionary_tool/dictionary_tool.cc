@@ -90,9 +90,7 @@ const int kSessionTimeout = 100000;
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
   // Here we use "龍" to calc font size, as it looks almsot square
-  const char kHexBaseChar[] = "龍";
-  const QRect rect =
-      QFontMetrics(widget->font()).boundingRect(QObject::trUtf8(kHexBaseChar));
+  const QRect rect = QFontMetrics(widget->font()).boundingRect("龍");
   return static_cast<int>(rect.height() * 1.4);
 }
 

@@ -235,7 +235,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     // ignore NOOP|SHUTDOWN
     if (command.type() == commands::RendererCommand::UPDATE) {
       scoped_lock l(&pending_command_mutex_);
-      if (pending_command_.get() == NULL) {
+      if (!pending_command_) {
         pending_command_.reset(new commands::RendererCommand);
       }
       pending_command_->CopyFrom(command);
@@ -252,7 +252,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
         error_times_(0),
         disable_renderer_path_check_(false),
         suppress_error_dialog_(false),
-        ipc_client_factory_interface_(NULL) {}
+        ipc_client_factory_interface_(nullptr) {}
 
   virtual ~RendererLauncher() {
     if (!IsRunning()) {
@@ -275,10 +275,9 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
 
   void FlushPendingCommand() {
     scoped_lock l(&pending_command_mutex_);
-    if (ipc_client_factory_interface_ != NULL &&
-        pending_command_.get() != NULL) {
+    if (ipc_client_factory_interface_ != nullptr && pending_command_) {
       std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
-      if (client.get() != NULL) {
+      if (!client) {
         CallCommand(client.get(), *(pending_command_.get()));
       }
     }
@@ -292,8 +291,8 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   }
 
   IPCClientInterface *CreateIPCClient() const {
-    if (ipc_client_factory_interface_ == NULL) {
-      return NULL;
+    if (ipc_client_factory_interface_ == nullptr) {
+      return nullptr;
     }
     if (disable_renderer_path_check_) {
       return ipc_client_factory_interface_->NewClient(name_, "");
@@ -319,7 +318,7 @@ RendererClient::RendererClient()
       version_mismatch_nums_(0),
       ipc_client_factory_interface_(IPCClientFactory::GetIPCClientFactory()),
       renderer_launcher_(new RendererLauncher),
-      renderer_launcher_interface_(NULL) {
+      renderer_launcher_interface_(nullptr) {
   renderer_launcher_interface_ = renderer_launcher_.get();
 
   name_ = kServiceName;
@@ -362,8 +361,8 @@ bool RendererClient::Activate() {
 }
 
 bool RendererClient::IsAvailable() const {
-  if (renderer_launcher_interface_ == NULL) {
-    LOG(ERROR) << "renderer_launcher_interface is NULL";
+  if (renderer_launcher_interface_ == nullptr) {
+    LOG(ERROR) << "renderer_launcher_interface is nullptr";
     return false;
   }
   return renderer_launcher_interface_->IsAvailable();
@@ -372,7 +371,7 @@ bool RendererClient::IsAvailable() const {
 bool RendererClient::Shutdown(bool force) {
   std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 
-  if (client.get() == NULL) {
+  if (!client) {
     LOG(ERROR) << "Cannot make client object";
     return false;
   }
@@ -401,21 +400,21 @@ void RendererClient::DisableRendererServerCheck() {
 }
 
 void RendererClient::set_suppress_error_dialog(bool suppress) {
-  if (renderer_launcher_interface_ == NULL) {
-    LOG(ERROR) << "RendererLauncher is NULL";
+  if (renderer_launcher_interface_ == nullptr) {
+    LOG(ERROR) << "RendererLauncher is nullptr";
     return;
   }
   renderer_launcher_interface_->set_suppress_error_dialog(suppress);
 }
 
 bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
-  if (renderer_launcher_interface_ == NULL) {
-    LOG(ERROR) << "RendererLauncher is NULL";
+  if (renderer_launcher_interface_ == nullptr) {
+    LOG(ERROR) << "RendererLauncher is nullptr";
     return false;
   }
 
-  if (ipc_client_factory_interface_ == NULL) {
-    LOG(ERROR) << "IPCClientFactory is NULL";
+  if (ipc_client_factory_interface_ == nullptr) {
+    LOG(ERROR) << "IPCClientFactory is nullptr";
     return false;
   }
 
@@ -501,8 +500,8 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
 }
 
 IPCClientInterface *RendererClient::CreateIPCClient() const {
-  if (ipc_client_factory_interface_ == NULL) {
-    return NULL;
+  if (ipc_client_factory_interface_ == nullptr) {
+    return nullptr;
   }
   if (disable_renderer_path_check_) {
     return ipc_client_factory_interface_->NewClient(name_, "");

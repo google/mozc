@@ -84,7 +84,6 @@ cc_test_mozc(
         "//base:file_util",
         "//prediction:predictor_interface",
         "//protocol:engine_builder_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
         "//testing:mozctest",
     ],

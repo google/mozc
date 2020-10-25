@@ -118,13 +118,13 @@ bool UnixServer::AsyncExecCommand(string *proto_message) {
 }
 
 int UnixServer::StartMessageLoop() {
-  GSourceFuncs src_funcs = {mozc_prepare, mozc_check, mozc_dispatch, NULL};
+  GSourceFuncs src_funcs = {mozc_prepare, mozc_check, mozc_dispatch, nullptr};
 
   MozcWatchSource *watch = reinterpret_cast<MozcWatchSource *>(
       gtk_->GSourceNew(&src_funcs, sizeof(MozcWatchSource)));
   gtk_->GSourceSetCanRecurse(&watch->source, TRUE);
-  gtk_->GSourceAttach(&watch->source, NULL);
-  gtk_->GSourceSetCallback(&watch->source, NULL, (gpointer)this, NULL);
+  gtk_->GSourceAttach(&watch->source, nullptr);
+  gtk_->GSourceSetCallback(&watch->source, nullptr, (gpointer)this, nullptr);
 
   watch->poll_fd.fd = pipefd_[0];
   watch->poll_fd.events = G_IO_IN | G_IO_HUP;

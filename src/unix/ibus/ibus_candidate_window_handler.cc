@@ -51,7 +51,7 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
   }
   const commands::Footer &footer = candidates.footer();
 
-  string auxiliary_text;
+  std::string auxiliary_text;
   if (footer.has_label()) {
     // TODO(yusukes,mozc-team): label() is not localized. Currently, it's always
     // written in Japanese (in UTF-8).
@@ -180,7 +180,7 @@ bool IBusCandidateWindowHandler::UpdateAuxiliaryText(
 }
 
 void IBusCandidateWindowHandler::OnIBusCustomFontDescriptionChanged(
-    const string &custom_font_description) {
+    const std::string &custom_font_description) {
   // Do nothing
   // The custom font description is managed by ibus directly.
 }

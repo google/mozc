@@ -27,50 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "renderer/unix/unix_server.h"
-
-#include "base/system_util.h"
-#include "renderer/unix/gtk_wrapper_mock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
-
-using testing::_;
-using testing::Return;
-using testing::StrictMock;
-
-namespace mozc {
-namespace renderer {
-namespace gtk {
-
-class UnixServerTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  }
-};
-
-TEST_F(UnixServerTest, StartMessageLoopTest) {
-  GtkWrapperMock *gtk_mock = new StrictMock<GtkWrapperMock>();
-
-  UnixServer server(gtk_mock);
-
-  UnixServer::MozcWatchSource watch;
-
-  EXPECT_CALL(*gtk_mock, GSourceNew(_, _))
-      .WillOnce(Return(reinterpret_cast<GSource *>(&watch)));
-  EXPECT_CALL(*gtk_mock, GSourceSetCanRecurse(&watch.source, TRUE));
-  EXPECT_CALL(*gtk_mock, GSourceAttach(&watch.source, nullptr));
-  EXPECT_CALL(*gtk_mock, GSourceSetCallback(&watch.source, nullptr,
-                                            (gpointer)&server, nullptr));
-  EXPECT_CALL(*gtk_mock, GSourceAddPoll(reinterpret_cast<GSource *>(&watch),
-                                        &watch.poll_fd));
-  EXPECT_CALL(*gtk_mock, GdkThreadsEnter());
-  EXPECT_CALL(*gtk_mock, GtkMain());
-  EXPECT_CALL(*gtk_mock, GdkThreadsLeave());
-
-  server.StartMessageLoop();
+int main(int argc, char **argv) {
+  // This is a stub used by platforms which do not support iBus
+  // (i.e. non Linux environments).
+  return 1;
 }
-
-}  // namespace gtk
-}  // namespace renderer
-}  // namespace mozc

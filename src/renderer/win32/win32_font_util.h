@@ -44,13 +44,13 @@ namespace win32 {
 class FontUtil {
  public:
   // Serializes given LOGFONT into the WinLogFont.
-  // Returns false if |win_log_font| is NULL and/or the specified LOGFONT has
+  // Returns false if |win_log_font| is nullptr and/or the specified LOGFONT has
   // any invalid field.
   static bool ToWinLogFont(
       const LOGFONTW &log_font,
       mozc::commands::RendererCommand_WinLogFont *win_log_font);
   // Deserializes given WinLogFont into the LOGFONT.
-  // Returns false if |win_log_font| is NULL and/or the specified WinLogFont
+  // Returns false if |win_log_font| is nullptr and/or the specified WinLogFont
   // has any invalid field.
   static bool ToLOGFONT(
       const mozc::commands::RendererCommand_WinLogFont &win_log_font,

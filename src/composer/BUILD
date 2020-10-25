@@ -176,7 +176,6 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_proto",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

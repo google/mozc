@@ -92,12 +92,12 @@ const char *kUILocaleEnvNames[] = {
 
 string GetEnv(const char *envname) {
   const char *result = ::getenv(envname);
-  return result != nullptr ? string(result) : "";
+  return result != nullptr ? std::string(result) : "";
 }
 
 string GetMessageLocale() {
   for (size_t i = 0; i < arraysize(kUILocaleEnvNames); ++i) {
-    const string result = GetEnv(kUILocaleEnvNames[i]);
+    const std::string result = GetEnv(kUILocaleEnvNames[i]);
     if (!result.empty()) {
       return result;
     }
@@ -157,9 +157,9 @@ namespace {
 struct SurroundingTextInfo {
   SurroundingTextInfo() : relative_selected_length(0) {}
   int32 relative_selected_length;
-  string preceding_text;
-  string selection_text;
-  string following_text;
+  std::string preceding_text;
+  std::string selection_text;
+  std::string following_text;
 };
 
 bool GetSurroundingText(IBusEngine *engine,
@@ -178,7 +178,7 @@ bool GetSurroundingText(IBusEngine *engine,
   // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
   IBusText *text = NULL;
   ibus_engine_get_surrounding_text(engine, &text, &cursor_pos, &anchor_pos);
-  const string surrounding_text(ibus_text_get_text(text));
+  const std::string surrounding_text(ibus_text_get_text(text));
 
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   if (cursor_pos == anchor_pos && selection_monitor != NULL) {
@@ -657,7 +657,7 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
   }
 
   // TODO(nona): integrate with renderer/renderer_client.cc
-  const string renderer_path =
+  const std::string renderer_path =
       FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "mozc_renderer");
   if (!FileUtil::FileExists(renderer_path)) {
     return ibus_candidate_window_handler_.get();

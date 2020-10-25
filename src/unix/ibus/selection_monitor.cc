@@ -213,7 +213,7 @@ class SelectionMonitorServer {
     }
   }
 
-  bool CreateAtom(const string name, xcb_atom_t *atom) const {
+  bool CreateAtom(const std::string name, xcb_atom_t *atom) const {
     DCHECK(atom);
     *atom = XCB_NONE;
     xcb_intern_atom_cookie_t cookie =
@@ -278,7 +278,7 @@ class SelectionMonitorServer {
     return true;
   }
 
-  string GetAtomName(xcb_atom_t atom) const {
+  std::string GetAtomName(xcb_atom_t atom) const {
     const xcb_get_atom_name_cookie_t cookie =
         ::xcb_get_atom_name(connection_, atom);
     ScopedXcbGenericError xcb_error;
@@ -296,12 +296,12 @@ class SelectionMonitorServer {
 
     const char *ptr = ::xcb_get_atom_name_name(reply.get());
     const size_t len = ::xcb_get_atom_name_name_length(reply.get());
-    return string(ptr, len);
+    return std::string(ptr, len);
   }
 
   bool GetByteArrayProperty(xcb_window_t window, xcb_atom_t property_atom,
                             xcb_atom_t property_type_atom, size_t max_bytes,
-                            string *retval) const {
+                            std::string *retval) const {
     DCHECK(retval);
     retval->clear();
     size_t bytes_after = 0;
@@ -365,7 +365,7 @@ class SelectionMonitorServer {
       const char *data =
           reinterpret_cast<const char *>(::xcb_get_property_value(reply.get()));
       const int length = ::xcb_get_property_value_length(reply.get());
-      *retval += string(data, length);
+      *retval += std::string(data, length);
       byte_offset += length;
     }
     return true;
@@ -428,13 +428,13 @@ class SelectionMonitorServer {
       last_request_info_.process_id = net_wm_pid;
     }
 
-    string net_wm_name;
+    std::string net_wm_name;
     if (GetByteArrayProperty(event_notify->owner, atoms_.net_wm_name,
                              atoms_.utf8_string, max_bytes, &net_wm_name)) {
       last_request_info_.window_title = net_wm_name;
     }
 
-    string wm_client_machine;
+    std::string wm_client_machine;
     if (GetByteArrayProperty(event_notify->owner, atoms_.wm_client_machine,
                              XCB_ATOM_STRING, max_bytes, &wm_client_machine)) {
       last_request_info_.machine_name = wm_client_machine;
@@ -459,7 +459,7 @@ class SelectionMonitorServer {
       return false;
     }
 
-    string selected_text;
+    std::string selected_text;
     if (!GetByteArrayProperty(event_notify->requestor, event_notify->property,
                               atoms_.utf8_string, max_bytes, &selected_text)) {
       LOG(ERROR) << "Failed to retrieve selection text.";

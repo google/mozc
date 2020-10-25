@@ -683,7 +683,6 @@ cc_test_mozc(
     deps = [
         ":number_util",
         ":port",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -758,7 +757,6 @@ cc_test_mozc(
     deps = [
         ":clock_mock",
         ":util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -778,7 +776,6 @@ cc_test_mozc(
     deps = [
         ":bitarray",
         ":util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -822,7 +819,6 @@ cc_test_mozc(
         ":flags",
         ":mmap",
         ":util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -856,7 +852,6 @@ cc_test_mozc(
         ":logging",
         ":number_util",
         ":util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -864,15 +859,14 @@ cc_test_mozc(
 cc_library_mozc(
     name = "system_util",
     srcs = select_mozc(
-        android = [
-            "android_util.cc",
-        ],
+        android = ["android_util.cc"],
     ) + ["system_util.cc"],
     hdrs = select_mozc(
-        android = [
-            "android_util.h",
-        ],
+        android = ["android_util.h"],
     ) + ["system_util.h"],
+    local_defines = select_mozc(
+        linux = ["MOZC_SERVER_DIR=\"/usr/lib/mozc\""],
+    ),
     visibility = [
         "//:__subpackages__",
     ],
@@ -967,7 +961,6 @@ cc_test_mozc(
         ":process_mutex",
         ":system_util",
         ":util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -1056,7 +1049,6 @@ cc_test_mozc(
         ":config_file_stream",
         ":file_util",
         ":system_util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -1158,7 +1150,6 @@ cc_test_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":obfuscator_support",
-        "//testing:googletest",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
     ],
@@ -1207,7 +1198,6 @@ cc_test_mozc(
         ":encryptor",
         ":system_util",
         ":util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -1315,7 +1305,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":cpu_stats",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -1420,7 +1409,6 @@ cc_test_mozc(
         ":flags",
         ":multifile",
         ":util",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

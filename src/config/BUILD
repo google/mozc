@@ -78,7 +78,6 @@ cc_test_mozc(
         "//base:thread",
         "//base:util",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
         "//testing:mozctest",
     ],
@@ -115,7 +114,6 @@ cc_test_mozc(
         "//base:system_util",
         "//base:win_api_test_helper",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )
@@ -156,7 +154,6 @@ cc_test_mozc(
         "//base",
         "//base:system_util",
         "//protocol:config_proto",
-        "//testing:googletest",
         "//testing:gunit_main",
     ],
 )

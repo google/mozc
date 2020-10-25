@@ -157,7 +157,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
       is_activated_ ? original_composition_mode_
                     : kMozcEnginePropertyIMEOffState->composition_mode;
 
-  string icon_path_for_panel;
+  std::string icon_path_for_panel;
   const char *mode_symbol = NULL;
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
     const MozcEngineProperty &entry = kMozcEngineProperties[i];
@@ -179,7 +179,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   DCHECK(!icon_path_for_panel.empty());
   DCHECK(mode_symbol != NULL);
 
-  const string &mode_label =
+  const std::string &mode_label =
       translator_->MaybeTranslate("Input Mode") + " (" + mode_symbol + ")";
   IBusText *label = ibus_text_new_from_string(mode_label.c_str());
 
@@ -254,7 +254,7 @@ void PropertyHandler::AppendToolPropertyToPanel() {
 
   IBusText *tool_label =
       ibus_text_new_from_string(translator_->MaybeTranslate("Tools").c_str());
-  const string icon_path = GetIconPath(kMozcToolIconPath);
+  const std::string icon_path = GetIconPath(kMozcToolIconPath);
   prop_mozc_tool_ = ibus_property_new("MozcTool", PROP_TYPE_MENU, tool_label,
                                       icon_path.c_str(), NULL /* tooltip */,
                                       TRUE /* sensitive */, TRUE /* visible */,
@@ -329,7 +329,7 @@ void PropertyHandler::UpdateCompositionModeIcon(
   ibus_property_set_symbol(prop_composition_mode_, symbol);
 #endif  // MOZC_IBUS_HAS_SYMBOL
 
-  const string &mode_label =
+  const std::string &mode_label =
       translator_->MaybeTranslate("Input Mode") + " (" + mode_symbol + ")";
   IBusText *label = ibus_text_new_from_string(mode_label.c_str());
   ibus_property_set_label(prop_composition_mode_, label);
