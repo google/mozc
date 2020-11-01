@@ -40,7 +40,7 @@ bazel build package --config oss_linux -c opt
 ```
 
 `package` is an alias to build `server:mozc_server`, `gui/tool:mozc_tool`,
-`renderer:mozc_renderer` and `ibus:ibus_mozc`.
+`renderer:mozc_renderer`, `ibus:ibus_mozc` and `emacs:mozc_emacs_helper`.
 
 Unittests can be executed as follows.
 
