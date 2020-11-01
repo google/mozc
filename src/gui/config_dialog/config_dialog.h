@@ -34,7 +34,6 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
-
 #include <map>
 #include <memory>
 #include <string>
@@ -59,7 +58,7 @@ class ConfigDialog : public QDialog, private Ui::ConfigDialog {
 
  public:
   ConfigDialog();
-  virtual ~ConfigDialog();
+  ~ConfigDialog() override;
 
   // Methods defined in the 'slots' section (Qt's extention) will be processed
   // by Qt's moc tool (moc.exe on Windows). Unfortunately, preprocessor macros
@@ -87,7 +86,7 @@ class ConfigDialog : public QDialog, private Ui::ConfigDialog {
   virtual void EnableApplyButton();
 
  protected:
-  bool eventFilter(QObject *obj, QEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
 
  private:
   bool GetConfig(config::Config *config);

@@ -69,6 +69,7 @@
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/memory/memory.h"
 
 #ifdef OS_WIN
 #include "gui/base/win_util.h"
@@ -132,9 +133,9 @@ class UTF16TextLineIterator
     progress_.reset(CreateProgressDialog(message, parent, file_.size()));
   }
 
-  bool IsAvailable() const { return file_.error() == QFile::NoError; }
+  bool IsAvailable() const override { return file_.error() == QFile::NoError; }
 
-  bool Next(std::string *line) {
+  bool Next(std::string *line) override {
     if (stream_->atEnd()) {
       return false;
     }
@@ -161,9 +162,9 @@ class UTF16TextLineIterator
     return true;
   }
 
-  void Reset() {
+  void Reset() override {
     file_.seek(0);
-    stream_.reset(new QTextStream);
+    stream_ = absl::make_unique<QTextStream>();
     stream_->setDevice(&file_);
     stream_->setCodec("UTF-16");
   }
@@ -190,7 +191,7 @@ class MultiByteTextLineIterator
     progress_.reset(CreateProgressDialog(message, parent, size));
   }
 
-  bool IsAvailable() const {
+  bool IsAvailable() const override {
     // This means that neither failbit nor badbit is set.
     // TODO(yukawa): Consider to remove |ifs_->eof()|. Furthermore, we should
     // replace IsAvailable() with something easier to understand, e.g.,
@@ -198,7 +199,7 @@ class MultiByteTextLineIterator
     return ifs_->good() || ifs_->eof();
   }
 
-  bool Next(std::string *line) {
+  bool Next(std::string *line) override {
     if (!ifs_->good()) {
       return false;
     }
@@ -240,7 +241,7 @@ class MultiByteTextLineIterator
     return true;
   }
 
-  void Reset() {
+  void Reset() override {
     // Clear state bit (eofbit, failbit, badbit).
     ifs_->clear();
     ifs_->seekg(0, std::ios_base::beg);
@@ -1031,7 +1032,8 @@ void DictionaryTool::GetSortedSelectedRows(std::vector<int> *rows) const {
   }
 
   std::sort(rows->begin(), rows->end(), std::greater<int>());
-  std::vector<int>::const_iterator end = unique(rows->begin(), rows->end());
+  std::vector<int>::const_iterator end =
+      std::unique(rows->begin(), rows->end());
 
   rows->resize(end - rows->begin());
 }

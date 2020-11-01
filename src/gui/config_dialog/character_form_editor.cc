@@ -31,11 +31,11 @@
 
 #include <QtGui/QtGui>
 #include <QtWidgets/QHeaderView>
-
 #include <memory>
 
 #include "config/config_handler.h"
 #include "gui/config_dialog/combobox_delegate.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace gui {
@@ -127,7 +127,7 @@ void CharacterFormEditor::Load(const config::Config &config) {
 
   // make sure that table isn't empty.
   if (config.character_form_rules_size() == 0) {
-    default_config.reset(new config::Config);
+    default_config = absl::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(default_config.get());
     target_config = default_config.get();
   }

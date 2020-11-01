@@ -410,7 +410,7 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
 bool ConverterImpl::StartPredictionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   if (!request.has_composer()) {
-    LOG(ERROR) << "Composer is NULL";
+    LOG(ERROR) << "Composer is nullptr";
     return false;
   }
 

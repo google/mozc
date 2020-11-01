@@ -188,7 +188,7 @@ TEST(CandidateTest, BasicTest) {
   EXPECT_TRUE(segment.is_valid_index(-kMetaCandidatesSize));
   EXPECT_FALSE(segment.is_valid_index(-kMetaCandidatesSize - 1));
 
-  EXPECT_EQ(segment.candidates_size(), segment.indexOf(NULL));
+  EXPECT_EQ(segment.candidates_size(), segment.indexOf(nullptr));
 
   segment.pop_back_candidate();
   EXPECT_EQ(cand[3], segment.mutable_candidate(3));
@@ -598,7 +598,7 @@ TEST(SegmentTest, MetaCandidateTest) {
     EXPECT_EQ(meta_idx, segment.indexOf(segment.mutable_candidate(meta_idx)));
   }
 
-  EXPECT_EQ(segment.candidates_size(), segment.indexOf(NULL));
+  EXPECT_EQ(segment.candidates_size(), segment.indexOf(nullptr));
 
   // mutable_meta_candidates
   {

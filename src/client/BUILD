@@ -33,6 +33,7 @@ load(
     "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
+    "py_binary_mozc",
     "select_mozc",
 )
 
@@ -199,3 +200,39 @@ cc_binary_mozc(
     ],
 )
 
+py_binary_mozc(
+    name = "gen_client_quality_test_data",
+    srcs = ["gen_client_quality_test_data.py"],
+)
+
+genrule(
+    name = "client_quality_test_data",
+    srcs = [
+        # TSV files formatted as "label <tab> expected <tab> query"
+    ],
+    outs = ["client_quality_test_data.inc"],
+    cmd = "$(location :gen_client_quality_test_data) $(SRCS) > $@",
+    exec_tools = [":gen_client_quality_test_data"],
+)
+
+cc_binary_mozc(
+    name = "client_quality_test_main",
+    srcs = [
+        "client_quality_test_main.cc",
+        ":client_quality_test_data",
+    ],
+    deps = [
+        ":client",
+        "//base",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:logging",
+        "//base:multifile",
+        "//base:port",
+        "//base:util",
+        "//evaluation:scorer",
+        "//protocol:commands_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)

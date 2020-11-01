@@ -45,19 +45,19 @@ class ComboBoxDelegate : public QItemDelegate {
   Q_OBJECT
  public:
   explicit ComboBoxDelegate(QObject *parent = nullptr);
-  virtual ~ComboBoxDelegate();
+  ~ComboBoxDelegate() override;
 
   void SetItemList(const QStringList &item_list);
 
   QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                        const QModelIndex &index) const;
+                        const QModelIndex &index) const override;
 
-  void setEditorData(QWidget *editor, const QModelIndex &index) const;
+  void setEditorData(QWidget *editor, const QModelIndex &index) const override;
   void setModelData(QWidget *editor, QAbstractItemModel *model,
-                    const QModelIndex &index) const;
+                    const QModelIndex &index) const override;
 
   void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
-                            const QModelIndex &index) const;
+                            const QModelIndex &index) const override;
 
  private slots:
   void CommitAndCloseEditor(const QString &str);

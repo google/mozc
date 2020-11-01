@@ -66,7 +66,7 @@ std::string GenRandomString(size_t size) {
 class MultiConnections : public mozc::Thread {
  public:
 #ifdef __APPLE__
-  MultiConnections() : mach_port_manager_(NULL) {}
+  MultiConnections() : mach_port_manager_(nullptr) {}
 
   void SetMachPortManager(mozc::MachPortManagerInterface *manager) {
     mach_port_manager_ = manager;
@@ -142,7 +142,7 @@ TEST(IPCTest, IPCTest) {
   for (size_t i = 0; i < cons.size(); ++i) {
     cons[i]->Join();
     delete cons[i];
-    cons[i] = NULL;
+    cons[i] = nullptr;
   }
 
   mozc::IPCClient kill(kServerAddress, "");

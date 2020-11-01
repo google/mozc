@@ -478,18 +478,18 @@ const char *KeyCorrector::GetCorrectedPrefix(const size_t original_key_pos,
                                              size_t *length) const {
   if (!IsAvailable()) {
     *length = 0;
-    return NULL;
+    return nullptr;
   }
 
   if (mode_ == KANA) {
     *length = 0;
-    return NULL;
+    return nullptr;
   }
 
   const size_t corrected_key_pos = GetCorrectedPosition(original_key_pos);
   if (!IsValidPosition(corrected_key_pos)) {
     *length = 0;
-    return NULL;
+    return nullptr;
   }
 
   const char *corrected_substr = corrected_key_.data() + corrected_key_pos;
@@ -504,7 +504,7 @@ const char *KeyCorrector::GetCorrectedPrefix(const size_t original_key_pos,
   }
 
   *length = 0;
-  return NULL;
+  return nullptr;
 }
 
 size_t KeyCorrector::GetOriginalOffset(const size_t original_key_pos,

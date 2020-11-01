@@ -55,14 +55,14 @@ TEST(STLDeleteElementsTest, STLDeleteElements) {
   v.push_back(new InstanceCounter<std::string>());
   v.push_back(new InstanceCounter<std::string>());
   EXPECT_EQ(3, InstanceCounter<std::string>::instance_count);
-  v.push_back(NULL);
+  v.push_back(nullptr);
   EXPECT_EQ(3, InstanceCounter<std::string>::instance_count);
   mozc::STLDeleteElements(&v);
   EXPECT_EQ(0, InstanceCounter<std::string>::instance_count);
   EXPECT_EQ(0, v.size());
 
-  // Deleting NULL pointers to containers is ok.
-  std::vector<InstanceCounter<std::string> *> *p = NULL;
+  // Deleting nullptr pointers to containers is ok.
+  std::vector<InstanceCounter<std::string> *> *p = nullptr;
   mozc::STLDeleteElements(p);
 }
 

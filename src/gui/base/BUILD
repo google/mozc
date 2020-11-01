@@ -166,5 +166,6 @@ cc_qt_library_mozc(
         "//base:version",
         "//ipc",
         "//ipc:window_info_proto",
+        "@com_google_absl//absl/memory",
     ],
 )

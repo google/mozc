@@ -46,7 +46,7 @@ class GenericTableEditorDialog : public QDialog,
 
  public:
   explicit GenericTableEditorDialog(QWidget *parent, size_t column_size);
-  virtual ~GenericTableEditorDialog();
+  ~GenericTableEditorDialog() override;
 
   bool LoadFromString(const std::string &table);
   const std::string &table() const;

@@ -61,9 +61,9 @@ namespace {
 // program name into standard argc/argv parameters.
 class WinCommandLine {
  public:
-  WinCommandLine() : argc_(0), argv_(NULL) {
+  WinCommandLine() : argc_(0), argv_(nullptr) {
     LPWSTR *argvw = ::CommandLineToArgvW(::GetCommandLineW(), &argc_);
-    if (argvw == NULL) {
+    if (argvw == nullptr) {
       return;
     }
 
@@ -84,7 +84,7 @@ class WinCommandLine {
       delete[] argv_[i];
     }
     delete[] argv_;
-    argv_ = NULL;
+    argv_ = nullptr;
   }
 
   int argc() const { return argc_; }
@@ -118,9 +118,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DWORD vt = 0;
     HKEY hKey = 0;
     if (ERROR_SUCCESS == ::RegOpenKeyExW(HKEY_CURRENT_USER, mozc::kMozcRegKey,
-                                         NULL, KEY_READ, &hKey)) {
+                                         nullptr, KEY_READ, &hKey)) {
       if (ERROR_SUCCESS == ::RegQueryValueExW(
-                               hKey, L"debug_sleep_time", NULL, &vt,
+                               hKey, L"debug_sleep_time", nullptr, &vt,
                                reinterpret_cast<BYTE *>(&sleep_time), &size) &&
           vt == REG_DWORD && sleep_time > 0) {
         ::Sleep(sleep_time * 1000);

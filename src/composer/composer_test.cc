@@ -1109,7 +1109,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1124,7 +1124,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("あｎ", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1137,7 +1137,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetQueryForConversion(&src_composition);
     EXPECT_EQ("あん", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1156,7 +1156,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("AaAAあ", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1174,7 +1174,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("M", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);

@@ -40,16 +40,16 @@ class ZeroWidthSplitterHandle : public QSplitterHandle {
 
  public:
   ZeroWidthSplitterHandle(Qt::Orientation orientation, QSplitter *parent);
-  virtual ~ZeroWidthSplitterHandle();
+  ~ZeroWidthSplitterHandle() override;
 
-  void paintEvent(QPaintEvent *event);
-  QSize sizeHint() const;
+  void paintEvent(QPaintEvent *event) override;
+  QSize sizeHint() const override;
 };
 
 class ZeroWidthSplitter : public QSplitter {
  public:
   ZeroWidthSplitter(QWidget *parent);
-  QSplitterHandle *createHandle();
+  QSplitterHandle *createHandle() override;
 };
 
 #endif  // MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_

@@ -168,8 +168,9 @@ class NBestGeneratorTest : public ::testing::Test {
                          const Segments &segments, const Node &begin_node,
                          const std::vector<uint16> &group,
                          bool is_single_segment) {
-    const Node *end_node = NULL;
-    for (Node *node = begin_node.next; node->next != NULL; node = node->next) {
+    const Node *end_node = nullptr;
+    for (Node *node = begin_node.next; node->next != nullptr;
+         node = node->next) {
       end_node = node->next;
       if (converter.IsSegmentEndNode(segments, node, group,
                                      is_single_segment)) {

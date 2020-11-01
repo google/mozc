@@ -45,19 +45,19 @@ class Encryptor {
     // Make a session key from password and salt.
     // You can also set an initialization vector whose
     // size must be iv_size().
-    // if iv is NULL, default iv is used.
+    // if iv is nullptr, default iv is used.
     bool DeriveFromPassword(const std::string &password,
                             const std::string &salt, const uint8 *iv);
 
     // use default iv.
     bool DeriveFromPassword(const std::string &password,
                             const std::string &salt) {
-      return DeriveFromPassword(password, salt, NULL);
+      return DeriveFromPassword(password, salt, nullptr);
     }
 
     // use empty salt and default iv
     bool DeriveFromPassword(const std::string &password) {
-      return DeriveFromPassword(password, "", NULL);
+      return DeriveFromPassword(password, "", nullptr);
     }
 
     // return block size. the result should be 16byte with AES

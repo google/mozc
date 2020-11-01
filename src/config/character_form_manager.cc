@@ -212,7 +212,7 @@ uint16 GetNormalizedCharacter(const std::string &str) {
         std::string tmp;
         Util::HalfWidthToFullWidth(str, &tmp);
         char32 ucs4 = 0;
-        if (Util::SplitFirstChar32(tmp, &ucs4, NULL) && ucs4 <= 0xffff) {
+        if (Util::SplitFirstChar32(tmp, &ucs4, nullptr) && ucs4 <= 0xffff) {
           ucs2 = static_cast<uint16>(ucs4);
         } else {
           ucs2 = 0x0000;  // no conversion as fall back
@@ -241,7 +241,7 @@ void ConvertToAlternative(const std::string &input, std::string *output,
 }
 
 CharacterFormManagerImpl::CharacterFormManagerImpl()
-    : storage_(NULL), require_consistent_conversion_(false) {}
+    : storage_(nullptr), require_consistent_conversion_(false) {}
 
 CharacterFormManagerImpl::~CharacterFormManagerImpl() {}
 
@@ -266,7 +266,7 @@ Config::CharacterForm CharacterFormManagerImpl::GetCharacterForm(
 }
 
 void CharacterFormManagerImpl::ClearHistory() {
-  if (storage_ != NULL) {
+  if (storage_ != nullptr) {
     storage_->Clear();
   }
 }
@@ -307,12 +307,12 @@ void CharacterFormManagerImpl::SetCharacterForm(const std::string &str,
 
 Config::CharacterForm CharacterFormManagerImpl::GetCharacterFormFromStorage(
     uint16 ucs2) const {
-  if (storage_ == NULL) {
+  if (storage_ == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
   }
   const std::string key(reinterpret_cast<const char *>(&ucs2), sizeof(ucs2));
   const char *value = storage_->Lookup(key);
-  if (value == NULL) {
+  if (value == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
   }
   const uint32 ivalue = *reinterpret_cast<const uint32 *>(value);
@@ -325,13 +325,13 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
     return;
   }
 
-  if (storage_ == NULL) {
+  if (storage_ == nullptr) {
     return;
   }
 
   const std::string key(reinterpret_cast<const char *>(&ucs2), sizeof(ucs2));
   const char *value = storage_->Lookup(key);
-  if (value != NULL && static_cast<Config::CharacterForm>(*value) == form) {
+  if (value != nullptr && static_cast<Config::CharacterForm>(*value) == form) {
     return;
   }
 
@@ -357,7 +357,7 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
 
 void CharacterFormManagerImpl::ConvertString(const std::string &str,
                                              std::string *output) const {
-  ConvertStringWithAlternative(str, output, NULL);
+  ConvertStringWithAlternative(str, output, nullptr);
 }
 
 bool CharacterFormManagerImpl::TryConvertStringWithPreference(
@@ -475,13 +475,13 @@ bool CharacterFormManagerImpl::ConvertStringWithAlternative(
     *output = str;
   }
 
-  if (alternative_output != NULL) {
+  if (alternative_output != nullptr) {
     alternative_output->clear();
     ConvertStringAlternative(*output, alternative_output);
   }
 
   // return true if alternative_output and output are different
-  return (alternative_output != NULL && *alternative_output != *output);
+  return (alternative_output != nullptr && *alternative_output != *output);
 }
 
 void CharacterFormManagerImpl::Clear() {
@@ -564,7 +564,7 @@ CharacterFormManager::Data::Data() {
   const uint32 key_type = 0;
   storage_.reset(LRUStorage::Create(filename.c_str(), sizeof(key_type),
                                     kLRUSize, kSeedValue));
-  LOG_IF(ERROR, storage_.get() == NULL) << "cannot open " << filename;
+  LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;
   preedit_.reset(new PreeditCharacterFormManagerImpl);
   conversion_.reset(new ConversionCharacterFormManagerImpl);
   preedit_->set_storage(storage_.get());

@@ -104,7 +104,7 @@ class POSMapCompare {
 bool ConvertEntryInternal(const POSMap *pos_map, size_t map_size,
                           const UserDictionaryImporter::RawEntry &from,
                           UserDictionary::Entry *to) {
-  if (to == NULL) {
+  if (to == nullptr) {
     LOG(ERROR) << "Null pointer is passed.";
     return false;
   }
@@ -186,8 +186,8 @@ bool ConvertEntryInternal(const POSMap *pos_map, size_t map_size,
 
 UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
     InputIteratorInterface *iter, UserDictionary *user_dic) {
-  if (iter == NULL || user_dic == NULL) {
-    LOG(ERROR) << "iter or user_dic is NULL";
+  if (iter == nullptr || user_dic == nullptr) {
+    LOG(ERROR) << "iter or user_dic is nullptr";
     return IMPORT_FATAL;
   }
 
@@ -318,8 +318,8 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
     return false;
   }
 
-  if (entry == NULL) {
-    LOG(ERROR) << "Entry is NULL";
+  if (entry == nullptr) {
+    LOG(ERROR) << "Entry is nullptr";
     return false;
   }
 

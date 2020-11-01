@@ -84,7 +84,7 @@ DictionaryGenerator::DictionaryGenerator(
   const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();
-  user_pos_.reset(dictionary::UserPOS::CreateFromDataManager(data_manager));
+  user_pos_ = dictionary::UserPOS::CreateFromDataManager(data_manager);
 }
 
 DictionaryGenerator::~DictionaryGenerator() {}

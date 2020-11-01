@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_
-#define MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_
+#ifndef MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_H_
+#define MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_H_
 
 #include <QtCore/QEvent>
 #include <QtCore/QObject>
@@ -44,9 +44,9 @@ class WindowTitleModifier : public QObject {
   ~WindowTitleModifier() override = default;
 
  protected:
-  bool eventFilter(QObject *obj, QEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
 };
 }  // namespace gui
 }  // namespace mozc
 
-#endif  // MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_
+#endif  // MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_H_

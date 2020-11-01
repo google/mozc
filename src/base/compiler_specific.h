@@ -211,7 +211,7 @@
 //       "Compiler warning C4355: 'this': used in base member initializer list"
 //        http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
 //   example:
-//     Foo::Foo() : x(NULL), ALLOW_THIS_IN_INITIALIZER_LIST(y(this)) {}
+//     Foo::Foo() : x(nullptr), ALLOW_THIS_IN_INITIALIZER_LIST(y(this)) {}
 #if defined(_MSC_VER)
 #define ALLOW_THIS_IN_INITIALIZER_LIST(code)                \
   __pragma(warning(push)) __pragma(warning(disable : 4355)) \

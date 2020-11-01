@@ -203,7 +203,7 @@ TEST(WinUtilTest, GetNtPath) {
   EXPECT_TRUE(LooksLikeNtPath(nt_system_dir));
 
   EXPECT_FALSE(WinUtil::GetNtPath(system_dir, nullptr))
-      << "Must fail against a NULL argument.";
+      << "Must fail against a nullptr argument.";
 
   std::wstring nt_notepad;
   EXPECT_TRUE(WinUtil::GetNtPath(notepad, &nt_notepad))

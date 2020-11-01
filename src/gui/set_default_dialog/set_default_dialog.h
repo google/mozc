@@ -41,11 +41,11 @@ class SetDefaultDialog : public QDialog, private Ui::SetDefaultDialog {
 
  public:
   SetDefaultDialog();
-  virtual ~SetDefaultDialog();
+  ~SetDefaultDialog() override;
 
  protected slots:
-  virtual void accept();
-  virtual void reject();
+  void accept() override;
+  void reject() override;
 
  private:
   bool SetCheckDefault(bool check_default);

@@ -81,7 +81,7 @@ TEST(DictionaryFileTest, Basic) {
     content.assign(ptr, len);
     EXPECT_EQ("9876543210", content);
     ptr = df.GetSection("sec3", &len);
-    EXPECT_TRUE(ptr == NULL);
+    EXPECT_TRUE(ptr == nullptr);
   }
 
   FileUtil::Unlink(dfn);

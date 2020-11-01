@@ -31,7 +31,6 @@
 
 #include <QtGui/QtGui>
 #include <QtWidgets/QPushButton>
-
 #include <memory>
 
 #include "base/logging.h"

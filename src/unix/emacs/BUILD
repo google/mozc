@@ -38,14 +38,13 @@ load(
     "cc_test_mozc",
 )
 
-package(default_visibility = ["//:__subpackages__"])
-
 cc_binary_mozc(
     name = "mozc_emacs_helper",
     srcs = ["mozc_emacs_helper.cc"],
     copts = [
         "$(STACK_FRAME_UNLIMITED)",  # mozc_emacs_helper.cc
     ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":mozc_emacs_helper_lib",
         "//base",

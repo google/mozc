@@ -207,7 +207,7 @@ bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
   for (size_t i = 0; i < keys.size(); ++i) {
     if (Util::CharsLen(keys[i]) == 1) {
       char32 key_code = 0;
-      if (Util::SplitFirstChar32(keys[i], &key_code, NULL)) {
+      if (Util::SplitFirstChar32(keys[i], &key_code, nullptr)) {
         key_event->set_key_code(key_code);
       }
     } else {

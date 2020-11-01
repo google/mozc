@@ -169,7 +169,7 @@ float CPUStats::GetCurrentProcessCPULoad() {
   // OSX's basic_info_t has no filed |creation_time|, we cannot use it.
   // The initial value might be different from the real CPU load.
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  gettimeofday(&tv, nullptr);
 
   const uint64 total_times = 1000000ULL * tv.tv_sec + tv.tv_usec;
   const uint64 cpu_times = TimeValueTToInt64(task_times_info.user_time) +

@@ -51,7 +51,7 @@ class ImportDialog : public QDialog, private Ui::ImportDialog {
 
  public:
   ImportDialog(QWidget *parent = 0);
-  virtual ~ImportDialog();
+  ~ImportDialog() override;
 
   // Accessor methods to get form values.
   const QString file_name() const;

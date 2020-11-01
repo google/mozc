@@ -73,7 +73,7 @@ struct TokenInfo {
     token = t;
   }
   void Clear() {
-    token = NULL;
+    token = nullptr;
     id_in_value_trie = -1;
     id_in_frequent_pos_map = -1;
     pos_type = DEFAULT_POS;

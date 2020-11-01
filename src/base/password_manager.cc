@@ -180,8 +180,8 @@ bool PlainPasswordManager::SetPassword(const std::string &password) const {
 }
 
 bool PlainPasswordManager::GetPassword(std::string *password) const {
-  if (password == NULL) {
-    LOG(ERROR) << "password is NULL";
+  if (password == nullptr) {
+    LOG(ERROR) << "password is nullptr";
     return false;
   }
 
@@ -231,8 +231,8 @@ bool WinMacPasswordManager::SetPassword(const string &password) const {
 }
 
 bool WinMacPasswordManager::GetPassword(string *password) const {
-  if (password == NULL) {
-    LOG(ERROR) << "password is NULL";
+  if (password == nullptr) {
+    LOG(ERROR) << "password is nullptr";
     return false;
   }
 
@@ -279,7 +279,7 @@ class PasswordManagerImpl {
  public:
   PasswordManagerImpl() {
     password_manager_ = Singleton<DefaultPasswordManager>::get();
-    DCHECK(password_manager_ != NULL);
+    DCHECK(password_manager_ != nullptr);
   }
 
   bool InitPassword() {

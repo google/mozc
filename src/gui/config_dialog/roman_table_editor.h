@@ -31,7 +31,6 @@
 #define MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 
 #include <QtWidgets/QWidget>
-
 #include <memory>
 #include <string>
 
@@ -48,20 +47,20 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
 
  public:
   explicit RomanTableEditorDialog(QWidget *parent);
-  virtual ~RomanTableEditorDialog();
+  ~RomanTableEditorDialog() override;
 
   // show a modal dialog
   static bool Show(QWidget *parent, const std::string &current_keymap,
                    std::string *new_keymap);
 
  protected slots:
-  virtual void UpdateMenuStatus();
-  virtual void OnEditMenuAction(QAction *action);
+  void UpdateMenuStatus() override;
+  void OnEditMenuAction(QAction *action) override;
 
  protected:
-  virtual std::string GetDefaultFilename() const { return "romantable.txt"; }
-  virtual bool LoadFromStream(std::istream *is);
-  virtual bool Update();
+  std::string GetDefaultFilename() const override { return "romantable.txt"; }
+  bool LoadFromStream(std::istream *is) override;
+  bool Update() override;
 
  private:
   bool LoadDefaultRomanTable();

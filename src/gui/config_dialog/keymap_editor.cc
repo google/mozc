@@ -38,7 +38,6 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
-
 #include <algorithm>  // for unique
 #include <cctype>
 #include <memory>
@@ -326,7 +325,7 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
   }
 
   std::string line;
-  if (!getline(*is, line)) {  // must have 1st line
+  if (!std::getline(*is, line)) {  // must have 1st line
     return false;
   }
 
@@ -337,7 +336,7 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
 
   invisible_keymap_table_.clear();
   direct_mode_commands_.clear();
-  while (getline(*is, line)) {
+  while (std::getline(*is, line)) {
     if (line.empty() || line[0] == '#') {
       continue;
     }

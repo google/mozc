@@ -369,9 +369,9 @@ class UserHistoryPredictor : public PredictorInterface {
   // If |entry| is the target of prediction,
   // create a new result and insert it to |results|.
   // Can set |prev_entry| if there is a history segment just before |input_key|.
-  // |prev_entry| is an optional field. If set NULL, this field is just ignored.
-  // This method adds a new result entry with score, pair<score, entry>, to
-  // |results|.
+  // |prev_entry| is an optional field. If set nullptr, this field is just
+  // ignored. This method adds a new result entry with score,
+  // pair<score, entry>, to |results|.
   bool LookupEntry(RequestType request_type, const std::string &input_key,
                    const std::string &key_base,
                    const Trie<std::string> *key_expanded, const Entry *entry,

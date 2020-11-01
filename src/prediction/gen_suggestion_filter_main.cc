@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     filter->Insert(words[i]);
   }
 
-  char *buf = NULL;
+  char *buf = nullptr;
   size_t size = 0;
 
   LOG(INFO) << "writing bloomfilter: " << FLAGS_output;

@@ -293,7 +293,7 @@ class MozcSessionHandlerThread : public Thread {
         static_cast<MozcSessionHandlerThread *>(data);
     usage_stats::UsageStats::SetInteger("BigDictionaryState",
                                         self->GetBigDictionaryState());
-    return usage_stats::UsageStatsUploader::Send(NULL);
+    return usage_stats::UsageStatsUploader::Send(nullptr);
   }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -391,7 +391,7 @@ Module *CreateModule() {
   // We use dummy argc and argv to call mozc::InitMozc().
   int argc = 1;
   char argv0[] = "NaclModule";
-  char *argv_body[] = {argv0, NULL};
+  char *argv_body[] = {argv0, nullptr};
   char **argv = argv_body;
   mozc::InitMozc(argv[0], &argc, &argv);
 

@@ -175,7 +175,8 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
 
   inline int GetCost(const Node *lnode, const Node *rnode) const {
     const int kInvalidPenaltyCost = 100000;
-    if (rnode->constrained_prev != NULL && lnode != rnode->constrained_prev) {
+    if (rnode->constrained_prev != nullptr &&
+        lnode != rnode->constrained_prev) {
       return kInvalidPenaltyCost;
     }
     return connector_->GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;

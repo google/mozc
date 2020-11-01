@@ -150,7 +150,7 @@ int Loop(std::istream *input) {
       client.SendKey(keys[i], &output);
       VLOG(2) << "Output of SendKey: " << output.DebugString();
 
-      if (renderer_client.get() != NULL) {
+      if (renderer_client != nullptr) {
         renderer_command.set_type(commands::RendererCommand::UPDATE);
         renderer_command.set_visible(output.has_candidates());
         renderer_command.mutable_output()->CopyFrom(output);
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
   }
 
   std::unique_ptr<mozc::InputFileStream> input_file;
-  std::istream *input = NULL;
+  std::istream *input = nullptr;
 
   if (!FLAGS_input.empty()) {
     // Batch mode loading the input file.

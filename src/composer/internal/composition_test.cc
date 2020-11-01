@@ -283,16 +283,16 @@ TEST_F(CompositionTest, SplitRawChunk) {
   };
   for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
-    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, nullptr);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
-    CharChunk* left_new_chunk_ptr = NULL;
+    CharChunk* left_new_chunk_ptr = nullptr;
     right_orig_chunk.SplitChunk(Transliterators::RAW_STRING, test.position,
                                 &left_new_chunk_ptr);
     std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
 
-    if (left_new_chunk.get() != NULL) {
+    if (left_new_chunk != nullptr) {
       EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
       EXPECT_EQ(test.expected_left_pending, left_new_chunk->pending());
       EXPECT_EQ(test.expected_left_raw, left_new_chunk->raw());
@@ -328,16 +328,16 @@ TEST_F(CompositionTest, SplitConversionChunk) {
   };
   for (int i = 0; i < arraysize(test_cases); ++i) {
     const TestCase& test = test_cases[i];
-    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, nullptr);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
-    CharChunk* left_new_chunk_ptr = NULL;
+    CharChunk* left_new_chunk_ptr = nullptr;
     right_orig_chunk.SplitChunk(Transliterators::CONVERSION_STRING,
                                 test.position, &left_new_chunk_ptr);
     std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
 
-    if (left_new_chunk.get() != NULL) {
+    if (left_new_chunk != nullptr) {
       EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
       EXPECT_EQ(test.expected_left_pending, left_new_chunk->pending());
       EXPECT_EQ(test.expected_left_raw, left_new_chunk->raw());

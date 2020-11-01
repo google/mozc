@@ -50,7 +50,8 @@ namespace dictionary {
 
 class UserDictionary : public DictionaryInterface {
  public:
-  UserDictionary(const UserPOSInterface *user_pos, POSMatcher pos_matcher,
+  UserDictionary(std::unique_ptr<const UserPOSInterface> user_pos,
+                 POSMatcher pos_matcher,
                  SuppressionDictionary *suppression_dictionary);
   ~UserDictionary() override;
 

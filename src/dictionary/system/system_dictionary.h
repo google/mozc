@@ -67,7 +67,7 @@ class SystemDictionary : public DictionaryInterface {
   // Usage:
   //   SystemDictionary::Builder builder(filename);
   //   builder.SetOptions(SystemDictionary::NONE);
-  //   builder.SetCodec(NULL);
+  //   builder.SetCodec(nullptr);
   //   SystemDictionary *dictionary = builder.Build();
   //   ...
   //   delete dictionary;
@@ -84,8 +84,8 @@ class SystemDictionary : public DictionaryInterface {
     // Sets options (default: NONE)
     Builder &SetOptions(Options options);
 
-    // Sets codec (default: NULL)
-    // Uses default codec if this is NULL
+    // Sets codec (default: nullptr)
+    // Uses default codec if this is nullptr
     // Doesn't take the ownership of |codec|.
     Builder &SetCodec(const SystemDictionaryCodecInterface *codec);
 

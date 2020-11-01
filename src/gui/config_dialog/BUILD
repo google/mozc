@@ -209,6 +209,7 @@ cc_qt_library_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//session/internal:keymap",
+        "@com_google_absl//absl/memory",
     ],
 )
 

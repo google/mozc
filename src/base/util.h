@@ -214,7 +214,7 @@ class Util {
   static size_t UCS4ToUTF8(char32 c, char *output);
 
   // Returns true if |s| is split into |first_char32| + |rest|.
-  // You can pass NULL to |first_char32| and/or |rest| to ignore the matched
+  // You can pass nullptr to |first_char32| and/or |rest| to ignore the matched
   // value.
   // Returns false if an invalid UTF-8 sequence is prefixed. That is, |rest| may
   // contain any invalid sequence even when this method returns true.
@@ -222,7 +222,7 @@ class Util {
                                absl::string_view *rest);
 
   // Returns true if |s| is split into |rest| + |last_char32|.
-  // You can pass NULL to |rest| and/or |last_char32| to ignore the matched
+  // You can pass nullptr to |rest| and/or |last_char32| to ignore the matched
   // value.
   // Returns false if an invalid UTF-8 sequence is suffixed. That is, |rest| may
   // contain any invalid sequence even when this method returns true.

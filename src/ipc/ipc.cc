@@ -54,7 +54,7 @@ class IPCServerThread : public Thread {
   explicit IPCServerThread(IPCServer *server) : server_(server) {}
   virtual ~IPCServerThread() {}
   virtual void Run() {
-    if (server_ != NULL) {
+    if (server_ != nullptr) {
       server_->Loop();
     }
   }
@@ -68,7 +68,7 @@ class IPCServerThread : public Thread {
 }  // namespace
 
 void IPCServer::LoopAndReturn() {
-  if (server_thread_.get() == NULL) {
+  if (server_thread_ == nullptr) {
     server_thread_.reset(new IPCServerThread(this));
     server_thread_->SetJoinable(true);
     server_thread_->Start("IPCServer");
@@ -78,7 +78,7 @@ void IPCServer::LoopAndReturn() {
 }
 
 void IPCServer::Wait() {
-  if (server_thread_.get() != NULL) {
+  if (server_thread_ != nullptr) {
     server_thread_->Join();
     server_thread_.reset();
   }
@@ -137,7 +137,7 @@ bool IPCClient::TerminateServer(const std::string &name) {
 #ifdef OS_WIN
   HANDLE handle =
       ::OpenProcess(PROCESS_TERMINATE, false, static_cast<DWORD>(pid));
-  if (NULL == handle) {
+  if (nullptr == handle) {
     LOG(ERROR) << "OpenProcess failed: " << ::GetLastError();
     return false;
   }

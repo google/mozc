@@ -73,11 +73,11 @@ RendererStyleHandlerImpl::RendererStyleHandlerImpl() {
 }
 
 bool RendererStyleHandlerImpl::GetRendererStyle(RendererStyle *style) {
-  style->CopyFrom(this->style_);
+  *style = this->style_;
   return true;
 }
 bool RendererStyleHandlerImpl::SetRendererStyle(const RendererStyle &style) {
-  style_.CopyFrom(style);
+  style_ = style;
   return true;
 }
 void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {

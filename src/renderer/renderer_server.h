@@ -48,7 +48,7 @@ class ParentApplicationWatchDog;
 class RendererServer : public IPCServer {
  public:
   RendererServer();
-  virtual ~RendererServer();
+  ~RendererServer() override;
 
   void SetRendererInterface(RendererInterface *renderer_interface);
 
@@ -59,7 +59,7 @@ class RendererServer : public IPCServer {
   int StartServer();
 
   bool Process(const char *request, size_t request_size, char *response,
-               size_t *response_size);
+               size_t *response_size) override;
 
   // DEPRECATED: this functions is never called
   virtual void AsyncHide() {}

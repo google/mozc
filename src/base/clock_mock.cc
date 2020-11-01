@@ -69,11 +69,11 @@ bool ClockMock::GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
   }
 #elif defined(OS_NACL)
   const time_t localtime_sec = modified_sec + timezone_offset_sec_;
-  if (gmtime_r(&localtime_sec, output) == NULL) {
+  if (gmtime_r(&localtime_sec, output) == nullptr) {
     return false;
   }
 #else  // !OS_WIN && !OS_NACL
-  if (gmtime_r(&modified_sec, output) == NULL) {
+  if (gmtime_r(&modified_sec, output) == nullptr) {
     return false;
   }
 #endif

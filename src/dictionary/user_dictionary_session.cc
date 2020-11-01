@@ -85,7 +85,7 @@ class UndoDeleteDictionaryCommand : public UserDictionarySession::UndoCommand {
       : index_(index), dictionary_(dictionary) {}
 
   virtual bool RunUndo(mozc::UserDictionaryStorage *storage) {
-    if (dictionary_.get() == NULL) {
+    if (dictionary_ == nullptr) {
       return false;
     }
 
@@ -139,7 +139,7 @@ class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
     UserDictionary *dictionary =
         UserDictionaryUtil::GetMutableUserDictionaryById(
             &storage->GetProto(), dictionary_id_);
-    if (dictionary == NULL) {
+    if (dictionary == nullptr) {
       return false;
     }
 
@@ -163,7 +163,7 @@ class UndoAddEntryCommand : public UserDictionarySession::UndoCommand {
     UserDictionary *dictionary =
         UserDictionaryUtil::GetMutableUserDictionaryById(
             &storage->GetProto(), dictionary_id_);
-    if (dictionary == NULL || dictionary->entries_size() == 0) {
+    if (dictionary == nullptr || dictionary->entries_size() == 0) {
       return false;
     }
 
@@ -189,7 +189,7 @@ class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
     UserDictionary *dictionary =
         UserDictionaryUtil::GetMutableUserDictionaryById(
             &storage->GetProto(), dictionary_id_);
-    if (dictionary == NULL || index_ < 0 ||
+    if (dictionary == nullptr || index_ < 0 ||
         dictionary->entries_size() <= index_) {
       return false;
     }
@@ -234,7 +234,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
     UserDictionary *dictionary =
         UserDictionaryUtil::GetMutableUserDictionaryById(
             &storage->GetProto(), dictionary_id_);
-    if (dictionary == NULL) {
+    if (dictionary == nullptr) {
       return false;
     }
 
@@ -299,7 +299,7 @@ class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
     UserDictionary *dictionary =
         UserDictionaryUtil::GetMutableUserDictionaryById(
             &storage->GetProto(), dictionary_id_);
-    if (dictionary == NULL) {
+    if (dictionary == nullptr) {
       return false;
     }
 
@@ -502,7 +502,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
   const UserDictionary *dictionary =
       UserDictionaryUtil::GetUserDictionaryById(
           storage_->GetProto(), dictionary_id);
-  if (dictionary != NULL) {
+  if (dictionary != nullptr) {
     // Note that if dictionary is null, it means the dictionary_id is invalid
     // so following RenameDictionary will fail, and error handling is done
     // in the following codes.
@@ -537,7 +537,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::AddEntry(
     uint64 dictionary_id, const UserDictionary::Entry &entry) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
-  if (dictionary == NULL) {
+  if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
 
@@ -564,7 +564,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
     uint64 dictionary_id, int index, const UserDictionary::Entry &entry) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
-  if (dictionary == NULL) {
+  if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
 
@@ -591,7 +591,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
     uint64 dictionary_id, const std::vector<int> &index_list) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
-  if (dictionary == NULL) {
+  if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
 
@@ -612,11 +612,12 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
     const int index = index_list[i];
 
     deleted_entries.push_back(std::make_pair(index, data[index]));
-    data[index] = NULL;
+    data[index] = nullptr;
   }
 
-  UserDictionary::Entry **tail = std::remove(
-      data, data + entries->size(), static_cast<UserDictionary::Entry *>(NULL));
+  UserDictionary::Entry **tail =
+      std::remove(data, data + entries->size(),
+                  static_cast<UserDictionary::Entry *>(nullptr));
   const int remaining_size = tail - data;
   while (entries->size() > remaining_size) {
     entries->ReleaseLast();
@@ -630,7 +631,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::ImportFromString(
     uint64 dictionary_id, const std::string &data) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
-  if (dictionary == NULL) {
+  if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
 
@@ -693,7 +694,7 @@ UserDictionarySession::ImportToNewDictionaryFromString(
 
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), *new_dictionary_id);
-  if (dictionary == NULL) {
+  if (dictionary == nullptr) {
     // The dictionary should be always found.
     return UserDictionaryCommandStatus::UNKNOWN_ERROR;
   }

@@ -44,7 +44,7 @@ namespace mozc {
 namespace internal {
 
 PosIdPrinter::PosIdPrinter(std::istream *id_def) {
-  if (id_def == NULL) {
+  if (id_def == nullptr) {
     return;
   }
 

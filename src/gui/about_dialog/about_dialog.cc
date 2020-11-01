@@ -30,7 +30,6 @@
 #include "gui/about_dialog/about_dialog.h"
 
 #include <QtGui/QtGui>
-
 #include <string>
 
 #include "base/file_util.h"
@@ -40,6 +39,7 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "gui/base/util.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace gui {
@@ -112,7 +112,7 @@ AboutDialog::AboutDialog(QWidget *parent)
   SetLabelText(label_terms);
   SetLabelText(label_credits);
 
-  product_image_.reset(new QImage(":/product_logo.png"));
+  product_image_ = absl::make_unique<QImage>(":/product_logo.png");
 }
 
 void AboutDialog::paintEvent(QPaintEvent *event) {

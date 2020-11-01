@@ -41,41 +41,41 @@
 #include <pwd.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#endif  // OS_WIN
+
 #ifdef __APPLE__
 #include <sys/stat.h>
 #include <sys/sysctl.h>
-#endif  // __APPLE__
-#endif  // OS_WIN
-
-#ifdef __APPLE__
 #include <cerrno>
 #endif  // __APPLE__
+
 #include <cstdlib>
 #include <cstring>
+
 #ifdef OS_WIN
 #include <memory>
 #endif  // OS_WIN
+
 #include <sstream>
 #include <string>
-
-#include "base/const.h"
-#include "base/file_util.h"
-#include "base/logging.h"
-#ifdef __APPLE__
-#include "base/mac_util.h"
-#endif  // __APPLE__
-#include "base/singleton.h"
-#include "base/util.h"
-#ifdef OS_WIN
-#include "base/win_util.h"
-#endif  // OS_WIN
 
 #ifdef OS_ANDROID
 #include "base/android_util.h"
 #endif  // OS_ANDROID
 
+#include "base/const.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+
+#ifdef __APPLE__
+#include "base/mac_util.h"
+#endif  // __APPLE__
+
+#include "base/singleton.h"
+#include "base/util.h"
+
 #ifdef OS_WIN
-using std::unique_ptr;
+#include "base/win_util.h"
 #endif  // OS_WIN
 
 namespace mozc {
@@ -210,7 +210,20 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   // NaCL platform is correct.
   dir_ = "/mutable";
   return;
-#else  // OS_NACL || OS_CHROMEOS
+#endif  // OS_NACL || OS_CHROMEOS
+
+#if defined(OS_WASM)
+  // Do nothing for WebAssembly.
+  return;
+#endif  // OS_WASM
+
+#if defined(OS_ANDROID)
+  // For android, we do nothing here because user profile directory,
+  // of which the path depends on active user,
+  // is injected from Java layer.
+  return;
+#endif  // OS_ANDROID
+
   std::string dir;
 
 #ifdef OS_IOS
@@ -221,37 +234,32 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   // because the support directory doesn't exist by default.  Also, it is backed
   // up by iTunes and iCloud.
   dir = FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
+#endif  // OS_IOS
 
-#elif defined(OS_WIN)
+#if defined(OS_WIN)
   DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
   dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+# ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
   FileUtil::CreateDirectory(dir);
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+# endif  // GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, kProductNameInEnglish);
+#endif  // OS_WIN
 
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
   dir = MacUtil::GetApplicationSupportDirectory();
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+# ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, "Google");
   // The permission of ~/Library/Application Support/Google seems to be 0755.
   // TODO(komatsu): nice to make a wrapper function.
   ::mkdir(dir.c_str(), 0755);
   dir = FileUtil::JoinPath(dir, "JapaneseInput");
-#else   //  GOOGLE_JAPANESE_INPUT_BUILD
+# else   //  GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, "Mozc");
-#endif  //  GOOGLE_JAPANESE_INPUT_BUILD
+# endif  //  GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // __APPLE__
 
-#elif defined(OS_WASM)
-  // Do nothing for WebAssembly.
-  return;
-#elif defined(OS_ANDROID)
-  // For android, we do nothing here because user profile directory,
-  // of which the path depends on active user,
-  // is injected from Java layer.
-
-#else   // !OS_IOS && !OS_WIN && !__APPLE__ && !OS_ANDROID
+#if defined(OS_LINUX)
   char buf[1024];
   struct passwd pw, *ppw;
   const uid_t uid = geteuid();
@@ -260,7 +268,7 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   CHECK_LT(0, strlen(pw.pw_dir))
       << "Home directory for uid " << uid << " is not set.";
   dir = FileUtil::JoinPath(pw.pw_dir, ".mozc");
-#endif  // !OS_IOS && !OS_WIN && !__APPLE__ && !OS_ANDROID
+#endif  // OS_LINUX
 
   FileUtil::CreateDirectory(dir);
   if (!FileUtil::DirectoryExists(dir)) {
@@ -269,7 +277,6 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 
   // set User profile directory
   dir_ = dir;
-#endif  // !OS_NACL && !OS_CHROMEOS
 }
 
 }  // namespace
@@ -367,28 +374,33 @@ class ProgramFilesX86Cache {
 std::string SystemUtil::GetServerDirectory() {
 #ifdef OS_WIN
   DCHECK(SUCCEEDED(Singleton<ProgramFilesX86Cache>::get()->result()));
-#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+# if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   return FileUtil::JoinPath(
       FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                          kCompanyNameInEnglish),
       kProductNameInEnglish);
-#else   // GOOGLE_JAPANESE_INPUT_BUILD
+# else   // GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                             kProductNameInEnglish);
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+# endif  // GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // OS_WIN
 
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
   return MacUtil::GetServerDirectory();
+#endif  // __APPLE__
 
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
     defined(OS_WASM)
-#if defined(MOZC_SERVER_DIRECTORY)
+# if defined(MOZC_SERVER_DIRECTORY)
   return MOZC_SERVER_DIRECTORY;
-#else
+# else
   return "/usr/lib/mozc";
-#endif  // MOZC_SERVER_DIRECTORY
+# endif  // MOZC_SERVER_DIRECTORY
 
-#endif  // OS_WIN, __APPLE__, OS_LINUX, ...
+#else  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+# error "unknown platform"
+
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
 }
 
 std::string SystemUtil::GetServerPath() {
@@ -438,8 +450,9 @@ std::string SystemUtil::GetUserNameAsString() {
 #ifdef OS_NACL
   LOG(ERROR) << "SystemUtil::GetUserNameAsString() is not implemented in NaCl.";
   return "username";
+#endif  // OS_NACL
 
-#elif defined(OS_WIN)  // OS_NACL
+#if defined(OS_WIN)
   wchar_t wusername[UNLEN + 1];
   DWORD name_size = UNLEN + 1;
   // Call the same name Windows API.  (include Advapi32.lib).
@@ -451,20 +464,20 @@ std::string SystemUtil::GetUserNameAsString() {
   string username;
   Util::WideToUTF8(&wusername[0], &username);
   return username;
+#endif  // OS_WIN
 
-#elif defined(OS_ANDROID)  // OS_WIN
+#if defined(OS_ANDROID)
   // Android doesn't seem to support getpwuid_r.
   struct passwd *ppw = getpwuid(geteuid());
-  CHECK(ppw != NULL);
+  CHECK(ppw != nullptr);
   return ppw->pw_name;
+#endif  // OS_ANDROID
 
-#else   // OS_ANDROID
   // __APPLE__, OS_LINUX or OS_NACL
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
   return pw.pw_name;
-#endif  // !OS_NACL && !OS_WIN && !OS_ANDROID
 }
 
 #ifdef OS_WIN
@@ -489,7 +502,7 @@ UserSidImpl::UserSidImpl() {
 
   DWORD length = 0;
   ::GetTokenInformation(htoken, TokenUser, nullptr, 0, &length);
-  unique_ptr<char[]> buf(new char[length]);
+  std::unique_ptr<char[]> buf(new char[length]);
   PTOKEN_USER p_user = reinterpret_cast<PTOKEN_USER>(buf.get());
 
   if (length == 0 ||
@@ -546,7 +559,7 @@ string GetObjectNameAsString(HANDLE handle) {
     return "";
   }
 
-  unique_ptr<char[]> buf(new char[size]);
+  std::unique_ptr<char[]> buf(new char[size]);
   DWORD return_size = 0;
   if (!::GetUserObjectInformationA(handle, UOI_NAME, buf.get(), size,
                                    &return_size)) {
@@ -560,7 +573,7 @@ string GetObjectNameAsString(HANDLE handle) {
   }
 
   char *result = buf.get();
-  result[return_size - 1] = '\0';  // just make sure NULL terminated
+  result[return_size - 1] = '\0';  // just make sure nullptr terminated
 
   return result;
 }
@@ -622,15 +635,17 @@ std::string SystemUtil::GetDesktopNameAsString() {
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
     defined(OS_WASM)
   const char *display = getenv("DISPLAY");
-  if (display == NULL) {
+  if (display == nullptr) {
     return "";
   }
   return display;
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
 
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
   return "";
+#endif  // __APPLE__
 
-#elif defined(OS_WIN)
+#if defined(OS_WIN)
   const string &session_id = GetSessionIdString();
   if (session_id.empty()) {
     DLOG(ERROR) << "Failed to retrieve session id";
@@ -650,7 +665,7 @@ std::string SystemUtil::GetDesktopNameAsString() {
   }
 
   return (session_id + "." + window_station_name + "." + desktop_name);
-#endif  // OS_LINUX, __APPLE__, OS_WIN, ...
+#endif  // OS_WIN
 }
 
 #ifdef OS_WIN
@@ -840,11 +855,14 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
     return 0;
   }
   return memory_status.ullTotalPhys;
-#elif defined(__APPLE__)
+#endif  // OS_WIN
+
+#if defined(__APPLE__)
   int mib[] = {CTL_HW, HW_MEMSIZE};
   uint64 total_memory = 0;
   size_t size = sizeof(total_memory);
-  const int error = sysctl(mib, arraysize(mib), &total_memory, &size, NULL, 0);
+  const int error =
+      sysctl(mib, arraysize(mib), &total_memory, &size, nullptr, 0);
   if (error == -1) {
     const int error = errno;
     LOG(ERROR) << "sysctl with hw.memsize failed. "
@@ -852,23 +870,27 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
     return 0;
   }
   return total_memory;
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+#endif  // __APPLE__
+
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
     defined(OS_WASM)
-#if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-  const long page_size = sysconf(_SC_PAGESIZE);
-  const long number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
+# if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
+  const int32 page_size = sysconf(_SC_PAGESIZE);
+  const int32 number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
   if (number_of_phyisical_pages < 0) {
     // likely to be overflowed.
     LOG(FATAL) << number_of_phyisical_pages << ", " << page_size;
     return 0;
   }
   return static_cast<uint64>(number_of_phyisical_pages) * page_size;
-#else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
+# else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
-#endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-#else   // !(defined(OS_WIN) || defined(__APPLE__) || defined(OS_LINUX))
-#error "unknown platform"
-#endif  // OS_WIN, __APPLE__, OS_LINUX
+# endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
+
+#else  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+# error "unknown platform"
+
+#endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
 }
 
 }  // namespace mozc

@@ -34,6 +34,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -160,10 +161,11 @@ bool UserPOS::GetTokens(const std::string &key, const std::string &value,
   return true;
 }
 
-UserPOS *UserPOS::CreateFromDataManager(const DataManagerInterface &manager) {
+std::unique_ptr<UserPOS> UserPOS::CreateFromDataManager(
+    const DataManagerInterface &manager) {
   absl::string_view token_array_data, string_array_data;
   manager.GetUserPOSData(&token_array_data, &string_array_data);
-  return new UserPOS(token_array_data, string_array_data);
+  return absl::make_unique<UserPOS>(token_array_data, string_array_data);
 }
 
 }  // namespace dictionary

@@ -75,7 +75,7 @@
 #include <crt_externs.h>
 static char **environ = *_NSGetEnviron();
 #elif !defined(OS_WIN)
-// Defined somewhere in libc. We can't pass NULL as the 6th argument of
+// Defined somewhere in libc. We can't pass nullptr as the 6th argument of
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.
 extern char **environ;
@@ -134,13 +134,13 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   si.dwFlags = STARTF_FORCEOFFFEEDBACK;
   PROCESS_INFORMATION pi = {0};
 
-  // If both |lpApplicationName| and |lpCommandLine| are non-NULL,
+  // If both |lpApplicationName| and |lpCommandLine| are non-nullptr,
   // the argument array of the process will be shifted.
   // http://support.microsoft.com/kb/175986
   const bool create_process_succeeded =
       ::CreateProcessW(
-          NULL, wpath2.get(), NULL, NULL, FALSE, CREATE_DEFAULT_ERROR_MODE,
-          NULL,
+          nullptr, wpath2.get(), nullptr, nullptr, FALSE,
+          CREATE_DEFAULT_ERROR_MODE, nullptr,
           // NOTE: Working directory will be locked by the system.
           // We use system directory to spawn process so that users will not
           // to be aware of any undeletable directory. (http://b/2017482)
@@ -166,7 +166,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
     argv[i + 1] = arg_tmp[i].c_str();
   }
-  argv[arg_tmp.size() + 1] = NULL;
+  argv[arg_tmp.size() + 1] = nullptr;
 
   struct stat statbuf;
   if (::stat(path.c_str(), &statbuf) != 0) {
@@ -215,7 +215,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   // the return value of posix_spawn is basically determined
   // by the return value of fork().
   const int result =
-      ::posix_spawn(&tmp_pid, path.c_str(), NULL, NULL,
+      ::posix_spawn(&tmp_pid, path.c_str(), nullptr, nullptr,
                     const_cast<char *const *>(argv.get()), environ);
   if (result == 0) {
     VLOG(1) << "posix_spawn: child pid is " << tmp_pid;
@@ -223,7 +223,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
     LOG(ERROR) << "posix_spawn failed: " << strerror(result);
   }
 
-  if (pid != NULL) {
+  if (pid != nullptr) {
     *pid = tmp_pid;
   }
   return result == 0;
@@ -250,7 +250,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
 #ifdef OS_WIN
   DWORD processe_id = static_cast<DWORD>(pid);
   ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE, processe_id));
-  if (handle.get() == NULL) {
+  if (handle.get() == nullptr) {
     LOG(ERROR) << "Cannot get handle id";
     return true;
   }
@@ -300,7 +300,7 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
   {
     ScopedHandle handle(
         ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid)));
-    if (NULL == handle.get()) {
+    if (nullptr == handle.get()) {
       const DWORD error = ::GetLastError();
       if (error == ERROR_ACCESS_DENIED) {
         LOG(ERROR) << "OpenProcess failed: " << error;
@@ -341,7 +341,7 @@ bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
   {
     ScopedHandle handle(
         ::OpenThread(SYNCHRONIZE, FALSE, static_cast<DWORD>(thread_id)));
-    if (NULL == handle.get()) {
+    if (nullptr == handle.get()) {
       const DWORD error = ::GetLastError();
       if (error == ERROR_ACCESS_DENIED) {
         LOG(ERROR) << "OpenThread failed: " << error;

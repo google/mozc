@@ -50,6 +50,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "gui/base/util.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace gui {
@@ -158,12 +159,12 @@ bool IsAlphabet(const char key) { return (key >= 'a' && key <= 'z'); }
 class KeyBindingFilter : public QObject {
  public:
   KeyBindingFilter(QLineEdit *line_edit, QPushButton *ok_button);
-  virtual ~KeyBindingFilter();
+  ~KeyBindingFilter() override;
 
   enum KeyState { DENY_KEY, ACCEPT_KEY, SUBMIT_KEY };
 
  protected:
-  bool eventFilter(QObject *obj, QEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
 
  private:
   void Reset();
@@ -491,7 +492,7 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
       KeyBindingEditorbuttonBox->button(QDialogButtonBox::Ok);
   CHECK(ok_button != nullptr);
 
-  filter_.reset(new KeyBindingFilter(KeyBindingLineEdit, ok_button));
+  filter_ = absl::make_unique<KeyBindingFilter>(KeyBindingLineEdit, ok_button);
   KeyBindingLineEdit->installEventFilter(filter_.get());
 
   // no right click

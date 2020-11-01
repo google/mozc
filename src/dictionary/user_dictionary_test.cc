@@ -58,6 +58,7 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -207,7 +208,7 @@ class UserDictionaryTest : public ::testing::Test {
   // Creates a user dictionary with mock pos data.
   UserDictionary *CreateDictionaryWithMockPos() {
     return new UserDictionary(
-        new UserPOSMock(),
+        absl::make_unique<UserPOSMock>(),
         dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()),
         suppression_dictionary_.get());
   }

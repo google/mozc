@@ -55,12 +55,12 @@ namespace {
 // http://developer.apple.com/samplecode/CFProxySupportTool/
 static void PACResultCallback(void *client, CFArrayRef proxies,
                               CFErrorRef error) {
-  DCHECK((proxies == NULL && error != NULL) ||
-         (proxies != NULL && error == NULL));
+  DCHECK((proxies == nullptr && error != nullptr) ||
+         (proxies != nullptr && error == nullptr));
   CFTypeRef *result = static_cast<CFTypeRef *>(client);
 
-  if (result != NULL && *result == NULL) {
-    if (error != NULL) {
+  if (result != nullptr && *result == nullptr) {
+    if (error != nullptr) {
       *result = CFRetain(error);
     } else {
       *result = CFRetain(proxies);
@@ -77,7 +77,7 @@ static void PACResultCallback(void *client, CFArrayRef proxies,
 // The implementation is inspired by
 // http://developer.apple.com/samplecode/CFProxySupportTool/
 CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
-  CFDictionaryRef final_proxy = NULL;
+  CFDictionaryRef final_proxy = nullptr;
   CFStringRef proxy_type = reinterpret_cast<CFStringRef>(
       CFDictionaryGetValue(proxy, kCFProxyTypeKey));
 
@@ -86,19 +86,19 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
   // the pac URL server.  However, it seems that the function seems to
   // take care of caching in memory.  So there are no additional
   // latency problems here.
-  if (proxy_type != NULL && CFGetTypeID(proxy_type) == CFStringGetTypeID() &&
+  if (proxy_type != nullptr && CFGetTypeID(proxy_type) == CFStringGetTypeID() &&
       CFEqual(proxy_type, kCFProxyTypeAutoConfigurationURL)) {
     CFURLRef script_url = reinterpret_cast<CFURLRef>(
         CFDictionaryGetValue(proxy, kCFProxyAutoConfigurationURLKey));
-    if (script_url != NULL && CFGetTypeID(script_url) == CFURLGetTypeID()) {
-      CFTypeRef result = NULL;
-      CFStreamClientContext context = {0, &result, NULL, NULL, NULL};
+    if (script_url != nullptr && CFGetTypeID(script_url) == CFURLGetTypeID()) {
+      CFTypeRef result = nullptr;
+      CFStreamClientContext context = {0, &result, nullptr, nullptr, nullptr};
       scoped_cftyperef<CFRunLoopSourceRef> runloop_source(
           CFNetworkExecuteProxyAutoConfigurationURL(
               script_url, cfurl, PACResultCallback, &context));
       const string label = MacUtil::GetLabelForSuffix("ProxyResolverMac");
       scoped_cftyperef<CFStringRef> private_runloop_mode(
-          CFStringCreateWithBytes(NULL,
+          CFStringCreateWithBytes(nullptr,
                                   reinterpret_cast<const UInt8 *>(label.data()),
                                   label.size(), kCFStringEncodingUTF8, false));
       CFRunLoopAddSource(CFRunLoopGetCurrent(), runloop_source.get(),
@@ -108,7 +108,7 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
                             private_runloop_mode.get());
 
       // resolving PAC succeeds
-      if (result != NULL && CFGetTypeID(result) == CFArrayGetTypeID() &&
+      if (result != nullptr && CFGetTypeID(result) == CFArrayGetTypeID() &&
           CFArrayGetCount(reinterpret_cast<CFArrayRef>(result)) > 0) {
         final_proxy = reinterpret_cast<CFDictionaryRef>(
             CFArrayGetValueAtIndex(reinterpret_cast<CFArrayRef>(result), 0));
@@ -117,7 +117,7 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
         LOG(WARNING) << "Failed to resolve PAC file. "
                      << "Possibly wrong PAC file is specified.";
       }
-      if (result != NULL) {
+      if (result != nullptr) {
         CFRelease(result);
       }
     }
@@ -125,7 +125,7 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
 
   // If configuration isn't PAC or resolving PAC fails, just returns
   // the retained proxy.
-  if (final_proxy == NULL) {
+  if (final_proxy == nullptr) {
     final_proxy = reinterpret_cast<CFDictionaryRef>(CFRetain(proxy));
   }
 
@@ -146,16 +146,16 @@ class MacProxyManager : public ProxyManagerInterface {
         CFNetworkCopySystemProxySettings());
 #else
     scoped_cftyperef<CFDictionaryRef> proxy_settings(
-        SCDynamicStoreCopyProxies(NULL));
+        SCDynamicStoreCopyProxies(nullptr));
 #endif  // OS_IOS
     if (!proxy_settings.Verify(CFDictionaryGetTypeID())) {
       LOG(ERROR) << "Failed to create proxy setting";
       return false;
     }
 
-    scoped_cftyperef<CFURLRef> cfurl(
-        CFURLCreateWithBytes(NULL, reinterpret_cast<const UInt8 *>(url.data()),
-                             url.size(), kCFStringEncodingUTF8, NULL));
+    scoped_cftyperef<CFURLRef> cfurl(CFURLCreateWithBytes(
+        nullptr, reinterpret_cast<const UInt8 *>(url.data()), url.size(),
+        kCFStringEncodingUTF8, nullptr));
     if (!cfurl.Verify(CFURLGetTypeID())) {
       LOG(ERROR) << "Failed to create URL object from the specified URL";
       return false;
@@ -189,8 +189,8 @@ class MacProxyManager : public ProxyManagerInterface {
         if (host.Verify(CFStringGetTypeID())) {
           scoped_cftyperef<CFStringRef> host_desc;
           if (port.Verify(CFNumberGetTypeID())) {
-            host_desc.reset(CFStringCreateWithFormat(NULL, NULL, CFSTR("%@:%@"),
-                                                     host.get(), port.get()));
+            host_desc.reset(CFStringCreateWithFormat(
+                nullptr, nullptr, CFSTR("%@:%@"), host.get(), port.get()));
           } else {
             host_desc.reset(reinterpret_cast<CFStringRef>(host.get()));
             CFRetain(host.get());
@@ -198,7 +198,7 @@ class MacProxyManager : public ProxyManagerInterface {
           if (host_desc.Verify(CFStringGetTypeID())) {
             const char *hostdata_ptr =
                 CFStringGetCStringPtr(host_desc.get(), kCFStringEncodingUTF8);
-            if (hostdata_ptr != NULL) {
+            if (hostdata_ptr != nullptr) {
               hostdata->assign(hostdata_ptr);
               proxy_available = true;
             } else {
@@ -210,12 +210,13 @@ class MacProxyManager : public ProxyManagerInterface {
         }
         if (proxy_available && username.Verify(CFStringGetTypeID()) &&
             password.Verify(CFStringGetTypeID())) {
-          scoped_cftyperef<CFStringRef> auth_desc(CFStringCreateWithFormat(
-              NULL, NULL, CFSTR("%@:%@"), username.get(), password.get()));
+          scoped_cftyperef<CFStringRef> auth_desc(
+              CFStringCreateWithFormat(nullptr, nullptr, CFSTR("%@:%@"),
+                                       username.get(), password.get()));
           if (auth_desc.Verify(CFStringGetTypeID())) {
             const char *authdata_ptr =
                 CFStringGetCStringPtr(auth_desc.get(), kCFStringEncodingUTF8);
-            if (authdata_ptr != NULL) {
+            if (authdata_ptr != nullptr) {
               authdata->assign(authdata_ptr);
             }
           }
@@ -237,10 +238,10 @@ bool DummyProxyManager::GetProxyData(const std::string &url,
 namespace {
 
 // This is only used for dependency injection
-ProxyManagerInterface *g_proxy_manager = NULL;
+ProxyManagerInterface *g_proxy_manager = nullptr;
 
 ProxyManagerInterface *GetProxyManager() {
-  if (g_proxy_manager == NULL) {
+  if (g_proxy_manager == nullptr) {
 #ifdef __APPLE__
     return Singleton<MacProxyManager>::get();
 #else

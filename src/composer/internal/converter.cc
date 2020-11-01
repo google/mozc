@@ -50,7 +50,7 @@ void Converter::Convert(const std::string& input, std::string* output) const {
     size_t key_length;
     bool fixed;
     const Entry* entry = table_.LookUpPrefix(key, &key_length, &fixed);
-    if (entry == NULL) {
+    if (entry == nullptr) {
       output->append(key, 0, 1);
       key.erase(0, 1);
     } else {

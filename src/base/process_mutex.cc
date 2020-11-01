@@ -58,7 +58,7 @@ namespace mozc {
 namespace {
 
 std::string CreateProcessMutexFileName(const char *name) {
-  name = (name == NULL) ? "NULL" : name;
+  name = (name == nullptr) ? "nullptr" : name;
 
 #ifdef OS_WIN
   string basename;
@@ -103,10 +103,10 @@ bool ProcessMutex::LockAndWrite(const string &message) {
   }
   handle_.reset(::CreateFileW(wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
                               &serucity_attributes, CREATE_ALWAYS, kAttribute,
-                              NULL));
+                              nullptr));
   ::LocalFree(serucity_attributes.lpSecurityDescriptor);
 
-  locked_ = (handle_.get() != NULL);
+  locked_ = (handle_.get() != nullptr);
 
   if (!locked_) {
     VLOG(1) << "already locked";
@@ -116,7 +116,7 @@ bool ProcessMutex::LockAndWrite(const string &message) {
   if (!message.empty()) {
     DWORD size = 0;
     if (!::WriteFile(handle_.get(), message.data(), message.size(), &size,
-                     NULL)) {
+                     nullptr)) {
       const int last_error = ::GetLastError();
       LOG(ERROR) << "Cannot write message: " << message
                  << ", last_error:" << last_error;
@@ -129,7 +129,7 @@ bool ProcessMutex::LockAndWrite(const string &message) {
 }
 
 bool ProcessMutex::UnLock() {
-  handle_.reset(NULL);
+  handle_.reset(nullptr);
   FileUtil::Unlink(filename_);
   locked_ = false;
   return true;
@@ -213,8 +213,8 @@ class FileLockManager {
   bool Lock(const std::string &filename, int *fd) {
     scoped_lock l(&mutex_);
 
-    if (fd == NULL) {
-      LOG(ERROR) << "fd is NULL";
+    if (fd == nullptr) {
+      LOG(ERROR) << "fd is nullptr";
       return false;
     }
 

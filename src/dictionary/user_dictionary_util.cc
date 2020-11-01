@@ -179,14 +179,14 @@ UserDictionaryUtil::GetUserDictionaryById(
     const user_dictionary::UserDictionaryStorage &storage,
     uint64 dictionary_id) {
   int index = GetUserDictionaryIndexById(storage, dictionary_id);
-  return index >= 0 ? &storage.dictionaries(index) : NULL;
+  return index >= 0 ? &storage.dictionaries(index) : nullptr;
 }
 
 user_dictionary::UserDictionary *
 UserDictionaryUtil::GetMutableUserDictionaryById(
     user_dictionary::UserDictionaryStorage *storage, uint64 dictionary_id) {
   int index = GetUserDictionaryIndexById(*storage, dictionary_id);
-  return index >= 0 ? storage->mutable_dictionaries(index) : NULL;
+  return index >= 0 ? storage->mutable_dictionaries(index) : nullptr;
 }
 
 int UserDictionaryUtil::GetUserDictionaryIndexById(
@@ -315,7 +315,7 @@ const char *UserDictionaryUtil::GetStringPosType(
   if (user_dictionary::UserDictionary::PosType_IsValid(pos_type)) {
     return kPosTypeStringTable[pos_type];
   }
-  return NULL;
+  return nullptr;
 }
 
 user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
@@ -373,14 +373,14 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
     return UserDictionaryCommandStatus::DICTIONARY_SIZE_LIMIT_EXCEEDED;
   }
 
-  if (new_dictionary_id == NULL) {
-    LOG(ERROR) << "new_dictionary_id is NULL";
+  if (new_dictionary_id == nullptr) {
+    LOG(ERROR) << "new_dictionary_id is nullptr";
     return UserDictionaryCommandStatus::UNKNOWN_ERROR;
   }
 
   *new_dictionary_id = CreateNewDictionaryId(*storage);
   user_dictionary::UserDictionary *dictionary = storage->add_dictionaries();
-  if (dictionary == NULL) {
+  if (dictionary == nullptr) {
     LOG(ERROR) << "add_dictionaries failed.";
     return UserDictionaryCommandStatus::UNKNOWN_ERROR;
   }
@@ -394,7 +394,7 @@ bool UserDictionaryUtil::DeleteDictionary(
     user_dictionary::UserDictionaryStorage *storage, uint64 dictionary_id,
     int *original_index, user_dictionary::UserDictionary **deleted_dictionary) {
   const int index = GetUserDictionaryIndexById(*storage, dictionary_id);
-  if (original_index != NULL) {
+  if (original_index != nullptr) {
     *original_index = index;
   }
 
@@ -410,7 +410,7 @@ bool UserDictionaryUtil::DeleteDictionary(
               dictionaries->pointer_begin() + index + 1,
               dictionaries->pointer_end());
 
-  if (deleted_dictionary == NULL) {
+  if (deleted_dictionary == nullptr) {
     dictionaries->RemoveLast();
   } else {
     *deleted_dictionary = dictionaries->ReleaseLast();

@@ -31,7 +31,6 @@
 #define MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 
 #include <QtWidgets/QWidget>
-
 #include <map>
 #include <memory>
 #include <set>
@@ -53,20 +52,20 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
 
  public:
   explicit KeyMapEditorDialog(QWidget *parent);
-  virtual ~KeyMapEditorDialog();
+  ~KeyMapEditorDialog() override;
 
   // show a modal dialog
   static bool Show(QWidget *parent, const std::string &current_keymap,
                    std::string *new_keymap);
 
  protected slots:
-  virtual void UpdateMenuStatus();
-  virtual void OnEditMenuAction(QAction *action);
+  void UpdateMenuStatus() override;
+  void OnEditMenuAction(QAction *action) override;
 
  protected:
-  virtual std::string GetDefaultFilename() const { return "keymap.txt"; }
-  virtual bool LoadFromStream(std::istream *is);
-  virtual bool Update();
+  std::string GetDefaultFilename() const override { return "keymap.txt"; }
+  bool LoadFromStream(std::istream *is) override;
+  bool Update() override;
 
  private:
   std::string invisible_keymap_table_;

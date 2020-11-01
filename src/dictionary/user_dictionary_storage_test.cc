@@ -132,7 +132,7 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   for (size_t i = 0; i < kDictionariesSize; ++i) {
     EXPECT_EQ(storage.GetProto().mutable_dictionaries(i + dict_size),
               storage.GetUserDictionary(id[i]));
-    EXPECT_EQ(NULL, storage.GetUserDictionary(id[i] + 1));
+    EXPECT_EQ(nullptr, storage.GetUserDictionary(id[i] + 1));
   }
 
   // empty

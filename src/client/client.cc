@@ -393,7 +393,7 @@ bool Client::EnsureCallCommand(commands::Input *input,
 }
 
 void Client::EnableCascadingWindow(const bool enable) {
-  if (preferences_.get() == NULL) {
+  if (preferences_ == nullptr) {
     preferences_.reset(new config::Config);
   }
   preferences_->set_use_cascading_window(enable);
@@ -536,7 +536,7 @@ bool Client::NoOperation() {
 
 // PingServer ignores all server status
 bool Client::PingServer() const {
-  if (client_factory_ == NULL) {
+  if (client_factory_ == nullptr) {
     return false;
   }
 
@@ -550,7 +550,7 @@ bool Client::PingServer() const {
   std::unique_ptr<IPCClientInterface> client(client_factory_->NewClient(
       kServerAddress, server_launcher_->server_program()));
 
-  if (client.get() == NULL) {
+  if (client == nullptr) {
     LOG(ERROR) << "Cannot make client object";
     return false;
   }
@@ -606,7 +606,7 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
     return false;
   }
 
-  if (client_factory_ == NULL) {
+  if (client_factory_ == nullptr) {
     return false;
   }
 
@@ -629,7 +629,7 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
   server_product_version_ = Version::GetMozcVersion();
   server_process_id_ = 0;
 
-  if (client.get() == NULL) {
+  if (client == nullptr) {
     LOG(ERROR) << "Cannot make client object";
     server_status_ = SERVER_FATAL;
     return false;
@@ -690,21 +690,21 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
 }
 
 bool Client::StartServer() {
-  if (server_launcher_.get() != NULL) {
+  if (server_launcher_ != nullptr) {
     return server_launcher_->StartServer(this);
   }
   return true;
 }
 
 void Client::OnFatal(ServerLauncherInterface::ServerErrorType type) {
-  if (server_launcher_.get() != NULL) {
+  if (server_launcher_ != nullptr) {
     server_launcher_->OnFatal(type);
   }
 }
 
 void Client::InitInput(commands::Input *input) const {
   input->set_id(id_);
-  if (preferences_.get() != NULL) {
+  if (preferences_ != nullptr) {
     input->mutable_config()->CopyFrom(*preferences_);
   }
 }
@@ -792,7 +792,7 @@ void Client::Reset() {
 
 bool Client::TranslateProtoBufToMozcToolArg(const commands::Output &output,
                                             std::string *mode) {
-  if (!output.has_launch_tool_mode() || mode == NULL) {
+  if (!output.has_launch_tool_mode() || mode == nullptr) {
     return false;
   }
 
@@ -907,11 +907,11 @@ class DefaultClientFactory : public ClientFactoryInterface {
   virtual ClientInterface *NewClient() { return new Client; }
 };
 
-ClientFactoryInterface *g_client_factory = NULL;
+ClientFactoryInterface *g_client_factory = nullptr;
 }  // namespace
 
 ClientInterface *ClientFactory::NewClient() {
-  if (g_client_factory == NULL) {
+  if (g_client_factory == nullptr) {
     return Singleton<DefaultClientFactory>::get()->NewClient();
   } else {
     return g_client_factory->NewClient();

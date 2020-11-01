@@ -36,8 +36,6 @@
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
 
-#include <memory>
-
 #include <QtCore/QObject>
 #include <QtGui/QFont>
 #include <QtGui/QGuiApplication>
@@ -45,9 +43,10 @@
 #include <QtWidgets/QAbstractButton>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QStyleFactory>
+#include <memory>
 
-#include "absl/memory/memory.h"
 #include "base/logging.h"
+#include "absl/memory/memory.h"
 
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"

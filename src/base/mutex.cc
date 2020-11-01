@@ -183,7 +183,7 @@ pthread_rwlock_t *AsPthreadRWLockT(T *opaque_buffer) {
 }  // namespace
 
 ReaderWriterMutex::ReaderWriterMutex() {
-  pthread_rwlock_init(AsPthreadRWLockT(&opaque_buffer_), NULL);
+  pthread_rwlock_init(AsPthreadRWLockT(&opaque_buffer_), nullptr);
 }
 
 ReaderWriterMutex::~ReaderWriterMutex() {
@@ -213,7 +213,7 @@ bool ReaderWriterMutex::MultipleReadersThreadsSupported() { return true; }
 // Fallback implementations as ReaderWriterLock is not available.
 ReaderWriterMutex::ReaderWriterMutex() {
   // Non-recursive lock is OK.
-  pthread_mutex_init(AsPthreadMutexT(&opaque_buffer_), NULL);
+  pthread_mutex_init(AsPthreadMutexT(&opaque_buffer_), nullptr);
 }
 
 ReaderWriterMutex::~ReaderWriterMutex() {

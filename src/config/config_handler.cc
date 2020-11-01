@@ -214,7 +214,7 @@ bool ConfigHandlerImpl::Reload() {
   Config input_proto;
   bool ret_code = true;
 
-  if (is.get() == NULL) {
+  if (is == nullptr) {
     LOG(ERROR) << filename_ << " is not found";
     ret_code = false;
   } else if (!input_proto.ParseFromIstream(is.get())) {

@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
   }
 
   const uint8 *iv = FLAGS_iv.empty()
-                        ? NULL
+                        ? nullptr
                         : reinterpret_cast<const uint8 *>(FLAGS_iv.data());
 
   if (!FLAGS_input_file.empty() && !FLAGS_output_file.empty()) {

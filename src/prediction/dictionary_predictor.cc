@@ -968,7 +968,7 @@ void DictionaryPredictor::SetPredictionCost(
   // candidates that have the same key length as |input_key| so that we can set
   // a slightly smaller cost to REALTIME_TOP than these.
   int realtime_cost_min = kInfinity;
-  Result *realtime_top_result = NULL;
+  Result *realtime_top_result = nullptr;
 
   for (size_t i = 0; i < results->size(); ++i) {
     const Result &result = results->at(i);
@@ -1044,7 +1044,7 @@ void DictionaryPredictor::SetPredictionCost(
 
   // Ensure that the REALTIME_TOP candidate has relatively smaller cost than
   // those of REALTIME candidates.
-  if (realtime_top_result != NULL) {
+  if (realtime_top_result != nullptr) {
     realtime_top_result->cost = std::max(0, realtime_cost_min - 10);
   }
 }

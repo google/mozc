@@ -279,7 +279,8 @@ TEST(UserDictionaryUtilTest, GetUserDictionaryById) {
               &storage.dictionaries(0));
   EXPECT_TRUE(UserDictionaryUtil::GetUserDictionaryById(storage, 2) ==
               &storage.dictionaries(1));
-  EXPECT_TRUE(UserDictionaryUtil::GetUserDictionaryById(storage, -1) == NULL);
+  EXPECT_TRUE(UserDictionaryUtil::GetUserDictionaryById(storage, -1) ==
+              nullptr);
 }
 
 TEST(UserDictionaryUtilTest, GetMutableUserDictionaryById) {
@@ -292,7 +293,7 @@ TEST(UserDictionaryUtilTest, GetMutableUserDictionaryById) {
   EXPECT_TRUE(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, 2) ==
               storage.mutable_dictionaries(1));
   EXPECT_TRUE(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, -1) ==
-              NULL);
+              nullptr);
 }
 
 TEST(UserDictionaryUtilTest, GetUserDictionaryIndexById) {
@@ -326,9 +327,9 @@ TEST(UserDictionaryUtilTest, CreateDictionary) {
                                                  &dictionary_id));
 
   storage.Clear();
-  EXPECT_EQ(
-      UserDictionaryCommandStatus::UNKNOWN_ERROR,
-      UserDictionaryUtil::CreateDictionary(&storage, "new dictionary", NULL));
+  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_ERROR,
+            UserDictionaryUtil::CreateDictionary(&storage, "new dictionary",
+                                                 nullptr));
 
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             UserDictionaryUtil::CreateDictionary(&storage, "new dictionary",
@@ -349,8 +350,8 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
 
   // Simplest deleting case.
   int original_index;
-  ASSERT_TRUE(
-      UserDictionaryUtil::DeleteDictionary(&storage, 1, &original_index, NULL));
+  ASSERT_TRUE(UserDictionaryUtil::DeleteDictionary(&storage, 1, &original_index,
+                                                   nullptr));
   EXPECT_EQ(0, original_index);
   ASSERT_EQ(1, storage.dictionaries_size());
   EXPECT_EQ(2, storage.dictionaries(0).id());
@@ -359,7 +360,8 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
   storage.Clear();
   storage.add_dictionaries()->set_id(1);
   storage.add_dictionaries()->set_id(2);
-  EXPECT_FALSE(UserDictionaryUtil::DeleteDictionary(&storage, 100, NULL, NULL));
+  EXPECT_FALSE(
+      UserDictionaryUtil::DeleteDictionary(&storage, 100, nullptr, nullptr));
 
   // Keep deleted dictionary.
   storage.Clear();
@@ -367,7 +369,7 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
   storage.add_dictionaries()->set_id(2);
   UserDictionary *expected_deleted_dictionary = storage.mutable_dictionaries(0);
   UserDictionary *deleted_dictionary;
-  EXPECT_TRUE(UserDictionaryUtil::DeleteDictionary(&storage, 1, NULL,
+  EXPECT_TRUE(UserDictionaryUtil::DeleteDictionary(&storage, 1, nullptr,
                                                    &deleted_dictionary));
   ASSERT_EQ(1, storage.dictionaries_size());
   EXPECT_EQ(2, storage.dictionaries(0).id());

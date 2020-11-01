@@ -276,12 +276,12 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   DISALLOW_COPY_AND_ASSIGN(UserDictionaryReloader);
 };
 
-UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
+UserDictionary::UserDictionary(std::unique_ptr<const UserPOSInterface> user_pos,
                                POSMatcher pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
     : ALLOW_THIS_IN_INITIALIZER_LIST(
           reloader_(new UserDictionaryReloader(this))),
-      user_pos_(user_pos),
+      user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
       tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)),

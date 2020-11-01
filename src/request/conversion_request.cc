@@ -36,7 +36,7 @@
 namespace mozc {
 
 ConversionRequest::ConversionRequest()
-    : composer_(NULL),
+    : composer_(nullptr),
       request_(&commands::Request::default_instance()),
       config_(&config::ConfigHandler::DefaultConfig()),
       use_actual_converter_for_realtime_conversion_(false),
@@ -57,7 +57,7 @@ ConversionRequest::ConversionRequest(const composer::Composer *c,
 
 ConversionRequest::~ConversionRequest() {}
 
-bool ConversionRequest::has_composer() const { return composer_ != NULL; }
+bool ConversionRequest::has_composer() const { return composer_ != nullptr; }
 
 const composer::Composer &ConversionRequest::composer() const {
   DCHECK(composer_);

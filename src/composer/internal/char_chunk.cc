@@ -156,7 +156,7 @@ void CharChunk::AppendTrimedResult(Transliterators::Transliterator t12r,
     size_t key_length = 0;
     bool fixed = false;
     const Entry *entry = table_->LookUpPrefix(pending_, &key_length, &fixed);
-    if (entry != NULL && entry->input() == entry->result()) {
+    if (entry != nullptr && entry->input() == entry->result()) {
       converted.append(entry->result());
     }
   }
@@ -304,7 +304,7 @@ bool CharChunk::AddInputInternal(std::string *input) {
   const Entry *entry = table_->LookUpPrefix(key, &key_length, &fixed);
   local_length_cache_ = std::string::npos;
 
-  if (entry == NULL) {
+  if (entry == nullptr) {
     if (key_length == 0) {
       // No prefix character is not contained in the table, fallback
       // operation is performed.
@@ -339,7 +339,7 @@ bool CharChunk::AddInputInternal(std::string *input) {
     return kNoLoop;
   }
 
-  // The prefix of key reached a conversion result, thus entry is not NULL.
+  // The prefix of key reached a conversion result, thus entry is not nullptr.
 
   if (key.size() == key_length) {
     const bool is_following_entry =
@@ -421,7 +421,7 @@ void CharChunk::AddInputAndConvertedChar(std::string *key,
     // If this entry is the first entry, the table attributes are
     // applied to this chunk.
     const Entry *entry = table_->LookUp(pending_);
-    if (entry != NULL) {
+    if (entry != nullptr) {
       attributes_ = entry->attributes();
     }
     return;
@@ -431,7 +431,7 @@ void CharChunk::AddInputAndConvertedChar(std::string *key,
   size_t key_length = 0;
   bool fixed = false;
   const Entry *entry = table_->LookUpPrefix(input, &key_length, &fixed);
-  if (entry == NULL) {
+  if (entry == nullptr) {
     // Do not modify this char_chunk, all key and converted_char
     // values will be used by the next char_chunk.
     return;

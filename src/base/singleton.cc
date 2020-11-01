@@ -56,7 +56,7 @@ SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];
 void ExitWithError() {
   // This logic is copied from logging.h
 #ifdef OS_WIN
-  ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, NULL, NULL);
+  ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
 #else
   exit(-1);
 #endif

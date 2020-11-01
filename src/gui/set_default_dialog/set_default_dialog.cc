@@ -34,7 +34,6 @@
 #endif
 
 #include <QtGui/QtGui>
-
 #include <memory>
 
 #include "base/logging.h"

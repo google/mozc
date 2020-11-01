@@ -262,7 +262,8 @@ bool UserDictionaryStorage::CreateDictionary(const std::string &dic_name,
 }
 
 bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
-  if (!UserDictionaryUtil::DeleteDictionary(&proto_, dic_id, NULL, NULL)) {
+  if (!UserDictionaryUtil::DeleteDictionary(&proto_, dic_id, nullptr,
+                                            nullptr)) {
     // Failed to delete dictionary.
     last_error_type_ = INVALID_DICTIONARY_ID;
     return false;
@@ -282,7 +283,7 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
   }
 
   UserDictionary *dic = GetUserDictionary(dic_id);
-  if (dic == NULL) {
+  if (dic == nullptr) {
     last_error_type_ = INVALID_DICTIONARY_ID;
     LOG(ERROR) << "Invalid dictionary id: " << dic_id;
     return false;

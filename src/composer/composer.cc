@@ -1044,8 +1044,8 @@ bool IsAlphabetOrNumber(const Script script) {
 
 // static
 bool Composer::TransformCharactersForNumbers(std::string *query) {
-  if (query == NULL) {
-    LOG(ERROR) << "query is NULL";
+  if (query == nullptr) {
+    LOG(ERROR) << "query is nullptr";
     return false;
   }
 

@@ -33,7 +33,6 @@
 #define MOZC_GUI_ABOUT_DIALOG_ABOUT_DIALOG_H_
 
 #include <QtWidgets/QDialog>
-
 #include <memory>
 
 #include "base/port.h"
@@ -57,7 +56,7 @@ class AboutDialog : public QDialog, private Ui::AboutDialog {
   explicit AboutDialog(QWidget *parent = nullptr);
   void SetLinkCallback(LinkCallbackInterface *callback);
 
-  void paintEvent(QPaintEvent *event);
+  void paintEvent(QPaintEvent *event) override;
 
  public slots:
   void linkActivated(const QString &link);

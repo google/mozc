@@ -104,7 +104,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
           return ifs;
         }
         delete ifs;
-        return NULL;
+        return nullptr;
       }
     }
     // user://foo.bar.txt
@@ -118,7 +118,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
       return ifs;
     }
     delete ifs;
-    return NULL;
+    return nullptr;
     // file:///foo.map
   } else if (Util::StartsWith(filename, kFilePrefix)) {
     const std::string new_filename = RemovePrefix(kFilePrefix, filename);
@@ -128,7 +128,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
       return ifs;
     }
     delete ifs;
-    return NULL;
+    return nullptr;
   } else if (Util::StartsWith(filename, kMemoryPrefix)) {
     std::istringstream *ifs = new std::istringstream(
         Singleton<OnMemoryFileMap>::get()->get(filename), mode);
@@ -137,7 +137,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
       return ifs;
     }
     delete ifs;
-    return NULL;
+    return nullptr;
   } else {
     LOG(WARNING) << filename << " has no prefix. open from localfile";
     InputFileStream *ifs = new InputFileStream(filename.c_str(), mode);
@@ -146,10 +146,10 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
       return ifs;
     }
     delete ifs;
-    return NULL;
+    return nullptr;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 bool ConfigFileStream::AtomicUpdate(const std::string &filename,

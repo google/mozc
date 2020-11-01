@@ -190,7 +190,7 @@ IPCPathManager::~IPCPathManager() {}
 
 IPCPathManager *IPCPathManager::GetIPCPathManager(const std::string &name) {
   IPCPathManagerMap *manager_map = Singleton<IPCPathManagerMap>::get();
-  DCHECK(manager_map != NULL);
+  DCHECK(manager_map != nullptr);
   return manager_map->GetIPCPathManager(name);
 }
 
@@ -204,7 +204,7 @@ bool IPCPathManager::CreateNewPathName() {
 
 bool IPCPathManager::SavePathName() {
   scoped_lock l(mutex_.get());
-  if (path_mutex_.get() != NULL) {
+  if (path_mutex_ != nullptr) {
     return true;
   }
 
@@ -275,8 +275,8 @@ bool IPCPathManager::LoadPathName() {
 }
 
 bool IPCPathManager::GetPathName(std::string *ipc_name) const {
-  if (ipc_name == NULL) {
-    LOG(ERROR) << "ipc_name is NULL";
+  if (ipc_name == nullptr) {
+    LOG(ERROR) << "ipc_name is nullptr";
     return false;
   }
 
@@ -389,13 +389,14 @@ bool IPCPathManager::IsValidServer(uint32 pid, const std::string &server_path) {
 #ifdef __APPLE__
   int name[] = {CTL_KERN, KERN_PROCARGS, static_cast<int>(pid)};
   size_t data_len = 0;
-  if (sysctl(name, arraysize(name), NULL, &data_len, NULL, 0) < 0) {
+  if (sysctl(name, arraysize(name), nullptr, &data_len, nullptr, 0) < 0) {
     LOG(ERROR) << "sysctl KERN_PROCARGS failed";
     return false;
   }
 
   server_path_.resize(data_len);
-  if (sysctl(name, arraysize(name), &server_path_[0], &data_len, NULL, 0) < 0) {
+  if (sysctl(name, arraysize(name), &server_path_[0], &data_len, nullptr, 0) <
+      0) {
     LOG(ERROR) << "sysctl KERN_PROCARGS failed";
     return false;
   }
@@ -486,16 +487,16 @@ bool IPCPathManager::LoadPathNameInternal() {
     ScopedHandle handle(
         ::CreateFileW(wfilename.c_str(), GENERIC_READ,
                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                      NULL, OPEN_EXISTING, 0, NULL));
+                      nullptr, OPEN_EXISTING, 0, nullptr));
 
     // ScopedHandle does not receive INVALID_HANDLE_VALUE and
-    // NULL check is appropriate here.
-    if (NULL == handle.get()) {
+    // nullptr check is appropriate here.
+    if (nullptr == handle.get()) {
       LOG(ERROR) << "cannot open: " << filename << " " << ::GetLastError();
       return false;
     }
 
-    const DWORD size = ::GetFileSize(handle.get(), NULL);
+    const DWORD size = ::GetFileSize(handle.get(), nullptr);
     if (-1 == static_cast<int>(size)) {
       LOG(ERROR) << "GetFileSize failed: " << ::GetLastError();
       return false;
@@ -510,7 +511,7 @@ bool IPCPathManager::LoadPathNameInternal() {
     std::unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
-    if (!::ReadFile(handle.get(), buf.get(), size, &read_size, NULL)) {
+    if (!::ReadFile(handle.get(), buf.get(), size, &read_size, nullptr)) {
       LOG(ERROR) << "ReadFile failed: " << ::GetLastError();
       return false;
     }

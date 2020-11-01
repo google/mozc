@@ -250,7 +250,7 @@ Segment::Candidate *Segment::mutable_candidate(int i) {
 }
 
 int Segment::indexOf(const Segment::Candidate *candidate) {
-  if (candidate == NULL) {
+  if (candidate == nullptr) {
     return static_cast<int>(candidates_size());
   }
 

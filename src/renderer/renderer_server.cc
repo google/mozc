@@ -88,9 +88,9 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
  public:
   explicit ParentApplicationWatchDog(RendererServer *renderer_server)
       : renderer_server_(renderer_server) {}
-  virtual ~ParentApplicationWatchDog() {}
+  ~ParentApplicationWatchDog() override {}
 
-  void Signaled(ProcessWatchDog::SignalType type) {
+  void Signaled(ProcessWatchDog::SignalType type) override {
     if (renderer_server_ == nullptr) {
       LOG(ERROR) << "renderer_server is nullptr";
       return;
@@ -119,10 +119,10 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
 class RendererServerSendCommand : public client::SendCommandInterface {
  public:
   RendererServerSendCommand() : receiver_handle_(0) {}
-  virtual ~RendererServerSendCommand() {}
+  ~RendererServerSendCommand() override {}
 
   bool SendCommand(const mozc::commands::SessionCommand &command,
-                   mozc::commands::Output *output) {
+                   mozc::commands::Output *output) override {
 #ifdef OS_WIN
     if ((command.type() != commands::SessionCommand::SELECT_CANDIDATE) &&
         (command.type() != commands::SessionCommand::HIGHLIGHT_CANDIDATE) &&

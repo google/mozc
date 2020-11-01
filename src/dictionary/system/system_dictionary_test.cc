@@ -546,7 +546,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
   BuildSystemDictionary(tokens, 100);
   std::unique_ptr<SystemDictionary> system_dic =
       SystemDictionary::Builder(dic_fn_).Build().value();
-  ASSERT_TRUE(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != nullptr)
       << "Failed to open dictionary source: " << dic_fn_;
 
   const std::string kKey = "かつこう";

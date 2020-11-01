@@ -121,7 +121,7 @@ size_t Composition::DeleteAt(const size_t position) {
       continue;
     }
 
-    CharChunk *left_deleted_chunk_ptr = NULL;
+    CharChunk *left_deleted_chunk_ptr = nullptr;
     (*chunk_it)->SplitChunk(Transliterators::LOCAL, 1, &left_deleted_chunk_ptr);
     std::unique_ptr<CharChunk> left_deleted_chunk(left_deleted_chunk_ptr);
   }
@@ -370,7 +370,7 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
   // The position is the beginning of composition.
   if (pos <= 0) {
     *it = chunks_.begin();
-    return NULL;
+    return nullptr;
   }
 
   size_t inner_position;
@@ -382,7 +382,7 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
     return chunk;
   }
 
-  CharChunk *left_chunk = NULL;
+  CharChunk *left_chunk = nullptr;
   chunk->SplitChunk(Transliterators::LOCAL, inner_position, &left_chunk);
   chunks_.insert(*it, left_chunk);
   return left_chunk;

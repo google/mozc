@@ -123,7 +123,7 @@ TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
   for (size_t i = 0; i < threads.size(); ++i) {
     threads[i]->Join();
     delete threads[i];
-    threads[i] = NULL;
+    threads[i] = nullptr;
   }
 }
 

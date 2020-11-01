@@ -37,20 +37,20 @@ template <typename T>
 class scoped_cftyperef {
  public:
   typedef T element_type;
-  explicit scoped_cftyperef(T p = NULL, bool do_retain = false) : ptr_(p) {
-    if (do_retain && p != NULL) {
+  explicit scoped_cftyperef(T p = nullptr, bool do_retain = false) : ptr_(p) {
+    if (do_retain && p != nullptr) {
       CFRetain(ptr_);
     }
   }
 
   ~scoped_cftyperef() {
-    if (ptr_ != NULL) {
+    if (ptr_ != nullptr) {
       CFRelease(ptr_);
     }
   }
 
-  void reset(T p = NULL) {
-    if (ptr_ != NULL) {
+  void reset(T p = nullptr) {
+    if (ptr_ != nullptr) {
       CFRelease(ptr_);
     }
     ptr_ = p;
@@ -59,7 +59,7 @@ class scoped_cftyperef {
   T get() const { return ptr_; }
 
   bool Verify(CFTypeID type_id) {
-    return ptr_ != NULL &&
+    return ptr_ != nullptr &&
            CFGetTypeID(reinterpret_cast<CFTypeRef>(ptr_)) == type_id;
   }
 

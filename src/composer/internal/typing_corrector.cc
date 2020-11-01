@@ -169,7 +169,7 @@ void TypingCorrector::SetConfig(const config::Config *config) {
 void TypingCorrector::GetQueriesForPrediction(
     std::vector<TypeCorrectedQuery> *queries) const {
   queries->clear();
-  if (!IsAvailable() || table_ == NULL || raw_key_.empty()) {
+  if (!IsAvailable() || table_ == nullptr || raw_key_.empty()) {
     return;
   }
   // These objects are for cache. Used and reset repeatedly.

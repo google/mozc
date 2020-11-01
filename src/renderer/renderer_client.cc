@@ -46,6 +46,7 @@
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
+#include "absl/memory/memory.h"
 
 #ifdef __APPLE__
 #include "base/mac_util.h"
@@ -84,7 +85,7 @@ inline void CallCommand(IPCClientInterface *client,
 
 class RendererLauncher : public RendererLauncherInterface, public Thread {
  public:
-  bool CanConnect() const {
+  bool CanConnect() const override {
     switch (renderer_status_) {
       case RendererLauncher::RENDERER_UNKNOWN:
       case RendererLauncher::RENDERER_READY:
@@ -111,13 +112,14 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     return false;
   }
 
-  bool IsAvailable() const {
+  bool IsAvailable() const override {
     return (renderer_status_ == RendererLauncher::RENDERER_READY);
   }
 
-  void StartRenderer(const std::string &name, const std::string &path,
-                     bool disable_renderer_path_check,
-                     IPCClientFactoryInterface *ipc_client_factory_interface) {
+  void StartRenderer(
+      const std::string &name, const std::string &path,
+      bool disable_renderer_path_check,
+      IPCClientFactoryInterface *ipc_client_factory_interface) override {
     renderer_status_ = RendererLauncher::RENDERER_LAUNCHING;
     name_ = name;
     path_ = path;
@@ -126,7 +128,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     Thread::Start("Renderer");
   }
 
-  void Run() {
+  void Run() override {
     last_launch_time_ = Clock::GetTime();
 
     NamedEventListener listener(name_.c_str());
@@ -206,11 +208,11 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     }
   }
 
-  bool ForceTerminateRenderer(const std::string &name) {
+  bool ForceTerminateRenderer(const std::string &name) override {
     return IPCClient::TerminateServer(name);
   }
 
-  void OnFatal(RendererErrorType type) {
+  void OnFatal(RendererErrorType type) override {
     LOG(ERROR) << "OnFatal is called: " << static_cast<int>(type);
 
     std::string error_type;
@@ -231,18 +233,18 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     }
   }
 
-  void SetPendingCommand(const commands::RendererCommand &command) {
+  void SetPendingCommand(const commands::RendererCommand &command) override {
     // ignore NOOP|SHUTDOWN
     if (command.type() == commands::RendererCommand::UPDATE) {
       scoped_lock l(&pending_command_mutex_);
       if (!pending_command_) {
-        pending_command_.reset(new commands::RendererCommand);
+        pending_command_ = absl::make_unique<commands::RendererCommand>();
       }
-      pending_command_->CopyFrom(command);
+      *pending_command_ = command;
     }
   }
 
-  void set_suppress_error_dialog(bool suppress) {
+  void set_suppress_error_dialog(bool suppress) override {
     suppress_error_dialog_ = suppress;
   }
 
@@ -254,7 +256,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
         suppress_error_dialog_(false),
         ipc_client_factory_interface_(nullptr) {}
 
-  virtual ~RendererLauncher() {
+  ~RendererLauncher() override {
     if (!IsRunning()) {
       return;
     }

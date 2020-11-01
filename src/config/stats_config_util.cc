@@ -274,7 +274,7 @@ class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
   DISALLOW_COPY_AND_ASSIGN(NullStatsConfigUtilImpl);
 };
 
-StatsConfigUtilInterface *g_stats_config_util_handler = NULL;
+StatsConfigUtilInterface *g_stats_config_util_handler = nullptr;
 
 // GetStatsConfigUtil and SetHandler are not thread safe.
 
@@ -295,7 +295,7 @@ typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 #endif
 
 StatsConfigUtilInterface &GetStatsConfigUtil() {
-  if (g_stats_config_util_handler == NULL) {
+  if (g_stats_config_util_handler == nullptr) {
     return *(Singleton<DefaultConfigUtilImpl>::get());
   } else {
     return *g_stats_config_util_handler;

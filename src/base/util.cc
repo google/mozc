@@ -36,19 +36,22 @@
 // clang-format on
 #include <stdio.h>  // MSVC requires this for _vsnprintf
 #include <time.h>
-#else  // OS_WIN
+#endif  // OS_WIN
 
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <mach/mach_time.h>
+#endif  // __APPLE__
 
-#elif defined(OS_NACL)  // __APPLE__
+#if defined(OS_NACL)
 #include <irt.h>
-#endif  // __APPLE__ or OS_NACL
+#endif  // OS_NACL
+
+#ifndef OS_WIN
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // !OS_WIN
 
 #include <algorithm>
 #include <cctype>
@@ -241,8 +244,8 @@ void Util::SplitCSV(const std::string &input,
   str[input.size()] = '\0';
 
   char *eos = str + input.size();
-  char *start = NULL;
-  char *end = NULL;
+  char *start = nullptr;
+  char *end = nullptr;
   output->clear();
 
   while (str < eos) {
@@ -496,11 +499,11 @@ char32 Util::UTF8ToUCS4(const char *begin, const char *end, size_t *mblen) {
 bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
                             absl::string_view *rest) {
   char32 dummy_char32 = 0;
-  if (first_char32 == NULL) {
+  if (first_char32 == nullptr) {
     first_char32 = &dummy_char32;
   }
   absl::string_view dummy_rest;
-  if (rest == NULL) {
+  if (rest == nullptr) {
     rest = &dummy_rest;
   }
 
@@ -588,11 +591,11 @@ bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
 bool Util::SplitLastChar32(absl::string_view s, absl::string_view *rest,
                            char32 *last_char32) {
   absl::string_view dummy_rest;
-  if (rest == NULL) {
+  if (rest == nullptr) {
     rest = &dummy_rest;
   }
   char32 dummy_char32 = 0;
-  if (last_char32 == NULL) {
+  if (last_char32 == nullptr) {
     last_char32 = &dummy_char32;
   }
 
@@ -701,7 +704,7 @@ size_t Util::UCS4ToUTF8(char32 c, char *output) {
 #ifdef OS_WIN
 size_t Util::WideCharsLen(absl::string_view src) {
   const int num_chars =
-      ::MultiByteToWideChar(CP_UTF8, 0, src.begin(), src.size(), NULL, 0);
+      ::MultiByteToWideChar(CP_UTF8, 0, src.begin(), src.size(), nullptr, 0);
   if (num_chars <= 0) {
     return 0;
   }
@@ -726,7 +729,7 @@ int Util::UTF8ToWide(absl::string_view input, std::wstring *output) {
 
 int Util::WideToUTF8(const wchar_t *input, string *output) {
   const int output_length =
-      WideCharToMultiByte(CP_UTF8, 0, input, -1, NULL, 0, NULL, NULL);
+      WideCharToMultiByte(CP_UTF8, 0, input, -1, nullptr, 0, nullptr, nullptr);
   if (output_length == 0) {
     return 0;
   }
@@ -734,7 +737,7 @@ int Util::WideToUTF8(const wchar_t *input, string *output) {
   std::unique_ptr<char[]> input_encoded(new char[output_length + 1]);
   const int result =
       WideCharToMultiByte(CP_UTF8, 0, input, -1, input_encoded.get(),
-                          output_length + 1, NULL, NULL);
+                          output_length + 1, nullptr, nullptr);
   if (result > 0) {
     output->assign(input_encoded.get());
   }
@@ -826,7 +829,7 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   memset(buf, '\0', buf_size);
 #ifdef OS_WIN
   HCRYPTPROV hprov;
-  if (!::CryptAcquireContext(&hprov, NULL, NULL, PROV_RSA_FULL,
+  if (!::CryptAcquireContext(&hprov, nullptr, nullptr, PROV_RSA_FULL,
                              CRYPT_VERIFYCONTEXT)) {
     return false;
   }
@@ -837,7 +840,9 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   }
   ::CryptReleaseContext(hprov, 0);
   return true;
-#elif defined(OS_NACL)
+#endif  // OS_WIN
+
+#if defined(OS_NACL)
   struct nacl_irt_random interface;
 
   if (nacl_interface_query(NACL_IRT_RANDOM_v0_1, &interface,
@@ -857,7 +862,15 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
     return false;
   }
   return true;
-#else   // !OS_WIN && !OS_NACL
+#endif
+
+#if defined(OS_CHROMEOS)
+  // TODO(googleo): b/171939770 Accessing "/dev/urandom" is not allowed in
+  // "ime" sandbox. Returns false to use the self-implemented random number
+  // instead. When the API is unblocked, remove the hack.
+  return false;
+#endif  // OS_CHROMEOS
+
   // Use non blocking interface on Linux.
   // Mac also have /dev/urandom (although it's identical with /dev/random)
   std::ifstream ifs("/dev/urandom", std::ios::binary);
@@ -866,7 +879,6 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   }
   ifs.read(buf, buf_size);
   return true;
-#endif  // OS_WIN or OS_NACL
 }
 }  // namespace
 
@@ -1270,7 +1282,7 @@ void Util::DecodeURI(const std::string &src, std::string *output) {
 void Util::AppendCGIParams(
     const std::vector<std::pair<std::string, std::string> > &params,
     std::string *base) {
-  if (params.size() == 0 || base == NULL) {
+  if (params.size() == 0 || base == nullptr) {
     return;
   }
 
@@ -1551,6 +1563,7 @@ bool Util::DeserializeUint64(absl::string_view s, uint64 *x) {
   if (s.size() != 8) {
     return false;
   }
+  // The following operations assume `char` is unsigned (i.e. -funsigned-char).
   *x = static_cast<uint64>(s[0]) << 56 | static_cast<uint64>(s[1]) << 48 |
        static_cast<uint64>(s[2]) << 40 | static_cast<uint64>(s[3]) << 32 |
        static_cast<uint64>(s[4]) << 24 | static_cast<uint64>(s[5]) << 16 |
@@ -1561,7 +1574,8 @@ bool Util::DeserializeUint64(absl::string_view s, uint64 *x) {
 bool Util::IsLittleEndian() {
 #ifdef OS_WIN
   return true;
-#else   // OS_WIN
+#endif  // OS_WIN
+
   union {
     unsigned char c[4];
     unsigned int i;
@@ -1571,7 +1585,6 @@ bool Util::IsLittleEndian() {
   static_assert(sizeof(u) == sizeof(u.i), "Checking alignment.");
   u.i = 0x12345678U;
   return u.c[0] == 0x78U;
-#endif  // OS_WIN
 }
 
 }  // namespace mozc

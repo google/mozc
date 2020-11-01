@@ -84,8 +84,8 @@ class KeyCorrector {
 
   // return new prefix of string correspoindng to
   // the prefix of the original key at "original_key_pos"
-  // if new prefix and original prefix are the same, return NULL.
-  // Note that return value won't be NULL terminated.
+  // if new prefix and original prefix are the same, return nullptr.
+  // Note that return value won't be nullptr terminated.
   // "length" stores the length of return value.
   // We don't allow empty matching (see GetPrefix(15) below)
   //
@@ -102,17 +102,17 @@ class KeyCorrector {
   //  GetPrefix(3) = "かいじゅうのはっぱ"
   //  GetPrefix(9) = "じゅうのはっぱ"
   //  GetPrefix(12) = "ゅうのはっぱ"
-  //  GetPrefix(15) = NULL (not "うのはっぱ")
+  //  GetPrefix(15) = nullptr (not "うのはっぱ")
   //                  "う" itself doesn't correspond to the original key,
   //                   so, we don't make a new prefix
-  //  GetPrefix(18) = NULL (same as original)
+  //  GetPrefix(18) = nullptr (same as original)
   //
   // Example2:
   //  original: "みんあのほん"
   //  GetPrefix(0) = "みんなのほん"
   //  GetPrefix(3) = "んなのほん"
   //  GetPrefix(9) = "なのほん"
-  //  GetPrefix(12) = NULL
+  //  GetPrefix(12) = nullptr
   const char *GetCorrectedPrefix(const size_t original_key_pos,
                                  size_t *length) const;
 

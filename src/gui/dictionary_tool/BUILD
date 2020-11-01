@@ -170,6 +170,7 @@ cc_qt_library_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//protocol:user_dictionary_storage_proto",
+        "@com_google_absl//absl/memory",
     ],
 )
 

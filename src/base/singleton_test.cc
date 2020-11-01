@@ -59,7 +59,7 @@ class ThreadTest : public Thread {
 
   ThreadInstance *get() { return instance_; }
 
-  ThreadTest() : instance_(NULL) {}
+  ThreadTest() : instance_(nullptr) {}
 
  private:
   ThreadInstance *instance_;

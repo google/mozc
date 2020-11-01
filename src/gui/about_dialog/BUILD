@@ -89,6 +89,7 @@ cc_qt_library_mozc(
         "//base:version",
         "//gui/base:gui_base",
         "//gui/base:singleton_window_helper",
+        "@com_google_absl//absl/memory",
     ],
 )
 

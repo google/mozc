@@ -77,7 +77,7 @@ bool IsProcessAlive(pid_t pid) {
 }  // namespace
 
 const std::string NamedEventUtil::GetEventPath(const char *name) {
-  name = (name == NULL) ? "NULL" : name;
+  name = (name == nullptr) ? "nullptr" : name;
   std::string event_name = kEventPathPrefix;
   event_name += SystemUtil::GetUserSidAsString();
   event_name += ".";
@@ -103,13 +103,13 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
 
 #ifdef OS_WIN
 NamedEventListener::NamedEventListener(const char *name)
-    : is_owner_(false), handle_(NULL) {
+    : is_owner_(false), handle_(nullptr) {
   std::wstring event_path;
   Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
 
   handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false, event_path.c_str());
 
-  if (handle_ == NULL) {
+  if (handle_ == nullptr) {
     SECURITY_ATTRIBUTES security_attributes;
     if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableEvent,
                                             &security_attributes)) {
@@ -120,7 +120,7 @@ NamedEventListener::NamedEventListener(const char *name)
     handle_ =
         ::CreateEventW(&security_attributes, true, false, event_path.c_str());
     ::LocalFree(security_attributes.lpSecurityDescriptor);
-    if (handle_ == NULL) {
+    if (handle_ == nullptr) {
       LOG(ERROR) << "CreateEvent() failed: " << ::GetLastError();
       return;
     }
@@ -132,13 +132,13 @@ NamedEventListener::NamedEventListener(const char *name)
 }
 
 NamedEventListener::~NamedEventListener() {
-  if (NULL != handle_) {
+  if (nullptr != handle_) {
     ::CloseHandle(handle_);
   }
-  handle_ = NULL;
+  handle_ = nullptr;
 }
 
-bool NamedEventListener::IsAvailable() const { return (handle_ != NULL); }
+bool NamedEventListener::IsAvailable() const { return (handle_ != nullptr); }
 
 bool NamedEventListener::IsOwner() const {
   return (IsAvailable() && is_owner_);
@@ -169,7 +169,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
   }
 
   HANDLE handle = ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid));
-  if (NULL == handle) {
+  if (nullptr == handle) {
     LOG(ERROR) << "OpenProcess: failed() " << ::GetLastError() << " " << pid;
     if (::GetLastError() == ERROR_INVALID_PARAMETER) {
       LOG(ERROR) << "No such process found: " << pid;
@@ -183,7 +183,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
 
   HANDLE handles[2] = {handle_, handle};
 
-  const DWORD handles_size = (handle == NULL) ? 1 : 2;
+  const DWORD handles_size = (handle == nullptr) ? 1 : 2;
 
   const DWORD ret =
       ::WaitForMultipleObjects(handles_size, handles, FALSE, msec);
@@ -206,31 +206,31 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
       break;
   }
 
-  if (NULL != handle) {
+  if (nullptr != handle) {
     ::CloseHandle(handle);
   }
 
   return result;
 }
 
-NamedEventNotifier::NamedEventNotifier(const char *name) : handle_(NULL) {
+NamedEventNotifier::NamedEventNotifier(const char *name) : handle_(nullptr) {
   std::wstring event_path;
   Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
   handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false, event_path.c_str());
-  if (handle_ == NULL) {
+  if (handle_ == nullptr) {
     LOG(ERROR) << "Cannot open Event name: " << name;
     return;
   }
 }
 
 NamedEventNotifier::~NamedEventNotifier() {
-  if (NULL != handle_) {
+  if (nullptr != handle_) {
     ::CloseHandle(handle_);
   }
-  handle_ = NULL;
+  handle_ = nullptr;
 }
 
-bool NamedEventNotifier::IsAvailable() const { return handle_ != NULL; }
+bool NamedEventNotifier::IsAvailable() const { return handle_ != nullptr; }
 
 bool NamedEventNotifier::Notify() {
   if (!IsAvailable()) {

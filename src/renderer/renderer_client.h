@@ -81,7 +81,7 @@ class RendererLauncherInterface {
 class RendererClient : public RendererInterface {
  public:
   RendererClient();
-  virtual ~RendererClient();
+  ~RendererClient() override;
 
   // set IPC factory
   void SetIPCClientFactory(
@@ -96,13 +96,13 @@ class RendererClient : public RendererInterface {
   // platform separately.
   // TODO(taku): move win32 code into RendererClient
   void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) {}
+      client::SendCommandInterface *send_command_interface) override {}
 
   // activate renderer server
-  bool Activate();
+  bool Activate() override;
 
   // return true if the renderer is available
-  bool IsAvailable() const;
+  bool IsAvailable() const override;
 
   // shutdown the renderer if it is running
   // return true if the function finishes without error.
@@ -110,7 +110,7 @@ class RendererClient : public RendererInterface {
   // Otherwise command::RendererCommand::SHUDDOWN is used.
   bool Shutdown(bool force);
 
-  bool ExecCommand(const commands::RendererCommand &command);
+  bool ExecCommand(const commands::RendererCommand &command) override;
 
   // Don't check the renderer server path.
   // DO NOT call it except for testing

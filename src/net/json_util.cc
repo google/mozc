@@ -285,7 +285,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
         return false;
       }
       return JsonUtil::JsonValueToProtobufMessage(
-          value, reflection->MutableMessage(message, field, NULL));
+          value, reflection->MutableMessage(message, field, nullptr));
       break;
     }
     default: {
@@ -439,7 +439,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           result = false;
         } else {
           if (!JsonUtil::JsonValueToProtobufMessage(
-                  value[i], reflection->AddMessage(message, field, NULL))) {
+                  value[i], reflection->AddMessage(message, field, nullptr))) {
             result = false;
           }
         }

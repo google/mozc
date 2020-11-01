@@ -44,12 +44,12 @@ class ScopedHandle {
   // assume HANDLE type is a synonym of void *.
   typedef void *Win32Handle;
 
-  // Initializes with NULL.
+  // Initializes with nullptr.
   ScopedHandle();
 
   // Initializes with taking ownership of |handle|.
   // Covert: If |handle| is INVALID_HANDLE_VALUE, this wrapper treat
-  //     it as NULL.
+  //     it as nullptr.
   explicit ScopedHandle(Win32Handle handle);
 
   // Call ::CloseHandle API against the current object (if any).

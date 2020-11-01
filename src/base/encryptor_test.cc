@@ -213,8 +213,8 @@ TEST(EncryptorTest, EncryptBatch) {
     EXPECT_NE(original, encrypted4);
 
     // invalid values
-    EXPECT_FALSE(Encryptor::EncryptString(key1, NULL));
-    EXPECT_FALSE(Encryptor::DecryptString(key1, NULL));
+    EXPECT_FALSE(Encryptor::EncryptString(key1, nullptr));
+    EXPECT_FALSE(Encryptor::DecryptString(key1, nullptr));
 
     // empty string
     std::string empty_string;

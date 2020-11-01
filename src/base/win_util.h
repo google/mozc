@@ -46,14 +46,14 @@ class WinUtil {
   // system directory.
   // If the function succeeds, the return value is a handle to the module.
   // You should call FreeLibrary with the handle.
-  // If the function fails, the return value is NULL.
+  // If the function fails, the return value is nullptr.
   static HMODULE LoadSystemLibrary(const std::wstring &base_filename);
 
   // Load a DLL which has the specified base-name and is located in the
   // Mozc server directory.
   // If the function succeeds, the return value is a handle to the module.
   // You should call FreeLibrary with the handle.
-  // If the function fails, the return value is NULL.
+  // If the function fails, the return value is nullptr.
   static HMODULE LoadMozcLibrary(const std::wstring &base_filename);
 
   // If a DLL which has the specified base-name and located in the system
@@ -61,7 +61,7 @@ class WinUtil {
   // If the function succeeds, the return value is a handle to the module
   // without incrementing its reference count so that you should not call
   // FreeLibrary with the handle.
-  // If the function fails, the return value is NULL.
+  // If the function fails, the return value is nullptr.
   static HMODULE GetSystemModuleHandle(const std::wstring &base_filename);
 
   // A variant ot GetSystemModuleHandle except that this method increments
@@ -172,7 +172,7 @@ class ScopedCOMInitializer {
   ScopedCOMInitializer();
   ScopedCOMInitializer::~ScopedCOMInitializer();
 
-  // Returns the error code from CoInitialize(NULL)
+  // Returns the error code from CoInitialize(nullptr)
   // (called in constructor)
   inline HRESULT error_code() const { return hr_; }
 

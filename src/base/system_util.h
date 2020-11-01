@@ -142,7 +142,7 @@ class SystemUtil {
   static void SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode);
 
 #ifdef OS_WIN
-  // return system directory. If failed, return NULL.
+  // return system directory. If failed, return nullptr.
   // You need not to delete the returned pointer.
   // This function is thread safe.
   static const wchar_t *GetSystemDir();

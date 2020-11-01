@@ -35,10 +35,6 @@ load(
     "cc_qt_library_mozc",
 )
 
-package(
-    default_visibility = ["//gui:__subpackages__"],
-)
-
 cc_library_mozc(
     name = "prelauncher_lib",
     srcs = ["prelauncher_libmain.cc"],

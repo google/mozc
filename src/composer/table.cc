@@ -198,7 +198,7 @@ bool Table::InitializeWithRequestAndConfig(
         table_file_name = kNotouchHalfwidthasciiTableFile;
         break;
       default:
-        table_file_name = NULL;
+        table_file_name = nullptr;
     }
     if (table_file_name && LoadFromFile(table_file_name)) {
       return true;
@@ -229,11 +229,11 @@ bool Table::InitializeWithRequestAndConfig(
   // Initialize punctuations.
   const config::Config::PunctuationMethod punctuation_method =
       config.punctuation_method();
-  const mozc::composer::Entry *entry = NULL;
+  const mozc::composer::Entry *entry = nullptr;
 
   // Comma / Kuten
   entry = LookUp(",");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kKuten && entry->pending().empty())) {
     if (punctuation_method == config::Config::COMMA_PERIOD ||
         punctuation_method == config::Config::COMMA_TOUTEN) {
@@ -245,7 +245,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Period / Touten
   entry = LookUp(".");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kTouten && entry->pending().empty())) {
     if (punctuation_method == config::Config::COMMA_PERIOD ||
         punctuation_method == config::Config::KUTEN_PERIOD) {
@@ -260,7 +260,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Slash / Middle dot
   entry = LookUp("/");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kMiddleDot && entry->pending().empty())) {
     if (symbol_method == config::Config::SQUARE_BRACKET_SLASH ||
         symbol_method == config::Config::CORNER_BRACKET_SLASH) {
@@ -272,7 +272,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Square open bracket / Corner open bracket
   entry = LookUp("[");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kCornerOpen && entry->pending().empty())) {
     if (symbol_method == config::Config::CORNER_BRACKET_MIDDLE_DOT ||
         symbol_method == config::Config::CORNER_BRACKET_SLASH) {
@@ -284,7 +284,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Square close bracket / Corner close bracket
   entry = LookUp("]");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kCornerClose && entry->pending().empty())) {
     if (symbol_method == config::Config::CORNER_BRACKET_MIDDLE_DOT ||
         symbol_method == config::Config::CORNER_BRACKET_SLASH) {
@@ -319,7 +319,7 @@ bool Table::IsLoopingEntry(const std::string &input,
     size_t key_length = 0;
     bool fixed = false;
     const Entry *entry = LookUpPrefix(key, &key_length, &fixed);
-    if (entry == NULL) {
+    if (entry == nullptr) {
       return false;
     }
     DCHECK_LE(key_length, key.size());
@@ -350,7 +350,7 @@ const Entry *Table::AddRuleWithAttributes(const std::string &escaped_input,
   if (escaped_input.size() >= kMaxSize || output.size() >= kMaxSize ||
       escaped_pending.size() >= kMaxSize) {
     LOG(ERROR) << "Invalid input/output/pending";
-    return NULL;
+    return nullptr;
   }
 
   const std::string input = ParseSpecialKey(escaped_input);
@@ -358,10 +358,10 @@ const Entry *Table::AddRuleWithAttributes(const std::string &escaped_input,
   if (IsLoopingEntry(input, pending)) {
     LOG(WARNING) << "Entry " << input << " " << output << " " << pending
                  << " is removed, since the rule is looping";
-    return NULL;
+    return nullptr;
   }
 
-  const Entry *old_entry = NULL;
+  const Entry *old_entry = nullptr;
   if (entries_->LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
@@ -408,7 +408,7 @@ bool Table::LoadFromString(const std::string &str) {
 
 bool Table::LoadFromFile(const char *filepath) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filepath));
-  if (ifs.get() == NULL) {
+  if (ifs == nullptr) {
     return false;
   }
   return LoadFromStream(ifs.get());
@@ -472,7 +472,7 @@ bool Table::LoadFromStream(std::istream *is) {
 }
 
 const Entry *Table::LookUp(const std::string &input) const {
-  const Entry *entry = NULL;
+  const Entry *entry = nullptr;
   if (case_sensitive_) {
     entries_->LookUp(input, &entry);
   } else {
@@ -485,7 +485,7 @@ const Entry *Table::LookUp(const std::string &input) const {
 
 const Entry *Table::LookUpPrefix(const std::string &input, size_t *key_length,
                                  bool *fixed) const {
-  const Entry *entry = NULL;
+  const Entry *entry = nullptr;
   if (case_sensitive_) {
     entries_->LookUpPrefix(input, &entry, key_length, fixed);
   } else {

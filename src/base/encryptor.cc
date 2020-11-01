@@ -162,7 +162,7 @@ bool Encryptor::Key::DeriveFromPassword(const std::string &password,
     return false;
   }
 
-  if (iv != NULL) {
+  if (iv != nullptr) {
     memcpy(data_->iv, iv, iv_size());
   } else {
     memset(data_->iv, '\0', iv_size());
@@ -185,8 +185,8 @@ Encryptor::Key::Key() : data_(new Encryptor::Key::InternalData) {}
 Encryptor::Key::~Key() {}
 
 bool Encryptor::EncryptString(const Encryptor::Key &key, std::string *data) {
-  if (data == NULL || data->empty()) {
-    LOG(ERROR) << "data is NULL or empty";
+  if (data == nullptr || data->empty()) {
+    LOG(ERROR) << "data is nullptr or empty";
     return false;
   }
   size_t size = data->size();
@@ -201,8 +201,8 @@ bool Encryptor::EncryptString(const Encryptor::Key &key, std::string *data) {
 }
 
 bool Encryptor::DecryptString(const Encryptor::Key &key, std::string *data) {
-  if (data == NULL || data->empty()) {
-    LOG(ERROR) << "data is NULL or empty";
+  if (data == nullptr || data->empty()) {
+    LOG(ERROR) << "data is nullptr or empty";
     return false;
   }
   size_t size = data->size();
@@ -223,7 +223,7 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key, char *buf,
     return false;
   }
 
-  if (buf == NULL || buf_size == NULL || *buf_size == 0) {
+  if (buf == nullptr || buf_size == nullptr || *buf_size == 0) {
     LOG(ERROR) << "invalid buffer given";
     return false;
   }
@@ -252,7 +252,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
     return false;
   }
 
-  if (buf == NULL || buf_size == NULL || *buf_size == 0) {
+  if (buf == nullptr || buf_size == nullptr || *buf_size == 0) {
     LOG(ERROR) << "invalid buffer given";
     return false;
   }
@@ -304,7 +304,7 @@ bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
   input.cbData = static_cast<DWORD>(plain_text.size());
 
   DATA_BLOB output;
-  const BOOL result = ::CryptProtectData(&input, L"", NULL, NULL, NULL,
+  const BOOL result = ::CryptProtectData(&input, L"", nullptr, nullptr, nullptr,
                                          CRYPTPROTECT_UI_FORBIDDEN, &output);
   if (!result) {
     LOG(ERROR) << "CryptProtectData failed: " << ::GetLastError();
@@ -327,8 +327,9 @@ bool Encryptor::UnprotectData(const string &cipher_text, string *plain_text) {
   input.cbData = static_cast<DWORD>(cipher_text.length());
 
   DATA_BLOB output;
-  const BOOL result = ::CryptUnprotectData(&input, NULL, NULL, NULL, NULL,
-                                           CRYPTPROTECT_UI_FORBIDDEN, &output);
+  const BOOL result =
+      ::CryptUnprotectData(&input, nullptr, nullptr, nullptr, nullptr,
+                           CRYPTPROTECT_UI_FORBIDDEN, &output);
   if (!result) {
     LOG(ERROR) << "CryptUnprotectData failed: " << ::GetLastError();
     return false;

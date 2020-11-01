@@ -186,7 +186,7 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   DictionaryFileCodecFactory::SetCodec(internal_codec.get());
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
-  EXPECT_TRUE(codec != NULL);
+  EXPECT_TRUE(codec != nullptr);
   {
     std::vector<DictionaryFileSection> write_sections;
     const std::string value0 = "Value 0 test";

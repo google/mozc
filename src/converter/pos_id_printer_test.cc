@@ -68,7 +68,7 @@ TEST_F(PosIdPrinterTest, InvalidId) {
 }
 
 TEST_F(PosIdPrinterTest, NullInput) {
-  PosIdPrinter pos_id_printer(NULL);
+  PosIdPrinter pos_id_printer(nullptr);
   EXPECT_EQ("", pos_id_printer.IdToString(-1));
   EXPECT_EQ("", pos_id_printer.IdToString(1934));
 }

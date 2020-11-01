@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_ERROR_MESSAGE_DIALOG_H_
-#define MOZC_GUI_ERROR_MESSAGE_DIALOG_H_
+#ifndef MOZC_GUI_ERROR_MESSAGE_DIALOG_ERROR_MESSAGE_DIALOG_H_
+#define MOZC_GUI_ERROR_MESSAGE_DIALOG_ERROR_MESSAGE_DIALOG_H_
 
 #include <QtCore/QObject>
 #include <QtWidgets/QMessageBox>
@@ -52,7 +52,7 @@ class DeleyedMessageDialogHandler : public QObject {
 
  public:
   DeleyedMessageDialogHandler(QMessageBox *message_box);
-  virtual ~DeleyedMessageDialogHandler();
+  ~DeleyedMessageDialogHandler() override;
 
   void Exec();
 
@@ -64,4 +64,4 @@ class DeleyedMessageDialogHandler : public QObject {
 };
 }  // namespace gui
 }  // namespace mozc
-#endif  // MOZC_GUI_ERROR_MESSAGE_DIALOG_H_
+#endif  // MOZC_GUI_ERROR_MESSAGE_DIALOG_ERROR_MESSAGE_DIALOG_H_

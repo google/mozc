@@ -143,7 +143,7 @@ void GenericTableEditorDialog::DeleteSelectedItems() {
     rows.push_back(selected[i]->row());
   }
 
-  std::vector<int>::iterator last = unique(rows.begin(), rows.end());
+  std::vector<int>::iterator last = std::unique(rows.begin(), rows.end());
   rows.erase(last, rows.end());
 
   if (rows.empty()) {

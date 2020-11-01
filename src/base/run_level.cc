@@ -157,7 +157,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   }
 
   // Get process token
-  HANDLE hProcessToken = NULL;
+  HANDLE hProcessToken = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(),
                           TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
     return RunLevel::DENY;
@@ -172,7 +172,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   }
 
   // Get thread token (if any)
-  HANDLE hThreadToken = NULL;
+  HANDLE hThreadToken = nullptr;
   if (!::OpenThreadToken(::GetCurrentThread(), TOKEN_QUERY, TRUE,
                          &hThreadToken) &&
       ERROR_NO_TOKEN != ::GetLastError()) {
@@ -182,7 +182,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   ScopedHandle thread_token(hThreadToken);
 
   // Thread token (if any) must not a service account.
-  if (NULL != thread_token.get()) {
+  if (nullptr != thread_token.get()) {
     bool is_service_thread = false;
     if (!WinUtil::IsServiceUser(thread_token.get(), &is_service_thread)) {
       // Returns DENY conservatively.
@@ -203,7 +203,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     }
 
     // Thread token must be created by sandbox.
-    if (NULL == thread_token.get()) {
+    if (nullptr == thread_token.get()) {
       return RunLevel::DENY;
     }
 
@@ -219,9 +219,9 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     std::wstring dir;
     Util::UTF8ToWide(user_dir, &dir);
     ScopedHandle dir_handle(::CreateFile(dir.c_str(), READ_CONTROL | WRITE_DAC,
-                                         0, NULL, OPEN_EXISTING,
+                                         0, nullptr, OPEN_EXISTING,
                                          FILE_FLAG_BACKUP_SEMANTICS, 0));
-    if (NULL != dir_handle.get()) {
+    if (nullptr != dir_handle.get()) {
       BYTE buffer[sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE];
       DWORD size = 0;
       if (::GetTokenInformation(thread_token.get(), TokenUser, buffer,
@@ -303,9 +303,9 @@ bool RunLevel::IsProcessInJob() {
 
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION JobExtLimitInfo;
   // Get the job information of the current process
-  if (!::QueryInformationJobObject(NULL, JobObjectExtendedLimitInformation,
+  if (!::QueryInformationJobObject(nullptr, JobObjectExtendedLimitInformation,
                                    &JobExtLimitInfo, sizeof(JobExtLimitInfo),
-                                   NULL)) {
+                                   nullptr)) {
     return false;
   }
 
@@ -325,7 +325,7 @@ bool RunLevel::IsProcessInJob() {
 bool RunLevel::IsElevatedByUAC() {
 #ifdef OS_WIN
   // Get process token
-  HANDLE hProcessToken = NULL;
+  HANDLE hProcessToken = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(),
                           TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
     return false;
@@ -342,8 +342,8 @@ bool RunLevel::SetElevatedProcessDisabled(bool disable) {
 #ifdef OS_WIN
   HKEY key = 0;
   LONG result =
-      ::RegCreateKeyExW(HKEY_CURRENT_USER, kElevatedProcessDisabledKey, 0, NULL,
-                        0, KEY_WRITE, NULL, &key, NULL);
+      ::RegCreateKeyExW(HKEY_CURRENT_USER, kElevatedProcessDisabledKey, 0,
+                        nullptr, 0, KEY_WRITE, nullptr, &key, nullptr);
 
   if (ERROR_SUCCESS != result) {
     return false;
@@ -365,7 +365,7 @@ bool RunLevel::GetElevatedProcessDisabled() {
 #ifdef OS_WIN
   HKEY key = 0;
   LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER, kElevatedProcessDisabledKey,
-                                NULL, KEY_READ, &key);
+                                0, KEY_READ, &key);
   if (ERROR_SUCCESS != result) {
     return false;
   }
@@ -374,7 +374,7 @@ bool RunLevel::GetElevatedProcessDisabled() {
   DWORD value_size = sizeof(value);
   DWORD value_type = 0;
   result =
-      ::RegQueryValueEx(key, kElevatedProcessDisabledName, NULL, &value_type,
+      ::RegQueryValueEx(key, kElevatedProcessDisabledName, nullptr, &value_type,
                         reinterpret_cast<BYTE *>(&value), &value_size);
   ::RegCloseKey(key);
 

@@ -29,6 +29,7 @@
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QtGui>
+
 #include "base/system_util.h"
 #include "gui/about_dialog/about_dialog.h"
 #include "gui/base/singleton_window_helper.h"

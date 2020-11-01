@@ -38,8 +38,8 @@
 // usage:
 // // start scheduled job
 // Scheduler::AddJob(Scheduler::JobSetting(
-//     "TimerName", 60*1000, 60*60*1000, 30*1000, 60*1000, &Callback, NULL));
-// (NULL is the args for Callback)
+//     "TimerName", 60*1000, 60*60*1000, 30*1000, 60*1000, &Callback, nullptr));
+// (nullptr is the args for Callback)
 // // stop job
 // Scheduler::RemoveJob("TimerName");
 

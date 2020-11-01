@@ -110,7 +110,7 @@ class UserDictionaryUtil {
   static bool IsDictionaryFull(
       const user_dictionary::UserDictionary &dictionary);
 
-  // Returns UserDictionary with the given id, or NULL if not found.
+  // Returns UserDictionary with the given id, or nullptr if not found.
   static const user_dictionary::UserDictionary *GetUserDictionaryById(
       const user_dictionary::UserDictionaryStorage &storage,
       uint64 dictionary_id);
@@ -126,13 +126,13 @@ class UserDictionaryUtil {
   // Returns the file name of UserDictionary.
   static std::string GetUserDictionaryFileName();
 
-  // Returns the string representation of PosType, or NULL if the given
+  // Returns the string representation of PosType, or nullptr if the given
   // pos is invalid.
   // For historicall reason, the pos was represented in Japanese characters.
   static const char *GetStringPosType(
       user_dictionary::UserDictionary::PosType pos_type);
 
-  // Returns the string representation of PosType, or NULL if the given
+  // Returns the string representation of PosType, or nullptr if the given
   // pos is invalid.
   static user_dictionary::UserDictionary::PosType ToPosType(
       const char *string_pos_type);
@@ -147,7 +147,7 @@ class UserDictionaryUtil {
       const std::string &dictionary_name, uint64 *new_dictionary_id);
 
   // Deletes dictionary specified by the given dictionary_id.
-  // If the deleted_dictionary is not NULL, the pointer to the
+  // If the deleted_dictionary is not nullptr, the pointer to the
   // delete dictionary is stored into it. In other words,
   // caller has responsibility to actual deletion of the instance.
   // Returns true if succeeded, otherwise false.

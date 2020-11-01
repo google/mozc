@@ -78,9 +78,9 @@ int g_reference_count = 0;
 
 // The CRITICAL_SECTION struct used for creating or deleting ExceptionHandler in
 // a mutually exclusive manner.
-CRITICAL_SECTION *g_critical_section = NULL;
+CRITICAL_SECTION *g_critical_section = nullptr;
 
-google_breakpad::ExceptionHandler *g_handler = NULL;
+google_breakpad::ExceptionHandler *g_handler = nullptr;
 
 // Returns the name of the build mode.
 std::wstring GetBuildMode() {
@@ -94,10 +94,10 @@ std::wstring GetBuildMode() {
 }
 
 // Reduces the size of the string |str| to a max of 64 chars (Extra 1 char is
-// trimmed for NULL-terminator so effective characters are 63 characters).
+// trimmed for nullptr-terminator so effective characters are 63 characters).
 // Required because breakpad's CustomInfoEntry raises an invalid_parameter error
 // if the string we want to set is longer than 64 characters, including
-// NULL-terminator.
+// nullptr-terminator.
 std::wstring TrimToBreakpadMax(const std::wstring &str) {
   std::wstring shorter(str);
   return shorter.substr(0,
@@ -120,7 +120,7 @@ google_breakpad::CustomClientInfo *GetCustomInfo() {
   {
     int num_args = 0;
     wchar_t **args = ::CommandLineToArgvW(::GetCommandLineW(), &num_args);
-    if (args != NULL) {
+    if (args != nullptr) {
       if (num_args > 1) {
         switch1.set_value(TrimToBreakpadMax(args[1]).c_str());
       }
@@ -153,12 +153,12 @@ class ScopedCriticalSection {
  public:
   explicit ScopedCriticalSection(CRITICAL_SECTION *critical_section)
       : critical_section_(critical_section) {
-    if (critical_section_ != NULL) {
+    if (critical_section_ != nullptr) {
       EnterCriticalSection(critical_section_);
     }
   }
   ~ScopedCriticalSection() {
-    if (critical_section_ != NULL) {
+    if (critical_section_ != nullptr) {
       LeaveCriticalSection(critical_section_);
     }
   }
@@ -169,11 +169,11 @@ class ScopedCriticalSection {
 
 // get the handle to the module containing the given executing address
 HMODULE GetModuleHandleFromAddress(void *address) {
-  // address may be NULL
+  // address may be nullptr
   MEMORY_BASIC_INFORMATION mbi;
   SIZE_T result = VirtualQuery(address, &mbi, sizeof(mbi));
   if (0 == result) {
-    return NULL;
+    return nullptr;
   }
   return static_cast<HMODULE>(mbi.AllocationBase);
 }
@@ -185,7 +185,7 @@ HMODULE GetCurrentModuleHandle() {
 
 // Check to see if an address is in the current module.
 bool IsAddressInCurrentModule(void *address) {
-  // address may be NULL
+  // address may be nullptr
   return GetCurrentModuleHandle() == GetModuleHandleFromAddress(address);
 }
 
@@ -226,7 +226,7 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
 
 bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
                    MDRawAssertionInfo *assertion) {
-  if (exinfo == NULL) {
+  if (exinfo == nullptr) {
     // We do not catch CRT error in release build.
 #ifdef MOZC_NO_LOGGING
     return false;
@@ -255,7 +255,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
   ScopedCriticalSection critical_section(g_critical_section);
   DCHECK_GE(g_reference_count, 0);
   ++g_reference_count;
-  if (g_reference_count == 1 && g_handler == NULL) {
+  if (g_reference_count == 1 && g_handler == nullptr) {
     const string acrashdump_directory = SystemUtil::GetCrashReportDirectory();
     // create a crash dump directory if not exist.
     if (!FileUtil::FileExists(acrashdump_directory)) {
@@ -266,13 +266,13 @@ bool CrashReportHandler::Initialize(bool check_address) {
     Util::UTF8ToWide(acrashdump_directory, &crashdump_directory);
 
     google_breakpad::ExceptionHandler::FilterCallback filter_callback =
-        check_address ? FilterHandler : NULL;
+        check_address ? FilterHandler : nullptr;
     const auto kCrashDumpType = static_cast<MINIDUMP_TYPE>(
         MiniDumpWithUnloadedModules | MiniDumpWithProcessThreadData);
     g_handler = new google_breakpad::ExceptionHandler(
         crashdump_directory.c_str(), filter_callback,
-        NULL,  // MinidumpCallback
-        NULL,  // callback_context
+        nullptr,  // MinidumpCallback
+        nullptr,  // callback_context
         google_breakpad::ExceptionHandler::HANDLER_ALL, kCrashDumpType,
         GetCrashHandlerPipeName().c_str(), GetCustomInfo());
 
@@ -293,9 +293,9 @@ bool CrashReportHandler::Uninitialize() {
   ScopedCriticalSection critical_section(g_critical_section);
   --g_reference_count;
   DCHECK_GE(g_reference_count, 0);
-  if (g_reference_count == 0 && g_handler != NULL) {
+  if (g_reference_count == 0 && g_handler != nullptr) {
     delete g_handler;
-    g_handler = NULL;
+    g_handler = nullptr;
     return true;
   }
   return false;

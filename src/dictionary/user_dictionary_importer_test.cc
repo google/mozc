@@ -46,7 +46,7 @@ namespace {
 class TestInputIterator
     : public UserDictionaryImporter::InputIteratorInterface {
  public:
-  TestInputIterator() : index_(0), is_available_(false), entries_(NULL) {}
+  TestInputIterator() : index_(0), is_available_(false), entries_(nullptr) {}
 
   bool IsAvailable() const { return is_available_; }
 

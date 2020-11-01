@@ -58,6 +58,7 @@ cc_library_mozc(
         "//ipc",
         "//ipc:named_event",
         "//protocol:renderer_proto",
+        "@com_google_absl//absl/memory",
     ] + select_mozc(
         ios = ["//base:mac_util"],
     ),

@@ -34,7 +34,6 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QSplitterHandle>
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -65,7 +64,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
  public:
   explicit DictionaryTool(QWidget *parent = 0);
-  virtual ~DictionaryTool();
+  ~DictionaryTool() override;
 
   // return true DictionaryTool is available.
   bool IsAvailable() const { return is_available_; }
@@ -73,9 +72,9 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
  protected:
   // Override the default implementation to check unsaved
   // modifications on data before closing the window.
-  void closeEvent(QCloseEvent *event);
+  void closeEvent(QCloseEvent *event) override;
 
-  bool eventFilter(QObject *obj, QEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
 
  private slots:
   void CreateDictionary();

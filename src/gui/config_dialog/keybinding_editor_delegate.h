@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_KEYCOMMAND_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_
-#define MOZC_GUI_KEYCOMMAND_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_
+#ifndef MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_
+#define MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_
 
 #include <QtCore/QModelIndex>
 #include <QtCore/QObject>
@@ -43,17 +43,17 @@ class KeyBindingEditorDelegate : public QItemDelegate {
   Q_OBJECT
  public:
   explicit KeyBindingEditorDelegate(QObject *parent = nullptr);
-  virtual ~KeyBindingEditorDelegate();
+  ~KeyBindingEditorDelegate() override;
 
   QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                        const QModelIndex &index) const;
+                        const QModelIndex &index) const override;
 
-  void setEditorData(QWidget *editor, const QModelIndex &index) const;
+  void setEditorData(QWidget *editor, const QModelIndex &index) const override;
   void setModelData(QWidget *editor, QAbstractItemModel *model,
-                    const QModelIndex &index) const;
+                    const QModelIndex &index) const override;
 
   void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
-                            const QModelIndex &index) const;
+                            const QModelIndex &index) const override;
 
  private slots:
   void CommitAndCloseEditor();
@@ -61,4 +61,4 @@ class KeyBindingEditorDelegate : public QItemDelegate {
 };
 }  // namespace gui
 }  // namespace mozc
-#endif  // MOZC_GUI_KEYCOMMAND_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_
+#endif  // MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_

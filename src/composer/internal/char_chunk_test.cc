@@ -191,21 +191,21 @@ TEST(CharChunkTest, AddInput_WithString) {
 }
 
 TEST(CharChunkTest, GetLength) {
-  CharChunk chunk1(Transliterators::CONVERSION_STRING, NULL);
+  CharChunk chunk1(Transliterators::CONVERSION_STRING, nullptr);
   chunk1.set_conversion("ね");
   chunk1.set_pending("");
   chunk1.set_raw("ne");
   EXPECT_EQ(1, chunk1.GetLength(Transliterators::CONVERSION_STRING));
   EXPECT_EQ(2, chunk1.GetLength(Transliterators::RAW_STRING));
 
-  CharChunk chunk2(Transliterators::CONVERSION_STRING, NULL);
+  CharChunk chunk2(Transliterators::CONVERSION_STRING, nullptr);
   chunk2.set_conversion("っと");
   chunk2.set_pending("");
   chunk2.set_raw("tto");
   EXPECT_EQ(2, chunk2.GetLength(Transliterators::CONVERSION_STRING));
   EXPECT_EQ(3, chunk2.GetLength(Transliterators::RAW_STRING));
 
-  CharChunk chunk3(Transliterators::CONVERSION_STRING, NULL);
+  CharChunk chunk3(Transliterators::CONVERSION_STRING, nullptr);
   chunk3.set_conversion("が");
   chunk3.set_pending("");
   chunk3.set_raw("ga");
@@ -363,7 +363,7 @@ TEST(CharChunkTest, SplitChunk) {
   EXPECT_EQ("mo", output);
 
   // Split "mo" to "m" and "o".
-  CharChunk *left_chunk_ptr = NULL;
+  CharChunk *left_chunk_ptr = nullptr;
   chunk.SplitChunk(Transliterators::LOCAL, 1, &left_chunk_ptr);
   std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
 
@@ -995,7 +995,7 @@ TEST(CharChunkTest, Issue2990253) {
     chunk.AddInput(&input);
   }
 
-  CharChunk *left_new_chunk_ptr = NULL;
+  CharChunk *left_new_chunk_ptr = nullptr;
   chunk.SplitChunk(Transliterators::HIRAGANA, size_t(1), &left_new_chunk_ptr);
   std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
   {
@@ -1007,8 +1007,8 @@ TEST(CharChunkTest, Issue2990253) {
 
 TEST(CharChunkTest, Combine) {
   {
-    CharChunk lhs(Transliterators::CONVERSION_STRING, NULL);
-    CharChunk rhs(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
     lhs.set_ambiguous("LA");
     lhs.set_conversion("LC");
     lhs.set_pending("LP");
@@ -1027,8 +1027,8 @@ TEST(CharChunkTest, Combine) {
   }
 
   {  // lhs' ambigous is empty.
-    CharChunk lhs(Transliterators::CONVERSION_STRING, NULL);
-    CharChunk rhs(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
 
     lhs.set_ambiguous("");
     lhs.set_conversion("LC");
@@ -1048,8 +1048,8 @@ TEST(CharChunkTest, Combine) {
   }
 
   {  // rhs' ambigous is empty.
-    CharChunk lhs(Transliterators::CONVERSION_STRING, NULL);
-    CharChunk rhs(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
 
     lhs.set_ambiguous("LA");
     lhs.set_conversion("LC");
@@ -1204,11 +1204,11 @@ TEST(CharChunkTest, SpecialKeys) {
 
 TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
+    CharChunk *left_chunk_ptr = nullptr;
     EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 0,
                                   &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
@@ -1219,11 +1219,11 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   }
 
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
+    CharChunk *left_chunk_ptr = nullptr;
     EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 1,
                                  &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
@@ -1232,11 +1232,11 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   }
 
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
+    CharChunk *left_chunk_ptr = nullptr;
     EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 2,
                                  &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
@@ -1245,11 +1245,11 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   }
 
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
+    CharChunk *left_chunk_ptr = nullptr;
     EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 3,
                                  &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
@@ -1723,7 +1723,7 @@ TEST(CharChunkTest, Clone) {
   src.attributes_ = NEW_CHUNK;
 
   std::unique_ptr<CharChunk> dest(
-      new CharChunk(Transliterators::CONVERSION_STRING, NULL));
+      new CharChunk(Transliterators::CONVERSION_STRING, nullptr));
   EXPECT_FALSE(src.transliterator_ == dest->transliterator_);
   EXPECT_FALSE(src.table_ == dest->table_);
   EXPECT_NE(src.raw_, dest->raw_);

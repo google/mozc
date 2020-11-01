@@ -30,8 +30,8 @@
 #include <QtCore/QTextCodec>
 #include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
-
 #include <string>
+
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "gui/base/singleton_window_helper.h"

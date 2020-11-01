@@ -31,7 +31,6 @@
 #define MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 
 #include <QtWidgets/QTableWidget>
-
 #include <memory>
 
 #include "base/port.h"
@@ -50,7 +49,7 @@ class CharacterFormEditor : public QTableWidget {
   Q_OBJECT
  public:
   explicit CharacterFormEditor(QWidget *parent = nullptr);
-  virtual ~CharacterFormEditor();
+  ~CharacterFormEditor() override;
 
   void Load(const config::Config &config);
   void Save(config::Config *config);

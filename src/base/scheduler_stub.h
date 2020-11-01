@@ -39,7 +39,7 @@
 //   ... (Do something)
 //   scheduler_stub.PutClockForward(60*1000);
 //   ... (Do something)
-//   Scheduler::SetSchedulerHandler(NULL);
+//   Scheduler::SetSchedulerHandler(nullptr);
 // }
 
 #include <map>

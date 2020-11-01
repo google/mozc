@@ -71,8 +71,8 @@ const int kRunLevelMedium = 1;
 const int kRunLevelHigh = 2;
 
 bool TryGetKnownKey(HKEY key, LPCWSTR sub_key, HKEY *result_key) {
-  HKEY dummy = NULL;
-  HKEY &result = (result_key != NULL ? *result_key : dummy);
+  HKEY dummy = nullptr;
+  HKEY &result = (result_key != nullptr ? *result_key : dummy);
   if (HKEY_CURRENT_USER == key) {
     if (std::wstring(kOmahaUsageKey) == sub_key) {
       result = kHKCU_ClientState;
@@ -163,7 +163,7 @@ class RegistryEmulator {
     if (!HasUsagestatsValue(key)) {
       return false;
     }
-    if (value != NULL) {
+    if (value != nullptr) {
       *value =
           mozc::Singleton<Property>::get()->get_entry_from_usagestats_map(key);
     }
@@ -203,8 +203,8 @@ class RegistryEmulator {
       HKEY key, LPCWSTR sub_key, DWORD reserved, LPWSTR class_name,
       DWORD options, REGSAM sam, LPSECURITY_ATTRIBUTES security_attributes,
       PHKEY result, LPDWORD disposition) {
-    HKEY dummy = NULL;
-    HKEY &result_key = result != NULL ? *result : dummy;
+    HKEY dummy = nullptr;
+    HKEY &result_key = result != nullptr ? *result : dummy;
     if (!TryGetKnownKey(key, sub_key, &result_key)) {
       return ERROR_ACCESS_DENIED;
     }
@@ -245,7 +245,7 @@ class RegistryEmulator {
       return ERROR_FILE_NOT_FOUND;
     }
     GetUsagestatsValue(key, reinterpret_cast<DWORD *>(data));
-    if (type != NULL) {
+    if (type != nullptr) {
       *type = REG_DWORD;
     }
     return ERROR_SUCCESS;

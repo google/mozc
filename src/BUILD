@@ -146,9 +146,10 @@ filegroup(
         oss_android = ["//android/jni:mozc_lib"],
         oss_linux = [
             "//gui/tool:mozc_tool",
+            "//unix/emacs:mozc_emacs_helper",
+            "//unix/ibus:ibus_mozc",
             "//renderer:mozc_renderer",
             "//server:mozc_server",
-            "//unix/ibus:ibus_mozc",
         ],
     ),
 )

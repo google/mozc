@@ -70,7 +70,7 @@ class CandidateFilterTest : public ::testing::Test {
     node_freelist_.reset(new FreeList<Node>(1024));
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     {
-      const char *data = NULL;
+      const char *data = nullptr;
       size_t size = 0;
       mock_data_manager_.GetSuggestionFilterData(&data, &size);
       suggestion_filter_.reset(new SuggestionFilter(data, size));

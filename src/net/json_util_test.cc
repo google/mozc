@@ -180,7 +180,7 @@ void FillRequiredFields(protobuf::Message *message) {
       }
     } else if (reflection->HasField(*message, field)) {
       if (field->cpp_type() == protobuf::FieldDescriptor::CPPTYPE_MESSAGE) {
-        FillRequiredFields(reflection->MutableMessage(message, field, NULL));
+        FillRequiredFields(reflection->MutableMessage(message, field, nullptr));
       }
     } else if (field->is_required()) {
       switch (field->cpp_type()) {
@@ -221,7 +221,8 @@ void FillRequiredFields(protobuf::Message *message) {
           break;
         }
         case protobuf::FieldDescriptor::CPPTYPE_MESSAGE: {
-          FillRequiredFields(reflection->MutableMessage(message, field, NULL));
+          FillRequiredFields(
+              reflection->MutableMessage(message, field, nullptr));
           break;
         }
         default: {

@@ -28,6 +28,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("//tools/build_defs:stubs.bzl", "cc_embed_data")
+
 package(default_visibility = [
     "//:__subpackages__",
 ])
@@ -45,3 +47,23 @@ exports_files([
     "user_segment_history_pos_group.def",
 ])
 
+cc_embed_data(
+    name = "dictionary_config_data",
+    srcs = [
+        "boundary.def",
+        "cforms.def",
+        "segmenter.def",
+        "sorting_map.tsv",
+        "special_pos.def",
+        "third_party_pos_map.def",
+        "user_pos.def",
+        "user_segment_history_pos_group.def",
+    ],
+    outs = [
+        "dictionary_config_data.cc",
+        "dictionary_config_data.h",
+        "dictionary_config_data_data.o",
+    ],
+    flatten = 1,
+    strip = "dictionary_config_data",
+)

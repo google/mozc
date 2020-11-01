@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "renderer/table_layout.h"
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

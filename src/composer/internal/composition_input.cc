@@ -35,7 +35,7 @@ namespace mozc {
 namespace composer {
 
 CompositionInput::CompositionInput()
-    : has_conversion_(false), is_new_input_(false), transliterator_(NULL) {}
+    : has_conversion_(false), is_new_input_(false), transliterator_(nullptr) {}
 
 CompositionInput::~CompositionInput() {}
 
@@ -44,7 +44,7 @@ void CompositionInput::Clear() {
   conversion_.clear();
   has_conversion_ = false;
   is_new_input_ = false;
-  transliterator_ = NULL;
+  transliterator_ = nullptr;
 }
 
 bool CompositionInput::Empty() const {

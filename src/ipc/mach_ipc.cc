@@ -30,18 +30,17 @@
 // The IPC implementation using core Mach APIs.
 #ifdef __APPLE__
 
-#include "ipc/ipc.h"
-
-#include <map>
-
 #include <launch.h>
 #include <mach/mach.h>
 #include <servers/bootstrap.h>
+
+#include <map>
 
 #include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/singleton.h"
 #include "base/thread.h"
+#include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 
 namespace mozc {
@@ -101,7 +100,7 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
                             LAUNCH_KEY_GETJOB);
     launch_data_t job = launch_msg(request);
     launch_data_free(request);
-    if (job == NULL) {
+    if (job == nullptr) {
       LOG(ERROR) << "Server job not found";
       return false;
     }
@@ -113,7 +112,7 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
     }
 
     launch_data_t pid_data = launch_data_dict_lookup(job, LAUNCH_JOBKEY_PID);
-    if (pid_data == NULL ||
+    if (pid_data == nullptr ||
         launch_data_get_type(pid_data) != LAUNCH_DATA_INTEGER) {
       // PID information is unavailable, which means server is not running.
       VLOG(2) << "Returned job is formatted wrongly: cannot find PID data.";
@@ -190,12 +189,12 @@ struct mach_ipc_receive_message {
 
 // Client implementation
 IPCClient::IPCClient(const string &name)
-    : name_(name), mach_port_manager_(NULL), ipc_path_manager_(NULL) {
+    : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, "");
 }
 
 IPCClient::IPCClient(const string &name, const string &server_path)
-    : name_(name), mach_port_manager_(NULL), ipc_path_manager_(NULL) {
+    : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, server_path);
 }
 
@@ -214,13 +213,13 @@ bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
                      size_t *response_size, int32 timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultClientMachPortManager>::get();
   }
 
   // Obtain the server port
   mach_port_t server_port;
-  if (manager == NULL || !manager->GetMachPort(name_, &server_port)) {
+  if (manager == nullptr || !manager->GetMachPort(name_, &server_port)) {
     last_ipc_error_ = IPC_NO_CONNECTION;
     LOG(ERROR) << "Cannot connect to the server";
     return false;
@@ -336,7 +335,7 @@ bool IPCClient::Connected() const {
   }
 
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultClientMachPortManager>::get();
   }
 
@@ -345,7 +344,7 @@ bool IPCClient::Connected() const {
 
 // Server implementation
 IPCServer::IPCServer(const string &name, int32 num_connections, int32 timeout)
-    : name_(name), mach_port_manager_(NULL), timeout_(timeout) {
+    : name_(name), mach_port_manager_(nullptr), timeout_(timeout) {
   // This is a fake IPC path manager: it just stores the server
   // version and IPC name but we don't use the stored IPC name itself.
   // It's just for compatibility.
@@ -370,7 +369,7 @@ IPCServer::~IPCServer() {
 
 bool IPCServer::Connected() const {
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultServerMachPortManager>::get();
   }
 
@@ -379,13 +378,13 @@ bool IPCServer::Connected() const {
 
 void IPCServer::Loop() {
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultServerMachPortManager>::get();
   }
 
   // Obtain the server port
   mach_port_t server_port;
-  if (manager == NULL || !manager->GetMachPort(name_, &server_port)) {
+  if (manager == nullptr || !manager->GetMachPort(name_, &server_port)) {
     LOG(ERROR) << "Failed to reserve the port.";
     return;
   }

@@ -49,8 +49,8 @@ static const int32 kKanaModifierInsensitivePenalty = 1700;
 class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
  public:
   BaseNodeListBuilder(mozc::NodeAllocator *allocator, int limit)
-      : allocator_(allocator), limit_(limit), penalty_(0), result_(NULL) {
-    DCHECK(allocator_) << "Allocator must not be NULL";
+      : allocator_(allocator), limit_(limit), penalty_(0), result_(nullptr) {
+    DCHECK(allocator_) << "Allocator must not be nullptr";
   }
 
   BaseNodeListBuilder(const BaseNodeListBuilder &) = delete;

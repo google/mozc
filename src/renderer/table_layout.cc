@@ -174,7 +174,7 @@ void TableLayout::FreezeLayout() {
   }
 
   const int all_cell_width =
-      accumulate(column_width_list_.begin(), column_width_list_.end(), 0);
+      std::accumulate(column_width_list_.begin(), column_width_list_.end(), 0);
 
   const int table_width =
       row_rect_padding_pixels_ * 2 +  // padding left and right
@@ -215,7 +215,7 @@ Rect TableLayout::GetCellRect(int row, int column) const {
   DCHECK(0 <= row && row < number_of_rows_);
   DCHECK(0 <= column && column < column_width_list_.size());
 
-  const int width_of_left_cells = accumulate(
+  const int width_of_left_cells = std::accumulate(
       column_width_list_.begin(), column_width_list_.begin() + column, 0);
 
   const int left = window_border_pixels_ +     // border left
@@ -346,7 +346,7 @@ Rect TableLayout::GetColumnRect(int column) const {
   }
   DCHECK(0 <= column && column < column_width_list_.size());
 
-  const int width_of_left_cells = accumulate(
+  const int width_of_left_cells = std::accumulate(
       column_width_list_.begin(), column_width_list_.begin() + column, 0);
 
   const int left = window_border_pixels_ +     // border left

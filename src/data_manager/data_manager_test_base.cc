@@ -196,7 +196,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   // Load embedded suggestion filter (bloom filter)
   std::unique_ptr<SuggestionFilter> suggestion_filter;
   {
-    const char *data = NULL;
+    const char *data = nullptr;
     size_t size;
     data_manager_->GetSuggestionFilterData(&data, &size);
     suggestion_filter.reset(new SuggestionFilter(data, size));

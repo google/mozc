@@ -204,6 +204,7 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -525,6 +526,7 @@ cc_library_mozc(
         "//base:serialized_string_array",
         "//base:util",
         "//data_manager:data_manager_interface",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

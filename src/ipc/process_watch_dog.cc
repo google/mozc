@@ -46,13 +46,13 @@ namespace mozc {
 
 #ifdef OS_WIN
 ProcessWatchDog::ProcessWatchDog()
-    : event_(::CreateEventW(NULL, TRUE, FALSE, NULL)),
+    : event_(::CreateEventW(nullptr, TRUE, FALSE, nullptr)),
       process_id_(UnknownProcessID),
       thread_id_(UnknownThreadID),
       timeout_(-1),
       is_finished_(false),
       mutex_(new Mutex) {
-  if (event_.get() == NULL) {
+  if (event_.get() == nullptr) {
     LOG(ERROR) << "::CreateEvent() failed.";
     return;
   }
@@ -62,7 +62,7 @@ ProcessWatchDog::ProcessWatchDog()
 ProcessWatchDog::~ProcessWatchDog() {
   is_finished_ = true;  // set the flag to terminate the thread
 
-  if (event_.get() != NULL) {
+  if (event_.get() != nullptr) {
     ::SetEvent(event_.get());  // wake up WaitForMultipleObjects
   }
 
@@ -71,8 +71,8 @@ ProcessWatchDog::~ProcessWatchDog() {
 
 bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
                             int timeout) {
-  if (event_.get() == NULL) {
-    LOG(ERROR) << "event is NULL";
+  if (event_.get() == nullptr) {
+    LOG(ERROR) << "event is nullptr";
     return false;
   }
 
@@ -110,7 +110,7 @@ void ProcessWatchDog::Run() {
         const HANDLE handle = ::OpenProcess(SYNCHRONIZE, FALSE, process_id_);
         const DWORD error = ::GetLastError();
         process_handle.reset(handle);
-        if (process_handle.get() == NULL) {
+        if (process_handle.get() == nullptr) {
           LOG(ERROR) << "OpenProcess failed: " << process_id_ << " " << error;
           switch (error) {
             case ERROR_ACCESS_DENIED:
@@ -130,7 +130,7 @@ void ProcessWatchDog::Run() {
         const HANDLE handle = ::OpenThread(SYNCHRONIZE, FALSE, thread_id_);
         const DWORD error = ::GetLastError();
         thread_handle.reset(handle);
-        if (thread_handle.get() == NULL) {
+        if (thread_handle.get() == nullptr) {
           LOG(ERROR) << "OpenThread failed: " << thread_id_ << " " << error;
           switch (error) {
             case ERROR_ACCESS_DENIED:
@@ -164,14 +164,14 @@ void ProcessWatchDog::Run() {
 
     // set handles
     DWORD size = 1;
-    if (process_handle.get() != NULL) {
+    if (process_handle.get() != nullptr) {
       VLOG(2) << "Inserting process handle";
       handles[size] = process_handle.get();
       types[size] = ProcessWatchDog::PROCESS_SIGNALED;
       ++size;
     }
 
-    if (thread_handle.get() != NULL) {
+    if (thread_handle.get() != nullptr) {
       VLOG(2) << "Inserting thread handle";
       handles[size] = thread_handle.get();
       types[size] = ProcessWatchDog::THREAD_SIGNALED;
@@ -276,7 +276,7 @@ void ProcessWatchDog::Run() {
       if (errno == EPERM) {
         Signaled(ProcessWatchDog::PROCESS_ACCESS_DENIED_SIGNALED);
       } else if (errno == ESRCH) {
-        // Since we are polling the process by NULL signal,
+        // Since we are polling the process by nullptr signal,
         // it is essentially impossible to tell the process is not found
         // or terminated.
         Signaled(ProcessWatchDog::PROCESS_SIGNALED);

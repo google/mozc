@@ -46,7 +46,7 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_FALSE(input.is_new_input());
-    EXPECT_TRUE(NULL == input.transliterator());
+    EXPECT_TRUE(nullptr == input.transliterator());
   }
 
   {  // Value setting
@@ -72,7 +72,7 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_FALSE(input.is_new_input());
-    EXPECT_TRUE(NULL == input.transliterator());
+    EXPECT_TRUE(nullptr == input.transliterator());
 
     EXPECT_FALSE(input2.Empty());
     EXPECT_EQ("raw", input2.raw());

@@ -68,21 +68,23 @@ std::string g_server_product_version;
 class TestIPCClient : public IPCClientInterface {
  public:
   TestIPCClient() { g_server_product_version = Version::GetMozcVersion(); }
-  ~TestIPCClient() {}
+  ~TestIPCClient() override {}
 
-  bool Connected() const { return g_connected; }
+  bool Connected() const override { return g_connected; }
 
-  uint32 GetServerProtocolVersion() const { return g_server_protocol_version; }
+  uint32 GetServerProtocolVersion() const override {
+    return g_server_protocol_version;
+  }
 
-  const std::string &GetServerProductVersion() const {
+  const std::string &GetServerProductVersion() const override {
     return g_server_product_version;
   }
 
-  uint32 GetServerProcessId() const { return 0; }
+  uint32 GetServerProcessId() const override { return 0; }
 
   // just count up how many times Call is called.
-  virtual bool Call(const char *request, size_t request_size, char *response,
-                    size_t *response_size, int32 timeout) {
+  bool Call(const char *request, size_t request_size, char *response,
+            size_t *response_size, int32 timeout) override {
     g_counter++;
     return true;
   }
@@ -97,20 +99,20 @@ class TestIPCClient : public IPCClientInterface {
     g_server_protocol_version = version;
   }
 
-  virtual IPCErrorType GetLastIPCError() const { return IPC_NO_ERROR; }
+  IPCErrorType GetLastIPCError() const override { return IPC_NO_ERROR; }
 };
 
 class TestIPCClientFactory : public IPCClientFactoryInterface {
  public:
   TestIPCClientFactory() {}
-  ~TestIPCClientFactory() {}
+  ~TestIPCClientFactory() override {}
 
-  virtual IPCClientInterface *NewClient(const std::string &name,
-                                        const std::string &path_name) {
+  IPCClientInterface *NewClient(const std::string &name,
+                                const std::string &path_name) override {
     return new TestIPCClient;
   }
 
-  virtual IPCClientInterface *NewClient(const std::string &name) {
+  IPCClientInterface *NewClient(const std::string &name) override {
     return new TestIPCClient;
   }
 };
@@ -122,35 +124,38 @@ class TestRendererLauncher : public RendererLauncherInterface {
         force_terminate_renderer_called_(false),
         available_(false),
         can_connect_(false) {}
-  ~TestRendererLauncher() {}
+  ~TestRendererLauncher() override {}
 
   // implement StartServer.
   // return true if server can launched successfully.
-  void StartRenderer(const std::string &name, const std::string &renderer_path,
-                     bool disable_renderer_path_check,
-                     IPCClientFactoryInterface *ipc_client_factory_interface) {
+  void StartRenderer(
+      const std::string &name, const std::string &renderer_path,
+      bool disable_renderer_path_check,
+      IPCClientFactoryInterface *ipc_client_factory_interface) override {
     start_renderer_called_ = true;
     LOG(INFO) << name << " " << renderer_path;
   }
 
-  bool ForceTerminateRenderer(const std::string &name) {
+  bool ForceTerminateRenderer(const std::string &name) override {
     force_terminate_renderer_called_ = true;
     return true;
   }
 
-  void OnFatal(RendererErrorType type) { LOG(ERROR) << static_cast<int>(type); }
+  void OnFatal(RendererErrorType type) override {
+    LOG(ERROR) << static_cast<int>(type);
+  }
 
   // return true if the renderer is running
-  virtual bool IsAvailable() const { return available_; }
+  bool IsAvailable() const override { return available_; }
 
   // return true if client can make a IPC connection.
-  virtual bool CanConnect() const { return can_connect_; }
+  bool CanConnect() const override { return can_connect_; }
 
-  virtual void SetPendingCommand(const commands::RendererCommand &command) {
+  void SetPendingCommand(const commands::RendererCommand &command) override {
     set_pending_command_called_ = true;
   }
 
-  virtual void set_suppress_error_dialog(bool suppress) {}
+  void set_suppress_error_dialog(bool suppress) override {}
 
   void Reset() {
     start_renderer_called_ = false;

@@ -124,10 +124,10 @@ class Job {
       : setting_(setting),
         skip_count_(0),
         backoff_count_(0),
-        timer_(NULL),
+        timer_(nullptr),
         running_(false) {}
 
-  ~Job() { set_timer(NULL); }
+  ~Job() { set_timer(nullptr); }
 
   const Scheduler::JobSetting setting() const { return setting_; }
 
@@ -142,7 +142,7 @@ class Job {
   uint32 backoff_count() const { return backoff_count_; }
 
   void set_timer(QueueTimer *timer) {
-    if (timer_ != NULL) {
+    if (timer_ != nullptr) {
       delete timer_;
     }
     timer_ = timer;
@@ -184,7 +184,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     DCHECK_NE(0, job_setting.default_interval());
     DCHECK_NE(0, job_setting.max_interval());
     // do not use DCHECK_NE as a type checker raises an error.
-    DCHECK(job_setting.callback() != NULL);
+    DCHECK(job_setting.callback() != nullptr);
   }
 
   virtual bool AddJob(const Scheduler::JobSetting &job_setting) {
@@ -210,7 +210,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     // TODO(hsumita): Make Job class uncopiable.
     job->set_timer(new QueueTimer(std::bind(TimerCallback, job), delay,
                                   job_setting.default_interval()));
-    if (job->timer() == NULL) {
+    if (job->timer() == nullptr) {
       LOG(ERROR) << "failed to create QueueTimer";
       return false;
     }
@@ -246,7 +246,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     }
     job->set_running(true);
     Scheduler::JobSetting::CallbackFunc callback = job->setting().callback();
-    DCHECK(callback != NULL);
+    DCHECK(callback != nullptr);
     const bool success = callback(job->setting().data());
     job->set_running(false);
     if (success) {
@@ -276,10 +276,10 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
   DISALLOW_COPY_AND_ASSIGN(SchedulerImpl);
 };
 
-Scheduler::SchedulerInterface *g_scheduler_handler = NULL;
+Scheduler::SchedulerInterface *g_scheduler_handler = nullptr;
 
 Scheduler::SchedulerInterface *GetSchedulerHandler() {
-  if (g_scheduler_handler != NULL) {
+  if (g_scheduler_handler != nullptr) {
     return g_scheduler_handler;
   } else {
     return Singleton<SchedulerImpl>::get();

@@ -73,7 +73,7 @@ class Singleton {
 
   static void Delete() {
     delete instance_;
-    instance_ = NULL;
+    instance_ = nullptr;
     ResetOnce(&once_);
   }
 
@@ -85,7 +85,7 @@ template <typename T>
 once_t Singleton<T>::once_ = MOZC_ONCE_INIT;
 
 template <typename T>
-T *Singleton<T>::instance_ = NULL;
+T *Singleton<T>::instance_ = nullptr;
 }  // namespace mozc
 
 #endif  // MOZC_BASE_SINGLETON_H_

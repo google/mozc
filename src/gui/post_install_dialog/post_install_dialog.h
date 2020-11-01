@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_POST_INSTALL_DIALOG_H_
-#define MOZC_GUI_POST_INSTALL_DIALOG_H_
+#ifndef MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_
+#define MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_
 
 #include <memory>
 
@@ -48,12 +48,12 @@ class PostInstallDialog : public QDialog, private Ui::PostInstallDialog {
 
  public:
   PostInstallDialog();
-  virtual ~PostInstallDialog();
+  ~PostInstallDialog() override;
 
  protected slots:
   virtual void OnOk();
   virtual void OnsetAsDefaultCheckBoxToggled(int state);
-  virtual void reject();
+  void reject() override;
 
  private:
   // - Sets this IME as the default IME if the check box on the
@@ -68,4 +68,4 @@ class PostInstallDialog : public QDialog, private Ui::PostInstallDialog {
 }  // namespace gui
 }  // namespace mozc
 
-#endif  // MOZC_GUI_POST_INSTALL_DIALOG_H_
+#endif  // MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_

@@ -69,7 +69,7 @@ class CharacterFormManager {
   // Converts string according to the config rules.
   // if alternate output, which should be shown next to
   // the output, is defined, it is stored into alternative_output.
-  // If alternative_output is not required, you can pass NULL.
+  // If alternative_output is not required, you can pass nullptr.
   // e.g., output = "@" alternative_output = "＠"
   // return true if both output and alternative_output are defined.
   bool ConvertPreeditStringWithAlternative(

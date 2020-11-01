@@ -57,7 +57,7 @@ Node *InitBOSNode(Lattice *lattice, uint16 length) {
   bos_node->cost = 0;
   bos_node->begin_pos = length;
   bos_node->end_pos = length;
-  bos_node->enext = NULL;
+  bos_node->enext = nullptr;
   return bos_node;
 }
 
@@ -73,14 +73,14 @@ Node *InitEOSNode(Lattice *lattice, uint16 length) {
   eos_node->cost = 0;
   eos_node->begin_pos = length;
   eos_node->end_pos = length;
-  eos_node->bnext = NULL;
+  eos_node->bnext = nullptr;
   return eos_node;
 }
 
 bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
                         const std::string &str) {
   CHECK(node);
-  for (; node->prev != NULL; node = node->prev) {
+  for (; node->prev != nullptr; node = node->prev) {
     if (node->begin_pos == begin_pos && node->end_pos == end_pos &&
         node->value == str) {
       return true;
@@ -110,7 +110,7 @@ std::string GetDebugStringForPath(const Node *end_node) {
   for (const Node *node = end_node; node; node = node->prev) {
     node_vector.push_back(node);
   }
-  const Node *prev_node = NULL;
+  const Node *prev_node = nullptr;
 
   for (int i = static_cast<int>(node_vector.size()) - 1; i >= 0; --i) {
     const Node *node = node_vector[i];
@@ -164,8 +164,8 @@ void Lattice::SetKey(absl::string_view key) {
   cache_info_.resize(size + 4);
 
   std::fill(begin_nodes_.begin(), begin_nodes_.end(),
-            static_cast<Node *>(NULL));
-  std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(NULL));
+            static_cast<Node *>(nullptr));
+  std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(nullptr));
   std::fill(cache_info_.begin(), cache_info_.end(), 0);
 
   end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
@@ -178,22 +178,22 @@ Node *Lattice::bos_nodes() const { return end_nodes_[0]; }
 Node *Lattice::eos_nodes() const { return begin_nodes_[key_.size()]; }
 
 void Lattice::Insert(size_t pos, Node *node) {
-  for (Node *rnode = node; rnode != NULL; rnode = rnode->bnext) {
+  for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
     const size_t end_pos = std::min(rnode->key.size() + pos, key_.size());
     rnode->begin_pos = static_cast<uint16>(pos);
     rnode->end_pos = static_cast<uint16>(end_pos);
-    rnode->prev = NULL;
-    rnode->next = NULL;
+    rnode->prev = nullptr;
+    rnode->next = nullptr;
     rnode->cost = 0;
     rnode->enext = end_nodes_[end_pos];
     end_nodes_[end_pos] = rnode;
   }
 
-  if (begin_nodes_[pos] == NULL) {
+  if (begin_nodes_[pos] == nullptr) {
     begin_nodes_[pos] = node;
   } else {
-    for (Node *rnode = node; rnode != NULL; rnode = rnode->bnext) {
-      if (rnode->bnext == NULL) {
+    for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
+      if (rnode->bnext == nullptr) {
         rnode->bnext = begin_nodes_[pos];
         begin_nodes_[pos] = node;
         break;
@@ -267,9 +267,9 @@ void Lattice::AddSuffix(const std::string &suffix_key) {
   end_nodes_.resize(new_size + 4);
 
   std::fill(begin_nodes_.begin() + old_size, begin_nodes_.end(),
-            static_cast<Node *>(NULL));
+            static_cast<Node *>(nullptr));
   std::fill(end_nodes_.begin() + old_size + 1, end_nodes_.end(),
-            static_cast<Node *>(NULL));
+            static_cast<Node *>(nullptr));
 
   end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
   begin_nodes_[new_size] = InitEOSNode(this, static_cast<uint16>(new_size));
@@ -291,11 +291,11 @@ void Lattice::ShrinkKey(const size_t new_len) {
   // erase nodes whose end position exceeds new_len
   for (size_t i = 0; i < new_len; ++i) {
     Node *begin = begin_nodes_[i];
-    if (begin == NULL) {
+    if (begin == nullptr) {
       continue;
     }
 
-    for (Node *prev = begin, *curr = begin->bnext; curr != NULL;) {
+    for (Node *prev = begin, *curr = begin->bnext; curr != nullptr;) {
       CHECK(prev);
       if (curr->end_pos > new_len) {
         prev->bnext = curr->bnext;
@@ -312,10 +312,10 @@ void Lattice::ShrinkKey(const size_t new_len) {
 
   // update begin_nodes and end_nodes
   for (size_t i = new_len; i <= old_len; ++i) {
-    begin_nodes_[i] = NULL;
+    begin_nodes_[i] = nullptr;
   }
   for (size_t i = new_len + 1; i <= old_len; ++i) {
-    end_nodes_[i] = NULL;
+    end_nodes_[i] = nullptr;
   }
   begin_nodes_[new_len] = InitEOSNode(this, static_cast<uint16>(new_len));
 
@@ -341,9 +341,9 @@ void Lattice::SetCacheInfo(const size_t pos, const size_t len) {
 
 void Lattice::ResetNodeCost() {
   for (size_t i = 0; i <= key_.size(); ++i) {
-    if (begin_nodes_[i] != NULL) {
-      Node *prev = NULL;
-      for (Node *node = begin_nodes_[i]; node != NULL; node = node->bnext) {
+    if (begin_nodes_[i] != nullptr) {
+      Node *prev = nullptr;
+      for (Node *node = begin_nodes_[i]; node != nullptr; node = node->bnext) {
         // do not process BOS / EOS nodes
         if (node->node_type == Node::BOS_NODE ||
             node->node_type == Node::EOS_NODE) {
@@ -355,8 +355,8 @@ void Lattice::ResetNodeCost() {
           node->wcost = node->raw_wcost;
         } else {
           if (node == begin_nodes_[i]) {
-            if (node->bnext == NULL) {
-              begin_nodes_[i] = NULL;
+            if (node->bnext == nullptr) {
+              begin_nodes_[i] = nullptr;
             } else {
               begin_nodes_[i] = node->bnext;
             }
@@ -371,9 +371,9 @@ void Lattice::ResetNodeCost() {
       }
     }
 
-    if (end_nodes_[i] != NULL) {
-      Node *prev = NULL;
-      for (Node *node = end_nodes_[i]; node != NULL; node = node->enext) {
+    if (end_nodes_[i] != nullptr) {
+      Node *prev = nullptr;
+      for (Node *node = end_nodes_[i]; node != nullptr; node = node->enext) {
         if (node->node_type == Node::BOS_NODE ||
             node->node_type == Node::EOS_NODE) {
           continue;
@@ -382,8 +382,8 @@ void Lattice::ResetNodeCost() {
           node->wcost = node->raw_wcost;
         } else {
           if (node == end_nodes_[i]) {
-            if (node->enext == NULL) {
-              end_nodes_[i] = NULL;
+            if (node->enext == nullptr) {
+              end_nodes_[i] = nullptr;
             } else {
               end_nodes_[i] = node->enext;
             }
@@ -419,7 +419,7 @@ std::string Lattice::DebugString() const {
     return os.str();
   }
 
-  for (; node != NULL; node = node->prev) {
+  for (; node != nullptr; node = node->prev) {
     best_path_nodes.push_back(node);
   }
 

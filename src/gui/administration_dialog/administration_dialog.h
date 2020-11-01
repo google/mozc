@@ -42,13 +42,13 @@ class AdministrationDialog : public QDialog, private Ui::AdministrationDialog {
 
  public:
   AdministrationDialog();
-  virtual ~AdministrationDialog();
+  ~AdministrationDialog() override;
 
  protected slots:
   virtual void clicked(QAbstractButton *button);
 
  protected:
-  bool eventFilter(QObject *obj, QEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
 
  private:
   bool CanStartService();

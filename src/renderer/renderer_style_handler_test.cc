@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "renderer/renderer_style_handler.h"
+
 #include "protocol/renderer_style.pb.h"
 #include "testing/base/public/gunit.h"
 

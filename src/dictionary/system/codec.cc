@@ -808,12 +808,12 @@ void ReadValueInfo(const uint8 *ptr, uint8 flags, int *value_id, int *offset) {
 }  // namespace
 
 namespace {
-SystemDictionaryCodecInterface *g_system_dictionary_codec = NULL;
+SystemDictionaryCodecInterface *g_system_dictionary_codec = nullptr;
 typedef SystemDictionaryCodec DefaultSystemDictionaryCodec;
 }  // namespace
 
 SystemDictionaryCodecInterface *SystemDictionaryCodecFactory::GetCodec() {
-  if (g_system_dictionary_codec == NULL) {
+  if (g_system_dictionary_codec == nullptr) {
     return Singleton<DefaultSystemDictionaryCodec>::get();
   } else {
     return g_system_dictionary_codec;

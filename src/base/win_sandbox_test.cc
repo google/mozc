@@ -59,7 +59,7 @@ void VerifySidContained(const std::vector<Sid> sids,
 }
 
 TEST(WinSandboxTest, GetSidsToDisable) {
-  HANDLE process_token_ret = NULL;
+  HANDLE process_token_ret = nullptr;
   ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
                      &process_token_ret);
   ScopedHandle process_token(process_token_ret);
@@ -92,7 +92,7 @@ TEST(WinSandboxTest, GetSidsToDisable) {
 }
 
 TEST(WinSandboxTest, GetPrivilegesToDisable) {
-  HANDLE process_token_ret = NULL;
+  HANDLE process_token_ret = nullptr;
   ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
                      &process_token_ret);
   ScopedHandle process_token(process_token_ret);
@@ -118,7 +118,7 @@ TEST(WinSandboxTest, GetPrivilegesToDisable) {
 }
 
 TEST(WinSandboxTest, GetSidsToRestrict) {
-  HANDLE process_token_ret = NULL;
+  HANDLE process_token_ret = nullptr;
   ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
                      &process_token_ret);
   ScopedHandle process_token(process_token_ret);

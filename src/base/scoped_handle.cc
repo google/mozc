@@ -34,9 +34,9 @@
 
 namespace mozc {
 
-ScopedHandle::ScopedHandle() : handle_(NULL) {}
+ScopedHandle::ScopedHandle() : handle_(nullptr) {}
 
-ScopedHandle::ScopedHandle(Win32Handle handle) : handle_(NULL) {
+ScopedHandle::ScopedHandle(Win32Handle handle) : handle_(nullptr) {
   reset(handle);
 }
 
@@ -69,14 +69,14 @@ ScopedHandle::Win32Handle ScopedHandle::get() const { return handle_; }
 // transfers ownership away from this object
 ScopedHandle::Win32Handle ScopedHandle::take() {
   HANDLE handle = handle_;
-  handle_ = NULL;
+  handle_ = nullptr;
   return handle;
 }
 
 void ScopedHandle::Close() {
-  if (handle_ != NULL) {
+  if (handle_ != nullptr) {
     ::CloseHandle(handle_);
-    handle_ = NULL;
+    handle_ = nullptr;
   }
 }
 

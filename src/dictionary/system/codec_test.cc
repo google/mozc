@@ -118,12 +118,12 @@ namespace {
 class SystemDictionaryCodecTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemDictionaryCodecFactory::SetCodec(NULL);
+    SystemDictionaryCodecFactory::SetCodec(nullptr);
     ResetAllTokens();
   }
 
   void TearDown() override {
-    SystemDictionaryCodecFactory::SetCodec(NULL);
+    SystemDictionaryCodecFactory::SetCodec(nullptr);
     ResetAllTokens();
   }
 
@@ -275,8 +275,8 @@ class SystemDictionaryCodecTest : public ::testing::Test {
   void CheckDecoded() const {
     EXPECT_EQ(source_tokens_.size(), decoded_tokens_.size());
     for (size_t i = 0; i < source_tokens_.size(); ++i) {
-      EXPECT_TRUE(source_tokens_[i].token != NULL);
-      EXPECT_TRUE(decoded_tokens_[i].token != NULL);
+      EXPECT_TRUE(source_tokens_[i].token != nullptr);
+      EXPECT_TRUE(decoded_tokens_[i].token != nullptr);
 
       EXPECT_EQ(source_tokens_[i].token->attributes,
                 decoded_tokens_[i].token->attributes);

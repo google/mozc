@@ -71,7 +71,7 @@ class HTTPStream {
       : output_string_(output_string),
         max_data_size_(max_data_size),
         output_size_(0) {
-    if (NULL != output_string_) {
+    if (nullptr != output_string_) {
       output_string_->clear();
     }
     VLOG(2) << "max_data_size=" << max_data_size;
@@ -85,7 +85,7 @@ class HTTPStream {
       LOG(WARNING) << "too long data max_data_size=" << max_data_size_;
     }
 
-    if (output_string_ != NULL) {
+    if (output_string_ != nullptr) {
       VLOG(2) << "Recived: " << size << " bytes to std::string";
       output_string_->append(buf, size);
     }
@@ -109,11 +109,11 @@ class ScopedHINTERNET {
  public:
   explicit ScopedHINTERNET(HINTERNET internet) : internet_(internet) {}
   virtual ~ScopedHINTERNET() {
-    if (NULL != internet_) {
+    if (nullptr != internet_) {
       VLOG(2) << "InternetCloseHandle() called";
       ::InternetCloseHandle(internet_);
     }
-    internet_ = NULL;
+    internet_ = nullptr;
   }
 
   HINTERNET get() { return internet_; }
@@ -178,17 +178,17 @@ bool RequestInternal(HTTPMethodType type, const string &url,
 
   Stopwatch stopwatch = stopwatch.StartNew();
 
-  HANDLE event = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-  if (NULL == event) {
+  HANDLE event = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+  if (nullptr == event) {
     LOG(ERROR) << "CreateEvent() failed: " << ::GetLastError();
     return false;
   }
 
-  ScopedHINTERNET internet(::InternetOpenA(kUserAgent,
-                                           INTERNET_OPEN_TYPE_PRECONFIG, NULL,
-                                           NULL, INTERNET_FLAG_ASYNC));
+  ScopedHINTERNET internet(
+      ::InternetOpenA(kUserAgent, INTERNET_OPEN_TYPE_PRECONFIG, nullptr,
+                      nullptr, INTERNET_FLAG_ASYNC));
 
-  if (NULL == internet.get()) {
+  if (nullptr == internet.get()) {
     LOG(ERROR) << "InternetOpen() failed: " << ::GetLastError() << " " << url;
     ::CloseHandle(event);
     return false;
@@ -235,10 +235,10 @@ bool RequestInternal(HTTPMethodType type, const string &url,
   }
 
   ScopedHINTERNET session(::InternetConnect(internet.get(), uc.lpszHostName,
-                                            uc.nPort, NULL, NULL,
+                                            uc.nPort, nullptr, nullptr,
                                             INTERNET_SERVICE_HTTP, 0, 0));
 
-  if (NULL == session.get()) {
+  if (nullptr == session.get()) {
     LOG(ERROR) << "InternetConnect() failed: " << ::GetLastError() << " "
                << url;
     return false;
@@ -255,13 +255,13 @@ bool RequestInternal(HTTPMethodType type, const string &url,
   CHECK(method);
 
   ScopedHINTERNET handle(::HttpOpenRequestW(
-      session.get(), method, uri.c_str(), NULL, NULL, NULL,
+      session.get(), method, uri.c_str(), nullptr, nullptr, nullptr,
       INTERNET_FLAG_RELOAD | INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_NO_UI |
           INTERNET_FLAG_PRAGMA_NOCACHE |
           (uc.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0),
       reinterpret_cast<DWORD_PTR>(event)));
 
-  if (NULL == handle.get()) {
+  if (nullptr == handle.get()) {
     LOG(ERROR) << "HttpOpenRequest() failed: " << ::GetLastError() << " "
                << url;
     return false;
@@ -280,8 +280,8 @@ bool RequestInternal(HTTPMethodType type, const string &url,
     }
   }
 
-  if (!::HttpSendRequest(handle.get(), NULL, 0,
-                         (type == HTTP_POST) ? (LPVOID)post_data : NULL,
+  if (!::HttpSendRequest(handle.get(), nullptr, 0,
+                         (type == HTTP_POST) ? (LPVOID)post_data : nullptr,
                          (type == HTTP_POST) ? post_size : 0)) {
     if (!CheckTimeout(event, stopwatch.GetElapsedMilliseconds(),
                       option.timeout)) {
@@ -427,7 +427,7 @@ bool RequestInternal(HTTPMethodType type, const std::string &url,
   Singleton<CurlInitializer>::get()->Init();
 
   CURL *curl = curl_easy_init();
-  if (NULL == curl) {
+  if (nullptr == curl) {
     LOG(ERROR) << "curl_easy_init() failed";
     return false;
   }
@@ -462,13 +462,13 @@ bool RequestInternal(HTTPMethodType type, const std::string &url,
     }
   }
 
-  struct curl_slist *slist = NULL;
+  struct curl_slist *slist = nullptr;
   for (size_t i = 0; i < option.headers.size(); ++i) {
     VLOG(2) << "Add header: " << option.headers[i];
     slist = curl_slist_append(slist, option.headers[i].c_str());
   }
 
-  if (slist != NULL) {
+  if (slist != nullptr) {
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist);
   }
 
@@ -512,7 +512,7 @@ bool RequestInternal(HTTPMethodType type, const std::string &url,
   }
 
   curl_easy_cleanup(curl);
-  if (slist != NULL) {
+  if (slist != nullptr) {
     curl_slist_free_all(slist);
   }
 
@@ -543,12 +543,12 @@ class HTTPClientImpl : public HTTPClientInterface {
  public:
   virtual bool Get(const std::string &url, const HTTPClient::Option &option,
                    std::string *output_string) const {
-    return RequestInternal(HTTP_GET, url, NULL, 0, option, output_string);
+    return RequestInternal(HTTP_GET, url, nullptr, 0, option, output_string);
   }
 
   virtual bool Head(const std::string &url, const HTTPClient::Option &option,
                     std::string *output_string) const {
-    return RequestInternal(HTTP_HEAD, url, NULL, 0, option, output_string);
+    return RequestInternal(HTTP_HEAD, url, nullptr, 0, option, output_string);
   }
 
   virtual bool Post(const std::string &url, const std::string &data,
@@ -561,10 +561,10 @@ class HTTPClientImpl : public HTTPClientInterface {
 
 namespace {
 
-const HTTPClientInterface *g_http_connection_handler = NULL;
+const HTTPClientInterface *g_http_connection_handler = nullptr;
 
 const HTTPClientInterface &GetHTTPClient() {
-  if (g_http_connection_handler == NULL) {
+  if (g_http_connection_handler == nullptr) {
     g_http_connection_handler = Singleton<HTTPClientImpl>::get();
   }
   return *g_http_connection_handler;

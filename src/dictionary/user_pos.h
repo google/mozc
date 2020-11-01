@@ -170,7 +170,8 @@ class UserPOS : public UserPOSInterface {
 
   using const_iterator = iterator;
 
-  static UserPOS *CreateFromDataManager(const DataManagerInterface &manager);
+  static std::unique_ptr<UserPOS> CreateFromDataManager(
+      const DataManagerInterface &manager);
 
   // Initializes the user pos from the given binary data.  The provided byte
   // data must outlive this instance.

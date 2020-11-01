@@ -212,8 +212,8 @@ int main(int argc, char* argv[]) {
 
   std::map<std::string, std::vector<double> > scores;  // Results to be averaged
 
-  for (mozc::TestCase* test_case = mozc::test_cases; test_case->source != NULL;
-       ++test_case) {
+  for (mozc::TestCase* test_case = mozc::test_cases;
+       test_case->source != nullptr; ++test_case) {
     const std::string& source = test_case->source;
     const std::string& hiragana_sentence = test_case->hiragana_sentence;
     const std::string& expected_result = test_case->expected_result;

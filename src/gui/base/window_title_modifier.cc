@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "gui/base/window_title_modifier.h"
+
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtGui/QGuiApplication>
@@ -34,7 +36,6 @@
 #include <QtWidgets/QWidget>
 
 #include "base/version.h"
-#include "gui/base/window_title_modifier.h"
 
 namespace mozc {
 namespace gui {

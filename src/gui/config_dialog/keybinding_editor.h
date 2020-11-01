@@ -32,7 +32,6 @@
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QtGui>
-
 #include <memory>
 #include <string>
 
@@ -50,7 +49,7 @@ class KeyBindingEditor : public QDialog, private Ui::KeyBindingEditor {
   // |trigger_parent| is the object who was the trigger of launching the editor.
   // QPushButton can be a trigger_parent.
   KeyBindingEditor(QWidget *parent, QWidget *trigger_parent);
-  virtual ~KeyBindingEditor();
+  ~KeyBindingEditor() override;
 
   QWidget *mutable_trigger_parent() const { return trigger_parent_; }
 
@@ -61,7 +60,7 @@ class KeyBindingEditor : public QDialog, private Ui::KeyBindingEditor {
   // For some reason, KeyBindingEditor lanuched by
   // QItemDelegate looses focus. We overwrite
   // setVisible() function to call raise() and activateWindow().
-  virtual void setVisible(bool visible) {
+  void setVisible(bool visible) override {
     QWidget::setVisible(visible);
     if (visible) {
       raise();

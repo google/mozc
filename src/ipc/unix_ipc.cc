@@ -30,8 +30,6 @@
 // OS_LINUX only. Note that OS_ANDROID/OS_NACL don't reach here.
 #if defined(OS_LINUX)
 
-#include "ipc/ipc.h"
-
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -51,6 +49,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/thread.h"
+#include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 
 #ifndef UNIX_PATH_MAX
@@ -82,7 +81,7 @@ bool IsReadTimeout(int socket, int timeout) {
   FD_SET(socket, &fds);
   tv.tv_sec = timeout / 1000;
   tv.tv_usec = 1000 * (timeout % 1000);
-  if (select(socket + 1, &fds, NULL, NULL, &tv) < 0) {
+  if (select(socket + 1, &fds, nullptr, nullptr, &tv) < 0) {
     // Mac OS X and glibc implementations of strerror() return a pointer to a
     // string literal whenever errno is in a valid range, and thus thread-safe.
     // Probably we don't have to use the cumbersome strerror_r() function.
@@ -107,7 +106,7 @@ bool IsWriteTimeout(int socket, int timeout) {
   FD_SET(socket, &fds);
   tv.tv_sec = timeout / 1000;
   tv.tv_usec = 1000 * (timeout % 1000);
-  if (select(socket + 1, NULL, &fds, NULL, &tv) < 0) {
+  if (select(socket + 1, nullptr, &fds, nullptr, &tv) < 0) {
     LOG(WARNING) << "select() failed: " << strerror(errno);
     return true;
   }
@@ -228,7 +227,7 @@ bool IsAbstractSocket(const std::string &address) {
 IPCClient::IPCClient(const std::string &name)
     : socket_(kInvalidSocket),
       connected_(false),
-      ipc_path_manager_(NULL),
+      ipc_path_manager_(nullptr),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, "");
 }
@@ -236,7 +235,7 @@ IPCClient::IPCClient(const std::string &name)
 IPCClient::IPCClient(const std::string &name, const std::string &server_path)
     : socket_(kInvalidSocket),
       connected_(false),
-      ipc_path_manager_(NULL),
+      ipc_path_manager_(nullptr),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, server_path);
 }
@@ -246,7 +245,7 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
 
   // Try twice, because key may be changed.
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
-  if (manager == NULL) {
+  if (manager == nullptr) {
     LOG(ERROR) << "IPCPathManager::GetIPCPathManager failed";
     return;
   }
@@ -408,7 +407,7 @@ IPCServer::IPCServer(const std::string &name, int32 num_connections,
 }
 
 IPCServer::~IPCServer() {
-  if (server_thread_.get() != NULL) {
+  if (server_thread_.get() != nullptr) {
     server_thread_->Terminate();
   }
   ::shutdown(socket_, SHUT_RDWR);
@@ -430,7 +429,7 @@ void IPCServer::Loop() {
   IPCErrorType last_ipc_error = IPC_NO_ERROR;
   pid_t pid = 0;
   while (!error) {
-    const int new_sock = ::accept(socket_, NULL, NULL);
+    const int new_sock = ::accept(socket_, nullptr, nullptr);
     if (new_sock < 0) {
       LOG(FATAL) << "accept() failed: " << strerror(errno);
       return;

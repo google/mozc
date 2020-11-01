@@ -45,11 +45,11 @@ class FindDialog : public QDialog, private Ui::FindDialog {
 
  public:
   FindDialog(QWidget *parent, QTableWidget *table);
-  virtual ~FindDialog();
+  ~FindDialog() override;
 
  protected:
-  void closeEvent(QCloseEvent *event);
-  void showEvent(QShowEvent *event);
+  void closeEvent(QCloseEvent *event) override;
+  void showEvent(QShowEvent *event) override;
 
  private slots:
   void FindForward();

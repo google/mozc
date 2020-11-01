@@ -363,10 +363,10 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     size_t length = 0;
 
     // same as the original key
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(0, &length));
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(1, &length));
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(2, &length));
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(3, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(0, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(1, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(2, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(3, &length));
   }
 
   {
@@ -375,7 +375,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ("みんなであそぼう", corrector.corrected_key());
 
-    const char *output = NULL;
+    const char *output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
@@ -389,7 +389,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
 
     output = corrector.GetCorrectedPrefix(9, &length);
     // same
-    EXPECT_TRUE(NULL == output);
+    EXPECT_TRUE(nullptr == output);
   }
 
   {
@@ -398,20 +398,20 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ("こんにちは", corrector.corrected_key());
 
-    const char *output = NULL;
+    const char *output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
     EXPECT_EQ("こんにちは", std::string(output, length));
 
     output = corrector.GetCorrectedPrefix(3, &length);
-    EXPECT_TRUE(NULL == output);
+    EXPECT_TRUE(nullptr == output);
 
     output = corrector.GetCorrectedPrefix(6, &length);
-    EXPECT_TRUE(NULL == output);
+    EXPECT_TRUE(nullptr == output);
 
     output = corrector.GetCorrectedPrefix(9, &length);
-    EXPECT_TRUE(NULL == output);
+    EXPECT_TRUE(nullptr == output);
   }
 
   {
@@ -420,17 +420,17 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ("こんにちはせんよう", corrector.corrected_key());
 
-    const char *output = NULL;
+    const char *output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
     EXPECT_EQ("こんにちはせんよう", std::string(output, length));
 
     output = corrector.GetCorrectedPrefix(3, &length);
-    EXPECT_TRUE(NULL == output);
+    EXPECT_TRUE(nullptr == output);
 
     output = corrector.GetCorrectedPrefix(6, &length);
-    EXPECT_TRUE(NULL == output);
+    EXPECT_TRUE(nullptr == output);
 
     output = corrector.GetCorrectedPrefix(9, &length);
     EXPECT_EQ("にちはせんよう", std::string(output, length));
@@ -527,10 +527,10 @@ TEST(KeyCorrectorTest, Bug3046266Test) {
     size_t length = 0;
 
     // same as the original key
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(0, &length));
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(1, &length));
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(2, &length));
-    EXPECT_TRUE(NULL == corrector.GetCorrectedPrefix(3, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(0, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(1, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(2, &length));
+    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(3, &length));
   }
 }
 

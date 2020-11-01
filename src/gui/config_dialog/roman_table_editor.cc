@@ -97,7 +97,7 @@ std::string RomanTableEditorDialog::GetDefaultRomanTable() {
   CHECK(ifs.get() != nullptr);  // should never happen
   std::string line, result;
   std::vector<std::string> fields;
-  while (getline(*ifs.get(), line)) {
+  while (std::getline(*ifs.get(), line)) {
     if (line.empty()) {
       continue;
     }
@@ -128,7 +128,7 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
   mutable_table_widget()->verticalHeader()->hide();
 
   int row = 0;
-  while (getline(*is, line)) {
+  while (std::getline(*is, line)) {
     if (line.empty()) {
       continue;
     }
