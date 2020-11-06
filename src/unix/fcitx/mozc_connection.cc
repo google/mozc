@@ -40,7 +40,6 @@
 #include "session/ime_switch_util.h"
 #include "unix/fcitx/fcitx_key_event_handler.h"
 #include "unix/fcitx/surrounding_text_util.h"
-#include "fcitx_mozc.h"
 
 namespace mozc {
 namespace fcitx {

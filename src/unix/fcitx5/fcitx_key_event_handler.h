@@ -32,6 +32,7 @@
 #define UNIX_FCITX5_FCITX_KEY_EVENT_HANDLER_H_
 
 #include <fcitx-utils/key.h>
+
 #include <memory>
 #include <set>
 

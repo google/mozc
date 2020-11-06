@@ -32,6 +32,7 @@
 #define UNIX_FCITX5_FCITX_KEY_TRANSLATOR_H_
 
 #include <fcitx-utils/key.h>
+
 #include <map>
 #include <set>
 #include <string>
@@ -57,7 +58,7 @@ class KeyTranslator {
   typedef std::map<uint32, mozc::commands::KeyEvent::SpecialKey> SpecialKeyMap;
   typedef std::map<uint32, mozc::commands::KeyEvent::ModifierKey>
       ModifierKeyMap;
-  typedef std::map<uint32, std::pair<string, string> > KanaMap;
+  typedef std::map<uint32, std::pair<string, string>> KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(KeySym keyval, uint32 keycode, KeyStates modifiers) const;

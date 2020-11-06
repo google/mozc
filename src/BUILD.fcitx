@@ -1,0 +1,26 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# This rule is created from pkg-config
+#
+# packages="fcitx"
+# copts, hdrs, indludes: pkg-config --cflags $packages
+# linkopts: pkg-config --libs-only-l $packages
+
+cc_library(
+    name = "fcitx",
+    hdrs = glob([
+        "include/fcitx/**",
+        "include/fcitx-config/**",
+        "include/fcitx-utils/**",
+    ]),
+    copts = ["-pthread"],
+    includes = [
+    ],
+    linkopts = [
+        "-lfcitx-core",
+        "-lfcitx-config",
+        "-lfcitx-utils",
+    ],
+)

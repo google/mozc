@@ -59,10 +59,10 @@ class MozcConnection {
   MozcConnection();
   virtual ~MozcConnection();
 
-  mozc::client::ClientInterface* CreateClient();
+  mozc::client::ClientInterface *CreateClient();
 
  private:
-  mozc::IPCClientFactoryInterface* client_factory_;
+  mozc::IPCClientFactoryInterface *client_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcConnection);
 };

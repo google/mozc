@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/process.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "unix/fcitx/fcitx_mozc.h"

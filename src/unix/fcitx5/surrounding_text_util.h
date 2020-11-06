@@ -31,6 +31,7 @@
 #define MOZC_UNIX_FCITX_SURROUNDING_TEXT_URIL_H_
 
 #include <fcitx/inputcontext.h>
+
 #include <string>
 
 #include "base/port.h"

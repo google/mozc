@@ -135,7 +135,7 @@ Instance *Init(Instance *instance) {
   char argv0[] = "fcitx_mozc";
   char *_argv[] = {argv0};
   char **argv = _argv;
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
   return instance;
 }
 

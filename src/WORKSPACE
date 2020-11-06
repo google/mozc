@@ -59,6 +59,22 @@ new_local_repository(
     build_file = "BUILD.ibus",
 )
 
+# Fcitx
+new_local_repository(
+    name = "fcitx",
+    # This path should be updated per the environment.
+    path = "/usr",  # For Debian
+    build_file = "BUILD.fcitx",
+)
+
+# Fcitx 5
+new_local_repository(
+    name = "fcitx5",
+    # This path should be updated per the environment.
+    path = "/usr",  # For Debian
+    build_file = "BUILD.fcitx5",
+)
+
 # Japanese Usage Dictionary
 new_local_repository(
     name = "ja_usage_dict",
@@ -70,7 +86,7 @@ new_local_repository(
 new_local_repository(
     name = "io_qt",
     # This path should be updated per the environment.
-    path = "/usr/include/x86_64-linux-gnu/qt5",  # For Debian
+    path = "/usr/include/qt",  # For Debian
     build_file = "BUILD.qt"
 )
 
